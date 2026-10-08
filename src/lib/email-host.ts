@@ -14,7 +14,13 @@ export type GuestEmailInput = {
   guideUrl: string;
   intendedTo: string;
   secrets?: GuideSecrets;
+  /** src loga v HTML (cid:… při odeslání, https při náhledu) */
+  logoSrc?: string;
 };
+
+/** Veřejné logo na ostrém webu (náhled HTML). */
+export const LOGO_PUBLIC_URL = 'https://vivienapartments.cz/images/logo-96.png';
+export const LOGO_CID = 'vivien-logo';
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
 
@@ -163,20 +169,22 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
   const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
   const subjectBase = t(subjectL, lang);
   const subject = testMode ? `[TEST] ${subjectBase}` : subjectBase;
+  const logoSrc = input.logoSrc || LOGO_PUBLIC_URL;
+  const serif = "Georgia,'Times New Roman',serif";
 
   const nameCs = apt.nazev.cs;
   const nameEn = apt.nazev.en;
   const nameHtml =
     lang === 'cs'
-      ? `<div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.35;color:#1c1712;">${escapeHtml(nameCs)}</div>
-         <div style="font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.35;color:#8b6914;margin-top:4px;">${escapeHtml(nameEn)}</div>`
-      : `<div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.35;color:#1c1712;">${escapeHtml(nameEn)}</div>`;
+      ? `<div style="font-family:${serif};font-size:22px;line-height:1.35;color:#1c1712;">${escapeHtml(nameCs)}</div>
+         <div style="font-family:${serif};font-size:18px;line-height:1.35;color:#8b6914;margin-top:4px;">${escapeHtml(nameEn)}</div>`
+      : `<div style="font-family:${serif};font-size:22px;line-height:1.35;color:#1c1712;">${escapeHtml(nameEn)}</div>`;
 
   const nameText = lang === 'cs' ? `${nameCs}\n${nameEn}` : nameEn;
 
   const banner = testMode
     ? `<tr><td style="padding:0 0 20px;">
-        <div style="background:#fff8e8;border:1px solid #c9a84c;border-radius:6px;padding:12px 14px;font-size:14px;color:#3a3228;">
+        <div style="background:#fff8e8;border:1px solid #c9a84c;border-radius:6px;padding:12px 14px;font-family:${serif};font-size:15px;color:#3a3228;">
           <strong>${escapeHtml(t(testBannerL, lang))}</strong> ${escapeHtml(input.intendedTo)}
         </div>
       </td></tr>`
@@ -195,13 +203,18 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
       <td align="center">
         <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e8dfc8;border-radius:10px;">
           <tr>
-            <td style="padding:28px 28px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.55;color:#3a3228;">
+            <td style="padding:28px 28px 8px;font-family:${serif};font-size:17px;line-height:1.55;color:#3a3228;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                ${banner}
-                <tr><td style="padding:0 0 16px;">${escapeHtml(greeting)}</td></tr>
-                <tr><td style="padding:0 0 22px;">${escapeHtml(t(introL, lang))}</td></tr>
                 <tr>
-                  <td style="padding:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8b6914;font-weight:700;">
+                  <td align="center" style="padding:0 0 22px;">
+                    <img src="${escapeAttr(logoSrc)}" width="96" height="96" alt="VIVIEN Apartments" style="display:block;width:96px;height:auto;border:0;" />
+                  </td>
+                </tr>
+                ${banner}
+                <tr><td style="padding:0 0 16px;font-family:${serif};font-size:20px;line-height:1.4;color:#1c1712;">${escapeHtml(greeting)}</td></tr>
+                <tr><td style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#3a3228;">${escapeHtml(t(introL, lang))}</td></tr>
+                <tr>
+                  <td style="padding:0 0 8px;font-family:${serif};font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8b6914;font-weight:700;">
                     ${escapeHtml(t(stayL, lang))}
                   </td>
                 </tr>
@@ -210,7 +223,7 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   <td style="padding:0 0 22px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#faf7f2;border-radius:8px;">
                       <tr>
-                        <td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#3a3228;">
+                        <td style="padding:14px 16px;font-family:${serif};font-size:16px;line-height:1.5;color:#3a3228;">
                           <div style="margin:0 0 8px;"><span style="color:#8b6914;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;">${escapeHtml(t(datesL, lang))}</span><br/><strong>${escapeHtml(term)}</strong></div>
                           <div style="margin:0 0 8px;"><span style="color:#8b6914;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;">${escapeHtml(t(nightsL, lang))}</span><br/><strong>${escapeHtml(nociLabel)}</strong></div>
                           <div style="margin:0;"><span style="color:#8b6914;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;">${escapeHtml(t(guestsL, lang))}</span><br/><strong>${escapeHtml(osobLabel)}</strong></div>
@@ -221,13 +234,13 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                 </tr>
                 <tr>
                   <td align="center" style="padding:8px 0 22px;">
-                    <a href="${escapeAttr(input.guideUrl)}" style="display:inline-block;background:#8b6914;color:#ffffff;text-decoration:none;padding:14px 26px;border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;">
+                    <a href="${escapeAttr(input.guideUrl)}" style="display:inline-block;background:#8b6914;color:#ffffff;text-decoration:none;padding:14px 26px;border-radius:6px;font-family:${serif};font-size:17px;font-weight:700;">
                       ${escapeHtml(t(openGuideL, lang))}
                     </a>
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:18px 0 0;border-top:1px solid #efe6d4;font-size:14px;color:#3a3228;">
+                  <td style="padding:18px 0 0;border-top:1px solid #efe6d4;font-family:${serif};font-size:15px;color:#3a3228;">
                     ${escapeHtml(t(contactL, lang))}
                   </td>
                 </tr>
@@ -269,13 +282,17 @@ export async function sendGuestEmail(opts: {
   input: GuestEmailInput;
   toOverride?: string;
 }): Promise<{ to: string; messageId?: string }> {
+  const path = await import('path');
   const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
   const majitel = process.env.MAJITEL_EMAIL?.trim();
   if (!majitel) throw new Error('MAJITEL_EMAIL chybí');
 
   const intended = opts.input.intendedTo;
   const to = testMode || opts.toOverride ? majitel : intended;
-  const built = buildGuestEmail(opts.input);
+  const built = buildGuestEmail({
+    ...opts.input,
+    logoSrc: `cid:${LOGO_CID}`,
+  });
 
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_HESLO?.trim();
@@ -290,6 +307,8 @@ export async function sendGuestEmail(opts: {
     auth: { user, pass },
   });
 
+  const logoPath = path.join(process.cwd(), 'assets', 'email', 'logo.png');
+
   const info = await transporter.sendMail({
     from: `VIVIEN Apartments <${user}>`,
     to,
@@ -297,6 +316,14 @@ export async function sendGuestEmail(opts: {
     subject: built.subject,
     text: built.text,
     html: built.html,
+    attachments: [
+      {
+        filename: 'logo.png',
+        path: logoPath,
+        cid: LOGO_CID,
+        contentDisposition: 'inline',
+      },
+    ],
   });
 
   return { to, messageId: info.messageId };
