@@ -26,6 +26,7 @@ import {
   wifiPayload,
 } from '@/lib/i18n';
 import type { GuideSecrets } from '@/lib/secrets';
+import { kodZahradyProApt } from '@/lib/secrets';
 import * as TX from '@/lib/texts';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import './guide.scss';
@@ -67,7 +68,7 @@ export function Guide({
   const fill = (raw: string) =>
     fillPlaceholders(raw, {
       stani: aptRec.stani,
-      kodZahrada: secrets.KOD_ZAHRADA,
+      kodZahrada: kodZahradyProApt(secrets, apt),
       branaTelefon: secrets.BRANA_TELEFON,
       stay,
     });
@@ -199,32 +200,32 @@ export function Guide({
 
       <main className="pv">
         <section className="pv-hub">
-          <p className="pv-kicker">{TX.hubCs.kicker}</p>
-          <h2 className="pv-hub__title">{TX.hubCs.title}</h2>
-          <p className="pv-hub__lead">{TX.hubCs.lead}</p>
+          <p className="pv-kicker">{tt(TX.hub.kicker)}</p>
+          <h2 className="pv-hub__title">{tt(TX.hub.title)}</h2>
+          <p className="pv-hub__lead">{tt(TX.hub.lead)}</p>
           <div className="pv-hub__choices">
             <button
               type="button"
               className={`pv-hub__choice${prijezd === 'auto' ? ' pv-hub__choice--on' : ''}`}
               onClick={() => choose('auto')}
             >
-              <span className="pv-hub__choice-kicker">{TX.hubCs.autoKicker}</span>
-              <span className="pv-hub__choice-title">{TX.hubCs.autoTitle}</span>
-              <span className="pv-hub__choice-text">{TX.hubCs.autoText}</span>
+              <span className="pv-hub__choice-kicker">{tt(TX.hub.autoKicker)}</span>
+              <span className="pv-hub__choice-title">{tt(TX.hub.autoTitle)}</span>
+              <span className="pv-hub__choice-text">{tt(TX.hub.autoText)}</span>
             </button>
             <button
               type="button"
               className={`pv-hub__choice${prijezd === 'pesky' ? ' pv-hub__choice--on' : ''}`}
               onClick={() => choose('pesky')}
             >
-              <span className="pv-hub__choice-kicker">{TX.hubCs.walkKicker}</span>
-              <span className="pv-hub__choice-title">{TX.hubCs.walkTitle}</span>
-              <span className="pv-hub__choice-text">{TX.hubCs.walkText}</span>
+              <span className="pv-hub__choice-kicker">{tt(TX.hub.walkKicker)}</span>
+              <span className="pv-hub__choice-title">{tt(TX.hub.walkTitle)}</span>
+              <span className="pv-hub__choice-text">{tt(TX.hub.walkText)}</span>
             </button>
           </div>
           {prijezd ? (
             <button type="button" className="pv-hub__reset" onClick={reset}>
-              {TX.hubCs.reset}
+              {tt(TX.hub.reset)}
             </button>
           ) : null}
         </section>
@@ -248,7 +249,7 @@ export function Guide({
                       <>
                         {kroky.map((k) => (
                           <article key={k.id} className="pv-step">
-                            <p className="pv-kicker">{si + 1}. Parkování</p>
+                            <p className="pv-kicker">{si + 1}. {tt(TX.SECTION_NAV['zadost-o-parkovani'])}</p>
                             <h2>{tt(s.nadpis)}</h2>
                             <p>
                               {phoneParts(tt(k.text)).map((part, i) =>
@@ -277,11 +278,11 @@ export function Guide({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <span className="pv-navcta__label">Trasa na parkování</span>
+                          <span className="pv-navcta__label">{tt(TX.ui.routeParking)}</span>
                           <span className="pv-navcta__addr">
                             {PARKING_ADDRESS}, České Budějovice
                           </span>
-                          <span className="pv-navcta__hint">Otevřít navigaci v Mapy.cz</span>
+                          <span className="pv-navcta__hint">{tt(TX.ui.openMapy)}</span>
                         </a>
                         <p className="pv-navcta__alt">
                           <a
@@ -290,7 +291,7 @@ export function Guide({
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            Nebo Google Maps
+                            {tt(TX.ui.orGoogle)}
                           </a>
                         </p>
                       </>
@@ -309,9 +310,9 @@ export function Guide({
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              <span className="pv-navcta__label">Trasa k domu</span>
+                              <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
                               <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
-                              <span className="pv-navcta__hint">Otevřít navigaci v Mapy.cz</span>
+                              <span className="pv-navcta__hint">{tt(TX.ui.openMapy)}</span>
                             </a>
                             <p className="pv-navcta__alt">
                               <a
@@ -320,13 +321,13 @@ export function Guide({
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
-                                Nebo Google Maps
+                                {tt(TX.ui.orGoogle)}
                               </a>
                             </p>
                           </>
                         ) : null}
                         <article className="pv-step">
-                          <p className="pv-kicker">Dům</p>
+                          <p className="pv-kicker">{tt(TX.ui.house)}</p>
                           <h3>{tt(TX.fasadaNadpis)}</h3>
                           <div className="pv-step__row">
                             <figure>
@@ -343,7 +344,7 @@ export function Guide({
                         </article>
                         <p className="pv-hub__lead">{tt(TX.predDomemText)}</p>
                         <article className="pv-step pv-step--note">
-                          <p className="pv-kicker">Poznámka</p>
+                          <p className="pv-kicker">{tt(TX.ui.note)}</p>
                           <h3>{tt(TX.poplatekNadpis)}</h3>
                           <p>{tt(TX.poplatekZaklad)}</p>
                           <p className="pv-poplatek__formula">
@@ -361,7 +362,7 @@ export function Guide({
                           </p>
                         </article>
                         <article className="pv-step pv-step--note">
-                          <p className="pv-kicker">Vstup</p>
+                          <p className="pv-kicker">{tt(TX.ui.entry)}</p>
                           <h3>{tt(TX.vstupNadpis)}</h3>
                           <p>{tt(TX.vstupText)}</p>
                         </article>
@@ -379,7 +380,7 @@ export function Guide({
                               key={k.id}
                               className={`pv-step${k.typ === 'upozorneni' ? ' pv-step--hi' : ''}`}
                             >
-                              <p className="pv-kicker">Krok {stepLabel(i)}</p>
+                              <p className="pv-kicker">{tt(TX.ui.step)} {stepLabel(i)}</p>
                               <h3>{tt(k.nadpis)}</h3>
                               {tt(k.text) ? (
                                 <p>
@@ -418,7 +419,7 @@ export function Guide({
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <span className="pv-navcta__label">Trasa k domu</span>
+                          <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
                           <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
                           <span className="pv-navcta__hint">
                             {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes} min pěšky ·
@@ -432,7 +433,7 @@ export function Guide({
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            Nebo Google Maps
+                            {tt(TX.ui.orGoogle)}
                           </a>
                         </p>
                       </>
@@ -450,7 +451,7 @@ export function Guide({
                               key={k.id}
                               className={`pv-step${k.typ === 'upozorneni' ? ' pv-step--note' : ''}`}
                             >
-                              <p className="pv-kicker">Krok {stepLabel(i)}</p>
+                              <p className="pv-kicker">{tt(TX.ui.step)} {stepLabel(i)}</p>
                               <h3>{tt(k.nadpis)}</h3>
                               <div className="pv-step__row">
                                 {src ? (
@@ -495,7 +496,7 @@ export function Guide({
                                       src={wifiQr}
                                       width={280}
                                       height={280}
-                                      alt="QR kód WiFi apartmán"
+                                      alt={tt(TX.ui.qrApt)}
                                     />
                                     <p className="pv-wifi__qrhint">{tt(popisky['qr'])}</p>
                                   </>
@@ -534,13 +535,13 @@ export function Guide({
                                       src={gardenQr}
                                       width={280}
                                       height={280}
-                                      alt="QR kód WiFi zahrada"
+                                      alt={tt(TX.ui.qrGarden)}
                                     />
                                     <p className="pv-wifi__qrhint">{tt(popisky['qr'])}</p>
                                   </>
                                 ) : (
                                   <p className="pv-wifi__qrmiss">
-                                    QR kód se zobrazí, až bude doplněné heslo WiFi na zahradě.
+                                    {tt(TX.ui.qrMissGarden)}
                                   </p>
                                 )}
                               </div>
@@ -582,7 +583,7 @@ export function Guide({
                     ) : s.id === 'pravidla' ? (
                       <>
                         <div className="pv-flow__card-head">
-                          <h2 className="pv-flow__title">Co u nás platí, jednoduše a napřímo</h2>
+                          <h2 className="pv-flow__title">{tt(TX.ui.rulesHeading)}</h2>
                         </div>
                         {TX.stayRules.map((rule) => (
                           <article key={rule.title.cs} className="pv-rule">
@@ -681,7 +682,7 @@ export function Guide({
                               key={k.id}
                               className={`pv-step${k.typ === 'upozorneni' ? ' pv-step--note' : ''}`}
                             >
-                              <p className="pv-kicker">Krok {stepLabel(i)}</p>
+                              <p className="pv-kicker">{tt(TX.ui.step)} {stepLabel(i)}</p>
                               <h3>{tt(k.nadpis)}</h3>
                               <div className="pv-step__row">
                                 {src ? (
@@ -694,9 +695,9 @@ export function Guide({
                                   {tt(k.text) ? <p>{tt(k.text)}</p> : null}
                                   {k.id === 'z3' ? (
                                     <p
-                                      className={`pv-step--note${secrets.KOD_ZAHRADA.trim() === 'DOPLNIT' ? ' pv-doplnit' : ''}`}
+                                      className={`pv-step--note${kodZahradyProApt(secrets, apt).trim() === 'DOPLNIT' ? ' pv-doplnit' : ''}`}
                                     >
-                                      {secrets.KOD_ZAHRADA}
+                                      {kodZahradyProApt(secrets, apt)}
                                     </p>
                                   ) : null}
                                   {k.body?.length ? (

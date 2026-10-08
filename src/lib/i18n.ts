@@ -22,6 +22,7 @@ export function fillPlaceholders(
       : String(opts.stay.noci * opts.stay.osob * 50);
   return text
     .replaceAll('{{STANI}}', String(opts.stani))
+    .replaceAll('{{KOD_ZAHRADA}} + #', opts.kodZahrada)
     .replaceAll('{{KOD_ZAHRADA}}', opts.kodZahrada)
     .replaceAll('{{BRANA_TELEFON}}', opts.branaTelefon)
     .replaceAll('{{POPLATEK_NOCI}}', noci)

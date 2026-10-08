@@ -40,7 +40,9 @@ export function visibleKroky(s: Sekce, apt: AptId) {
 }
 
 export function sectionNavLabel(s: Sekce, lang: GuideLang): string {
-  return SECTION_NAV[s.id] ?? t(s.nadpis, lang) ?? s.id;
+  const nav = SECTION_NAV[s.id];
+  if (nav) return t(nav, lang);
+  return t(s.nadpis, lang) || s.id;
 }
 
 export function stepLabel(index: number): string {
