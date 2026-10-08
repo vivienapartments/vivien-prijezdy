@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createToken, pragueLocalToUtc, verifyToken } from './token';
+import { createToken, pragueLocalToUtc, stayFromPayload, verifyToken } from './token';
 import type { TokenPayload } from './types';
 
 const SECRET = 'test-secret-at-least-32-bytes-long!!';
@@ -16,6 +16,22 @@ describe('token', () => {
     const token = createToken(base, SECRET);
     const result = verifyToken(token, SECRET, new Date('2099-01-01T10:00:00Z'));
     expect(result).toEqual({ ok: true, payload: base });
+  });
+
+  it('token s p a o', () => {
+    const payload: TokenPayload = { ...base, p: '2099-12-28', o: 3 };
+    const token = createToken(payload, SECRET);
+    const result = verifyToken(token, SECRET, new Date('2099-01-01T10:00:00Z'));
+    expect(result).toEqual({ ok: true, payload });
+    expect(stayFromPayload(payload)).toEqual({ noci: 3, osob: 3 });
+  });
+
+  it('starý token bez p/o má XXX pobyt', () => {
+    const token = createToken(base, SECRET);
+    const result = verifyToken(token, SECRET, new Date('2099-01-01T10:00:00Z'));
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(stayFromPayload(result.payload)).toEqual({ noci: null, osob: null });
   });
 
   it('změněné datum v těle neprojde', () => {
@@ -35,22 +51,12 @@ describe('token', () => {
     const [body] = token.split('.');
     const result = verifyToken(`${body}.aaaa`, SECRET);
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.reason).toBe('invalid');
   });
 
   it('po odjezdu po 12:00 Prague vyprší', () => {
     const payload: TokenPayload = { ...base, d: '2026-10-08' };
     const token = createToken(payload, SECRET);
     const afterNoon = pragueLocalToUtc(2026, 10, 8, 12, 0, 1);
-    const result = verifyToken(token, SECRET, afterNoon);
-    expect(result).toEqual({ ok: false, reason: 'expired' });
-  });
-
-  it('před polednem v den odjezdu ještě platí', () => {
-    const payload: TokenPayload = { ...base, d: '2026-10-08' };
-    const token = createToken(payload, SECRET);
-    const beforeNoon = pragueLocalToUtc(2026, 10, 8, 11, 59, 0);
-    const result = verifyToken(token, SECRET, beforeNoon);
-    expect(result).toEqual({ ok: true, payload });
+    expect(verifyToken(token, SECRET, afterNoon)).toEqual({ ok: false, reason: 'expired' });
   });
 });

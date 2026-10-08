@@ -48,11 +48,14 @@ export interface Sekce {
   popisky_wifi?: Record<string, LText>;
 }
 
+/** Token: r rezervace, a apartmán, d odjezd, l jazyk, p příjezd (volitelné), o osoby (volitelné). */
 export interface TokenPayload {
   r: string;
   a: AptId;
   d: string;
   l: GuideLang;
+  p?: string;
+  o?: number;
 }
 
 export interface StayFacts {

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { Guide } from '@/components/Guide';
 import { Expired } from '@/components/Expired';
 import { loadSecrets } from '@/lib/secrets';
-import { verifyToken } from '@/lib/token';
+import { stayFromPayload, verifyToken } from '@/lib/token';
 import type { GuideLang } from '@/lib/types';
 
 type Props = { params: Promise<{ token: string }> };
@@ -25,13 +25,14 @@ export default async function TokenPage({ params }: Props) {
 
   const { a, l } = result.payload;
   const secrets = loadSecrets();
+  const stay = stayFromPayload(result.payload);
 
   return (
     <Guide
       apt={a}
       lang={l as GuideLang}
       secrets={secrets}
-      stay={{ noci: 2, osob: 2 }}
+      stay={stay}
       initialPrijezd={null}
     />
   );

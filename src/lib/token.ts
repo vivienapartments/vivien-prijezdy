@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from 'crypto';
-import { APT_IDS, GUIDE_LANGS, type AptId, type GuideLang, type TokenPayload } from './types';
+import { nightsBetween } from './dates';
+import { APT_IDS, GUIDE_LANGS, type AptId, type GuideLang, type StayFacts, type TokenPayload } from './types';
 
 function b64urlEncode(buf: Buffer | string): string {
   const b = typeof buf === 'string' ? Buffer.from(buf, 'utf8') : buf;
@@ -22,13 +23,24 @@ function signPayload(payloadJson: string, secret: string): string {
   return createHmac('sha256', secret).update(payloadJson).digest('base64url');
 }
 
-export function createToken(payload: TokenPayload, secret = getSecret()): string {
-  const json = JSON.stringify({
+function normalizePayload(payload: TokenPayload): Record<string, string | number> {
+  const out: Record<string, string | number> = {
     r: String(payload.r),
     a: payload.a,
     d: payload.d,
     l: payload.l,
-  });
+  };
+  if (payload.p && /^\d{4}-\d{2}-\d{2}$/.test(payload.p)) {
+    out.p = payload.p;
+  }
+  if (typeof payload.o === 'number' && Number.isFinite(payload.o) && payload.o > 0) {
+    out.o = Math.floor(payload.o);
+  }
+  return out;
+}
+
+export function createToken(payload: TokenPayload, secret = getSecret()): string {
+  const json = JSON.stringify(normalizePayload(payload));
   return `${b64urlEncode(json)}.${signPayload(json, secret)}`;
 }
 
@@ -47,16 +59,13 @@ function parseApt(raw: unknown): AptId | null {
 }
 
 function isExpired(departureYmd: string, now = new Date()): boolean {
-  // Po dni odjezdu po 12:00 Europe/Prague
   const parts = departureYmd.split('-').map(Number);
   if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return true;
   const [y, m, d] = parts;
-  // Najdi UTC okamžik, kdy je v Praze 12:00 v den odjezdu
   const noonPrague = pragueLocalToUtc(y, m, d, 12, 0, 0);
   return now.getTime() > noonPrague.getTime();
 }
 
-/** Převod lokálního času Europe/Prague na UTC Date (bez externí lib). */
 export function pragueLocalToUtc(
   year: number,
   month: number,
@@ -65,7 +74,6 @@ export function pragueLocalToUtc(
   minute: number,
   second: number,
 ): Date {
-  // Hrubý odhad: zkus CET (UTC+1) a CEST (UTC+2), vyber ten, který po formátování sedí.
   for (const offsetHours of [2, 1]) {
     const utcMs = Date.UTC(year, month - 1, day, hour - offsetHours, minute, second);
     const dt = new Date(utcMs);
@@ -93,7 +101,6 @@ export function pragueLocalToUtc(
       return dt;
     }
   }
-  // Fallback CET
   return new Date(Date.UTC(year, month - 1, day, hour - 1, minute, second));
 }
 
@@ -133,11 +140,31 @@ export function verifyToken(token: string, secret = getSecret(), now = new Date(
     return { ok: false, reason: 'invalid' };
   }
 
+  const payload: TokenPayload = { r, a, d, l };
+
+  const p = String(raw.p ?? '').trim();
+  if (p) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p)) return { ok: false, reason: 'invalid' };
+    payload.p = p;
+  }
+
+  if (raw.o !== undefined && raw.o !== null && raw.o !== '') {
+    const o = Number(raw.o);
+    if (!Number.isFinite(o) || o < 1) return { ok: false, reason: 'invalid' };
+    payload.o = Math.floor(o);
+  }
+
   if (isExpired(d, now)) {
     return { ok: false, reason: 'expired' };
   }
 
-  return { ok: true, payload: { r, a, d, l } };
+  return { ok: true, payload };
+}
+
+export function stayFromPayload(payload: TokenPayload): StayFacts {
+  const noci = payload.p ? nightsBetween(payload.p, payload.d) : null;
+  const osob = typeof payload.o === 'number' ? payload.o : null;
+  return { noci, osob };
 }
 
 export function mapWebLocaleToGuideLang(locale: string): GuideLang {
