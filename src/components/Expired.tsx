@@ -1,5 +1,5 @@
 import { NIKOL_PHONE } from '@/lib/constants';
-import { t } from '@/lib/i18n';
+import { t, toTelHref } from '@/lib/i18n';
 import { expiredHelp, expiredTexts } from '@/lib/texts';
 import type { GuideLang } from '@/lib/types';
 
@@ -10,7 +10,10 @@ export function Expired({ lang = 'cs' }: { lang?: GuideLang }) {
         {t(expiredTexts, lang)}
       </h1>
       <p>
-        {t(expiredHelp, lang)} <strong className="pv-phone">{NIKOL_PHONE}</strong>
+        {t(expiredHelp, lang)}{' '}
+        <a className="pv-phone" href={toTelHref(NIKOL_PHONE)}>
+          {NIKOL_PHONE}
+        </a>
       </p>
     </main>
   );

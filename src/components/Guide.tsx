@@ -22,6 +22,7 @@ import {
   phoneParts,
   photoSrc,
   t,
+  toTelHref,
   wifiHesloProApt,
   wifiPayload,
 } from '@/lib/i18n';
@@ -35,6 +36,18 @@ import {
 import * as TX from '@/lib/texts';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import './guide.scss';
+
+function renderPhoneText(raw: string) {
+  return phoneParts(raw).map((part, i) =>
+    part.href ? (
+      <a key={i} className="pv-phone" href={part.href}>
+        {part.text}
+      </a>
+    ) : (
+      <span key={i}>{part.text}</span>
+    ),
+  );
+}
 
 export type GuideProps = {
   apt: AptId;
@@ -264,17 +277,7 @@ export function Guide({
                           <article key={k.id} className="pv-step">
                             <p className="pv-kicker">{si + 1}. {tt(TX.SECTION_NAV['zadost-o-parkovani'])}</p>
                             <h2>{tt(s.nadpis)}</h2>
-                            <p>
-                              {phoneParts(tt(k.text)).map((part, i) =>
-                                part.bold ? (
-                                  <strong key={i} className="pv-phone">
-                                    {part.text}
-                                  </strong>
-                                ) : (
-                                  <span key={i}>{part.text}</span>
-                                ),
-                              )}
-                            </p>
+                            <p>{renderPhoneText(tt(k.text))}</p>
                             {k.body?.length ? (
                               <ul className="pv-sms-list">
                                 {k.body.map((b, i) => (
@@ -420,19 +423,7 @@ export function Guide({
                             >
                               <p className="pv-kicker">{tt(TX.ui.step)} {stepLabel(i)}</p>
                               <h3>{tt(k.nadpis)}</h3>
-                              {tt(k.text) ? (
-                                <p>
-                                  {phoneParts(tt(k.text)).map((part, pi) =>
-                                    part.bold ? (
-                                      <strong key={pi} className="pv-phone">
-                                        {part.text}
-                                      </strong>
-                                    ) : (
-                                      <span key={pi}>{part.text}</span>
-                                    ),
-                                  )}
-                                </p>
-                              ) : null}
+                              {tt(k.text) ? <p>{renderPhoneText(tt(k.text))}</p> : null}
                               {k.body?.length ? (
                                 <ul>
                                   {k.body.map((b, bi) => (
@@ -499,7 +490,7 @@ export function Guide({
                                   </figure>
                                 ) : null}
                                 <div>
-                                  {tt(k.text) ? <p>{tt(k.text)}</p> : null}
+                                  {tt(k.text) ? <p>{renderPhoneText(tt(k.text))}</p> : null}
                                   {k.body?.length ? (
                                     <ul>
                                       {k.body.map((b, bi) => (
@@ -615,7 +606,10 @@ export function Guide({
                         </ol>
                         <p>{tt(TX.tvTexts.langs)}</p>
                         <p>
-                          {tt(TX.tvTexts.help)} {NIKOL_PHONE}
+                          {tt(TX.tvTexts.help)}{' '}
+                          <a className="pv-phone" href={toTelHref(NIKOL_PHONE)}>
+                            {NIKOL_PHONE}
+                          </a>
                         </p>
                       </>
                     ) : s.id === 'pravidla' ? (
@@ -730,7 +724,7 @@ export function Guide({
                                   </figure>
                                 ) : null}
                                 <div>
-                                  {tt(k.text) ? <p>{tt(k.text)}</p> : null}
+                                  {tt(k.text) ? <p>{renderPhoneText(tt(k.text))}</p> : null}
                                   {k.id === 'z3' ? (
                                     <p
                                       className={`pv-step--note${gardenCode.trim() === 'DOPLNIT' ? ' pv-doplnit' : ''}`}

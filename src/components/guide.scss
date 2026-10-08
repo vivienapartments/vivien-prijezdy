@@ -422,6 +422,18 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--color-dark);
+  white-space: nowrap;
+}
+
+a.pv-phone {
+  text-decoration: none;
+  color: var(--color-dark);
+}
+
+a.pv-phone:hover,
+a.pv-phone:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
 }
 
 .pv-cmp-switch {

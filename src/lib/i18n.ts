@@ -42,18 +42,37 @@ export function photoSrc(foto: string | null | undefined): string | null {
   return '/' + foto.replace(/^fotky\//, 'pruvodce/');
 }
 
-export function phoneParts(raw: string): { text: string; bold: boolean }[] {
-  const re = /(\+420\s*)?777\s*702\s*272/g;
-  const out: { text: string; bold: boolean }[] = [];
+export type PhonePart = {
+  text: string;
+  /** Klikatelné číslo (tel:), jinak obyčejný text. */
+  href?: string;
+};
+
+/** tel:+420… z zobrazeného čísla. */
+export function toTelHref(display: string): string {
+  const digits = display.replace(/\D/g, '');
+  if (digits.startsWith('420') && digits.length >= 12) return `tel:+${digits}`;
+  if (digits.length === 9) return `tel:+420${digits}`;
+  return `tel:+${digits}`;
+}
+
+/**
+ * Rozdělí text a telefonní čísla (+420 xxx xxx xxx i 777 702 272 bez předvolby)
+ * na části vhodné pro odkaz tel: na mobilu.
+ */
+export function phoneParts(raw: string): PhonePart[] {
+  const re =
+    /\+420[\s\u00a0]*\d{3}[\s\u00a0]*\d{3}[\s\u00a0]*\d{3}|(?<!\d)777[\s\u00a0]*702[\s\u00a0]*272(?!\d)/g;
+  const out: PhonePart[] = [];
   let last = 0;
   for (const m of raw.matchAll(re)) {
     const start = m.index ?? 0;
-    if (start > last) out.push({ text: raw.slice(last, start), bold: false });
-    out.push({ text: m[0], bold: true });
+    if (start > last) out.push({ text: raw.slice(last, start) });
+    out.push({ text: m[0], href: toTelHref(m[0]) });
     last = start + m[0].length;
   }
-  if (last < raw.length) out.push({ text: raw.slice(last), bold: false });
-  return out.length ? out : [{ text: raw, bold: false }];
+  if (last < raw.length) out.push({ text: raw.slice(last) });
+  return out.length ? out : [{ text: raw }];
 }
 
 export function wifiPayload(ssid: string, password: string): string {
