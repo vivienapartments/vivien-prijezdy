@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import apartmanyJson from '@/data/apartmany.json';
-import { apartmentTitle, wifiHesloProApt } from './i18n';
-import { kodZahradyProApt, loadSecrets, type GuideSecrets } from './secrets';
+import type { GuideSecrets } from './secrets';
 import type { AptId, GuideLang, LText } from './types';
 
 export type GuestEmailInput = {
@@ -17,7 +16,7 @@ export type GuestEmailInput = {
   secrets?: GuideSecrets;
 };
 
-type AptRow = { id: AptId; nazev: { cs: string; en: string }; wifi: { ssid: string }; navod_na_zahradu?: boolean };
+type AptRow = { id: AptId; nazev: { cs: string; en: string } };
 
 const apartmany = (apartmanyJson as { apartmany: AptRow[] }).apartmany;
 
@@ -33,14 +32,28 @@ function fmtYmd(ymd: string, lang: GuideLang): string {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-const greetNeutral: LText = {
-  cs: 'Dobrý den,',
-  en: 'Hello,',
-  de: 'Guten Tag,',
-  pl: 'Dzień dobry,',
-  uk: 'Добрий день,',
-  'zh-Hant': '您好，',
-};
+/** CS: „Dobrý den pane Nováku,“ z OSLOVENI. Jiné jazyky: neutrální pozdrav. */
+function greetingLine(lang: GuideLang, osloveni: string | null): string {
+  if (lang === 'cs' && osloveni?.trim()) {
+    const rest = osloveni
+      .trim()
+      .replace(/^Vážen[ýá]\s+/i, '')
+      .replace(/[,.]+$/, '')
+      .trim();
+    return rest ? `Dobrý den ${rest},` : 'Dobrý den,';
+  }
+  return t(
+    {
+      cs: 'Dobrý den,',
+      en: 'Hello,',
+      de: 'Guten Tag,',
+      pl: 'Dzień dobry,',
+      uk: 'Добрий день,',
+      'zh-Hant': '您好，',
+    },
+    lang,
+  );
+}
 
 const subjectL: LText = {
   cs: 'Váš osobní průvodce příjezdem · VIVIEN',
@@ -48,16 +61,16 @@ const subjectL: LText = {
   de: 'Ihr persönlicher Anreiseleitfaden · VIVIEN',
   pl: 'Wasza osobista instrukcja przyjazdu · VIVIEN',
   uk: 'Ваш особистий гід приїзду · VIVIEN',
-  'zh-Hant': '您的個人入住指南 · VIVIEN',
+  'zh-Hant': '您的個人抵達指南 · VIVIEN',
 };
 
 const introL: LText = {
-  cs: 'Připravili jsme pro vás osobní průvodce příjezdem. Otevřete odkaz níže. Hesla a praktické kroky jsou uvnitř.',
-  en: 'We prepared a personal arrival guide for you. Open the link below. Passwords and practical steps are inside.',
-  de: 'Wir haben einen persönlichen Anreiseleitfaden für Sie vorbereitet. Öffnen Sie den Link unten. Passwörter und praktische Schritte finden Sie darin.',
-  pl: 'Przygotowaliśmy dla Was osobistą instrukcję przyjazdu. Otwórzcie link poniżej. Hasła i praktyczne kroki są w środku.',
-  uk: 'Ми підготували для вас особистий гід приїзду. Відкрийте посилання нижче. Паролі та практичні кроки всередині.',
-  'zh-Hant': '我們為您準備了個人入住指南。請開啟下方連結。密碼與實用步驟都在裡面。',
+  cs: 'Připravili jsme pro vás osobní průvodce příjezdem. Parkování, WiFi, brána i další kroky jsou v odkazu níže.',
+  en: 'We prepared a personal arrival guide for you. Parking, WiFi, the gate and the other steps are in the link below.',
+  de: 'Wir haben einen persönlichen Anreiseleitfaden für Sie vorbereitet. Parken, WLAN, Tor und die weiteren Schritte finden Sie im Link unten.',
+  pl: 'Przygotowaliśmy dla Was osobistą instrukcję przyjazdu. Parking, WiFi, brama i kolejne kroki są w linku poniżej.',
+  uk: 'Ми підготували для вас особистий гід приїзду. Паркування, WiFi, брама та інші кроки є в посиланні нижче.',
+  'zh-Hant': '我們為您準備了個人抵達指南。停車、WiFi、大門與其他步驟都在下方連結中。',
 };
 
 const stayL: LText = {
@@ -69,6 +82,33 @@ const stayL: LText = {
   'zh-Hant': '您的住宿',
 };
 
+const datesL: LText = {
+  cs: 'Termín',
+  en: 'Dates',
+  de: 'Zeitraum',
+  pl: 'Termin',
+  uk: 'Термін',
+  'zh-Hant': '日期',
+};
+
+const nightsL: LText = {
+  cs: 'Počet nocí',
+  en: 'Nights',
+  de: 'Nächte',
+  pl: 'Liczba nocy',
+  uk: 'Кількість ночей',
+  'zh-Hant': '晚數',
+};
+
+const guestsL: LText = {
+  cs: 'Počet osob',
+  en: 'Guests',
+  de: 'Personen',
+  pl: 'Liczba osób',
+  uk: 'Кількість осіб',
+  'zh-Hant': '人數',
+};
+
 const openGuideL: LText = {
   cs: 'Otevřít průvodce příjezdem',
   en: 'Open the arrival guide',
@@ -78,76 +118,22 @@ const openGuideL: LText = {
   'zh-Hant': '開啟抵達指南',
 };
 
-const carL: LText = {
-  cs: 'Přijedete autem? Napište nám SMS',
-  en: 'Arriving by car? Send us a text message',
-  de: 'Reisen Sie mit dem Auto an? Schreiben Sie uns eine SMS',
-  pl: 'Przyjeżdżacie samochodem? Napiszcie SMS',
-  uk: 'Приїжджаєте автомобілем? Напишіть нам SMS',
-  'zh-Hant': '開車抵達？請傳簡訊給我們',
-};
-
-const carLeadL: LText = {
-  cs: 'Parkovací stání vám zajistíme, jen když nám co nejdříve pošlete SMS nebo zprávu na číslo +420 777 702 272. Nejlépe hned teď. Uveďte v ní:',
-  en: 'We can only reserve a parking space if you send a text message to +420 777 702 272 as soon as possible. Ideally right now. Please include:',
-  de: 'Einen Stellplatz können wir nur sichern, wenn Sie uns so bald wie möglich eine SMS an +420 777 702 272 senden. Am besten sofort. Bitte geben Sie an:',
-  pl: 'Miejsce parkingowe zapewnimy tylko, gdy jak najszybciej wyślecie SMS na +420 777 702 272. Najlepiej od razu. Podajcie:',
-  uk: 'Паркувальне місце забезпечимо, лише якщо якнайшвидше надішлете SMS на +420 777 702 272. Найкраще зараз. Вкажіть:',
-  'zh-Hant': '請儘快傳簡訊至 +420 777 702 272，我們才能保留車位。最好現在就傳。請寫明：',
-};
-
-const carPoints: LText[] = [
-  {
-    cs: 'že máte zájem o parkovací stání,',
-    en: 'that you would like a parking space,',
-    de: 'dass Sie einen Stellplatz wünschen,',
-    pl: 'że chcecie miejsce parkingowe,',
-    uk: 'що хочете паркувальне місце,',
-    'zh-Hant': '您需要停車位，',
-  },
-  {
-    cs: 'telefonní číslo, ze kterého budete otevírat bránu parkoviště,',
-    en: 'the phone number you will use to open the car park gate,',
-    de: 'die Telefonnummer, von der aus Sie das Parkplatztor öffnen werden,',
-    pl: 'numer telefonu, z którego otworzycie bramę parkingu,',
-    uk: 'номер телефону, з якого відкриватимете браму парковки,',
-    'zh-Hant': '用來開停車場大門的電話號碼，',
-  },
-  {
-    cs: 'registrační značku (SPZ) vašeho auta.',
-    en: "your car's licence plate number.",
-    de: 'das Kennzeichen Ihres Autos.',
-    pl: 'numer rejestracyjny Waszego auta.',
-    uk: 'реєстраційний номер вашого авто.',
-    'zh-Hant': '您的車牌號碼。',
-  },
-];
-
-const wifiL: LText = {
-  cs: 'WiFi v apartmánu',
-  en: 'WiFi in the apartment',
-  de: 'WLAN in der Wohnung',
-  pl: 'WiFi w apartamencie',
-  uk: 'WiFi в апартаментах',
-  'zh-Hant': '公寓 WiFi',
-};
-
-const gardenL: LText = {
-  cs: 'Kód na zahradu',
-  en: 'Garden code',
-  de: 'Gartencode',
-  pl: 'Kod do ogrodu',
-  uk: 'Код до саду',
-  'zh-Hant': '花園密碼',
+const linkHintL: LText = {
+  cs: 'Když tlačítko nefunguje, zkopírujte odkaz:',
+  en: 'If the button does not work, copy this link:',
+  de: 'Wenn die Schaltfläche nicht funktioniert, kopieren Sie diesen Link:',
+  pl: 'Jeśli przycisk nie działa, skopiujcie ten link:',
+  uk: 'Якщо кнопка не працює, скопіюйте це посилання:',
+  'zh-Hant': '若按鈕無法使用，請複製此連結：',
 };
 
 const contactL: LText = {
-  cs: 'Když něco nefunguje, zavolejte Nikol: +420 702 153 573',
-  en: 'If something does not work, call Nikol: +420 702 153 573',
-  de: 'Wenn etwas nicht funktioniert, rufen Sie Nikol an: +420 702 153 573',
-  pl: 'Jeśli coś nie działa, zadzwońcie do Nikol: +420 702 153 573',
-  uk: 'Якщо щось не працює, зателефонуйте Nikol: +420 702 153 573',
-  'zh-Hant': '若有問題，請致電 Nikol：+420 702 153 573',
+  cs: 'Když potřebujete pomoci, volejte Nikol: +420 702 153 573',
+  en: 'If you need help, call Nikol: +420 702 153 573',
+  de: 'Wenn Sie Hilfe brauchen, rufen Sie Nikol an: +420 702 153 573',
+  pl: 'Jeśli potrzebujecie pomocy, zadzwońcie do Nikol: +420 702 153 573',
+  uk: 'Якщо потрібна допомога, телефонуйте Nikol: +420 702 153 573',
+  'zh-Hant': '如需協助，請致電 Nikol：+420 702 153 573',
 };
 
 const testBannerL: LText = {
@@ -163,94 +149,6 @@ function aptRow(id: AptId): AptRow {
   return apartmany.find((a) => a.id === id) ?? apartmany[0];
 }
 
-function showsGardenCode(apt: AptId): boolean {
-  return Boolean(aptRow(apt).navod_na_zahradu);
-}
-
-export function buildGuestEmail(input: GuestEmailInput): { subject: string; html: string; text: string } {
-  const lang = input.lang;
-  const secrets = input.secrets ?? loadSecrets();
-  const apt = aptRow(input.apt);
-  const name = apartmentTitle(apt.nazev, lang);
-  const greeting =
-    lang === 'cs' && input.osloveni?.trim() ? input.osloveni.trim() : t(greetNeutral, lang);
-
-  const nociLabel = input.noci == null ? 'XXX' : String(input.noci);
-  const osobLabel = input.osob == null ? 'XXX' : String(input.osob);
-  const term = `${fmtYmd(input.prijezd, lang)} → ${fmtYmd(input.odjezd, lang)}`;
-  const wifiPass = wifiHesloProApt(secrets, input.apt);
-  const garden = showsGardenCode(input.apt) ? kodZahradyProApt(secrets, input.apt) : null;
-
-  const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
-  const subjectBase = t(subjectL, lang);
-  const subject = testMode ? `[TEST] ${subjectBase}` : subjectBase;
-
-  const pointsHtml = carPoints.map((p) => `<li>${escapeHtml(t(p, lang))}</li>`).join('');
-  const pointsText = carPoints.map((p) => `- ${t(p, lang)}`).join('\n');
-
-  const banner = testMode
-    ? `<p style="background:#fff3cd;border:1px solid #c9a84c;padding:12px 14px;"><strong>${escapeHtml(t(testBannerL, lang))}</strong> ${escapeHtml(input.intendedTo)}</p>`
-    : '';
-
-  const gardenHtml = garden
-    ? `<h3 style="font-family:Georgia,serif;font-weight:500;">${escapeHtml(t(gardenL, lang))}</h3><p><strong>${escapeHtml(garden)}</strong></p>`
-    : '';
-  const gardenText = garden ? `\n${t(gardenL, lang)}: ${garden}\n` : '';
-
-  const html = `<!DOCTYPE html>
-<html lang="${lang}">
-<body style="margin:0;padding:0;background:#faf7f2;color:#3a3228;font-family:Arial,Helvetica,sans-serif;line-height:1.55;">
-  <div style="max-width:560px;margin:0 auto;padding:28px 20px 40px;">
-    ${banner}
-    <p>${escapeHtml(greeting)}</p>
-    <p>${escapeHtml(t(introL, lang))}</p>
-    <h2 style="font-family:Georgia,serif;font-weight:500;font-size:22px;color:#1c1712;">${escapeHtml(t(stayL, lang))}</h2>
-    <p>${escapeHtml(name)}<br/>${escapeHtml(term)}<br/>${escapeHtml(nociLabel)} · ${escapeHtml(osobLabel)}</p>
-    <p style="margin:28px 0;">
-      <a href="${escapeAttr(input.guideUrl)}" style="display:inline-block;background:#8b6914;color:#fff;text-decoration:none;padding:14px 22px;font-weight:700;">${escapeHtml(t(openGuideL, lang))}</a>
-    </p>
-    <p style="font-size:14px;word-break:break-all;"><a href="${escapeAttr(input.guideUrl)}">${escapeHtml(input.guideUrl)}</a></p>
-    <h3 style="font-family:Georgia,serif;font-weight:500;">${escapeHtml(t(carL, lang))}</h3>
-    <p>${escapeHtml(t(carLeadL, lang))}</p>
-    <ul>${pointsHtml}</ul>
-    <h3 style="font-family:Georgia,serif;font-weight:500;">${escapeHtml(t(wifiL, lang))}</h3>
-    <p>SSID: <strong>${escapeHtml(apt.wifi.ssid)}</strong><br/>${escapeHtml(wifiPass)}</p>
-    ${gardenHtml}
-    <p>${escapeHtml(t(contactL, lang))}</p>
-  </div>
-</body>
-</html>`;
-
-  const text = [
-    testMode ? `${t(testBannerL, lang)} ${input.intendedTo}` : '',
-    greeting,
-    '',
-    t(introL, lang),
-    '',
-    t(stayL, lang),
-    name,
-    term,
-    `${nociLabel} · ${osobLabel}`,
-    '',
-    t(openGuideL, lang),
-    input.guideUrl,
-    '',
-    t(carL, lang),
-    t(carLeadL, lang),
-    pointsText,
-    '',
-    t(wifiL, lang),
-    `SSID: ${apt.wifi.ssid}`,
-    wifiPass,
-    gardenText,
-    t(contactL, lang),
-  ]
-    .filter((x) => x !== '')
-    .join('\n');
-
-  return { subject, html, text };
-}
-
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -261,6 +159,126 @@ function escapeHtml(s: string): string {
 
 function escapeAttr(s: string): string {
   return escapeHtml(s).replace(/'/g, '&#39;');
+}
+
+export function buildGuestEmail(input: GuestEmailInput): { subject: string; html: string; text: string } {
+  const lang = input.lang;
+  const apt = aptRow(input.apt);
+  const greeting = greetingLine(lang, input.osloveni);
+  const nociLabel = input.noci == null ? 'XXX' : String(input.noci);
+  const osobLabel = input.osob == null ? 'XXX' : String(input.osob);
+  const term = `${fmtYmd(input.prijezd, lang)} – ${fmtYmd(input.odjezd, lang)}`.replace('–', '-');
+
+  const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+  const subjectBase = t(subjectL, lang);
+  const subject = testMode ? `[TEST] ${subjectBase}` : subjectBase;
+
+  const nameCs = apt.nazev.cs;
+  const nameEn = apt.nazev.en;
+  const nameHtml =
+    lang === 'cs'
+      ? `<div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.35;color:#1c1712;">${escapeHtml(nameCs)}</div>
+         <div style="font-family:Georgia,'Times New Roman',serif;font-size:18px;line-height:1.35;color:#8b6914;margin-top:4px;">${escapeHtml(nameEn)}</div>`
+      : `<div style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:1.35;color:#1c1712;">${escapeHtml(nameEn)}</div>`;
+
+  const nameText = lang === 'cs' ? `${nameCs}\n${nameEn}` : nameEn;
+
+  const banner = testMode
+    ? `<tr><td style="padding:0 0 20px;">
+        <div style="background:#fff8e8;border:1px solid #c9a84c;border-radius:6px;padding:12px 14px;font-size:14px;color:#3a3228;">
+          <strong>${escapeHtml(t(testBannerL, lang))}</strong> ${escapeHtml(input.intendedTo)}
+        </div>
+      </td></tr>`
+    : '';
+
+  const html = `<!DOCTYPE html>
+<html lang="${escapeAttr(lang)}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeHtml(subjectBase)}</title>
+</head>
+<body style="margin:0;padding:0;background:#faf7f2;color:#3a3228;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#faf7f2;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e8dfc8;border-radius:10px;">
+          <tr>
+            <td style="padding:28px 28px 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.55;color:#3a3228;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                ${banner}
+                <tr><td style="padding:0 0 16px;">${escapeHtml(greeting)}</td></tr>
+                <tr><td style="padding:0 0 22px;">${escapeHtml(t(introL, lang))}</td></tr>
+                <tr>
+                  <td style="padding:0 0 8px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#8b6914;font-weight:700;">
+                    ${escapeHtml(t(stayL, lang))}
+                  </td>
+                </tr>
+                <tr><td style="padding:0 0 16px;">${nameHtml}</td></tr>
+                <tr>
+                  <td style="padding:0 0 22px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#faf7f2;border-radius:8px;">
+                      <tr>
+                        <td style="padding:14px 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.5;color:#3a3228;">
+                          <div style="margin:0 0 8px;"><span style="color:#8b6914;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;">${escapeHtml(t(datesL, lang))}</span><br/><strong>${escapeHtml(term)}</strong></div>
+                          <div style="margin:0 0 8px;"><span style="color:#8b6914;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;">${escapeHtml(t(nightsL, lang))}</span><br/><strong>${escapeHtml(nociLabel)}</strong></div>
+                          <div style="margin:0;"><span style="color:#8b6914;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;">${escapeHtml(t(guestsL, lang))}</span><br/><strong>${escapeHtml(osobLabel)}</strong></div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding:8px 0 10px;">
+                    <a href="${escapeAttr(input.guideUrl)}" style="display:inline-block;background:#8b6914;color:#ffffff;text-decoration:none;padding:14px 26px;border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;">
+                      ${escapeHtml(t(openGuideL, lang))}
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:8px 0 22px;font-size:13px;color:#6a5f52;">
+                    ${escapeHtml(t(linkHintL, lang))}<br/>
+                    <a href="${escapeAttr(input.guideUrl)}" style="color:#8b6914;word-break:break-all;">${escapeHtml(input.guideUrl)}</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:18px 0 0;border-top:1px solid #efe6d4;font-size:14px;color:#3a3228;">
+                    ${escapeHtml(t(contactL, lang))}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr><td style="height:24px;line-height:24px;font-size:0;">&nbsp;</td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  const text = [
+    testMode ? `${t(testBannerL, lang)} ${input.intendedTo}` : '',
+    greeting,
+    '',
+    t(introL, lang),
+    '',
+    t(stayL, lang),
+    nameText,
+    '',
+    `${t(datesL, lang)}: ${term}`,
+    `${t(nightsL, lang)}: ${nociLabel}`,
+    `${t(guestsL, lang)}: ${osobLabel}`,
+    '',
+    t(openGuideL, lang),
+    input.guideUrl,
+    '',
+    t(contactL, lang),
+  ]
+    .filter((line) => line !== '')
+    .join('\n');
+
+  return { subject, html, text };
 }
 
 export async function sendGuestEmail(opts: {
