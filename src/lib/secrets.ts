@@ -17,7 +17,11 @@ export type GuideSecrets = {
 
 function envOrDoplnit(key: string): string {
   const v = process.env[key]?.trim();
-  return v && v.length > 0 ? v : 'DOPLNIT';
+  // Na Vercelu občas omylem zůstane placeholder = název proměnné.
+  if (!v || v === key || /^WIFI_HESLO_V[1-5]$/i.test(v) || v === 'WIFI_HESLO_ZAHRADA') {
+    return 'DOPLNIT';
+  }
+  return v;
 }
 
 /** Jen server. */
