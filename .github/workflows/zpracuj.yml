@@ -1,11 +1,7 @@
-# Budik vola zive API na Vercelu.
-# GitHub Actions: nejmensi interval je 5 minut (*/2 se vubec nespousti).
-# Schedule muze mit zpozdeni pri zatezi Actions.
+# Zaloha: rucni spusteni. Pravidelny budik = cron-job.org (kazde 2 minuty).
 name: Zpracuj schranku
 
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
