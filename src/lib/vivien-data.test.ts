@@ -50,6 +50,21 @@ describe('parseVivienData', () => {
     expect(r.data.noci).toBe(2);
   });
 
+  it('parsuje HTML entity v názvu apartmánu', () => {
+    const html = `VIVIEN-DATA v1
+REZERVACE: 55
+APARTMAN: Pohodl&#237; v tlumen&#253;ch t&#243;nech
+PRIJEZD: 1.12.2026
+ODJEZD: 3.12.2026
+EMAIL: host@example.com
+NARODNOST: CZE
+KONEC`;
+    const r = parseVivienData(html);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.apartman).toBe('V5');
+  });
+
   it('hlásí chybějící pole', () => {
     const r = parseVivienData(`VIVIEN-DATA v1\nREZERVACE: 1\nKONEC`);
     expect(r.ok).toBe(false);

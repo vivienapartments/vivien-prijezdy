@@ -19,6 +19,14 @@ Tajné hodnoty: `.env.local` (viz `.env.example`).
 
 Token = `base64url(JSON {r,a,d,l}) + "." + HMAC-SHA256`. Stránka `/{token}`.
 
+## Automat (fáze 4b, lokálně)
+
+```bash
+npm run zpracuj:test
+```
+
+Čte schránku přes IMAP (jen PEEK), ověří původ, sestaví odkaz a pošle `[TEST]` mail majiteli (`TEST_REZIM=1`). Schránku nemění. `POST /api/zpracuj` se stejným Bearer `CRON_SECRET` (nasazení = PROMPT-5).
+
 ## Ověření
 
 ```bash

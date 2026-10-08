@@ -30,21 +30,58 @@ export const predDomemText: LText = {
 };
 
 export const vstupNadpis: LText = {
-  cs: 'Vstup do apartmánu',
-  en: 'Entering the apartment',
-  de: 'Zugang zum Apartment',
-  pl: 'Wejście do apartamentu',
-  uk: 'Вхід до апартаментів',
-  'zh-Hant': '進入公寓',
+  cs: 'Vaše kódy',
+  en: 'Your codes',
+  de: 'Ihre Codes',
+  pl: 'Wasze kody',
+  uk: 'Ваші коди',
+  'zh-Hant': '您的密碼',
 };
 
 export const vstupText: LText = {
-  cs: 'Do domu i do apartmánu vás uvedeme osobně. Po kontrole dokladů vám aktivujeme kódy ke vstupu do apartmánu.',
-  en: 'We will show you into the house and the apartment in person. After we check your ID, we activate the codes for entering the apartment.',
-  de: 'In das Haus und das Apartment führen wir Sie persönlich. Nach der Ausweiskontrolle aktivieren wir die Codes für den Zugang zum Apartment.',
-  pl: 'Do domu i do apartamentu wprowadzimy Was osobiście. Po sprawdzeniu dokumentów aktywujemy kody wejścia do apartamentu.',
-  uk: 'До будинку й апартаментів проведемо вас особисто. Після перевірки документів активуємо коди входу до апартаментів.',
-  'zh-Hant': '我們會親自帶您進入房屋與公寓。核對證件後，會為您啟用進入公寓的密碼。',
+  cs: 'Do domu vás uvedeme osobně. Po kontrole dokladů kódy aktivujeme. Tady je máte po ruce na celý pobyt.',
+  en: 'We will show you into the house in person. After we check your ID, we activate the codes. Keep them here for the whole stay.',
+  de: 'Ins Haus führen wir Sie persönlich. Nach der Ausweiskontrolle aktivieren wir die Codes. Hier haben Sie sie für den ganzen Aufenthalt.',
+  pl: 'Do domu wprowadzimy Was osobiście. Po sprawdzeniu dokumentów aktywujemy kody. Tu macie je pod ręką na cały pobyt.',
+  uk: 'До будинку проведемо вас особисто. Після перевірки документів коди активуємо. Тут вони під рукою на весь час перебування.',
+  'zh-Hant': '我們會親自帶您進入房屋。核對證件後啟用密碼。整段住宿期間可在此隨時查看。',
+};
+
+export const kodDumLabel: LText = {
+  cs: 'Vstup dům',
+  en: 'House entry',
+  de: 'Hauszugang',
+  pl: 'Wejście do domu',
+  uk: 'Вхід до будинку',
+  'zh-Hant': '房屋入口',
+};
+
+export const kodAptLabel: LText = {
+  cs: 'Vstup apartmán',
+  en: 'Apartment entry',
+  de: 'Apartmentzugang',
+  pl: 'Wejście do apartamentu',
+  uk: 'Вхід до апартаментів',
+  'zh-Hant': '公寓入口',
+};
+
+export const kodZahradaLabel: LText = {
+  cs: 'Vstup zahrada',
+  en: 'Garden entry',
+  de: 'Gartenzugang',
+  pl: 'Wejście do ogrodu',
+  uk: 'Вхід до саду',
+  'zh-Hant': '花園入口',
+};
+
+/** Slovo kolem čísla klíčku: „klíček 9000 klíček“. */
+export const keyFobWord: LText = {
+  cs: 'klíček',
+  en: 'key fob',
+  de: 'Schlüsselanhänger',
+  pl: 'brelok',
+  uk: 'брелок',
+  'zh-Hant': '鑰匙扣',
 };
 
 export const poplatekNadpis: LText = {
@@ -495,6 +532,14 @@ export const ui = {
     uk: 'Або Google Maps',
     'zh-Hant': '或 Google Maps',
   } as LText,
+  minWalk: {
+    cs: 'min pěšky',
+    en: 'min walk',
+    de: 'Min. zu Fuß',
+    pl: 'min pieszo',
+    uk: 'хв пішки',
+    'zh-Hant': '分鐘步行',
+  } as LText,
   walkHint: {
     cs: '{{M}} m · {{MIN}} min pěšky · Mapy.cz',
     en: '{{M}} m · {{MIN}} min on foot · Mapy.cz',
@@ -604,7 +649,7 @@ export const SECTION_NAV: Record<string, LText> = {
     uk: 'Паркування',
     'zh-Hant': '停車',
   },
-  'brana-parkoviste': {
+'brana-parkoviste': {
     cs: 'Brána',
     en: 'Gate',
     de: 'Tor',

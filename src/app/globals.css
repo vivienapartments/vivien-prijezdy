@@ -1,9 +1,14 @@
 :root {
-  --color-cream: #faf7f2;
+  /* Tmavý průvodce (stejná paleta jako hostitelský e-mail) */
+  --color-cream: #1c1712;
   --color-gold: #c9a84c;
-  --color-gold-dark: #8b6914;
-  --color-dark: #1c1712;
-  --color-text: #3a3228;
+  --color-gold-dark: #c9a84c;
+  --color-dark: #f5efe3;
+  --color-text: #e8dfc8;
+  --pv-surface: #241e18;
+  --pv-surface-2: #2a221c;
+  --pv-muted: #cbbba8;
+  --pv-line: #3d342a;
   --font-body-fluid: clamp(16px, 2.6vw, 18.5px);
   --container-padding-x: clamp(16px, 5vw, 32px);
   --app-nav-offset-safe: 1rem;
@@ -18,7 +23,7 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
-  background: var(--color-cream);
+  background: #1c1712;
   color: var(--color-text);
   font-family: var(--font-body), 'DM Sans', sans-serif;
   font-size: var(--font-body-fluid);
@@ -26,5 +31,5 @@ body {
 }
 
 a {
-  color: var(--color-gold-dark);
+  color: var(--color-gold);
 }

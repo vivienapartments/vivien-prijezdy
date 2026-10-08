@@ -23,7 +23,7 @@ export default async function TokenPage({ params }: Props) {
     notFound();
   }
 
-  const { a, l } = result.payload;
+  const { a, l, i } = result.payload;
   const secrets = loadSecrets();
   const stay = stayFromPayload(result.payload);
 
@@ -33,6 +33,7 @@ export default async function TokenPage({ params }: Props) {
       lang={l as GuideLang}
       secrets={secrets}
       stay={stay}
+      accessPin={i ?? null}
       initialPrijezd={null}
     />
   );

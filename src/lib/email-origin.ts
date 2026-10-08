@@ -49,6 +49,7 @@ export function verifyEmailOrigin(input: OriginInput): OriginResult {
     if (!klic || klic !== input.bhKlic) {
       return { ok: false, reason: 'KLIC nesedí nebo chybí (cesta BH)' };
     }
+    // Chybí-li hlavička, spoléhej na KLIC. Když je a neprojde, odmítni.
     if (auth && !authPassForDomain(auth, 'better-hotel.com')) {
       return { ok: false, reason: 'Authentication-Results neprošel pro better-hotel.com' };
     }
@@ -57,7 +58,9 @@ export function verifyEmailOrigin(input: OriginInput): OriginResult {
 
   if (fromEmail === majitel) {
     const majitelDomain = domainOf(majitel);
-    if (!authPassForDomain(auth, majitelDomain)) {
+    // Chybí-li Authentication-Results (časté u Seznam IMAP), spoléhej na From.
+    // Když hlavička je a neprojde, odmítni.
+    if (auth && !authPassForDomain(auth, majitelDomain)) {
       return { ok: false, reason: 'Přeposlání bez platného SPF/DKIM majitele' };
     }
     if (klic && input.bhKlic && klic !== input.bhKlic) {

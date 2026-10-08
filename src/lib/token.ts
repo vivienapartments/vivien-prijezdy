@@ -36,6 +36,10 @@ function normalizePayload(payload: TokenPayload): Record<string, string | number
   if (typeof payload.o === 'number' && Number.isFinite(payload.o) && payload.o > 0) {
     out.o = Math.floor(payload.o);
   }
+  const pin = typeof payload.i === 'string' ? payload.i.trim() : '';
+  if (pin && pin.length <= 64) {
+    out.i = pin;
+  }
   return out;
 }
 
@@ -58,7 +62,8 @@ function parseApt(raw: unknown): AptId | null {
   return APT_IDS.includes(v) ? v : null;
 }
 
-function isExpired(departureYmd: string, now = new Date()): boolean {
+/** Po poledni v den odjezdu (Praha) je pobyt pro automat i stránku prošlý. */
+export function isDepartureExpired(departureYmd: string, now = new Date()): boolean {
   const parts = departureYmd.split('-').map(Number);
   if (parts.length !== 3 || parts.some((n) => !Number.isFinite(n))) return true;
   const [y, m, d] = parts;
@@ -154,7 +159,13 @@ export function verifyToken(token: string, secret = getSecret(), now = new Date(
     payload.o = Math.floor(o);
   }
 
-  if (isExpired(d, now)) {
+  const pin = String(raw.i ?? '').trim();
+  if (pin) {
+    if (pin.length > 64) return { ok: false, reason: 'invalid' };
+    payload.i = pin;
+  }
+
+  if (isDepartureExpired(d, now)) {
     return { ok: false, reason: 'expired' };
   }
 

@@ -26,7 +26,12 @@ import {
   wifiPayload,
 } from '@/lib/i18n';
 import type { GuideSecrets } from '@/lib/secrets';
-import { kodZahradyProApt } from '@/lib/secrets';
+import {
+  HOUSE_KEY_TAG,
+  apartmentPinOrDoplnit,
+  codesOrder,
+  gardenCodeForApt,
+} from '@/lib/access-codes';
 import * as TX from '@/lib/texts';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import './guide.scss';
@@ -36,6 +41,8 @@ export type GuideProps = {
   lang: GuideLang;
   secrets: GuideSecrets;
   stay: StayFacts;
+  /** ACCESS_PIN z Better Hotelu (podle pobytu). */
+  accessPin?: string | null;
   vikend?: boolean;
   /** Výchozí příjezd (dev náhled); host na token stránce volí sám. */
   initialPrijezd?: Prijezd | null;
@@ -53,6 +60,7 @@ export function Guide({
   lang,
   secrets,
   stay,
+  accessPin = null,
   vikend = false,
   initialPrijezd = null,
   showDevBar = false,
@@ -65,10 +73,15 @@ export function Guide({
   const aptRec = useMemo(() => aptRecord(apt), [apt]);
   const sections = useMemo(() => visibleSekce(apt, prijezd), [apt, prijezd]);
 
+  const gardenCode = gardenCodeForApt(apt, accessPin);
+  const aptPin = apartmentPinOrDoplnit(accessPin);
+  const fob = t(TX.keyFobWord, lang);
+  const houseCodeValue = `${fob} ${HOUSE_KEY_TAG} ${fob}`;
+
   const fill = (raw: string) =>
     fillPlaceholders(raw, {
       stani: aptRec.stani,
-      kodZahrada: kodZahradyProApt(secrets, apt),
+      kodZahrada: gardenCode,
       branaTelefon: secrets.BRANA_TELEFON,
       stay,
     });
@@ -365,6 +378,31 @@ export function Guide({
                           <p className="pv-kicker">{tt(TX.ui.entry)}</p>
                           <h3>{tt(TX.vstupNadpis)}</h3>
                           <p>{tt(TX.vstupText)}</p>
+                          <dl className="pv-codes">
+                            {codesOrder(apt).map((kind) => {
+                              const label =
+                                kind === 'dum'
+                                  ? TX.kodDumLabel
+                                  : kind === 'apt'
+                                    ? TX.kodAptLabel
+                                    : TX.kodZahradaLabel;
+                              const value =
+                                kind === 'dum'
+                                  ? houseCodeValue
+                                  : kind === 'apt'
+                                    ? aptPin
+                                    : gardenCode;
+                              const missing = value === 'DOPLNIT';
+                              return (
+                                <div className="pv-codes__row" key={kind}>
+                                  <dt>{tt(label)}</dt>
+                                  <dd className={missing ? 'pv-doplnit' : undefined}>
+                                    <strong className="pv-phone">{value}</strong>
+                                  </dd>
+                                </div>
+                              );
+                            })}
+                          </dl>
                         </article>
                       </>
                     ) : s.id === 'brana-parkoviste' ? (
@@ -422,7 +460,7 @@ export function Guide({
                           <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
                           <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
                           <span className="pv-navcta__hint">
-                            {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes} min pěšky ·
+                            {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes} {tt(TX.ui.minWalk)} ·
                             Mapy.cz
                           </span>
                         </a>
@@ -695,9 +733,9 @@ export function Guide({
                                   {tt(k.text) ? <p>{tt(k.text)}</p> : null}
                                   {k.id === 'z3' ? (
                                     <p
-                                      className={`pv-step--note${kodZahradyProApt(secrets, apt).trim() === 'DOPLNIT' ? ' pv-doplnit' : ''}`}
+                                      className={`pv-step--note${gardenCode.trim() === 'DOPLNIT' ? ' pv-doplnit' : ''}`}
                                     >
-                                      {kodZahradyProApt(secrets, apt)}
+                                      {gardenCode}
                                     </p>
                                   ) : null}
                                   {k.body?.length ? (

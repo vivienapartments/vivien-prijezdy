@@ -24,6 +24,7 @@ export function NahledClient({ secrets, searchParams }: Props) {
   const prijezdRaw = one(searchParams.prijezd);
   const prijezd: Prijezd | null =
     prijezdRaw === 'auto' || prijezdRaw === 'pesky' ? prijezdRaw : null;
+  const accessPin = one(searchParams.pin);
 
   const write = (next: {
     apt: AptId;
@@ -45,6 +46,7 @@ export function NahledClient({ secrets, searchParams }: Props) {
       lang={lang}
       secrets={secrets}
       stay={{ noci: 2, osob: 2 }}
+      accessPin={accessPin}
       vikend={vikend}
       initialPrijezd={prijezd}
       showDevBar

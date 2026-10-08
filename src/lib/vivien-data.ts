@@ -16,6 +16,8 @@ export type VivienData = {
   osloveni: string | null;
   zdroj: string | null;
   klic: string | null;
+  /** PIN apartmánu z BH (ACCESS_PIN), mění se podle pobytu. */
+  accessPin: string | null;
 };
 
 export type ParseResult =
@@ -27,19 +29,27 @@ type AptRow = { id: AptId; nazev: { cs: string; en: string } };
 const apartmany = (apartmanyJson as { apartmany: AptRow[] }).apartmany;
 const jazykyMap = (apartmanyJson as { jazyky: Record<string, string> }).jazyky;
 
-function htmlToText(input: string): string {
+function decodeHtmlEntities(input: string): string {
   return input
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, '\n')
-    .replace(/<a[^>]*href=["']mailto:([^"']+)["'][^>]*>/gi, '$1 ')
-    .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>/gi, '$1 ')
-    .replace(/<[^>]+>/g, ' ')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
-    .replace(/&#64;/g, '@')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
     .replace(/\u00a0/g, ' ');
+}
+
+function htmlToText(input: string): string {
+  return decodeHtmlEntities(
+    input
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|div|tr|li|h[1-6])>/gi, '\n')
+      .replace(/<a[^>]*href=["']mailto:([^"']+)["'][^>]*>/gi, '$1 ')
+      .replace(/<a[^>]*href=["']([^"']+)["'][^>]*>/gi, '$1 ')
+      .replace(/<[^>]+>/g, ' '),
+  );
 }
 
 function extractBlock(raw: string): string | null {
@@ -66,7 +76,7 @@ function parseFields(block: string): Record<string, string> {
     const m = trimmed.match(/^([A-ZÁÉÍÓÚÝŽČŘŠĎŤŇ_]+)\s*:\s*(.*)$/i);
     if (!m) continue;
     const key = m[1].normalize('NFD').replace(/\p{M}/gu, '').toUpperCase();
-    out[key] = m[2].trim();
+    out[key] = decodeHtmlEntities(m[2].trim());
   }
   return out;
 }
@@ -95,10 +105,14 @@ export function langFromNarodnost(raw: string | null | undefined): GuideLang {
     mapped === 'de' ||
     mapped === 'pl' ||
     mapped === 'uk' ||
-    mapped === 'zh-Hant'
+    mapped === 'zh-Hant' ||
+    mapped === 'es' ||
+    mapped === 'fr' ||
+    mapped === 'it'
   ) {
     return mapped;
   }
+  // Ostatní národnosti / neznámý kód → angličtina
   return 'en';
 }
 
@@ -162,6 +176,18 @@ export function parseVivienData(raw: string): ParseResult {
 
   const narodnost = f.NARODNOST?.trim() || null;
 
+  const accessPinRaw = (f.ACCESS_PIN || f.ACCESSPIN || '').trim();
+  // Prázdný / nevyplněný merge field z BH nemá hodnotu.
+  if (
+    !accessPinRaw ||
+    /^\(?\s*ACCESS_PIN\s*\)?$/i.test(accessPinRaw) ||
+    accessPinRaw === '—' ||
+    accessPinRaw === '-'
+  ) {
+    return { ok: false, reason: 'Chybí ACCESS_PIN' };
+  }
+  const accessPin = accessPinRaw;
+
   return {
     ok: true,
     data: {
@@ -177,6 +203,7 @@ export function parseVivienData(raw: string): ParseResult {
       osloveni: f.OSLOVENI?.trim() || null,
       zdroj: f.ZDROJ?.trim() || null,
       klic: f.KLIC?.trim() || null,
+      accessPin,
     },
     warnings,
   };

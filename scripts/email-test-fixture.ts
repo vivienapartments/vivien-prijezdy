@@ -6,6 +6,7 @@
 import { config } from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import { buildGuestEmail, sendGuestEmail } from '../src/lib/email-host';
 import { loadSecrets } from '../src/lib/secrets';
 import { createToken } from '../src/lib/token';
@@ -48,6 +49,11 @@ async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   const secrets = loadSecrets();
 
+  const logoFile = pathToFileURL(path.join(process.cwd(), 'assets', 'email', 'logo.png')).href;
+  const podpisFile = pathToFileURL(
+    path.join(process.cwd(), 'assets', 'email', 'logo-podpis.jpg'),
+  ).href;
+
   for (const p of PREVIEWS) {
     const token = createToken({
       r: 'PREVIEW',
@@ -68,6 +74,9 @@ async function main() {
       guideUrl: `${baseUrl()}/${token}`,
       intendedTo: 'host@example.com',
       secrets,
+      logoSrc: logoFile,
+      podpisSrc: podpisFile,
+      ctaStyle: 'A',
     });
     const file = path.join(outDir, `${p.apt}-${p.lang}.html`);
     fs.writeFileSync(file, built.html, 'utf8');
@@ -111,9 +120,10 @@ async function main() {
       guideUrl: `${baseUrl()}/${token}`,
       intendedTo: parsed.data.email,
       secrets,
+      ctaStyle: 'A',
     },
   });
-  console.log('odeslano [TEST] na majitele, rezervace', parsed.data.rezervace, 'to=', result.to);
+  console.log('odeslano [TEST] finální náhled (styl A), rezervace', parsed.data.rezervace, 'to=', result.to);
 }
 
 main().catch((err) => {
