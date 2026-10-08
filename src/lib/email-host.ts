@@ -65,12 +65,12 @@ const subjectL: LText = {
 };
 
 const introL: LText = {
-  cs: 'Připravili jsme pro vás osobní průvodce příjezdem. Parkování, WiFi, brána i další kroky jsou v odkazu níže.',
-  en: 'We prepared a personal arrival guide for you. Parking, WiFi, the gate and the other steps are in the link below.',
-  de: 'Wir haben einen persönlichen Anreiseleitfaden für Sie vorbereitet. Parken, WLAN, Tor und die weiteren Schritte finden Sie im Link unten.',
-  pl: 'Przygotowaliśmy dla Was osobistą instrukcję przyjazdu. Parking, WiFi, brama i kolejne kroki są w linku poniżej.',
-  uk: 'Ми підготували для вас особистий гід приїзду. Паркування, WiFi, брама та інші кроки є в посиланні нижче.',
-  'zh-Hant': '我們為您準備了個人抵達指南。停車、WiFi、大門與其他步驟都在下方連結中。',
+  cs: 'Připravili jsme pro vás osobní průvodce příjezdem. Otevřete ho tlačítkem níže.',
+  en: 'We prepared a personal arrival guide for you. Open it with the button below.',
+  de: 'Wir haben einen persönlichen Anreiseleitfaden für Sie vorbereitet. Öffnen Sie ihn über die Schaltfläche unten.',
+  pl: 'Przygotowaliśmy dla Was osobistą instrukcję przyjazdu. Otwórzcie ją przyciskiem poniżej.',
+  uk: 'Ми підготували для вас особистий гід приїзду. Відкрийте його кнопкою нижче.',
+  'zh-Hant': '我們為您準備了個人抵達指南。請用下方按鈕開啟。',
 };
 
 const stayL: LText = {
@@ -116,15 +116,6 @@ const openGuideL: LText = {
   pl: 'Otwórz instrukcję przyjazdu',
   uk: 'Відкрити гід приїзду',
   'zh-Hant': '開啟抵達指南',
-};
-
-const linkHintL: LText = {
-  cs: 'Když tlačítko nefunguje, zkopírujte odkaz:',
-  en: 'If the button does not work, copy this link:',
-  de: 'Wenn die Schaltfläche nicht funktioniert, kopieren Sie diesen Link:',
-  pl: 'Jeśli przycisk nie działa, skopiujcie ten link:',
-  uk: 'Якщо кнопка не працює, скопіюйте це посилання:',
-  'zh-Hant': '若按鈕無法使用，請複製此連結：',
 };
 
 const contactL: LText = {
@@ -229,16 +220,10 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   </td>
                 </tr>
                 <tr>
-                  <td align="center" style="padding:8px 0 10px;">
+                  <td align="center" style="padding:8px 0 22px;">
                     <a href="${escapeAttr(input.guideUrl)}" style="display:inline-block;background:#8b6914;color:#ffffff;text-decoration:none;padding:14px 26px;border-radius:6px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:700;">
                       ${escapeHtml(t(openGuideL, lang))}
                     </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding:8px 0 22px;font-size:13px;color:#6a5f52;">
-                    ${escapeHtml(t(linkHintL, lang))}<br/>
-                    <a href="${escapeAttr(input.guideUrl)}" style="color:#8b6914;word-break:break-all;">${escapeHtml(input.guideUrl)}</a>
                   </td>
                 </tr>
                 <tr>
@@ -270,8 +255,7 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
     `${t(nightsL, lang)}: ${nociLabel}`,
     `${t(guestsL, lang)}: ${osobLabel}`,
     '',
-    t(openGuideL, lang),
-    input.guideUrl,
+    `${t(openGuideL, lang)}: ${input.guideUrl}`,
     '',
     t(contactL, lang),
   ]
