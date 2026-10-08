@@ -387,8 +387,14 @@ export async function sendGuestEmail(opts: {
     auth: { user, pass },
   });
 
+  const fs = await import('fs');
   const logoPath = path.join(process.cwd(), 'assets', 'email', 'logo.png');
   const podpisPath = path.join(process.cwd(), 'assets', 'email', 'logo-podpis.jpg');
+  if (!fs.existsSync(logoPath) || !fs.existsSync(podpisPath)) {
+    throw new Error(
+      `Chybí e-mailové logo v serverless balíčku (${logoPath} / ${podpisPath})`,
+    );
+  }
 
   const info = await transporter.sendMail({
     from: `VIVIEN Apartments <${user}>`,
@@ -400,13 +406,13 @@ export async function sendGuestEmail(opts: {
     attachments: [
       {
         filename: 'logo.png',
-        path: logoPath,
+        content: fs.readFileSync(logoPath),
         cid: LOGO_CID,
         contentDisposition: 'inline',
       },
       {
         filename: 'logo-podpis.jpg',
-        path: podpisPath,
+        content: fs.readFileSync(podpisPath),
         cid: PODPIS_CID,
         contentDisposition: 'inline',
       },

@@ -2,8 +2,41 @@ import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
+async function kvCmd(
+  url: string,
+  token: string,
+  args: (string | number)[],
+): Promise<unknown> {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) throw new Error(`Upstash HTTP ${res.status}`);
+  const json = (await res.json()) as { result: unknown };
+  return json.result;
+}
+
+async function scanKeys(url: string, token: string): Promise<string[]> {
+  let cursor = '0';
+  const keys: string[] = [];
+  do {
+    const result = (await kvCmd(url, token, ['SCAN', cursor, 'COUNT', 100])) as [
+      string,
+      string[],
+    ];
+    cursor = String(result[0]);
+    keys.push(...(result[1] || []));
+  } while (cursor !== '0');
+  return keys;
+}
+
 /**
- * TEST: vyprázdní Upstash paměť (FLUSHDB). Jen s Bearer CRON_SECRET a TEST_REZIM=1.
+ * TEST: FLUSHDB, nebo mode=errors (jen záznamy status=error).
+ * Bearer CRON_SECRET + TEST_REZIM=1.
  */
 export async function POST(request: Request): Promise<NextResponse> {
   const secret = process.env.CRON_SECRET?.trim();
@@ -30,23 +63,55 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: 'KV chybí' }, { status: 500 });
   }
 
+  const mode = new URL(request.url).searchParams.get('mode') || 'all';
+
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(['FLUSHDB']),
-    });
-    const body = await res.text();
-    if (!res.ok) {
-      return NextResponse.json(
-        { ok: false, error: `Upstash ${res.status}` },
-        { status: 502 },
-      );
+    if (mode === 'all') {
+      const result = await kvCmd(url, token, ['FLUSHDB']);
+      return NextResponse.json({ ok: true, flushed: true, result });
     }
-    return NextResponse.json({ ok: true, flushed: true, detail: body.slice(0, 80) });
+
+    if (mode !== 'errors') {
+      return NextResponse.json({ ok: false, error: 'mode: all|errors' }, { status: 400 });
+    }
+
+    const keys = await scanKeys(url, token);
+    let removedMsg = 0;
+    let removedRez = 0;
+    const reasons: string[] = [];
+
+    for (const key of keys) {
+      if (!key.startsWith('msg:')) continue;
+      const raw = (await kvCmd(url, token, ['GET', key])) as string | null;
+      if (!raw) continue;
+      let parsed: { status?: string; rezervace?: string; reason?: string };
+      try {
+        parsed = JSON.parse(raw) as {
+          status?: string;
+          rezervace?: string;
+          reason?: string;
+        };
+      } catch {
+        continue;
+      }
+      if (parsed.status !== 'error') continue;
+      await kvCmd(url, token, ['DEL', key]);
+      removedMsg += 1;
+      if (parsed.reason) reasons.push(parsed.reason);
+      if (parsed.rezervace) {
+        const rezKey = `rez:${parsed.rezervace}`;
+        const del = await kvCmd(url, token, ['DEL', rezKey]);
+        if (del === 1 || del === '1') removedRez += 1;
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      mode: 'errors',
+      removedMsg,
+      removedRez,
+      reasons: reasons.slice(0, 10),
+    });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'chyba';
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
