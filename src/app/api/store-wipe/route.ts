@@ -71,14 +71,16 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: true, flushed: true, result });
     }
 
-    if (mode !== 'errors') {
-      return NextResponse.json({ ok: false, error: 'mode: all|errors' }, { status: 400 });
+    if (mode !== 'errors' && mode !== 'sent') {
+      return NextResponse.json({ ok: false, error: 'mode: all|errors|sent' }, { status: 400 });
     }
 
+    const wantStatus = mode === 'errors' ? 'error' : 'sent';
     const keys = await scanKeys(url, token);
     let removedMsg = 0;
     let removedRez = 0;
     const reasons: string[] = [];
+    const rezervace: string[] = [];
 
     for (const key of keys) {
       if (!key.startsWith('msg:')) continue;
@@ -94,11 +96,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       } catch {
         continue;
       }
-      if (parsed.status !== 'error') continue;
+      if (parsed.status !== wantStatus) continue;
       await kvCmd(url, token, ['DEL', key]);
       removedMsg += 1;
       if (parsed.reason) reasons.push(parsed.reason);
       if (parsed.rezervace) {
+        rezervace.push(parsed.rezervace);
         const rezKey = `rez:${parsed.rezervace}`;
         const del = await kvCmd(url, token, ['DEL', rezKey]);
         if (del === 1 || del === '1') removedRez += 1;
@@ -107,9 +110,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json({
       ok: true,
-      mode: 'errors',
+      mode,
       removedMsg,
       removedRez,
+      rezervace: rezervace.slice(0, 20),
       reasons: reasons.slice(0, 10),
     });
   } catch (err) {
