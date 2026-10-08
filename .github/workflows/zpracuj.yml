@@ -1,0 +1,28 @@
+# Budík: každých ~2 minuty zavolá živé API na Vercelu.
+# GitHub schedule může občas zpozdit o pár minut (zatížení Actions).
+name: Zpracuj schranku
+
+on:
+  schedule:
+    - cron: '*/2 * * * *'
+  workflow_dispatch:
+
+jobs:
+  zpracuj:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: POST /api/zpracuj
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          PRUVODCE_URL: https://vivien-prijezdy-six.vercel.app
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "Chybi GitHub secret CRON_SECRET"
+            exit 1
+          fi
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            --max-time 90 \
+            "${PRUVODCE_URL}/api/zpracuj"
