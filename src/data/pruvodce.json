@@ -1,0 +1,1295 @@
+{
+  "_popis": "Obsah osobního průvodce. Sekce v pořadí, jak host jde. Každý krok má 'apartmany' – zobrazí se jen hostům těchto apartmánů. Značky {{…}} doplní server z nastavení (env) jen pro platný osobní odkaz. Prázdný text v jazyce → použít angličtinu. Sekce s 'obsah_z_webu' převezmou texty ze stávajícího webu přes stejná i18n ID (jsou už přeložené), nic se nepřepisuje ručně.",
+  "stavy": {
+    "hotovo": "převzato z podkladů majitele",
+    "upraveno_ke_schvaleni": "upraveno, čeká na schválení majitele",
+    "chybi_podklad": "podklad zatím chybí – sekci nezobrazovat",
+    "chybi_preklad": "text jen česky"
+  },
+  "znacky": [
+    "{{STANI}}",
+    "{{KOD_ZAHRADA}}"
+  ],
+  "sekce": [
+    {
+      "id": "zadost-o-parkovani",
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "upraveno_ke_schvaleni",
+      "typ": "vyzva_nahore",
+      "nadpis": {
+        "cs": "Přijedete autem? Napište nám hned",
+        "en": "Arriving by car? Message us right away",
+        "de": "Reisen Sie mit dem Auto an? Schreiben Sie uns sofort",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "poznamka": "Úplně nahoře v e-mailu po check-inu, na osobní stránce i v ranní připomínce. Výrazně (barevný rámeček).",
+      "kroky": [
+        {
+          "id": "zadost",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4",
+            "V5"
+          ],
+          "foto": null,
+          "stav": "upraveno_ke_schvaleni",
+          "nadpis": {
+            "cs": "Přijedete autem? Napište nám hned",
+            "en": "Arriving by car? Message us right away",
+            "de": "Reisen Sie mit dem Auto an? Schreiben Sie uns sofort",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Parkovací stání vám zajistíme, jen když nám co nejdříve pošlete SMS nebo zprávu na číslo +420 777 702 272. Nejlépe hned teď. Uveďte v ní:",
+            "en": "We can only reserve a parking space for you if you send us a text message to +420 777 702 272 as soon as possible. Ideally right now. Please include:",
+            "de": "Einen Stellplatz können wir Ihnen nur sichern, wenn Sie uns so bald wie möglich eine SMS oder Nachricht an +420 777 702 272 senden. Am besten sofort. Bitte geben Sie an:",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "body": [
+            {
+              "cs": "že máte zájem o parkovací stání,",
+              "en": "that you would like a parking space,",
+              "de": "dass Sie einen Stellplatz wünschen,",
+              "pl": "",
+              "uk": "",
+              "zh-Hant": ""
+            },
+            {
+              "cs": "telefonní číslo, ze kterého budete otevírat bránu parkoviště,",
+              "en": "the phone number you will use to open the car park gate,",
+              "de": "die Telefonnummer, von der aus Sie das Parkplatztor öffnen werden,",
+              "pl": "",
+              "uk": "",
+              "zh-Hant": ""
+            },
+            {
+              "cs": "registrační značku (SPZ) vašeho auta.",
+              "en": "your car's licence plate number.",
+              "de": "das Kennzeichen Ihres Autos.",
+              "pl": "",
+              "uk": "",
+              "zh-Hant": ""
+            }
+          ],
+          "zaver": {
+            "cs": "Číslo musíme předem zaregistrovat v bráně, proto to nejde řešit až na poslední chvíli. Bez této zprávy vám stání bohužel zajistit nemůžeme.",
+            "en": "We have to register your number in the gate system in advance, so this cannot be left to the last minute. Without this message, we unfortunately cannot provide a parking space.",
+            "de": "Wir müssen Ihre Nummer vorab im Torsystem registrieren, daher geht das nicht in letzter Minute. Ohne diese Nachricht können wir Ihnen leider keinen Stellplatz sichern.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          }
+        }
+      ]
+    },
+    {
+      "id": "prijezd-k-domu",
+      "nadpis": {
+        "cs": "Příjezd k domu",
+        "en": "Arrival at the house",
+        "de": "Ankunft am Haus",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "obsah_z_webu": {
+        "zdroj": "web_i18n",
+        "i18n_id": [
+          "stay.parking.guide.title",
+          "stay.parking.guide.steps.label",
+          "stay.parking.guide.step1.a",
+          "stay.parking.guide.step1.map",
+          "stay.parking.guide.step1.b",
+          "stay.parking.guide.step2",
+          "stay.parking.guide.step3"
+        ],
+        "soubor": "src/app/features/accommodation/accommodation.component.html"
+      },
+      "odkazy": [
+        "dropoffMapsUrl (místo pro vyložení zavazadel, 30 m)"
+      ],
+      "poznamka": "Převzít texty z webu přes stejná i18n ID – jsou už přeložené do všech jazyků webu. Do domu a apartmánu hosty uvádí majitel osobně – žádný návod na vstup do domu ani do apartmánu se nezobrazuje.",
+      "kroky": []
+    },
+    {
+      "id": "brana-parkoviste",
+      "nadpis": {
+        "cs": "Brána parkoviště",
+        "en": "Car park gate",
+        "de": "Parkplatztor",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "upraveno_ke_schvaleni",
+      "kroky": [
+        {
+          "id": "brana-otevreno",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4",
+            "V5"
+          ],
+          "foto": null,
+          "nadpis": {
+            "cs": "Kdy je brána otevřená",
+            "en": "When the gate is open",
+            "de": "Wann das Tor offen ist",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Ve všední dny (pondělí až pátek) je brána otevřená od 6:00 do 18:00. Večer, v noci a o víkendu celý den je zavřená. Otevřete si ji telefonním hovorem na číslo {{BRANA_TELEFON}}. Hovor nikdo nepřijme: ozve se obsazovací tón a brána se začne otevírat.",
+            "en": "On weekdays (Monday to Friday) the gate is open from 6:00 to 18:00. In the evening, at night and all day at weekends it is closed. You open it by making a phone call to {{BRANA_TELEFON}}. Nobody will answer: you will hear a busy tone and the gate will start to open.",
+            "de": "An Werktagen (Montag bis Freitag) ist das Tor von 6:00 bis 18:00 Uhr geöffnet. Abends, nachts und am Wochenende ganztägig ist es geschlossen. Sie öffnen es mit einem Anruf unter {{BRANA_TELEFON}}. Niemand nimmt ab: Sie hören ein Besetztzeichen und das Tor beginnt sich zu öffnen.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "upraveno_ke_schvaleni"
+        },
+        {
+          "id": "brana-pozor",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4",
+            "V5"
+          ],
+          "foto": null,
+          "typ": "upozorneni",
+          "nadpis": {
+            "cs": "Aby se brána otevřela",
+            "en": "For the gate to open",
+            "de": "Damit sich das Tor öffnet",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "body": [
+            {
+              "cs": "Volejte z telefonního čísla, které jste nám předem nahlásili. Máte-li v telefonu dvě SIM karty, volejte z té s nahlášeným číslem.",
+              "en": "Call from the phone number you gave us in advance. If your phone has two SIM cards, call from the one with that number.",
+              "de": "Rufen Sie von der Telefonnummer an, die Sie uns vorab mitgeteilt haben. Wenn Ihr Telefon zwei SIM-Karten hat, rufen Sie von der Karte mit dieser Nummer an.",
+              "pl": "",
+              "uk": "",
+              "zh-Hant": ""
+            },
+            {
+              "cs": "Volejte běžným telefonním hovorem, ne přes WhatsApp ani jinou aplikaci.",
+              "en": "Make a regular phone call, not via WhatsApp or any other app.",
+              "de": "Rufen Sie normal über das Mobilfunknetz an, nicht über WhatsApp oder eine andere App.",
+              "pl": "",
+              "uk": "",
+              "zh-Hant": ""
+            },
+            {
+              "cs": "Vaše číslo nesmí být skryté (vypněte skrývání čísla volajícího).",
+              "en": "Your number must not be hidden (switch off caller ID blocking).",
+              "de": "Ihre Nummer darf nicht unterdrückt sein (Rufnummernunterdrückung ausschalten).",
+              "pl": "",
+              "uk": "",
+              "zh-Hant": ""
+            }
+          ],
+          "stav": "upraveno_ke_schvaleni"
+        },
+        {
+          "id": "brana-problem",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4",
+            "V5"
+          ],
+          "foto": null,
+          "stav": "upraveno_ke_schvaleni",
+          "nadpis": {
+            "cs": "Brána se neotevírá?",
+            "en": "The gate won't open?",
+            "de": "Das Tor öffnet sich nicht?",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Zavolejte nám na +420 777 702 272. Pokud se nedovoláte, volejte Nikol na +420 702 153 573.",
+            "en": "Call us on +420 777 702 272. If you can't get through, call Nikol on +420 702 153 573.",
+            "de": "Rufen Sie uns unter +420 777 702 272 an. Wenn Sie niemanden erreichen, rufen Sie Nikol unter +420 702 153 573 an.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          }
+        }
+      ],
+      "poznamka": "NEPŘEBÍRAT text z webu (stay.parking.guide.gate.text říká 'denně 6–18', což neplatí o víkendu). Zvýraznit tuto sekci nahoře v e-mailu i na stránce, když příjezd vychází na sobotu/neděli nebo po 18:00. Telefon z Better Hotelu se pro bránu NEPOUŽÍVÁ – host musí číslo sám napsat. Automat telefonní čísla nezpracovává."
+    },
+    {
+      "id": "parkovani",
+      "nadpis": {
+        "cs": "Parkování: cesta na vaše stání",
+        "en": "Parking: route to your space",
+        "de": "Parken: Weg zu Ihrem Stellplatz",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "kroky": [
+        {
+          "id": "mapa-25",
+          "apartmany": [
+            "V2"
+          ],
+          "foto": "fotky/parkovani/mapa-stani-25.jpg",
+          "nadpis": {
+            "cs": "Přehled parkoviště",
+            "en": "Car park overview",
+            "de": "Übersicht des Parkplatzes",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "",
+            "en": "",
+            "de": "",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo",
+          "poznamka": "Mapa má zapečený český text – v ostatních jazycích ponechat, popisek je v textu kroků."
+        },
+        {
+          "id": "mapa-26",
+          "apartmany": [
+            "V3"
+          ],
+          "foto": "fotky/parkovani/mapa-stani-26.jpg",
+          "nadpis": {
+            "cs": "Přehled parkoviště",
+            "en": "Car park overview",
+            "de": "Übersicht des Parkplatzes",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "",
+            "en": "",
+            "de": "",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "mapa-43",
+          "apartmany": [
+            "V5"
+          ],
+          "foto": "fotky/parkovani/mapa-stani-43.jpg",
+          "nadpis": {
+            "cs": "Přehled parkoviště",
+            "en": "Car park overview",
+            "de": "Übersicht des Parkplatzes",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "",
+            "en": "",
+            "de": "",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "mapa-14",
+          "apartmany": [
+            "V1"
+          ],
+          "foto": "fotky/parkovani/mapa-stani-14.jpg",
+          "nadpis": {
+            "cs": "Přehled parkoviště",
+            "en": "Car park overview",
+            "de": "Übersicht des Parkplatzes",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "",
+            "en": "",
+            "de": "",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "mapa-27",
+          "apartmany": [
+            "V4"
+          ],
+          "foto": "fotky/parkovani/mapa-stani-27.jpg",
+          "nadpis": {
+            "cs": "Přehled parkoviště",
+            "en": "Car park overview",
+            "de": "Übersicht des Parkplatzes",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "",
+            "en": "",
+            "de": "",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "ulice",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4",
+            "V5"
+          ],
+          "foto": "fotky/parkovani/spolecne-1-ulice.jpg",
+          "nadpis": {
+            "cs": "Příjezd z ulice",
+            "en": "Arrival from the street",
+            "de": "Ankunft von der Straße",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Orientační bod je roh budovy s nápisem LIBRA ELECTRONICS (tu vidíte z čela). Vjezd na parkoviště je u hnědého plotu s cedulí „Parkovací místa“.",
+            "en": "Your landmark is the corner of the building with the LIBRA ELECTRONICS sign (seen head-on). The car park entrance is by the brown fence with the „Parkovací místa“ (parking) sign.",
+            "de": "Orientierungspunkt ist die Gebäudeecke mit der Aufschrift LIBRA ELECTRONICS (von vorne sichtbar). Die Parkplatzeinfahrt ist am braunen Zaun mit dem Schild „Parkovací místa“ (Parkplätze).",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "k-pruvodu",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4"
+          ],
+          "foto": "fotky/parkovani/spolecne-2-dvur-k-pruvodu.jpg",
+          "nadpis": {
+            "cs": "Ke průjezdu",
+            "en": "Towards the passage",
+            "de": "Zur Durchfahrt",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Vjeďte do dvora a pokračujte k průjezdu pod kulatou cedulí NuArt (vpravo je zeď s nápisem ELECTRONICS).",
+            "en": "Enter the courtyard and continue towards the passage under the round NuArt sign (the wall with the ELECTRONICS sign is on your right).",
+            "de": "Fahren Sie in den Hof und weiter zur Durchfahrt unter dem runden NuArt-Schild (rechts ist die Wand mit der Aufschrift ELECTRONICS).",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "pruvod",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4"
+          ],
+          "foto": "fotky/parkovani/pruvod-brana-3-3m.jpg",
+          "nadpis": {
+            "cs": "Projeďte průjezdem",
+            "en": "Drive through the passage",
+            "de": "Durch die Durchfahrt fahren",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Průjezdem projedete na druhou stranu. Brána má omezení výšky 3,3 m, pozor na výšku vozidla.",
+            "en": "Drive through the passage to the other side. The gate has a 3.3 m height limit. Mind the height of your vehicle.",
+            "de": "Fahren Sie durch die Durchfahrt auf die andere Seite. Das Tor hat eine Höhenbegrenzung von 3,3 m. Achten Sie auf die Höhe Ihres Fahrzeugs.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo",
+          "poznamka": "V originále 'Tentokrát průjezdem…' – slovo 'Tentokrát' vypuštěno, protože na stránce nenavazuje na jiný list."
+        },
+        {
+          "id": "14-jemne-doprava",
+          "apartmany": [
+            "V1"
+          ],
+          "foto": "fotky/parkovani/stani-14-jemne-doprava.jpg",
+          "nadpis": {
+            "cs": "Za průjezdem jemně doprava",
+            "en": "After the passage bear right",
+            "de": "Nach der Durchfahrt leicht rechts",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Za průjezdem se dejte jemně doprava. Parkovací stání jsou podél protější stěny.",
+            "en": "After the passage, bear gently right. The parking spaces are along the opposite wall.",
+            "de": "Halten Sie sich nach der Durchfahrt leicht rechts. Die Stellplätze sind entlang der gegenüberliegenden Wand.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "cil-14",
+          "apartmany": [
+            "V1"
+          ],
+          "foto": "fotky/parkovani/cil-stani-14.jpg",
+          "nadpis": {
+            "cs": "Cíl: stání č. 14",
+            "en": "Destination: space No. 14",
+            "de": "Ziel: Stellplatz Nr. 14",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Vaše místo je zlaté „Gentle Harmony 14“ u zdi. Zaparkujte prosím pouze zde.",
+            "en": "Your space is the gold „Gentle Harmony 14“ by the wall. Please park here only.",
+            "de": "Ihr Stellplatz ist der goldene „Gentle Harmony 14“ an der Wand. Bitte parken Sie nur hier.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "cil-25",
+          "apartmany": [
+            "V2"
+          ],
+          "foto": "fotky/parkovani/cil-stani-25.jpg",
+          "nadpis": {
+            "cs": "Za průjezdem doleva. Stání č. 25",
+            "en": "After the passage turn left. Space No. 25",
+            "de": "Nach der Durchfahrt links. Stellplatz Nr. 25",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Za průjezdem odbočte doleva. Vaše místo je podélné stání, první v pořadí (hned u rohu budovy), č. 25 „Golden Balance“ (zlaté). Zaparkujte prosím pouze zde.",
+            "en": "After the passage, turn left. Your space is a longitudinal one, first in the row (right by the corner of the building), No. 25 „Golden Balance“ (gold). Please park here only.",
+            "de": "Biegen Sie nach der Durchfahrt links ab. Ihr Stellplatz ist ein Längsstellplatz, der erste in der Reihe (direkt an der Gebäudeecke), Nr. 25 „Golden Balance“ (golden). Bitte parken Sie nur hier.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "cil-26",
+          "apartmany": [
+            "V3"
+          ],
+          "foto": "fotky/parkovani/cil-stani-26.jpg",
+          "nadpis": {
+            "cs": "Za průjezdem doleva. Stání č. 26",
+            "en": "After the passage turn left. Space No. 26",
+            "de": "Nach der Durchfahrt links. Stellplatz Nr. 26",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Za průjezdem odbočte doleva. Vaše místo je podélné stání, druhé v pořadí (uprostřed, mezi 25 a 27), č. 26 „Evening Elegance“ (modré). Zaparkujte prosím pouze zde.",
+            "en": "After the passage, turn left. Your space is a longitudinal one, second in the row (in the middle, between 25 and 27), No. 26 „Evening Elegance“ (blue). Please park here only.",
+            "de": "Biegen Sie nach der Durchfahrt links ab. Ihr Stellplatz ist ein Längsstellplatz, der zweite in der Reihe (in der Mitte, zwischen 25 und 27), Nr. 26 „Evening Elegance“ (blau). Bitte parken Sie nur hier.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "cil-27",
+          "apartmany": [
+            "V4"
+          ],
+          "foto": "fotky/parkovani/cil-stani-27.jpg",
+          "nadpis": {
+            "cs": "Za průjezdem doleva. Stání č. 27",
+            "en": "After the passage turn left. Space No. 27",
+            "de": "Nach der Durchfahrt links. Stellplatz Nr. 27",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Za průjezdem odbočte doleva. Vaše místo je podélné stání, třetí v pořadí, č. 27 „Noble Contrast“ (zelené). Zaparkujte prosím pouze zde.",
+            "en": "After the passage, turn left. Your space is a longitudinal one, third in the row, No. 27 „Noble Contrast“ (green). Please park here only.",
+            "de": "Biegen Sie nach der Durchfahrt links ab. Ihr Stellplatz ist ein Längsstellplatz, der dritte in der Reihe, Nr. 27 „Noble Contrast“ (grün). Bitte parken Sie nur hier.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "43-doprava",
+          "apartmany": [
+            "V5"
+          ],
+          "foto": "fotky/parkovani/spolecne-2-dvur-k-pruvodu.jpg",
+          "nadpis": {
+            "cs": "Odbočte doprava",
+            "en": "Turn right",
+            "de": "Rechts abbiegen",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Průjezdem rovně dozadu neprojíždíte (podjezd s cedulí NuArt). Ještě před ním odbočte doprava, za roh budovy.",
+            "en": "Do not drive straight to the back through the passage (the underpass with the NuArt sign). Just before it, turn right, around the corner of the building.",
+            "de": "Fahren Sie nicht geradeaus nach hinten durch die Durchfahrt (Durchfahrt mit dem NuArt-Schild). Kurz davor biegen Sie rechts ab, um die Gebäudeecke.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "43-brana-kontejner",
+          "apartmany": [
+            "V5"
+          ],
+          "foto": "fotky/parkovani/stani-43-brana-a-kontejner.jpg",
+          "nadpis": {
+            "cs": "Kolem brány a kontejneru",
+            "en": "Past the gate and the bin",
+            "de": "Am Tor und Container vorbei",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Bránou s omezením výšky 3,3 m neprojíždíte. Míjíte kontejner a po pravé straně se otevře dlážděná plocha.",
+            "en": "Do not drive through the gate with the 3.3 m height limit. Pass the waste bin and the paved area opens up on your right.",
+            "de": "Fahren Sie nicht durch das Tor mit der Höhenbegrenzung 3,3 m. Sie fahren am Müllcontainer vorbei, rechts öffnet sich die gepflasterte Fläche.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "43-dlazba",
+          "apartmany": [
+            "V5"
+          ],
+          "foto": "fotky/parkovani/stani-43-dlazdena-plocha.jpg",
+          "nadpis": {
+            "cs": "Dlážděná plocha",
+            "en": "Paved area",
+            "de": "Gepflasterte Fläche",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Pokračujte po dlážděné (zámkové) ploše.",
+            "en": "Continue across the paved area.",
+            "de": "Fahren Sie weiter über die gepflasterte Fläche.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "cil-43",
+          "apartmany": [
+            "V5"
+          ],
+          "foto": "fotky/parkovani/cil-stani-43.jpg",
+          "nadpis": {
+            "cs": "Cíl: stání č. 43",
+            "en": "Destination: space No. 43",
+            "de": "Ziel: Stellplatz Nr. 43",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Po pravé straně uvidíte své místo č. 43 (u plotu s modrou šipkou). Zaparkujte prosím pouze zde.",
+            "en": "On your right you will see your space No. 43 (by the fence with the blue arrow). Please park here only.",
+            "de": "Auf der rechten Seite sehen Sie Ihren Stellplatz Nr. 43 (am Zaun mit dem blauen Pfeil). Bitte parken Sie nur hier.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "dulezite",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4",
+            "V5"
+          ],
+          "foto": null,
+          "nadpis": {
+            "cs": "Důležité",
+            "en": "Important",
+            "de": "Wichtig",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Parkujte prosím POUZE na svém přiděleném místě, stání č. {{STANI}}.",
+            "en": "Please park ONLY in your assigned space, No. {{STANI}}.",
+            "de": "Bitte parken Sie NUR auf Ihrem zugewiesenen Stellplatz, Nr. {{STANI}}.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo",
+          "typ": "upozorneni"
+        }
+      ]
+    },
+    {
+      "id": "pesky-parkoviste-dum",
+      "nadpis": {
+        "cs": "Z parkoviště zpět k domu",
+        "en": "From the car park back to the house",
+        "de": "Vom Parkplatz zurück zum Haus",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "obsah_z_webu": {
+        "zdroj": "web",
+        "vzdalenost": "SITE_DISTANCES.parking (239 m / 3 min)",
+        "mapa_odkaz": "PARKING_OPEN_MAPY_URL (pěší trasa dům ↔ parkoviště, Mapy.cz) + PARKING_OPEN_GOOGLE_URL"
+      },
+      "poznamka": "Vzdálenost a minuty brát z SITE_DISTANCES, ne psát ručně.",
+      "kroky": []
+    },
+    {
+      "id": "wifi",
+      "nadpis": {
+        "cs": "WiFi",
+        "en": "WiFi",
+        "de": "WLAN",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "kroky": [],
+      "poznamka": "Kartu generuje kód: SSID z apartmany.json, heslo z env, QR 'WIFI:T:WPA;S:<ssid>;P:<heslo>;;'. Popisky viz 'popisky_wifi'.",
+      "typ": "wifi_karta",
+      "popisky_wifi": {
+        "nadpis": {
+          "cs": "WiFi přístup",
+          "en": "WiFi access",
+          "de": "WLAN Zugang",
+          "pl": "",
+          "uk": "",
+          "zh-Hant": ""
+        },
+        "nad_nadpisem": {
+          "cs": "Připojení k síti",
+          "en": "Network connection",
+          "de": "Netzwerkverbindung",
+          "pl": "",
+          "uk": "",
+          "zh-Hant": ""
+        },
+        "ssid": {
+          "cs": "Název sítě (SSID)",
+          "en": "Network name (SSID)",
+          "de": "Netzwerkname (SSID)",
+          "pl": "",
+          "uk": "",
+          "zh-Hant": ""
+        },
+        "heslo": {
+          "cs": "Heslo",
+          "en": "Password",
+          "de": "Passwort",
+          "pl": "",
+          "uk": "",
+          "zh-Hant": ""
+        },
+        "zabezpeceni": {
+          "cs": "Zabezpečení",
+          "en": "Security",
+          "de": "Sicherheit",
+          "pl": "",
+          "uk": "",
+          "zh-Hant": ""
+        },
+        "qr": {
+          "cs": "Naskenujte pro přímé připojení",
+          "en": "Scan for direct connection",
+          "de": "Scannen für direkte Verbindung",
+          "pl": "",
+          "uk": "",
+          "zh-Hant": ""
+        }
+      }
+    },
+    {
+      "id": "zahrada",
+      "nadpis": {
+        "cs": "Cesta na zahradu",
+        "en": "Getting to the garden",
+        "de": "Weg in den Garten",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "kroky": [
+        {
+          "id": "z1",
+          "apartmany": [
+            "V1",
+            "V4",
+            "V5"
+          ],
+          "foto": "fotky/zahrada/zahrada-1-schody-dolu.jpg",
+          "nadpis": {
+            "cs": "Schody dolů",
+            "en": "Down the stairs",
+            "de": "Treppe hinunter",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Ze svého patra sejděte po schodech dolů do přízemí. Na konci chodby uvidíte prosklené dveře vedoucí do zahrady.",
+            "en": "Go down the stairs from your floor to the ground floor. At the end of the corridor, you will see the glass door leading to the garden.",
+            "de": "Gehen Sie von Ihrer Etage die Treppe hinunter ins Erdgeschoss. Am Ende des Flurs sehen Sie die Glastür, die in den Garten führt.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "z2",
+          "apartmany": [
+            "V1",
+            "V4",
+            "V5"
+          ],
+          "foto": "fotky/zahrada/zahrada-2-prosklene-dvere.jpg",
+          "nadpis": {
+            "cs": "Prosklené dveře",
+            "en": "Glass door",
+            "de": "Glastür",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Prosklené dveře jsou na konci přízemní chodby. Na pravé straně vedle dveří je kódová klávesnice.",
+            "en": "The glass door is at the end of the ground-floor corridor. On the right-hand side next to the door, there is a keypad.",
+            "de": "Die Glastür befindet sich am Ende des Flurs im Erdgeschoss. Rechts neben der Tür befindet sich die Codetastatur.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "z3",
+          "apartmany": [
+            "V1",
+            "V4",
+            "V5"
+          ],
+          "foto": "fotky/zahrada/zahrada-3-klavesnice.jpg",
+          "nadpis": {
+            "cs": "Zadání kódu",
+            "en": "Enter the code",
+            "de": "Code eingeben",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Zadejte kód na klávesnici a potvrďte. Dveře se odemknou a otevřou do zahrady.",
+            "en": "Enter the code on the keypad and confirm it. The door will unlock and open to the garden.",
+            "de": "Geben Sie den Code an der Tastatur ein und bestätigen Sie ihn. Die Tür wird entriegelt und öffnet sich zum Garten.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo",
+          "kod": {
+            "popisek": {
+              "cs": "Kód na zahradu",
+              "en": "Garden code",
+              "de": "Gartencode",
+              "pl": "",
+              "uk": "",
+              "zh-Hant": ""
+            },
+            "hodnota": "{{KOD_ZAHRADA}} + #"
+          }
+        },
+        {
+          "id": "z4",
+          "apartmany": [
+            "V1",
+            "V4",
+            "V5"
+          ],
+          "foto": "fotky/zahrada/zahrada-4-zahrada.jpg",
+          "nadpis": {
+            "cs": "Jste v zahradě",
+            "en": "You are in the garden",
+            "de": "Sie sind im Garten",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Dveře vedou do klidné zahrady. Je tu zeleň a posezení, stranou od ruchu města.",
+            "en": "The door leads into a quiet garden. There is greenery and seating, away from the city noise.",
+            "de": "Die Tür führt in einen ruhigen Garten. Es gibt Grün und Sitzplätze, abseits vom Stadtlärm.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "upraveno_ke_schvaleni",
+          "poznamka": "Originál: 'soukromé zahrady / private garden / privaten Garten' – zahrada je ale sdílená."
+        },
+        {
+          "id": "z-info",
+          "apartmany": [
+            "V1",
+            "V4",
+            "V5"
+          ],
+          "foto": "fotky/zahrada/zahrada-5-celkovy-pohled.jpg",
+          "nadpis": {
+            "cs": "Tichý kout v zahradě",
+            "en": "A quiet corner in the garden",
+            "de": "Ein ruhiger Platz im Garten",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "",
+            "en": "",
+            "de": "",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "upraveno_ke_schvaleni",
+          "typ": "zahrada_info",
+          "poznamka": "Originál nadpisu: 'Tichý kout jen pro vás' – upraveno, protože zahradu sdílí V1, V4 a V5.",
+          "boxy": [
+            {
+              "stitek": {
+                "cs": "K odpočinku",
+                "en": "To relax",
+                "de": "Zum Entspannen",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              },
+              "nadpis": {
+                "cs": "Ráno i podvečer",
+                "en": "Morning and evening",
+                "de": "Morgens und abends",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              },
+              "text": {
+                "cs": "Ráno si tu dáte kávu, odpoledne sedíte ve stínu. Po dni ve městě je to dobré místo i na sklenku vína.",
+                "en": "In the morning you can have coffee here, in the afternoon you sit in the shade. After a day in the city it is a good place for a glass of wine too.",
+                "de": "Morgens können Sie hier Kaffee trinken, nachmittags im Schatten sitzen. Nach einem Tag in der Stadt ist es auch ein guter Platz für ein Glas Wein.",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              }
+            },
+            {
+              "stitek": {
+                "cs": "Sdílený prostor",
+                "en": "Shared space",
+                "de": "Gemeinsamer Bereich",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              },
+              "nadpis": {
+                "cs": "Ohleduplnost",
+                "en": "Consideration",
+                "de": "Rücksichtnahme",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              },
+              "text": {
+                "cs": "Zahradu sdílejí hosté více apartmánů. Prosíme o klid, čistotu a ohled k ostatním. Ať si ji užije každý stejně.",
+                "en": "The garden is shared by guests of several apartments. Please be mindful of quiet, cleanliness and the other guests, so everyone can enjoy it just as you do.",
+                "de": "Gäste mehrerer Apartments teilen sich den Garten. Bitte um Ruhe, Sauberkeit und Rücksicht. Damit ihn alle gleich genießen können.",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              },
+              "stav": "upraveno_ke_schvaleni"
+            },
+            {
+              "stitek": {
+                "cs": "Při odchodu",
+                "en": "When leaving",
+                "de": "Beim Verlassen",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              },
+              "nadpis": {
+                "cs": "Dveře zavírejte",
+                "en": "Keep the door closed",
+                "de": "Tür schließen",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              },
+              "text": {
+                "cs": "Při návratu zkontrolujte, že se dveře řádně dovřely. Kód si vezměte s sebou.",
+                "en": "When returning, please check that the door has closed properly. Take the code with you.",
+                "de": "Bitte prüfen Sie bei Ihrer Rückkehr, dass sich die Tür wieder richtig geschlossen hat. Nehmen Sie den Code mit.",
+                "pl": "",
+                "uk": "",
+                "zh-Hant": ""
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "posezeni-venku",
+      "nadpis": {
+        "cs": "Posezení venku",
+        "en": "Seating outside",
+        "de": "Sitzplatz im Freien",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V2",
+        "V3",
+        "V4"
+      ],
+      "stav": "upraveno_ke_schvaleni",
+      "kroky": [
+        {
+          "id": "posezeni",
+          "apartmany": [
+            "V2",
+            "V3",
+            "V4"
+          ],
+          "foto": null,
+          "nadpis": {
+            "cs": "Posezení venku",
+            "en": "Seating outside",
+            "de": "Sitzplatz im Freien",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "K posezení venku máte svou terasu. Když jsou křesílka dole v zahradě volná, můžete je využít i vy. Jsou ale určená hlavně hostům apartmánů, které terasu nemají. Děkujeme za ohleduplnost.",
+            "en": "You have your own terrace for sitting outside. If the chairs down in the garden are free, you are welcome to use them too. They are intended mainly for guests of the apartments without a terrace. Thank you for your consideration.",
+            "de": "Zum Sitzen im Freien steht Ihnen Ihre Terrasse zur Verfügung. Wenn die Sessel unten im Garten frei sind, dürfen Sie sie gerne auch nutzen. Sie sind vor allem für die Gäste der Apartments ohne Terrasse gedacht. Vielen Dank für Ihre Rücksicht.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "upraveno_ke_schvaleni"
+        }
+      ],
+      "poznamka": "Jen jedna krátká poznámka, žádný návod. Nejmenovat V1/V5 (hosté označení neznají)."
+    },
+    {
+      "id": "televize",
+      "nadpis": {
+        "cs": "Televize",
+        "en": "Television",
+        "de": "Fernsehen",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "obsah_z_webu": {
+        "zdroj": "web_i18n",
+        "i18n_id": [
+          "stay.tv.eyebrow",
+          "stay.tv.heading",
+          "stay.tv.lead",
+          "stay.tv.step1",
+          "stay.tv.step2",
+          "stay.tv.step3",
+          "stay.tv.langs",
+          "stay.tv.help"
+        ],
+        "soubor": "src/app/features/accommodation/accommodation.component.html"
+      },
+      "poznamka": "Balíček Lepší.TV KLASIK (ověřeno 6. 10. 2026 na lepší.tv: 163 programů, zpětně až 100 dní; ZDF, Das Erste, 3sat, CNN International, Bloomberg, France 2, TV5MONDE, Polsat, TVN, 1+1 International, ICTV jsou v KLASIKU). Text webu proto sedí. Zvýraznit programy podle jazyka hosta: de→ZDF, Das Erste, 3sat; pl→Polsat, TVN; uk→1+1 International, ICTV; fr→France 2, TV5MONDE; en a ostatní (vč. zh – čínské programy v nabídce nejsou)→CNN International, Bloomberg. Tabulka jako datový soubor.",
+      "kroky": []
+    },
+    {
+      "id": "pravidla",
+      "nadpis": {
+        "cs": "Pravidla pobytu",
+        "en": "House rules",
+        "de": "Hausregeln",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "obsah_z_webu": {
+        "zdroj": "web_i18n",
+        "i18n_id": [
+          "stay.rules.heading",
+          "stay.rules.smoking.title",
+          "stay.rules.smoking.text",
+          "stay.rules.bikes.title",
+          "stay.rules.bikes.text",
+          "stay.rules.pets.title",
+          "stay.rules.pets.text",
+          "stay.rules.quiet.title",
+          "stay.rules.quiet.text"
+        ],
+        "soubor": "src/app/features/accommodation/accommodation.component.html"
+      },
+      "kroky": []
+    },
+    {
+      "id": "odjezd",
+      "nadpis": {
+        "cs": "Odjezd",
+        "en": "Departure",
+        "de": "Abreise",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "obsah_z_webu": {
+        "zdroj": "web_i18n",
+        "i18n_id": [
+          "stay.checkin.step4.title",
+          "stay.checkin.step4.text"
+        ],
+        "soubor": "src/app/features/accommodation/accommodation.component.html"
+      },
+      "kroky": []
+    },
+    {
+      "id": "kontakt",
+      "nadpis": {
+        "cs": "Časy a kontakt",
+        "en": "Times and contact",
+        "de": "Zeiten und Kontakt",
+        "pl": "",
+        "uk": "",
+        "zh-Hant": ""
+      },
+      "apartmany": [
+        "V1",
+        "V2",
+        "V3",
+        "V4",
+        "V5"
+      ],
+      "stav": "hotovo",
+      "kroky": [
+        {
+          "id": "casy",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4",
+            "V5"
+          ],
+          "foto": null,
+          "nadpis": {
+            "cs": "Časy",
+            "en": "Times",
+            "de": "Zeiten",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Check-in 14:00 až 20:00, check-out do 10:00.",
+            "en": "Check-in 14:00 to 20:00, check-out by 10:00.",
+            "de": "Check-in 14:00 bis 20:00 Uhr, Check-out bis 10:00 Uhr.",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        },
+        {
+          "id": "kontakt",
+          "apartmany": [
+            "V1",
+            "V2",
+            "V3",
+            "V4",
+            "V5"
+          ],
+          "foto": null,
+          "nadpis": {
+            "cs": "Kontakt",
+            "en": "Contact",
+            "de": "Kontakt",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "text": {
+            "cs": "Nikol: +420 702 153 573 · info@vivienapartments.cz",
+            "en": "Nikol: +420 702 153 573 · info@vivienapartments.cz",
+            "de": "Nikol: +420 702 153 573 · info@vivienapartments.cz",
+            "pl": "",
+            "uk": "",
+            "zh-Hant": ""
+          },
+          "stav": "hotovo"
+        }
+      ]
+    }
+  ]
+}

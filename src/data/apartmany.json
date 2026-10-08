@@ -1,0 +1,121 @@
+{
+  "_popis": "Profil pěti apartmánů. Pořadí V1–V5 = od nejmenšího po největší. Hesla a kódy tu NEJSOU – jsou v nastavení Vercelu pod uvedenými názvy proměnných.",
+  "apartmany": [
+    {
+      "id": "V1",
+      "nazev": {
+        "cs": "Jemná harmonie",
+        "en": "Gentle Harmony"
+      },
+      "stani": 14,
+      "wifi": {
+        "ssid": "apartman1guest",
+        "zabezpeceni": "WPA",
+        "heslo_env": "WIFI_HESLO_V1"
+      },
+      "navod_na_zahradu": true,
+      "vstup_do_apartmanu_pres_zahradu": false,
+      "terasa": null
+    },
+    {
+      "id": "V2",
+      "nazev": {
+        "cs": "Zlatá rovnováha",
+        "en": "Golden Balance"
+      },
+      "stani": 25,
+      "wifi": {
+        "ssid": "apartman2guest",
+        "zabezpeceni": "WPA",
+        "heslo_env": "WIFI_HESLO_V2"
+      },
+      "navod_na_zahradu": false,
+      "vstup_do_apartmanu_pres_zahradu": true,
+      "terasa": "sdilena"
+    },
+    {
+      "id": "V3",
+      "nazev": {
+        "cs": "Večerní elegance",
+        "en": "Evening Elegance"
+      },
+      "stani": 26,
+      "wifi": {
+        "ssid": "apartman3guest",
+        "zabezpeceni": "WPA",
+        "heslo_env": "WIFI_HESLO_V3"
+      },
+      "navod_na_zahradu": false,
+      "vstup_do_apartmanu_pres_zahradu": true,
+      "terasa": "sdilena"
+    },
+    {
+      "id": "V4",
+      "nazev": {
+        "cs": "Ušlechtilý kontrast",
+        "en": "Noble Contrast"
+      },
+      "stani": 27,
+      "wifi": {
+        "ssid": "apartman4guest",
+        "zabezpeceni": "WPA",
+        "heslo_env": "WIFI_HESLO_V4"
+      },
+      "navod_na_zahradu": true,
+      "vstup_do_apartmanu_pres_zahradu": false,
+      "terasa": "soukroma"
+    },
+    {
+      "id": "V5",
+      "nazev": {
+        "cs": "Pohodlí v tlumených tónech",
+        "en": "Comfort in Muted Tones"
+      },
+      "stani": 43,
+      "wifi": {
+        "ssid": "apartman5guest",
+        "zabezpeceni": "WPA",
+        "heslo_env": "WIFI_HESLO_V5"
+      },
+      "navod_na_zahradu": true,
+      "vstup_do_apartmanu_pres_zahradu": false,
+      "terasa": null
+    }
+  ],
+  "spolecne": {
+    "adresa_domu": "Nádražní 108/43, České Budějovice",
+    "parkoviste_adresa": "Chelčického 95/15",
+    "parkoviste_vzdalenost": "brát z SITE_DISTANCES na webu (nyní 239 m, 3 min pěšky)",
+    "check_in": "14:00–20:00",
+    "check_out": "do 10:00",
+    "kontakt": {
+      "jmeno": "Nikol",
+      "telefon": "+420 702 153 573",
+      "email": "info@vivienapartments.cz"
+    },
+    "kody_env": {
+      "KOD_ZAHRADA": "kód na klávesnici u prosklených dveří do zahrady (zadává se + #)"
+    },
+    "vstup": "Do domu a apartmánu uvádí hosty majitel osobně – žádné kódy ke vstupu do domu se neposílají.",
+    "brana": "Po–Pá 6:00–18:00 otevřená; jinak a o víkendu celý den zavřená, otevírá se hovorem z předem nahlášeného čísla (ne WhatsApp, ne skryté číslo, pozor na dvě SIM).",
+    "kontakt_parkovani_brana": {
+      "telefon": "(jen env / osobni pruvodce)",
+      "pravidlo": "VÝJIMKA z pravidla č. 1 schválená majitelem 6. 10. 2026: jen v sekcích o parkování a bráně v osobním průvodci a e-mailu hostovi. Nikdy na veřejném webu, v sitemap, llms.txt ani jinde."
+    }
+  },
+  "jazyky": {
+    "_pravidlo": "Jazyk podle národnosti prvního hosta, jinak angličtina. Chybí-li text v daném jazyce, použije se angličtina.",
+    "DEU": "de",
+    "AUT": "de",
+    "CHE": "de",
+    "CZE": "cs",
+    "SVK": "cs",
+    "POL": "pl",
+    "UKR": "uk",
+    "TWN": "zh-Hant",
+    "HKG": "zh-Hant",
+    "CHN": "zh-Hant",
+    "_ostatni": "en"
+  },
+  "nazvy_apartmanu_pravidlo": "V češtině český + anglický název (např. Zlatá rovnováha / Golden Balance), v ostatních jazycích jen anglický."
+}
