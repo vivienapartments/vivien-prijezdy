@@ -961,40 +961,29 @@ a.pv-phone:focus-visible {
   text-underline-offset: 0.15em;
 }
 
-/* P.S. apartmány: ztišený box (méně křiklavý na mobilu) */
+/* P.S. apartmány: box + stejný odkaz jako jinde (pv-link), ne pill tlačítko */
 .pv-ps__box {
   padding: 0.85rem 0.95rem;
-  border: 1px solid color-mix(in srgb, var(--color-gold) 40%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-gold) 28%, transparent);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--color-gold) 5%, var(--color-cream));
+  background: color-mix(in srgb, var(--color-gold) 4%, var(--color-cream));
 
   .pv-flow__title {
     margin: 0 0 0.5rem;
-    font-size: 1.2rem;
+    font-size: 1.15rem;
   }
 
   p {
-    margin: 0 0 0.85rem;
+    margin: 0 0 0.75rem;
     font-size: 0.95rem;
   }
 }
 
-.pv-ps__btn {
-  display: inline-block;
-  padding: 0.55rem 0.95rem;
-  border: 1px solid var(--color-gold);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--color-gold-dark, #8b6914);
-  font-family: var(--font-body);
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-decoration: none;
+.pv-ps__cta {
+  margin: 0;
 
-  @media (min-width: 720px) {
-    padding: 0.65rem 1.1rem;
-    background: color-mix(in srgb, var(--color-gold) 88%, #fff);
-    border-color: transparent;
-    color: var(--color-dark);
+  .pv-link {
+    font-size: 0.95rem;
+    text-underline-offset: 0.18em;
   }
 }

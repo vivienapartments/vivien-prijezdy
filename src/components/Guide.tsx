@@ -220,9 +220,11 @@ export function Guide({
           <p className="pv-kicker">{tt(TX.psApartmany.kicker)}</p>
           <h2 className="pv-flow__title">{tt(TX.psApartmany.title)}</h2>
           <p>{tt(TX.psApartmany.text)}</p>
-          <a className="pv-ps__btn" href={quizUrl} target="_blank" rel="noopener noreferrer">
-            {tt(TX.psApartmany.cta)}
-          </a>
+          <p className="pv-ps__cta">
+            <a className="pv-link" href={quizUrl} target="_blank" rel="noopener noreferrer">
+              {tt(TX.psApartmany.cta)}
+            </a>
+          </p>
         </div>
       </div>
     </li>
