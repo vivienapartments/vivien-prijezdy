@@ -37,7 +37,8 @@ export function NahledClient({ secrets, searchParams }: Props) {
     params.set('lang', next.lang);
     params.set('vikend', next.vikend ? '1' : '0');
     if (next.prijezd) params.set('prijezd', next.prijezd);
-    router.replace(`/nahled?${params.toString()}`);
+    // scroll: false = přepínač neodroluje stránku nahoru
+    router.replace(`/nahled?${params.toString()}`, { scroll: false });
   };
 
   return (
