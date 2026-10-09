@@ -174,12 +174,12 @@ const closingL: LText = {
 
 /** Úplně na konci mailu: odkaz na veřejný web ({{WEB}} = URL podle jazyka). */
 const webTipL: LText = {
-  cs: 'Ještě víc tipů najdete na {{WEB}}: jídlo, výlety, aktivity, co se děje ve městě, dny podle nálady, poznávací hra Budějovic a průvodce atmosférou.',
-  en: 'For more tips see {{WEB}}: food, day trips, activities, what is on in town, days by mood, the Budweis discovery game, and the atmosphere guide.',
-  de: 'Noch mehr Tipps finden Sie auf {{WEB}}: Essen, Ausflüge, Aktivitäten, was in der Stadt läuft, Tage nach Stimmung, das Budweiser Entdeckungsspiel und den Atmosphären-Guide.',
-  pl: 'Więcej wskazówek znajdziecie na {{WEB}}: jedzenie, wycieczki, atrakcje, co się dzieje w mieście, dni według nastroju, gra odkrywcza Budziejowic i przewodnik po atmosferze.',
-  uk: 'Ще більше порад на {{WEB}}: їжа, виїзди, активності, що відбувається в місті, дні за настроєм, пізнавальна гра Будейовиць і гід атмосферою.',
-  'zh-Hant': '更多實用資訊請見 {{WEB}}：美食、一日遊、活動、城裡近期活動、依心情安排的一天、布杰約維采探索遊戲，以及氛圍指南。',
+  cs: 'Ještě víc tipů najdete na {{WEB}}: jídlo, výlety, aktivity, co se děje ve městě, poznávací hra Budějovic a průvodce atmosférou.',
+  en: 'For more tips see {{WEB}}: food, day trips, activities, what is on in town, the Budweis discovery game, and the atmosphere guide.',
+  de: 'Noch mehr Tipps finden Sie auf {{WEB}}: Essen, Ausflüge, Aktivitäten, was in der Stadt läuft, das Budweiser Entdeckungsspiel und den Atmosphären-Guide.',
+  pl: 'Więcej wskazówek znajdziecie na {{WEB}}: jedzenie, wycieczki, atrakcje, co się dzieje w mieście, gra odkrywcza Budziejowic i przewodnik po atmosferze.',
+  uk: 'Ще більше порад на {{WEB}}: їжа, виїзди, активності, що відбувається в місті, пізнавальна гра Будейовиць і гід атмосферою.',
+  'zh-Hant': '更多實用資訊請見 {{WEB}}：美食、一日遊、活動、城裡近期活動、布杰約維采探索遊戲，以及氛圍指南。',
 };
 
 function publicSiteUrl(lang: GuideLang): string {
