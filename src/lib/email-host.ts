@@ -175,12 +175,30 @@ const closingL: LText = {
 
 /** Úplně na konci mailu: odkaz na veřejný web ({{WEB}} = URL podle jazyka). */
 const webTipL: LText = {
-  cs: 'Ještě víc tipů najdete na {{WEB}}: jídlo, výlety, aktivity, co se děje ve městě, poznávací hra Budějovic a průvodce atmosférou.',
-  en: 'For more tips see {{WEB}}: food, day trips, activities, what is on in town, the Budweis discovery game, and the atmosphere guide.',
-  de: 'Noch mehr Tipps finden Sie auf {{WEB}}: Essen, Ausflüge, Aktivitäten, was in der Stadt läuft, das Budweiser Entdeckungsspiel und den Atmosphären-Guide.',
-  pl: 'Więcej wskazówek znajdziecie na {{WEB}}: jedzenie, wycieczki, atrakcje, co się dzieje w mieście, gra odkrywcza Budziejowic i przewodnik po atmosferze.',
-  uk: 'Ще більше порад на {{WEB}}: їжа, виїзди, активності, що відбувається в місті, пізнавальна гра Будейовиць і гід атмосферою.',
-  'zh-Hant': '更多實用資訊請見 {{WEB}}：美食、一日遊、活動、城裡近期活動、布杰約維采探索遊戲，以及氛圍指南。',
+  cs: 'Ještě víc tipů na pobyt najdete na {{WEB}}: kam na jídlo, kam na výlet, co podniknout, co se děje ve městě a poznávací hra po Budějovicích.',
+  en: 'More tips for your stay are on {{WEB}}: where to eat, day trips, things to do, what is on in town, and the Budweis discovery game.',
+  de: 'Noch mehr Tipps für Ihren Aufenthalt finden Sie auf {{WEB}}: Essen, Ausflüge, Unternehmungen, was in der Stadt läuft und das Budweiser Entdeckungsspiel.',
+  pl: 'Więcej wskazówek na pobyt znajdziecie na {{WEB}}: gdzie zjeść, wycieczki, co robić, co się dzieje w mieście i gra odkrywcza po Budziejowicach.',
+  uk: 'Ще більше порад на перебування на {{WEB}}: куди на їжу, виїзди, що робити, що відбувається в місті та пізнавальна гра Будейовицями.',
+  'zh-Hant': '更多住宿小提示請見 {{WEB}}：去哪吃飯、一日遊、城裡活動、近期活動，以及布杰約維采探索遊戲。',
+};
+
+const psApartmanyL: LText = {
+  cs: 'P.S. Máme pět apartmánů, každý s jinou atmosférou. Spousta hostů o tom neví. Až budete plánovat další pobyt, můžete si vybrat podle nálady: {{QUIZ}}',
+  en: 'P.S. We have five apartments, each with a different atmosphere. Many guests do not know that. When you plan another stay, you can choose by mood: {{QUIZ}}',
+  de: 'P.S. Wir haben fünf Apartments, jedes mit einer anderen Atmosphäre. Viele Gäste wissen das nicht. Wenn Sie den nächsten Aufenthalt planen, können Sie nach Stimmung wählen: {{QUIZ}}',
+  pl: 'P.S. Mamy pięć apartamentów, każdy z inną atmosferą. Wielu gości o tym nie wie. Gdy będziecie planować kolejny pobyt, możecie wybrać według nastroju: {{QUIZ}}',
+  uk: 'P.S. У нас пʼять апартаментів, кожні з іншою атмосферою. Багато гостей про це не знають. Коли плануватимете наступне перебування, можете обрати за настроєм: {{QUIZ}}',
+  'zh-Hant': 'P.S. 我們有五間公寓，各有不同氛圍。很多客人不知道這件事。下次規劃住宿時，可以依心情挑選：{{QUIZ}}',
+};
+
+const psCtaL: LText = {
+  cs: 'Který apartmán by vám seděl',
+  en: 'Which apartment would suit you',
+  de: 'Welches Apartment würde zu Ihnen passen',
+  pl: 'Który apartament by Wam pasował',
+  uk: 'Які апартаменти вам підійдуть',
+  'zh-Hant': '哪間公寓適合您',
 };
 
 function publicSiteUrl(lang: GuideLang): string {
@@ -193,6 +211,11 @@ function publicSiteUrl(lang: GuideLang): string {
   return `${base}/`;
 }
 
+function quizUrl(lang: GuideLang): string {
+  const base = publicSiteUrl(lang).replace(/\/$/, '');
+  return `${base}/discover-your-atmosphere`;
+}
+
 function webTipPlain(lang: GuideLang): string {
   return t(webTipL, lang).replace(/\{\{WEB\}\}/g, publicSiteUrl(lang).replace(/\/$/, ''));
 }
@@ -202,6 +225,17 @@ function webTipHtml(lang: GuideLang): string {
   const label = url.replace(/^https:\/\//, '').replace(/\/$/, '');
   const [before = '', after = ''] = t(webTipL, lang).split('{{WEB}}');
   return `${escapeHtml(before)}<a href="${escapeAttr(url)}" style="color:#e8d5a3;text-decoration:underline;font-weight:700;">${escapeHtml(label)}</a>${escapeHtml(after)}`;
+}
+
+function psApartmanyPlain(lang: GuideLang): string {
+  return t(psApartmanyL, lang).replace(/\{\{QUIZ\}\}/g, `${t(psCtaL, lang)} (${quizUrl(lang)})`);
+}
+
+function psApartmanyHtml(lang: GuideLang): string {
+  const href = quizUrl(lang);
+  const cta = t(psCtaL, lang);
+  const [before = '', after = ''] = t(psApartmanyL, lang).split('{{QUIZ}}');
+  return `${escapeHtml(before)}<a href="${escapeAttr(href)}" style="color:#e8d5a3;text-decoration:underline;font-weight:700;">${escapeHtml(cta)}</a>${escapeHtml(after)}`;
 }
 
 function aptRow(id: AptId): AptRow {
@@ -370,6 +404,11 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                     ${webTipHtml(lang)}
                   </td>
                 </tr>
+                <tr>
+                  <td style="padding:16px 0 0;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;">
+                    ${psApartmanyHtml(lang)}
+                  </td>
+                </tr>
               </table>
             </td>
           </tr>
@@ -403,6 +442,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
     '+420 702 153 573',
     '',
     webTipPlain(lang),
+    '',
+    psApartmanyPlain(lang),
   ].join('\n');
 
   return { subject, html, text };

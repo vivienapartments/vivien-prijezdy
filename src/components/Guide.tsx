@@ -82,7 +82,6 @@ export function Guide({
   const [prijezd, setPrijezd] = useState<Prijezd | null>(initialPrijezd);
   const [wifiQr, setWifiQr] = useState<string | null>(null);
   const [gardenQr, setGardenQr] = useState<string | null>(null);
-
   const aptRec = useMemo(() => aptRecord(apt), [apt]);
   const sections = useMemo(() => visibleSekce(apt, prijezd), [apt, prijezd]);
 
@@ -162,6 +161,72 @@ export function Guide({
 
   const wifiSekce = sections.find((s) => s.id === 'wifi');
   const popisky = wifiSekce?.popisky_wifi ?? {};
+
+  const sitePath = (path: string) => {
+    const p = path.startsWith('/') ? path : `/${path}`;
+    if (lang === 'cs') return `https://vivienapartments.cz${p}`;
+    if (lang === 'zh-Hant') return `https://vivienapartments.cz/zh${p}`;
+    return `https://vivienapartments.cz/${lang}${p}`;
+  };
+  const quizUrl = sitePath(TX.psApartmany.quizPath);
+  const kontaktIndex = sections.findIndex((s) => s.id === 'kontakt');
+
+  const renderTipsSection = (num: number) => (
+    <li
+      key="tipy-na-webu"
+      id="pv-tipy-na-webu"
+      className={`pv-flow__step pv-flow__step--${((num - 1) % 4) + 1} pv-web-tip`}
+    >
+      <div className="pv-flow__marker" aria-hidden="true">
+        <span className="pv-flow__num">{num}</span>
+      </div>
+      <div className="pv-flow__card">
+        <div className="pv-flow__card-head">
+          <h2 className="pv-flow__title">
+            {num}. {tt(TX.tipyNaWebu.title)}
+          </h2>
+        </div>
+        <p className="pv-hub__lead">{tt(TX.tipyNaWebu.lead)}</p>
+        <ul className="pv-web-tip__list pv-web-tip__list--safe">
+          {TX.tipyNaWebu.items.map((it) => (
+            <li key={it.path}>
+              <span className="pv-web-tip__item-label">{tt(it.label)}</span>
+              <a
+                className="pv-web-tip__item-open"
+                href={sitePath(it.path)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {tt(TX.tipyNaWebu.open)}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </li>
+  );
+
+  const renderPsSection = (num: number) => (
+    <li
+      key="ps-apartmany"
+      id="pv-ps-apartmany"
+      className={`pv-flow__step pv-flow__step--${((num - 1) % 4) + 1} pv-ps`}
+    >
+      <div className="pv-flow__marker" aria-hidden="true">
+        <span className="pv-flow__num">{num}</span>
+      </div>
+      <div className="pv-flow__card">
+        <div className="pv-ps__box">
+          <p className="pv-kicker">{tt(TX.psApartmany.kicker)}</p>
+          <h2 className="pv-flow__title">{tt(TX.psApartmany.title)}</h2>
+          <p>{tt(TX.psApartmany.text)}</p>
+          <a className="pv-ps__btn" href={quizUrl} target="_blank" rel="noopener noreferrer">
+            {tt(TX.psApartmany.cta)}
+          </a>
+        </div>
+      </div>
+    </li>
+  );
 
   return (
     <div className="pv-root">
@@ -258,24 +323,34 @@ export function Guide({
 
         {prijezd ? (
           <ol className="pv-flow pv-flow--axis" aria-label="Kroky průvodce">
-            {sections.map((s, si) => {
+            {sections.flatMap((s, si) => {
+              const insertBefore =
+                kontaktIndex >= 0 && s.id === 'kontakt'
+                  ? [renderTipsSection(kontaktIndex + 1)]
+                  : [];
+              const displayNum =
+                kontaktIndex >= 0 && si >= kontaktIndex ? si + 2 : si + 1;
+              const insertAfter =
+                kontaktIndex >= 0 && s.id === 'kontakt'
+                  ? [renderPsSection(displayNum + 1)]
+                  : [];
               const kroky = visibleKroky(s, apt);
-              const tone = (si % 4) + 1;
-              return (
+              const tone = ((displayNum - 1) % 4) + 1;
+              const sectionLi = (
                 <li
                   key={s.id}
                   id={`pv-${s.id}`}
                   className={`pv-flow__step pv-flow__step--${tone}`}
                 >
                   <div className="pv-flow__marker" aria-hidden="true">
-                    <span className="pv-flow__num">{si + 1}</span>
+                    <span className="pv-flow__num">{displayNum}</span>
                   </div>
                   <div className="pv-flow__card">
                     {s.id === 'zadost-o-parkovani' ? (
                       <>
                         {kroky.map((k) => (
                           <article key={k.id} className="pv-step">
-                            <p className="pv-kicker">{si + 1}. {tt(TX.SECTION_NAV['zadost-o-parkovani'])}</p>
+                            <p className="pv-kicker">{displayNum}. {tt(TX.SECTION_NAV['zadost-o-parkovani'])}</p>
                             <h2>{tt(s.nadpis)}</h2>
                             <p>{renderPhoneText(tt(k.text))}</p>
                             {k.body?.length ? (
@@ -315,7 +390,7 @@ export function Guide({
                       <>
                         <div className="pv-flow__card-head">
                           <h2 className="pv-flow__title">
-                            {si + 1}. {sectionNavLabel(s, lang)}
+                            {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
                         {prijezd === 'pesky' ? (
@@ -420,7 +495,7 @@ export function Guide({
                       <>
                         <div className="pv-flow__card-head">
                           <h2 className="pv-flow__title">
-                            {si + 1}. {sectionNavLabel(s, lang)}
+                            {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
                         <div className={vikend ? 'pv-sec--weekend' : undefined}>
@@ -447,7 +522,7 @@ export function Guide({
                       <>
                         <div className="pv-flow__card-head">
                           <h2 className="pv-flow__title">
-                            {si + 1}. {sectionNavLabel(s, lang)}
+                            {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
                         <a
@@ -478,7 +553,7 @@ export function Guide({
                       <>
                         <div className="pv-flow__card-head">
                           <h2 className="pv-flow__title">
-                            {si + 1}. {sectionNavLabel(s, lang)}
+                            {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
                         {kroky.map((k, i) => {
@@ -516,7 +591,7 @@ export function Guide({
                       <>
                         <div className="pv-flow__card-head">
                           <h2 className="pv-flow__title">
-                            {si + 1}. {sectionNavLabel(s, lang)}
+                            {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
                         <p className="pv-hub__lead">{tt(popisky['nad_nadpisem'])}</p>
@@ -636,7 +711,7 @@ export function Guide({
                       <>
                         <div className="pv-flow__card-head">
                           <h2 className="pv-flow__title">
-                            {si + 1}. {sectionNavLabel(s, lang)}
+                            {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
                         <p>{tt(TX.odjezdTextL)}</p>
@@ -645,7 +720,7 @@ export function Guide({
                       <>
                         <div className="pv-flow__card-head">
                           <h2 className="pv-flow__title">
-                            {si + 1}. {sectionNavLabel(s, lang)}
+                            {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
                         {kroky.map((k, i) => {
@@ -757,6 +832,7 @@ export function Guide({
                   </div>
                 </li>
               );
+              return [...insertBefore, sectionLi, ...insertAfter];
             })}
           </ol>
         ) : null}

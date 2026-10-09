@@ -737,4 +737,142 @@ export const SECTION_NAV: Record<string, LText> = {
     uk: 'Контакт',
     'zh-Hant': '聯絡',
   },
+  'tipy-na-webu': {
+    cs: 'Tipy na pobyt',
+    en: 'Tips for your stay',
+    de: 'Tipps für den Aufenthalt',
+    pl: 'Wskazówki na pobyt',
+    uk: 'Поради на перебування',
+    'zh-Hant': '住宿小提示',
+  },
+  'ps-apartmany': {
+    cs: 'P.S.',
+    en: 'P.S.',
+    de: 'P.S.',
+    pl: 'P.S.',
+    uk: 'P.S.',
+    'zh-Hant': 'P.S.',
+  },
+};
+
+/** Sekce tipů na webu (klik = rovnou daná stránka). */
+export const tipyNaWebu = {
+  title: {
+    cs: 'Nechte si poradit s tipy na pobyt',
+    en: 'Get tips for your stay',
+    de: 'Tipps für Ihren Aufenthalt',
+    pl: 'Wskazówki na czas pobytu',
+    uk: 'Поради на час перебування',
+    'zh-Hant': '住宿小提示，讓我們幫您',
+  } as LText,
+  lead: {
+    cs: 'Klikněte na to, co vás zajímá. Otevře se rovnou daná stránka.',
+    en: 'Tap what interests you. It opens that page directly.',
+    de: 'Tippen Sie auf das, was Sie interessiert. Die Seite öffnet sich direkt.',
+    pl: 'Kliknijcie to, co Was interesuje. Otworzy się od razu dana strona.',
+    uk: 'Натисніть те, що вас цікавить. Одразу відкриється потрібна сторінка.',
+    'zh-Hant': '點選您感興趣的項目，會直接開啟該頁面。',
+  } as LText,
+  open: {
+    cs: 'otevřít',
+    en: 'open',
+    de: 'öffnen',
+    pl: 'otwórz',
+    uk: 'відкрити',
+    'zh-Hant': '開啟',
+  } as LText,
+  items: [
+    {
+      path: '/jidlo-a-podniky',
+      label: {
+        cs: 'Kam na jídlo',
+        en: 'Where to eat',
+        de: 'Wohin zum Essen',
+        pl: 'Gdzie zjeść',
+        uk: 'Куди на їжу',
+        'zh-Hant': '去哪裡吃飯',
+      } as LText,
+    },
+    {
+      path: '/tipy-na-vylety',
+      label: {
+        cs: 'Kam na výlet',
+        en: 'Day trip ideas',
+        de: 'Wohin zum Ausflug',
+        pl: 'Dokąd na wycieczkę',
+        uk: 'Куди на виїзд',
+        'zh-Hant': '一日遊去哪',
+      } as LText,
+    },
+    {
+      path: '/zazitky',
+      label: {
+        cs: 'Co podniknout ve městě',
+        en: 'Things to do in town',
+        de: 'Was man in der Stadt unternehmen kann',
+        pl: 'Co robić w mieście',
+        uk: 'Що робити в місті',
+        'zh-Hant': '城裡能做什麼',
+      } as LText,
+    },
+    {
+      path: '/co-se-deje',
+      label: {
+        cs: 'Co se děje tento týden',
+        en: 'What is on this week',
+        de: 'Was diese Woche läuft',
+        pl: 'Co się dzieje w tym tygodniu',
+        uk: 'Що відбувається цього тижня',
+        'zh-Hant': '本週有什麼活動',
+      } as LText,
+    },
+    {
+      path: '/zazitky/pecet-budejovic',
+      label: {
+        cs: 'Poznávací hra po Budějovicích',
+        en: 'Budweis discovery game',
+        de: 'Entdeckungsspiel durch Budweis',
+        pl: 'Gra odkrywcza po Budziejowicach',
+        uk: 'Пізнавальна гра Будейовицями',
+        'zh-Hant': '布杰約維采探索遊戲',
+      } as LText,
+    },
+  ],
+};
+
+/** P.S. pod kontaktem: další apartmány / nálada. */
+export const psApartmany = {
+  kicker: {
+    cs: 'P.S.',
+    en: 'P.S.',
+    de: 'P.S.',
+    pl: 'P.S.',
+    uk: 'P.S.',
+    'zh-Hant': 'P.S.',
+  } as LText,
+  title: {
+    cs: 'Pět apartmánů, pět atmosfér',
+    en: 'Five apartments, five atmospheres',
+    de: 'Fünf Apartments, fünf Atmosphären',
+    pl: 'Pięć apartamentów, pięć atmosfer',
+    uk: 'Пʼять апартаментів, пʼять атмосфер',
+    'zh-Hant': '五間公寓，五種氛圍',
+  } as LText,
+  text: {
+    cs: 'Spousta hostů o tom neví. Až budete plánovat další pobyt, můžete si vybrat podle nálady.',
+    en: 'Many guests do not know that. When you plan another stay, you can choose by mood.',
+    de: 'Viele Gäste wissen das nicht. Wenn Sie den nächsten Aufenthalt planen, können Sie nach Stimmung wählen.',
+    pl: 'Wielu gości o tym nie wie. Gdy będziecie planować kolejny pobyt, możecie wybrać według nastroju.',
+    uk: 'Багато гостей про це не знають. Коли плануватимете наступне перебування, можете обрати за настроєм.',
+    'zh-Hant': '很多客人不知道這件事。下次規劃住宿時，可以依心情挑選。',
+  } as LText,
+  cta: {
+    cs: 'Který apartmán by vám seděl',
+    en: 'Which apartment would suit you',
+    de: 'Welches Apartment würde zu Ihnen passen',
+    pl: 'Który apartament by Wam pasował',
+    uk: 'Які апартаменти вам підійдуть',
+    'zh-Hant': '哪間公寓適合您',
+  } as LText,
+  quizPath: '/discover-your-atmosphere',
 };
