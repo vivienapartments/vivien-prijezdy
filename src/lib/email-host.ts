@@ -24,9 +24,11 @@ export type GuestEmailInput = {
 
 export type CtaStyle = 'A' | 'B' | 'C' | 'D' | 'E';
 
-/** Veřejné logo na ostrém webu (náhled HTML). */
-export const LOGO_PUBLIC_URL = 'https://vivienapartments.cz/images/logo-96.png';
+/** Veřejné logo na ostrém webu (náhled HTML). Preferovat 2× asset. */
+export const LOGO_PUBLIC_URL = 'https://vivienapartments.cz/logo-512.png';
 export const LOGO_CID = 'vivien-logo';
+/** Horní logo: PNG 192 px (2×), v HTML zobrazeno na 96 px kvůli ostrosti na retina. */
+export const LOGO_DISPLAY_WIDTH = 96;
 /** Podpis: JPEG 400 px (2×), v HTML zobrazeno na 180 px kvůli ostrosti. */
 export const PODPIS_CID = 'vivien-podpis';
 export const PODPIS_WIDTH = 180;
@@ -352,7 +354,7 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center" style="padding:0 0 22px;">
-                    <img src="${escapeAttr(logoSrc)}" width="96" height="96" alt="VIVIEN Apartments" style="display:block;width:96px;height:auto;border:0;" />
+                    <img src="${escapeAttr(logoSrc)}" width="${LOGO_DISPLAY_WIDTH}" height="${LOGO_DISPLAY_WIDTH}" alt="VIVIEN Apartments" style="display:block;width:${LOGO_DISPLAY_WIDTH}px;height:auto;border:0;-ms-interpolation-mode:bicubic;" />
                   </td>
                 </tr>
                 <tr><td style="padding:0 0 16px;font-family:${serif};font-size:20px;line-height:1.4;color:#f5efe3;">${escapeHtml(greeting)}</td></tr>
