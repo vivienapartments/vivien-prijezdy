@@ -74,7 +74,7 @@ export const kodZahradaLabel: LText = {
   'zh-Hant': '花園入口',
 };
 
-/** Slovo kolem čísla klíčku: „klíček 9000 klíček“. */
+/** Slovo kolem čísla klíčku. V UI se skládá pod sebe: slovo / 9000 / slovo. */
 export const keyFobWord: LText = {
   cs: 'klíček',
   en: 'key fob',

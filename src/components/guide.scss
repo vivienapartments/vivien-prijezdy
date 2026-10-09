@@ -392,6 +392,16 @@
   margin: 1.25rem 0 1.75rem;
 }
 
+/* Dlouhá německá složená slova nesmí vytéct z karty na mobilu.
+   Telefony (.pv-phone) mají nowrap a zůstanou v jednom kuse. */
+.pv-step p,
+.pv-step li,
+.pv-flow__card > p,
+.pv-hub__lead {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
 .pv-step--note {
   background: color-mix(in srgb, var(--color-gold) 8%, var(--pv-surface-2));
   padding: 1rem 1.1rem;
@@ -891,10 +901,26 @@ a.pv-phone:focus-visible {
   color: var(--color-gold);
 }
 
+.pv-codes__row dt,
+.pv-codes__row dd {
+  overflow-wrap: anywhere;
+}
+
 .pv-codes__row dd {
   margin: 0;
   font-family: var(--font-display);
   font-size: 1.15rem;
+}
+
+/* klíček / 9000 / klíček — na mobilu i u dlouhého DE „Schlüsselanhänger“ */
+.pv-codes__stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .pv-doplnit {

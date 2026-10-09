@@ -400,7 +400,15 @@ export function Guide({
                                 <div className="pv-codes__row" key={kind}>
                                   <dt>{tt(label)}</dt>
                                   <dd className={missing ? 'pv-doplnit' : undefined}>
-                                    <strong className="pv-phone">{value}</strong>
+                                    {kind === 'dum' ? (
+                                      <strong className="pv-codes__stack">
+                                        <span>{fob}</span>
+                                        <span>{HOUSE_KEY_TAG}</span>
+                                        <span>{fob}</span>
+                                      </strong>
+                                    ) : (
+                                      <strong className="pv-phone">{value}</strong>
+                                    )}
                                   </dd>
                                 </div>
                               );

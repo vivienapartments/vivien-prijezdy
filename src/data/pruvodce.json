@@ -219,7 +219,7 @@
             {
               "cs": "Vaše číslo nesmí být skryté (vypněte skrývání čísla volajícího).",
               "en": "Your number must not be hidden (switch off caller ID blocking).",
-              "de": "Ihre Nummer darf nicht unterdrückt sein (Rufnummernunterdrückung ausschalten).",
+              "de": "Ihre Nummer darf nicht unterdrückt sein. Schalten Sie die Anzeige der Rufnummer ein.",
               "pl": "Wasze numer nie może być ukryty (wyłączcie ukrywanie numeru).",
               "uk": "Ваш номер не повинен бути прихованим (вимкніть приховування номера).",
               "zh-Hant": "號碼不可隱藏（請關閉隱藏來電號碼）。"
