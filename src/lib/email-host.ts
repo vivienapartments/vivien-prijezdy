@@ -88,13 +88,24 @@ const subjectL: LText = {
   'zh-Hant': '您的個人抵達指南 · VIVIEN',
 };
 
-const introL: LText = {
-  cs: 'Připravili jsme pro vás osobní průvodce příjezdem. Otevřete ho tlačítkem níže.',
-  en: 'We prepared a personal arrival guide for you. Open it with the button below.',
-  de: 'Wir haben einen persönlichen Anreiseleitfaden für Sie vorbereitet. Öffnen Sie ihn über die Schaltfläche unten.',
-  pl: 'Przygotowaliśmy dla Was osobistą instrukcję przyjazdu. Otwórzcie ją przyciskiem poniżej.',
-  uk: 'Ми підготували для вас особистий гід приїзду. Відкрийте його кнопкою нижче.',
-  'zh-Hant': '我們為您準備了個人抵達指南。請用下方按鈕開啟。',
+/** Co průvodce je (cesta + zásadní info). */
+const introBodyL: LText = {
+  cs: 'Připravili jsme krátký průvodce. Je v něm cesta k nám, parkování, brána, Wi-Fi a kódy. Ať víte, kam jet a co dělat po příjezdu.',
+  en: 'We prepared a short guide. It has the way to us, parking, the gate, Wi-Fi and codes. So you know where to go and what to do after arrival.',
+  de: 'Wir haben einen kurzen Leitfaden vorbereitet. Darin finden Sie den Weg zu uns, Parken, Tor, WLAN und Codes. Damit Sie wissen, wohin Sie fahren und was nach der Ankunft zu tun ist.',
+  pl: 'Przygotowaliśmy krótki przewodnik. Jest w nim droga do nas, parking, brama, Wi-Fi i kody. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
+  uk: 'Ми підготували короткий гід. У ньому шлях до нас, паркування, брама, Wi-Fi та коди. Щоб ви знали, куди їхати і що робити після прибуття.',
+  'zh-Hant': '我們準備了一份簡短指南。內容包含前往我們這裡的路線、停車、大門、Wi-Fi 與密碼。讓您知道怎麼來、抵達後該做什麼。',
+};
+
+/** CTA nápověda (v HTML tučně). */
+const introOpenL: LText = {
+  cs: 'Otevřete ho tlačítkem níže.',
+  en: 'Open it with the button below.',
+  de: 'Öffnen Sie ihn über die Schaltfläche unten.',
+  pl: 'Otwórzcie go przyciskiem poniżej.',
+  uk: 'Відкрийте його кнопкою нижче.',
+  'zh-Hant': '請用下方按鈕開啟。',
 };
 
 const stayL: LText = {
@@ -279,7 +290,7 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   </td>
                 </tr>
                 <tr><td style="padding:0 0 16px;font-family:${serif};font-size:20px;line-height:1.4;color:#f5efe3;">${escapeHtml(greeting)}</td></tr>
-                <tr><td style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">${escapeHtml(t(introL, lang))}</td></tr>
+                <tr><td style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">${escapeHtml(t(introBodyL, lang))}<br/><br/><strong style="color:#f5efe3;font-weight:700;">${escapeHtml(t(introOpenL, lang))}</strong></td></tr>
                 <tr>
                   <td style="padding:0 0 22px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#2a221c;border-radius:8px;">
@@ -336,7 +347,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
   const text = [
     greeting,
     '',
-    t(introL, lang),
+    t(introBodyL, lang),
+    t(introOpenL, lang),
     '',
     t(stayL, lang),
     nameText,

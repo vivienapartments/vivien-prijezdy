@@ -97,7 +97,13 @@ export function aptFromCzechName(name: string): AptId | null {
 
 export function langFromNarodnost(raw: string | null | undefined): GuideLang {
   if (!raw) return 'en';
-  const code = raw.trim().toUpperCase().replace(/\s+/g, '');
+  // BH někdy pošle "TWN", jindy "Taiwan" / "TW" / "Taiwan, Province of China"
+  const code = raw
+    .trim()
+    .toUpperCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9]+/g, '');
   const mapped = jazykyMap[code];
   if (
     mapped === 'cs' ||

@@ -15,6 +15,7 @@ EMAIL: host@example.com
 NARODNOST: CZE
 OSLOVENI: Vážený pane Nováku
 ZDROJ: Booking.com
+ACCESS_PIN: 1234
 KONEC
 `;
 
@@ -41,6 +42,7 @@ describe('parseVivienData', () => {
 <p>ODJEZD: 3.11.2026</p>
 <p>EMAIL: <a href="mailto:a@b.cz">a@b.cz</a></p>
 <p>NARODNOST: DEU</p>
+<p>ACCESS_PIN: 5678</p>
 <p>KONEC</p></body></html>`;
     const r = parseVivienData(html);
     expect(r.ok).toBe(true);
@@ -58,6 +60,7 @@ PRIJEZD: 1.12.2026
 ODJEZD: 3.12.2026
 EMAIL: host@example.com
 NARODNOST: CZE
+ACCESS_PIN: 9012
 KONEC`;
     const r = parseVivienData(html);
     expect(r.ok).toBe(true);
@@ -74,5 +77,16 @@ KONEC`;
     expect(langFromNarodnost('pol')).toBe('pl');
     expect(langFromNarodnost('')).toBe('en');
     expect(langFromNarodnost('XXX')).toBe('en');
+  });
+
+  it('mapuje Taiwan / Čínu / HK na zh-Hant i z variant BH', () => {
+    expect(langFromNarodnost('TWN')).toBe('zh-Hant');
+    expect(langFromNarodnost('TW')).toBe('zh-Hant');
+    expect(langFromNarodnost('Taiwan')).toBe('zh-Hant');
+    expect(langFromNarodnost('Taiwan, Province of China')).toBe('zh-Hant');
+    expect(langFromNarodnost('HKG')).toBe('zh-Hant');
+    expect(langFromNarodnost('Hong Kong')).toBe('zh-Hant');
+    expect(langFromNarodnost('CHN')).toBe('zh-Hant');
+    expect(langFromNarodnost('China')).toBe('zh-Hant');
   });
 });

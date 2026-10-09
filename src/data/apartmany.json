@@ -113,8 +113,15 @@
     "POL": "pl",
     "UKR": "uk",
     "TWN": "zh-Hant",
+    "TW": "zh-Hant",
+    "TAIWAN": "zh-Hant",
+    "TAIWANPROVINCEOFCHINA": "zh-Hant",
     "HKG": "zh-Hant",
+    "HK": "zh-Hant",
+    "HONGKONG": "zh-Hant",
     "CHN": "zh-Hant",
+    "CN": "zh-Hant",
+    "CHINA": "zh-Hant",
     "_ostatni": "en"
   },
   "nazvy_apartmanu_pravidlo": "V češtině český + anglický název (např. Zlatá rovnováha / Golden Balance), v ostatních jazycích jen anglický."
