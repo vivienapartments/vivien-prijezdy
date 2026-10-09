@@ -104,7 +104,7 @@ const introOpenL: LText = {
   cs: 'Otevřete ho tlačítkem níže.',
   en: 'Open it with the button below.',
   de: 'Öffnen Sie ihn über die Schaltfläche unten.',
-  pl: 'Otwórzcie go przyciskiem poniżej.',
+  pl: 'Otwórzcie ją przyciskiem poniżej.',
   uk: 'Відкрийте його кнопкою нижче.',
   'zh-Hant': '請用下方按鈕開啟。',
 };
@@ -113,7 +113,7 @@ const stayL: LText = {
   cs: 'Váš pobyt',
   en: 'Your stay',
   de: 'Ihr Aufenthalt',
-  pl: 'Wasze pobyty',
+  pl: 'Wasz pobyt',
   uk: 'Ваше перебування',
   'zh-Hant': '您的住宿',
 };
@@ -188,7 +188,7 @@ const psApartmanyL: LText = {
   en: 'P.S. We have five apartments, each with a different atmosphere. Many guests do not know that. When you plan another stay, you can choose by mood: {{QUIZ}}',
   de: 'P.S. Wir haben fünf Apartments, jedes mit einer anderen Atmosphäre. Viele Gäste wissen das nicht. Wenn Sie den nächsten Aufenthalt planen, können Sie nach Stimmung wählen: {{QUIZ}}',
   pl: 'P.S. Mamy pięć apartamentów, każdy z inną atmosferą. Wielu gości o tym nie wie. Gdy będziecie planować kolejny pobyt, możecie wybrać według nastroju: {{QUIZ}}',
-  uk: 'P.S. У нас пʼять апартаментів, кожні з іншою атмосферою. Багато гостей про це не знають. Коли плануватимете наступне перебування, можете обрати за настроєм: {{QUIZ}}',
+  uk: 'P.S. У нас пʼять апартаментів, кожен зі своєю атмосферою. Багато гостей про це не знають. Коли плануватимете наступне перебування, можете обрати за настроєм: {{QUIZ}}',
   'zh-Hant': 'P.S. 我們有五間公寓，各有不同氛圍。很多客人不知道這件事。下次規劃住宿時，可以依心情挑選：{{QUIZ}}',
 };
 
