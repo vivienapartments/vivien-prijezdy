@@ -14,6 +14,8 @@ export type VivienData = {
   narodnost: string | null;
   jazyk: GuideLang;
   osloveni: string | null;
+  /** Křestní jméno hosta z BH: GUEST_NAME: (GUEST_NAME). */
+  jmeno: string | null;
   zdroj: string | null;
   klic: string | null;
   /** PIN apartmánu z BH (ACCESS_PIN), mění se podle pobytu. */
@@ -194,6 +196,11 @@ export function parseVivienData(raw: string): ParseResult {
   }
   const accessPin = accessPinRaw;
 
+  // BH šablona: GUEST_NAME: (GUEST_NAME) — křestní jméno
+  const jmeno = cleanGuestFirstName(
+    f.GUEST_NAME || f.JMENO || f.FIRSTNAME || f.FIRST_NAME || '',
+  );
+
   return {
     ok: true,
     data: {
@@ -207,10 +214,22 @@ export function parseVivienData(raw: string): ParseResult {
       narodnost,
       jazyk: langFromNarodnost(narodnost),
       osloveni: f.OSLOVENI?.trim() || null,
+      jmeno,
       zdroj: f.ZDROJ?.trim() || null,
       klic: f.KLIC?.trim() || null,
       accessPin,
     },
     warnings,
   };
+}
+
+/** Křestní jméno z BH; prázdný / nevyplněný merge field → null. */
+export function cleanGuestFirstName(raw: string): string | null {
+  const s = raw.trim().replace(/\s+/g, ' ');
+  if (!s) return null;
+  if (/^\(?\s*(JMENO|GUEST_?NAME|FIRST_?NAME|FIRSTNAME)\s*\)?$/i.test(s)) return null;
+  if (s === '—' || s === '-' || s === '–') return null;
+  // max 40 znaků, bez e-mailu / čísla rezervace
+  if (s.length > 40 || /@|\d{5,}/.test(s)) return null;
+  return s;
 }

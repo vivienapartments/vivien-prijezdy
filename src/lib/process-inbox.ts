@@ -145,6 +145,7 @@ export async function processOneMail(
         noci: data.noci,
         osob: data.osob,
         osloveni: data.osloveni,
+        jmeno: data.jmeno,
         guideUrl: `${baseUrl()}/${token}`,
         intendedTo: data.email,
       },

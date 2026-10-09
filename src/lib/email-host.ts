@@ -11,6 +11,8 @@ export type GuestEmailInput = {
   noci: number | null;
   osob: number | null;
   osloveni: string | null;
+  /** Křestní jméno z BH (JMENO). */
+  jmeno?: string | null;
   guideUrl: string;
   intendedTo: string;
   secrets?: GuideSecrets;
@@ -57,42 +59,11 @@ function fmtYmd(ymd: string, lang: GuideLang): string {
 }
 
 /**
- * Z OSLOVENI jen jméno/příjmení.
- * Bez pane/paní/Herr/Frau (BH občas splete rod, např. žena jako „pane“).
+ * Pozdrav z křestního jména (pole JMENO v BH šabloně).
+ * OSLOVENI (pane/paní/Herr) nepoužíváme: BH občas splete rod.
+ * Bez JMENO → neutrální „Dobrý den,“ / „Guten Tag,“.
  */
-export function nameFromOsloveni(osloveni: string | null | undefined): string | null {
-  if (!osloveni?.trim()) return null;
-  let s = osloveni.trim().replace(/[,.，]+$/u, '').trim();
-
-  // Celý pozdrav z BH → nechat jen zbytek za ním
-  s = s
-    .replace(/^(Dobrý den|Hello|Hi|Guten Tag|Dzień dobry|Добрий день|您好)\s+/iu, '')
-    .replace(/^Vážen[ýá]\s+/i, '')
-    .replace(/^Sehr geehrte[rs]?\s+/i, '')
-    .replace(/^Dear\s+/i, '')
-    .replace(/^Szanown[ya]\s+/i, '')
-    .replace(/^Шановн[иі]й?\s+/iu, '')
-    .trim();
-
-  // Tituly / rod (opakovaně, kdyby jich bylo víc)
-  for (let i = 0; i < 3; i += 1) {
-    const next = s
-      .replace(/^(paní|pane|pan)\s+/i, '')
-      .replace(/^(Herr|Frau)\s+/i, '')
-      .replace(/^(Mr\.?|Mrs\.?|Ms\.?|Miss)\s+/i, '')
-      .replace(/^(Pani|Pan)\s+/i, '')
-      .replace(/^(пані|пан)\s+/iu, '')
-      .trim();
-    if (next === s) break;
-    s = next;
-  }
-
-  s = s.replace(/[,.，]+$/u, '').trim();
-  return s || null;
-}
-
-/** „Dobrý den Nováku,“ / „Guten Tag Doppler,“. Bez OSLOVENI: neutrální pozdrav. */
-export function greetingLine(lang: GuideLang, osloveni: string | null): string {
+export function greetingLine(lang: GuideLang, jmeno: string | null | undefined): string {
   const generic = t(
     {
       cs: 'Dobrý den,',
@@ -104,9 +75,8 @@ export function greetingLine(lang: GuideLang, osloveni: string | null): string {
     },
     lang,
   );
-  const name = nameFromOsloveni(osloveni);
+  const name = (jmeno || '').trim();
   if (!name) return generic;
-
   const prefix = generic.replace(/[,，]\s*$/u, '');
   if (lang === 'zh-Hant') return `${prefix}${name}，`;
   return `${prefix} ${name},`;
@@ -337,7 +307,7 @@ function ctaHtml(opts: {
 export function buildGuestEmail(input: GuestEmailInput): { subject: string; html: string; text: string } {
   const lang = input.lang;
   const apt = aptRow(input.apt);
-  const greeting = greetingLine(lang, input.osloveni);
+  const greeting = greetingLine(lang, input.jmeno);
   const nociLabel = input.noci == null ? 'XXX' : String(input.noci);
   const osobLabel = input.osob == null ? 'XXX' : String(input.osob);
   const term = `${fmtYmd(input.prijezd, lang)} – ${fmtYmd(input.odjezd, lang)}`.replace('–', '-');
