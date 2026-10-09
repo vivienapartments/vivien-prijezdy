@@ -90,12 +90,13 @@ const subjectL: LText = {
 
 /** Co průvodce je (cesta + zásadní info). */
 const introBodyL: LText = {
-  cs: 'Připravili jsme krátký průvodce. Je v něm cesta k nám, parkování, brána, Wi-Fi a kódy. Ať víte, kam jet a co dělat po příjezdu.',
-  en: 'We prepared a short guide. It has the way to us, parking, the gate, Wi-Fi and codes. So you know where to go and what to do after arrival.',
-  de: 'Wir haben einen kurzen Leitfaden vorbereitet. Darin finden Sie den Weg zu uns, Parken, Tor, WLAN und Codes. Damit Sie wissen, wohin Sie fahren und was nach der Ankunft zu tun ist.',
-  pl: 'Przygotowaliśmy krótki przewodnik. Jest w nim droga do nas, parking, brama, Wi-Fi i kody. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
-  uk: 'Ми підготували короткий гід. У ньому шлях до нас, паркування, брама, Wi-Fi та коди. Щоб ви знали, куди їхати і що робити після прибуття.',
-  'zh-Hant': '我們準備了一份簡短指南。內容包含前往我們這裡的路線、停車、大門、Wi-Fi 與密碼。讓您知道怎麼來、抵達後該做什麼。',
+  // CS: po oslovení s čárkou malé písmeno (pravopis dopisu)
+  cs: 'připravili jsme pro vás krátkého průvodce příjezdem. Najdete v něm cestu k nám, parkování, bránu, Wi-Fi a kódy. Ať víte, kam jet a co dělat po příjezdu.',
+  en: 'We prepared a short arrival guide for you. You will find the way to us, parking, the gate, Wi-Fi and codes. So you know where to go and what to do after arrival.',
+  de: 'wir haben für Sie einen kurzen Anreiseleitfaden vorbereitet. Darin finden Sie den Weg zu uns, Parken, Tor, WLAN und Codes. Damit Sie wissen, wohin Sie fahren und was nach der Ankunft zu tun ist.',
+  pl: 'przygotowaliśmy dla Was krótką instrukcję przyjazdu. Znajdziecie w niej drogę do nas, parking, bramę, Wi-Fi i kody. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
+  uk: 'ми підготували для вас короткий гід приїзду. У ньому шлях до нас, паркування, брама, Wi-Fi та коди. Щоб ви знали, куди їхати і що робити після прибуття.',
+  'zh-Hant': '我們為您準備了一份簡短的抵達指南。您會找到前往我們這裡的路線、停車、大門、Wi-Fi 與密碼。讓您知道怎麼來、抵達後該做什麼。',
 };
 
 /** CTA nápověda (v HTML tučně). */
