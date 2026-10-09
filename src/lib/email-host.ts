@@ -172,6 +172,37 @@ const closingL: LText = {
   'zh-Hant': '此致',
 };
 
+/** Úplně na konci mailu: odkaz na veřejný web ({{WEB}} = URL podle jazyka). */
+const webTipL: LText = {
+  cs: 'Ještě víc tipů najdete na {{WEB}}: jídlo, výlety, aktivity, co se děje ve městě, dny podle nálady, poznávací hra Budějovic a průvodce atmosférou.',
+  en: 'For more tips see {{WEB}}: food, day trips, activities, what is on in town, days by mood, the Budweis discovery game, and the atmosphere guide.',
+  de: 'Noch mehr Tipps finden Sie auf {{WEB}}: Essen, Ausflüge, Aktivitäten, was in der Stadt läuft, Tage nach Stimmung, das Budweiser Entdeckungsspiel und den Atmosphären-Guide.',
+  pl: 'Więcej wskazówek znajdziecie na {{WEB}}: jedzenie, wycieczki, atrakcje, co się dzieje w mieście, dni według nastroju, gra odkrywcza Budziejowic i przewodnik po atmosferze.',
+  uk: 'Ще більше порад на {{WEB}}: їжа, виїзди, активності, що відбувається в місті, дні за настроєм, пізнавальна гра Будейовиць і гід атмосферою.',
+  'zh-Hant': '更多實用資訊請見 {{WEB}}：美食、一日遊、活動、城裡近期活動、依心情安排的一天、布杰約維采探索遊戲，以及氛圍指南。',
+};
+
+function publicSiteUrl(lang: GuideLang): string {
+  const base = 'https://vivienapartments.cz';
+  if (lang === 'cs') return `${base}/`;
+  if (lang === 'zh-Hant') return `${base}/zh/`;
+  if (lang === 'en' || lang === 'de' || lang === 'pl' || lang === 'uk' || lang === 'es' || lang === 'fr' || lang === 'it') {
+    return `${base}/${lang}/`;
+  }
+  return `${base}/`;
+}
+
+function webTipPlain(lang: GuideLang): string {
+  return t(webTipL, lang).replace(/\{\{WEB\}\}/g, publicSiteUrl(lang).replace(/\/$/, ''));
+}
+
+function webTipHtml(lang: GuideLang): string {
+  const url = publicSiteUrl(lang);
+  const label = url.replace(/^https:\/\//, '').replace(/\/$/, '');
+  const [before = '', after = ''] = t(webTipL, lang).split('{{WEB}}');
+  return `${escapeHtml(before)}<a href="${escapeAttr(url)}" style="color:#e8d5a3;text-decoration:underline;font-weight:700;">${escapeHtml(label)}</a>${escapeHtml(after)}`;
+}
+
 function aptRow(id: AptId): AptRow {
   return apartmany.find((a) => a.id === id) ?? apartmany[0];
 }
@@ -333,6 +364,11 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                     }
                   </td>
                 </tr>
+                <tr>
+                  <td style="padding:22px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;">
+                    ${webTipHtml(lang)}
+                  </td>
+                </tr>
               </table>
             </td>
           </tr>
@@ -364,6 +400,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
     t(closingL, lang),
     'Nikol',
     '+420 702 153 573',
+    '',
+    webTipPlain(lang),
   ].join('\n');
 
   return { subject, html, text };
