@@ -27,7 +27,7 @@ export type CtaStyle = 'A' | 'B' | 'C' | 'D' | 'E';
 /** Veřejné logo na ostrém webu (náhled HTML). */
 export const LOGO_PUBLIC_URL = 'https://vivienapartments.cz/images/logo-96.png';
 export const LOGO_CID = 'vivien-logo';
-/** Podpis: JPEG 400 px (2×), v HTML zobrazeno na 180 px kvůli ostrosti. */
+/** Podpis: PNG 400 px (2×) s průhledným pozadím, v HTML na 180 px. */
 export const PODPIS_CID = 'vivien-podpis';
 export const PODPIS_WIDTH = 180;
 
@@ -56,17 +56,9 @@ function fmtYmd(ymd: string, lang: GuideLang): string {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-/** CS: „Dobrý den pane Nováku,“ z OSLOVENI. Jiné jazyky: neutrální pozdrav. */
+/** „Dobrý den pane Nováku,“ z OSLOVENI (všechny jazyky). Bez OSLOVENI: neutrální pozdrav. */
 function greetingLine(lang: GuideLang, osloveni: string | null): string {
-  if (lang === 'cs' && osloveni?.trim()) {
-    const rest = osloveni
-      .trim()
-      .replace(/^Vážen[ýá]\s+/i, '')
-      .replace(/[,.]+$/, '')
-      .trim();
-    return rest ? `Dobrý den ${rest},` : 'Dobrý den,';
-  }
-  return t(
+  const generic = t(
     {
       cs: 'Dobrý den,',
       en: 'Hello,',
@@ -77,6 +69,28 @@ function greetingLine(lang: GuideLang, osloveni: string | null): string {
     },
     lang,
   );
+  if (!osloveni?.trim()) return generic;
+
+  const rest = osloveni
+    .trim()
+    .replace(/^Vážen[ýá]\s+/i, '')
+    .replace(/^Sehr geehrte[rs]?\s+/i, '')
+    .replace(/^Dear\s+/i, '')
+    .replace(/^Szanown[ya]\s+/i, '')
+    .replace(/^Шановн[иі]й?\s+/i, '')
+    .replace(/[,.，]+$/u, '')
+    .trim();
+  if (!rest) return generic;
+
+  // Už celé oslovení z BH (např. „Guten Tag Herr Müller“)
+  if (/^(Dobrý den|Hello|Hi|Guten Tag|Dzień dobry|Добрий день|您好)/i.test(rest)) {
+    return /[,，]$/u.test(rest) ? rest : `${rest},`;
+  }
+
+  const prefix = generic.replace(/[,，]\s*$/u, '');
+  // zh: bez mezery před jménem
+  if (lang === 'zh-Hant') return `${prefix}${rest}，`;
+  return `${prefix} ${rest},`;
 }
 
 const subjectL: LText = {
@@ -481,7 +495,7 @@ export async function sendGuestEmail(opts: {
 
   const fs = await import('fs');
   const logoPath = path.join(process.cwd(), 'assets', 'email', 'logo.png');
-  const podpisPath = path.join(process.cwd(), 'assets', 'email', 'logo-podpis.jpg');
+  const podpisPath = path.join(process.cwd(), 'assets', 'email', 'logo-podpis.png');
   if (!fs.existsSync(logoPath) || !fs.existsSync(podpisPath)) {
     throw new Error(
       `Chybí e-mailové logo v serverless balíčku (${logoPath} / ${podpisPath})`,
@@ -503,7 +517,7 @@ export async function sendGuestEmail(opts: {
         contentDisposition: 'inline',
       },
       {
-        filename: 'logo-podpis.jpg',
+        filename: 'logo-podpis.png',
         content: fs.readFileSync(podpisPath),
         cid: PODPIS_CID,
         contentDisposition: 'inline',
