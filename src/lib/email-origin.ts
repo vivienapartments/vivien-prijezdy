@@ -30,9 +30,14 @@ function authPassForDomain(header: string | null | undefined, domain: string): b
 }
 
 function extractKlic(body: string): string | null {
-  const text = body.replace(/\r\n/g, '\n');
-  const m = text.match(/(?:^|\n)[\s>]*KLIC\s*:\s*(\S+)/i);
-  return m ? m[1].trim() : null;
+  // BH často posílá HTML: <p>KLIC:hodnota</p> bez nových řádků.
+  const text = body
+    .replace(/\r\n/g, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|tr|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ');
+  const m = text.match(/\bKLIC\s*:\s*(\S+)/i);
+  return m ? m[1].trim().replace(/&nbsp;/gi, '') : null;
 }
 
 export function verifyEmailOrigin(input: OriginInput): OriginResult {

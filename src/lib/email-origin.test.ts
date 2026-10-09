@@ -16,6 +16,17 @@ describe('verifyEmailOrigin', () => {
     expect(r).toEqual({ ok: true, path: 1 });
   });
 
+  it('cesta 1: KLIC v HTML bez nových řádků', () => {
+    const r = verifyEmailOrigin({
+      from: 'noreply@better-hotel.com',
+      authenticationResults: null,
+      body: `<p>VIVIEN-DATA v1</p><p>KLIC:${BH_KLIC}</p><p>REZERVACE: 1</p><p>KONEC</p>`,
+      bhKlic: BH_KLIC,
+      majitelPreposilaZ: MAJITEL,
+    });
+    expect(r).toEqual({ ok: true, path: 1 });
+  });
+
   it('cesta 2: přeposlání majitelem', () => {
     const r = verifyEmailOrigin({
       from: `VIVIEN <${MAJITEL}>`,
