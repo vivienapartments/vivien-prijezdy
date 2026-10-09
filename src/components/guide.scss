@@ -129,6 +129,8 @@
 }
 
 .pv {
+  --pv-axis-marker: 2.5rem;
+  --pv-axis-gap: 1rem;
   max-width: 56rem;
   margin: 0 auto;
   padding: 1.5rem var(--container-padding-x, 1.25rem) 5rem;
@@ -136,12 +138,20 @@
   color: var(--color-text);
   font-family: var(--font-body);
   line-height: 1.65;
+
+  @media (max-width: 640px) {
+    --pv-axis-marker: 2.15rem;
+    --pv-axis-gap: 0.7rem;
+  }
 }
 
 .pv-hub {
+  /* Stejný levý odsazení jako karty na ose → pravé hrany na jedné linii */
   margin: 0 0 1.75rem;
-  padding: 1.35rem 1.4rem 1.5rem;
+  margin-left: calc(var(--pv-axis-marker) + var(--pv-axis-gap));
+  padding: 1.35rem 1.15rem 1.5rem;
   border: 1px solid color-mix(in srgb, var(--color-gold) 28%, transparent);
+  border-radius: 14px;
   background: var(--pv-surface);
 }
 
@@ -258,11 +268,11 @@
 
 /* Varianta B: osa vlevo jako stay-timeline */
 .pv-flow--axis {
-  --flow-marker: 2.5rem;
-  --flow-gap: 1rem;
+  --flow-marker: var(--pv-axis-marker);
+  --flow-gap: var(--pv-axis-gap);
   position: relative;
   gap: 1.15rem;
-  max-width: 48rem;
+  max-width: none;
   padding-left: 0.15rem;
 
   &::before {
@@ -330,13 +340,6 @@
 .pv-flow__step--4 .pv-flow__card {
   background: var(--pv-surface);
   border-color: color-mix(in srgb, var(--color-gold) 22%, var(--pv-line));
-}
-
-@media (max-width: 640px) {
-  .pv-flow--axis {
-    --flow-marker: 2.15rem;
-    --flow-gap: 0.7rem;
-  }
 }
 
 .pv-callout,
