@@ -56,8 +56,43 @@ function fmtYmd(ymd: string, lang: GuideLang): string {
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-/** „Dobrý den pane Nováku,“ z OSLOVENI (všechny jazyky). Bez OSLOVENI: neutrální pozdrav. */
-function greetingLine(lang: GuideLang, osloveni: string | null): string {
+/**
+ * Z OSLOVENI jen jméno/příjmení.
+ * Bez pane/paní/Herr/Frau (BH občas splete rod, např. žena jako „pane“).
+ */
+export function nameFromOsloveni(osloveni: string | null | undefined): string | null {
+  if (!osloveni?.trim()) return null;
+  let s = osloveni.trim().replace(/[,.，]+$/u, '').trim();
+
+  // Celý pozdrav z BH → nechat jen zbytek za ním
+  s = s
+    .replace(/^(Dobrý den|Hello|Hi|Guten Tag|Dzień dobry|Добрий день|您好)\s+/iu, '')
+    .replace(/^Vážen[ýá]\s+/i, '')
+    .replace(/^Sehr geehrte[rs]?\s+/i, '')
+    .replace(/^Dear\s+/i, '')
+    .replace(/^Szanown[ya]\s+/i, '')
+    .replace(/^Шановн[иі]й?\s+/iu, '')
+    .trim();
+
+  // Tituly / rod (opakovaně, kdyby jich bylo víc)
+  for (let i = 0; i < 3; i += 1) {
+    const next = s
+      .replace(/^(paní|pane|pan)\s+/i, '')
+      .replace(/^(Herr|Frau)\s+/i, '')
+      .replace(/^(Mr\.?|Mrs\.?|Ms\.?|Miss)\s+/i, '')
+      .replace(/^(Pani|Pan)\s+/i, '')
+      .replace(/^(пані|пан)\s+/iu, '')
+      .trim();
+    if (next === s) break;
+    s = next;
+  }
+
+  s = s.replace(/[,.，]+$/u, '').trim();
+  return s || null;
+}
+
+/** „Dobrý den Nováku,“ / „Guten Tag Doppler,“. Bez OSLOVENI: neutrální pozdrav. */
+export function greetingLine(lang: GuideLang, osloveni: string | null): string {
   const generic = t(
     {
       cs: 'Dobrý den,',
@@ -69,28 +104,12 @@ function greetingLine(lang: GuideLang, osloveni: string | null): string {
     },
     lang,
   );
-  if (!osloveni?.trim()) return generic;
-
-  const rest = osloveni
-    .trim()
-    .replace(/^Vážen[ýá]\s+/i, '')
-    .replace(/^Sehr geehrte[rs]?\s+/i, '')
-    .replace(/^Dear\s+/i, '')
-    .replace(/^Szanown[ya]\s+/i, '')
-    .replace(/^Шановн[иі]й?\s+/i, '')
-    .replace(/[,.，]+$/u, '')
-    .trim();
-  if (!rest) return generic;
-
-  // Už celé oslovení z BH (např. „Guten Tag Herr Müller“)
-  if (/^(Dobrý den|Hello|Hi|Guten Tag|Dzień dobry|Добрий день|您好)/i.test(rest)) {
-    return /[,，]$/u.test(rest) ? rest : `${rest},`;
-  }
+  const name = nameFromOsloveni(osloveni);
+  if (!name) return generic;
 
   const prefix = generic.replace(/[,，]\s*$/u, '');
-  // zh: bez mezery před jménem
-  if (lang === 'zh-Hant') return `${prefix}${rest}，`;
-  return `${prefix} ${rest},`;
+  if (lang === 'zh-Hant') return `${prefix}${name}，`;
+  return `${prefix} ${name},`;
 }
 
 const subjectL: LText = {
