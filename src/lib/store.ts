@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import type { Duvod } from './chyby';
 import type { AptId, GuideLang } from './types';
 
 export type MessageStatus = 'sent' | 'skipped_no_data' | 'rejected' | 'duplicate' | 'error';
@@ -13,18 +14,38 @@ export type MessageRecord = {
   reason?: string;
 };
 
+export type RezervaceStav =
+  | 'odeslano'
+  | 'odeslano_s_vyhradou'
+  | 'neodeslano'
+  | 'vraceno'
+  | 'bez_checkinu'
+  | 'zruseno';
+
+export type HistorieAkce = { cas: string; co: string };
+
 export type RezervaceRecord = {
-  status: 'odeslano' | 'zruseno';
-  odjezd: string;
-  emailHosta: string;
-  processedAt: string;
-  messageId: string;
-  /** YYYY-MM-DD – od novějších záznamů */
-  prijezd?: string;
-  apartman?: AptId;
-  /** Jméno hosta (GUEST_NAME / zkrácené OSLOVENI) */
-  jmeno?: string;
-  jazyk?: GuideLang;
+  rezervace: string;
+  apartman: AptId | null;
+  prijezd: string | null;
+  odjezd: string | null;
+  noci: number | null;
+  osob: number | null;
+  jazyk: GuideLang | null;
+  jmeno: string | null;
+  /** Křestní jméno z GUEST_NAME jen pro pozdrav. Příjmení z oslovení sem nepatří. */
+  krestni: string | null;
+  emailHosta: string | null;
+  /** PIN pobytu pro odkaz na průvodce. V přehledu se neukazuje. */
+  accessPin: string | null;
+  stav: RezervaceStav;
+  duvody: Duvod[];
+  posledniPokus: string;
+  odeslaneMessageId: string | null;
+  historie: HistorieAkce[];
+  /** Kódy důvodů, ke kterým už odešlo upozornění. */
+  upozorneneKody: string[];
+  smtpPokusy: number;
 };
 
 export type RezervaceEntry = { id: string; record: RezervaceRecord };
@@ -46,21 +67,93 @@ export interface ProcessStore {
   purgeExpired(now?: Date): Promise<number>;
 }
 
+const MESSAGE_TTL_SEC = 90 * 24 * 60 * 60;
+const STAVY: RezervaceStav[] = [
+  'odeslano',
+  'odeslano_s_vyhradou',
+  'neodeslano',
+  'vraceno',
+  'bez_checkinu',
+  'zruseno',
+];
+
 function emptyData(): StoreData {
   return { messages: {}, rezervace: {} };
 }
 
-function dayAfterOdjezd(odjezdYmd: string): Date | null {
+/** Smazat v poledne UTC třetí den po dni odjezdu. */
+export function smazatPoOdjezdu(odjezdYmd: string): Date | null {
   const [y, m, d] = odjezdYmd.split('-').map(Number);
   if (!y || !m || !d) return null;
-  return new Date(Date.UTC(y, m - 1, d + 1, 12, 0, 0));
+  return new Date(Date.UTC(y, m - 1, d + 3, 12, 0, 0));
+}
+
+function jeStav(value: unknown): value is RezervaceStav {
+  return typeof value === 'string' && STAVY.includes(value as RezervaceStav);
+}
+
+function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  const stary = typeof r.status === 'string' ? r.status : '';
+  const stav = jeStav(r.stav) ? r.stav : stary === 'zruseno' ? 'zruseno' : stary === 'odeslano' ? 'odeslano' : 'neodeslano';
+  const posledni =
+    (typeof r.posledniPokus === 'string' && r.posledniPokus) ||
+    (typeof r.processedAt === 'string' && r.processedAt) ||
+    new Date(0).toISOString();
+  return {
+    rezervace: typeof r.rezervace === 'string' && r.rezervace ? r.rezervace : id,
+    apartman: (r.apartman as AptId) || null,
+    prijezd: typeof r.prijezd === 'string' ? r.prijezd : null,
+    odjezd: typeof r.odjezd === 'string' ? r.odjezd : null,
+    noci: typeof r.noci === 'number' ? r.noci : null,
+    osob: typeof r.osob === 'number' ? r.osob : null,
+    jazyk: (r.jazyk as GuideLang) || null,
+    jmeno: typeof r.jmeno === 'string' ? r.jmeno : null,
+    krestni: typeof r.krestni === 'string' ? r.krestni : null,
+    emailHosta: typeof r.emailHosta === 'string' ? r.emailHosta : null,
+    accessPin: typeof r.accessPin === 'string' ? r.accessPin : null,
+    stav,
+    duvody: Array.isArray(r.duvody) ? (r.duvody as Duvod[]) : [],
+    posledniPokus: posledni,
+    odeslaneMessageId:
+      (typeof r.odeslaneMessageId === 'string' && r.odeslaneMessageId) ||
+      (typeof r.messageId === 'string' && r.messageId) ||
+      null,
+    historie: Array.isArray(r.historie) ? (r.historie as HistorieAkce[]) : [],
+    upozorneneKody: Array.isArray(r.upozorneneKody) ? (r.upozorneneKody as string[]) : [],
+    smtpPokusy: typeof r.smtpPokusy === 'number' ? r.smtpPokusy : 0,
+  };
+}
+
+export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
+  return {
+    rezervace: id,
+    apartman: null,
+    prijezd: null,
+    odjezd: null,
+    noci: null,
+    osob: null,
+    jazyk: null,
+    jmeno: null,
+    krestni: null,
+    emailHosta: null,
+    accessPin: null,
+    stav: 'neodeslano',
+    duvody: [],
+    posledniPokus: cas,
+    odeslaneMessageId: null,
+    historie: [],
+    upozorneneKody: [],
+    smtpPokusy: 0,
+  };
 }
 
 /** Lokální soubor .data/store.json (výchozí). */
 export class FileProcessStore implements ProcessStore {
   private readonly filePath: string;
 
-  constructor(filePath = path.join(process.cwd(), '.data', 'store.json')) {
+  constructor(filePath = process.env.STORE_FILE?.trim() || path.join(process.cwd(), '.data', 'store.json')) {
     this.filePath = filePath;
   }
 
@@ -101,7 +194,8 @@ export class FileProcessStore implements ProcessStore {
   }
 
   async getRezervace(id: string): Promise<RezervaceRecord | null> {
-    return this.read().rezervace[id] ?? null;
+    const raw = this.read().rezervace[id];
+    return raw ? asRezervace(id, raw) : null;
   }
 
   async setRezervace(id: string, record: RezervaceRecord): Promise<void> {
@@ -111,7 +205,9 @@ export class FileProcessStore implements ProcessStore {
   }
 
   async listRezervace(): Promise<RezervaceEntry[]> {
-    return Object.entries(this.read().rezervace).map(([id, record]) => ({ id, record }));
+    return Object.entries(this.read().rezervace)
+      .map(([id, record]) => ({ id, record: asRezervace(id, record) }))
+      .filter((row): row is RezervaceEntry => Boolean(row.record));
   }
 
   async listMessages(): Promise<MessageEntry[]> {
@@ -121,10 +217,19 @@ export class FileProcessStore implements ProcessStore {
   async purgeExpired(now = new Date()): Promise<number> {
     const data = this.read();
     let removed = 0;
-    for (const [id, rec] of Object.entries(data.rezervace)) {
-      const limit = dayAfterOdjezd(rec.odjezd);
+    for (const [id, raw] of Object.entries(data.rezervace)) {
+      const rec = asRezervace(id, raw);
+      const limit = rec?.odjezd ? smazatPoOdjezdu(rec.odjezd) : null;
       if (limit && now.getTime() > limit.getTime()) {
         delete data.rezervace[id];
+        removed += 1;
+      }
+    }
+    const messageLimit = now.getTime() - MESSAGE_TTL_SEC * 1000;
+    for (const [id, rec] of Object.entries(data.messages)) {
+      const at = Date.parse(rec.processedAt);
+      if (Number.isFinite(at) && at < messageLimit) {
+        delete data.messages[id];
         removed += 1;
       }
     }
@@ -168,14 +273,7 @@ export class UpstashProcessStore implements ProcessStore {
     const keys: string[] = [];
     let cursor = '0';
     do {
-      const result = await this.cmd<[string, string[]]>(
-        'SCAN',
-        cursor,
-        'MATCH',
-        match,
-        'COUNT',
-        100,
-      );
+      const result = await this.cmd<[string, string[]]>('SCAN', cursor, 'MATCH', match, 'COUNT', 100);
       cursor = String(result[0]);
       keys.push(...(result[1] || []));
     } while (cursor !== '0');
@@ -194,21 +292,22 @@ export class UpstashProcessStore implements ProcessStore {
   }
 
   async markMessage(record: MessageRecord): Promise<void> {
-    await this.cmd('SET', this.msgKey(record.messageId), JSON.stringify(record));
+    await this.cmd('SET', this.msgKey(record.messageId), JSON.stringify(record), 'EX', MESSAGE_TTL_SEC);
   }
 
   async getRezervace(id: string): Promise<RezervaceRecord | null> {
     const v = await this.cmd<string | null>('GET', this.rezKey(id));
     if (!v) return null;
-    return JSON.parse(v) as RezervaceRecord;
+    return asRezervace(id, JSON.parse(v));
   }
 
   async setRezervace(id: string, record: RezervaceRecord): Promise<void> {
-    const limit = dayAfterOdjezd(record.odjezd);
-    const ttlSec =
-      limit && limit.getTime() > Date.now()
-        ? Math.ceil((limit.getTime() - Date.now()) / 1000)
-        : 60 * 60 * 24 * 7;
+    const limit = record.odjezd ? smazatPoOdjezdu(record.odjezd) : null;
+    const ttlSec = !record.odjezd
+      ? MESSAGE_TTL_SEC
+      : limit && limit.getTime() > Date.now()
+        ? Math.max(60, Math.ceil((limit.getTime() - Date.now()) / 1000))
+        : 60;
     await this.cmd('SET', this.rezKey(id), JSON.stringify(record), 'EX', ttlSec);
   }
 
@@ -218,7 +317,9 @@ export class UpstashProcessStore implements ProcessStore {
     for (const key of keys) {
       const v = await this.cmd<string | null>('GET', key);
       if (!v) continue;
-      out.push({ id: key.slice(4), record: JSON.parse(v) as RezervaceRecord });
+      const id = key.slice(4);
+      const record = asRezervace(id, JSON.parse(v));
+      if (record) out.push({ id, record });
     }
     return out;
   }

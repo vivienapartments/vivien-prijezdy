@@ -11,7 +11,7 @@ export type GuestEmailInput = {
   noci: number | null;
   osob: number | null;
   osloveni: string | null;
-  /** Křestní jméno z BH (JMENO). */
+  /** Křestní jméno z BH (GUEST_NAME). */
   jmeno?: string | null;
   guideUrl: string;
   intendedTo: string;
@@ -20,11 +20,7 @@ export type GuestEmailInput = {
   logoSrc?: string;
   /** src podpisu (vodorovné logo VA / VIVIEN) */
   podpisSrc?: string;
-  /** Styl CTA tlačítka (A–E). Výchozí A = tmavá výplň, kulaté. */
-  ctaStyle?: CtaStyle;
 };
-
-export type CtaStyle = 'A' | 'B' | 'C' | 'D' | 'E';
 
 /** Veřejné logo na ostrém webu (náhled HTML). */
 export const LOGO_PUBLIC_URL = 'https://vivienapartments.cz/images/logo-96.png';
@@ -32,15 +28,6 @@ export const LOGO_CID = 'vivien-logo';
 /** Podpis: PNG 400 px (2×) s průhledným pozadím, v HTML na 180 px. */
 export const PODPIS_CID = 'vivien-podpis';
 export const PODPIS_WIDTH = 180;
-
-/** Popisky variant pro výběr majitele. */
-export const CTA_STYLE_LABELS: Record<CtaStyle, string> = {
-  A: 'A · zlatá výplň, kulaté (na tmavém mailu)',
-  B: 'B · jen obrys (bez plné výplně)',
-  C: 'C · textový odkaz bez rámečku',
-  D: 'D · úzký pruh, malá písmena',
-  E: 'E · světlé pozadí, zlatý text',
-};
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
 
@@ -59,9 +46,9 @@ function fmtYmd(ymd: string, lang: GuideLang): string {
 }
 
 /**
- * Pozdrav z křestního jména (pole JMENO v BH šabloně).
+ * Pozdrav z křestního jména (GUEST_NAME).
  * OSLOVENI (pane/paní/Herr) nepoužíváme: BH občas splete rod.
- * Bez JMENO → neutrální „Dobrý den,“ / „Guten Tag,“.
+ * Bez jména → neutrální „Dobrý den,“ / „Guten Tag,“.
  */
 export function greetingLine(lang: GuideLang, jmeno: string | null | undefined): string {
   const generic = t(
@@ -257,46 +244,12 @@ function escapeAttr(s: string): string {
   return escapeHtml(s).replace(/'/g, '&#39;');
 }
 
-/** CTA pro tmavý e-mail (table + a). */
-function ctaHtml(opts: {
-  href: string;
-  label: string;
-  style: CtaStyle;
-  serif: string;
-}): string {
+/** Zlaté kulaté tlačítko. Jediný schválený vzhled. */
+function ctaHtml(opts: { href: string; label: string; serif: string }): string {
   const href = escapeAttr(opts.href);
   const label = escapeHtml(opts.label);
   const f = opts.serif;
 
-  if (opts.style === 'C') {
-    return `<a href="${href}" style="font-family:${f};font-size:17px;line-height:1.5;color:#c9a84c;text-decoration:underline;font-weight:400;">${label}</a>`;
-  }
-
-  if (opts.style === 'B') {
-    return `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;"><tr>
-      <td align="center" style="border:1px solid #c9a84c;border-radius:28px;background:#1c1712;text-align:center;">
-        <a href="${href}" style="display:inline-block;padding:11px 22px;font-family:${f};font-size:15px;line-height:1.25;color:#c9a84c;text-decoration:none;font-weight:400;border-radius:28px;text-align:center;white-space:nowrap;">${label}</a>
-      </td>
-    </tr></table>`;
-  }
-
-  if (opts.style === 'D') {
-    return `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;"><tr>
-      <td align="center" style="background:#c9a84c;border-radius:2px;text-align:center;">
-        <a href="${href}" style="display:inline-block;padding:10px 18px;font-family:${f};font-size:13px;letter-spacing:0.06em;line-height:1.25;color:#1c1712;text-decoration:none;font-weight:400;text-transform:uppercase;text-align:center;white-space:nowrap;">${label}</a>
-      </td>
-    </tr></table>`;
-  }
-
-  if (opts.style === 'E') {
-    return `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;"><tr>
-      <td align="center" style="background:#2a221c;border:1px solid #4a3f32;border-radius:8px;text-align:center;">
-        <a href="${href}" style="display:inline-block;padding:12px 20px;font-family:${f};font-size:15px;line-height:1.25;color:#e8d5a3;text-decoration:none;font-weight:400;border-radius:8px;text-align:center;white-space:nowrap;">${label}</a>
-      </td>
-    </tr></table>`;
-  }
-
-  // A · zlatá výplň na tmavém mailu, kulaté (kratší text + nowrap = 1 řádek na mobilu)
   return `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;"><tr>
     <td align="center" style="background:#c9a84c;border-radius:28px;text-align:center;">
       <a href="${href}" style="display:inline-block;padding:12px 22px;font-family:${f};font-size:15px;line-height:1.25;color:#1c1712;text-decoration:none;font-weight:400;border-radius:28px;text-align:center;white-space:nowrap;">${label}</a>
@@ -317,7 +270,6 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
   const subject = testMode ? `[TEST] ${subjectBase}` : subjectBase;
   const logoSrc = input.logoSrc || LOGO_PUBLIC_URL;
   const podpisSrc = input.podpisSrc || '';
-  const ctaStyle: CtaStyle = input.ctaStyle || 'A';
   const serif = "Georgia,'Times New Roman',serif";
 
   const nameCs = apt.nazev.cs;
@@ -332,7 +284,6 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
   const cta = ctaHtml({
     href: input.guideUrl,
     label: t(openGuideL, lang),
-    style: ctaStyle,
     serif,
   });
 

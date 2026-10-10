@@ -1,0 +1,201 @@
+.ph {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.25rem var(--container-padding-x, 1rem) 3rem;
+  color: var(--color-text);
+}
+
+.ph h1 {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  color: var(--color-gold);
+}
+
+.ph-souhrn {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.ph-login,
+.ph-filtry,
+.ph-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: flex-end;
+  margin: 1rem 0;
+}
+
+.ph-login {
+  flex-direction: column;
+  align-items: stretch;
+  max-width: 22rem;
+}
+
+.ph label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--pv-muted);
+}
+
+.ph input,
+.ph select,
+.ph button {
+  font: inherit;
+  color: var(--color-text);
+}
+
+.ph input,
+.ph select {
+  min-height: 2.6rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 8px;
+  background: var(--pv-surface);
+}
+
+.ph button {
+  min-height: 2.6rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-gold);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-gold);
+  cursor: pointer;
+}
+
+.ph button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.ph-chyba,
+.ph-hlaska {
+  margin: 0.5rem 0;
+}
+
+.ph-chyba,
+.ph-wifi {
+  color: #e07a7a;
+}
+
+.ph-wifi {
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #e07a7a;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.ph-head,
+.ph-row {
+  display: grid;
+  gap: 0.35rem 0.8rem;
+}
+
+.ph-head {
+  display: none;
+}
+
+.ph-row {
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--pv-line);
+}
+
+.ph-cell::before {
+  content: attr(data-label);
+  display: block;
+  margin-bottom: 0.1rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+}
+
+.ph-mail {
+  color: var(--color-gold);
+  word-break: break-all;
+}
+
+.ph-stav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.ph-stav::before {
+  content: '';
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ph-stav--odeslano {
+  color: #8dcea0;
+}
+
+.ph-stav--odeslano_s_vyhradou {
+  color: var(--color-gold);
+}
+
+.ph-stav--neodeslano,
+.ph-stav--vraceno {
+  color: #e07a7a;
+}
+
+.ph-stav--bez_checkinu,
+.ph-stav--zruseno {
+  color: var(--pv-muted);
+}
+
+.ph-akce,
+.ph-form {
+  grid-column: 1 / -1;
+}
+
+.ph-akce {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.ph-historie {
+  grid-column: 1 / -1;
+  margin: 0.2rem 0 0;
+  padding-left: 1.1rem;
+  color: var(--pv-muted);
+  font-size: 0.9rem;
+}
+
+.ph-prazdno {
+  color: var(--pv-muted);
+}
+
+@media (min-width: 960px) {
+  .ph-head,
+  .ph-row {
+    grid-template-columns: 9.5rem 7rem 11rem 8rem 11rem 1.4fr 7rem;
+    align-items: start;
+  }
+
+  .ph-head {
+    display: grid;
+    padding-bottom: 0.4rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--pv-muted);
+  }
+
+  .ph-cell::before {
+    display: none;
+  }
+}

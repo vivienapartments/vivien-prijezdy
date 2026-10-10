@@ -39,6 +39,8 @@ yarn-error.log*
 # lokální data a náhledy e-mailů
 .data/
 nahled-emailu/
+nahled-prehledu/
+STAV-PRO-CLAUDE.md
 
 # vercel
 .vercel

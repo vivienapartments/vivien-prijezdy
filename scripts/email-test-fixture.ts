@@ -27,6 +27,7 @@ EMAIL: host@example.com
 NARODNOST: CZE
 OSLOVENI: Vážený pane Nováku
 ZDROJ: Booking.com
+ACCESS_PIN: 1234
 KLIC: FIXTURE
 KONEC
 `;
@@ -76,7 +77,6 @@ async function main() {
       secrets,
       logoSrc: logoFile,
       podpisSrc: podpisFile,
-      ctaStyle: 'A',
     });
     const file = path.join(outDir, `${p.apt}-${p.lang}.html`);
     fs.writeFileSync(file, built.html, 'utf8');
@@ -120,7 +120,6 @@ async function main() {
       guideUrl: `${baseUrl()}/${token}`,
       intendedTo: parsed.data.email,
       secrets,
-      ctaStyle: 'A',
     },
   });
   console.log('odeslano [TEST] finální náhled (styl A), rezervace', parsed.data.rezervace, 'to=', result.to);

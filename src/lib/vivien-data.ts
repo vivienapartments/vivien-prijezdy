@@ -1,4 +1,5 @@
 import apartmanyJson from '@/data/apartmany.json';
+import { duvod, problemEmailu, type Duvod } from './chyby';
 import { nightsBetween, parseCzechDate } from './dates';
 import type { AptId, GuideLang } from './types';
 import { APT_IDS } from './types';
@@ -164,14 +165,11 @@ export function parseVivienData(raw: string): ParseResult {
     return { ok: false, reason: 'ODJEZD musí být po PRIJEZDU' };
   }
 
-  let noci: number | null = computedNights;
+  const noci: number | null = computedNights;
   if (f.NOCI) {
     const declared = Number(f.NOCI);
-    if (Number.isFinite(declared) && declared > 0) {
-      if (declared !== computedNights) {
-        warnings.push(`NOCI v datech=${declared}, z dat=${computedNights}`);
-      }
-      noci = declared;
+    if (Number.isFinite(declared) && declared > 0 && declared !== computedNights) {
+      warnings.push(`NOCI v datech=${declared}, z dat=${computedNights}`);
     }
   }
 
@@ -184,19 +182,10 @@ export function parseVivienData(raw: string): ParseResult {
 
   const narodnost = f.NARODNOST?.trim() || null;
 
-  const accessPinRaw = (f.ACCESS_PIN || f.ACCESSPIN || '').trim();
-  // Prázdný / nevyplněný merge field z BH nemá hodnotu.
-  if (
-    !accessPinRaw ||
-    /^\(?\s*ACCESS_PIN\s*\)?$/i.test(accessPinRaw) ||
-    accessPinRaw === '—' ||
-    accessPinRaw === '-'
-  ) {
-    return { ok: false, reason: 'Chybí ACCESS_PIN' };
-  }
-  const accessPin = accessPinRaw;
+  const accessPin = cleanAccessPin(f.ACCESS_PIN || f.ACCESSPIN || '');
+  if (!accessPin) return { ok: false, reason: 'Chybí ACCESS_PIN' };
 
-  // BH šablona: GUEST_NAME: (GUEST_NAME) — křestní jméno
+  // BH šablona: GUEST_NAME: (GUEST_NAME) — křestní jméno do pozdravu. OSLOVENI se nepoužívá.
   const jmeno = cleanGuestFirstName(
     f.GUEST_NAME || f.JMENO || f.FIRSTNAME || f.FIRST_NAME || '',
   );
@@ -223,13 +212,155 @@ export function parseVivienData(raw: string): ParseResult {
   };
 }
 
+function cleanAccessPin(raw: string): string | null {
+  const s = raw.trim();
+  if (!s) return null;
+  if (/^\(?\s*ACCESS_?PIN\s*\)?$/i.test(s)) return null;
+  if (s === '—' || s === '-' || s === '–') return null;
+  return s;
+}
+
 /** Křestní jméno z BH; prázdný / nevyplněný merge field → null. */
 export function cleanGuestFirstName(raw: string): string | null {
   const s = raw.trim().replace(/\s+/g, ' ');
   if (!s) return null;
-  if (/^\(?\s*(JMENO|GUEST_?NAME|FIRST_?NAME|FIRSTNAME)\s*\)?$/i.test(s)) return null;
+  if (/^\([A-Z0-9_ ]+\)$/i.test(s)) return null;
+  if (/^\(?\s*(JMENO|GUEST_?NAME|MAIN_GUEST_NAME|FIRST_?NAME|FIRSTNAME)\s*\)?$/i.test(s)) return null;
   if (s === '—' || s === '-' || s === '–') return null;
   // max 40 znaků, bez e-mailu / čísla rezervace
   if (s.length > 40 || /@|\d{5,}/.test(s)) return null;
   return s;
+}
+
+/** Jméno jen do tabulky: GUEST_NAME, jinak příjmení z OSLOVENI. Do pozdravu nepatří. */
+export function jmenoProPrehled(
+  guestName: string | null | undefined,
+  osloveni: string | null | undefined,
+): string | null {
+  const fromGuest = cleanGuestFirstName(guestName || '');
+  if (fromGuest) return fromGuest;
+  const raw = (osloveni || '').trim();
+  if (!raw) return null;
+  const cleaned = raw
+    .replace(/[,.]+$/g, '')
+    .replace(/\b(vážený|vážená|vázena|pane|paní|pani|herr|frau|geehrter|geehrte|sehr|dear|mr|mrs|ms)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const last = cleaned.split(' ').filter(Boolean).pop() || '';
+  return cleanGuestFirstName(last);
+}
+
+export type MailInspection = {
+  rezervace: string | null;
+  apartman: AptId | null;
+  prijezd: string | null;
+  odjezd: string | null;
+  noci: number | null;
+  osob: number | null;
+  email: string | null;
+  jazyk: GuideLang | null;
+  /** Jméno do tabulky (GUEST_NAME, jinak příjmení z OSLOVENI). */
+  jmeno: string | null;
+  /** Křestní jméno do pozdravu v e-mailu. */
+  krestni: string | null;
+  osloveni: string | null;
+  accessPin: string | null;
+  duvody: Duvod[];
+};
+
+function rezervaceZeSubjectu(subject: string): string | null {
+  const m = subject.match(/#\s*(\d{4,})/);
+  return m ? m[1] : null;
+}
+
+/** Přečte, co z e-mailu jde. Chyby neskončí dřív, pokud je číslo rezervace. */
+export function inspectVivienMail(raw: string, subject = ''): MailInspection {
+  const duvody: Duvod[] = [];
+  const block = extractBlock(raw);
+  const zeSubjectu = rezervaceZeSubjectu(subject);
+
+  if (!block) {
+    if (zeSubjectu) duvody.push(duvod('chybi_blok'));
+    return {
+      rezervace: zeSubjectu,
+      apartman: null,
+      prijezd: null,
+      odjezd: null,
+      noci: null,
+      osob: null,
+      email: null,
+      jazyk: null,
+      jmeno: null,
+      krestni: null,
+      osloveni: null,
+      accessPin: null,
+      duvody,
+    };
+  }
+
+  const f = parseFields(block);
+  const rezervace = (f.REZERVACE || '').trim() || zeSubjectu;
+  const apartmanRaw = (f.APARTMAN || '').trim();
+  const prijezdRaw = (f.PRIJEZD || '').trim();
+  const odjezdRaw = (f.ODJEZD || '').trim();
+  const emailRaw = (f.EMAIL || '').trim();
+  const emailMatch = emailRaw.match(/[^\s<>"]+@[^\s<>"]+/);
+  const emailKandidat = emailMatch ? emailMatch[0] : emailRaw;
+  const problem = problemEmailu(emailKandidat);
+  let email: string | null = null;
+  if (problem === 'chybi') duvody.push(duvod('chybi_email'));
+  else if (problem === 'spatny') duvody.push(duvod('spatny_email', emailKandidat));
+  else email = emailKandidat.replace(/[.,;]+$/, '');
+
+  let apartman: AptId | null = null;
+  if (!apartmanRaw) duvody.push(duvod('neznamy_apartman', 'chybí'));
+  else {
+    apartman = aptFromCzechName(apartmanRaw);
+    if (!apartman) duvody.push(duvod('neznamy_apartman', apartmanRaw));
+  }
+
+  const prijezd = prijezdRaw ? parseCzechDate(prijezdRaw) : null;
+  const odjezd = odjezdRaw ? parseCzechDate(odjezdRaw) : null;
+  let noci: number | null = null;
+  if (!prijezd || !odjezd) {
+    duvody.push(duvod('spatne_datum'));
+  } else {
+    noci = nightsBetween(prijezd, odjezd);
+    if (noci == null) duvody.push(duvod('odjezd_pred_prijezdem'));
+    else if (f.NOCI) {
+      const declared = Number(f.NOCI);
+      if (Number.isFinite(declared) && declared > 0 && declared !== noci) {
+        duvody.push(duvod('noci_nesedi'));
+      }
+    }
+  }
+
+  let osob: number | null = null;
+  if (!f.OSOB?.trim()) duvody.push(duvod('chybi_osoby'));
+  else {
+    const o = Number(f.OSOB);
+    if (!Number.isFinite(o) || o < 1) duvody.push(duvod('chybi_osoby'));
+    else osob = Math.floor(o);
+  }
+
+  const osloveni = f.OSLOVENI?.trim() || null;
+  const narodnost = f.NARODNOST?.trim() || null;
+  const accessPin = cleanAccessPin(f.ACCESS_PIN || f.ACCESSPIN || '');
+  if (!accessPin) duvody.push(duvod('chybi_pin'));
+
+  return {
+    rezervace,
+    apartman,
+    prijezd,
+    odjezd,
+    noci,
+    osob,
+    email,
+    jazyk: langFromNarodnost(narodnost),
+    jmeno: jmenoProPrehled(f.GUEST_NAME, osloveni),
+    krestni: cleanGuestFirstName(f.GUEST_NAME || ''),
+    osloveni,
+    accessPin,
+    duvody,
+  };
 }

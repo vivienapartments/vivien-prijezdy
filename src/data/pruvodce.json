@@ -20,7 +20,7 @@
         "V4",
         "V5"
       ],
-      "stav": "upraveno_ke_schvaleni",
+      "stav": "hotovo",
       "typ": "vyzva_nahore",
       "nadpis": {
         "cs": "Přijedete autem? Napište nám hned",
@@ -42,7 +42,7 @@
             "V5"
           ],
           "foto": null,
-          "stav": "upraveno_ke_schvaleni",
+          "stav": "hotovo",
           "nadpis": {
             "cs": "Přijedete autem? Napište nám hned",
             "en": "Arriving by car? Message us right away",
@@ -150,7 +150,7 @@
         "V4",
         "V5"
       ],
-      "stav": "upraveno_ke_schvaleni",
+      "stav": "hotovo",
       "kroky": [
         {
           "id": "brana-otevreno",
@@ -178,7 +178,7 @@
             "uk": "У будні (понеділок-п’ятниця) ворота відкриті з 6:00 до 18:00. Увечері, вночі та у вихідні весь день вони зачинені. Відкрийте їх телефонним дзвінком на {{BRANA_TELEFON}}. Ніхто не відповість: прозвучить сигнал зайнято й ворота почнуть відкриватися.",
             "zh-Hant": "平日（週一至週五）大門 6:00-18:00 開啟。傍晚、夜間與週末全天關閉。請撥打 {{BRANA_TELEFON}} 開啟。無人接聽：會聽到忙線音，大門隨即開啟。"
           },
-          "stav": "upraveno_ke_schvaleni"
+          "stav": "hotovo"
         },
         {
           "id": "brana-pozor",
@@ -225,7 +225,7 @@
               "zh-Hant": "號碼不可隱藏（請關閉隱藏來電號碼）。"
             }
           ],
-          "stav": "upraveno_ke_schvaleni"
+          "stav": "hotovo"
         },
         {
           "id": "brana-problem",
@@ -237,7 +237,7 @@
             "V5"
           ],
           "foto": null,
-          "stav": "upraveno_ke_schvaleni",
+          "stav": "hotovo",
           "nadpis": {
             "cs": "Brána se neotevírá?",
             "en": "The gate won't open?",
@@ -1085,7 +1085,7 @@
         "V3",
         "V4"
       ],
-      "stav": "upraveno_ke_schvaleni",
+      "stav": "hotovo",
       "kroky": [
         {
           "id": "posezeni",
@@ -1111,7 +1111,7 @@
             "uk": "Для сидіння надворі у вас є своя тераса. Якщо крісла внизу в саду вільні, можете скористатися й ви. Але вони призначені головно для гостей апартаментів без тераси. Дякуємо за ввічливість.",
             "zh-Hant": "戶外座位您有自己的露台。若花園下方的椅子空著，您也可以使用。不過它們主要是給沒有露台的公寓客人。謝謝體諒。"
           },
-          "stav": "upraveno_ke_schvaleni"
+          "stav": "hotovo"
         }
       ],
       "poznamka": "Jen jedna krátká poznámka, žádný návod. Nejmenovat V1/V5 (hosté označení neznají)."

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { langFromNarodnost, parseVivienData } from './vivien-data';
+import { inspectVivienMail, jmenoProPrehled, langFromNarodnost, parseVivienData } from './vivien-data';
 
 const SAMPLE = `
 (RES_URL)
@@ -66,6 +66,33 @@ KONEC`;
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.data.apartman).toBe('V5');
+  });
+
+  it('bez PINu se data nepustí dál', () => {
+    const bez = SAMPLE.replace('ACCESS_PIN: 1234\n', '');
+    const r = parseVivienData(bez);
+    expect(r.ok).toBe(false);
+  });
+
+  it('jméno do tabulky je z GUEST_NAME, jinak příjmení z oslovení', () => {
+    expect(jmenoProPrehled('Marie', 'Vážená paní Nováková')).toBe('Marie');
+    expect(jmenoProPrehled('', 'Vážený pane Nováku')).toBe('Nováku');
+    expect(jmenoProPrehled('(GUEST_NAME)', 'Vážený pane Nováku')).toBe('Nováku');
+  });
+
+  it('překlep e-mailu je chyba, číslo rezervace zůstane', () => {
+    const r = inspectVivienMail(
+      `VIVIEN-DATA v1
+REZERVACE: 42
+APARTMAN: Jemná harmonie
+PRIJEZD: 1.11.2026
+ODJEZD: 3.11.2026
+EMAIL: host@gmial.com
+OSOB: 2
+KONEC`,
+    );
+    expect(r.rezervace).toBe('42');
+    expect(r.duvody.some((d) => d.kod === 'spatny_email')).toBe(true);
   });
 
   it('hlásí chybějící pole', () => {
