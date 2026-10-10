@@ -131,6 +131,10 @@
 .pv {
   --pv-axis-marker: 2.5rem;
   --pv-axis-gap: 1rem;
+  /* Stejné odsazení jako padding osy, ať levý okraj karet sedí na pixel. */
+  --pv-axis-inset: 0.15rem;
+  hyphens: auto;
+  -webkit-hyphens: auto;
   max-width: 56rem;
   margin: 0 auto;
   padding: 1.5rem var(--container-padding-x, 1.25rem) 5rem;
@@ -145,10 +149,73 @@
   }
 }
 
+.pv-cas {
+  --pv-cas-red: #c23b32;
+  margin: 0 0 1rem;
+  margin-left: calc(var(--pv-axis-marker) + var(--pv-axis-gap) + var(--pv-axis-inset));
+  padding: 1rem 1.1rem;
+  background: color-mix(in srgb, var(--color-gold) 14%, var(--pv-surface-2));
+  border: 1px solid color-mix(in srgb, var(--color-gold) 42%, transparent);
+  border-left: 4px solid var(--pv-cas-red);
+  border-radius: 14px;
+
+  h2 {
+    margin: 0 0 0.45rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 2.2vw, 1.7rem);
+    font-weight: 600;
+    color: var(--color-dark);
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.pv-cas__text {
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.pv-cas__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+}
+
+.pv-cas__btn {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 55%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-dark);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.pv-cas__btn:hover,
+.pv-cas__btn:focus-visible {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.pv-cas__checkin {
+  margin-top: 0.55rem;
+  font-weight: 600;
+  text-align: start;
+}
+
 .pv-hub {
   /* Stejný levý odsazení jako karty na ose → pravé hrany na jedné linii */
   margin: 0 0 1.75rem;
-  margin-left: calc(var(--pv-axis-marker) + var(--pv-axis-gap));
+  margin-left: calc(var(--pv-axis-marker) + var(--pv-axis-gap) + var(--pv-axis-inset));
   padding: 1.35rem 1.15rem 1.5rem;
   border: 1px solid color-mix(in srgb, var(--color-gold) 28%, transparent);
   border-radius: 14px;
@@ -273,7 +340,7 @@
   position: relative;
   gap: 1.15rem;
   max-width: none;
-  padding-left: 0.15rem;
+  padding-left: var(--pv-axis-inset);
 
   &::before {
     content: '';

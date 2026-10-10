@@ -123,6 +123,7 @@ export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
         <article key={row.rezervace} id={row.rezervace} className="ph-row">
           <div className="ph-cell" data-label="Stav">
             <span className={`ph-stav ph-stav--${row.stav}`}>{row.stavText}</span>
+            <div className="ph-poplatek">poplatek: {row.poplatek === 'neznamo' ? 'neznámo' : row.poplatek}</div>
           </div>
           <div className="ph-cell" data-label="Rezervace">
             #{row.rezervace}

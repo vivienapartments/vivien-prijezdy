@@ -1,6 +1,7 @@
 import apartmanyJson from '@/data/apartmany.json';
 import { duvod, problemEmailu, type Duvod } from './chyby';
 import { nightsBetween, parseCzechDate } from './dates';
+import { parseDatumVytvoreni } from './poplatek';
 import type { AptId, GuideLang } from './types';
 import { APT_IDS } from './types';
 
@@ -232,13 +233,17 @@ export function cleanGuestFirstName(raw: string): string | null {
   return s;
 }
 
-/** Jméno jen do tabulky: GUEST_NAME, jinak příjmení z OSLOVENI. Do pozdravu nepatří. */
+/** Jméno jen do tabulky. Do pozdravu nepatří. */
 export function jmenoProPrehled(
   guestName: string | null | undefined,
   osloveni: string | null | undefined,
+  surname?: string | null,
 ): string | null {
   const fromGuest = cleanGuestFirstName(guestName || '');
+  const fromSurname = cleanGuestFirstName(surname || '');
+  if (fromGuest && fromSurname) return `${fromGuest} ${fromSurname}`;
   if (fromGuest) return fromGuest;
+  if (fromSurname) return fromSurname;
   const raw = (osloveni || '').trim();
   if (!raw) return null;
   const cleaned = raw
@@ -259,10 +264,12 @@ export type MailInspection = {
   osob: number | null;
   email: string | null;
   jazyk: GuideLang | null;
-  /** Jméno do tabulky (GUEST_NAME, jinak příjmení z OSLOVENI). */
+  /** Jméno do tabulky (GUEST_NAME a GUEST_SURNAME, jinak příjmení z OSLOVENI). */
   jmeno: string | null;
+  vytvoreno: string | null;
   /** Křestní jméno do pozdravu v e-mailu. */
   krestni: string | null;
+  narodnost: string | null;
   osloveni: string | null;
   accessPin: string | null;
   duvody: Duvod[];
@@ -292,8 +299,10 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
       jazyk: null,
       jmeno: null,
       krestni: null,
+      narodnost: null,
       osloveni: null,
       accessPin: null,
+      vytvoreno: null,
       duvody,
     };
   }
@@ -347,6 +356,7 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
   const narodnost = f.NARODNOST?.trim() || null;
   const accessPin = cleanAccessPin(f.ACCESS_PIN || f.ACCESSPIN || '');
   if (!accessPin) duvody.push(duvod('chybi_pin'));
+  const vytvoreno = parseDatumVytvoreni(f.DATE);
 
   return {
     rezervace,
@@ -357,10 +367,12 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
     osob,
     email,
     jazyk: langFromNarodnost(narodnost),
-    jmeno: jmenoProPrehled(f.GUEST_NAME, osloveni),
+    jmeno: jmenoProPrehled(f.GUEST_NAME, osloveni, f.GUEST_SURNAME),
     krestni: cleanGuestFirstName(f.GUEST_NAME || ''),
+    narodnost,
     osloveni,
     accessPin,
+    vytvoreno,
     duvody,
   };
 }

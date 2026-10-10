@@ -34,6 +34,7 @@ import {
   gardenCodeForApt,
 } from '@/lib/access-codes';
 import * as TX from '@/lib/texts';
+import { ukazatPoplatek, type PoplatekStav } from '@/lib/poplatek';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import './guide.scss';
 
@@ -56,6 +57,8 @@ export type GuideProps = {
   stay: StayFacts;
   /** ACCESS_PIN z Better Hotelu (podle pobytu). */
   accessPin?: string | null;
+  /** Chybí nebo neznámo = box se ukáže. Ne = schovaný. */
+  poplatek?: PoplatekStav;
   vikend?: boolean;
   /** Výchozí příjezd (dev náhled); host na token stránce volí sám. */
   initialPrijezd?: Prijezd | null;
@@ -74,6 +77,7 @@ export function Guide({
   secrets,
   stay,
   accessPin = null,
+  poplatek = 'neznamo',
   vikend = false,
   initialPrijezd = null,
   showDevBar = false,
@@ -230,8 +234,16 @@ export function Guide({
     </li>
   );
 
+  useEffect(() => {
+    const prev = document.documentElement.lang;
+    document.documentElement.lang = lang;
+    return () => {
+      document.documentElement.lang = prev;
+    };
+  }, [lang]);
+
   return (
-    <div className="pv-root">
+    <div className="pv-root" lang={lang}>
       {showDevBar ? (
         <details className="pv-dev">
           <summary className="pv-dev__summary">Nastavení náhledu (host neuvidí)</summary>
@@ -292,6 +304,24 @@ export function Guide({
       ) : null}
 
       <main className="pv">
+        <section className="pv-cas" lang={lang}>
+          <h2>{tt(TX.casPrijezduNadpis)}</h2>
+          <p className="pv-cas__text">{renderPhoneText(tt(TX.casPrijezduText))}</p>
+          <p className="pv-cas__checkin">{tt(TX.casPrijezduCheckin)}</p>
+          <div className="pv-cas__actions">
+            <a className="pv-cas__btn" href="sms:+420777702272">
+              {tt(TX.casPrijezduSms)}
+            </a>
+            <a
+              className="pv-cas__btn"
+              href="https://wa.me/420777702272"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {tt(TX.casPrijezduWhatsapp)}
+            </a>
+          </div>
+        </section>
         <section className="pv-hub">
           <p className="pv-kicker">{tt(TX.hub.kicker)}</p>
           <h2 className="pv-hub__title">{tt(TX.hub.title)}</h2>
@@ -436,6 +466,7 @@ export function Guide({
                           </div>
                         </article>
                         <p className="pv-hub__lead">{tt(TX.predDomemText)}</p>
+                        {ukazatPoplatek(poplatek) ? (
                         <article className="pv-step pv-step--note">
                           <p className="pv-kicker">{tt(TX.ui.note)}</p>
                           <h3>{tt(TX.poplatekNadpis)}</h3>
@@ -454,6 +485,7 @@ export function Guide({
                             </span>
                           </p>
                         </article>
+                        ) : null}
                         <article className="pv-step pv-step--note">
                           <p className="pv-kicker">{tt(TX.ui.entry)}</p>
                           <h3>{tt(TX.vstupNadpis)}</h3>

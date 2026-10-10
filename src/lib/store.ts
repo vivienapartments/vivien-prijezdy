@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { Duvod } from './chyby';
+import type { PoplatekStav } from './poplatek';
 import type { AptId, GuideLang } from './types';
 
 export type MessageStatus = 'sent' | 'skipped_no_data' | 'rejected' | 'duplicate' | 'error';
@@ -35,9 +36,14 @@ export type RezervaceRecord = {
   jmeno: string | null;
   /** Křestní jméno z GUEST_NAME jen pro pozdrav. Příjmení z oslovení sem nepatří. */
   krestni: string | null;
+  /** Národnost z BH (CZE, SVK, …). U starých záznamů chybí a zůstane null. */
+  narodnost: string | null;
   emailHosta: string | null;
   /** PIN pobytu pro odkaz na průvodce. V přehledu se neukazuje. */
   accessPin: string | null;
+  /** Den vytvoření rezervace z BH (DATE), YYYY-MM-DD. */
+  vytvoreno: string | null;
+  poplatek: PoplatekStav;
   stav: RezervaceStav;
   duvody: Duvod[];
   posledniPokus: string;
@@ -111,8 +117,11 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     jazyk: (r.jazyk as GuideLang) || null,
     jmeno: typeof r.jmeno === 'string' ? r.jmeno : null,
     krestni: typeof r.krestni === 'string' ? r.krestni : null,
+    narodnost: typeof r.narodnost === 'string' ? r.narodnost : null,
     emailHosta: typeof r.emailHosta === 'string' ? r.emailHosta : null,
     accessPin: typeof r.accessPin === 'string' ? r.accessPin : null,
+    vytvoreno: typeof r.vytvoreno === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.vytvoreno) ? r.vytvoreno : null,
+    poplatek: r.poplatek === 'ano' || r.poplatek === 'ne' || r.poplatek === 'neznamo' ? r.poplatek : 'neznamo',
     stav,
     duvody: Array.isArray(r.duvody) ? (r.duvody as Duvod[]) : [],
     posledniPokus: posledni,
@@ -137,8 +146,11 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     jazyk: null,
     jmeno: null,
     krestni: null,
+    narodnost: null,
     emailHosta: null,
     accessPin: null,
+    vytvoreno: null,
+    poplatek: 'neznamo',
     stav: 'neodeslano',
     duvody: [],
     posledniPokus: cas,

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { Guide } from '@/components/Guide';
 import { Expired } from '@/components/Expired';
 import { loadSecrets } from '@/lib/secrets';
+import { poplatekZTokenu } from '@/lib/poplatek';
 import { stayFromPayload, verifyToken } from '@/lib/token';
 import type { GuideLang } from '@/lib/types';
 
@@ -34,6 +35,7 @@ export default async function TokenPage({ params }: Props) {
       secrets={secrets}
       stay={stay}
       accessPin={i ?? null}
+      poplatek={poplatekZTokenu(result.payload.f)}
       initialPrijezd={null}
     />
   );

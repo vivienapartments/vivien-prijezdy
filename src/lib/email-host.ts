@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import apartmanyJson from '@/data/apartmany.json';
+import { ceskyVokativ, narodnostKod } from './osloveni';
 import type { GuideSecrets } from './secrets';
 import type { AptId, GuideLang, LText } from './types';
 
@@ -13,6 +14,8 @@ export type GuestEmailInput = {
   osloveni: string | null;
   /** Křestní jméno z BH (GUEST_NAME). */
   jmeno?: string | null;
+  /** Národnost z BH, třeba CZE nebo SVK. Bez ní se české jméno neskloňuje. */
+  narodnost?: string | null;
   guideUrl: string;
   intendedTo: string;
   secrets?: GuideSecrets;
@@ -48,9 +51,15 @@ function fmtYmd(ymd: string, lang: GuideLang): string {
 /**
  * Pozdrav z křestního jména (GUEST_NAME).
  * OSLOVENI (pane/paní/Herr) nepoužíváme: BH občas splete rod.
+ * Čeština: vždy čárka po „Dobrý den“. CZE jen 5. pád ze slovníku, jinak bez jména.
+ * SVK: jméno v 1. pádu. Ostatní jazyky beze změny.
  * Bez jména → neutrální „Dobrý den,“ / „Guten Tag,“.
  */
-export function greetingLine(lang: GuideLang, jmeno: string | null | undefined): string {
+export function greetingLine(
+  lang: GuideLang,
+  jmeno: string | null | undefined,
+  narodnost?: string | null,
+): string {
   const generic = t(
     {
       cs: 'Dobrý den,',
@@ -63,6 +72,15 @@ export function greetingLine(lang: GuideLang, jmeno: string | null | undefined):
     lang,
   );
   const name = (jmeno || '').trim();
+  if (lang === 'cs') {
+    if (!name) return 'Dobrý den,';
+    const kod = narodnostKod(narodnost);
+    if (kod === 'SVK') return `Dobrý den, ${name},`;
+    if (kod !== 'CZE') return 'Dobrý den,';
+    const vok = ceskyVokativ(name);
+    if (!vok) return 'Dobrý den,';
+    return `Dobrý den, ${vok},`;
+  }
   if (!name) return generic;
   const prefix = generic.replace(/[,，]\s*$/u, '');
   if (lang === 'zh-Hant') return `${prefix}${name}，`;
@@ -87,6 +105,16 @@ const introBodyL: LText = {
   pl: 'przygotowaliśmy dla Was krótką instrukcję przyjazdu. Znajdziecie w niej drogę do nas, parking, bramę, Wi-Fi i kody. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
   uk: 'ми підготували для вас короткий гід приїзду. У ньому шлях до нас, паркування, брама, Wi-Fi та коди. Щоб ви знали, куди їхати і що робити після прибуття.',
   'zh-Hant': '我們為您準備了一份簡短的抵達指南。您會找到前往我們這裡的路線、停車、大門、Wi-Fi 與密碼。讓您知道怎麼來、抵達後該做什麼。',
+};
+
+/** Nad tlačítkem. Čas příjezdu, ať host nečeká před domem. */
+const casPrijezduL: LText = {
+  cs: 'Nejdůležitější: napište nám, v kolik dorazíte, SMS nebo WhatsApp na +420 777 702 272. Apartmán předáváme osobně a pak aktivujeme vaše kódy, ať nemusíte čekat.',
+  en: 'Most important: tell us what time you will arrive, by SMS or WhatsApp to +420 777 702 272. We hand over the apartment in person and then activate your codes, so you do not have to wait.',
+  de: 'Das Wichtigste: schreiben Sie uns, um wie viel Uhr Sie ankommen, per SMS oder WhatsApp an +420 777 702 272. Wir übergeben das Apartment persönlich und aktivieren danach Ihre Codes, damit Sie nicht warten müssen.',
+  pl: 'Najważniejsze: napiszcie nam, o której dojedziecie, SMS-em albo przez WhatsApp na +420 777 702 272. Apartament przekazujemy osobiście, a potem aktywujemy Wasze kody, żebyście nie musieli czekać.',
+  uk: 'Найважливіше: напишіть нам, о котрій приїдете, SMS або через WhatsApp на +420 777 702 272. Апартаменти передаємо особисто, а потім активуємо ваші коди, щоб вам не довелося чекати.',
+  'zh-Hant': '最重要的事：請告訴我們您幾點到，簡訊或 WhatsApp 至 +420 777 702 272。公寓由我們當面交接，然後啟用您的密碼，以免您在外面等候。',
 };
 
 /** CTA nápověda (v HTML tučně). */
@@ -260,7 +288,7 @@ function ctaHtml(opts: { href: string; label: string; serif: string }): string {
 export function buildGuestEmail(input: GuestEmailInput): { subject: string; html: string; text: string } {
   const lang = input.lang;
   const apt = aptRow(input.apt);
-  const greeting = greetingLine(lang, input.jmeno);
+  const greeting = greetingLine(lang, input.jmeno, input.narodnost);
   const nociLabel = input.noci == null ? 'XXX' : String(input.noci);
   const osobLabel = input.osob == null ? 'XXX' : String(input.osob);
   const term = `${fmtYmd(input.prijezd, lang)} – ${fmtYmd(input.odjezd, lang)}`.replace('–', '-');
@@ -329,6 +357,16 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   </td>
                 </tr>
                 <tr>
+                  <td style="padding:0 0 18px;">
+                    <div style="padding:12px 14px;background:#2a221c;border:1px solid #c9a84c;border-radius:8px;font-family:${serif};font-size:16px;line-height:1.5;color:#f5efe3;">
+                      ${escapeHtml(t(casPrijezduL, lang)).replace(
+                        /\+420 777 702 272/g,
+                        '<a href="tel:+420777702272" style="color:#e8d5a3;text-decoration:none;font-weight:700;">+420 777 702 272</a>',
+                      )}
+                    </div>
+                  </td>
+                </tr>
+                <tr>
                   <td align="center" style="padding:8px 0 22px;">
                     ${cta}
                   </td>
@@ -386,6 +424,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
     `${t(datesL, lang)}: ${term}`,
     `${t(nightsL, lang)}: ${nociLabel}`,
     `${t(guestsL, lang)}: ${osobLabel}`,
+    '',
+    t(casPrijezduL, lang),
     '',
     `${t(openGuideL, lang)}: ${input.guideUrl}`,
     '',

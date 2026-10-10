@@ -1,3 +1,4 @@
+import { tokenPoplatku } from './poplatek';
 import { createToken } from './token';
 import { sendGuestEmail } from './email-host';
 import type { RezervaceRecord } from './store';
@@ -16,6 +17,7 @@ export function odkazNaPruvodce(rec: RezervaceRecord): string | null {
     o: rec.osob ?? undefined,
     l: rec.jazyk,
     i: rec.accessPin ?? undefined,
+    f: tokenPoplatku(rec.poplatek),
   });
   return `${baseUrl()}/${token}`;
 }
@@ -39,6 +41,7 @@ export async function posliPruvodce(
       osob: rec.osob,
       osloveni: null,
       jmeno: jmenoDoPozdravu ?? null,
+      narodnost: rec.narodnost,
       guideUrl: url,
       intendedTo: rec.emailHosta,
     },

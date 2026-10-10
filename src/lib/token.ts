@@ -40,6 +40,7 @@ function normalizePayload(payload: TokenPayload): Record<string, string | number
   if (pin && pin.length <= 64) {
     out.i = pin;
   }
+  if (payload.f === 0 || payload.f === 1) out.f = payload.f;
   return out;
 }
 
@@ -164,6 +165,8 @@ export function verifyToken(token: string, secret = getSecret(), now = new Date(
     if (pin.length > 64) return { ok: false, reason: 'invalid' };
     payload.i = pin;
   }
+
+  if (raw.f === 0 || raw.f === 1) payload.f = raw.f;
 
   if (isDepartureExpired(d, now)) {
     return { ok: false, reason: 'expired' };

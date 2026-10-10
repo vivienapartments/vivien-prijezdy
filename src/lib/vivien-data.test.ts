@@ -78,6 +78,18 @@ KONEC`;
     expect(jmenoProPrehled('Marie', 'Vážená paní Nováková')).toBe('Marie');
     expect(jmenoProPrehled('', 'Vážený pane Nováku')).toBe('Nováku');
     expect(jmenoProPrehled('(GUEST_NAME)', 'Vážený pane Nováku')).toBe('Nováku');
+    expect(jmenoProPrehled('Marie', 'Vážený pane Nováku', 'Svobodová')).toBe('Marie Svobodová');
+    expect(jmenoProPrehled('Marie', 'Vážený pane Nováku', '(GUEST_SURNAME)')).toBe('Marie');
+  });
+
+  it('DATE z BH je den vytvoření a do pozdravu nejde', () => {
+    const r = inspectVivienMail(
+      SAMPLE.replace('KONEC', 'DATE: 4.10.2026\nGUEST_NAME: Marie\nGUEST_SURNAME: Svobodová\nKONEC'),
+    );
+    expect(r.vytvoreno).toBe('2026-10-04');
+    expect(r.jmeno).toBe('Marie Svobodová');
+    expect(r.krestni).toBe('Marie');
+    expect(inspectVivienMail(SAMPLE).vytvoreno).toBeNull();
   });
 
   it('překlep e-mailu je chyba, číslo rezervace zůstane', () => {

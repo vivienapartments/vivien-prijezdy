@@ -1,4 +1,5 @@
 import apartmanyJson from '@/data/apartmany.json';
+import type { PoplatekStav } from './poplatek';
 import type { ProcessStore, RezervaceRecord, RezervaceStav } from './store';
 import type { AptId, GuideLang } from './types';
 
@@ -21,6 +22,7 @@ export type PrehledRadek = {
   osob: number | null;
   jazyk: GuideLang | null;
   accessPin: string | null;
+  poplatek: PoplatekStav;
 };
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
@@ -111,6 +113,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     osob: rec.osob,
     jazyk: rec.jazyk,
     accessPin: rec.accessPin,
+    poplatek: rec.poplatek,
   };
 }
 

@@ -38,6 +38,52 @@ export const vstupNadpis: LText = {
   'zh-Hant': '您的密碼',
 };
 
+/** Nahoře v průvodci, ještě před volbou autem nebo pěšky. */
+export const casPrijezduNadpis: LText = {
+  cs: 'Napište nám, v kolik dorazíte',
+  en: 'Tell us what time you will arrive',
+  de: 'Schreiben Sie uns, um wie viel Uhr Sie ankommen',
+  pl: 'Napiszcie nam, o której dojedziecie',
+  uk: 'Напишіть нам, о котрій ви приїдете',
+  'zh-Hant': '請告訴我們您幾點到',
+};
+
+export const casPrijezduText: LText = {
+  cs: 'Apartmán vám předáme osobně a hned potom aktivujeme vaše kódy. Abychom na vás byli připravení a vy nemuseli čekat před domem, pošlete nám čas příjezdu co nejdřív, SMS nebo přes WhatsApp na +420 777 702 272. Když se čas změní, dejte vědět. Asi 15 minut před příjezdem nám napište ještě jednou.',
+  en: 'We hand over the apartment in person and then activate your codes. So that we are ready for you and you do not have to wait outside the house, send us your arrival time as soon as you can, by SMS or WhatsApp to +420 777 702 272. If the time changes, let us know. About 15 minutes before you arrive, message us once more.',
+  de: 'Wir übergeben das Apartment persönlich und aktivieren danach Ihre Codes. Damit wir für Sie bereit sind und Sie nicht vor dem Haus warten müssen, schicken Sie uns Ihre Ankunftszeit so bald wie möglich per SMS oder WhatsApp an +420 777 702 272. Wenn sich die Zeit ändert, geben Sie uns Bescheid. Etwa 15 Minuten vor der Ankunft schreiben Sie uns bitte noch einmal.',
+  pl: 'Apartament przekażemy osobiście i zaraz potem aktywujemy Wasze kody. Żebyśmy byli na Was gotowi i nie musieliście czekać przed domem, wyślijcie godzinę przyjazdu jak najszybciej, SMS-em albo przez WhatsApp na +420 777 702 272. Gdy godzina się zmieni, dajcie znać. Około 15 minut przed przyjazdem napiszcie jeszcze raz.',
+  uk: 'Апартаменти передамо особисто і одразу після цього активуємо ваші коди. Щоб ми були готові і вам не довелося чекати перед будинком, надішліть час приїзду якнайшвидше, SMS або через WhatsApp на +420 777 702 272. Якщо час зміниться, повідомте. Приблизно за 15 хвилин до приїзду напишіть ще раз.',
+  'zh-Hant': '公寓由我們當面交接，交接後立刻啟用您的密碼。為了我們能準備好、您也不必在屋外等候，請盡快用簡訊或 WhatsApp 把抵達時間傳到 +420 777 702 272。時間若有變動，請告訴我們。抵達前約 15 分鐘請再傳一次。',
+};
+
+export const casPrijezduCheckin: LText = {
+  cs: 'Check-in je 14:00–20:00.',
+  en: 'Check-in is 14:00–20:00.',
+  de: 'Check-in ist 14:00–20:00.',
+  pl: 'Check-in jest 14:00–20:00.',
+  uk: 'Заселення з 14:00 до 20:00.',
+  'zh-Hant': '入住時間為 14:00–20:00。',
+};
+
+export const casPrijezduSms: LText = {
+  cs: 'Napsat SMS',
+  en: 'Send an SMS',
+  de: 'SMS schreiben',
+  pl: 'Napisz SMS',
+  uk: 'Написати SMS',
+  'zh-Hant': '傳送簡訊',
+};
+
+export const casPrijezduWhatsapp: LText = {
+  cs: 'Napsat na WhatsApp',
+  en: 'Message on WhatsApp',
+  de: 'Auf WhatsApp schreiben',
+  pl: 'Napisz na WhatsApp',
+  uk: 'Написати у WhatsApp',
+  'zh-Hant': '用 WhatsApp 傳訊',
+};
+
 export const vstupText: LText = {
   cs: 'Do domu vás uvedeme osobně. Po kontrole dokladů kódy aktivujeme. Tady je máte po ruce na celý pobyt.',
   en: 'We will show you into the house in person. After we check your ID, we activate the codes. Keep them here for the whole stay.',
@@ -94,21 +140,21 @@ export const poplatekNadpis: LText = {
 };
 
 export const poplatekZaklad: LText = {
-  cs: 'U rezervací vzniklých od 1. 10. 2026 se městský poplatek z pobytu platí: 50 Kč za noc a osobu a není zahrnutý v ceně ubytování. U rezervací vzniklých před 1. 10. 2026 byl poplatek zahrnutý v ceně.',
-  en: 'For reservations created from 1 October 2026, the city stay tax is charged: 50 CZK per night per person and is not included in the accommodation price. For reservations created before 1 October 2026, the tax was included in the price.',
-  de: 'Bei Reservierungen ab dem 1. 10. 2026 wird die Kurtaxe erhoben: 50 CZK pro Nacht und Person und ist nicht im Unterkunftspreis enthalten. Bei Reservierungen vor dem 1. 10. 2026 war die Steuer im Preis enthalten.',
-  pl: 'Dla rezerwacji utworzonych od 1.10.2026 miejski podatek noclegowy jest pobierany: 50 CZK za noc na osobę i nie jest wliczony w cenę zakwaterowania. Dla rezerwacji utworzonych przed 1.10.2026 podatek był wliczony w cenę.',
-  uk: 'Для бронювань, створених з 1.10.2026, міський збір за проживання стягується: 50 CZK за ніч на особу і не включений у ціну розміщення. Для бронювань, створених до 1.10.2026, збір був включений у ціну.',
-  'zh-Hant': '自 2026 年 10 月 1 日起建立的預訂需另行支付城市住宿稅：每人每晚 50 捷克克朗，不含在住宿價格內。此日期之前建立的預訂，該稅已含在價格中。',
+  cs: '50 Kč za osobu a noc. Vybíráme ho za město, není to náš příplatek. Zaplaťte ho prosím při předání, ideálně kartou (v hotovosti přesně).',
+  en: '50 CZK per person per night. We collect it for the city, it is not our extra charge. Please pay it when we hand over the apartment, ideally by card (in cash, the exact amount).',
+  de: '50 CZK pro Person und Nacht. Wir kassieren sie für die Stadt, es ist kein Aufpreis von uns. Bitte zahlen Sie sie bei der Übergabe, am besten mit Karte (bar bitte passend).',
+  pl: '50 CZK za osobę i noc. Pobieramy go dla miasta, to nie jest nasza dopłata. Prosimy zapłacić przy przekazaniu apartamentu, najlepiej kartą (gotówką odliczoną).',
+  uk: '50 CZK за особу і ніч. Ми збираємо його для міста, це не наша доплата. Будь ласка, сплатіть його під час передачі, найкраще карткою (готівкою без решти).',
+  'zh-Hant': '每人每晚 50 捷克克朗。這是我們代市政府收取的，不是我們的附加費。請在交接時支付，最好用卡（現金請給剛好的金額）。',
 };
 
 export const poplatekFormulaStitek: LText = {
-  cs: 'Pro váš pobyt',
-  en: 'For your stay',
-  de: 'Für Ihren Aufenthalt',
-  pl: 'Dla Waszego pobytu',
-  uk: 'Для вашого перебування',
-  'zh-Hant': '本次住宿',
+  cs: 'Orientačně',
+  en: 'As a guide',
+  de: 'Zur Orientierung',
+  pl: 'Orientacyjnie',
+  uk: 'Орієнтовно',
+  'zh-Hant': '約略',
 };
 
 export const poplatekFormulaDetail: LText = {

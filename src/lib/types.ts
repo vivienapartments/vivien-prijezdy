@@ -80,6 +80,8 @@ export interface TokenPayload {
   o?: number;
   /** ACCESS_PIN z Better Hotelu (mění se podle pobytu). */
   i?: string;
+  /** 1 poplatek platí, 0 neplatí. Chybí = neznámo, box se ukáže. */
+  f?: 0 | 1;
 }
 
 export interface StayFacts {

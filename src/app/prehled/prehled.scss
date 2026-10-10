@@ -129,6 +129,13 @@
   font-weight: 600;
 }
 
+.ph-poplatek {
+  margin-top: 0.2rem;
+  color: var(--pv-muted);
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
 .ph-stav::before {
   content: '';
   width: 0.55rem;

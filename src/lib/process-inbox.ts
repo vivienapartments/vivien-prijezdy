@@ -3,6 +3,7 @@ import { parseBounce, stejneMessageId } from './bounce';
 import { duvod, jeBlokujici, jeVyhrada, type Duvod } from './chyby';
 import { verifyEmailOrigin } from './email-origin';
 import { fetchRecentInboxMails, type InboxMail } from './inbox-mail';
+import { poplatekZData } from './poplatek';
 import { posliPruvodce } from './posli-pruvodce';
 import {
   createProcessStore,
@@ -116,8 +117,11 @@ function udajeZMailu(ins: MailInspection): Partial<RezervaceRecord> {
     jazyk: ins.jazyk,
     jmeno: ins.jmeno,
     krestni: ins.krestni,
+    narodnost: ins.narodnost,
     emailHosta: ins.email,
     accessPin: ins.accessPin,
+    vytvoreno: ins.vytvoreno,
+    poplatek: poplatekZData(ins.vytvoreno),
   };
 }
 
