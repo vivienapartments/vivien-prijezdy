@@ -1,0 +1,14 @@
+---
+description: Pracuj jen ve složce vivien-prijezdy a větev přepínej jen na pokyn
+alwaysApply: true
+---
+
+# Jen tato složka
+
+- Pracuj jen v této složce (`vivien-prijezdy`).
+- Větev přepínej jen na výslovný pokyn majitele v chatu. Bez pokynu se zeptej a zůstaň na aktuální větvi.
+- Nepoužívej git worktree.
+- Do složky `vivien` smíš jen číst soubory. Nikdy tam nespouštěj git a nic tam neměň.
+- Commitni jen lokálně. Nepushuj.
+
+Příklad: majitel napíše „přepni na master“ — pak `git switch master`. Jinak větev nech být.
