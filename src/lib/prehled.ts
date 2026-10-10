@@ -26,6 +26,19 @@ export type PrehledRadek = {
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
 const apartmany = (apartmanyJson as { apartmany: AptRow[] }).apartmany;
 
+/** U zrušené rezervace se znovu neposílá. Odkaz na průvodce zůstává. */
+export function nabidnoutOdeslani(stav: RezervaceStav): boolean {
+  return stav !== 'zruseno';
+}
+
+/** Už odeslaný průvodce se znovu posílá jen po této otázce. */
+export function dotazPredOdeslanimZnovu(stav: RezervaceStav): string | null {
+  if (stav === 'odeslano' || stav === 'odeslano_s_vyhradou') {
+    return 'Host už průvodce dostal. Opravdu poslat znovu?';
+  }
+  return null;
+}
+
 export const STAV_TEXT: Record<RezervaceStav, string> = {
   odeslano: 'Odesláno',
   odeslano_s_vyhradou: 'Odesláno s výhradou',

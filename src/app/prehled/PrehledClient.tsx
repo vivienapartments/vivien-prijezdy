@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import apartmanyJson from '@/data/apartmany.json';
-import type { PrehledRadek } from '@/lib/prehled';
+import { dotazPredOdeslanimZnovu, nabidnoutOdeslani, type PrehledRadek } from '@/lib/prehled';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
 type Stav = PrehledRadek['stav'];
@@ -144,17 +144,29 @@ export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
             {row.posledniPokusText}
           </div>
           <div className="ph-akce">
-            <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'znovu')}>
-              Odeslat znovu
-            </button>
-            <button type="button" onClick={() => setOtevreno(otevreno === row.rezervace ? null : row.rezervace)}>
-              Opravit a odeslat
-            </button>
+            {nabidnoutOdeslani(row.stav) ? (
+              <>
+                <button
+                  type="button"
+                  disabled={cekam !== null}
+                  onClick={() => {
+                    const dotaz = dotazPredOdeslanimZnovu(row.stav);
+                    if (dotaz && !window.confirm(dotaz)) return;
+                    volat(row, 'znovu');
+                  }}
+                >
+                  Odeslat znovu
+                </button>
+                <button type="button" onClick={() => setOtevreno(otevreno === row.rezervace ? null : row.rezervace)}>
+                  Opravit a odeslat
+                </button>
+              </>
+            ) : null}
             <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
               Zkopírovat odkaz
             </button>
           </div>
-          {otevreno === row.rezervace ? (
+          {nabidnoutOdeslani(row.stav) && otevreno === row.rezervace ? (
             <OpravitForm
               row={row}
               cekam={cekam !== null}

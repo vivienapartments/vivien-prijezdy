@@ -48,6 +48,10 @@ export async function POST(request: Request): Promise<NextResponse> {
   const rec = await store.getRezervace(id);
   if (!rec) return chyba(404, 'Rezervace v přehledu není.');
 
+  if ((akce === 'znovu' || akce === 'opravit') && rec.stav === 'zruseno') {
+    return chyba(400, 'Zrušená rezervace se znovu neposílá.');
+  }
+
   if (akce === 'odkaz') {
     const url = odkazNaPruvodce(rec);
     if (!url) return chyba(400, 'Chybí apartmán, datum nebo jazyk.');
