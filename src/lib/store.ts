@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import type { AptId, GuideLang } from './types';
 
 export type MessageStatus = 'sent' | 'skipped_no_data' | 'rejected' | 'duplicate' | 'error';
 
@@ -18,7 +19,16 @@ export type RezervaceRecord = {
   emailHosta: string;
   processedAt: string;
   messageId: string;
+  /** YYYY-MM-DD – od novějších záznamů */
+  prijezd?: string;
+  apartman?: AptId;
+  /** Jméno hosta (GUEST_NAME / zkrácené OSLOVENI) */
+  jmeno?: string;
+  jazyk?: GuideLang;
 };
+
+export type RezervaceEntry = { id: string; record: RezervaceRecord };
+export type MessageEntry = { id: string; record: MessageRecord };
 
 type StoreData = {
   messages: Record<string, MessageRecord>;
@@ -31,6 +41,8 @@ export interface ProcessStore {
   markMessage(record: MessageRecord): Promise<void>;
   getRezervace(id: string): Promise<RezervaceRecord | null>;
   setRezervace(id: string, record: RezervaceRecord): Promise<void>;
+  listRezervace(): Promise<RezervaceEntry[]>;
+  listMessages(): Promise<MessageEntry[]>;
   purgeExpired(now?: Date): Promise<number>;
 }
 
@@ -98,6 +110,14 @@ export class FileProcessStore implements ProcessStore {
     this.write(data);
   }
 
+  async listRezervace(): Promise<RezervaceEntry[]> {
+    return Object.entries(this.read().rezervace).map(([id, record]) => ({ id, record }));
+  }
+
+  async listMessages(): Promise<MessageEntry[]> {
+    return Object.entries(this.read().messages).map(([id, record]) => ({ id, record }));
+  }
+
   async purgeExpired(now = new Date()): Promise<number> {
     const data = this.read();
     let removed = 0;
@@ -144,6 +164,24 @@ export class UpstashProcessStore implements ProcessStore {
     return `rez:${id}`;
   }
 
+  private async scanKeys(match: string): Promise<string[]> {
+    const keys: string[] = [];
+    let cursor = '0';
+    do {
+      const result = await this.cmd<[string, string[]]>(
+        'SCAN',
+        cursor,
+        'MATCH',
+        match,
+        'COUNT',
+        100,
+      );
+      cursor = String(result[0]);
+      keys.push(...(result[1] || []));
+    } while (cursor !== '0');
+    return keys;
+  }
+
   async isMessageProcessed(messageId: string): Promise<boolean> {
     const v = await this.cmd<string | null>('GET', this.msgKey(messageId));
     return Boolean(v);
@@ -172,6 +210,28 @@ export class UpstashProcessStore implements ProcessStore {
         ? Math.ceil((limit.getTime() - Date.now()) / 1000)
         : 60 * 60 * 24 * 7;
     await this.cmd('SET', this.rezKey(id), JSON.stringify(record), 'EX', ttlSec);
+  }
+
+  async listRezervace(): Promise<RezervaceEntry[]> {
+    const keys = await this.scanKeys('rez:*');
+    const out: RezervaceEntry[] = [];
+    for (const key of keys) {
+      const v = await this.cmd<string | null>('GET', key);
+      if (!v) continue;
+      out.push({ id: key.slice(4), record: JSON.parse(v) as RezervaceRecord });
+    }
+    return out;
+  }
+
+  async listMessages(): Promise<MessageEntry[]> {
+    const keys = await this.scanKeys('msg:*');
+    const out: MessageEntry[] = [];
+    for (const key of keys) {
+      const v = await this.cmd<string | null>('GET', key);
+      if (!v) continue;
+      out.push({ id: key.slice(4), record: JSON.parse(v) as MessageRecord });
+    }
+    return out;
   }
 
   async purgeExpired(): Promise<number> {
