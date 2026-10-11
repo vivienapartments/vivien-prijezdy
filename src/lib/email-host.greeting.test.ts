@@ -52,7 +52,7 @@ KONEC`);
   });
 
   it('čas příjezdu je nad zlatým tlačítkem', () => {
-    const { html, text } = buildGuestEmail({
+    const { html, text, subject } = buildGuestEmail({
       lang: 'cs',
       apt: 'V1',
       prijezd: '2026-11-01',
@@ -71,6 +71,9 @@ KONEC`);
     expect(html).toContain('white-space:nowrap');
     expect(html).toContain('Nikol a rodina VIVIEN');
     expect(text).toContain('Nejdůležitější je, abyste nám napsali, v kolik dorazíte');
+    const predmet = 'DŮLEŽITÉ · Bez tohoto u nás nezaparkujete ani nevejdete';
+    expect(subject === predmet || subject === `[TEST] ${predmet}`).toBe(true);
+    expect(html).toContain(`<title>${predmet}</title>`);
   });
 
   it('odmítne nevyplněný merge field', () => {
