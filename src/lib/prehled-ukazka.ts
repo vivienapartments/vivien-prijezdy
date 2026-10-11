@@ -26,6 +26,8 @@ export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
     stav: 'odeslano',
     telefon: '+420777111222',
     telefonWa: '420777111222',
+    telefonRezervace: '+420777123456',
+    telefonRezervaceWa: '420777123456',
     zdroj: 'Booking.com',
     casPrijezdu: '16:30',
     otevrenoPocet: 3,
@@ -56,6 +58,27 @@ export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
     otevrenoPocet: 0,
   };
 
+  const ceka: RezervaceRecord = {
+    ...prazdnaRezervace('8004', '2026-10-11T05:00:00.000Z'),
+    apartman: 'V3',
+    prijezd: dnes,
+    odjezd: posunDen(dnes, 3),
+    noci: 3,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Eva Dvořáková',
+    krestni: 'Eva',
+    emailHosta: 'eva.ukazka@example.com',
+    vytvoreno: '2026-10-08',
+    poplatek: 'ano',
+    stav: 'bez_checkinu',
+    telefonRezervace: '+420777123456',
+    telefonRezervaceWa: '420777123456',
+    zdroj: 'Booking',
+    checkinUrl: 'https://checkin.example.com/ukazka',
+    otevrenoPocet: 0,
+  };
+
   const stary: RezervaceRecord = {
     ...prazdnaRezervace('9003', '2026-10-09T08:00:00.000Z'),
     prijezd: pozitri,
@@ -68,5 +91,5 @@ export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
     apartman: null,
   };
 
-  return seradRadky([otevrel, neotevrel, stary].map((rec) => sOdkazem(radekZRezervace(rec), rec)), now);
+  return seradRadky([ceka, otevrel, neotevrel, stary].map((rec) => sOdkazem(radekZRezervace(rec), rec)), now);
 }

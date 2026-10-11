@@ -5,12 +5,13 @@ import {
   radekZRezervace,
   seradRadky,
   souhrnDne,
+  telefonyPrehledu,
   textOtevreni,
   textPoplatku,
   type PrehledRadek,
 } from './prehled';
 import { prazdnaRezervace } from './store';
-import { textZpravy } from './whatsapp-zprava';
+import { textCheckinu, textZpravy } from './whatsapp-zprava';
 
 describe('tlačítka v přehledu', () => {
   it('u zrušené rezervace skryje odeslání', () => {
@@ -29,6 +30,9 @@ describe('tlačítka v přehledu', () => {
   it('česká zpráva na WhatsApp je schválené znění', () => {
     expect(textZpravy('cs')).toBe(
       'Dobrý den, posíláme průvodce k vašemu příjezdu. Napište nám prosím čas příjezdu, ať na nás nemusíte čekat.',
+    );
+    expect(textCheckinu('cs')).toBe(
+      'Dobrý den, děkujeme za rezervaci. Prosím vyplňte si online check-in, hned potom vám pošleme průvodce se vstupem a parkováním.',
     );
   });
 
@@ -90,7 +94,34 @@ describe('tlačítka v přehledu', () => {
   it('u neodeslané rezervace se neptá a odeslání nabídne', () => {
     expect(nabidnoutOdeslani('neodeslano')).toBe(true);
     expect(nabidnoutOdeslani('vraceno')).toBe(true);
-    expect(nabidnoutOdeslani('bez_checkinu')).toBe(true);
+    expect(nabidnoutOdeslani('bez_checkinu')).toBe(false);
     expect(dotazPredOdeslanimZnovu('neodeslano')).toBeNull();
+  });
+
+  it('stejné číslo z check-inu a z rezervace ukáže jednou', () => {
+    const rec = {
+      ...prazdnaRezervace('1', '2026-10-01T00:00:00.000Z'),
+      telefon: '+420777123456',
+      telefonWa: '420777123456',
+      telefonRezervace: '+420777123456',
+      telefonRezervaceWa: '420777123456',
+    };
+    const t = telefonyPrehledu(rec);
+    expect(t.text).toBe('+420 777 123 456');
+    expect(t.jinyText).toBeNull();
+  });
+
+  it('jiné číslo z rezervace zůstane pod hlavním', () => {
+    const rec = {
+      ...prazdnaRezervace('1', '2026-10-01T00:00:00.000Z'),
+      telefon: '+420777111222',
+      telefonWa: '420777111222',
+      telefonRezervace: '+420777123456',
+      telefonRezervaceWa: '420777123456',
+    };
+    const t = telefonyPrehledu(rec);
+    expect(t.text).toBe('+420 777 111 222');
+    expect(t.jinyText).toBe('+420 777 123 456');
+    expect(t.jinyWa).toBe('420777123456');
   });
 });

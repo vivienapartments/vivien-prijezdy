@@ -218,6 +218,24 @@
   color: var(--color-gold);
 }
 
+.ph-tel-jiny {
+  margin-top: 0.35rem;
+  color: var(--pv-muted);
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.ph-tel-jiny .ph-tel {
+  font-size: 0.82rem;
+}
+
+.ph a.ph-wa--maly {
+  min-height: 1.7rem;
+  margin-left: 0.35rem;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.78rem;
+}
+
 .ph-wa,
 .ph-kopie {
   white-space: nowrap;
@@ -257,6 +275,7 @@
   align-items: center;
   gap: 0.35rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .ph-poplatek {
@@ -287,7 +306,10 @@
   color: #e07a7a;
 }
 
-.ph-stav--bez_checkinu,
+.ph-stav--bez_checkinu {
+  color: #9eb4cc;
+}
+
 .ph-stav--zruseno {
   color: var(--pv-muted);
 }
@@ -328,7 +350,7 @@
   .ph-head,
   .ph-row {
     display: grid;
-    grid-template-columns: 9.2rem minmax(12rem, 1.3fr) 9rem 10rem 8rem minmax(8rem, 1fr) 7rem;
+    grid-template-columns: 12rem minmax(12rem, 1.3fr) 9rem 10rem 8rem minmax(8rem, 1fr) 7rem;
     align-items: start;
   }
 

@@ -4,7 +4,7 @@ import type { ProcessStore, RezervaceRecord, RezervaceStav } from './store';
 import { textTelefonu } from './telefon';
 import type { AptId, GuideLang } from './types';
 import { LANG_LABELS } from './types';
-import { zpravaHostovi } from './whatsapp-zprava';
+import { zpravaPodleStavu } from './whatsapp-zprava';
 
 export const STARY_ZAZNAM = 'starý záznam';
 
@@ -41,6 +41,8 @@ export type PrehledRadek = {
   stary: boolean;
   telefonText: string | null;
   telefonWa: string | null;
+  jinyTelefonText: string | null;
+  jinyTelefonWa: string | null;
   zdrojText: string;
   casPrijezdu: string | null;
   vytvorenoText: string;
@@ -53,7 +55,7 @@ const apartmany = (apartmanyJson as { apartmany: AptRow[] }).apartmany;
 
 /** U zrušené rezervace se znovu neposílá. Odkaz na průvodce zůstává. */
 export function nabidnoutOdeslani(stav: RezervaceStav): boolean {
-  return stav !== 'zruseno';
+  return stav !== 'zruseno' && stav !== 'bez_checkinu';
 }
 
 /** Už odeslaný průvodce se znovu posílá jen po této otázce. */
@@ -69,7 +71,7 @@ export const STAV_TEXT: Record<RezervaceStav, string> = {
   odeslano_s_vyhradou: 'Odesláno s výhradou',
   neodeslano: 'Neodesláno',
   vraceno: 'Vráceno',
-  bez_checkinu: 'Bez check-inu',
+  bez_checkinu: 'Čeká na check-in',
   zruseno: 'Zrušeno',
 };
 
@@ -215,15 +217,44 @@ function chybi(hodnota: string, stary: boolean): string {
   return stary ? STARY_ZAZNAM : '';
 }
 
+function stejneCislo(a: string | null, b: string | null, aw: string | null, bw: string | null): boolean {
+  if (aw && bw) return aw === bw;
+  if (!a || !b) return false;
+  return textTelefonu(a) === textTelefonu(b);
+}
+
+/** Hlavní telefon je z check-inu. Když se liší, druhé číslo z rezervace zůstane vidět. */
+export function telefonyPrehledu(rec: RezervaceRecord): {
+  text: string | null;
+  wa: string | null;
+  jinyText: string | null;
+  jinyWa: string | null;
+} {
+  const checkin = rec.telefon ? { text: textTelefonu(rec.telefon), wa: rec.telefonWa } : null;
+  const rezervace = rec.telefonRezervace
+    ? { text: textTelefonu(rec.telefonRezervace), wa: rec.telefonRezervaceWa }
+    : null;
+  if (checkin && rezervace && !stejneCislo(rec.telefon, rec.telefonRezervace, rec.telefonWa, rec.telefonRezervaceWa)) {
+    return { text: checkin.text, wa: checkin.wa, jinyText: rezervace.text, jinyWa: rezervace.wa };
+  }
+  const hlavni = checkin || rezervace;
+  return { text: hlavni?.text ?? null, wa: hlavni?.wa ?? null, jinyText: null, jinyWa: null };
+}
+
 export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
   const stary = rec.otevrenoPocet == null;
   const vety = rec.duvody.map((d) => d.veta).filter(Boolean);
   const coSeStalo =
-    vety.join(' ') ||
-    (rec.stav === 'odeslano' || rec.stav === 'odeslano_s_vyhradou'
-      ? 'Průvodce odeslán.'
-      : chybi('', stary));
+    rec.stav === 'zruseno'
+      ? 'Rezervace je zrušená.'
+      : vety.join(' ') ||
+        (rec.stav === 'bez_checkinu'
+          ? 'Čeká na online check-in.'
+          : rec.stav === 'odeslano' || rec.stav === 'odeslano_s_vyhradou'
+            ? 'Průvodce odeslán.'
+            : chybi('', stary));
   const otev = textOtevreni(rec.otevrenoPocet, rec.otevrenoNaposled);
+  const telefony = telefonyPrehledu(rec);
   const poprve = rec.otevrenoPoprve ? casPraha(rec.otevrenoPoprve) : '';
   const naposled = rec.otevrenoNaposled ? casPraha(rec.otevrenoNaposled) : '';
   const jazykText = rec.jazyk ? LANG_LABELS[rec.jazyk] : '';
@@ -256,13 +287,15 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     otevreniTon: otev.ton,
     otevreniTitle: poprve && naposled && poprve !== naposled ? `Poprvé ${poprve}` : '',
     stary,
-    telefonText: rec.telefon ? textTelefonu(rec.telefon) : null,
-    telefonWa: rec.telefonWa,
+    telefonText: telefony.text,
+    telefonWa: telefony.wa,
+    jinyTelefonText: telefony.jinyText,
+    jinyTelefonWa: telefony.jinyWa,
     zdrojText: chybi(zdrojText(rec.zdroj), stary),
     casPrijezdu: rec.casPrijezdu,
     vytvorenoText: chybi(rec.vytvoreno ? czDenRok(rec.vytvoreno) : '', stary),
     odkaz: null,
-    zprava: zpravaHostovi(rec.jazyk, null),
+    zprava: zpravaPodleStavu(rec.stav, rec.jazyk, rec.checkinUrl, null),
   };
 }
 
@@ -311,6 +344,7 @@ export type DenSouhrn = {
   pocet: number;
   otevrelo: number;
   neodeslano: number;
+  bezCheckinu: number;
   plan: PlanHost[];
 };
 
@@ -333,6 +367,7 @@ export function souhrnDne(rows: PrehledRadek[], den: string, casy: Record<string
     pocet: list.length,
     otevrelo: list.filter((r) => (r.otevrenoPocet ?? 0) > 0).length,
     neodeslano: list.filter((r) => r.stav === 'neodeslano').length,
+    bezCheckinu: list.filter((r) => r.stav === 'bez_checkinu').length,
     plan,
   };
 }

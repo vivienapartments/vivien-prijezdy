@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer';
+import { jeInterniPredmet, parsujInterni, puvodInterniOk, vetaChybi, type InterniUdaje } from './bh-interni';
 import { parseBounce, stejneMessageId } from './bounce';
 import { duvod, jeBlokujici, jeVyhrada, type Duvod } from './chyby';
+import { nightsBetween } from './dates';
 import { verifyEmailOrigin } from './email-origin';
 import { fetchRecentInboxMails, type InboxMail } from './inbox-mail';
 import { poplatekZData } from './poplatek';
@@ -143,6 +145,10 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
     return zpracujBounce(mail, bounce, store, now);
   }
 
+  if (jeInterniPredmet(mail.subject)) {
+    return zpracujInterni(mail, store, now);
+  }
+
   const body = bodyForParse(mail);
   const ins = inspectVivienMail(body, mail.subject);
   const origin = verifyEmailOrigin({
@@ -192,6 +198,23 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
 
   const id = ins.rezervace;
   const prev = await store.getRezervace(id);
+  if (prev?.stav === 'zruseno') {
+    const rec = sloucit(id, prev, {}, now, 'Přišel check-in u zrušené rezervace, průvodce se neposlal');
+    await store.setRezervace(id, rec);
+    const predmet = testRezim()
+      ? `[TEST] U zrušené rezervace #${id} přišel check-in`
+      : `U zrušené rezervace #${id} přišel check-in`;
+    await alertMajitel(predmet, 'Průvodce se neposlal.');
+    await store.markMessage({
+      messageId: mail.messageId,
+      uid: mail.uid,
+      processedAt: now,
+      rezervace: id,
+      status: 'skipped_no_data',
+      reason: 'zruseno',
+    });
+    return { rezervace: id, status: 'zruseno', reason: 'zruseno' };
+  }
   if (prev?.stav === 'odeslano' || prev?.stav === 'odeslano_s_vyhradou') {
     await store.markMessage({
       messageId: mail.messageId,
@@ -293,6 +316,123 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
   }
 }
 
+function udajeInterni(u: InterniUdaje, stav: RezervaceStav): Partial<RezervaceRecord> {
+  const data: Partial<RezervaceRecord> = { stav };
+  if (u.apartman) data.apartman = u.apartman;
+  if (u.prijezd) data.prijezd = u.prijezd;
+  if (u.odjezd) data.odjezd = u.odjezd;
+  if (u.noci) data.noci = u.noci;
+  else if (u.prijezd && u.odjezd) {
+    const noci = nightsBetween(u.prijezd, u.odjezd);
+    if (noci) data.noci = noci;
+  }
+  if (u.osob) data.osob = u.osob;
+  if (u.jmeno) data.jmeno = u.jmeno;
+  if (u.krestni) data.krestni = u.krestni;
+  if (u.email) data.emailHosta = u.email;
+  if (u.telefon) {
+    data.telefonRezervace = u.telefon;
+    data.telefonRezervaceWa = u.telefonWa;
+  }
+  if (u.zdroj) data.zdroj = u.zdroj;
+  if (u.vytvoreno) {
+    data.vytvoreno = u.vytvoreno;
+    data.poplatek = poplatekZData(u.vytvoreno);
+  }
+  if (u.checkinUrl) data.checkinUrl = u.checkinUrl;
+  const veta = vetaChybi(u.chybi);
+  if (veta && stav === 'bez_checkinu') {
+    data.duvody = [duvod('neuplne', `Čeká na online check-in. ${veta}`)];
+  }
+  return data;
+}
+
+function historieInterni(u: InterniUdaje, stav: RezervaceStav, odeslano: boolean): string {
+  if (u.druh === 'zruseni') return 'Rezervace zrušena';
+  if (odeslano) return 'Rezervace se změnila, průvodce má staré údaje';
+  if (u.druh === 'zmena') return 'Rezervace se změnila';
+  if (stav === 'bez_checkinu') return 'Nová rezervace, čeká na check-in';
+  return 'Nová rezervace, údaje doplněny';
+}
+
+async function zpracujInterni(mail: InboxMail, store: ProcessStore, now: string): Promise<ProcessItem> {
+  if (
+    !puvodInterniOk({
+      from: mail.from,
+      authenticationResults: mail.authenticationResults,
+      dkimBetterHotel: mail.dkimBetterHotel,
+    })
+  ) {
+    await store.markMessage({
+      messageId: mail.messageId,
+      uid: mail.uid,
+      processedAt: now,
+      status: 'rejected',
+      reason: 'Interní e-mail bez DKIM pro better-hotel.com',
+    });
+    return { status: 'rejected', reason: 'bez DKIM' };
+  }
+
+  const u = parsujInterni(mail.subject, mail.html, mail.text);
+  if (!u?.rezervace) {
+    await store.markMessage({
+      messageId: mail.messageId,
+      uid: mail.uid,
+      processedAt: now,
+      status: 'skipped_no_data',
+      reason: 'bez čísla rezervace',
+    });
+    return { status: 'skipped_no_data', reason: 'bez čísla rezervace' };
+  }
+
+  const id = u.rezervace;
+  const prev = await store.getRezervace(id);
+  const odeslano = prev?.stav === 'odeslano' || prev?.stav === 'odeslano_s_vyhradou';
+  let stav: RezervaceStav = 'bez_checkinu';
+  if (u.druh === 'zruseni') stav = 'zruseno';
+  else if (prev?.stav === 'zruseno') stav = 'zruseno';
+  else if (
+    prev &&
+    (prev.stav === 'odeslano' || prev.stav === 'odeslano_s_vyhradou' || prev.stav === 'neodeslano' || prev.stav === 'vraceno')
+  ) {
+    stav = prev.stav;
+  }
+
+  const rec = sloucit(id, prev, udajeInterni(u, stav), now, historieInterni(u, stav, odeslano));
+  await store.setRezervace(id, rec);
+
+  const zmeniloSe =
+    !!prev &&
+    ((u.apartman && u.apartman !== prev.apartman) ||
+      (u.prijezd && u.prijezd !== prev.prijezd) ||
+      (u.odjezd && u.odjezd !== prev.odjezd));
+
+  if (odeslano && zmeniloSe && u.druh !== 'zruseni') {
+    const predmet = testRezim()
+      ? `[TEST] Rezervace #${id} se změnila, průvodce má staré údaje`
+      : `Rezervace #${id} se změnila, průvodce má staré údaje`;
+    await alertMajitel(
+      predmet,
+      `U rezervace #${id} se změnilo datum nebo apartmán. Průvodce už odešel a odkaz v e-mailu má staré údaje. V přehledu jsou nové.`,
+    );
+  }
+
+  if (u.druh === 'zruseni' && odeslano) {
+    const predmet = testRezim() ? `[TEST] Rezervace #${id} je zrušená` : `Rezervace #${id} je zrušená`;
+    await alertMajitel(predmet, 'Průvodce už hostovi odešel. Rezervace je zrušená.');
+  }
+
+  await store.markMessage({
+    messageId: mail.messageId,
+    uid: mail.uid,
+    processedAt: now,
+    rezervace: id,
+    status: 'skipped_no_data',
+    reason: stav,
+  });
+  return { rezervace: id, status: stav };
+}
+
 async function zpracujBounce(
   mail: InboxMail,
   bounce: NonNullable<ReturnType<typeof parseBounce>>,
@@ -381,7 +521,14 @@ export async function runInboxProcessing(opts: {
     if (item.status === 'already_done') continue;
     summary.items.push(item);
     if (item.status === 'sent') summary.sent += 1;
-    else if (item.status === 'skipped_no_data' || item.status === 'skipped_past' || item.status === 'neodeslano') {
+    else if (
+      item.status === 'skipped_no_data' ||
+      item.status === 'skipped_past' ||
+      item.status === 'neodeslano' ||
+      item.status === 'bez_checkinu' ||
+      item.status === 'zruseno' ||
+      item.status === 'zmena'
+    ) {
       summary.skipped += 1;
     } else if (item.status === 'rejected') summary.rejected += 1;
     else if (item.status === 'duplicate') summary.duplicate += 1;

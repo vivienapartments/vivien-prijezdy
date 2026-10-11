@@ -10,7 +10,8 @@ export type ChybaKod =
   | 'nedoveryhodny_odesilatel'
   | 'chybi_pin'
   | 'smtp_chyba'
-  | 'nedoruceno';
+  | 'nedoruceno'
+  | 'neuplne';
 
 export type Duvod = { kod: ChybaKod; veta: string };
 
@@ -28,9 +29,10 @@ const VETY: Record<ChybaKod, string> = {
     'V e-mailu z Better Hotelu chybí PIN apartmánu. Doplňte ho v BH a klikněte na Odeslat znovu, nebo ho zadejte v Opravit a odeslat.',
   smtp_chyba: 'E-mail se nepodařilo odeslat (chyba serveru). Zkusí se znovu při dalším běhu, nejvýš 3×.',
   nedoruceno: 'E-mail se vrátil jako nedoručitelný: „…“.',
+  neuplne: 'Z e-mailu o rezervaci se nepodařilo přečíst všechny údaje.',
 };
 
-const VYHRADA = new Set<ChybaKod>(['chybi_osoby', 'noci_nesedi']);
+const VYHRADA = new Set<ChybaKod>(['chybi_osoby', 'noci_nesedi', 'neuplne']);
 
 export function jeVyhrada(kod: ChybaKod): boolean {
   return VYHRADA.has(kod);
@@ -55,6 +57,9 @@ export function duvod(kod: ChybaKod, detail?: string): Duvod {
   }
   if (kod === 'nedoruceno') {
     return { kod, veta: `E-mail se vrátil jako nedoručitelný: „${detailNebo(detail, 160)}“.` };
+  }
+  if (kod === 'neuplne') {
+    return { kod, veta: detail?.replace(/\s+/g, ' ').trim() || VETY.neuplne };
   }
   return { kod, veta: VETY[kod] };
 }

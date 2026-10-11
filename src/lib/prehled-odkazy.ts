@@ -1,7 +1,7 @@
 import { odkazNaPruvodce } from './posli-pruvodce';
 import { radekZRezervace, seradRadky, type PrehledRadek } from './prehled';
 import type { ProcessStore, RezervaceRecord } from './store';
-import { zpravaHostovi } from './whatsapp-zprava';
+import { zpravaPodleStavu } from './whatsapp-zprava';
 
 export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord): PrehledRadek {
   let odkaz: string | null = null;
@@ -10,7 +10,7 @@ export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord): PrehledRadek 
   } catch {
     odkaz = null;
   }
-  return { ...row, odkaz, zprava: zpravaHostovi(rec.jazyk, odkaz) };
+  return { ...row, odkaz, zprava: zpravaPodleStavu(rec.stav, rec.jazyk, rec.checkinUrl, odkaz) };
 }
 
 export async function buildPrehledSOdkazy(store: ProcessStore, now = new Date()): Promise<PrehledRadek[]> {

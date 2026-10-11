@@ -23,7 +23,7 @@ const STAVY: { id: '' | Stav; text: string }[] = [
   { id: 'odeslano_s_vyhradou', text: 'Odesláno s výhradou' },
   { id: 'neodeslano', text: 'Neodesláno' },
   { id: 'vraceno', text: 'Vráceno' },
-  { id: 'bez_checkinu', text: 'Bez check-inu' },
+  { id: 'bez_checkinu', text: 'Čeká na check-in' },
   { id: 'zruseno', text: 'Zrušeno' },
 ];
 
@@ -45,6 +45,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
   const [hledat, setHledat] = useState('');
   const [den, setDen] = useState<'' | 'dnes' | 'zitra'>('');
   const [jenNeotevreni, setJenNeotevreni] = useState(false);
+  const [jenBezCheckinu, setJenBezCheckinu] = useState(false);
   const [otevreno, setOtevreno] = useState<string | null>(null);
   const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState<string | null>(null);
@@ -69,7 +70,8 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
     const denYmd = den === 'dnes' ? dnes : den === 'zitra' ? zitra : '';
     return rows.filter((row) => {
       if (denYmd && row.prijezd !== denYmd) return false;
-      if (jenNeotevreni && row.otevrenoPocet !== 0) return false;
+      if (jenNeotevreni && (row.otevrenoPocet !== 0 || row.stav === 'bez_checkinu')) return false;
+      if (jenBezCheckinu && row.stav !== 'bez_checkinu') return false;
       if (stav && row.stav !== stav) return false;
       if (!q) return true;
       return (
@@ -78,7 +80,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
         row.email.toLowerCase().includes(q)
       );
     });
-  }, [rows, stav, hledat, den, dnes, zitra, jenNeotevreni]);
+  }, [rows, stav, hledat, den, dnes, zitra, jenNeotevreni, jenBezCheckinu]);
 
   async function volat(row: PrehledRadek, akce: 'znovu' | 'odkaz' | 'opravit', extra?: Record<string, string>) {
     setCekam(`${row.rezervace}:${akce}`);
@@ -146,7 +148,8 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
         onClick={() => setDen((prev) => (prev === ktery ? '' : ktery))}
       >
         <span>
-          {nadpis}: {souhrn.pocet} · průvodce otevřelo {souhrn.otevrelo} · neodesláno {souhrn.neodeslano}
+          {nadpis}: {souhrn.pocet} · průvodce otevřelo {souhrn.otevrelo} · neodesláno {souhrn.neodeslano} · bez
+          check-inu: {souhrn.bezCheckinu}
         </span>
         {plan ? <span className="ph-plan">{plan}</span> : null}
       </button>
@@ -182,6 +185,14 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
           onClick={() => setJenNeotevreni((v) => !v)}
         >
           Neotevřeli průvodce
+        </button>
+        <button
+          type="button"
+          className={jenBezCheckinu ? 'is-on' : ''}
+          aria-pressed={jenBezCheckinu}
+          onClick={() => setJenBezCheckinu((v) => !v)}
+        >
+          Bez check-inu
         </button>
         <label>
           Hledat
@@ -222,9 +233,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
           </div>
           <div className="ph-cell ph-cell--stav" data-label="Stav">
             <span className={`ph-stav ph-stav--${row.stav}`}>{row.stavText}</span>
-            <div className={`ph-otev ph-otev--${row.otevreniTon}`} title={row.otevreniTitle || undefined}>
-              {row.otevreniText}
-            </div>
+            {row.stav !== 'bez_checkinu' ? (
+              <div className={`ph-otev ph-otev--${row.otevreniTon}`} title={row.otevreniTitle || undefined}>
+                {row.otevreniText}
+              </div>
+            ) : null}
           </div>
           <div className="ph-cell ph-cell--host" data-label="Host">
             <div className="ph-jmeno">
@@ -258,6 +271,21 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
                 <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
                   Zkopírovat zprávu
                 </button>
+              </div>
+            ) : null}
+            {row.jinyTelefonText ? (
+              <div className="ph-tel-jiny">
+                jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
+                {row.jinyTelefonWa ? (
+                  <a
+                    className="ph-wa ph-wa--maly"
+                    href={odkazWhatsApp(row.jinyTelefonWa, row.zprava)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    WhatsApp
+                  </a>
+                ) : null}
               </div>
             ) : null}
             <label className="ph-cas">
@@ -312,9 +340,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
                 </button>
               </>
             ) : null}
-            <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
-              Zkopírovat odkaz
-            </button>
+            {row.stav !== 'bez_checkinu' ? (
+              <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
+                Zkopírovat odkaz
+              </button>
+            ) : null}
           </div>
           {nabidnoutOdeslani(row.stav) && otevreno === row.rezervace ? (
             <OpravitForm

@@ -296,4 +296,111 @@ Original-Message-ID: <x>
     expect(raw.rezervace['120260530'].status).toBe('odeslano');
     expect(raw.rezervace['120260530'].stav).toBeUndefined();
   });
+
+  const NOVA = 'Vivien Apartmens Character and Atmosphere | Nová rezervace - #100000001';
+  const TELO = [
+    'Nová rezervace',
+    'Číslo',
+    '100000001',
+    'Zarezervováno',
+    '6.10.2026',
+    'Příjezd',
+    '20.11.2026',
+    'Odjezd',
+    '22.11.2026',
+    'Agentura',
+    'Booking.com',
+    'Klient',
+    'Jana Malá',
+    'Email',
+    'jana.mala@example.com',
+    'Telefon',
+    '777 123 456',
+    'Rezervované pokoje',
+    'Jemná harmonie (Gentle Harmony) - počet hostů: 2',
+  ].join('\n');
+
+  function interni(partial: Partial<InboxMail> & Pick<InboxMail, 'messageId'>): InboxMail {
+    return mail({
+      from: 'Better Hotel <info@better-hotel.com>',
+      subject: NOVA,
+      authenticationResults: 'dkim=pass header.d=mg2.better-hotel.com',
+      text: TELO,
+      ...partial,
+    });
+  }
+
+  it('podvržený e-mail bez DKIM se odmítne a záznam nevznikne', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      interni({
+        messageId: 'podvrh@test',
+        authenticationResults: null,
+      }),
+      store,
+    );
+    expect(item.status).toBe('rejected');
+    expect(await store.getRezervace('100000001')).toBeNull();
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+  });
+
+  it('nová rezervace založí záznam a check-in ho doplní a pošle průvodce', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const zalozeno = await processOneMail(interni({ messageId: 'nova@test' }), store);
+    expect(zalozeno.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const pred = await store.getRezervace('100000001');
+    expect(pred?.stav).toBe('bez_checkinu');
+    expect(pred?.telefonRezervace).toBe('+420777123456');
+    expect(pred?.apartman).toBe('V1');
+
+    const checkin = BLOCK.replace('REZERVACE: 120260530', 'REZERVACE: 100000001').replace(
+      'EMAIL: host@example.com',
+      'EMAIL: jana.mala@example.com\nGUEST_NAME: Jana\nGUEST_SURNAME: Malá\nGUEST_PHONE: +420777999888\nDATE: 6.10.2026',
+    );
+    const item = await processOneMail(
+      mail({
+        messageId: 'checkin@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com',
+        text: checkin,
+      }),
+      store,
+    );
+    expect(item.status).toBe('sent');
+    expect(sendGuestEmail).toHaveBeenCalledOnce();
+    const po = await store.getRezervace('100000001');
+    expect(po?.stav).toBe('odeslano');
+    expect(po?.telefon).toBe('+420777999888');
+    expect(po?.telefonRezervace).toBe('+420777123456');
+  });
+
+  it('zrušení zastaví odeslání průvodce', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    await processOneMail(interni({ messageId: 'nova-zrus@test' }), store);
+    const zruseno = await processOneMail(
+      interni({
+        messageId: 'zrus@test',
+        subject: 'Vivien Apartmens Character and Atmosphere | Zrušení rezervace - #100000001',
+      }),
+      store,
+    );
+    expect(zruseno.status).toBe('zruseno');
+
+    const item = await processOneMail(
+      mail({
+        messageId: 'checkin-zrus@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com',
+        text: BLOCK.replace('REZERVACE: 120260530', 'REZERVACE: 100000001'),
+      }),
+      store,
+    );
+    expect(item.status).toBe('zruseno');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect((await store.getRezervace('100000001'))?.stav).toBe('zruseno');
+  });
 });

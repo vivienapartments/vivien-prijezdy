@@ -68,6 +68,11 @@ export type RezervaceRecord = {
   zdroj: string | null;
   /** Čas, který host napsal a majitel si ho sem zapsal. Tvar HH:MM. */
   casPrijezdu: string | null;
+  /** Telefon z e-mailu o nové rezervaci. Check-in ho nepřepisuje. */
+  telefonRezervace: string | null;
+  telefonRezervaceWa: string | null;
+  /** Odkaz na online check-in, když v e-mailu o rezervaci byl. */
+  checkinUrl: string | null;
 };
 
 export type RezervaceEntry = { id: string; record: RezervaceRecord };
@@ -155,6 +160,9 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     telefonWa: typeof r.telefonWa === 'string' && r.telefonWa ? r.telefonWa : null,
     zdroj: typeof r.zdroj === 'string' && r.zdroj ? r.zdroj : null,
     casPrijezdu: typeof r.casPrijezdu === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.casPrijezdu) ? r.casPrijezdu : null,
+    telefonRezervace: typeof r.telefonRezervace === 'string' && r.telefonRezervace ? r.telefonRezervace : null,
+    telefonRezervaceWa: typeof r.telefonRezervaceWa === 'string' && r.telefonRezervaceWa ? r.telefonRezervaceWa : null,
+    checkinUrl: typeof r.checkinUrl === 'string' && /^https?:\/\//i.test(r.checkinUrl) ? r.checkinUrl : null,
   };
 }
 
@@ -188,6 +196,9 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     telefonWa: null,
     zdroj: null,
     casPrijezdu: null,
+    telefonRezervace: null,
+    telefonRezervaceWa: null,
+    checkinUrl: null,
   };
 }
 

@@ -7,6 +7,11 @@ export type InboxMail = {
   authenticationResults: string | null;
   text: string;
   html: string;
+  /**
+   * Platný podpis DKIM pro better-hotel.com. Nastaví se jen když Authentication-Results chybí.
+   * Seznam tu hlavičku do schránky neukládá.
+   */
+  dkimBetterHotel?: boolean;
 };
 
 function normalizeMessageId(raw: string | undefined | null): string {
@@ -81,6 +86,15 @@ export async function fetchRecentInboxMails(opts: {
         `uid-${msg.uid}`;
 
       const authenticationResults = extractAuthResults(msg.headers, parsed.headers);
+      const subject = parsed.subject || msg.envelope?.subject || '';
+      let dkimBetterHotel = false;
+      if (subject && !authenticationResults) {
+        const { jeInterniPredmet } = await import('./bh-interni');
+        if (jeInterniPredmet(subject)) {
+          const { overDkimBetterHotel } = await import('./bh-dkim');
+          dkimBetterHotel = await overDkimBetterHotel(msg.source);
+        }
+      }
 
       const from =
         parsed.from?.text ||
@@ -92,11 +106,12 @@ export async function fetchRecentInboxMails(opts: {
         uid: msg.uid,
         messageId,
         from,
-        subject: parsed.subject || msg.envelope?.subject || '',
+        subject,
         date: asDate(parsed.date) || asDate(msg.envelope?.date),
         authenticationResults,
         text: typeof parsed.text === 'string' ? parsed.text : '',
         html: typeof parsed.html === 'string' ? parsed.html : '',
+        dkimBetterHotel,
       });
     }
   } finally {
