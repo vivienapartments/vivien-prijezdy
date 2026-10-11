@@ -40,6 +40,15 @@ function Pole({ text }: { text: string }) {
   return <>{text}</>;
 }
 
+function UlozitKontakt({ row }: { row: PrehledRadek }) {
+  if (!row.telefonText && !row.jinyTelefonText) return null;
+  return (
+    <a className="ph-kontakt" href={`/api/prehled/vizitka?rezervace=${encodeURIComponent(row.rezervace)}`}>
+      Uložit kontakt
+    </a>
+  );
+}
+
 export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
   const [stav, setStav] = useState<'' | Stav>('');
   const [hledat, setHledat] = useState('');
@@ -387,8 +396,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
                 <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
                   Zkopírovat zprávu
                 </button>
+                <UlozitKontakt row={row} />
               </div>
-            ) : null}
+            ) : (
+              <UlozitKontakt row={row} />
+            )}
             <label className="ph-cas">
               Čas příjezdu
               <input

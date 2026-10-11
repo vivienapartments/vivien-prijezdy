@@ -3,7 +3,7 @@ import { dnesVPraze, posunDen, radekZRezervace, seradRadky, type PrehledRadek } 
 import { prazdnaRezervace, type RezervaceRecord } from './store';
 
 /** Jen místní náhled přehledu. Na ostrém webu se tahle data neukážou. */
-export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
+export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
   const dnes = dnesVPraze(now);
   const zitra = posunDen(dnes, 1);
   const pozitri = posunDen(dnes, 2);
@@ -82,6 +82,57 @@ export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
     otevrenoPocet: 0,
   };
 
+  const bezCasu: RezervaceRecord = {
+    ...prazdnaRezervace('8005', '2026-10-11T06:30:00.000Z'),
+    apartman: 'V4',
+    prijezd: dnes,
+    odjezd: posunDen(dnes, 2),
+    noci: 2,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Lucie Horáková',
+    krestni: 'Lucie',
+    narodnost: 'CZE',
+    emailHosta: 'lucie.ukazka@example.com',
+    accessPin: '0000',
+    vytvoreno: '2026-10-07',
+    poplatek: 'ano',
+    stav: 'odeslano',
+    telefon: '+420777222333',
+    telefonWa: '420777222333',
+    telefonPuvodni: '777 222 333',
+    zdroj: 'přímá',
+    casPrijezdu: null,
+    otevrenoPocet: 1,
+    otevrenoPoprve: '2026-10-10T09:00:00.000Z',
+    otevrenoNaposled: '2026-10-10T09:00:00.000Z',
+  };
+
+  const bezCasuPozdeji: RezervaceRecord = {
+    ...prazdnaRezervace('8006', '2026-10-11T08:00:00.000Z'),
+    apartman: 'V5',
+    prijezd: posunDen(dnes, 3),
+    odjezd: posunDen(dnes, 5),
+    noci: 2,
+    osob: 1,
+    jazyk: 'cs',
+    jmeno: 'Martin Černý',
+    krestni: 'Martin',
+    narodnost: 'CZE',
+    emailHosta: 'martin.ukazka@example.com',
+    accessPin: '0000',
+    vytvoreno: '2026-10-04',
+    poplatek: 'ano',
+    stav: 'odeslano',
+    telefon: '+420777333444',
+    telefonWa: '420777333444',
+    zdroj: 'Booking',
+    casPrijezdu: null,
+    otevrenoPocet: 2,
+    otevrenoPoprve: '2026-10-10T15:00:00.000Z',
+    otevrenoNaposled: '2026-10-10T15:00:00.000Z',
+  };
+
   const stary: RezervaceRecord = {
     ...prazdnaRezervace('9003', '2026-10-09T08:00:00.000Z'),
     prijezd: pozitri,
@@ -94,5 +145,16 @@ export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
     apartman: null,
   };
 
-  return seradRadky([ceka, otevrel, neotevrel, stary].map((rec) => sOdkazem(radekZRezervace(rec), rec, now)), now);
+  return [ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary];
+}
+
+export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
+  return seradRadky(
+    ukazkoveZaznamy(now).map((rec) => sOdkazem(radekZRezervace(rec), rec, now)),
+    now,
+  );
+}
+
+export function ukazkovaRezervace(id: string, now = new Date()): RezervaceRecord | null {
+  return ukazkoveZaznamy(now).find((rec) => rec.rezervace === id) || null;
 }

@@ -273,9 +273,20 @@
 }
 
 .ph-wa,
-.ph-kopie {
+.ph-kopie,
+.ph-kontakt {
   white-space: nowrap;
   text-decoration: none;
+}
+
+.ph a.ph-kontakt {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.6rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-gold);
+  border-radius: 999px;
+  color: var(--color-gold);
 }
 
 .ph-kopie {
