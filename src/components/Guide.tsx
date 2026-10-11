@@ -42,7 +42,7 @@ function renderPhoneText(raw: string) {
   return phoneParts(raw).map((part, i) =>
     part.href ? (
       <a key={i} className="pv-phone" href={part.href}>
-        {part.text}
+        {part.text.replace(/ /g, '\u00a0')}
       </a>
     ) : (
       <span key={i}>{part.text}</span>
@@ -725,7 +725,7 @@ export function Guide({
                         <p>
                           {tt(TX.tvTexts.help)}{' '}
                           <a className="pv-phone" href={toTelHref(NIKOL_PHONE)}>
-                            {NIKOL_PHONE}
+                            {NIKOL_PHONE.replace(/ /g, '\u00a0')}
                           </a>
                         </p>
                       </>

@@ -472,6 +472,29 @@
   word-break: normal;
 }
 
+/* Odstavce všude do bloku. Štítek, jeden řádek a QR zůstanou, jak byly. */
+.pv p,
+.pv li,
+.pv-hub__choice-text {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+.pv .pv-kicker,
+.pv .pv-cas__checkin,
+.pv .pv-ps__cta,
+.pv .pv-navcta__alt,
+.pv .pv-poplatek__formula {
+  text-align: start;
+}
+
+.pv .pv-wifi__qrhint,
+.pv .pv-wifi__qrmiss {
+  text-align: center;
+}
+
 .pv-step--note {
   background: color-mix(in srgb, var(--color-gold) 8%, var(--pv-surface-2));
   padding: 1rem 1.1rem;

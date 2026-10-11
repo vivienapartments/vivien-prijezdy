@@ -12,7 +12,7 @@ export function Expired({ lang = 'cs' }: { lang?: GuideLang }) {
       <p>
         {t(expiredHelp, lang)}{' '}
         <a className="pv-phone" href={toTelHref(NIKOL_PHONE)}>
-          {NIKOL_PHONE}
+          {NIKOL_PHONE.replace(/ /g, '\u00a0')}
         </a>
       </p>
     </main>

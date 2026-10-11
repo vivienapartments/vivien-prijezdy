@@ -109,12 +109,12 @@ const introBodyL: LText = {
 
 /** Nad tlačítkem. Čas příjezdu, ať host nečeká před domem. */
 const casPrijezduL: LText = {
-  cs: 'Nejdůležitější: napište nám, v kolik dorazíte, SMS nebo WhatsApp na +420 777 702 272. Apartmán předáváme osobně a pak aktivujeme vaše kódy, ať nemusíte čekat.',
-  en: 'Most important: tell us what time you will arrive, by SMS or WhatsApp to +420 777 702 272. We hand over the apartment in person and then activate your codes, so you do not have to wait.',
-  de: 'Das Wichtigste: schreiben Sie uns, um wie viel Uhr Sie ankommen, per SMS oder WhatsApp an +420 777 702 272. Wir übergeben das Apartment persönlich und aktivieren danach Ihre Codes, damit Sie nicht warten müssen.',
-  pl: 'Najważniejsze: napiszcie nam, o której dojedziecie, SMS-em albo przez WhatsApp na +420 777 702 272. Apartament przekazujemy osobiście, a potem aktywujemy Wasze kody, żebyście nie musieli czekać.',
-  uk: 'Найважливіше: напишіть нам, о котрій приїдете, SMS або через WhatsApp на +420 777 702 272. Апартаменти передаємо особисто, а потім активуємо ваші коди, щоб вам не довелося чекати.',
-  'zh-Hant': '最重要的事：請告訴我們您幾點到，簡訊或 WhatsApp 至 +420 777 702 272。公寓由我們當面交接，然後啟用您的密碼，以免您在外面等候。',
+  cs: 'Nejdůležitější je, abyste nám napsali, v kolik dorazíte. Apartmán vám předáme osobně a nebudete na nás čekat. Stačí SMS nebo WhatsApp na +420 777 702 272.',
+  en: 'The most important thing is that you write to us with the time you will arrive. We hand the apartment over in person and you will not be waiting for us. An SMS or WhatsApp to +420 777 702 272 is enough.',
+  de: 'Das Wichtigste ist, dass Sie uns schreiben, um wie viel Uhr Sie ankommen. Wir übergeben das Apartment persönlich und Sie warten nicht auf uns. Eine SMS oder WhatsApp an +420 777 702 272 genügt.',
+  pl: 'Najważniejsze jest, żebyście napisali, o której dojedziecie. Apartament przekażemy osobiście i nie będziecie na nas czekać. Wystarczy SMS albo WhatsApp na +420 777 702 272.',
+  uk: 'Найважливіше, щоб ви написали, о котрій приїдете. Апартаменти передамо особисто, і вам не доведеться на нас чекати. Досить SMS або WhatsApp на +420 777 702 272.',
+  'zh-Hant': '最重要的是請告訴我們您幾點到。公寓由我們當面交接，您不必等我們。傳簡訊或 WhatsApp 到 +420 777 702 272 即可。',
 };
 
 /** CTA nápověda (v HTML tučně). */
@@ -174,12 +174,21 @@ const openGuideL: LText = {
 
 /** Problém: nejdřív majitel, pak Nikol (číslo v podpisu). */
 const helpL: LText = {
-  cs: 'Když něco nefunguje, volejte nejdřív +420 777 702 272. Když se nedovoláte, volejte Nikol.',
-  en: 'If something does not work, call +420 777 702 272 first. If you cannot reach us, call Nikol.',
-  de: 'Wenn etwas nicht funktioniert, rufen Sie zuerst +420 777 702 272 an. Wenn Sie uns nicht erreichen, rufen Sie Nikol an.',
-  pl: 'Jeśli coś nie działa, zadzwońcie najpierw pod +420 777 702 272. Jeśli nie możecie się dodzwonić, zadzwońcie do Nikol.',
-  uk: 'Якщо щось не працює, телефонуйте спочатку на +420 777 702 272. Якщо не додзвонитеся, телефонуйте Nikol.',
-  'zh-Hant': '若有問題，請先致電 +420 777 702 272。若聯絡不到，請致電 Nikol。',
+  cs: 'Kdyby cokoli nefungovalo, volejte nejdřív na číslo +420 777 702 272, a pokud se nedovoláte, zavolejte Nikol.',
+  en: 'If anything does not work, call +420 777 702 272 first, and if you cannot get through, call Nikol.',
+  de: 'Wenn etwas nicht funktioniert, rufen Sie zuerst +420 777 702 272 an, und wenn Sie uns nicht erreichen, rufen Sie Nikol an.',
+  pl: 'Gdyby cokolwiek nie działało, zadzwońcie najpierw na numer +420 777 702 272, a jeśli się nie dodzwonicie, zadzwońcie do Nikol.',
+  uk: 'Якщо щось не працює, телефонуйте спочатку на номер +420 777 702 272, а якщо не додзвонитеся, зателефонуйте Nikol.',
+  'zh-Hant': '如果有任何問題，請先撥 +420 777 702 272，若打不通，再打給 Nikol。',
+};
+
+const familyL: LText = {
+  cs: 'Nikol a rodina VIVIEN',
+  en: 'Nikol & the VIVIEN family',
+  de: 'Nikol und Familie VIVIEN',
+  pl: 'Nikol i rodzina VIVIEN',
+  uk: 'Nikol і родина VIVIEN',
+  'zh-Hant': 'Nikol 與 VIVIEN 全家',
 };
 
 const closingL: LText = {
@@ -193,30 +202,30 @@ const closingL: LText = {
 
 /** Úplně na konci mailu: odkaz na veřejný web ({{WEB}} = URL podle jazyka). */
 const webTipL: LText = {
-  cs: 'Ještě víc tipů na pobyt najdete na {{WEB}}: kam na jídlo, kam na výlet, co podniknout, co se děje ve městě a poznávací hra po Budějovicích.',
-  en: 'More tips for your stay are on {{WEB}}: where to eat, day trips, things to do, what is on in town, and the Budweis discovery game.',
-  de: 'Noch mehr Tipps für Ihren Aufenthalt finden Sie auf {{WEB}}: Essen, Ausflüge, Unternehmungen, was in der Stadt läuft und das Budweiser Entdeckungsspiel.',
-  pl: 'Więcej wskazówek na pobyt znajdziecie na {{WEB}}: gdzie zjeść, wycieczki, co robić, co się dzieje w mieście i gra odkrywcza po Budziejowicach.',
-  uk: 'Ще більше порад на перебування на {{WEB}}: куди на їжу, виїзди, що робити, що відбувається в місті та пізнавальна гра Будейовицями.',
-  'zh-Hant': '更多住宿小提示請見 {{WEB}}：去哪吃飯、一日遊、城裡活動、近期活動，以及布杰約維采探索遊戲。',
+  cs: 'Další tipy na pobyt najdete na {{WEB}}. Kam na jídlo, kam na výlet, co se děje ve městě a poznávací hra po Budějovicích.',
+  en: 'More tips for your stay are on {{WEB}}. Where to eat, where to go for a day out, what is on in town, and the Budweis discovery game.',
+  de: 'Weitere Tipps für Ihren Aufenthalt finden Sie auf {{WEB}}. Wohin zum Essen, wohin auf einen Ausflug, was in der Stadt läuft, und das Budweiser Entdeckungsspiel.',
+  pl: 'Kolejne wskazówki na pobyt znajdziecie na {{WEB}}. Gdzie zjeść, gdzie na wycieczkę, co się dzieje w mieście i gra odkrywcza po Budziejowicach.',
+  uk: 'Інші поради на перебування знайдете на {{WEB}}. Куди на їжу, куди на виїзд, що відбувається в місті та пізнавальна гра Будейовицями.',
+  'zh-Hant': '更多住宿提示請見 {{WEB}}。去哪吃飯、去哪一日遊、城裡近期活動，以及布杰約維采探索遊戲。',
 };
 
 const psApartmanyL: LText = {
-  cs: 'P.S. Máme pět apartmánů, každý s jinou atmosférou. Spousta hostů o tom neví. Až budete plánovat další pobyt, můžete si vybrat podle nálady: {{QUIZ}}',
-  en: 'P.S. We have five apartments, each with a different atmosphere. Many guests do not know that. When you plan another stay, you can choose by mood: {{QUIZ}}',
-  de: 'P.S. Wir haben fünf Apartments, jedes mit einer anderen Atmosphäre. Viele Gäste wissen das nicht. Wenn Sie den nächsten Aufenthalt planen, können Sie nach Stimmung wählen: {{QUIZ}}',
-  pl: 'P.S. Mamy pięć apartamentów, każdy z inną atmosferą. Wielu gości o tym nie wie. Gdy będziecie planować kolejny pobyt, możecie wybrać według nastroju: {{QUIZ}}',
-  uk: 'P.S. У нас пʼять апартаментів, кожен зі своєю атмосферою. Багато гостей про це не знають. Коли плануватимете наступне перебування, можете обрати за настроєм: {{QUIZ}}',
-  'zh-Hant': 'P.S. 我們有五間公寓，各有不同氛圍。很多客人不知道這件事。下次規劃住宿時，可以依心情挑選：{{QUIZ}}',
+  cs: 'P.S. Máme pět apartmánů, každý s jinou atmosférou. Spousta hostů o tom neví. Až budete plánovat další pobyt, můžete si vybrat podle nálady. {{QUIZ}}',
+  en: 'P.S. We have five apartments, each with a different atmosphere. Many guests do not know that. When you plan another stay, you can choose by mood. {{QUIZ}}',
+  de: 'P.S. Wir haben fünf Apartments, jedes mit einer anderen Atmosphäre. Viele Gäste wissen das nicht. Wenn Sie den nächsten Aufenthalt planen, können Sie nach Stimmung wählen. {{QUIZ}}',
+  pl: 'P.S. Mamy pięć apartamentów, każdy z inną atmosferą. Wielu gości o tym nie wie. Gdy będziecie planować kolejny pobyt, możecie wybrać według nastroju. {{QUIZ}}',
+  uk: 'P.S. У нас пʼять апартаментів, кожен зі своєю атмосферою. Багато гостей про це не знають. Коли плануватимете наступне перебування, можете обрати за настроєм. {{QUIZ}}',
+  'zh-Hant': 'P.S. 我們有五間公寓，各有不同氛圍。很多客人不知道這件事。下次規劃住宿時，可以依心情挑選。{{QUIZ}}',
 };
 
 const psCtaL: LText = {
-  cs: 'Který apartmán by vám seděl',
-  en: 'Which apartment would suit you',
-  de: 'Welches Apartment würde zu Ihnen passen',
-  pl: 'Który apartament by Wam pasował',
-  uk: 'Які апартаменти вам підійдуть',
-  'zh-Hant': '哪間公寓適合您',
+  cs: 'Který apartmán by vám seděl?',
+  en: 'Which apartment would suit you?',
+  de: 'Welches Apartment würde zu Ihnen passen?',
+  pl: 'Który apartament by Wam pasował?',
+  uk: 'Які апартаменти вам підійдуть?',
+  'zh-Hant': '哪間公寓適合您？',
 };
 
 function publicSiteUrl(lang: GuideLang): string {
@@ -272,6 +281,18 @@ function escapeAttr(s: string): string {
   return escapeHtml(s).replace(/'/g, '&#39;');
 }
 
+/** Číslo v mailu: tel odkaz, nowrap a nedělitelné mezery, ať se nezalomí. */
+function telAnchor(display: string, bold: boolean): string {
+  const digits = display.replace(/\D/g, '');
+  const shown = display.trim().replace(/ /g, '\u00a0');
+  const weight = bold ? 'font-weight:700;' : '';
+  return `<a href="tel:+${digits}" style="color:#e8d5a3;text-decoration:none;${weight}white-space:nowrap;">${shown}</a>`;
+}
+
+function withPhones(text: string): string {
+  return escapeHtml(text).replace(/\+420 \d{3} \d{3} \d{3}/g, (m) => telAnchor(m, true));
+}
+
 /** Zlaté kulaté tlačítko. Jediný schválený vzhled. */
 function ctaHtml(opts: { href: string; label: string; serif: string }): string {
   const href = escapeAttr(opts.href);
@@ -299,6 +320,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
   const logoSrc = input.logoSrc || LOGO_PUBLIC_URL;
   const podpisSrc = input.podpisSrc || '';
   const serif = "Georgia,'Times New Roman',serif";
+  const sazba =
+    'text-align:justify;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto;-ms-hyphens:auto;';
 
   const nameCs = apt.nazev.cs;
   const nameEn = apt.nazev.en;
@@ -338,7 +361,10 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   </td>
                 </tr>
                 <tr><td style="padding:0 0 16px;font-family:${serif};font-size:20px;line-height:1.4;color:#f5efe3;">${escapeHtml(greeting)}</td></tr>
-                <tr><td style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">${escapeHtml(t(introBodyL, lang))}<br/><br/><strong style="color:#f5efe3;font-weight:700;">${escapeHtml(t(introOpenL, lang))}</strong></td></tr>
+                <tr><td style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
+                  <div lang="${escapeAttr(lang)}" style="${sazba}">${escapeHtml(t(introBodyL, lang))}</div>
+                  <div style="padding-top:26px;"><strong style="color:#f5efe3;font-weight:700;">${escapeHtml(t(introOpenL, lang))}</strong></div>
+                </td></tr>
                 <tr>
                   <td style="padding:0 0 22px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#2a221c;border-radius:8px;">
@@ -358,11 +384,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                 </tr>
                 <tr>
                   <td style="padding:0 0 18px;">
-                    <div style="padding:12px 14px;background:#2a221c;border:1px solid #c9a84c;border-radius:8px;font-family:${serif};font-size:16px;line-height:1.5;color:#f5efe3;">
-                      ${escapeHtml(t(casPrijezduL, lang)).replace(
-                        /\+420 777 702 272/g,
-                        '<a href="tel:+420777702272" style="color:#e8d5a3;text-decoration:none;font-weight:700;">+420 777 702 272</a>',
-                      )}
+                    <div lang="${escapeAttr(lang)}" style="padding:12px 14px;background:#2a221c;border:1px solid #c9a84c;border-radius:8px;font-family:${serif};font-size:16px;line-height:1.5;color:#f5efe3;${sazba}">
+                      ${withPhones(t(casPrijezduL, lang))}
                     </div>
                   </td>
                 </tr>
@@ -372,18 +395,15 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:18px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:15px;line-height:1.55;color:#cbbba8;">
-                    ${escapeHtml(t(helpL, lang)).replace(
-                      /\+420 777 702 272/g,
-                      '<a href="tel:+420777702272" style="color:#e8d5a3;text-decoration:none;font-weight:700;">+420 777 702 272</a>',
-                    )}
+                  <td lang="${escapeAttr(lang)}" style="padding:18px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:15px;line-height:1.55;color:#cbbba8;${sazba}">
+                    ${withPhones(t(helpL, lang))}
                   </td>
                 </tr>
                 <tr>
                   <td style="padding:22px 0 0;font-family:${serif};font-size:15px;line-height:1.55;color:#cbbba8;">
                     <div style="margin:0 0 4px;">${escapeHtml(t(closingL, lang))}</div>
-                    <div style="margin:0 0 2px;font-size:17px;color:#f5efe3;"><strong>Nikol</strong></div>
-                    <div style="margin:0 0 14px;"><a href="tel:+420702153573" style="color:#e8d5a3;text-decoration:none;">+420 702 153 573</a></div>
+                    <div style="margin:0 0 2px;font-size:17px;color:#f5efe3;"><strong>${escapeHtml(t(familyL, lang))}</strong></div>
+                    <div style="margin:0 0 14px;">${telAnchor('+420 702 153 573', false)}</div>
                     ${
                       podpisSrc
                         ? `<img src="${escapeAttr(podpisSrc)}" width="${PODPIS_WIDTH}" alt="VIVIEN Apartments" style="display:block;width:${PODPIS_WIDTH}px;max-width:100%;height:auto;border:0;" />`
@@ -392,12 +412,12 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:22px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;">
+                  <td lang="${escapeAttr(lang)}" style="padding:22px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;${sazba}">
                     ${webTipHtml(lang)}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:16px 0 0;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;">
+                  <td lang="${escapeAttr(lang)}" style="padding:16px 0 0;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;${sazba}">
                     ${psApartmanyHtml(lang)}
                   </td>
                 </tr>
@@ -432,7 +452,7 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
     t(helpL, lang),
     '',
     t(closingL, lang),
-    'Nikol',
+    t(familyL, lang),
     '+420 702 153 573',
     '',
     webTipPlain(lang),

@@ -64,11 +64,13 @@ KONEC`);
       guideUrl: 'http://127.0.0.1:3000/x',
       intendedTo: 'host@example.com',
     });
-    const veta = html.indexOf('Nejdůležitější: napište nám, v kolik dorazíte');
+    const veta = html.indexOf('Nejdůležitější je, abyste nám napsali, v kolik dorazíte');
     const tlacitko = html.indexOf('background:#c9a84c;border-radius:28px');
     expect(veta).toBeGreaterThan(-1);
     expect(tlacitko).toBeGreaterThan(veta);
-    expect(text).toContain('Nejdůležitější: napište nám, v kolik dorazíte');
+    expect(html).toContain('white-space:nowrap');
+    expect(html).toContain('Nikol a rodina VIVIEN');
+    expect(text).toContain('Nejdůležitější je, abyste nám napsali, v kolik dorazíte');
   });
 
   it('odmítne nevyplněný merge field', () => {
