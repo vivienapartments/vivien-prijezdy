@@ -122,6 +122,8 @@ function udajeZMailu(ins: MailInspection): Partial<RezervaceRecord> {
     accessPin: ins.accessPin,
     vytvoreno: ins.vytvoreno,
     poplatek: poplatekZData(ins.vytvoreno),
+    ...(ins.telefon ? { telefon: ins.telefon, telefonWa: ins.telefonWa } : {}),
+    ...(ins.zdroj ? { zdroj: ins.zdroj } : {}),
   };
 }
 

@@ -92,6 +92,14 @@ KONEC`;
     expect(inspectVivienMail(SAMPLE).vytvoreno).toBeNull();
   });
 
+  it('GUEST_PHONE je nepovinný a české číslo se srovná', () => {
+    const r = inspectVivienMail(SAMPLE.replace('KONEC', 'GUEST_PHONE: 777 111 222\nKONEC'));
+    expect(r.telefon).toBe('+420777111222');
+    expect(r.telefonWa).toBe('420777111222');
+    expect(inspectVivienMail(SAMPLE).telefon).toBeNull();
+    expect(inspectVivienMail(SAMPLE.replace('KONEC', 'GUEST_PHONE: (GUEST_PHONE)\nKONEC')).telefon).toBeNull();
+  });
+
   it('překlep e-mailu je chyba, číslo rezervace zůstane', () => {
     const r = inspectVivienMail(
       `VIVIEN-DATA v1

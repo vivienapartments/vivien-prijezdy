@@ -37,10 +37,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     osob?: number;
     jazyk?: string;
     pin?: string;
+    cas?: string;
   } | null;
   const id = (body?.rezervace || '').trim();
   const akce = body?.akce;
-  if (!id || (akce !== 'znovu' && akce !== 'opravit' && akce !== 'odkaz')) {
+  if (!id || (akce !== 'znovu' && akce !== 'opravit' && akce !== 'odkaz' && akce !== 'cas')) {
     return chyba(400, 'Neznámá akce.');
   }
 
@@ -50,6 +51,15 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if ((akce === 'znovu' || akce === 'opravit') && rec.stav === 'zruseno') {
     return chyba(400, 'Zrušená rezervace se znovu neposílá.');
+  }
+
+  if (akce === 'cas') {
+    const cas = (body?.cas || '').trim();
+    if (cas && !/^([01]\d|2[0-3]):[0-5]\d$/.test(cas)) {
+      return chyba(400, 'Čas napište jako 16:30.');
+    }
+    await store.setRezervace(id, { ...rec, casPrijezdu: cas || null });
+    return NextResponse.json({ ok: true }, { headers: noStore });
   }
 
   if (akce === 'odkaz') {

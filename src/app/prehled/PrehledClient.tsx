@@ -2,7 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import apartmanyJson from '@/data/apartmany.json';
-import { dotazPredOdeslanimZnovu, nabidnoutOdeslani, type PrehledRadek } from '@/lib/prehled';
+import {
+  dotazPredOdeslanimZnovu,
+  nabidnoutOdeslani,
+  souhrnDne,
+  STARY_ZAZNAM,
+  type PrehledRadek,
+} from '@/lib/prehled';
+import { odkazWhatsApp } from '@/lib/whatsapp-zprava';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
 type Stav = PrehledRadek['stav'];
@@ -22,20 +29,47 @@ const STAVY: { id: '' | Stav; text: string }[] = [
 
 type Props = {
   rows: PrehledRadek[];
-  souhrn: { prijezdy: number; neodeslano: number };
+  dnes: string;
+  zitra: string;
   chybiWifi: string[];
 };
 
-export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
+function Pole({ text }: { text: string }) {
+  if (!text) return null;
+  if (text === STARY_ZAZNAM) return <span className="ph-stary">{text}</span>;
+  return <>{text}</>;
+}
+
+export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
   const [stav, setStav] = useState<'' | Stav>('');
   const [hledat, setHledat] = useState('');
+  const [den, setDen] = useState<'' | 'dnes' | 'zitra'>('');
+  const [jenNeotevreni, setJenNeotevreni] = useState(false);
   const [otevreno, setOtevreno] = useState<string | null>(null);
   const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState<string | null>(null);
+  const [casy, setCasy] = useState<Record<string, string>>({});
+  const [ulozene, setUlozene] = useState<Record<string, string>>({});
+
+  function casRadku(row: PrehledRadek): string {
+    return casy[row.rezervace] ?? row.casPrijezdu ?? '';
+  }
+
+  const dnesSouhrn = useMemo(
+    () => souhrnDne(rows, dnes, casy),
+    [rows, dnes, casy],
+  );
+  const zitraSouhrn = useMemo(
+    () => souhrnDne(rows, zitra, casy),
+    [rows, zitra, casy],
+  );
 
   const viditelne = useMemo(() => {
     const q = hledat.trim().toLowerCase();
+    const denYmd = den === 'dnes' ? dnes : den === 'zitra' ? zitra : '';
     return rows.filter((row) => {
+      if (denYmd && row.prijezd !== denYmd) return false;
+      if (jenNeotevreni && row.otevrenoPocet !== 0) return false;
       if (stav && row.stav !== stav) return false;
       if (!q) return true;
       return (
@@ -44,7 +78,7 @@ export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
         row.email.toLowerCase().includes(q)
       );
     });
-  }, [rows, stav, hledat]);
+  }, [rows, stav, hledat, den, dnes, zitra, jenNeotevreni]);
 
   async function volat(row: PrehledRadek, akce: 'znovu' | 'odkaz' | 'opravit', extra?: Record<string, string>) {
     setCekam(`${row.rezervace}:${akce}`);
@@ -72,13 +106,59 @@ export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
     window.location.reload();
   }
 
+  async function ulozCas(row: PrehledRadek, hodnota: string) {
+    const cas = hodnota.trim();
+    const puvodni = ulozene[row.rezervace] ?? row.casPrijezdu ?? '';
+    if (cas === puvodni) return;
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'cas', cas }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Čas se neuložil.');
+      return;
+    }
+    setCasy((prev) => ({ ...prev, [row.rezervace]: cas }));
+    setUlozene((prev) => ({ ...prev, [row.rezervace]: cas }));
+  }
+
+  async function kopirovatZpravu(row: PrehledRadek) {
+    try {
+      await navigator.clipboard.writeText(row.zprava);
+      setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`);
+    } catch {
+      setHlaska(row.zprava);
+    }
+  }
+
+  function radekDne(ktery: 'dnes' | 'zitra', nadpis: string, souhrn: ReturnType<typeof souhrnDne>) {
+    const plan = souhrn.plan
+      .map((h) => (h.cas ? `${h.cas} ${h.jmeno}` : `bez času ${h.jmeno}`))
+      .join(' · ');
+    return (
+      <button
+        type="button"
+        className={den === ktery ? 'ph-den is-on' : 'ph-den'}
+        aria-pressed={den === ktery}
+        onClick={() => setDen((prev) => (prev === ktery ? '' : ktery))}
+      >
+        <span>
+          {nadpis}: {souhrn.pocet} · průvodce otevřelo {souhrn.otevrelo} · neodesláno {souhrn.neodeslano}
+        </span>
+        {plan ? <span className="ph-plan">{plan}</span> : null}
+      </button>
+    );
+  }
+
   return (
     <main className="ph">
       <header className="ph-top">
         <h1>Přehled rezervací</h1>
-        <p className="ph-souhrn">
-          Dnes přijíždí: {souhrn.prijezdy}, z toho neodesláno: {souhrn.neodeslano}
-        </p>
+        {radekDne('dnes', 'Dnes přijíždí', dnesSouhrn)}
+        {radekDne('zitra', 'Zítra přijíždí', zitraSouhrn)}
         {chybiWifi.length ? (
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
@@ -95,6 +175,14 @@ export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
             ))}
           </select>
         </label>
+        <button
+          type="button"
+          className={jenNeotevreni ? 'is-on' : ''}
+          aria-pressed={jenNeotevreni}
+          onClick={() => setJenNeotevreni((v) => !v)}
+        >
+          Neotevřeli průvodce
+        </button>
         <label>
           Hledat
           <input
@@ -109,10 +197,10 @@ export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
 
       <div className="ph-head" aria-hidden="true">
         <span>Stav</span>
-        <span>Rezervace</span>
-        <span>Apartmán</span>
-        <span>Termín</span>
         <span>Host</span>
+        <span>Apartmán</span>
+        <span>Příjezd</span>
+        <span>Vytvořeno</span>
         <span>Co se stalo</span>
         <span>Poslední pokus</span>
       </div>
@@ -121,28 +209,89 @@ export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
 
       {viditelne.map((row) => (
         <article key={row.rezervace} id={row.rezervace} className="ph-row">
-          <div className="ph-cell" data-label="Stav">
+          <div className="ph-karta-hlavicka">
+            <div className="ph-jmeno">
+              <Pole text={row.jmeno} />
+            </div>
+            <div>
+              <Pole text={row.apartmanNazev} />
+            </div>
+            <div>
+              <Pole text={row.termin} />
+            </div>
+          </div>
+          <div className="ph-cell ph-cell--stav" data-label="Stav">
             <span className={`ph-stav ph-stav--${row.stav}`}>{row.stavText}</span>
-            <div className="ph-poplatek">poplatek: {row.poplatek === 'neznamo' ? 'neznámo' : row.poplatek}</div>
+            <div className={`ph-otev ph-otev--${row.otevreniTon}`} title={row.otevreniTitle || undefined}>
+              {row.otevreniText}
+            </div>
           </div>
-          <div className="ph-cell" data-label="Rezervace">
-            #{row.rezervace}
+          <div className="ph-cell ph-cell--host" data-label="Host">
+            <div className="ph-jmeno">
+              <Pole text={row.jmeno} />
+            </div>
+            <div className="ph-mail">
+              <Pole text={row.email} />
+            </div>
+            {row.vlajka || row.jazykText ? (
+              <div className="ph-jazyk">
+                {row.vlajka ? <span className="ph-vlajka">{row.vlajka}</span> : null}
+                <Pole text={row.jazykText} />
+              </div>
+            ) : null}
+            {row.zdrojText ? (
+              <div className="ph-zdroj">
+                <Pole text={row.zdrojText} />
+              </div>
+            ) : null}
+            {row.telefonText ? <div className="ph-tel">{row.telefonText}</div> : null}
+            {row.telefonWa ? (
+              <div className="ph-wa-rada">
+                <a
+                  className="ph-wa"
+                  href={odkazWhatsApp(row.telefonWa, row.zprava)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Napsat na WhatsApp
+                </a>
+                <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
+                  Zkopírovat zprávu
+                </button>
+              </div>
+            ) : null}
+            <label className="ph-cas">
+              Čas příjezdu
+              <input
+                value={casRadku(row)}
+                placeholder="16:30"
+                inputMode="numeric"
+                onChange={(e) => setCasy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
+                onBlur={(e) => ulozCas(row, e.target.value)}
+              />
+            </label>
           </div>
-          <div className="ph-cell" data-label="Apartmán">
-            {row.apartmanNazev}
+          <div className="ph-cell ph-cell--apt" data-label="Apartmán">
+            <Pole text={row.apartmanNazev} />
           </div>
-          <div className="ph-cell" data-label="Termín">
-            {row.termin}
+          <div className="ph-cell ph-cell--pobyt" data-label="Příjezd">
+            <div className="ph-termin">
+              <Pole text={row.termin} />
+            </div>
+            {row.pobytText ? <div className="ph-pobyt">{row.pobytText}</div> : null}
+            <div className="ph-poplatek">{row.poplatekText}</div>
           </div>
-          <div className="ph-cell" data-label="Host">
-            <div>{row.jmeno}</div>
-            <div className="ph-mail">{row.email}</div>
+          <div className="ph-cell" data-label="Vytvořeno">
+            <div>
+              <Pole text={row.vytvorenoText} />
+            </div>
+            <div>#{row.rezervace}</div>
           </div>
           <div className="ph-cell" data-label="Co se stalo">
-            {row.coSeStalo}
+            <Pole text={row.coSeStalo} />
           </div>
           <div className="ph-cell" data-label="Poslední pokus">
-            {row.posledniPokusText}
+            <Pole text={row.posledniPokusText} />
           </div>
           <div className="ph-akce">
             {nabidnoutOdeslani(row.stav) ? (
@@ -177,9 +326,7 @@ export function PrehledClient({ rows, souhrn, chybiWifi }: Props) {
           {row.historie.length ? (
             <ul className="ph-historie">
               {row.historie.map((h, i) => (
-                <li key={`${h.cas}-${i}`}>
-                  {h.co}
-                </li>
+                <li key={`${h.cas}-${i}`}>{h.co}</li>
               ))}
             </ul>
           ) : null}
@@ -217,7 +364,7 @@ function OpravitForm({
     >
       <label>
         E-mail
-        <input name="email" type="email" defaultValue={row.email === '—' ? '' : row.email} required />
+        <input name="email" type="email" defaultValue={row.email === STARY_ZAZNAM ? '' : row.email} required />
       </label>
       <label>
         Apartmán

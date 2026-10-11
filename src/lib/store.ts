@@ -52,6 +52,22 @@ export type RezervaceRecord = {
   /** Kódy důvodů, ke kterým už odešlo upozornění. */
   upozorneneKody: string[];
   smtpPokusy: number;
+  /**
+   * Otevření průvodce v prohlížeči hosta.
+   * null u počtu = starý záznam, nevíme. 0 = sledujeme a ještě neotevřel.
+   * IP ani zařízení se neukládají. Maže se se záznamem.
+   */
+  otevrenoPoprve: string | null;
+  otevrenoNaposled: string | null;
+  otevrenoPocet: number | null;
+  /** Telefon z GUEST_PHONE. Jen přehled. V průvodci, tokenu ani logu není. */
+  telefon: string | null;
+  /** Číslice pro WhatsApp, bez plus. null = tlačítko neukazovat. */
+  telefonWa: string | null;
+  /** ZDROJ z Better Hotelu, jak přišel. */
+  zdroj: string | null;
+  /** Čas, který host napsal a majitel si ho sem zapsal. Tvar HH:MM. */
+  casPrijezdu: string | null;
 };
 
 export type RezervaceEntry = { id: string; record: RezervaceRecord };
@@ -132,6 +148,13 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     historie: Array.isArray(r.historie) ? (r.historie as HistorieAkce[]) : [],
     upozorneneKody: Array.isArray(r.upozorneneKody) ? (r.upozorneneKody as string[]) : [],
     smtpPokusy: typeof r.smtpPokusy === 'number' ? r.smtpPokusy : 0,
+    otevrenoPoprve: typeof r.otevrenoPoprve === 'string' ? r.otevrenoPoprve : null,
+    otevrenoNaposled: typeof r.otevrenoNaposled === 'string' ? r.otevrenoNaposled : null,
+    otevrenoPocet: typeof r.otevrenoPocet === 'number' ? r.otevrenoPocet : null,
+    telefon: typeof r.telefon === 'string' && r.telefon ? r.telefon : null,
+    telefonWa: typeof r.telefonWa === 'string' && r.telefonWa ? r.telefonWa : null,
+    zdroj: typeof r.zdroj === 'string' && r.zdroj ? r.zdroj : null,
+    casPrijezdu: typeof r.casPrijezdu === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.casPrijezdu) ? r.casPrijezdu : null,
   };
 }
 
@@ -158,6 +181,13 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     historie: [],
     upozorneneKody: [],
     smtpPokusy: 0,
+    otevrenoPoprve: null,
+    otevrenoNaposled: null,
+    otevrenoPocet: 0,
+    telefon: null,
+    telefonWa: null,
+    zdroj: null,
+    casPrijezdu: null,
   };
 }
 

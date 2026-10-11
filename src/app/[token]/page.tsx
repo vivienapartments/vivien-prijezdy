@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { Guide } from '@/components/Guide';
+import { OtevreniBeacon } from '@/components/OtevreniBeacon';
 import { Expired } from '@/components/Expired';
 import { loadSecrets } from '@/lib/secrets';
 import { poplatekZTokenu } from '@/lib/poplatek';
@@ -29,14 +30,17 @@ export default async function TokenPage({ params }: Props) {
   const stay = stayFromPayload(result.payload);
 
   return (
-    <Guide
-      apt={a}
-      lang={l as GuideLang}
-      secrets={secrets}
-      stay={stay}
-      accessPin={i ?? null}
-      poplatek={poplatekZTokenu(result.payload.f)}
-      initialPrijezd={null}
-    />
+    <>
+      <OtevreniBeacon token={decodeURIComponent(token)} />
+      <Guide
+        apt={a}
+        lang={l as GuideLang}
+        secrets={secrets}
+        stay={stay}
+        accessPin={i ?? null}
+        poplatek={poplatekZTokenu(result.payload.f)}
+        initialPrijezd={null}
+      />
+    </>
   );
 }

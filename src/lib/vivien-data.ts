@@ -2,6 +2,7 @@ import apartmanyJson from '@/data/apartmany.json';
 import { duvod, problemEmailu, type Duvod } from './chyby';
 import { nightsBetween, parseCzechDate } from './dates';
 import { parseDatumVytvoreni } from './poplatek';
+import { normalizujTelefon } from './telefon';
 import type { AptId, GuideLang } from './types';
 import { APT_IDS } from './types';
 
@@ -19,6 +20,9 @@ export type VivienData = {
   /** Křestní jméno hosta z BH: GUEST_NAME: (GUEST_NAME). */
   jmeno: string | null;
   zdroj: string | null;
+  /** GUEST_PHONE, už srovnaný. null = v mailu nebyl. */
+  telefon: string | null;
+  telefonWa: string | null;
   klic: string | null;
   /** PIN apartmánu z BH (ACCESS_PIN), mění se podle pobytu. */
   accessPin: string | null;
@@ -205,7 +209,8 @@ export function parseVivienData(raw: string): ParseResult {
       jazyk: langFromNarodnost(narodnost),
       osloveni: f.OSLOVENI?.trim() || null,
       jmeno,
-      zdroj: f.ZDROJ?.trim() || null,
+      zdroj: cistyZdroj(f.ZDROJ),
+      ...telefonZPoli(f.GUEST_PHONE),
       klic: f.KLIC?.trim() || null,
       accessPin,
     },
@@ -272,8 +277,23 @@ export type MailInspection = {
   narodnost: string | null;
   osloveni: string | null;
   accessPin: string | null;
+  telefon: string | null;
+  telefonWa: string | null;
+  zdroj: string | null;
   duvody: Duvod[];
 };
+
+function cistyZdroj(raw: string | null | undefined): string | null {
+  const s = (raw || '').trim();
+  if (!s || /^\(?\s*ZDROJ\s*\)?$/i.test(s)) return null;
+  return s;
+}
+
+function telefonZPoli(raw: string | null | undefined): { telefon: string | null; telefonWa: string | null } {
+  const tel = normalizujTelefon(raw);
+  if (!tel) return { telefon: null, telefonWa: null };
+  return { telefon: tel.ulozeny, telefonWa: tel.wa };
+}
 
 function rezervaceZeSubjectu(subject: string): string | null {
   const m = subject.match(/#\s*(\d{4,})/);
@@ -303,6 +323,9 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
       osloveni: null,
       accessPin: null,
       vytvoreno: null,
+      telefon: null,
+      telefonWa: null,
+      zdroj: null,
       duvody,
     };
   }
@@ -373,6 +396,8 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
     osloveni,
     accessPin,
     vytvoreno,
+    ...telefonZPoli(f.GUEST_PHONE),
+    zdroj: cistyZdroj(f.ZDROJ),
     duvody,
   };
 }
