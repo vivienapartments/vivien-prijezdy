@@ -404,12 +404,12 @@ export const tvTexts = {
     'zh-Hant': '入住期間 · 電視',
   } as LText,
   heading: {
-    cs: 'Televize s Lepší.TV: přes 150 programů, i zpětně',
-    en: 'TV with Lepší.TV: over 150 channels, including catch-up',
-    de: 'Fernsehen mit Lepší.TV: über 150 Programme, auch zeitversetzt',
-    pl: 'Telewizja z Lepší.TV: ponad 150 programów, także wstecz',
-    uk: 'Телевізор з Lepší.TV: понад 150 програм, також із записом',
-    'zh-Hant': 'Lepší.TV 電視：逾 150 個頻道，亦可回看',
+    cs: 'Televize s Lepší.TV. Přes 150 programů, i zpětně',
+    en: 'TV with Lepší.TV. Over 150 channels, including catch-up',
+    de: 'Fernsehen mit Lepší.TV. Über 150 Programme, auch zeitversetzt',
+    pl: 'Telewizja z Lepší.TV. Ponad 150 programów, także wstecz',
+    uk: 'Телевізор з Lepší.TV. Понад 150 програм, також із записом',
+    'zh-Hant': 'Lepší.TV 電視。逾 150 個頻道，亦可回看',
   } as LText,
   lead: {
     cs: 'V každém apartmánu je televize s aplikací Lepší.TV, přihlášená a v ceně pobytu.',
@@ -433,7 +433,7 @@ export const tvTexts = {
     de: 'Wählen Sie im Menü den ersten Eintrag, die App Lepší.TV.',
     pl: 'W menu wybierzcie pierwszą pozycję, aplikację Lepší.TV.',
     uk: 'У меню оберіть перший пункт, застосунок Lepší.TV.',
-    'zh-Hant': '在選單中選擇第一項：Lepší.TV 應用。',
+    'zh-Hant': '在選單中選擇第一項，Lepší.TV 應用。',
   } as LText,
   step3: {
     cs: 'Sledujte programy živě nebo zpětně až 100 dní.',
@@ -444,20 +444,20 @@ export const tvTexts = {
     'zh-Hant': '可看直播，也可回看最多 100 天。',
   } as LText,
   langs: {
-    cs: 'Programy i ve vašem jazyce: německé (ZDF, Das Erste, 3sat), anglické (CNN International, Bloomberg), francouzské (France 2, TV5MONDE), polské (Polsat, TVN) a ukrajinské (1+1 International, ICTV). Na televizi je i YouTube.',
-    en: 'Channels in your language too: German (ZDF, Das Erste, 3sat), English (CNN International, Bloomberg), French (France 2, TV5MONDE), Polish (Polsat, TVN) and Ukrainian (1+1 International, ICTV). YouTube is on the TV as well.',
-    de: 'Programme auch in Ihrer Sprache: deutsch (ZDF, Das Erste, 3sat), englisch (CNN International, Bloomberg), französisch (France 2, TV5MONDE), polnisch (Polsat, TVN) und ukrainisch (1+1 International, ICTV). Auf dem Fernseher gibt es auch YouTube.',
-    pl: 'Programy także w Waszym języku: niemieckie (ZDF, Das Erste, 3sat), angielskie (CNN International, Bloomberg), francuskie (France 2, TV5MONDE), polskie (Polsat, TVN) i ukraińskie (1+1 International, ICTV). Na telewizorze jest też YouTube.',
-    uk: 'Програми також вашою мовою: німецькі (ZDF, Das Erste, 3sat), англійські (CNN International, Bloomberg), французькі (France 2, TV5MONDE), польські (Polsat, TVN) і українські (1+1 International, ICTV). На телевізорі також є YouTube.',
-    'zh-Hant': '也有您語言的頻道：德語（ZDF、Das Erste、3sat）、英語（CNN International、Bloomberg）、法語（France 2、TV5MONDE）、波蘭語（Polsat、TVN）與烏克蘭語（1+1 International、ICTV）。電視上也有 YouTube。',
+    cs: 'Jsou tam i programy ve vašem jazyce. Německé (ZDF, Das Erste, 3sat), anglické (CNN International, Bloomberg), francouzské (France 2, TV5MONDE), polské (Polsat, TVN) a ukrajinské (1+1 International, ICTV). Na televizi je i YouTube.',
+    en: 'There are channels in your language too. German (ZDF, Das Erste, 3sat), English (CNN International, Bloomberg), French (France 2, TV5MONDE), Polish (Polsat, TVN) and Ukrainian (1+1 International, ICTV). YouTube is on the TV as well.',
+    de: 'Es gibt auch Programme in Ihrer Sprache. Deutsch (ZDF, Das Erste, 3sat), englisch (CNN International, Bloomberg), französisch (France 2, TV5MONDE), polnisch (Polsat, TVN) und ukrainisch (1+1 International, ICTV). Auf dem Fernseher gibt es auch YouTube.',
+    pl: 'Są tam też programy w Waszym języku. Niemieckie (ZDF, Das Erste, 3sat), angielskie (CNN International, Bloomberg), francuskie (France 2, TV5MONDE), polskie (Polsat, TVN) i ukraińskie (1+1 International, ICTV). Na telewizorze jest też YouTube.',
+    uk: 'Є там і програми вашою мовою. Німецькі (ZDF, Das Erste, 3sat), англійські (CNN International, Bloomberg), французькі (France 2, TV5MONDE), польські (Polsat, TVN) і українські (1+1 International, ICTV). На телевізорі також є YouTube.',
+    'zh-Hant': '也有您語言的頻道。德語（ZDF、Das Erste、3sat）、英語（CNN International、Bloomberg）、法語（France 2、TV5MONDE）、波蘭語（Polsat、TVN）與烏克蘭語（1+1 International、ICTV）。電視上也有 YouTube。',
   } as LText,
   help: {
-    cs: 'Když něco nefunguje, zavolejte Nikol:',
-    en: 'If something does not work, call Nikol:',
-    de: 'Wenn etwas nicht funktioniert, rufen Sie Nikol an:',
-    pl: 'Jeśli coś nie działa, zadzwońcie do Nikol:',
-    uk: 'Якщо щось не працює, зателефонуйте Nikol:',
-    'zh-Hant': '若有問題，請致電 Nikol：',
+    cs: 'Když něco nefunguje, zavolejte Nikol na',
+    en: 'If something does not work, call Nikol on',
+    de: 'Wenn etwas nicht funktioniert, rufen Sie Nikol an unter',
+    pl: 'Jeśli coś nie działa, zadzwońcie do Nikol na',
+    uk: 'Якщо щось не працює, зателефонуйте Nikol на',
+    'zh-Hant': '若有問題，請打給 Nikol',
   } as LText,
 };
 
@@ -678,12 +678,12 @@ export const expiredTexts: LText = {
 };
 
 export const expiredHelp: LText = {
-  cs: 'Potřebujete pomoc? Zavolejte Nikol:',
-  en: 'Need help? Call Nikol:',
-  de: 'Brauchen Sie Hilfe? Rufen Sie Nikol an:',
-  pl: 'Potrzebujecie pomocy? Zadzwońcie do Nikol:',
-  uk: 'Потрібна допомога? Зателефонуйте Nikol:',
-  'zh-Hant': '需要協助？請致電 Nikol：',
+  cs: 'Potřebujete pomoc? Zavolejte Nikol na',
+  en: 'Need help? Call Nikol on',
+  de: 'Brauchen Sie Hilfe? Rufen Sie Nikol an unter',
+  pl: 'Potrzebujecie pomocy? Zadzwońcie do Nikol na',
+  uk: 'Потрібна допомога? Зателефонуйте Nikol на',
+  'zh-Hant': '需要協助？請打給 Nikol',
 };
 
 export const SECTION_NAV: Record<string, LText> = {

@@ -117,6 +117,24 @@ const casPrijezduL: LText = {
   'zh-Hant': '最重要的是請告訴我們您幾點到。公寓由我們當面交接，您不必等我們。傳簡訊或 WhatsApp 到 +420 777 702 272 即可。',
 };
 
+const casSmsL: LText = {
+  cs: 'Napsat SMS',
+  en: 'Send an SMS',
+  de: 'SMS schreiben',
+  pl: 'Napisz SMS',
+  uk: 'Написати SMS',
+  'zh-Hant': '傳送簡訊',
+};
+
+const casWhatsappL: LText = {
+  cs: 'Napsat na WhatsApp',
+  en: 'Message on WhatsApp',
+  de: 'Auf WhatsApp schreiben',
+  pl: 'Napisz na WhatsApp',
+  uk: 'Написати у WhatsApp',
+  'zh-Hant': '用 WhatsApp 傳訊',
+};
+
 /** CTA nápověda (v HTML tučně). */
 const introOpenL: LText = {
   cs: 'Otevřete ho tlačítkem níže.',
@@ -174,12 +192,12 @@ const openGuideL: LText = {
 
 /** Problém: nejdřív majitel, pak Nikol (číslo v podpisu). */
 const helpL: LText = {
-  cs: 'Kdyby cokoli nefungovalo, volejte nejdřív na číslo +420 777 702 272, a pokud se nedovoláte, zavolejte Nikol.',
-  en: 'If anything does not work, call +420 777 702 272 first, and if you cannot get through, call Nikol.',
-  de: 'Wenn etwas nicht funktioniert, rufen Sie zuerst +420 777 702 272 an, und wenn Sie uns nicht erreichen, rufen Sie Nikol an.',
-  pl: 'Gdyby cokolwiek nie działało, zadzwońcie najpierw na numer +420 777 702 272, a jeśli się nie dodzwonicie, zadzwońcie do Nikol.',
-  uk: 'Якщо щось не працює, телефонуйте спочатку на номер +420 777 702 272, а якщо не додзвонитеся, зателефонуйте Nikol.',
-  'zh-Hant': '如果有任何問題，請先撥 +420 777 702 272，若打不通，再打給 Nikol。',
+  cs: 'Kdyby cokoli nefungovalo, volejte na +420 777 702 272. V případě, že se nedovoláte, zavolejte Nikol.',
+  en: 'If anything does not work, call +420 777 702 272. If you cannot get through, call Nikol.',
+  de: 'Wenn etwas nicht funktioniert, rufen Sie +420 777 702 272 an. Wenn Sie uns nicht erreichen, rufen Sie Nikol an.',
+  pl: 'Gdyby cokolwiek nie działało, zadzwońcie na +420 777 702 272. Jeśli się nie dodzwonicie, zadzwońcie do Nikol.',
+  uk: 'Якщо щось не працює, телефонуйте на +420 777 702 272. Якщо не додзвонитеся, зателефонуйте Nikol.',
+  'zh-Hant': '如果有任何問題，請撥 +420 777 702 272。若打不通，請打給 Nikol。',
 };
 
 const familyL: LText = {
@@ -286,11 +304,15 @@ function telAnchor(display: string, bold: boolean): string {
   const digits = display.replace(/\D/g, '');
   const shown = display.trim().replace(/ /g, '\u00a0');
   const weight = bold ? 'font-weight:700;' : '';
-  return `<a href="tel:+${digits}" style="color:#e8d5a3;text-decoration:none;${weight}white-space:nowrap;">${shown}</a>`;
+  return `<a href="tel:+${digits}" style="color:#e8d5a3;text-decoration:underline;text-underline-offset:0.12em;${weight}white-space:nowrap;">${shown}</a>`;
 }
 
 function withPhones(text: string): string {
   return escapeHtml(text).replace(/\+420 \d{3} \d{3} \d{3}/g, (m) => telAnchor(m, true));
+}
+
+function msgButton(href: string, label: string, serif: string): string {
+  return `<a href="${escapeAttr(href)}" style="display:inline-block;margin:0 8px 8px 0;padding:8px 14px;border:1px solid #c9a84c;border-radius:999px;color:#f5efe3;font-family:${serif};font-size:14px;line-height:1.2;text-decoration:none;white-space:nowrap;">${escapeHtml(label)}</a>`;
 }
 
 /** Zlaté kulaté tlačítko. Jediný schválený vzhled. */
@@ -386,6 +408,10 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   <td style="padding:0 0 18px;">
                     <div lang="${escapeAttr(lang)}" style="padding:12px 14px;background:#2a221c;border:1px solid #c9a84c;border-radius:8px;font-family:${serif};font-size:16px;line-height:1.5;color:#f5efe3;${sazba}">
                       ${withPhones(t(casPrijezduL, lang))}
+                      <div style="padding-top:12px;text-align:left;">
+                        ${msgButton('sms:+420777702272', t(casSmsL, lang), serif)}
+                        ${msgButton('https://wa.me/420777702272', t(casWhatsappL, lang), serif)}
+                      </div>
                     </div>
                   </td>
                 </tr>

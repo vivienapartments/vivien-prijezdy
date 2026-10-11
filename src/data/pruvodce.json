@@ -52,12 +52,12 @@
             "zh-Hant": "開車前來？請立刻寫訊息給我們"
           },
           "text": {
-            "cs": "Parkovací stání vám zajistíme, jen když nám co nejdříve pošlete SMS nebo zprávu na číslo +420 777 702 272. Nejlépe hned teď. Uveďte v ní:",
-            "en": "We can only reserve a parking space for you if you send us a text message to +420 777 702 272 as soon as possible. Ideally right now. Please include:",
-            "de": "Einen Stellplatz können wir Ihnen nur sichern, wenn Sie uns so bald wie möglich eine SMS oder Nachricht an +420 777 702 272 senden. Am besten sofort. Bitte geben Sie an:",
-            "pl": "Miejsce parkingowe zarezerwujemy tylko wtedy, gdy jak najszybciej wyślecie SMS lub wiadomość na numer +420 777 702 272. Najlepiej zaraz. Podajcie w niej:",
-            "uk": "Паркувальне місце можемо забронювати, лише якщо якомога швидше надішлете SMS або повідомлення на номер +420 777 702 272. Найкраще просто зараз. Укажіть у ньому:",
-            "zh-Hant": "只有您盡快傳簡訊或訊息到 +420 777 702 272，我們才能為您保留車位。最好現在就傳。請寫明："
+            "cs": "Parkovací stání vám zajistíme, jen když nám co nejdříve pošlete SMS nebo zprávu na číslo +420 777 702 272. Nejlépe hned teď. Ve zprávě uveďte",
+            "en": "We can only reserve a parking space for you if you send us a text message to +420 777 702 272 as soon as possible. Ideally right now. In the message, include",
+            "de": "Einen Stellplatz können wir Ihnen nur sichern, wenn Sie uns so bald wie möglich eine SMS oder Nachricht an +420 777 702 272 senden. Am besten sofort. Schreiben Sie in der Nachricht",
+            "pl": "Miejsce parkingowe zarezerwujemy tylko wtedy, gdy jak najszybciej wyślecie SMS lub wiadomość na numer +420 777 702 272. Najlepiej zaraz. W wiadomości podajcie",
+            "uk": "Паркувальне місце можемо забронювати, лише якщо якомога швидше надішлете SMS або повідомлення на номер +420 777 702 272. Найкраще просто зараз. У повідомленні вкажіть",
+            "zh-Hant": "只有您盡快傳簡訊或訊息到 +420 777 702 272，我們才能為您保留車位。最好現在就傳。請在訊息中寫明"
           },
           "body": [
             {
@@ -171,12 +171,12 @@
             "zh-Hant": "大門何時開啟"
           },
           "text": {
-            "cs": "Ve všední dny (pondělí až pátek) je brána otevřená od 6:00 do 18:00. Večer, v noci a o víkendu celý den je zavřená. Otevřete si ji telefonním hovorem na číslo {{BRANA_TELEFON}}. Hovor nikdo nepřijme: ozve se obsazovací tón a brána se začne otevírat.",
-            "en": "On weekdays (Monday to Friday) the gate is open from 6:00 to 18:00. In the evening, at night and all day at weekends it is closed. You open it by making a phone call to {{BRANA_TELEFON}}. Nobody will answer: you will hear a busy tone and the gate will start to open.",
-            "de": "An Werktagen (Montag bis Freitag) ist das Tor von 6:00 bis 18:00 Uhr geöffnet. Abends, nachts und am Wochenende ganztägig ist es geschlossen. Sie öffnen es mit einem Anruf unter {{BRANA_TELEFON}}. Niemand nimmt ab: Sie hören ein Besetztzeichen und das Tor beginnt sich zu öffnen.",
-            "pl": "W dni powszednie (poniedziałek-piątek) brama jest otwarta od 6:00 do 18:00. Wieczorem, w nocy i w weekend przez cały dzień jest zamknięta. Otworzycie ją zwykłym połączeniem na {{BRANA_TELEFON}}. Nikt nie odbierze: usłyszycie sygnał zajętości i brama zacznie się otwierać.",
-            "uk": "У будні (понеділок-п’ятниця) ворота відкриті з 6:00 до 18:00. Увечері, вночі та у вихідні весь день вони зачинені. Відкрийте їх телефонним дзвінком на {{BRANA_TELEFON}}. Ніхто не відповість: прозвучить сигнал зайнято й ворота почнуть відкриватися.",
-            "zh-Hant": "平日（週一至週五）大門 6:00-18:00 開啟。傍晚、夜間與週末全天關閉。請撥打 {{BRANA_TELEFON}} 開啟。無人接聽：會聽到忙線音，大門隨即開啟。"
+            "cs": "Ve všední dny (pondělí až pátek) je brána otevřená od 6:00 do 18:00. Večer, v noci a o víkendu celý den je zavřená. Otevřete si ji telefonním hovorem na číslo {{BRANA_TELEFON}}. Hovor nikdo nepřijme. Ozve se obsazovací tón a brána se začne otevírat.",
+            "en": "On weekdays (Monday to Friday) the gate is open from 6:00 to 18:00. In the evening, at night and all day at weekends it is closed. You open it by making a phone call to {{BRANA_TELEFON}}. Nobody will answer. You will hear a busy tone and the gate will start to open.",
+            "de": "An Werktagen (Montag bis Freitag) ist das Tor von 6:00 bis 18:00 Uhr geöffnet. Abends, nachts und am Wochenende ganztägig ist es geschlossen. Sie öffnen es mit einem Anruf unter {{BRANA_TELEFON}}. Niemand nimmt ab. Sie hören ein Besetztzeichen und das Tor beginnt sich zu öffnen.",
+            "pl": "W dni powszednie (poniedziałek-piątek) brama jest otwarta od 6:00 do 18:00. Wieczorem, w nocy i w weekend przez cały dzień jest zamknięta. Otworzycie ją zwykłym połączeniem na {{BRANA_TELEFON}}. Nikt nie odbierze. Usłyszycie sygnał zajętości i brama zacznie się otwierać.",
+            "uk": "У будні (понеділок-п’ятниця) ворота відкриті з 6:00 до 18:00. Увечері, вночі та у вихідні весь день вони зачинені. Відкрийте їх телефонним дзвінком на {{BRANA_TELEFON}}. Ніхто не відповість. Прозвучить сигнал зайнято й ворота почнуть відкриватися.",
+            "zh-Hant": "平日（週一至週五）大門 6:00-18:00 開啟。傍晚、夜間與週末全天關閉。請撥打 {{BRANA_TELEFON}} 開啟。無人接聽。會聽到忙線音，大門隨即開啟。"
           },
           "stav": "hotovo"
         },
@@ -252,7 +252,7 @@
             "de": "Rufen Sie uns unter +420 777 702 272 an. Wenn Sie niemanden erreichen, rufen Sie Nikol unter +420 702 153 573 an.",
             "pl": "Zadzwońcie do nas na +420 777 702 272. Jeśli nie dodzwonicie się, dzwońcie do Nikol na +420 702 153 573.",
             "uk": "Зателефонуйте нам на +420 777 702 272. Якщо не додзвонитеся, телефонуйте Nikol на +420 702 153 573.",
-            "zh-Hant": "請撥打 +420 777 702 272。若打不通，請打給 Nikol：+420 702 153 573。"
+            "zh-Hant": "請撥打 +420 777 702 272。若打不通，請打給 Nikol，+420 702 153 573。"
           }
         }
       ],
@@ -261,12 +261,12 @@
     {
       "id": "parkovani",
       "nadpis": {
-        "cs": "Parkování: cesta na vaše stání",
-        "en": "Parking: route to your space",
-        "de": "Parken: Weg zu Ihrem Stellplatz",
-        "pl": "Parking: droga do Waszego miejsca",
-        "uk": "Парковка: шлях до вашого місця",
-        "zh-Hant": "停車：前往您的車位"
+        "cs": "Cesta na vaše stání",
+        "en": "Route to your space",
+        "de": "Weg zu Ihrem Stellplatz",
+        "pl": "Droga do Waszego miejsca",
+        "uk": "Шлях до вашого місця",
+        "zh-Hant": "前往您的車位"
       },
       "apartmany": [
         "V1",
@@ -512,12 +512,12 @@
           ],
           "foto": "fotky/parkovani/cil-stani-14.jpg",
           "nadpis": {
-            "cs": "Cíl: stání č. 14",
-            "en": "Destination: space No. 14",
-            "de": "Ziel: Stellplatz Nr. 14",
-            "pl": "Cel: miejsce nr 14",
-            "uk": "Мета: місце № 14",
-            "zh-Hant": "目的地：車位 14 號"
+            "cs": "Cíl, stání č. 14",
+            "en": "Destination, space No. 14",
+            "de": "Ziel, Stellplatz Nr. 14",
+            "pl": "Cel, miejsce nr 14",
+            "uk": "Мета, місце № 14",
+            "zh-Hant": "目的地，車位 14 號"
           },
           "text": {
             "cs": "Vaše místo je zlaté „Gentle Harmony 14“ u zdi. Zaparkujte prosím pouze zde.",
@@ -680,12 +680,12 @@
           ],
           "foto": "fotky/parkovani/cil-stani-43.jpg",
           "nadpis": {
-            "cs": "Cíl: stání č. 43",
-            "en": "Destination: space No. 43",
-            "de": "Ziel: Stellplatz Nr. 43",
-            "pl": "Cel: miejsce nr 43",
-            "uk": "Мета: місце № 43",
-            "zh-Hant": "目的地：車位 43 號"
+            "cs": "Cíl, stání č. 43",
+            "en": "Destination, space No. 43",
+            "de": "Ziel, Stellplatz Nr. 43",
+            "pl": "Cel, miejsce nr 43",
+            "uk": "Мета, місце № 43",
+            "zh-Hant": "目的地，車位 43 號"
           },
           "text": {
             "cs": "Po pravé straně uvidíte své místo č. 43 (u plotu s modrou šipkou). Zaparkujte prosím pouze zde.",
@@ -1280,12 +1280,12 @@
             "zh-Hant": "聯絡"
           },
           "text": {
-            "cs": "Nikol: +420 702 153 573 · info@vivienapartments.cz",
-            "en": "Nikol: +420 702 153 573 · info@vivienapartments.cz",
-            "de": "Nikol: +420 702 153 573 · info@vivienapartments.cz",
-            "pl": "Nikol: +420 702 153 573 · info@vivienapartments.cz",
-            "uk": "Nikol: +420 702 153 573 · info@vivienapartments.cz",
-            "zh-Hant": "Nikol: +420 702 153 573 · info@vivienapartments.cz"
+            "cs": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
+            "en": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
+            "de": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
+            "pl": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
+            "uk": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
+            "zh-Hant": "Nikol, +420 702 153 573 · info@vivienapartments.cz"
           },
           "stav": "hotovo"
         }
