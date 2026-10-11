@@ -11,7 +11,7 @@ import {
   type PrehledRadek,
 } from './prehled';
 import { prazdnaRezervace } from './store';
-import { textCheckinu, textZpravy } from './whatsapp-zprava';
+import { hlavniZprava, textCasu, textCheckinu, textDne, textZpravy } from './whatsapp-zprava';
 
 describe('tlačítka v přehledu', () => {
   it('u zrušené rezervace skryje odeslání', () => {
@@ -32,8 +32,32 @@ describe('tlačítka v přehledu', () => {
       'Dobrý den, posíláme průvodce k vašemu příjezdu. Napište nám prosím čas příjezdu, ať na nás nemusíte čekat.',
     );
     expect(textCheckinu('cs')).toBe(
-      'Dobrý den, děkujeme za rezervaci. Prosím vyplňte si online check-in, hned potom vám pošleme průvodce se vstupem a parkováním.',
+      'Dobrý den, děkujeme za rezervaci. Prosím vyplňte si online check-in, odkaz najdete v e-mailu s potvrzením rezervace. Hned potom vám pošleme průvodce se vstupem a parkováním.',
     );
+    expect(textCheckinu('en')).toContain('booking confirmation email');
+    expect(textCheckinu('de')).toContain('Leitfaden');
+    expect(textCheckinu('de')).not.toContain('Wegweiser');
+    expect(textCasu('cs')).toBe(
+      'Dobrý den, děkujeme. Napište nám prosím ještě, v kolik zhruba dorazíte, ať na nás nemusíte čekat.',
+    );
+    expect(textDne('cs')).toBe(
+      'Dobrý den, dnes se na vás těšíme. Napište nám prosím asi 15 minut před příjezdem, ať jsme na místě. Průvodce s parkováním máte tady',
+    );
+  });
+
+  it('nahoře v menu je zpráva podle stavu', () => {
+    expect(
+      hlavniZprava({ stav: 'bez_checkinu', otevrenoPocet: 0, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11' }),
+    ).toBe('checkin');
+    expect(
+      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 0, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11' }),
+    ).toBe('neotevrel');
+    expect(
+      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-12', dnes: '2026-10-11' }),
+    ).toBe('cas');
+    expect(
+      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: '16:30', prijezd: '2026-10-11', dnes: '2026-10-11' }),
+    ).toBe('den');
   });
 
   it('poplatek ukáže částku, ne, nebo neznámo', () => {

@@ -51,6 +51,9 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
   const [cekam, setCekam] = useState<string | null>(null);
   const [casy, setCasy] = useState<Record<string, string>>({});
   const [ulozene, setUlozene] = useState<Record<string, string>>({});
+  const [volba, setVolba] = useState<Record<string, string>>({});
+  const [odkazy, setOdkazy] = useState<Record<string, string>>({});
+  const [ulozeneOdkazy, setUlozeneOdkazy] = useState<Record<string, string>>({});
 
   function casRadku(row: PrehledRadek): string {
     return casy[row.rezervace] ?? row.casPrijezdu ?? '';
@@ -127,12 +130,54 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
     setUlozene((prev) => ({ ...prev, [row.rezervace]: cas }));
   }
 
+  function zpravaRadku(row: PrehledRadek): string {
+    const id = volba[row.rezervace] ?? row.zpravy[0]?.id;
+    return row.zpravy.find((z) => z.id === id)?.text || row.zprava;
+  }
+
+  async function ulozOdkaz(row: PrehledRadek, hodnota: string) {
+    const url = hodnota.trim();
+    const puvodni = ulozeneOdkazy[row.rezervace] ?? row.checkinUrl ?? '';
+    if (url === puvodni) return;
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'checkin', url }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Odkaz se neuložil.');
+      return;
+    }
+    setUlozeneOdkazy((prev) => ({ ...prev, [row.rezervace]: url }));
+    window.location.reload();
+  }
+
+  async function ulozTelefon(row: PrehledRadek, ktery: 'checkin' | 'rezervace', hodnota: string) {
+    const cislo = hodnota.trim();
+    if (!cislo) return;
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'telefon', ktery, cislo }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Číslo se neuložilo.');
+      return;
+    }
+    window.location.reload();
+  }
+
   async function kopirovatZpravu(row: PrehledRadek) {
+    const text = zpravaRadku(row);
     try {
-      await navigator.clipboard.writeText(row.zprava);
+      await navigator.clipboard.writeText(text);
       setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`);
     } catch {
-      setHlaska(row.zprava);
+      setHlaska(text);
     }
   }
 
@@ -257,12 +302,83 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
                 <Pole text={row.zdrojText} />
               </div>
             ) : null}
-            {row.telefonText ? <div className="ph-tel">{row.telefonText}</div> : null}
+            {row.telefonText ? (
+              <div className="ph-tel-blok">
+                <div className="ph-tel">{row.telefonText}</div>
+                {row.telefonPuvodni ? <div className="ph-puvodni">napsáno {row.telefonPuvodni}</div> : null}
+                {row.telefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
+                {row.telefonNejisty && row.telefonKtery ? (
+                  <label className="ph-cas">
+                    Telefon
+                    <input
+                      placeholder="+420"
+                      onBlur={(e) => ulozTelefon(row, row.telefonKtery || 'checkin', e.target.value)}
+                    />
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+            {row.jinyTelefonText ? (
+              <div className="ph-tel-jiny">
+                jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
+                {row.jinyTelefonPuvodni ? <span className="ph-puvodni"> napsáno {row.jinyTelefonPuvodni}</span> : null}
+                {row.jinyTelefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
+                {row.jinyTelefonWa ? (
+                  <a
+                    className="ph-wa ph-wa--maly"
+                    href={odkazWhatsApp(row.jinyTelefonWa, zpravaRadku(row))}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    WhatsApp
+                  </a>
+                ) : null}
+                {row.jinyTelefonNejisty && row.jinyTelefonKtery ? (
+                  <label className="ph-cas">
+                    Telefon
+                    <input
+                      placeholder="+420"
+                      onBlur={(e) => ulozTelefon(row, row.jinyTelefonKtery || 'rezervace', e.target.value)}
+                    />
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+            {row.stav === 'bez_checkinu' ? (
+              <label className="ph-cas">
+                Odkaz na check-in
+                <input
+                  value={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
+                  placeholder="https://"
+                  onChange={(e) => setOdkazy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
+                  onBlur={(e) => ulozOdkaz(row, e.target.value)}
+                />
+              </label>
+            ) : null}
+            {row.zpravy.length && (row.telefonWa || row.jinyTelefonWa) ? (
+              <fieldset className="ph-menu">
+                <legend>Zpráva</legend>
+                {row.zpravy.map((z) => {
+                  const vybrano = (volba[row.rezervace] ?? row.zpravy[0]?.id) === z.id;
+                  return (
+                    <label key={z.id} className={vybrano ? 'is-on' : ''}>
+                      <input
+                        type="radio"
+                        name={`zprava-${row.rezervace}`}
+                        checked={vybrano}
+                        onChange={() => setVolba((prev) => ({ ...prev, [row.rezervace]: z.id }))}
+                      />
+                      {z.nazev}
+                    </label>
+                  );
+                })}
+              </fieldset>
+            ) : null}
             {row.telefonWa ? (
               <div className="ph-wa-rada">
                 <a
                   className="ph-wa"
-                  href={odkazWhatsApp(row.telefonWa, row.zprava)}
+                  href={odkazWhatsApp(row.telefonWa, zpravaRadku(row))}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -271,21 +387,6 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
                 <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
                   Zkopírovat zprávu
                 </button>
-              </div>
-            ) : null}
-            {row.jinyTelefonText ? (
-              <div className="ph-tel-jiny">
-                jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
-                {row.jinyTelefonWa ? (
-                  <a
-                    className="ph-wa ph-wa--maly"
-                    href={odkazWhatsApp(row.jinyTelefonWa, row.zprava)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    WhatsApp
-                  </a>
-                ) : null}
               </div>
             ) : null}
             <label className="ph-cas">

@@ -218,6 +218,42 @@
   color: var(--color-gold);
 }
 
+.ph-puvodni,
+.ph-poznamka {
+  display: block;
+  margin-top: 0.15rem;
+  color: var(--pv-muted);
+  font-size: 0.78rem;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.ph-menu {
+  margin: 0.55rem 0 0;
+  padding: 0.35rem 0.55rem 0.45rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 0.6rem;
+}
+
+.ph-menu legend {
+  padding: 0 0.25rem;
+  color: var(--pv-muted);
+  font-size: 0.78rem;
+}
+
+.ph-menu label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.28rem;
+  font-size: 0.88rem;
+  font-weight: 400;
+}
+
+.ph-menu label.is-on {
+  color: var(--color-gold);
+}
+
 .ph-tel-jiny {
   margin-top: 0.35rem;
   color: var(--pv-muted);

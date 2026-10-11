@@ -23,6 +23,7 @@ export type VivienData = {
   /** GUEST_PHONE, už srovnaný. null = v mailu nebyl. */
   telefon: string | null;
   telefonWa: string | null;
+  telefonPuvodni: string | null;
   klic: string | null;
   /** PIN apartmánu z BH (ACCESS_PIN), mění se podle pobytu. */
   accessPin: string | null;
@@ -210,7 +211,7 @@ export function parseVivienData(raw: string): ParseResult {
       osloveni: f.OSLOVENI?.trim() || null,
       jmeno,
       zdroj: cistyZdroj(f.ZDROJ),
-      ...telefonZPoli(f.GUEST_PHONE),
+      ...telefonZPoli(f.GUEST_PHONE, narodnost),
       klic: f.KLIC?.trim() || null,
       accessPin,
     },
@@ -279,6 +280,7 @@ export type MailInspection = {
   accessPin: string | null;
   telefon: string | null;
   telefonWa: string | null;
+  telefonPuvodni: string | null;
   zdroj: string | null;
   duvody: Duvod[];
 };
@@ -289,10 +291,13 @@ function cistyZdroj(raw: string | null | undefined): string | null {
   return s;
 }
 
-function telefonZPoli(raw: string | null | undefined): { telefon: string | null; telefonWa: string | null } {
-  const tel = normalizujTelefon(raw);
-  if (!tel) return { telefon: null, telefonWa: null };
-  return { telefon: tel.ulozeny, telefonWa: tel.wa };
+function telefonZPoli(
+  raw: string | null | undefined,
+  narodnost: string | null,
+): { telefon: string | null; telefonWa: string | null; telefonPuvodni: string | null } {
+  const tel = normalizujTelefon(raw, narodnost);
+  if (!tel) return { telefon: null, telefonWa: null, telefonPuvodni: null };
+  return { telefon: tel.ulozeny, telefonWa: tel.wa, telefonPuvodni: tel.puvodni };
 }
 
 function rezervaceZeSubjectu(subject: string): string | null {
@@ -325,6 +330,7 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
       vytvoreno: null,
       telefon: null,
       telefonWa: null,
+      telefonPuvodni: null,
       zdroj: null,
       duvody,
     };
@@ -396,7 +402,7 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
     osloveni,
     accessPin,
     vytvoreno,
-    ...telefonZPoli(f.GUEST_PHONE),
+    ...telefonZPoli(f.GUEST_PHONE, narodnost),
     zdroj: cistyZdroj(f.ZDROJ),
     duvody,
   };

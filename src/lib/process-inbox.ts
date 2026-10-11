@@ -3,6 +3,7 @@ import { jeInterniPredmet, parsujInterni, puvodInterniOk, vetaChybi, type Intern
 import { parseBounce, stejneMessageId } from './bounce';
 import { duvod, jeBlokujici, jeVyhrada, type Duvod } from './chyby';
 import { nightsBetween } from './dates';
+import { jazykZPredvolby, normalizujTelefon } from './telefon';
 import { verifyEmailOrigin } from './email-origin';
 import { fetchRecentInboxMails, type InboxMail } from './inbox-mail';
 import { poplatekZData } from './poplatek';
@@ -109,8 +110,8 @@ function sloucit(
   };
 }
 
-function udajeZMailu(ins: MailInspection): Partial<RezervaceRecord> {
-  return {
+function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partial<RezervaceRecord> {
+  const data: Partial<RezervaceRecord> = {
     apartman: ins.apartman,
     prijezd: ins.prijezd,
     odjezd: ins.odjezd,
@@ -124,9 +125,17 @@ function udajeZMailu(ins: MailInspection): Partial<RezervaceRecord> {
     accessPin: ins.accessPin,
     vytvoreno: ins.vytvoreno,
     poplatek: poplatekZData(ins.vytvoreno),
-    ...(ins.telefon ? { telefon: ins.telefon, telefonWa: ins.telefonWa } : {}),
+    ...(ins.telefon ? { telefon: ins.telefon, telefonWa: ins.telefonWa, telefonPuvodni: ins.telefonPuvodni } : {}),
     ...(ins.zdroj ? { zdroj: ins.zdroj } : {}),
   };
+  if (prev?.telefonRezervacePuvodni && ins.narodnost) {
+    const tel = normalizujTelefon(prev.telefonRezervacePuvodni, ins.narodnost);
+    if (tel) {
+      data.telefonRezervace = tel.ulozeny;
+      data.telefonRezervaceWa = tel.wa;
+    }
+  }
+  return data;
 }
 
 function duvodyMailu(ins: MailInspection): Duvod[] {
@@ -166,7 +175,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
       if (!uzOdeslano) {
         const duvody = [duvod('nedoveryhodny_odesilatel'), ...duvodyMailu(ins)];
         let rec = sloucit(ins.rezervace, prev, {
-          ...udajeZMailu(ins),
+          ...udajeZMailu(ins, prev),
           stav: 'neodeslano',
           duvody,
         }, now, 'E-mail odmítnut, odesílatel není důvěryhodný');
@@ -230,7 +239,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
   const duvody = duvodyMailu(ins);
 
   if (ins.odjezd && isDepartureExpired(ins.odjezd)) {
-    const rec = sloucit(id, prev, { ...udajeZMailu(ins), duvody, stav: prev?.stav ?? 'neodeslano' }, now, 'Odjezd už prošel');
+    const rec = sloucit(id, prev, { ...udajeZMailu(ins, prev), duvody, stav: prev?.stav ?? 'neodeslano' }, now, 'Odjezd už prošel');
     await store.setRezervace(id, rec);
     await store.markMessage({
       messageId: mail.messageId,
@@ -245,7 +254,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
 
   const blokujici = duvody.filter((d) => jeBlokujici(d.kod));
   if (blokujici.length) {
-    let rec = sloucit(id, prev, { ...udajeZMailu(ins), stav: 'neodeslano', duvody }, now, 'Průvodce neodešel');
+    let rec = sloucit(id, prev, { ...udajeZMailu(ins, prev), stav: 'neodeslano', duvody }, now, 'Průvodce neodešel');
     rec = await upozorniJednou(rec);
     await store.setRezervace(id, rec);
     await store.markMessage({
@@ -259,7 +268,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
     return { rezervace: id, status: 'neodeslano', reason: blokujici[0].kod };
   }
 
-  const koncept = sloucit(id, prev, { ...udajeZMailu(ins), duvody, stav: 'neodeslano' }, now, 'Pokus o odeslání');
+  const koncept = sloucit(id, prev, { ...udajeZMailu(ins, prev), duvody, stav: 'neodeslano' }, now, 'Pokus o odeslání');
   try {
     const sent = await posliPruvodce(koncept, ins.krestni);
     const stav: RezervaceStav = duvody.some((d) => jeVyhrada(d.kod)) ? 'odeslano_s_vyhradou' : 'odeslano';
@@ -267,7 +276,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
       id,
       prev,
       {
-        ...udajeZMailu(ins),
+        ...udajeZMailu(ins, prev),
         stav,
         duvody: duvody.filter((d) => jeVyhrada(d.kod)),
         odeslaneMessageId: sent.messageId || prev?.odeslaneMessageId || null,
@@ -292,7 +301,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
       id,
       prev,
       {
-        ...udajeZMailu(ins),
+        ...udajeZMailu(ins, prev),
         stav: 'neodeslano',
         duvody: [...duvody.filter((d) => d.kod !== 'smtp_chyba'), smtp],
         smtpPokusy: pokusy,
@@ -333,7 +342,9 @@ function udajeInterni(u: InterniUdaje, stav: RezervaceStav): Partial<RezervaceRe
   if (u.telefon) {
     data.telefonRezervace = u.telefon;
     data.telefonRezervaceWa = u.telefonWa;
+    data.telefonRezervacePuvodni = u.telefonPuvodni;
   }
+  if (stav === 'bez_checkinu') data.jazyk = jazykZPredvolby(u.telefon);
   if (u.zdroj) data.zdroj = u.zdroj;
   if (u.vytvoreno) {
     data.vytvoreno = u.vytvoreno;

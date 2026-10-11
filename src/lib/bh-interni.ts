@@ -18,6 +18,7 @@ export type InterniUdaje = {
   email: string | null;
   telefon: string | null;
   telefonWa: string | null;
+  telefonPuvodni: string | null;
   zdroj: string | null;
   vytvoreno: string | null;
   checkinUrl: string | null;
@@ -148,11 +149,11 @@ function emailZ(raw: string | null): string | null {
   return m ? m[0].replace(/[.,;]+$/, '') : null;
 }
 
-function telefonZ(raw: string | null): { telefon: string | null; telefonWa: string | null } {
-  if (!raw || !/\d/.test(raw)) return { telefon: null, telefonWa: null };
+function telefonZ(raw: string | null): { telefon: string | null; telefonWa: string | null; telefonPuvodni: string | null } {
+  if (!raw || !/\d/.test(raw)) return { telefon: null, telefonWa: null, telefonPuvodni: null };
   const tel = normalizujTelefon(raw);
-  if (!tel) return { telefon: null, telefonWa: null };
-  return { telefon: tel.ulozeny, telefonWa: tel.wa };
+  if (!tel) return { telefon: null, telefonWa: null, telefonPuvodni: null };
+  return { telefon: tel.ulozeny, telefonWa: tel.wa, telefonPuvodni: tel.puvodni };
 }
 
 function pokoj(lines: string[]): { apartman: AptId | null; osob: number | null } {
@@ -183,8 +184,8 @@ function jeSledovaci(href: string): boolean {
 }
 
 function checkinOdkaz(html: string, text: string): string | null {
-  const hrefs = [...html.matchAll(/href=["'](https?:\/\/[^"']+)["']/gi)].map((m) => decode(m[1]));
-  const plain = [...`${html}\n${text}`.matchAll(/https?:\/\/[^\s<>"']+/gi)].map((m) => m[0]);
+  const hrefs = [...html.matchAll(/href=["'](https:\/\/[^"']+)["']/gi)].map((m) => decode(m[1]));
+  const plain = [...`${html}\n${text}`.matchAll(/https:\/\/[^\s<>"']+/gi)].map((m) => m[0]);
   for (const href of [...hrefs, ...plain]) {
     const cisty = href.replace(/[),.;]+$/, '');
     if (jeSledovaci(cisty)) continue;
@@ -228,6 +229,7 @@ export function parsujInterni(subject: string, html = '', text = ''): InterniUda
     email,
     telefon: telefon.telefon,
     telefonWa: telefon.telefonWa,
+    telefonPuvodni: telefon.telefonPuvodni,
     zdroj: zdrojZAgentury(hodnota(lines, 'agentura')),
     vytvoreno: datum(hodnota(lines, 'zarezervováno')),
     checkinUrl: checkinOdkaz(html, text),

@@ -4,7 +4,7 @@ import type { ProcessStore, RezervaceRecord, RezervaceStav } from './store';
 import { textTelefonu } from './telefon';
 import type { AptId, GuideLang } from './types';
 import { LANG_LABELS } from './types';
-import { zpravaPodleStavu } from './whatsapp-zprava';
+import { zpravyMenu, type ZpravaMenu } from './whatsapp-zprava';
 
 export const STARY_ZAZNAM = 'starý záznam';
 
@@ -41,8 +41,16 @@ export type PrehledRadek = {
   stary: boolean;
   telefonText: string | null;
   telefonWa: string | null;
+  telefonPuvodni: string | null;
+  telefonNejisty: boolean;
+  telefonKtery: 'checkin' | 'rezervace' | null;
   jinyTelefonText: string | null;
   jinyTelefonWa: string | null;
+  jinyTelefonPuvodni: string | null;
+  jinyTelefonNejisty: boolean;
+  jinyTelefonKtery: 'checkin' | 'rezervace' | null;
+  checkinUrl: string | null;
+  zpravy: ZpravaMenu[];
   zdrojText: string;
   casPrijezdu: string | null;
   vytvorenoText: string;
@@ -223,22 +231,81 @@ function stejneCislo(a: string | null, b: string | null, aw: string | null, bw: 
   return textTelefonu(a) === textTelefonu(b);
 }
 
+type TelefonKus = {
+  text: string;
+  wa: string | null;
+  puvodni: string | null;
+  nejisty: boolean;
+  ktery: 'checkin' | 'rezervace';
+};
+
+function cislice(s: string): string {
+  return s.replace(/\D/g, '');
+}
+
+function kusTelefonu(
+  ulozeny: string | null,
+  wa: string | null,
+  puvodni: string | null,
+  ktery: 'checkin' | 'rezervace',
+): TelefonKus | null {
+  if (!ulozeny) return null;
+  const text = textTelefonu(ulozeny);
+  const ukazat = puvodni && cislice(puvodni) !== cislice(ulozeny) ? puvodni : null;
+  return { text, wa, puvodni: ukazat, nejisty: !wa, ktery };
+}
+
 /** Hlavní telefon je z check-inu. Když se liší, druhé číslo z rezervace zůstane vidět. */
 export function telefonyPrehledu(rec: RezervaceRecord): {
   text: string | null;
   wa: string | null;
+  puvodni: string | null;
+  nejisty: boolean;
+  ktery: 'checkin' | 'rezervace' | null;
   jinyText: string | null;
   jinyWa: string | null;
+  jinyPuvodni: string | null;
+  jinyNejisty: boolean;
+  jinyKtery: 'checkin' | 'rezervace' | null;
 } {
-  const checkin = rec.telefon ? { text: textTelefonu(rec.telefon), wa: rec.telefonWa } : null;
-  const rezervace = rec.telefonRezervace
-    ? { text: textTelefonu(rec.telefonRezervace), wa: rec.telefonRezervaceWa }
-    : null;
+  const checkin = kusTelefonu(rec.telefon, rec.telefonWa, rec.telefonPuvodni, 'checkin');
+  const rezervace = kusTelefonu(rec.telefonRezervace, rec.telefonRezervaceWa, rec.telefonRezervacePuvodni, 'rezervace');
+  const prazdny = {
+    text: null,
+    wa: null,
+    puvodni: null,
+    nejisty: false,
+    ktery: null as 'checkin' | 'rezervace' | null,
+    jinyText: null,
+    jinyWa: null,
+    jinyPuvodni: null,
+    jinyNejisty: false,
+    jinyKtery: null as 'checkin' | 'rezervace' | null,
+  };
   if (checkin && rezervace && !stejneCislo(rec.telefon, rec.telefonRezervace, rec.telefonWa, rec.telefonRezervaceWa)) {
-    return { text: checkin.text, wa: checkin.wa, jinyText: rezervace.text, jinyWa: rezervace.wa };
+    return {
+      text: checkin.text,
+      wa: checkin.wa,
+      puvodni: checkin.puvodni,
+      nejisty: checkin.nejisty,
+      ktery: checkin.ktery,
+      jinyText: rezervace.text,
+      jinyWa: rezervace.wa,
+      jinyPuvodni: rezervace.puvodni,
+      jinyNejisty: rezervace.nejisty,
+      jinyKtery: rezervace.ktery,
+    };
   }
   const hlavni = checkin || rezervace;
-  return { text: hlavni?.text ?? null, wa: hlavni?.wa ?? null, jinyText: null, jinyWa: null };
+  if (!hlavni) return prazdny;
+  return {
+    ...prazdny,
+    text: hlavni.text,
+    wa: hlavni.wa,
+    puvodni: hlavni.puvodni,
+    nejisty: hlavni.nejisty,
+    ktery: hlavni.ktery,
+  };
 }
 
 export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
@@ -255,6 +322,16 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
             : chybi('', stary));
   const otev = textOtevreni(rec.otevrenoPocet, rec.otevrenoNaposled);
   const telefony = telefonyPrehledu(rec);
+  const zpravy = zpravyMenu({
+    stav: rec.stav,
+    lang: rec.jazyk,
+    checkinUrl: rec.checkinUrl,
+    pruvodce: null,
+    otevrenoPocet: rec.otevrenoPocet,
+    casPrijezdu: rec.casPrijezdu,
+    prijezd: rec.prijezd,
+    dnes: dnesVPraze(),
+  });
   const poprve = rec.otevrenoPoprve ? casPraha(rec.otevrenoPoprve) : '';
   const naposled = rec.otevrenoNaposled ? casPraha(rec.otevrenoNaposled) : '';
   const jazykText = rec.jazyk ? LANG_LABELS[rec.jazyk] : '';
@@ -289,13 +366,21 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     stary,
     telefonText: telefony.text,
     telefonWa: telefony.wa,
+    telefonPuvodni: telefony.puvodni,
+    telefonNejisty: telefony.nejisty,
+    telefonKtery: telefony.ktery,
     jinyTelefonText: telefony.jinyText,
     jinyTelefonWa: telefony.jinyWa,
+    jinyTelefonPuvodni: telefony.jinyPuvodni,
+    jinyTelefonNejisty: telefony.jinyNejisty,
+    jinyTelefonKtery: telefony.jinyKtery,
+    checkinUrl: rec.checkinUrl,
     zdrojText: chybi(zdrojText(rec.zdroj), stary),
     casPrijezdu: rec.casPrijezdu,
     vytvorenoText: chybi(rec.vytvoreno ? czDenRok(rec.vytvoreno) : '', stary),
     odkaz: null,
-    zprava: zpravaPodleStavu(rec.stav, rec.jazyk, rec.checkinUrl, null),
+    zpravy,
+    zprava: zpravy[0]?.text || '',
   };
 }
 

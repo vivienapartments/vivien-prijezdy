@@ -22,25 +22,37 @@ function domenaBh(domain: string): boolean {
   return d === 'better-hotel.com' || d.endsWith('.better-hotel.com');
 }
 
+type DkimRow = { status?: { result?: string; comment?: string | false }; signingDomain?: string };
+type DkimResolver = (domain: string, rrtype: string) => Promise<string[] | string[][]>;
+
 /**
- * Ověří podpis DKIM v těle e-mailu. Platí jen pass pro doménu končící na better-hotel.com.
- * Prošlý podpis je odmítnutí. Při výpadku DNS taky.
+ * Podpis pro better-hotel.com, který je kryptograficky v pořádku.
+ * Prošlá platnost se bere taky. Z těchto mailů se hostům nic neposílá.
+ * Špatný podpis, cizí doména ani výpadek DNS se neberou.
  */
-export async function overDkimBetterHotel(raw: Buffer): Promise<boolean> {
+export function podpisInterniOk(row: DkimRow): boolean {
+  if (!domenaBh(row.signingDomain || '')) return false;
+  if (row.status?.result === 'pass') return true;
+  return row.status?.result === 'neutral' && row.status?.comment === 'expired';
+}
+
+/**
+ * Ověří podpis DKIM v těle e-mailu. Platí jen better-hotel.com.
+ * Prošlý, ale jinak platný podpis projde. Při výpadku DNS ne.
+ */
+export async function overDkimBetterHotel(raw: Buffer, vlastni?: DkimResolver): Promise<boolean> {
   try {
     const mod = (await import('mailauth')) as {
-      dkimVerify?: (input: Buffer, opts?: { resolver?: typeof resolver }) => Promise<{ results?: DkimRow[] }>;
+      dkimVerify?: (input: Buffer, opts?: { resolver?: DkimResolver }) => Promise<{ results?: DkimRow[] }>;
       default?: {
-        dkimVerify?: (input: Buffer, opts?: { resolver?: typeof resolver }) => Promise<{ results?: DkimRow[] }>;
+        dkimVerify?: (input: Buffer, opts?: { resolver?: DkimResolver }) => Promise<{ results?: DkimRow[] }>;
       };
     };
     const dkimVerify = mod.dkimVerify || mod.default?.dkimVerify;
     if (!dkimVerify) return false;
-    const res = await dkimVerify(raw, { resolver });
-    return (res.results || []).some((row) => row.status?.result === 'pass' && domenaBh(row.signingDomain || ''));
+    const res = await dkimVerify(raw, { resolver: vlastni || resolver });
+    return (res.results || []).some((row) => podpisInterniOk(row));
   } catch {
     return false;
   }
 }
-
-type DkimRow = { status?: { result?: string }; signingDomain?: string };

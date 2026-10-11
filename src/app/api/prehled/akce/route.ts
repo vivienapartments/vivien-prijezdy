@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { zkontrolujCheckinOdkaz } from '@/lib/checkin-odkaz';
 import { duvod, jeVyhrada, problemEmailu } from '@/lib/chyby';
 import { nightsBetween } from '@/lib/dates';
+import { jazykZPredvolby, normalizujTelefon } from '@/lib/telefon';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore, type RezervaceRecord, type RezervaceStav } from '@/lib/store';
@@ -38,10 +40,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     jazyk?: string;
     pin?: string;
     cas?: string;
+    url?: string;
+    cislo?: string;
+    ktery?: string;
   } | null;
   const id = (body?.rezervace || '').trim();
   const akce = body?.akce;
-  if (!id || (akce !== 'znovu' && akce !== 'opravit' && akce !== 'odkaz' && akce !== 'cas')) {
+  if (!id || (akce !== 'znovu' && akce !== 'opravit' && akce !== 'odkaz' && akce !== 'cas' && akce !== 'checkin' && akce !== 'telefon')) {
     return chyba(400, 'Neznámá akce.');
   }
 
@@ -60,6 +65,30 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     await store.setRezervace(id, { ...rec, casPrijezdu: cas || null });
     return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
+  if (akce === 'checkin') {
+    const vysledek = zkontrolujCheckinOdkaz(body?.url || '');
+    if (!vysledek.ok) return chyba(400, 'Odkaz musí začínat https://.');
+    await store.setRezervace(id, { ...rec, checkinUrl: vysledek.url });
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
+  if (akce === 'telefon') {
+    const ktery = body?.ktery;
+    if (ktery !== 'checkin' && ktery !== 'rezervace') return chyba(400, 'Neznámé číslo.');
+    const tel = normalizujTelefon(body?.cislo || '', rec.narodnost);
+    if (!tel) return chyba(400, 'Napište číslo.');
+    const patch: Partial<RezervaceRecord> =
+      ktery === 'rezervace'
+        ? { telefonRezervace: tel.ulozeny, telefonRezervaceWa: tel.wa }
+        : { telefon: tel.ulozeny, telefonWa: tel.wa };
+    if (!rec.narodnost) {
+      const proJazyk = ktery === 'rezervace' ? tel.ulozeny : rec.telefonRezervace || tel.ulozeny;
+      patch.jazyk = jazykZPredvolby(proJazyk);
+    }
+    await store.setRezervace(id, { ...rec, ...patch });
+    return NextResponse.json({ ok: true, nejisty: tel.nejisty }, { headers: noStore });
   }
 
   if (akce === 'odkaz') {
