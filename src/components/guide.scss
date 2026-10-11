@@ -921,6 +921,7 @@ a.pv-phone:focus-visible {
   text-decoration: none;
   box-sizing: border-box;
   box-shadow: 0 1px 0 color-mix(in srgb, var(--color-gold) 18%, transparent);
+  overflow-anchor: none;
   transition:
     background-color 180ms ease,
     border-color 180ms ease;
@@ -966,6 +967,7 @@ a.pv-phone:focus-visible {
 .pv-navcta__alt {
   margin: 0 0 1rem;
   font-size: 0.82rem;
+  overflow-anchor: none;
 }
 
 @media (max-width: 767px) {
@@ -1006,17 +1008,6 @@ a.pv-phone:focus-visible {
   margin: 0;
   font-family: var(--font-display);
   font-size: 1.15rem;
-}
-
-/* klíček / 9000 / klíček — na mobilu i u dlouhého DE „Schlüsselanhänger“ */
-.pv-codes__stack {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.05rem;
-  font-weight: 700;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
 }
 
 .pv-doplnit {

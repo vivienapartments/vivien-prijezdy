@@ -91,8 +91,6 @@ export function Guide({
 
   const gardenCode = gardenCodeForApt(apt, accessPin);
   const aptPin = apartmentPinOrDoplnit(accessPin);
-  const fob = t(TX.keyFobWord, lang);
-  const houseCodeValue = `${fob} ${HOUSE_KEY_TAG} ${fob}`;
 
   const fill = (raw: string) =>
     fillPlaceholders(raw, {
@@ -500,7 +498,7 @@ export function Guide({
                                     : TX.kodZahradaLabel;
                               const value =
                                 kind === 'dum'
-                                  ? houseCodeValue
+                                  ? HOUSE_KEY_TAG
                                   : kind === 'apt'
                                     ? aptPin
                                     : gardenCode;
@@ -509,15 +507,7 @@ export function Guide({
                                 <div className="pv-codes__row" key={kind}>
                                   <dt>{tt(label)}</dt>
                                   <dd className={missing ? 'pv-doplnit' : undefined}>
-                                    {kind === 'dum' ? (
-                                      <strong className="pv-codes__stack">
-                                        <span>{fob}</span>
-                                        <span>{HOUSE_KEY_TAG}</span>
-                                        <span>{fob}</span>
-                                      </strong>
-                                    ) : (
-                                      <strong className="pv-phone">{value}</strong>
-                                    )}
+                                    <strong className="pv-phone">{value}</strong>
                                   </dd>
                                 </div>
                               );
@@ -568,8 +558,7 @@ export function Guide({
                           <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
                           <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
                           <span className="pv-navcta__hint">
-                            {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes} {tt(TX.ui.minWalk)} ·
-                            Mapy.cz
+                            {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes} {tt(TX.ui.minWalk)}. {tt(TX.ui.openMapy)}
                           </span>
                         </a>
                         <p className="pv-navcta__alt">

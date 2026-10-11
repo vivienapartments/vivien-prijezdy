@@ -1,6 +1,6 @@
 import type { AptId } from './types';
 
-/** Stálý identifikátor klíčku ke vchodu do domu. */
+/** Pevný kód vchodu do domu. Na obrazovce jen toto číslo. */
 export const HOUSE_KEY_TAG = '9000';
 
 /** Zahrada: V1 / V4 / V5. */

@@ -120,16 +120,6 @@ export const kodZahradaLabel: LText = {
   'zh-Hant': '花園入口',
 };
 
-/** Slovo kolem čísla klíčku. V UI se skládá pod sebe: slovo / 9000 / slovo. */
-export const keyFobWord: LText = {
-  cs: 'klíček',
-  en: 'key fob',
-  de: 'Schlüsselanhänger',
-  pl: 'brelok',
-  uk: 'брелок',
-  'zh-Hant': '鑰匙扣',
-};
-
 export const poplatekNadpis: LText = {
   cs: 'Městský poplatek z pobytu',
   en: 'City stay tax',
@@ -563,20 +553,20 @@ export const ui = {
     'zh-Hant': '前往房子',
   } as LText,
   openMapy: {
-    cs: 'Otevřít navigaci v Mapy.cz',
-    en: 'Open navigation in Mapy.cz',
-    de: 'Navigation in Mapy.cz öffnen',
-    pl: 'Otwórz nawigację w Mapy.cz',
-    uk: 'Відкрити навігацію в Mapy.cz',
-    'zh-Hant': '在 Mapy.cz 開啟導航',
+    cs: 'Klikněte sem. Otevře se mapa s trasou v Mapy.cz.',
+    en: 'Click here. A map with the route opens in Mapy.cz.',
+    de: 'Klicken Sie hier. Eine Karte mit der Route öffnet sich in Mapy.cz.',
+    pl: 'Kliknijcie tutaj. Otworzy się mapa z trasą w Mapy.cz.',
+    uk: 'Натисніть тут. Відкриється карта з маршрутом у Mapy.cz.',
+    'zh-Hant': '請點這裡。會在 Mapy.cz 開啟含路線的地圖。',
   } as LText,
   orGoogle: {
-    cs: 'Nebo Google Maps',
-    en: 'Or Google Maps',
-    de: 'Oder Google Maps',
-    pl: 'Lub Google Maps',
-    uk: 'Або Google Maps',
-    'zh-Hant': '或 Google Maps',
+    cs: 'Nebo stejná trasa v Google Maps.',
+    en: 'Or the same route in Google Maps.',
+    de: 'Oder dieselbe Route in Google Maps.',
+    pl: 'Albo ta sama trasa w Google Maps.',
+    uk: 'Або той самий маршрут у Google Maps.',
+    'zh-Hant': '或在 Google Maps 開啟同一條路線。',
   } as LText,
   minWalk: {
     cs: 'min pěšky',
@@ -587,12 +577,12 @@ export const ui = {
     'zh-Hant': '分鐘步行',
   } as LText,
   walkHint: {
-    cs: '{{M}} m · {{MIN}} min pěšky · Mapy.cz',
-    en: '{{M}} m · {{MIN}} min on foot · Mapy.cz',
-    de: '{{M}} m · {{MIN}} Min. zu Fuß · Mapy.cz',
-    pl: '{{M}} m · {{MIN}} min pieszo · Mapy.cz',
-    uk: '{{M}} м · {{MIN}} хв пішки · Mapy.cz',
-    'zh-Hant': '{{M}} 公尺 · 步行 {{MIN}} 分鐘 · Mapy.cz',
+    cs: '{{M}} m · {{MIN}} min pěšky. Klikněte sem. Otevře se mapa s trasou v Mapy.cz.',
+    en: '{{M}} m · {{MIN}} min on foot. Click here. A map with the route opens in Mapy.cz.',
+    de: '{{M}} m · {{MIN}} Min. zu Fuß. Klicken Sie hier. Eine Karte mit der Route öffnet sich in Mapy.cz.',
+    pl: '{{M}} m · {{MIN}} min pieszo. Kliknijcie tutaj. Otworzy się mapa z trasą w Mapy.cz.',
+    uk: '{{M}} м · {{MIN}} хв пішки. Натисніть тут. Відкриється карта з маршрутом у Mapy.cz.',
+    'zh-Hant': '{{M}} 公尺 · 步行 {{MIN}} 分鐘。請點這裡。會在 Mapy.cz 開啟含路線的地圖。',
   } as LText,
   step: {
     cs: 'Krok',
