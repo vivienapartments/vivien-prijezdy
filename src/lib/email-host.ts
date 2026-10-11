@@ -88,12 +88,12 @@ export function greetingLine(
 }
 
 const subjectL: LText = {
-  cs: 'DŮLEŽITÉ · Bez tohoto u nás nezaparkujete ani nevejdete',
-  en: "IMPORTANT · Without this you can't park or get in",
-  de: 'WICHTIG · Ohne diese Infos können Sie weder parken noch hinein',
-  pl: 'WAŻNE · Bez tego u nas nie zaparkujecie ani nie wejdziecie',
-  uk: 'ВАЖЛИВО · Без цього у нас не припаркуєтесь і не зайдете',
-  'zh-Hant': '重要 · 沒有這個就停不了車，也進不去',
+  cs: 'DŮLEŽITÉ · Váš průvodce příjezdem, bez něj nezaparkujete ani nevejdete',
+  en: "IMPORTANT · Your arrival guide, without it you can't park or get in",
+  de: 'WICHTIG · Ihr Anreiseleitfaden, ohne ihn können Sie weder parken noch hinein',
+  pl: 'WAŻNE · Wasza instrukcja przyjazdu, bez niej nie zaparkujecie ani nie wejdziecie',
+  uk: 'ВАЖЛИВО · Ваш гід приїзду, без нього ви не припаркуєтесь і не зайдете',
+  'zh-Hant': '重要 · 您的抵達指南，沒有它無法停車也無法進門',
 };
 
 /** Co průvodce je (cesta + zásadní info). */

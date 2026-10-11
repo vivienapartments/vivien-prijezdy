@@ -71,7 +71,7 @@ KONEC`);
     expect(html).toContain('white-space:nowrap');
     expect(html).toContain('Nikol a rodina VIVIEN');
     expect(text).toContain('Nejdůležitější je, abyste nám napsali, v kolik dorazíte');
-    const predmet = 'DŮLEŽITÉ · Bez tohoto u nás nezaparkujete ani nevejdete';
+    const predmet = 'DŮLEŽITÉ · Váš průvodce příjezdem, bez něj nezaparkujete ani nevejdete';
     expect(subject === predmet || subject === `[TEST] ${predmet}`).toBe(true);
     expect(html).toContain(`<title>${predmet}</title>`);
   });

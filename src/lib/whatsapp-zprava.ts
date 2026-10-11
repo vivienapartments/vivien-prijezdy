@@ -27,19 +27,19 @@ const NEOTEVREL: Record<JazykZpravy, string> = {
 
 /**
  * Zpráva, když host ještě nevyplnil online check-in.
- * Čeština, angličtina a němčina jsou schválené 11. 10. 2026. Ostatní čekají na souhlas.
+ * Všechny jazyky schválené 11. 10. 2026. Angličtina má po „check-in“ tečku.
  * Odkaz, který majitel vloží, se přidá na vlastní řádek.
  */
 const CHECKIN: Record<JazykZpravy, string> = {
   cs: 'Dobrý den, děkujeme za rezervaci. Prosím vyplňte si online check-in, odkaz najdete v e-mailu s potvrzením rezervace. Hned potom vám pošleme průvodce se vstupem a parkováním.',
-  en: 'Hello, thank you for your booking. Please complete the online check-in, you will find the link in your booking confirmation email. Right after that we will send you the guide with all the information about entry and parking.',
+  en: 'Hello, thank you for your booking. Please complete the online check-in. You will find the link in your booking confirmation email. Right after that we will send you the guide with all the information about entry and parking.',
   de: 'Guten Tag, vielen Dank für Ihre Buchung. Bitte füllen Sie den Online-Check-in aus, den Link finden Sie in Ihrer Buchungsbestätigung. Gleich danach senden wir Ihnen den Leitfaden mit allen Infos zu Eingang und Parken.',
   pl: 'Dzień dobry, dziękujemy za rezerwację. Prosimy o wypełnienie online check-inu, link jest w e-mailu z potwierdzeniem rezerwacji. Zaraz potem wyślemy przewodnik ze wszystkimi informacjami o wejściu i parkowaniu.',
   uk: 'Добрий день, дякуємо за бронювання. Будь ласка, заповніть онлайн-реєстрацію, посилання є в листі з підтвердженням бронювання. Одразу після цього надішлемо путівник з усією інформацією про вхід і паркування.',
   'zh-Hant': '您好，謝謝您的預訂。請先完成線上入住登記，連結在預訂確認信裡。完成後我們會寄上指南，裡面有入口和停車的全部說明。',
 };
 
-/** Nenapsal čas. Čeština je schválená 11. 10. 2026. */
+/** Nenapsal čas. Všechny jazyky schválené 11. 10. 2026. */
 const CAS: Record<JazykZpravy, string> = {
   cs: 'Dobrý den, děkujeme. Napište nám prosím ještě, v kolik zhruba dorazíte, ať na nás nemusíte čekat.',
   en: "Hello, thank you. Please also tell us roughly what time you will arrive, so you don't have to wait for us.",
@@ -49,14 +49,14 @@ const CAS: Record<JazykZpravy, string> = {
   'zh-Hant': '您好，謝謝。請再告訴我們大約幾點到，這樣就不用等我們。',
 };
 
-/** Den příjezdu. Čeština je schválená 11. 10. 2026. Odkaz na průvodce je na dalším řádku. */
+/** Den příjezdu. Všechny jazyky schválené 11. 10. 2026. Odkaz na průvodce je na dalším řádku. */
 const DEN: Record<JazykZpravy, string> = {
   cs: 'Dobrý den, dnes se na vás těšíme. Napište nám prosím asi 15 minut před příjezdem, ať jsme na místě. Průvodce s parkováním máte tady',
-  en: 'Hello, we are looking forward to seeing you today. Please write to us about 15 minutes before you arrive, so we are there. The guide with parking is here',
-  de: 'Guten Tag, wir freuen uns heute auf Sie. Schreiben Sie uns bitte etwa 15 Minuten vor der Ankunft, damit wir vor Ort sind. Den Leitfaden mit dem Parken finden Sie hier',
+  en: 'Hello, we are looking forward to seeing you today. Please message us about 15 minutes before you arrive, so we can be there to meet you. Your guide with parking directions is here',
+  de: 'Guten Tag, wir freuen uns heute auf Sie. Schreiben Sie uns bitte etwa 15 Minuten vor der Ankunft, damit wir vor Ort sind. Ihren Leitfaden mit allen Infos zum Parken finden Sie hier',
   pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. Napiszcie proszę około 15 minut przed przyjazdem, żebyśmy byli na miejscu. Przewodnik z parkowaniem jest tutaj',
   uk: 'Добрий день, сьогодні на вас чекаємо. Напишіть, будь ласка, приблизно за 15 хвилин до приїзду, щоб ми були на місці. Путівник з паркуванням ось тут',
-  'zh-Hant': '您好，今天期待您的到來。請在抵達前大約 15 分鐘寫給我們，我們才會在現場。停車指南在這裡',
+  'zh-Hant': '您好，今天期待您的到來。請在抵達前大約 15 分鐘傳訊息給我們，我們才會在現場。停車指南在這裡',
 };
 
 export type DruhZpravy = 'checkin' | 'neotevrel' | 'cas' | 'den';
