@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { zkontrolujCheckinOdkaz } from '@/lib/checkin-odkaz';
 import { duvod, jeVyhrada, problemEmailu } from '@/lib/chyby';
 import { nightsBetween } from '@/lib/dates';
@@ -59,11 +60,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'cas') {
-    const cas = (body?.cas || '').trim();
-    if (cas && !/^([01]\d|2[0-3]):[0-5]\d$/.test(cas)) {
-      return chyba(400, 'Čas napište jako 16:30.');
-    }
-    await store.setRezervace(id, { ...rec, casPrijezdu: cas || null });
+    const vysledek = normalizujCasPrijezdu(body?.cas || '');
+    if (!vysledek.ok) return chyba(400, 'Čas napište jako 1630.');
+    await store.setRezervace(id, { ...rec, casPrijezdu: vysledek.cas });
     return NextResponse.json({ ok: true }, { headers: noStore });
   }
 

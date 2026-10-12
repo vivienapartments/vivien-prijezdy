@@ -9,6 +9,7 @@ import {
   STARY_ZAZNAM,
   type PrehledRadek,
 } from '@/lib/prehled';
+import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { odkazWhatsApp } from '@/lib/whatsapp-zprava';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
@@ -136,9 +137,23 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false }: 
   }
 
   async function ulozCas(row: PrehledRadek, hodnota: string) {
-    const cas = hodnota.trim();
+    const vysledek = normalizujCasPrijezdu(hodnota);
+    if (!vysledek.ok) {
+      setHlaska('Čas napište jako 1630.');
+      return;
+    }
+    const cas = vysledek.cas ?? '';
     const puvodni = ulozene[row.rezervace] ?? row.casPrijezdu ?? '';
-    if (cas === puvodni) return;
+    setCasy((prev) => ({ ...prev, [row.rezervace]: cas }));
+    if (cas === puvodni) {
+      setHlaska('');
+      return;
+    }
+    if (ukazka) {
+      setUlozene((prev) => ({ ...prev, [row.rezervace]: cas }));
+      setHlaska('');
+      return;
+    }
     setHlaska('');
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
@@ -150,7 +165,6 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false }: 
       setHlaska(json?.error || 'Čas se neuložil.');
       return;
     }
-    setCasy((prev) => ({ ...prev, [row.rezervace]: cas }));
     setUlozene((prev) => ({ ...prev, [row.rezervace]: cas }));
   }
 
@@ -473,11 +487,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false }: 
             ) : (
               <UlozitKontakt row={row} />
             )}
-            <label className="ph-cas">
+            <label className="ph-cas ph-cas-prijezd">
               Čas příjezdu
               <input
                 value={casRadku(row)}
-                placeholder="16:30"
+                placeholder="1630"
                 inputMode="numeric"
                 onChange={(e) => setCasy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
                 onBlur={(e) => ulozCas(row, e.target.value)}

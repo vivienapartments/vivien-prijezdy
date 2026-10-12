@@ -10,6 +10,7 @@ import {
   textPoplatku,
   type PrehledRadek,
 } from './prehled';
+import { normalizujCasPrijezdu } from './cas-prijezdu';
 import { prazdnaRezervace } from './store';
 import { GUIDE_LANGS } from './types';
 import {
@@ -65,6 +66,17 @@ describe('tlačítka v přehledu', () => {
     expect(textDneSCasem('cs', '16:30')).toBe(
       'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem 16:30, platí to? Kdyby se čas změnil, napište nám prosím hned. Asi 15 minut před příjezdem se nám prosím ozvěte, ať jsme na místě.',
     );
+  });
+
+  it('čas příjezdu bere 1630 i 18:00', () => {
+    expect(normalizujCasPrijezdu('1630')).toEqual({ ok: true, cas: '16:30' });
+    expect(normalizujCasPrijezdu('1800')).toEqual({ ok: true, cas: '18:00' });
+    expect(normalizujCasPrijezdu('930')).toEqual({ ok: true, cas: '09:30' });
+    expect(normalizujCasPrijezdu('16:30')).toEqual({ ok: true, cas: '16:30' });
+    expect(normalizujCasPrijezdu('9.05')).toEqual({ ok: true, cas: '09:05' });
+    expect(normalizujCasPrijezdu('')).toEqual({ ok: true, cas: null });
+    expect(normalizujCasPrijezdu('1660').ok).toBe(false);
+    expect(normalizujCasPrijezdu('2500').ok).toBe(false);
   });
 
   it('čas příjezdu se doplní ve všech jazycích', () => {

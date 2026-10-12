@@ -13,20 +13,27 @@
   color: var(--color-gold);
 }
 
-.ph-den {
+.ph button.ph-den {
   display: block;
   width: 100%;
   margin: 0.45rem 0 0;
   padding: 0.7rem 0.85rem;
-  border: 1px solid var(--pv-line);
-  border-radius: 12px;
-  background: transparent;
-  color: var(--color-text);
+  border: 1px solid var(--color-gold);
+  border-radius: 6px;
+  background: rgba(201, 168, 76, 0.16);
+  color: var(--color-gold);
   text-align: left;
   line-height: 1.4;
 }
 
-.ph-den.is-on,
+.ph button.ph-den .ph-plan {
+  color: var(--color-gold);
+}
+
+.ph button.ph-den.is-on {
+  background: rgba(201, 168, 76, 0.32);
+}
+
 .ph-filtry button.is-on {
   border-color: var(--color-gold);
   background: rgba(201, 168, 76, 0.16);
@@ -342,8 +349,24 @@
   max-width: 18rem;
 }
 
-.ph-cas input {
-  min-height: 2.2rem;
+.ph-cas-prijezd {
+  max-width: 9rem;
+}
+
+.ph-cas-prijezd input {
+  min-height: 2.6rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border: 2px solid var(--color-gold);
+  background: color-mix(in srgb, var(--color-gold) 14%, var(--pv-surface));
+  cursor: text;
+}
+
+.ph-cas-prijezd input::placeholder {
+  font-weight: 500;
+  color: var(--color-gold);
+  opacity: 0.55;
 }
 
 .ph-stary,
