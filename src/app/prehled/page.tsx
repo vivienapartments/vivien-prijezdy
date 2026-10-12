@@ -1,3 +1,4 @@
+import { headers } from 'next/headers';
 import { LoginForm } from './LoginForm';
 import { PrehledClient } from './PrehledClient';
 import { chybejiciWifi } from '@/lib/nastaveni-chyby';
@@ -33,7 +34,15 @@ export default async function PrehledPage({ searchParams }: Props) {
   const now = new Date();
   const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(createProcessStore(), now);
   const dnes = dnesVPraze(now);
+  const userAgent = (await headers()).get('user-agent') ?? '';
   return (
-    <PrehledClient rows={rows} dnes={dnes} zitra={posunDen(dnes, 1)} chybiWifi={chybejiciWifi()} ukazka={ukazka} />
+    <PrehledClient
+      rows={rows}
+      dnes={dnes}
+      zitra={posunDen(dnes, 1)}
+      chybiWifi={chybejiciWifi()}
+      ukazka={ukazka}
+      userAgent={userAgent}
+    />
   );
 }

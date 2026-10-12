@@ -27,9 +27,41 @@ import {
   zpravaDneSCasem,
   zpravaHostovi,
   zpravyMenu,
+  odkazWhatsApp,
+  odkazWhatsAppPrehled,
 } from './whatsapp-zprava';
 
 describe('tlačítka v přehledu', () => {
+  it('na Androidu otevře WhatsApp Business, jinde wa.me', () => {
+    const zprava = zpravaHostovi(
+      'cs',
+      'https://vivien-prijezdy-six.vercel.app/ukazka',
+    );
+    const android =
+      'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36';
+    const iphone =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+    const pocitac =
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    const web = odkazWhatsApp('420777111222', zprava);
+    const odkaz = odkazWhatsAppPrehled('420777111222', zprava, android);
+
+    expect(odkaz).toContain('package=com.whatsapp.w4b');
+    expect(odkaz.startsWith('intent://send/?phone=420777111222&text=')).toBe(true);
+    const text = odkaz.slice(odkaz.indexOf('text=') + 5, odkaz.indexOf('#Intent'));
+    expect(decodeURIComponent(text)).toBe(zprava);
+    expect(zprava).toContain('Děkujeme a těšíme se na setkání.');
+    expect(zprava).toContain('https://vivien-prijezdy-six.vercel.app/ukazka');
+    expect(zprava).toContain('Nikol a rodina VIVIEN');
+    const fallback = odkaz.slice(odkaz.indexOf('S.browser_fallback_url=') + 'S.browser_fallback_url='.length, odkaz.lastIndexOf(';end'));
+    expect(decodeURIComponent(fallback)).toBe(web);
+    expect(web.startsWith('https://wa.me/420777111222?text=')).toBe(true);
+
+    expect(odkazWhatsAppPrehled('420777111222', zprava, iphone)).toBe(web);
+    expect(odkazWhatsAppPrehled('420777111222', zprava, pocitac)).toBe(web);
+    expect(odkazWhatsAppPrehled('420777111222', zprava, '')).toBe(web);
+  });
+
   it('u zrušené rezervace skryje odeslání', () => {
     expect(nabidnoutOdeslani('zruseno')).toBe(false);
     expect(dotazPredOdeslanimZnovu('zruseno')).toBeNull();

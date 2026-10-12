@@ -234,3 +234,21 @@ export function zpravyMenu(opts: {
 export function odkazWhatsApp(wa: string, zprava: string): string {
   return `https://wa.me/${wa}?text=${encodeURIComponent(zprava)}`;
 }
+
+/** Android podle User-Agent prohlížeče. iPhone a počítač sem nepatří. */
+export function jeAndroid(userAgent: string): boolean {
+  return /Android/i.test(userAgent);
+}
+
+/**
+ * V přehledu na Androidu míří odkaz rovnou na WhatsApp Business.
+ * Jinde zůstane wa.me. Text zprávy se nemění, jen se zakóduje do adresy.
+ */
+export function odkazWhatsAppPrehled(wa: string, zprava: string, userAgent: string): string {
+  const web = odkazWhatsApp(wa, zprava);
+  if (!jeAndroid(userAgent)) return web;
+  const phone = wa.replace(/\D/g, '');
+  const text = encodeURIComponent(zprava);
+  const fallback = encodeURIComponent(web);
+  return `intent://send/?phone=${phone}&text=${text}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;S.browser_fallback_url=${fallback};end`;
+}

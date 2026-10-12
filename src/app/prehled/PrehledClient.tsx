@@ -11,7 +11,7 @@ import {
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
-import { odkazWhatsApp } from '@/lib/whatsapp-zprava';
+import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
 type Stav = PrehledRadek['stav'];
@@ -36,6 +36,8 @@ type Props = {
   chybiWifi: string[];
   /** Místní náhled. Číslo se zapíše jen na obrazovce, ne do ostrých rezervací. */
   ukazka?: boolean;
+  /** User-Agent prohlížeče. Na Androidu z něj vznikne odkaz na WhatsApp Business. */
+  userAgent?: string;
 };
 
 function Pole({ text }: { text: string }) {
@@ -53,7 +55,7 @@ function UlozitKontakt({ row }: { row: PrehledRadek }) {
   );
 }
 
-export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false }: Props) {
+export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, userAgent = '' }: Props) {
   const [radky, setRadky] = useState(rows);
   const [telefony, setTelefony] = useState<Record<string, string>>({});
   const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
@@ -421,7 +423,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false }: 
                 {row.jinyTelefonWa ? (
                   <a
                     className="ph-wa ph-wa--maly"
-                    href={odkazWhatsApp(row.jinyTelefonWa, zpravaRadku(row))}
+                    href={odkazWhatsAppPrehled(row.jinyTelefonWa, zpravaRadku(row), userAgent)}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -473,7 +475,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false }: 
               <div className="ph-wa-rada">
                 <a
                   className="ph-wa"
-                  href={odkazWhatsApp(row.telefonWa, zpravaRadku(row))}
+                  href={odkazWhatsAppPrehled(row.telefonWa, zpravaRadku(row), userAgent)}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
