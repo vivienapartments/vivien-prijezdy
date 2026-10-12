@@ -12,7 +12,14 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Přehled rezervací',
+  applicationName: 'VIVIEN',
+  manifest: '/prehled/manifest.webmanifest',
   robots: { index: false, follow: false, nocache: true },
+  appleWebApp: { capable: true, title: 'VIVIEN', statusBarStyle: 'black-translucent' as const },
+};
+
+export const viewport = {
+  themeColor: '#1c1712',
 };
 
 type Props = { searchParams: Promise<{ ukazka?: string }> };
