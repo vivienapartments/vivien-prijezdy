@@ -1,83 +1,164 @@
 import type { GuideLang } from './types';
 
 type JazykZpravy = 'cs' | 'en' | 'de' | 'pl' | 'uk' | 'zh-Hant';
+type ZdrojZpravy = 'booking' | 'airbnb' | 'prima' | 'jiny';
 
 function textVJazyce(tabulka: Record<JazykZpravy, string>, lang: GuideLang | null): string {
   if (lang && lang in tabulka) return tabulka[lang as JazykZpravy];
   return tabulka.en;
 }
 
-function sOdkazem(text: string, odkaz: string | null): string {
-  return odkaz ? `${text}\n${odkaz}` : text;
+/** Podpis pod každou zprávou. Čeština, angličtina a němčina jsou dané. */
+const PODPIS: Record<JazykZpravy, string> = {
+  cs: 'Nikol a rodina VIVIEN',
+  en: 'Nikol and the VIVIEN family',
+  de: 'Nikol und Familie VIVIEN',
+  pl: 'Nikol i rodzina VIVIEN',
+  uk: 'Nikol і родина VIVIEN',
+  'zh-Hant': 'Nikol 與 VIVIEN 家人',
+};
+
+/**
+ * Text, pak prázdný řádek, případně odkaz, pak prázdný řádek a podpis.
+ * Odkaz z políčka na check-in se sem nedává.
+ */
+function sestav(text: string, odkaz: string | null, lang: GuideLang | null): string {
+  const dily = [text.trim()];
+  if (odkaz) dily.push(odkaz);
+  dily.push(textVJazyce(PODPIS, lang));
+  return dily.join('\n\n');
 }
 
-/**
- * Zpráva, když průvodce neotevřel.
- * Čeština je schválená 11. 10. 2026. Ostatní jazyky čekají na souhlas.
- * Odkaz na průvodce se přidá na vlastní řádek.
- */
+/** Booking, Airbnb, přímá, jinak záložní věta. */
+export function druhZdroje(raw: string | null | undefined): ZdrojZpravy {
+  const s = (raw || '').trim();
+  if (!s) return 'jiny';
+  const n = s.toLowerCase();
+  if (n.includes('airbnb')) return 'airbnb';
+  if (n.includes('booking')) return 'booking';
+  if (n.includes('prim') || n.includes('přím') || n.includes('direct') || n === 'web' || n.includes('vivien')) {
+    return 'prima';
+  }
+  return 'jiny';
+}
+
+const CHECKIN_UVOD: Record<JazykZpravy, string> = {
+  cs: 'Dobrý den, ještě nemáte vyplněný online check-in. Bez něj vám nemůžeme poslat průvodce k příjezdu, a bez průvodce se u nás neubytujete ani nezaparkujete.',
+  en: 'Hello, you have not completed the online check-in yet. Without it we cannot send you the arrival guide, and without the guide you cannot stay with us or park.',
+  de: 'Guten Tag, Ihr Online-Check-in ist noch nicht ausgefüllt. Ohne ihn können wir Ihnen den Leitfaden zur Anreise nicht schicken, und ohne den Leitfaden können Sie bei uns weder übernachten noch parken.',
+  pl: 'Dzień dobry, nie macie jeszcze wypełnionego online check-inu. Bez niego nie możemy wysłać przewodnika do przyjazdu, a bez przewodnika nie zakwaterujecie się u nas ani nie zaparkujecie.',
+  uk: 'Добрий день, ви ще не заповнили онлайн-реєстрацію. Без неї ми не можемо надіслати путівник до приїзду, а без путівника ви не заселитеся і не припаркуєтесь.',
+  'zh-Hant': '您好，您還沒有完成線上入住登記。沒有它，我們無法寄上抵達指南，沒有指南就無法入住，也無法停車。',
+};
+
+const CHECKIN_KONEC: Record<JazykZpravy, string> = {
+  cs: 'Děkujeme a těšíme se na setkání.',
+  en: 'Thank you, and we look forward to seeing you.',
+  de: 'Vielen Dank, wir freuen uns auf Sie.',
+  pl: 'Dziękujemy i do zobaczenia.',
+  uk: 'Дякуємо і до зустрічі.',
+  'zh-Hant': '謝謝，期待與您見面。',
+};
+
+const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
+  booking: {
+    cs: 'Odkaz najdete ve zprávách na Booking.com.',
+    en: 'You will find the link in your messages on Booking.com.',
+    de: 'Den Link finden Sie in den Nachrichten auf Booking.com.',
+    pl: 'Link znajdziecie w wiadomościach na Booking.com.',
+    uk: 'Посилання є у повідомленнях на Booking.com.',
+    'zh-Hant': '連結在 Booking.com 的訊息裡。',
+  },
+  airbnb: {
+    cs: 'Odkaz najdete ve zprávách na Airbnb.',
+    en: 'You will find the link in your messages on Airbnb.',
+    de: 'Den Link finden Sie in den Nachrichten auf Airbnb.',
+    pl: 'Link znajdziecie w wiadomościach na Airbnb.',
+    uk: 'Посилання є у повідомленнях на Airbnb.',
+    'zh-Hant': '連結在 Airbnb 的訊息裡。',
+  },
+  prima: {
+    cs: 'Odkaz najdete v e-mailu s potvrzením rezervace.',
+    en: 'You will find the link in your booking confirmation email.',
+    de: 'Den Link finden Sie in der E-Mail mit der Buchungsbestätigung.',
+    pl: 'Link znajdziecie w e-mailu z potwierdzeniem rezerwacji.',
+    uk: 'Посилання є в листі з підтвердженням бронювання.',
+    'zh-Hant': '連結在預訂確認信裡。',
+  },
+  jiny: {
+    cs: 'Odkaz najdete ve zprávách od webu, kde jste rezervovali.',
+    en: 'You will find the link in the messages from the website where you booked.',
+    de: 'Den Link finden Sie in den Nachrichten von der Website, auf der Sie gebucht haben.',
+    pl: 'Link znajdziecie w wiadomościach ze strony, na której rezerwowaliście.',
+    uk: 'Посилання є у повідомленнях із сайту, де ви бронювали.',
+    'zh-Hant': '連結在您預訂的那個網站的訊息裡。',
+  },
+};
+
 const NEOTEVREL: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, posíláme průvodce k vašemu příjezdu. Napište nám prosím čas příjezdu, ať na nás nemusíte čekat.',
-  en: "Hello, we are sending the guide for your arrival. Please tell us what time you will arrive, so you don't have to wait for us.",
-  de: 'Guten Tag, wir schicken Ihnen den Leitfaden zu Ihrer Anreise. Schreiben Sie uns bitte, wann Sie ankommen, damit Sie nicht auf uns warten müssen.',
-  pl: 'Dzień dobry, przesyłamy przewodnik do przyjazdu. Napiszcie proszę, o której przyjedziecie, żebyście na nas nie czekali.',
-  uk: 'Добрий день, надсилаємо путівник до вашого приїзду. Напишіть, будь ласка, о котрій приїдете, щоб вам не довелося на нас чекати.',
-  'zh-Hant': '您好，寄上您的入住指南。請告訴我們抵達時間，這樣就不用等我們。',
+  cs: 'Dobrý den, abyste se u nás mohli ubytovat a zaparkovat, přečtěte si průvodce k příjezdu a pošlete nám podle něj potřebné údaje. Děkujeme a těšíme se na setkání.',
+  en: 'Hello, to check in and park with us, you need to read the arrival guide and send us the details it asks for. Thank you, and we look forward to seeing you.',
+  de: 'Guten Tag, damit Sie bei uns übernachten und parken können, lesen Sie den Leitfaden zur Anreise und schicken Sie uns die darin genannten Angaben. Vielen Dank, wir freuen uns auf Sie.',
+  pl: 'Dzień dobry, żebyście mogli się u nas zakwaterować i zaparkować, przeczytajcie przewodnik do przyjazdu i wyślijcie nam według niego potrzebne dane. Dziękujemy i do zobaczenia.',
+  uk: 'Добрий день, щоб ви могли заселитися і припаркуватися, прочитайте путівник до приїзду і надішліть нам потрібні дані з нього. Дякуємо і до зустрічі.',
+  'zh-Hant': '您好，要入住和停車，先看抵達指南，並依指南把需要的資料傳給我們。謝謝，期待與您見面。',
 };
 
-/**
- * Zpráva, když host ještě nevyplnil online check-in.
- * Všechny jazyky schválené 11. 10. 2026. Angličtina má po „check-in“ tečku.
- * Odkaz, který majitel vloží, se přidá na vlastní řádek.
- */
-const CHECKIN: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, děkujeme za rezervaci. Prosím vyplňte si online check-in, odkaz najdete v e-mailu s potvrzením rezervace. Hned potom vám pošleme průvodce se vstupem a parkováním.',
-  en: 'Hello, thank you for your booking. Please complete the online check-in. You will find the link in your booking confirmation email. Right after that we will send you the guide with all the information about entry and parking.',
-  de: 'Guten Tag, vielen Dank für Ihre Buchung. Bitte füllen Sie den Online-Check-in aus, den Link finden Sie in Ihrer Buchungsbestätigung. Gleich danach senden wir Ihnen den Leitfaden mit allen Infos zu Eingang und Parken.',
-  pl: 'Dzień dobry, dziękujemy za rezerwację. Prosimy o wypełnienie online check-inu, link jest w e-mailu z potwierdzeniem rezerwacji. Zaraz potem wyślemy przewodnik ze wszystkimi informacjami o wejściu i parkowaniu.',
-  uk: 'Добрий день, дякуємо за бронювання. Будь ласка, заповніть онлайн-реєстрацію, посилання є в листі з підтвердженням бронювання. Одразу після цього надішлемо путівник з усією інформацією про вхід і паркування.',
-  'zh-Hant': '您好，謝謝您的預訂。請先完成線上入住登記，連結在預訂確認信裡。完成後我們會寄上指南，裡面有入口和停車的全部說明。',
-};
-
-/** Nenapsal čas. Všechny jazyky schválené 11. 10. 2026. */
 const CAS: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, děkujeme. Napište nám prosím ještě, v kolik zhruba dorazíte, ať na nás nemusíte čekat.',
-  en: "Hello, thank you. Please also tell us roughly what time you will arrive, so you don't have to wait for us.",
-  de: 'Guten Tag, vielen Dank. Schreiben Sie uns bitte noch, um wie viel Uhr Sie ungefähr ankommen, damit Sie nicht auf uns warten müssen.',
-  pl: 'Dzień dobry, dziękujemy. Napiszcie proszę jeszcze, o której mniej więcej przyjedziecie, żebyście na nas nie czekali.',
-  uk: 'Добрий день, дякуємо. Напишіть, будь ласка, ще приблизно о котрій приїдете, щоб вам не довелося на нас чекати.',
-  'zh-Hant': '您好，謝謝。請再告訴我們大約幾點到，這樣就不用等我們。',
+  cs: 'Dobrý den, napište nám, v kolik zhruba dorazíte. Apartmán předáváme osobně, a bez času příjezdu se nepotkáme. Děkujeme a těšíme se na setkání.',
+  en: 'Hello, tell us roughly what time you will arrive. We hand the apartment over in person, and without your arrival time we won\'t be able to meet you. Thank you, and we look forward to seeing you.',
+  de: 'Guten Tag, schreiben Sie uns, um wie viel Uhr Sie ungefähr ankommen. Wir übergeben das Apartment persönlich, und ohne Ihre Ankunftszeit können wir uns nicht treffen. Vielen Dank, wir freuen uns auf Sie.',
+  pl: 'Dzień dobry, napiszcie nam, o której mniej więcej przyjedziecie. Apartament przekazujemy osobiście, a bez godziny przyjazdu się nie spotkamy. Dziękujemy i do zobaczenia.',
+  uk: 'Добрий день, напишіть нам, приблизно о котрій приїдете. Апартаменти передаємо особисто, і без часу приїзду ми не зустрінемося. Дякуємо і до зустрічі.',
+  'zh-Hant': '您好，告訴我們大約幾點到。公寓由我們當面交接，沒有抵達時間就見不到面。謝謝，期待與您見面。',
 };
 
-/** Den příjezdu. Všechny jazyky schválené 11. 10. 2026. Odkaz na průvodce je na dalším řádku. */
-const DEN: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, dnes se na vás těšíme. Napište nám prosím asi 15 minut před příjezdem, ať jsme na místě. Průvodce s parkováním máte tady',
-  en: 'Hello, we are looking forward to seeing you today. Please message us about 15 minutes before you arrive, so we can be there to meet you. Your guide with parking directions is here',
-  de: 'Guten Tag, wir freuen uns heute auf Sie. Schreiben Sie uns bitte etwa 15 Minuten vor der Ankunft, damit wir vor Ort sind. Ihren Leitfaden mit allen Infos zum Parken finden Sie hier',
-  pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. Napiszcie proszę około 15 minut przed przyjazdem, żebyśmy byli na miejscu. Przewodnik z parkowaniem jest tutaj',
-  uk: 'Добрий день, сьогодні на вас чекаємо. Напишіть, будь ласка, приблизно за 15 хвилин до приїзду, щоб ми були на місці. Путівник з паркуванням ось тут',
-  'zh-Hant': '您好，今天期待您的到來。請在抵達前大約 15 分鐘傳訊息給我們，我們才會在現場。停車指南在這裡',
+const DEN_BEZ: Record<JazykZpravy, string> = {
+  cs: 'Dobrý den, dnes se na vás těšíme. V kolik zhruba dorazíte? Potřebujeme to vědět, abychom vám mohli apartmán osobně předat.',
+  en: 'Hello, we are looking forward to seeing you today. Roughly what time will you arrive? We need to know so that we can hand the apartment over to you in person.',
+  de: 'Guten Tag, wir freuen uns heute auf Sie. Um wie viel Uhr kommen Sie ungefähr an? Wir müssen das wissen, damit wir Ihnen das Apartment persönlich übergeben können.',
+  pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. O której mniej więcej będziecie? Musimy to wiedzieć, żebyśmy mogli przekazać wam apartament osobiście.',
+  uk: 'Добрий день, сьогодні на вас чекаємо. Приблизно о котрій приїдете? Нам треба це знати, щоб передати вам апартаменти особисто.',
+  'zh-Hant': '您好，今天期待您的到來。大約幾點到？我們需要知道時間，才能當面把公寓交給您。',
 };
 
-export type DruhZpravy = 'checkin' | 'neotevrel' | 'cas' | 'den';
+const DEN_CAS: Record<JazykZpravy, string> = {
+  cs: 'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem {čas}, platí to? Kdyby se čas změnil, napište nám prosím hned. Asi 15 minut před příjezdem se nám prosím ozvěte, ať jsme na místě.',
+  en: 'Hello, we are looking forward to seeing you today. We are expecting you around {čas}. Does that still work? If the time changes, please write to us right away. About 15 minutes before you arrive, please message us so we are there.',
+  de: 'Guten Tag, wir freuen uns heute auf Sie. Wir rechnen mit Ihnen gegen {čas}. Passt das? Wenn sich die Zeit ändert, schreiben Sie uns bitte sofort. Etwa 15 Minuten vor der Ankunft melden Sie sich bitte, damit wir vor Ort sind.',
+  pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. Spodziewamy się Was około {čas}. Zgadza się? Gdyby godzina się zmieniła, napiszcie proszę od razu. Około 15 minut przed przyjazdem odezwijcie się proszę, żebyśmy byli na miejscu.',
+  uk: 'Добрий день, сьогодні на вас чекаємо. Розраховуємо на вас близько {čas}. Це ще актуально? Якщо час зміниться, напишіть нам, будь ласка, одразу. Приблизно за 15 хвилин до приїзду напишіть, будь ласка, щоб ми були на місці.',
+  'zh-Hant': '您好，今天期待您的到來。我們預計您大約 {čas} 到，這個時間還對嗎？如果時間有變，請立刻傳訊息給我們。抵達前大約 15 分鐘請再傳一次，我們才會在現場。',
+};
+
+export type DruhZpravy = 'checkin' | 'neotevrel' | 'cas' | 'denBez' | 'denCas';
 
 export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string };
 
-const PORADI: DruhZpravy[] = ['checkin', 'neotevrel', 'cas', 'den'];
+const PORADI: DruhZpravy[] = ['checkin', 'neotevrel', 'cas', 'denBez', 'denCas'];
 
 const NAZEV: Record<DruhZpravy, string> = {
   checkin: 'Vyplňte check-in',
   neotevrel: 'Neotevřel průvodce',
   cas: 'Nenapsal čas',
-  den: 'Den příjezdu',
+  denBez: 'Den příjezdu, čas neznáme',
+  denCas: 'Den příjezdu, čas známe',
 };
+
+function vetaCheckinu(lang: GuideLang | null, zdroj: string | null | undefined): string {
+  const druh = druhZdroje(zdroj);
+  const uvod = textVJazyce(CHECKIN_UVOD, lang);
+  const odkaz = textVJazyce(CHECKIN_ODKAZ[druh], lang);
+  const konec = textVJazyce(CHECKIN_KONEC, lang);
+  return `${uvod} ${odkaz} ${konec}`;
+}
 
 export function textZpravy(lang: GuideLang | null): string {
   return textVJazyce(NEOTEVREL, lang);
 }
 
-export function textCheckinu(lang: GuideLang | null): string {
-  return textVJazyce(CHECKIN, lang);
+export function textCheckinu(lang: GuideLang | null, zdroj?: string | null): string {
+  return vetaCheckinu(lang, zdroj);
 }
 
 export function textCasu(lang: GuideLang | null): string {
@@ -85,23 +166,32 @@ export function textCasu(lang: GuideLang | null): string {
 }
 
 export function textDne(lang: GuideLang | null): string {
-  return textVJazyce(DEN, lang);
+  return textVJazyce(DEN_BEZ, lang);
 }
 
-export function zpravaCheckinu(lang: GuideLang | null, odkaz: string | null): string {
-  return sOdkazem(textCheckinu(lang), odkaz);
+export function textDneSCasem(lang: GuideLang | null, cas: string | null): string {
+  const cisty = cas && /^([01]\d|2[0-3]):[0-5]\d$/.test(cas) ? cas : '';
+  return textVJazyce(DEN_CAS, lang).replaceAll('{čas}', cisty);
+}
+
+export function zpravaCheckinu(lang: GuideLang | null, zdroj?: string | null): string {
+  return sestav(vetaCheckinu(lang, zdroj), null, lang);
 }
 
 export function zpravaHostovi(lang: GuideLang | null, odkaz: string | null): string {
-  return sOdkazem(textZpravy(lang), odkaz);
+  return sestav(textZpravy(lang), odkaz, lang);
 }
 
 export function zpravaCasu(lang: GuideLang | null): string {
-  return textCasu(lang);
+  return sestav(textCasu(lang), null, lang);
 }
 
 export function zpravaDne(lang: GuideLang | null, odkaz: string | null): string {
-  return sOdkazem(textDne(lang), odkaz);
+  return sestav(textDne(lang), odkaz, lang);
+}
+
+export function zpravaDneSCasem(lang: GuideLang | null, cas: string | null, odkaz: string | null): string {
+  return sestav(textDneSCasem(lang, cas), odkaz, lang);
 }
 
 /** Která zpráva sedí na stav hosta. Ta je v menu nahoře. */
@@ -114,15 +204,15 @@ export function hlavniZprava(opts: {
 }): DruhZpravy {
   if (opts.stav === 'bez_checkinu') return 'checkin';
   if (opts.otevrenoPocet === 0) return 'neotevrel';
+  if (opts.prijezd && opts.prijezd === opts.dnes) return opts.casPrijezdu ? 'denCas' : 'denBez';
   if (!opts.casPrijezdu) return 'cas';
-  if (opts.prijezd && opts.prijezd === opts.dnes) return 'den';
   return 'neotevrel';
 }
 
 export function zpravyMenu(opts: {
   stav: string;
   lang: GuideLang | null;
-  checkinUrl: string | null;
+  zdroj?: string | null;
   pruvodce: string | null;
   otevrenoPocet: number | null;
   casPrijezdu: string | null;
@@ -130,13 +220,14 @@ export function zpravyMenu(opts: {
   dnes: string;
 }): ZpravaMenu[] {
   const texty: Record<DruhZpravy, string> = {
-    checkin: zpravaCheckinu(opts.lang, opts.checkinUrl),
+    checkin: zpravaCheckinu(opts.lang, opts.zdroj),
     neotevrel: zpravaHostovi(opts.lang, opts.pruvodce),
     cas: zpravaCasu(opts.lang),
-    den: zpravaDne(opts.lang, opts.pruvodce),
+    denBez: zpravaDne(opts.lang, opts.pruvodce),
+    denCas: zpravaDneSCasem(opts.lang, opts.casPrijezdu, opts.pruvodce),
   };
   const hlavni = hlavniZprava(opts);
-  const poradi = [hlavni, ...PORADI.filter((id) => id !== hlavni)];
+  const poradi: DruhZpravy[] = [hlavni, ...PORADI.filter((id) => id !== hlavni)];
   return poradi.map((id) => ({ id, nazev: NAZEV[id], text: texty[id] }));
 }
 

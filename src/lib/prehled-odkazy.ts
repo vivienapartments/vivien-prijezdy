@@ -13,7 +13,7 @@ export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord, now = new Date
   const zpravy = zpravyMenu({
     stav: rec.stav,
     lang: rec.jazyk,
-    checkinUrl: rec.checkinUrl,
+    zdroj: rec.zdroj,
     pruvodce: odkaz,
     otevrenoPocet: rec.otevrenoPocet,
     casPrijezdu: rec.casPrijezdu,

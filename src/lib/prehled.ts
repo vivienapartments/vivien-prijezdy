@@ -325,7 +325,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
   const zpravy = zpravyMenu({
     stav: rec.stav,
     lang: rec.jazyk,
-    checkinUrl: rec.checkinUrl,
+    zdroj: rec.zdroj,
     pruvodce: null,
     otevrenoPocet: rec.otevrenoPocet,
     casPrijezdu: rec.casPrijezdu,
