@@ -8,7 +8,12 @@ export function middleware(request: NextRequest) {
 
   const response = NextResponse.next();
   response.headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
-  if (request.nextUrl.pathname.startsWith('/prehled')) {
+  const cesta = request.nextUrl.pathname;
+  const ikonaPrehledu =
+    cesta.startsWith('/prehled/icon') ||
+    cesta.startsWith('/prehled/apple-icon') ||
+    cesta === '/prehled/manifest.webmanifest';
+  if (cesta.startsWith('/prehled') && !ikonaPrehledu) {
     response.headers.set('Cache-Control', 'no-store');
   }
   return response;

@@ -15,6 +15,13 @@ export const metadata = {
   title: 'Přehled rezervací',
   applicationName: 'VIVIEN',
   manifest: '/prehled/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/prehled/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/prehled/icon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [{ url: '/prehled/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   robots: { index: false, follow: false, nocache: true },
   appleWebApp: { capable: true, title: 'VIVIEN', statusBarStyle: 'black-translucent' as const },
 };
