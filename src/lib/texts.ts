@@ -49,12 +49,12 @@ export const casPrijezduNadpis: LText = {
 };
 
 export const casPrijezduText: LText = {
-  cs: 'Apartmán vám předáme osobně a hned potom aktivujeme vaše kódy. Abychom na vás byli připravení a vy nemuseli čekat před domem, pošlete nám čas příjezdu co nejdřív, SMS nebo přes WhatsApp na +420 777 702 272. Když se čas změní, dejte vědět. Asi 15 minut před příjezdem nám napište ještě jednou.',
-  en: 'We hand over the apartment in person and then activate your codes. So that we are ready for you and you do not have to wait outside the house, send us your arrival time as soon as you can, by SMS or WhatsApp to +420 777 702 272. If the time changes, let us know. About 15 minutes before you arrive, message us once more.',
-  de: 'Wir übergeben das Apartment persönlich und aktivieren danach Ihre Codes. Damit wir für Sie bereit sind und Sie nicht vor dem Haus warten müssen, schicken Sie uns Ihre Ankunftszeit so bald wie möglich per SMS oder WhatsApp an +420 777 702 272. Wenn sich die Zeit ändert, geben Sie uns Bescheid. Etwa 15 Minuten vor der Ankunft schreiben Sie uns bitte noch einmal.',
-  pl: 'Apartament przekażemy osobiście i zaraz potem aktywujemy Wasze kody. Żebyśmy byli na Was gotowi i nie musieliście czekać przed domem, wyślijcie godzinę przyjazdu jak najszybciej, SMS-em albo przez WhatsApp na +420 777 702 272. Gdy godzina się zmieni, dajcie znać. Około 15 minut przed przyjazdem napiszcie jeszcze raz.',
-  uk: 'Апартаменти передамо особисто і одразу після цього активуємо ваші коди. Щоб ми були готові і вам не довелося чекати перед будинком, надішліть час приїзду якнайшвидше, SMS або через WhatsApp на +420 777 702 272. Якщо час зміниться, повідомте. Приблизно за 15 хвилин до приїзду напишіть ще раз.',
-  'zh-Hant': '公寓由我們當面交接，交接後立刻啟用您的密碼。為了我們能準備好、您也不必在屋外等候，請盡快用簡訊或 WhatsApp 把抵達時間傳到 +420 777 702 272。時間若有變動，請告訴我們。抵達前約 15 分鐘請再傳一次。',
+  cs: 'Apartmán vám předáme osobně a hned potom aktivujeme vaše kódy. Abychom na vás byli připravení a vy nemuseli čekat před domem, pošlete nám čas příjezdu co nejdřív, SMS nebo přes WhatsApp na +420 604 692 573. Když se čas změní, dejte vědět. Asi 15 minut před příjezdem nám napište ještě jednou.',
+  en: 'We hand over the apartment in person and then activate your codes. So that we are ready for you and you do not have to wait outside the house, send us your arrival time as soon as you can, by SMS or WhatsApp to +420 604 692 573. If the time changes, let us know. About 15 minutes before you arrive, message us once more.',
+  de: 'Wir übergeben das Apartment persönlich und aktivieren danach Ihre Codes. Damit wir für Sie bereit sind und Sie nicht vor dem Haus warten müssen, schicken Sie uns Ihre Ankunftszeit so bald wie möglich per SMS oder WhatsApp an +420 604 692 573. Wenn sich die Zeit ändert, geben Sie uns Bescheid. Etwa 15 Minuten vor der Ankunft schreiben Sie uns bitte noch einmal.',
+  pl: 'Apartament przekażemy osobiście i zaraz potem aktywujemy Wasze kody. Żebyśmy byli na Was gotowi i nie musieliście czekać przed domem, wyślijcie godzinę przyjazdu jak najszybciej, SMS-em albo przez WhatsApp na +420 604 692 573. Gdy godzina się zmieni, dajcie znać. Około 15 minut przed przyjazdem napiszcie jeszcze raz.',
+  uk: 'Апартаменти передамо особисто і одразу після цього активуємо ваші коди. Щоб ми були готові і вам не довелося чекати перед будинком, надішліть час приїзду якнайшвидше, SMS або через WhatsApp на +420 604 692 573. Якщо час зміниться, повідомте. Приблизно за 15 хвилин до приїзду напишіть ще раз.',
+  'zh-Hant': '公寓由我們當面交接，交接後立刻啟用您的密碼。為了我們能準備好、您也不必在屋外等候，請盡快用簡訊或 WhatsApp 把抵達時間傳到 +420 604 692 573。時間若有變動，請告訴我們。抵達前約 15 分鐘請再傳一次。',
 };
 
 export const casPrijezduCheckin: LText = {

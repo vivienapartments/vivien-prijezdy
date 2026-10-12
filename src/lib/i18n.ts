@@ -57,12 +57,11 @@ export function toTelHref(display: string): string {
 }
 
 /**
- * Rozdělí text a telefonní čísla (+420 xxx xxx xxx i 777 702 272 bez předvolby)
+ * Rozdělí text a telefonní čísla +420 xxx xxx xxx
  * na části vhodné pro odkaz tel: na mobilu.
  */
 export function phoneParts(raw: string): PhonePart[] {
-  const re =
-    /\+420[\s\u00a0]*\d{3}[\s\u00a0]*\d{3}[\s\u00a0]*\d{3}|(?<!\d)777[\s\u00a0]*702[\s\u00a0]*272(?!\d)/g;
+  const re = /\+420[\s\u00a0]*\d{3}[\s\u00a0]*\d{3}[\s\u00a0]*\d{3}/g;
   const out: PhonePart[] = [];
   let last = 0;
   for (const m of raw.matchAll(re)) {

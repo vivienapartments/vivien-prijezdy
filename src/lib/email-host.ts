@@ -109,12 +109,12 @@ const introBodyL: LText = {
 
 /** Nad tlačítkem. Čas příjezdu, ať host nečeká před domem. */
 const casPrijezduL: LText = {
-  cs: 'Nejdůležitější je, abyste nám napsali, v kolik dorazíte. Apartmán vám předáme osobně a nebudete na nás čekat. Stačí SMS nebo WhatsApp na +420 777 702 272.',
-  en: 'The most important thing is that you write to us with the time you will arrive. We hand the apartment over in person and you will not be waiting for us. An SMS or WhatsApp to +420 777 702 272 is enough.',
-  de: 'Das Wichtigste ist, dass Sie uns schreiben, um wie viel Uhr Sie ankommen. Wir übergeben das Apartment persönlich und Sie warten nicht auf uns. Eine SMS oder WhatsApp an +420 777 702 272 genügt.',
-  pl: 'Najważniejsze jest, żebyście napisali, o której dojedziecie. Apartament przekażemy osobiście i nie będziecie na nas czekać. Wystarczy SMS albo WhatsApp na +420 777 702 272.',
-  uk: 'Найважливіше, щоб ви написали, о котрій приїдете. Апартаменти передамо особисто, і вам не доведеться на нас чекати. Досить SMS або WhatsApp на +420 777 702 272.',
-  'zh-Hant': '最重要的是請告訴我們您幾點到。公寓由我們當面交接，您不必等我們。傳簡訊或 WhatsApp 到 +420 777 702 272 即可。',
+  cs: 'Nejdůležitější je, abyste nám napsali, v kolik dorazíte. Apartmán vám předáme osobně a nebudete na nás čekat. Stačí SMS nebo WhatsApp na +420 604 692 573.',
+  en: 'The most important thing is that you write to us with the time you will arrive. We hand the apartment over in person and you will not be waiting for us. An SMS or WhatsApp to +420 604 692 573 is enough.',
+  de: 'Das Wichtigste ist, dass Sie uns schreiben, um wie viel Uhr Sie ankommen. Wir übergeben das Apartment persönlich und Sie warten nicht auf uns. Eine SMS oder WhatsApp an +420 604 692 573 genügt.',
+  pl: 'Najważniejsze jest, żebyście napisali, o której dojedziecie. Apartament przekażemy osobiście i nie będziecie na nas czekać. Wystarczy SMS albo WhatsApp na +420 604 692 573.',
+  uk: 'Найважливіше, щоб ви написали, о котрій приїдете. Апартаменти передамо особисто, і вам не доведеться на нас чекати. Досить SMS або WhatsApp на +420 604 692 573.',
+  'zh-Hant': '最重要的是請告訴我們您幾點到。公寓由我們當面交接，您不必等我們。傳簡訊或 WhatsApp 到 +420 604 692 573 即可。',
 };
 
 const casSmsL: LText = {
@@ -192,12 +192,12 @@ const openGuideL: LText = {
 
 /** Problém: nejdřív majitel, pak Nikol (číslo v podpisu). */
 const helpL: LText = {
-  cs: 'Kdyby cokoli nefungovalo, volejte na +420 777 702 272. V případě, že se nedovoláte, zavolejte Nikol.',
-  en: 'If anything does not work, call +420 777 702 272. If you cannot get through, call Nikol.',
-  de: 'Wenn etwas nicht funktioniert, rufen Sie +420 777 702 272 an. Wenn Sie uns nicht erreichen, rufen Sie Nikol an.',
-  pl: 'Gdyby cokolwiek nie działało, zadzwońcie na +420 777 702 272. Jeśli się nie dodzwonicie, zadzwońcie do Nikol.',
-  uk: 'Якщо щось не працює, телефонуйте на +420 777 702 272. Якщо не додзвонитеся, зателефонуйте Nikol.',
-  'zh-Hant': '如果有任何問題，請撥 +420 777 702 272。若打不通，請打給 Nikol。',
+  cs: 'Kdyby cokoli nefungovalo, volejte na +420 604 692 573. V případě, že se nedovoláte, zavolejte Nikol.',
+  en: 'If anything does not work, call +420 604 692 573. If you cannot get through, call Nikol.',
+  de: 'Wenn etwas nicht funktioniert, rufen Sie +420 604 692 573 an. Wenn Sie uns nicht erreichen, rufen Sie Nikol an.',
+  pl: 'Gdyby cokolwiek nie działało, zadzwońcie na +420 604 692 573. Jeśli się nie dodzwonicie, zadzwońcie do Nikol.',
+  uk: 'Якщо щось не працює, телефонуйте на +420 604 692 573. Якщо не додзвонитеся, зателефонуйте Nikol.',
+  'zh-Hant': '如果有任何問題，請撥 +420 604 692 573。若打不通，請打給 Nikol。',
 };
 
 const familyL: LText = {
@@ -409,8 +409,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                     <div lang="${escapeAttr(lang)}" style="padding:12px 14px;background:#2a221c;border:1px solid #c9a84c;border-radius:8px;font-family:${serif};font-size:16px;line-height:1.5;color:#f5efe3;${sazba}">
                       ${withPhones(t(casPrijezduL, lang))}
                       <div style="padding-top:12px;text-align:left;">
-                        ${msgButton('sms:+420777702272', t(casSmsL, lang), serif)}
-                        ${msgButton('https://wa.me/420777702272', t(casWhatsappL, lang), serif)}
+                        ${msgButton('sms:+420604692573', t(casSmsL, lang), serif)}
+                        ${msgButton('https://wa.me/420604692573', t(casWhatsappL, lang), serif)}
                       </div>
                     </div>
                   </td>

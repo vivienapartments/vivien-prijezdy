@@ -1,0 +1,38 @@
+---
+description: Paměť projektu – co platí, co majitel rozhodl a kde najít souvislosti
+alwaysApply: true
+---
+
+# Paměť projektu vivien-prijezdy
+
+Majitel: Pravoslav Tomek, VIVIEN Apartments (5 apartmánů, Nádražní 108/43, České Budějovice). Mluv s ním česky a jednoduše, není programátor.
+
+## Na začátku každého nového chatu
+1. Přečti `STAV-PRO-CLAUDE.md` v kořeni projektu. Je to podrobná paměť: co běží, co dostane host, šablona BH a rozhodnutí majitele.
+2. Ničím z toho nehýbej bez majitelova souhlasu.
+
+## Po každém rozhodnutí majitele
+Zapiš ho do `STAV-PRO-CLAUDE.md`, do sekce „Rozhodnutí majitele“ s datem. Ostatní sekce udržuj aktuální. Soubor necommituj, je v `.gitignore`. Hesla, kódy, PINy ani e-maily hostů do něj nepiš.
+
+## Ostrý provoz
+- Automat běží na Vercelu (vivien-prijezdy-six.vercel.app). Hostům chodí e-maily, `TEST_REZIM=0`.
+- Push na GitHub = okamžité nasazení hostům. Pushuj a nasazuj jen po majitelově „nasaď“.
+- Nikdy nemaž ani hromadně nepřepisuj záznamy v Upstash. Kdo průvodce dostal, nesmí ho dostat znovu.
+
+## Nejdůležitější rozhodnutí (podrobně v STAV-PRO-CLAUDE.md)
+- E-mail hostovi obsahuje jen souhrn pobytu a tlačítko na průvodce. Kódy, WiFi ani parkování v něm nejsou.
+- Pozdrav je jen křestní jméno (`GUEST_NAME`). Nikdy ne pane/paní a nikdy ne příjmení.
+- `GUEST_SURNAME` slouží jen pro přehled.
+- PIN z BH (`ACCESS_PIN`) je povinný. Bez něj průvodce neodejde a v přehledu je `chybi_pin`.
+- Zahrada: V1, V4, V5 mají pevný kód, V2 a V3 PIN apartmánu.
+- WiFi je pevná a nikdy neblokuje odeslání.
+- Číslo pro hosty je +420 604 692 573. Je v průvodci a v e-mailu. Na veřejném webu nikdy. Soukromé číslo majitele v projektu není.
+- Čas příjezdu i žádost o stání host posílá SMS nebo přes WhatsApp na 604 692 573. Autem v jedné zprávě: čas, stání, telefon na bránu, SPZ.
+- Bránu otevírá jen klasický hovor.
+- Předání apartmánu je osobní. Kódy aktivujeme až po předání.
+- Městský poplatek: box jen u rezervací vytvořených od 5. 10. 2026 (BH `DATE`). Neznámé datum = box ukázat.
+- Brána: Po–Pá 6–18. Víkend a čas po 18:00 je zavřená. Nikdy „denně“.
+- Před domem se nestojí. V domě není výtah.
+- Tlačítko v e-mailu: zlaté a kulaté, jediná varianta.
+- Přehled `/prehled`: tmavý jako průvodce, heslo `ADMIN_HESLO` je ve Vercelu.
+- Texty pro hosty nevymýšlej. Ukaž návrh a počkej na souhlas majitele.

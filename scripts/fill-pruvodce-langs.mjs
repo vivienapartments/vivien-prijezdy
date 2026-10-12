@@ -11,11 +11,11 @@ const byCs = {
     pl: 'Przyjeżdżacie samochodem? Napiszcie do nas od razu',
     'zh-Hant': '開車前來？請立刻寫訊息給我們',
   },
-  'Parkovací stání vám zajistíme, jen když nám co nejdříve pošlete SMS nebo zprávu na číslo +420 777 702 272. Nejlépe hned teď. Uveďte v ní:':
+  'Parkovací stání vám zajistíme, jen když nám co nejdříve pošlete SMS nebo zprávu na číslo +420 604 692 573. Nejlépe hned teď. Uveďte v ní:':
     {
-      uk: 'Паркувальне місце можемо забронювати, лише якщо якомога швидше надішлете SMS або повідомлення на номер +420 777 702 272. Найкраще просто зараз. Укажіть у ньому:',
-      pl: 'Miejsce parkingowe zarezerwujemy tylko wtedy, gdy jak najszybciej wyślecie SMS lub wiadomość na numer +420 777 702 272. Najlepiej zaraz. Podajcie w niej:',
-      'zh-Hant': '只有您盡快傳簡訊或訊息到 +420 777 702 272，我們才能為您保留車位。最好現在就傳。請寫明：',
+      uk: 'Паркувальне місце можемо забронювати, лише якщо якомога швидше надішлете SMS або повідомлення на номер +420 604 692 573. Найкраще просто зараз. Укажіть у ньому:',
+      pl: 'Miejsce parkingowe zarezerwujemy tylko wtedy, gdy jak najszybciej wyślecie SMS lub wiadomość na numer +420 604 692 573. Najlepiej zaraz. Podajcie w niej:',
+      'zh-Hant': '只有您盡快傳簡訊或訊息到 +420 604 692 573，我們才能為您保留車位。最好現在就傳。請寫明：',
     },
   'že máte zájem o parkovací stání,': {
     uk: 'що вам потрібне паркувальне місце,',
@@ -85,11 +85,11 @@ const byCs = {
     pl: 'Brama się nie otwiera?',
     'zh-Hant': '大門打不開？',
   },
-  'Zavolejte nám na +420 777 702 272. Pokud se nedovoláte, volejte Nikol na +420 702 153 573.':
+  'Zavolejte nám na +420 604 692 573. Pokud se nedovoláte, volejte Nikol na +420 702 153 573.':
     {
-      uk: 'Зателефонуйте нам на +420 777 702 272. Якщо не додзвонитеся, телефонуйте Nikol на +420 702 153 573.',
-      pl: 'Zadzwońcie do nas na +420 777 702 272. Jeśli nie dodzwonicie się, dzwońcie do Nikol na +420 702 153 573.',
-      'zh-Hant': '請撥打 +420 777 702 272。若打不通，請打給 Nikol：+420 702 153 573。',
+      uk: 'Зателефонуйте нам на +420 604 692 573. Якщо не додзвонитеся, телефонуйте Nikol на +420 702 153 573.',
+      pl: 'Zadzwońcie do nas na +420 604 692 573. Jeśli nie dodzwonicie się, dzwońcie do Nikol na +420 702 153 573.',
+      'zh-Hant': '請撥打 +420 604 692 573。若打不通，請打給 Nikol：+420 702 153 573。',
     },
   'Parkování: cesta na vaše stání': {
     uk: 'Парковка: шлях до вашого місця',

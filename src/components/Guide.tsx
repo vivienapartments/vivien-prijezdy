@@ -307,12 +307,12 @@ export function Guide({
           <p className="pv-cas__text">{renderPhoneText(tt(TX.casPrijezduText))}</p>
           <p className="pv-cas__checkin">{tt(TX.casPrijezduCheckin)}</p>
           <div className="pv-cas__actions">
-            <a className="pv-cas__btn" href="sms:+420777702272">
+            <a className="pv-cas__btn" href="sms:+420604692573">
               {tt(TX.casPrijezduSms)}
             </a>
             <a
               className="pv-cas__btn"
-              href="https://wa.me/420777702272"
+              href="https://wa.me/420604692573"
               target="_blank"
               rel="noopener noreferrer"
             >

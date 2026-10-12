@@ -7,7 +7,7 @@ describe('toTelHref', () => {
   });
 
   it('adds country code for 9 digits', () => {
-    expect(toTelHref('777 702 272')).toBe('tel:+420777702272');
+    expect(toTelHref('604 692 573')).toBe('tel:+420604692573');
   });
 });
 
@@ -21,7 +21,7 @@ describe('phoneParts', () => {
   });
 
   it('handles parking SMS number without +420', () => {
-    const parts = phoneParts('Pošlete SMS na 777 702 272 hned teď.');
-    expect(parts.find((p) => p.href)?.href).toBe('tel:+420777702272');
+    const parts = phoneParts('Pošlete SMS na +420 604 692 573 hned teď.');
+    expect(parts.find((p) => p.href)?.href).toBe('tel:+420604692573');
   });
 });

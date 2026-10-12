@@ -1,7 +1,7 @@
 export const PARKING_ADDRESS = 'Chelčického 95/15';
 export const HOUSE_ADDRESS = 'Nádražní 108/43, 370 01 České Budějovice';
 export const NIKOL_PHONE = '+420 702 153 573';
-export const PARKING_OWNER_PHONE = '+420 777 702 272';
+export const PARKING_OWNER_PHONE = '+420 604 692 573';
 export const WIFI_GARDEN_SSID = 'VivienGarden';
 
 export const PARKING_DISTANCE = { meters: 239, minutes: 3 };
