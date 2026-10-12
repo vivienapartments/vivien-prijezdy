@@ -9,6 +9,7 @@ import {
   STARY_ZAZNAM,
   type PrehledRadek,
 } from '@/lib/prehled';
+import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { odkazWhatsApp } from '@/lib/whatsapp-zprava';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
@@ -32,6 +33,8 @@ type Props = {
   dnes: string;
   zitra: string;
   chybiWifi: string[];
+  /** Místní náhled. Číslo se zapíše jen na obrazovce, ne do ostrých rezervací. */
+  ukazka?: boolean;
 };
 
 function Pole({ text }: { text: string }) {
@@ -49,7 +52,10 @@ function UlozitKontakt({ row }: { row: PrehledRadek }) {
   );
 }
 
-export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
+export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false }: Props) {
+  const [radky, setRadky] = useState(rows);
+  const [telefony, setTelefony] = useState<Record<string, string>>({});
+  const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
   const [stav, setStav] = useState<'' | Stav>('');
   const [hledat, setHledat] = useState('');
   const [den, setDen] = useState<'' | 'dnes' | 'zitra'>('');
@@ -68,19 +74,28 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
     return casy[row.rezervace] ?? row.casPrijezdu ?? '';
   }
 
+  function telefonRadku(row: PrehledRadek): string {
+    return telefony[row.rezervace] ?? row.telefonText ?? '';
+  }
+
+  function jeRozbaleno(row: PrehledRadek): boolean {
+    if (row.rezervace in rozbalene) return rozbalene[row.rezervace];
+    return row.prijezd === dnes;
+  }
+
   const dnesSouhrn = useMemo(
-    () => souhrnDne(rows, dnes, casy),
-    [rows, dnes, casy],
+    () => souhrnDne(radky, dnes, casy),
+    [radky, dnes, casy],
   );
   const zitraSouhrn = useMemo(
-    () => souhrnDne(rows, zitra, casy),
-    [rows, zitra, casy],
+    () => souhrnDne(radky, zitra, casy),
+    [radky, zitra, casy],
   );
 
   const viditelne = useMemo(() => {
     const q = hledat.trim().toLowerCase();
     const denYmd = den === 'dnes' ? dnes : den === 'zitra' ? zitra : '';
-    return rows.filter((row) => {
+    return radky.filter((row) => {
       if (denYmd && row.prijezd !== denYmd) return false;
       if (jenNeotevreni && (row.otevrenoPocet !== 0 || row.stav === 'bez_checkinu')) return false;
       if (jenBezCheckinu && row.stav !== 'bez_checkinu') return false;
@@ -92,7 +107,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
         row.email.toLowerCase().includes(q)
       );
     });
-  }, [rows, stav, hledat, den, dnes, zitra, jenNeotevreni, jenBezCheckinu]);
+  }, [radky, stav, hledat, den, dnes, zitra, jenNeotevreni, jenBezCheckinu]);
 
   async function volat(row: PrehledRadek, akce: 'znovu' | 'odkaz' | 'opravit', extra?: Record<string, string>) {
     setCekam(`${row.rezervace}:${akce}`);
@@ -166,6 +181,41 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
   async function ulozTelefon(row: PrehledRadek, ktery: 'checkin' | 'rezervace', hodnota: string) {
     const cislo = hodnota.trim();
     if (!cislo) return;
+    const ukazane = (ktery === row.jinyTelefonKtery ? row.jinyTelefonText : row.telefonText) || '';
+    if (cislo === ukazane.trim()) return;
+    const tel = normalizujTelefon(cislo);
+    if (!tel) {
+      setHlaska('Napište číslo.');
+      return;
+    }
+    if (ukazka) {
+      const text = textTelefonu(tel.ulozeny);
+      setRadky((prev) =>
+        prev.map((r) => {
+          if (r.rezervace !== row.rezervace) return r;
+          if (ktery === r.jinyTelefonKtery && ktery !== r.telefonKtery) {
+            return {
+              ...r,
+              jinyTelefonText: text,
+              jinyTelefonWa: tel.wa,
+              jinyTelefonNejisty: tel.nejisty,
+            };
+          }
+          return {
+            ...r,
+            telefonText: text,
+            telefonWa: tel.wa,
+            telefonNejisty: tel.nejisty,
+            telefonKtery: ktery,
+          };
+        }),
+      );
+      if (ktery !== row.jinyTelefonKtery || ktery === row.telefonKtery) {
+        setTelefony((prev) => ({ ...prev, [row.rezervace]: text }));
+      }
+      setHlaska('');
+      return;
+    }
     setHlaska('');
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
@@ -199,7 +249,19 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
         type="button"
         className={den === ktery ? 'ph-den is-on' : 'ph-den'}
         aria-pressed={den === ktery}
-        onClick={() => setDen((prev) => (prev === ktery ? '' : ktery))}
+        onClick={() => {
+          const zapnout = den !== ktery;
+          setDen(zapnout ? ktery : '');
+          if (!zapnout) return;
+          const cil = ktery === 'dnes' ? dnes : zitra;
+          setRozbalene((stav) => {
+            const nove = { ...stav };
+            for (const row of radky) {
+              if (row.prijezd === cil) nove[row.rezervace] = true;
+            }
+            return nove;
+          });
+        }}
       >
         <span>
           {nadpis}: {souhrn.pocet} · průvodce otevřelo {souhrn.otevrelo} · neodesláno {souhrn.neodeslano} · bez
@@ -272,8 +334,10 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
 
       {viditelne.length === 0 ? <p className="ph-prazdno">Nic tu není.</p> : null}
 
-      {viditelne.map((row) => (
-        <article key={row.rezervace} id={row.rezervace} className="ph-row">
+      {viditelne.map((row) => {
+        const rozbaleno = jeRozbaleno(row);
+        return (
+        <article key={row.rezervace} id={row.rezervace} className={rozbaleno ? 'ph-row is-open' : 'ph-row is-shut'}>
           <div className="ph-karta-hlavicka">
             <div className="ph-jmeno">
               <Pole text={row.jmeno} />
@@ -311,22 +375,30 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
                 <Pole text={row.zdrojText} />
               </div>
             ) : null}
-            {row.telefonText ? (
-              <div className="ph-tel-blok">
-                <div className="ph-tel">{row.telefonText}</div>
-                {row.telefonPuvodni ? <div className="ph-puvodni">napsáno {row.telefonPuvodni}</div> : null}
-                {row.telefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
-                {row.telefonNejisty && row.telefonKtery ? (
-                  <label className="ph-cas">
-                    Telefon
-                    <input
-                      placeholder="+420"
-                      onBlur={(e) => ulozTelefon(row, row.telefonKtery || 'checkin', e.target.value)}
-                    />
-                  </label>
-                ) : null}
-              </div>
-            ) : null}
+            {!rozbaleno && row.telefonText ? <div className="ph-tel">{row.telefonText}</div> : null}
+            <button
+              type="button"
+              className="ph-rozbal"
+              aria-expanded={rozbaleno}
+              onClick={() => setRozbalene((prev) => ({ ...prev, [row.rezervace]: !rozbaleno }))}
+            >
+              {rozbaleno ? 'Sbalit' : 'Rozbalit'}
+            </button>
+            {rozbaleno ? (
+            <>
+            <label className="ph-tel-pole">
+              Telefon
+              <input
+                value={telefonRadku(row)}
+                placeholder="sem napište číslo"
+                inputMode="tel"
+                autoComplete="off"
+                onChange={(e) => setTelefony((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
+                onBlur={(e) => ulozTelefon(row, row.telefonKtery || 'rezervace', e.target.value)}
+              />
+            </label>
+            {row.telefonPuvodni ? <div className="ph-puvodni">napsáno {row.telefonPuvodni}</div> : null}
+            {row.telefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
             {row.jinyTelefonText ? (
               <div className="ph-tel-jiny">
                 jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
@@ -354,7 +426,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
               </div>
             ) : null}
             {row.stav === 'bez_checkinu' ? (
-              <label className="ph-cas">
+              <label className="ph-cas ph-checkin">
                 Odkaz na check-in
                 <input
                   value={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
@@ -411,6 +483,8 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
                 onBlur={(e) => ulozCas(row, e.target.value)}
               />
             </label>
+            </>
+            ) : null}
           </div>
           <div className="ph-cell ph-cell--apt" data-label="Apartmán">
             <Pole text={row.apartmanNazev} />
@@ -434,6 +508,8 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
           <div className="ph-cell" data-label="Poslední pokus">
             <Pole text={row.posledniPokusText} />
           </div>
+          {rozbaleno ? (
+          <>
           <div className="ph-akce">
             {nabidnoutOdeslani(row.stav) ? (
               <>
@@ -473,8 +549,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi }: Props) {
               ))}
             </ul>
           ) : null}
+          </>
+          ) : null}
         </article>
-      ))}
+        );
+      })}
     </main>
   );
 }

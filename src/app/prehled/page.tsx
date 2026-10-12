@@ -26,5 +26,7 @@ export default async function PrehledPage({ searchParams }: Props) {
   const now = new Date();
   const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(createProcessStore(), now);
   const dnes = dnesVPraze(now);
-  return <PrehledClient rows={rows} dnes={dnes} zitra={posunDen(dnes, 1)} chybiWifi={chybejiciWifi()} />;
+  return (
+    <PrehledClient rows={rows} dnes={dnes} zitra={posunDen(dnes, 1)} chybiWifi={chybejiciWifi()} ukazka={ukazka} />
+  );
 }

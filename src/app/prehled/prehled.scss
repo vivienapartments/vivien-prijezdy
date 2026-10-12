@@ -243,11 +243,22 @@
 
 .ph-menu label {
   display: flex;
-  align-items: center;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 0.4rem;
-  margin-top: 0.28rem;
+  margin-top: 0.12rem;
   font-size: 0.88rem;
   font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.25;
+}
+
+.ph-menu input {
+  width: 1rem;
+  height: 1rem;
+  min-height: 0;
+  margin: 0.15rem 0 0;
+  padding: 0;
 }
 
 .ph-menu label.is-on {
@@ -289,15 +300,46 @@
   color: var(--color-gold);
 }
 
-.ph-kopie {
+.ph-kopie,
+.ph-rozbal {
   min-height: 2rem;
-  padding: 0.2rem 0.65rem;
-  font-size: 0.82rem;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.ph-rozbal {
+  align-self: flex-start;
+  margin-top: 0.45rem;
+}
+
+.ph-tel-pole {
+  margin-top: 0.45rem;
+  max-width: 18rem;
+}
+
+.ph-tel-pole input {
+  width: 100%;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  border: 2px solid var(--color-gold);
+  background: color-mix(in srgb, var(--color-gold) 14%, var(--pv-surface));
+  cursor: text;
+}
+
+.ph-tel-pole input::placeholder {
+  font-weight: 500;
+  color: var(--color-gold);
+  opacity: 1;
 }
 
 .ph-cas {
   margin-top: 0.55rem;
   max-width: 8rem;
+}
+
+.ph-checkin {
+  max-width: 18rem;
 }
 
 .ph-cas input {
