@@ -77,6 +77,8 @@ export type RezervaceRecord = {
   telefonRezervacePuvodni: string | null;
   /** Odkaz na online check-in. Jen https://. Maže se se záznamem. */
   checkinUrl: string | null;
+  /** Odkud řádek vznikl, když ho nezaložil automat z Better Hotelu. */
+  stitek: 'rucne' | 'info' | null;
 };
 
 export type RezervaceEntry = { id: string; record: RezervaceRecord };
@@ -170,6 +172,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     telefonRezervacePuvodni:
       typeof r.telefonRezervacePuvodni === 'string' && r.telefonRezervacePuvodni ? r.telefonRezervacePuvodni : null,
     checkinUrl: typeof r.checkinUrl === 'string' && /^https:\/\//i.test(r.checkinUrl) ? r.checkinUrl : null,
+    stitek: r.stitek === 'rucne' || r.stitek === 'info' ? r.stitek : null,
   };
 }
 
@@ -208,6 +211,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     telefonRezervaceWa: null,
     telefonRezervacePuvodni: null,
     checkinUrl: null,
+    stitek: null,
   };
 }
 

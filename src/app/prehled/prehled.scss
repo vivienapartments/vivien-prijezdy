@@ -183,6 +183,45 @@
   white-space: nowrap;
 }
 
+.ph-stitek {
+  margin-top: 0.35rem;
+  color: var(--pv-muted);
+  font-weight: 600;
+}
+
+.ph-pridani {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  max-width: 40rem;
+  margin: 0.4rem 0 1rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 14px;
+}
+
+.ph-pridani label {
+  max-width: 18rem;
+}
+
+.ph-pridani label.ph-siroke {
+  max-width: 100%;
+}
+
+.ph-pridani input,
+.ph-pridani select {
+  width: 100%;
+}
+
+.ph-pridani input[type='tel'] {
+  white-space: nowrap;
+}
+
+.ph-pridani .ph-akce-spodek {
+  margin-top: 0.2rem;
+}
+
 .ph-neni-checkin {
   display: inline-block;
   margin-top: 0.35rem;

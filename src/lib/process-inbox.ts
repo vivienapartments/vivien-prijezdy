@@ -1,13 +1,15 @@
 import nodemailer from 'nodemailer';
-import { jeInterniPredmet, parsujInterni, puvodInterniOk, vetaChybi, type InterniUdaje } from './bh-interni';
+import { druhZeSubjectu, jeInterniPredmet, parsujInterni, puvodInterniOk, vetaChybi, type InterniUdaje } from './bh-interni';
 import { parseBounce, stejneMessageId } from './bounce';
-import { duvod, jeBlokujici, jeVyhrada, type Duvod } from './chyby';
+import { duvod, jeBlokujici, jeVyhrada, problemEmailu, type Duvod } from './chyby';
 import { nightsBetween } from './dates';
 import { jazykZPredvolby, normalizujTelefon } from './telefon';
-import { verifyEmailOrigin } from './email-origin';
+import { jeMailMajitele, verifyEmailOrigin } from './email-origin';
 import { fetchRecentInboxMails, type InboxMail } from './inbox-mail';
 import { poplatekZData } from './poplatek';
+import { jePotvrzeniPredmet, parsujPotvrzeni } from './potvrzeni-rezervace';
 import { posliPruvodce } from './posli-pruvodce';
+import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
 import {
   createProcessStore,
   prazdnaRezervace,
@@ -155,7 +157,17 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
   }
 
   if (jeInterniPredmet(mail.subject)) {
+    const odMajitele = jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '');
+    if (odMajitele && druhZeSubjectu(mail.subject) === 'nova') {
+      const u = parsujInterni(mail.subject, mail.html, mail.text);
+      return zpracujOdMajitele(mail, store, now, u ? doplnekZInterni(u) : null, u?.chybi || []);
+    }
     return zpracujInterni(mail, store, now);
+  }
+
+  if (jePotvrzeniPredmet(mail.subject) && jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '')) {
+    const u = parsujPotvrzeni(mail.subject, mail.html, mail.text);
+    return zpracujOdMajitele(mail, store, now, u, u?.chybi || []);
   }
 
   const body = bodyForParse(mail);
@@ -364,6 +376,69 @@ function historieInterni(u: InterniUdaje, stav: RezervaceStav, odeslano: boolean
   if (u.druh === 'zmena') return 'Rezervace se změnila';
   if (stav === 'bez_checkinu') return 'Nová rezervace, čeká na check-in';
   return 'Nová rezervace, údaje doplněny';
+}
+
+function doplnekZInterni(u: InterniUdaje): DoplnekRezervace {
+  return {
+    rezervace: u.rezervace || '',
+    jmeno: u.jmeno,
+    telefon: u.telefonPuvodni || u.telefon,
+    email: u.email,
+    apartman: u.apartman,
+    prijezd: u.prijezd,
+    odjezd: u.odjezd,
+    osob: u.osob,
+    noci: u.noci,
+    zdroj: u.zdroj,
+    checkinUrl: u.checkinUrl,
+  };
+}
+
+async function zpracujOdMajitele(
+  mail: InboxMail,
+  store: ProcessStore,
+  now: string,
+  vstup: DoplnekRezervace | null,
+  chybi: string[],
+): Promise<ProcessItem> {
+  if (!vstup?.rezervace) {
+    await store.markMessage({
+      messageId: mail.messageId,
+      uid: mail.uid,
+      processedAt: now,
+      status: 'skipped_no_data',
+      reason: 'bez čísla rezervace',
+    });
+    return { status: 'skipped_no_data', reason: 'bez čísla rezervace' };
+  }
+  const email = (vstup.email || '').trim();
+  const cisty = email && !problemEmailu(email) ? email : null;
+  const chybiVcetne = cisty || !email ? chybi : [...chybi, 'e-mail'];
+  const vysledek = await doplnRezervaci(
+    store,
+    { ...vstup, email: cisty },
+    { stitek: 'info', historie: 'Přeposláno z info@', chybi: chybiVcetne },
+  );
+  if (!vysledek.ok) {
+    await store.markMessage({
+      messageId: mail.messageId,
+      uid: mail.uid,
+      processedAt: now,
+      rezervace: vstup.rezervace,
+      status: 'rejected',
+      reason: vysledek.error,
+    });
+    return { rezervace: vstup.rezervace, status: 'rejected', reason: vysledek.error };
+  }
+  await store.markMessage({
+    messageId: mail.messageId,
+    uid: mail.uid,
+    processedAt: now,
+    rezervace: vstup.rezervace,
+    status: 'skipped_no_data',
+    reason: 'preposlano',
+  });
+  return { rezervace: vstup.rezervace, status: 'bez_checkinu' };
 }
 
 async function zpracujInterni(mail: InboxMail, store: ProcessStore, now: string): Promise<ProcessItem> {

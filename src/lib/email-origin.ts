@@ -15,6 +15,13 @@ function extractEmail(from: string): string {
   return (m ? m[1] : from).trim().toLowerCase();
 }
 
+/** Jen shoda odesílatele s MAJITEL_PREPOSILA_Z. Bez SPF a DKIM. */
+export function jeMailMajitele(from: string, majitelPreposilaZ: string): boolean {
+  const majitel = extractEmail(majitelPreposilaZ);
+  if (!majitel || !majitel.includes('@')) return false;
+  return extractEmail(from) === majitel;
+}
+
 function domainOf(email: string): string {
   const at = email.lastIndexOf('@');
   return at >= 0 ? email.slice(at + 1) : '';

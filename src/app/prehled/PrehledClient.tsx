@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import apartmanyJson from '@/data/apartmany.json';
 import {
   dotazPredOdeslanimZnovu,
@@ -83,6 +83,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   const [volba, setVolba] = useState<Record<string, string>>({});
   const [odkazy, setOdkazy] = useState<Record<string, string>>({});
   const [ulozeneOdkazy, setUlozeneOdkazy] = useState<Record<string, string>>({});
+  const [pridat, setPridat] = useState(false);
 
   function casRadku(row: PrehledRadek): string {
     return casy[row.rezervace] ?? row.casPrijezdu ?? '';
@@ -90,6 +91,39 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
 
   function telefonRadku(row: PrehledRadek): string {
     return telefony[row.rezervace] ?? row.telefonText ?? '';
+  }
+
+  async function ulozPridani(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (ukazka) {
+      setHlaska('V náhledu se rezervace neukládá.');
+      return;
+    }
+    const data = new FormData(event.currentTarget);
+    setCekam('pridat');
+    setHlaska('');
+    const res = await fetch('/api/prehled/pridat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rezervace: String(data.get('rezervace') || ''),
+        jmeno: String(data.get('jmeno') || ''),
+        telefon: String(data.get('telefon') || ''),
+        email: String(data.get('email') || ''),
+        apartman: String(data.get('apartman') || ''),
+        prijezd: String(data.get('prijezd') || ''),
+        odjezd: String(data.get('odjezd') || ''),
+        osob: String(data.get('osob') || ''),
+        zdroj: String(data.get('zdroj') || ''),
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Rezervace se nepřidala.');
+      return;
+    }
+    window.location.reload();
   }
 
   function telefonPole(row: PrehledRadek) {
@@ -315,6 +349,8 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           <div className="ph-jmeno">{kdo}</div>
           {kde ? <div className="ph-kde">{kde}</div> : null}
           {row.stav === 'bez_checkinu' ? <div className="ph-neni-checkin">Není check-in</div> : null}
+          {row.stitek === 'rucne' ? <div className="ph-stitek">přidáno ručně</div> : null}
+          {row.stitek === 'info' ? <div className="ph-stitek">přeposláno z info@</div> : null}
           {pruvodce ? <div className={`ph-pruvodce ph-pruvodce--${pruvodce.ton}`}>{pruvodce.text}</div> : null}
           {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
           {telefonPole(row)}
@@ -498,6 +534,67 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
       </header>
+
+      <button type="button" className="ph-rozbal" onClick={() => setPridat((v) => !v)}>
+        {pridat ? 'Skrýt formulář' : 'Přidat rezervaci'}
+      </button>
+      {pridat ? (
+        <form className="ph-pridani" onSubmit={ulozPridani}>
+          <label>
+            Číslo rezervace
+            <input name="rezervace" inputMode="numeric" required autoComplete="off" />
+          </label>
+          <label>
+            Jméno a příjmení
+            <input name="jmeno" autoComplete="name" />
+          </label>
+          <label>
+            Telefon
+            <input name="telefon" type="tel" inputMode="tel" autoComplete="tel" />
+          </label>
+          <label className="ph-siroke">
+            E-mail
+            <input name="email" type="email" autoComplete="email" />
+          </label>
+          <label>
+            Apartmán
+            <select name="apartman" defaultValue="">
+              <option value="">nevybráno</option>
+              {apartmany.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.id} {a.nazev.cs}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Příjezd
+            <input name="prijezd" type="date" />
+          </label>
+          <label>
+            Odjezd
+            <input name="odjezd" type="date" />
+          </label>
+          <label>
+            Počet osob
+            <input name="osob" inputMode="numeric" />
+          </label>
+          <label>
+            Zdroj
+            <select name="zdroj" defaultValue="">
+              <option value="">nevybráno</option>
+              <option value="Booking">Booking</option>
+              <option value="Airbnb">Airbnb</option>
+              <option value="přímá">přímá</option>
+            </select>
+          </label>
+          <div className="ph-akce-spodek">
+            <button type="submit" disabled={cekam !== null}>
+              Uložit
+            </button>
+          </div>
+        </form>
+      ) : null}
 
       <div className="ph-filtry">
         <label>

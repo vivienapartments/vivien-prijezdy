@@ -57,6 +57,7 @@ export type PrehledRadek = {
   vytvorenoText: string;
   odkaz: string | null;
   zprava: string;
+  stitek: 'rucne' | 'info' | null;
 };
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
@@ -436,6 +437,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     odkaz: null,
     zpravy,
     zprava: zpravy.find((z) => z.vychozi)?.text || '',
+    stitek: rec.stitek,
   };
 }
 

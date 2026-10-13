@@ -104,6 +104,20 @@ export function aptFromCzechName(name: string): AptId | null {
   return APT_IDS.includes(asId) ? asId : null;
 }
 
+/** Název apartmánu kdekoli ve větě, ne jen přesná shoda. */
+export function aptZTextu(raw: string | null | undefined): AptId | null {
+  const s = (raw || '').trim();
+  if (!s) return null;
+  const prime = aptFromCzechName(s);
+  if (prime) return prime;
+  const n = s.toLowerCase();
+  const sorted = [...apartmany].sort((a, b) => b.nazev.cs.length - a.nazev.cs.length);
+  for (const a of sorted) {
+    if (n.includes(a.nazev.cs.toLowerCase()) || n.includes(a.nazev.en.toLowerCase())) return a.id;
+  }
+  return null;
+}
+
 export function langFromNarodnost(raw: string | null | undefined): GuideLang {
   if (!raw) return 'en';
   // BH někdy pošle "TWN", jindy "Taiwan" / "TW" / "Taiwan, Province of China"

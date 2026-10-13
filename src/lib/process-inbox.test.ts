@@ -403,4 +403,160 @@ Original-Message-ID: <x>
     expect(sendGuestEmail).not.toHaveBeenCalled();
     expect((await store.getRezervace('100000001'))?.stav).toBe('zruseno');
   });
+
+  it('ruční přidání založí záznam a stejné číslo ho jen doplní', async () => {
+    const { doplnRezervaci } = await import('./rezervace-rucne');
+    const store = tmpStore();
+    const zalozeno = await doplnRezervaci(
+      store,
+      {
+        rezervace: '120260541',
+        jmeno: 'Eva Dvořáková',
+        telefon: '777 123 456',
+        apartman: 'V3',
+        prijezd: '2026-11-16',
+        odjezd: '2026-11-18',
+        osob: 2,
+        zdroj: 'Booking',
+      },
+      { stitek: 'rucne', historie: 'Přidáno ručně' },
+    );
+    expect(zalozeno).toEqual({ ok: true, nova: true });
+    const pred = await store.getRezervace('120260541');
+    expect(pred?.stav).toBe('bez_checkinu');
+    expect(pred?.stitek).toBe('rucne');
+    expect(pred?.telefonRezervace).toBe('+420777123456');
+    expect(pred?.jmeno).toBe('Eva Dvořáková');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+
+    const doplneno = await doplnRezervaci(
+      store,
+      { rezervace: '120260541', jmeno: 'Jiný člověk', email: 'eva@example.com' },
+      { stitek: 'rucne', historie: 'Přidáno ručně' },
+    );
+    expect(doplneno).toEqual({ ok: true, nova: false });
+    const po = await store.getRezervace('120260541');
+    expect(po?.jmeno).toBe('Eva Dvořáková');
+    expect(po?.emailHosta).toBe('eva@example.com');
+    expect(po?.stitek).toBe('rucne');
+  });
+
+  it('check-in ruční záznam doplní a průvodce odejde, telefon z formuláře zůstane', async () => {
+    const { doplnRezervaci } = await import('./rezervace-rucne');
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    await doplnRezervaci(
+      store,
+      {
+        rezervace: '120260530',
+        jmeno: 'Eva Dvořáková',
+        telefon: '777 123 456',
+        apartman: 'V3',
+      },
+      { stitek: 'rucne', historie: 'Přidáno ručně' },
+    );
+    const item = await processOneMail(
+      mail({
+        messageId: 'rucni-checkin@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com; spf=pass',
+        text: BLOCK,
+      }),
+      store,
+    );
+    expect(item.status).toBe('sent');
+    expect(sendGuestEmail).toHaveBeenCalledOnce();
+    const po = await store.getRezervace('120260530');
+    expect(po?.stav).toBe('odeslano');
+    expect(po?.telefonRezervace).toBe('+420777123456');
+    expect(po?.apartman).toBe('V5');
+  });
+
+  it('přeposlaná nová rezervace z info@ založí řádek a hostovi nic nepošle', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'fwd-nova@test',
+        from: `VIVIEN <${MAJITEL}>`,
+        subject: NOVA,
+        authenticationResults: 'dkim=pass header.d=seznam.cz',
+        text: TELO,
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const rec = await store.getRezervace('100000001');
+    expect(rec?.stitek).toBe('info');
+    expect(rec?.jmeno).toBe('Jana Malá');
+    expect(rec?.apartman).toBe('V1');
+  });
+
+  it('potvrzení rezervace z info@ založí řádek', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'fwd-potvrzeni@test',
+        from: MAJITEL,
+        subject: 'Rezervace 120260541, Jan Novák : Potvrzení rezervace',
+        authenticationResults: null,
+        text: [
+          'Jméno: Jan Novák',
+          'E-mail: jan@example.com',
+          'Telefon: 777 111 222',
+          'Příjezd: 16.11.2026',
+          'Odjezd: 18.11.2026',
+          'Typ ubytování: Večerní elegance',
+          'Počet nocí: 2',
+        ].join('\n'),
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const rec = await store.getRezervace('120260541');
+    expect(rec?.stitek).toBe('info');
+    expect(rec?.jmeno).toBe('Jan Novák');
+    expect(rec?.apartman).toBe('V3');
+    expect(rec?.prijezd).toBe('2026-11-16');
+    expect(rec?.odjezd).toBe('2026-11-18');
+    expect(rec?.telefonRezervace).toBe('+420777111222');
+    expect(rec?.noci).toBe(2);
+  });
+
+  it('přeposlaný check-in z info@ se Seznamem neprojde a průvodce neodejde', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'fwd-checkin-seznam@test',
+        from: `VIVIEN <${MAJITEL}>`,
+        subject: 'Fwd: check-in',
+        authenticationResults: 'dkim=pass header.d=seznam.cz',
+        text: BLOCK,
+      }),
+      store,
+    );
+    expect(item.status).toBe('rejected');
+    expect(item.reason).toBe('Přeposlání bez platného SPF/DKIM majitele');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+  });
+
+  it('přeposlaný check-in z info@ projde, jen když ověření patří schránce', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'fwd-checkin-ok@test',
+        from: `VIVIEN <${MAJITEL}>`,
+        authenticationResults: 'spf=pass smtp.mailfrom=vivienapartments.cz',
+        text: BLOCK,
+      }),
+      store,
+    );
+    expect(item.status).toBe('sent');
+    expect(sendGuestEmail).toHaveBeenCalledOnce();
+  });
 });
