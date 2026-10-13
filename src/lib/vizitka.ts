@@ -1,5 +1,5 @@
 import apartmanyJson from '@/data/apartmany.json';
-import { terminText } from './prehled';
+import { terminKratky, terminText } from './prehled';
 import type { RezervaceRecord } from './store';
 
 type AptRow = { id: string; nazev: { cs: string } };
@@ -31,12 +31,6 @@ function telProVizitku(ulozeny: string | null): string | null {
   return raw;
 }
 
-function denPrijezdu(ymd: string | null): string | null {
-  if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
-  const [, m, d] = ymd.split('-');
-  return `${Number(d)}.${Number(m)}.`;
-}
-
 function nazevApartmanu(id: string | null): string {
   if (!id) return '';
   const a = apartmany.find((x) => x.id === id);
@@ -44,28 +38,17 @@ function nazevApartmanu(id: string | null): string {
 }
 
 function jmenoKontaktu(rec: RezervaceRecord): string {
-  const jmeno = (rec.jmeno || '').trim();
-  const casti = [jmeno || rec.rezervace];
+  const jmeno = (rec.jmeno || '').trim() || rec.rezervace;
+  const casti = [jmeno];
   if (rec.apartman) casti.push(rec.apartman);
-  const den = denPrijezdu(rec.prijezd);
-  if (den) casti.push(den);
+  const termin = terminKratky(rec.prijezd, rec.odjezd);
+  if (termin) casti.push(termin);
   return casti.join(' · ');
 }
 
-function poleN(rec: RezervaceRecord): string {
-  const jmeno = (rec.jmeno || '').trim();
-  if (!jmeno) return `${escapeVCard(rec.rezervace)};;;;`;
-  const krestni = (rec.krestni || '').trim();
-  if (krestni && (jmeno === krestni || jmeno.startsWith(`${krestni} `))) {
-    const prijmeni = jmeno.slice(krestni.length).trim();
-    return `${escapeVCard(prijmeni)};${escapeVCard(krestni)};;;`;
-  }
-  const slova = jmeno.split(' ').filter(Boolean);
-  if (slova.length >= 2) {
-    const prijmeni = slova.pop() || '';
-    return `${escapeVCard(prijmeni)};${escapeVCard(slova.join(' '))};;;`;
-  }
-  return `;${escapeVCard(jmeno)};;;`;
+/** Celý text je křestní jméno. Příjmení necháváme prázdné, ať ho telefon nedá na další řádek. */
+function poleN(text: string): string {
+  return `;${escapeVCard(text)};;;`;
 }
 
 function telefony(rec: RezervaceRecord): string[] {
@@ -111,7 +94,7 @@ export function sestavVizitku(rec: RezervaceRecord): VizitkaSoubor | null {
   const radky = [
     'BEGIN:VCARD',
     'VERSION:3.0',
-    `N:${poleN(rec)}`,
+    `N:${poleN(fn)}`,
     `FN:${escapeVCard(fn)}`,
     ...cisla.map((tel) => `TEL;TYPE=CELL:${tel}`),
   ];

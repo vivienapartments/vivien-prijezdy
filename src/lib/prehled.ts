@@ -1,7 +1,7 @@
 import apartmanyJson from '@/data/apartmany.json';
 import type { PoplatekStav } from './poplatek';
 import type { ProcessStore, RezervaceRecord, RezervaceStav } from './store';
-import { textTelefonu } from './telefon';
+import { normalizujTelefon, textTelefonu } from './telefon';
 import type { AptId, GuideLang } from './types';
 import { LANG_LABELS } from './types';
 import { zpravyMenu, type ZpravaMenu } from './whatsapp-zprava';
@@ -31,6 +31,7 @@ export type PrehledRadek = {
   jazyk: GuideLang | null;
   jazykText: string;
   vlajka: string;
+  narodnost: string | null;
   accessPin: string | null;
   poplatek: PoplatekStav;
   poplatekText: string;
@@ -115,6 +116,49 @@ export function terminText(prijezd: string | null, odjezd: string | null): strin
   if (prijezd) return czDen(prijezd);
   if (odjezd) return czDen(odjezd);
   return '';
+}
+
+function rozpadDne(ymd: string | null): { d: number; m: number; y: number } | null {
+  if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
+  const [y, m, d] = ymd.split('-').map(Number);
+  if (!y || !m || !d) return null;
+  return { d, m, y };
+}
+
+/** Příjezd a odjezd bez roku. Stejný měsíc je 12.–14.10., přes měsíc 30.10.–2.11. */
+export function terminKratky(prijezd: string | null, odjezd: string | null): string {
+  const a = rozpadDne(prijezd);
+  const b = rozpadDne(odjezd);
+  if (a && b) {
+    if (a.y === b.y && a.m === b.m) return `${a.d}.–${b.d}.${b.m}.`;
+    return `${a.d}.${a.m}.–${b.d}.${b.m}.`;
+  }
+  const jeden = a || b;
+  return jeden ? `${jeden.d}.${jeden.m}.` : '';
+}
+
+/** Krátký poplatek do sbaleného řádku. Výpočet zůstává v detailu. */
+export function poplatekKratky(stav: PoplatekStav, noci: number | null, osob: number | null): string {
+  if (stav === 'ne') return 'Poplatek ne';
+  if (stav === 'neznamo') return 'Poplatek neznámo';
+  if (noci && osob && noci > 0 && osob > 0) return `Poplatek ${noci * osob * 50} Kč`;
+  if (stav === 'ano') return 'Poplatek ano';
+  return '';
+}
+
+/** Jedna červená věta ve sbaleném řádku, když se mail neodeslal, vrátil, nebo číslo není jisté. */
+export function vetaChyby(row: {
+  stav: RezervaceStav;
+  telefonNejisty: boolean;
+  jinyTelefonNejisty: boolean;
+}): string | null {
+  const nejisty = row.telefonNejisty || row.jinyTelefonNejisty;
+  if (row.stav === 'neodeslano' && nejisty) return 'Průvodce se neodeslal, ověřte předvolbu.';
+  if (row.stav === 'vraceno' && nejisty) return 'E-mail se vrátil, ověřte předvolbu.';
+  if (row.stav === 'neodeslano') return 'Průvodce se neodeslal.';
+  if (row.stav === 'vraceno') return 'E-mail se vrátil.';
+  if (nejisty) return 'Ověřte předvolbu.';
+  return null;
 }
 
 export function pobytText(noci: number | null, osob: number | null): string {
@@ -248,11 +292,15 @@ function kusTelefonu(
   wa: string | null,
   puvodni: string | null,
   ktery: 'checkin' | 'rezervace',
+  narodnost: string | null,
 ): TelefonKus | null {
   if (!ulozeny) return null;
-  const text = textTelefonu(ulozeny);
-  const ukazat = puvodni && cislice(puvodni) !== cislice(ulozeny) ? puvodni : null;
-  return { text, wa, puvodni: ukazat, nejisty: !wa, ktery };
+  const znovu = normalizujTelefon(ulozeny, narodnost);
+  const hotovy = znovu && !znovu.nejisty ? znovu.ulozeny : ulozeny;
+  const waHotove = znovu && !znovu.nejisty ? znovu.wa : wa;
+  const text = textTelefonu(hotovy);
+  const ukazat = puvodni && cislice(puvodni) !== cislice(hotovy) ? puvodni : null;
+  return { text, wa: waHotove, puvodni: ukazat, nejisty: !waHotove, ktery };
 }
 
 /** Hlavní telefon je z check-inu. Když se liší, druhé číslo z rezervace zůstane vidět. */
@@ -268,8 +316,14 @@ export function telefonyPrehledu(rec: RezervaceRecord): {
   jinyNejisty: boolean;
   jinyKtery: 'checkin' | 'rezervace' | null;
 } {
-  const checkin = kusTelefonu(rec.telefon, rec.telefonWa, rec.telefonPuvodni, 'checkin');
-  const rezervace = kusTelefonu(rec.telefonRezervace, rec.telefonRezervaceWa, rec.telefonRezervacePuvodni, 'rezervace');
+  const checkin = kusTelefonu(rec.telefon, rec.telefonWa, rec.telefonPuvodni, 'checkin', rec.narodnost);
+  const rezervace = kusTelefonu(
+    rec.telefonRezervace,
+    rec.telefonRezervaceWa,
+    rec.telefonRezervacePuvodni,
+    'rezervace',
+    rec.narodnost,
+  );
   const prazdny = {
     text: null,
     wa: null,
@@ -356,6 +410,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     jazyk: rec.jazyk,
     jazykText: chybi(jazykText, stary),
     vlajka: vlajkaNarodnosti(rec.narodnost),
+    narodnost: rec.narodnost,
     accessPin: rec.accessPin,
     poplatek: rec.poplatek,
     poplatekText: textPoplatku(rec.poplatek, rec.noci, rec.osob),
@@ -380,7 +435,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     vytvorenoText: chybi(rec.vytvoreno ? czDenRok(rec.vytvoreno) : '', stary),
     odkaz: null,
     zpravy,
-    zprava: zpravy[0]?.text || '',
+    zprava: zpravy.find((z) => z.vychozi)?.text || '',
   };
 }
 

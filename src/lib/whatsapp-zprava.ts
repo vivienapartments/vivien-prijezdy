@@ -133,7 +133,7 @@ const DEN_CAS: Record<JazykZpravy, string> = {
 
 export type DruhZpravy = 'checkin' | 'neotevrel' | 'cas' | 'denBez' | 'denCas';
 
-export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string };
+export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string; vychozi: boolean };
 
 const PORADI: DruhZpravy[] = ['checkin', 'neotevrel', 'cas', 'denBez', 'denCas'];
 
@@ -194,7 +194,7 @@ export function zpravaDneSCasem(lang: GuideLang | null, cas: string | null, odka
   return sestav(textDneSCasem(lang, cas), odkaz, lang);
 }
 
-/** Která zpráva sedí na stav hosta. Ta je v menu nahoře. */
+/** Která zpráva sedí na stav hosta. Řádky menu se kvůli tomu neprohazují. */
 export function hlavniZprava(opts: {
   stav: string;
   otevrenoPocet: number | null;
@@ -227,8 +227,7 @@ export function zpravyMenu(opts: {
     denCas: zpravaDneSCasem(opts.lang, opts.casPrijezdu, opts.pruvodce),
   };
   const hlavni = hlavniZprava(opts);
-  const poradi: DruhZpravy[] = [hlavni, ...PORADI.filter((id) => id !== hlavni)];
-  return poradi.map((id) => ({ id, nazev: NAZEV[id], text: texty[id] }));
+  return PORADI.map((id) => ({ id, nazev: NAZEV[id], text: texty[id], vychozi: id === hlavni }));
 }
 
 export function odkazWhatsApp(wa: string, zprava: string): string {

@@ -31,7 +31,7 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     telefonRezervaceWa: '420777123456',
     telefonRezervacePuvodni: '777 123 456',
     zdroj: 'Booking.com',
-    casPrijezdu: '16:30',
+    casPrijezdu: null,
     otevrenoPocet: 3,
     otevrenoPoprve: '2026-10-10T12:32:00.000Z',
     otevrenoNaposled: '2026-10-10T12:32:00.000Z',
@@ -53,8 +53,8 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     vytvoreno: '2026-09-20',
     poplatek: 'ne',
     stav: 'neodeslano',
-    telefon: '+491701234567',
-    telefonWa: '491701234567',
+    telefon: '1701234567',
+    telefonWa: null,
     zdroj: 'Airbnb',
     casPrijezdu: '11:00',
     otevrenoPocet: 0,
@@ -145,7 +145,31 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     apartman: null,
   };
 
-  return [ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary];
+  const odjel: RezervaceRecord = {
+    ...prazdnaRezervace('7001', '2026-10-01T08:00:00.000Z'),
+    apartman: 'V4',
+    prijezd: posunDen(dnes, -4),
+    odjezd: posunDen(dnes, -1),
+    noci: 3,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Petra Malá',
+    krestni: 'Petra',
+    narodnost: 'CZE',
+    emailHosta: 'petra.ukazka@example.com',
+    accessPin: '0000',
+    vytvoreno: '2026-09-20',
+    poplatek: 'ano',
+    stav: 'odeslano',
+    telefon: '+420777444555',
+    telefonWa: '420777444555',
+    zdroj: 'Booking',
+    otevrenoPocet: 2,
+    otevrenoPoprve: '2026-10-08T10:00:00.000Z',
+    otevrenoNaposled: '2026-10-08T10:00:00.000Z',
+  };
+
+  return [ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel];
 }
 
 export function ukazkoveRadky(now = new Date()): PrehledRadek[] {

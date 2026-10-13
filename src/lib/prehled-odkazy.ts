@@ -20,7 +20,7 @@ export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord, now = new Date
     prijezd: rec.prijezd,
     dnes: dnesVPraze(now),
   });
-  return { ...row, odkaz, zpravy, zprava: zpravy[0]?.text || '' };
+  return { ...row, odkaz, zpravy, zprava: zpravy.find((z) => z.vychozi)?.text || '' };
 }
 
 export async function buildPrehledSOdkazy(store: ProcessStore, now = new Date()): Promise<PrehledRadek[]> {

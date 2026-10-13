@@ -2,12 +2,15 @@ import { describe, expect, it } from 'vitest';
 import {
   dotazPredOdeslanimZnovu,
   nabidnoutOdeslani,
+  poplatekKratky,
   radekZRezervace,
   seradRadky,
   souhrnDne,
   telefonyPrehledu,
+  terminKratky,
   textOtevreni,
   textPoplatku,
+  vetaChyby,
   type PrehledRadek,
 } from './prehled';
 import { normalizujCasPrijezdu } from './cas-prijezdu';
@@ -100,6 +103,21 @@ describe('tlačítka v přehledu', () => {
     );
   });
 
+  it('krátký termín a poplatek do sbaleného řádku', () => {
+    expect(terminKratky('2026-10-12', '2026-10-14')).toBe('12.–14.10.');
+    expect(terminKratky('2026-10-30', '2026-11-02')).toBe('30.10.–2.11.');
+    expect(terminKratky('2026-10-12', null)).toBe('12.10.');
+    expect(poplatekKratky('ano', 2, 2)).toBe('Poplatek 200 Kč');
+    expect(poplatekKratky('ne', 2, 2)).toBe('Poplatek ne');
+    expect(vetaChyby({ stav: 'neodeslano', telefonNejisty: false, jinyTelefonNejisty: false })).toBe(
+      'Průvodce se neodeslal.',
+    );
+    expect(vetaChyby({ stav: 'odeslano', telefonNejisty: true, jinyTelefonNejisty: false })).toBe(
+      'Ověřte předvolbu.',
+    );
+    expect(vetaChyby({ stav: 'odeslano', telefonNejisty: false, jinyTelefonNejisty: false })).toBeNull();
+  });
+
   it('čas příjezdu bere 1630 i 18:00', () => {
     expect(normalizujCasPrijezdu('1630')).toEqual({ ok: true, cas: '16:30' });
     expect(normalizujCasPrijezdu('1800')).toEqual({ ok: true, cas: '18:00' });
@@ -150,8 +168,9 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(bez.map((z) => z.id)).toEqual(['denBez', 'checkin', 'neotevrel', 'cas', 'denCas']);
-    expect(bez[0]?.text).toBe(`${textDne('cs')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
+    expect(bez.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'cas', 'denBez', 'denCas']);
+    expect(bez.find((z) => z.vychozi)?.id).toBe('denBez');
+    expect(bez.find((z) => z.id === 'denBez')?.text).toBe(`${textDne('cs')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
 
     const sCasem = zpravyMenu({
       stav: 'odeslano',
@@ -163,11 +182,12 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(sCasem[0]?.id).toBe('denCas');
-    expect(sCasem.map((z) => z.id)).toContain('denBez');
-    expect(sCasem[0]?.text).toBe(`${textDneSCasem('cs', '16:30')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
-    expect(sCasem[0]?.text).toContain('16:30');
-    expect(sCasem[0]?.text).not.toContain('4:30');
+    expect(sCasem.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'cas', 'denBez', 'denCas']);
+    expect(sCasem.find((z) => z.vychozi)?.id).toBe('denCas');
+    const textSeCasem = sCasem.find((z) => z.id === 'denCas')?.text || '';
+    expect(textSeCasem).toBe(`${textDneSCasem('cs', '16:30')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
+    expect(textSeCasem).toContain('16:30');
+    expect(textSeCasem).not.toContain('4:30');
     expect(zpravaDneSCasem('en', '16:30', odkaz)).toContain('around 16:30');
   });
 
@@ -191,8 +211,8 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(sOdkazem[0]?.text).toContain('na Airbnb.');
-    expect(sOdkazem[0]?.text).not.toContain('https://');
+    expect(sOdkazem.find((z) => z.vychozi)?.text).toContain('na Airbnb.');
+    expect(sOdkazem.find((z) => z.vychozi)?.text).not.toContain('https://');
   });
 
   it('podpis je pod odkazem a u zprávy bez odkazu hned pod textem', () => {
@@ -296,5 +316,17 @@ describe('tlačítka v přehledu', () => {
     expect(t.text).toBe('+420 777 111 222');
     expect(t.jinyText).toBe('+420 777 123 456');
     expect(t.jinyWa).toBe('420777123456');
+  });
+
+  it('číslo bez předvolby se v přehledu doplní podle země', () => {
+    const t = telefonyPrehledu({
+      ...prazdnaRezervace('1', '2026-10-01T00:00:00.000Z'),
+      narodnost: 'DEU',
+      telefon: '1701234567',
+      telefonWa: null,
+    });
+    expect(t.text).toBe('+49 1701234567');
+    expect(t.wa).toBe('491701234567');
+    expect(t.nejisty).toBe(false);
   });
 });

@@ -5,8 +5,11 @@ import apartmanyJson from '@/data/apartmany.json';
 import {
   dotazPredOdeslanimZnovu,
   nabidnoutOdeslani,
+  poplatekKratky,
   souhrnDne,
   STARY_ZAZNAM,
+  terminKratky,
+  vetaChyby,
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
@@ -40,6 +43,13 @@ type Props = {
   userAgent?: string;
 };
 
+function textPruvodce(row: PrehledRadek): { text: string; ton: 'ano' | 'ne' | 'nevim' } | null {
+  if (row.stav === 'bez_checkinu') return null;
+  if (row.otevrenoPocet == null) return { text: 'Nevíme', ton: 'nevim' };
+  if (row.otevrenoPocet <= 0) return { text: 'Průvodce neotevřen', ton: 'ne' };
+  return { text: `Průvodce otevřen ${row.otevrenoPocet}×`, ton: 'ano' };
+}
+
 function Pole({ text }: { text: string }) {
   if (!text) return null;
   if (text === STARY_ZAZNAM) return <span className="ph-stary">{text}</span>;
@@ -64,6 +74,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   const [den, setDen] = useState<'' | 'dnes' | 'zitra'>('');
   const [jenNeotevreni, setJenNeotevreni] = useState(false);
   const [jenBezCheckinu, setJenBezCheckinu] = useState(false);
+  const [odjeliOtevreno, setOdjeliOtevreno] = useState(false);
   const [otevreno, setOtevreno] = useState<string | null>(null);
   const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState<string | null>(null);
@@ -81,9 +92,23 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     return telefony[row.rezervace] ?? row.telefonText ?? '';
   }
 
+  function telefonPole(row: PrehledRadek) {
+    return (
+      <label className="ph-tel-pole">
+        Telefon
+        <input
+          value={telefonRadku(row)}
+          inputMode="tel"
+          autoComplete="off"
+          onChange={(e) => setTelefony((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
+          onBlur={(e) => ulozTelefon(row, row.telefonKtery || 'rezervace', e.target.value)}
+        />
+      </label>
+    );
+  }
+
   function jeRozbaleno(row: PrehledRadek): boolean {
-    if (row.rezervace in rozbalene) return rozbalene[row.rezervace];
-    return row.prijezd === dnes;
+    return rozbalene[row.rezervace] === true;
   }
 
   const dnesSouhrn = useMemo(
@@ -171,7 +196,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   }
 
   function zpravaRadku(row: PrehledRadek): string {
-    const id = volba[row.rezervace] ?? row.zpravy[0]?.id;
+    const id = volba[row.rezervace] ?? row.zpravy.find((z) => z.vychozi)?.id;
     return row.zpravy.find((z) => z.id === id)?.text || row.zprava;
   }
 
@@ -199,7 +224,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     if (!cislo) return;
     const ukazane = (ktery === row.jinyTelefonKtery ? row.jinyTelefonText : row.telefonText) || '';
     if (cislo === ukazane.trim()) return;
-    const tel = normalizujTelefon(cislo);
+    const tel = normalizujTelefon(cislo, row.narodnost);
     if (!tel) {
       setHlaska('Napište číslo.');
       return;
@@ -265,19 +290,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
         type="button"
         className={den === ktery ? 'ph-den is-on' : 'ph-den'}
         aria-pressed={den === ktery}
-        onClick={() => {
-          const zapnout = den !== ktery;
-          setDen(zapnout ? ktery : '');
-          if (!zapnout) return;
-          const cil = ktery === 'dnes' ? dnes : zitra;
-          setRozbalene((stav) => {
-            const nove = { ...stav };
-            for (const row of radky) {
-              if (row.prijezd === cil) nove[row.rezervace] = true;
-            }
-            return nove;
-          });
-        }}
+        onClick={() => setDen(den === ktery ? '' : ktery)}
       >
         <span>
           {nadpis}: {souhrn.pocet} · průvodce otevřelo {souhrn.otevrelo} · neodesláno {souhrn.neodeslano} · bez
@@ -287,6 +300,193 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
       </button>
     );
   }
+
+  function kartaHosta(row: PrehledRadek) {
+    const rozbaleno = jeRozbaleno(row);
+    const kdo = row.jmeno && row.jmeno !== STARY_ZAZNAM ? row.jmeno : row.rezervace;
+    const termin = terminKratky(row.prijezd, row.odjezd);
+    const kde = [row.apartman, termin].filter(Boolean).join(' · ');
+    const pruvodce = textPruvodce(row);
+    const chyba = vetaChyby(row);
+    const wa = row.telefonWa || row.jinyTelefonWa;
+    return (
+      <article key={row.rezervace} id={row.rezervace} className={rozbaleno ? 'ph-row is-open' : 'ph-row is-shut'}>
+        <div className="ph-shrnuti">
+          <div className="ph-jmeno">{kdo}</div>
+          {kde ? <div className="ph-kde">{kde}</div> : null}
+          {row.stav === 'bez_checkinu' ? <div className="ph-neni-checkin">Není check-in</div> : null}
+          {pruvodce ? <div className={`ph-pruvodce ph-pruvodce--${pruvodce.ton}`}>{pruvodce.text}</div> : null}
+          {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
+          {telefonPole(row)}
+          <label className="ph-cas ph-cas-prijezd">
+            Čas příjezdu
+            <input
+              value={casRadku(row)}
+              inputMode="numeric"
+              onChange={(e) => setCasy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
+              onBlur={(e) => ulozCas(row, e.target.value)}
+            />
+          </label>
+          <div className="ph-poplatek-kratky">{poplatekKratky(row.poplatek, row.noci, row.osob)}</div>
+          {row.zpravy.length && wa ? (
+            <fieldset className="ph-menu">
+              <legend>Zpráva</legend>
+              {row.zpravy.map((z) => {
+                const vybrano = (volba[row.rezervace] ?? row.zpravy.find((z) => z.vychozi)?.id) === z.id;
+                return (
+                  <label key={z.id} className={vybrano ? 'is-on' : ''}>
+                    <input
+                      type="radio"
+                      name={`zprava-${row.rezervace}`}
+                      checked={vybrano}
+                      onChange={() => setVolba((prev) => ({ ...prev, [row.rezervace]: z.id }))}
+                    />
+                    {z.nazev}
+                  </label>
+                );
+              })}
+            </fieldset>
+          ) : null}
+          {wa ? (
+            <div className="ph-wa-rada">
+              <a
+                className="ph-wa"
+                href={odkazWhatsAppPrehled(wa, zpravaRadku(row), userAgent)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Napsat na WhatsApp
+              </a>
+              <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
+                Zkopírovat zprávu
+              </button>
+            </div>
+          ) : null}
+          <div className="ph-akce-spodek">
+            <button
+              type="button"
+              className="ph-rozbal"
+              aria-expanded={rozbaleno}
+              onClick={() => setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))}
+            >
+              {rozbaleno ? 'Skrýt detail ▴' : 'Detail ▾'}
+            </button>
+            <UlozitKontakt row={row} />
+          </div>
+        </div>
+        <div className="ph-detail">
+          <div className="ph-cell ph-cell--host" data-label="Host">
+            <div className="ph-mail">
+              <Pole text={row.email} />
+            </div>
+            {row.vlajka || row.jazykText ? (
+              <div className="ph-jazyk">
+                {row.vlajka ? <span className="ph-vlajka">{row.vlajka}</span> : null}
+                <Pole text={row.jazykText} />
+              </div>
+            ) : null}
+            {row.zdrojText ? (
+              <div className="ph-zdroj">
+                <Pole text={row.zdrojText} />
+              </div>
+            ) : null}
+            {row.telefonPuvodni ? <div className="ph-puvodni">napsáno {row.telefonPuvodni}</div> : null}
+            {row.telefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
+            {row.jinyTelefonText ? (
+              <div className="ph-tel-jiny">
+                jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
+                {row.jinyTelefonPuvodni ? <span className="ph-puvodni"> napsáno {row.jinyTelefonPuvodni}</span> : null}
+                {row.jinyTelefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
+                {row.jinyTelefonWa && row.telefonWa && row.jinyTelefonWa !== row.telefonWa ? (
+                  <a
+                    className="ph-wa ph-wa--maly"
+                    href={odkazWhatsAppPrehled(row.jinyTelefonWa, zpravaRadku(row), userAgent)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    WhatsApp
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
+            {row.stav === 'bez_checkinu' ? (
+              <label className="ph-cas ph-checkin">
+                Odkaz na check-in
+                <input
+                  value={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
+                  placeholder="https://"
+                  onChange={(e) => setOdkazy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
+                  onBlur={(e) => ulozOdkaz(row, e.target.value)}
+                />
+              </label>
+            ) : null}
+          </div>
+          <div className="ph-cell" data-label="Apartmán">
+            <Pole text={row.apartmanNazev} />
+            {row.pobytText ? <div className="ph-pobyt">{row.pobytText}</div> : null}
+            <div className="ph-poplatek">{row.poplatekText}</div>
+          </div>
+          <div className="ph-cell" data-label="Příjezd">
+            <Pole text={row.termin} />
+          </div>
+          <div className="ph-cell" data-label="Vytvořeno">
+            <Pole text={row.vytvorenoText} />
+          </div>
+          <div className="ph-cell" data-label="Rezervace">
+            <div>{row.rezervace}</div>
+          </div>
+          <div className="ph-cell" data-label="Co se stalo">
+            <Pole text={row.coSeStalo} />
+          </div>
+          <div className="ph-cell" data-label="Poslední pokus">
+            <Pole text={row.posledniPokusText} />
+          </div>
+          <div className="ph-akce">
+            {nabidnoutOdeslani(row.stav) ? (
+              <>
+                <button
+                  type="button"
+                  disabled={cekam !== null}
+                  onClick={() => {
+                    const dotaz = dotazPredOdeslanimZnovu(row.stav);
+                    if (dotaz && !window.confirm(dotaz)) return;
+                    volat(row, 'znovu');
+                  }}
+                >
+                  Odeslat znovu
+                </button>
+                <button type="button" onClick={() => setOtevreno(otevreno === row.rezervace ? null : row.rezervace)}>
+                  Opravit a odeslat
+                </button>
+              </>
+            ) : null}
+            {row.stav !== 'bez_checkinu' ? (
+              <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
+                Zkopírovat odkaz
+              </button>
+            ) : null}
+          </div>
+          {nabidnoutOdeslani(row.stav) && otevreno === row.rezervace ? (
+            <OpravitForm
+              row={row}
+              cekam={cekam !== null}
+              onSubmit={(extra) => volat(row, 'opravit', extra)}
+            />
+          ) : null}
+          {row.historie.length ? (
+            <ul className="ph-historie">
+              {row.historie.map((h, i) => (
+                <li key={`${h.cas}-${i}`}>{h.co}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </article>
+    );
+  }
+
+  const aktivni = viditelne.filter((row) => !(row.odjezd && row.odjezd < dnes));
+  const odjeli = viditelne.filter((row) => Boolean(row.odjezd && row.odjezd < dnes));
 
   return (
     <main className="ph">
@@ -348,228 +548,25 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
         <span>Poslední pokus</span>
       </div>
 
-      {viditelne.length === 0 ? <p className="ph-prazdno">Nic tu není.</p> : null}
+      {aktivni.length === 0 && odjeli.length === 0 ? <p className="ph-prazdno">Nic tu není.</p> : null}
 
-      {viditelne.map((row) => {
-        const rozbaleno = jeRozbaleno(row);
-        return (
-        <article key={row.rezervace} id={row.rezervace} className={rozbaleno ? 'ph-row is-open' : 'ph-row is-shut'}>
-          <div className="ph-karta-hlavicka">
-            <div className="ph-jmeno">
-              <Pole text={row.jmeno} />
-            </div>
-            <div>
-              <Pole text={row.apartmanNazev} />
-            </div>
-            <div>
-              <Pole text={row.termin} />
-            </div>
-          </div>
-          <div className="ph-cell ph-cell--stav" data-label="Stav">
-            <span className={`ph-stav ph-stav--${row.stav}`}>{row.stavText}</span>
-            {row.stav !== 'bez_checkinu' ? (
-              <div className={`ph-otev ph-otev--${row.otevreniTon}`} title={row.otevreniTitle || undefined}>
-                {row.otevreniText}
-              </div>
-            ) : null}
-          </div>
-          <div className="ph-cell ph-cell--host" data-label="Host">
-            <div className="ph-jmeno">
-              <Pole text={row.jmeno} />
-            </div>
-            <div className="ph-mail">
-              <Pole text={row.email} />
-            </div>
-            {row.vlajka || row.jazykText ? (
-              <div className="ph-jazyk">
-                {row.vlajka ? <span className="ph-vlajka">{row.vlajka}</span> : null}
-                <Pole text={row.jazykText} />
-              </div>
-            ) : null}
-            {row.zdrojText ? (
-              <div className="ph-zdroj">
-                <Pole text={row.zdrojText} />
-              </div>
-            ) : null}
-            {!rozbaleno && row.telefonText ? <div className="ph-tel">{row.telefonText}</div> : null}
-            <button
-              type="button"
-              className="ph-rozbal"
-              aria-expanded={rozbaleno}
-              onClick={() => setRozbalene((prev) => ({ ...prev, [row.rezervace]: !rozbaleno }))}
-            >
-              {rozbaleno ? 'Sbalit' : 'Rozbalit'}
-            </button>
-            {rozbaleno ? (
-            <>
-            <label className="ph-tel-pole">
-              Telefon
-              <input
-                value={telefonRadku(row)}
-                placeholder="sem napište číslo"
-                inputMode="tel"
-                autoComplete="off"
-                onChange={(e) => setTelefony((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
-                onBlur={(e) => ulozTelefon(row, row.telefonKtery || 'rezervace', e.target.value)}
-              />
-            </label>
-            {row.telefonPuvodni ? <div className="ph-puvodni">napsáno {row.telefonPuvodni}</div> : null}
-            {row.telefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
-            {row.jinyTelefonText ? (
-              <div className="ph-tel-jiny">
-                jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
-                {row.jinyTelefonPuvodni ? <span className="ph-puvodni"> napsáno {row.jinyTelefonPuvodni}</span> : null}
-                {row.jinyTelefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
-                {row.jinyTelefonWa ? (
-                  <a
-                    className="ph-wa ph-wa--maly"
-                    href={odkazWhatsAppPrehled(row.jinyTelefonWa, zpravaRadku(row), userAgent)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    WhatsApp
-                  </a>
-                ) : null}
-                {row.jinyTelefonNejisty && row.jinyTelefonKtery ? (
-                  <label className="ph-cas">
-                    Telefon
-                    <input
-                      placeholder="+420"
-                      onBlur={(e) => ulozTelefon(row, row.jinyTelefonKtery || 'rezervace', e.target.value)}
-                    />
-                  </label>
-                ) : null}
-              </div>
-            ) : null}
-            {row.stav === 'bez_checkinu' ? (
-              <label className="ph-cas ph-checkin">
-                Odkaz na check-in
-                <input
-                  value={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
-                  placeholder="https://"
-                  onChange={(e) => setOdkazy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
-                  onBlur={(e) => ulozOdkaz(row, e.target.value)}
-                />
-              </label>
-            ) : null}
-            {row.zpravy.length && (row.telefonWa || row.jinyTelefonWa) ? (
-              <fieldset className="ph-menu">
-                <legend>Zpráva</legend>
-                {row.zpravy.map((z) => {
-                  const vybrano = (volba[row.rezervace] ?? row.zpravy[0]?.id) === z.id;
-                  return (
-                    <label key={z.id} className={vybrano ? 'is-on' : ''}>
-                      <input
-                        type="radio"
-                        name={`zprava-${row.rezervace}`}
-                        checked={vybrano}
-                        onChange={() => setVolba((prev) => ({ ...prev, [row.rezervace]: z.id }))}
-                      />
-                      {z.nazev}
-                    </label>
-                  );
-                })}
-              </fieldset>
-            ) : null}
-            {row.telefonWa ? (
-              <div className="ph-wa-rada">
-                <a
-                  className="ph-wa"
-                  href={odkazWhatsAppPrehled(row.telefonWa, zpravaRadku(row), userAgent)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Napsat na WhatsApp
-                </a>
-                <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
-                  Zkopírovat zprávu
-                </button>
-                <UlozitKontakt row={row} />
-              </div>
-            ) : (
-              <UlozitKontakt row={row} />
-            )}
-            <label className="ph-cas ph-cas-prijezd">
-              Čas příjezdu
-              <input
-                value={casRadku(row)}
-                placeholder="1630"
-                inputMode="numeric"
-                onChange={(e) => setCasy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
-                onBlur={(e) => ulozCas(row, e.target.value)}
-              />
-            </label>
-            </>
-            ) : null}
-          </div>
-          <div className="ph-cell ph-cell--apt" data-label="Apartmán">
-            <Pole text={row.apartmanNazev} />
-          </div>
-          <div className="ph-cell ph-cell--pobyt" data-label="Příjezd">
-            <div className="ph-termin">
-              <Pole text={row.termin} />
-            </div>
-            {row.pobytText ? <div className="ph-pobyt">{row.pobytText}</div> : null}
-            <div className="ph-poplatek">{row.poplatekText}</div>
-          </div>
-          <div className="ph-cell" data-label="Vytvořeno">
-            <div>
-              <Pole text={row.vytvorenoText} />
-            </div>
-            <div>#{row.rezervace}</div>
-          </div>
-          <div className="ph-cell" data-label="Co se stalo">
-            <Pole text={row.coSeStalo} />
-          </div>
-          <div className="ph-cell" data-label="Poslední pokus">
-            <Pole text={row.posledniPokusText} />
-          </div>
-          {rozbaleno ? (
-          <>
-          <div className="ph-akce">
-            {nabidnoutOdeslani(row.stav) ? (
-              <>
-                <button
-                  type="button"
-                  disabled={cekam !== null}
-                  onClick={() => {
-                    const dotaz = dotazPredOdeslanimZnovu(row.stav);
-                    if (dotaz && !window.confirm(dotaz)) return;
-                    volat(row, 'znovu');
-                  }}
-                >
-                  Odeslat znovu
-                </button>
-                <button type="button" onClick={() => setOtevreno(otevreno === row.rezervace ? null : row.rezervace)}>
-                  Opravit a odeslat
-                </button>
-              </>
-            ) : null}
-            {row.stav !== 'bez_checkinu' ? (
-              <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
-                Zkopírovat odkaz
-              </button>
-            ) : null}
-          </div>
-          {nabidnoutOdeslani(row.stav) && otevreno === row.rezervace ? (
-            <OpravitForm
-              row={row}
-              cekam={cekam !== null}
-              onSubmit={(extra) => volat(row, 'opravit', extra)}
-            />
-          ) : null}
-          {row.historie.length ? (
-            <ul className="ph-historie">
-              {row.historie.map((h, i) => (
-                <li key={`${h.cas}-${i}`}>{h.co}</li>
-              ))}
-            </ul>
-          ) : null}
-          </>
-          ) : null}
-        </article>
-        );
-      })}
+      {aktivni.map((row) => kartaHosta(row))}
+
+      {odjeli.length ? (
+        <section className="ph-odjeli">
+          <h2>Odjeli</h2>
+          <button
+            type="button"
+            className="ph-rozbal"
+            aria-expanded={odjeliOtevreno}
+            onClick={() => setOdjeliOtevreno((v) => !v)}
+          >
+            {odjeliOtevreno ? 'Skrýt detail ▴' : 'Detail ▾'}
+          </button>
+          {odjeliOtevreno ? odjeli.map((row) => kartaHosta(row)) : null}
+        </section>
+      ) : null}
+
     </main>
   );
 }

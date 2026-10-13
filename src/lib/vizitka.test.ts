@@ -23,16 +23,18 @@ describe('vizitka hosta', () => {
     );
     expect(vcf).not.toBeNull();
     expect(vcf?.telo.startsWith('BEGIN:VCARD\r\nVERSION:3.0\r\n')).toBe(true);
-    expect(vcf?.telo).toContain('N:Dvořáková;Eva;;;');
-    expect(vcf?.telo).toContain('FN:Eva Dvořáková · V3 · 12.10.');
+    expect(vcf?.telo).toContain('N:;Eva Dvořáková · V3 · 12.–15.10.;;;');
+    expect(vcf?.telo).toContain('FN:Eva Dvořáková · V3 · 12.–15.10.');
+    expect(vcf?.telo).not.toContain('ORG:');
+    expect(vcf?.telo).not.toContain('TITLE:');
     expect(vcf?.telo).toContain('TEL;TYPE=CELL:+420777123456');
     expect(vcf?.telo).not.toContain('777 123 456');
     expect(vcf?.telo).toContain('EMAIL:eva.ukazka@example.com');
     expect(vcf?.telo).toContain('NOTE:Večerní elegance (V3)\\n12. 10. → 15. 10.\\n#8004');
     expect(vcf?.telo).toContain('ř');
     expect(vcf?.telo).not.toContain('=C5');
-    expect(vcf?.soubor).toBe('Eva-Dvorakova-V3-12.10.vcf');
-    expect(vcf?.souborUtf).toBe('Eva Dvořáková · V3 · 12.10.vcf');
+    expect(vcf?.soubor).toBe('Eva-Dvorakova-V3-12.-15.10.vcf');
+    expect(vcf?.souborUtf).toBe('Eva Dvořáková · V3 · 12.–15.10.vcf');
   });
 
   it('přidá druhé číslo a bez jména použije číslo rezervace', () => {
@@ -71,8 +73,37 @@ describe('vizitka hosta', () => {
         emailHosta: null,
       }),
     );
+    expect(bezJmena?.telo).toContain('N:;9003 · V5 · 12.10.;;;');
     expect(bezJmena?.telo).toContain('FN:9003 · V5 · 12.10.');
     expect(bezJmena?.telo).not.toContain('EMAIL');
     expect(sestavVizitku(host({ jmeno: 'Eva', telefon: null, telefonRezervace: null }))).toBeNull();
+  });
+
+  it('stejný měsíc zkrátí a přes měsíc nechá oba dny', () => {
+    const stejny = sestavVizitku(
+      host({
+        jmeno: 'Jan Novák',
+        apartman: 'V3',
+        prijezd: '2026-10-12',
+        odjezd: '2026-10-14',
+        telefon: '+420777111222',
+      }),
+    );
+    const text = 'Jan Novák · V3 · 12.–14.10.';
+    expect(stejny?.telo).toContain(`N:;${text};;;`);
+    expect(stejny?.telo).toContain(`FN:${text}`);
+
+    const pres = sestavVizitku(
+      host({
+        jmeno: 'Jan Novák',
+        apartman: 'V3',
+        prijezd: '2026-10-30',
+        odjezd: '2026-11-02',
+        telefon: '+420777111222',
+      }),
+    );
+    const dlouhy = 'Jan Novák · V3 · 30.10.–2.11.';
+    expect(pres?.telo).toContain(`N:;${dlouhy};;;`);
+    expect(pres?.telo).toContain(`FN:${dlouhy}`);
   });
 });

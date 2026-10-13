@@ -125,17 +125,17 @@ export function normalizujTelefon(raw: string | null | undefined, narodnost?: st
 
   if (znaPredvolbu(digits)) return jisty(digits);
 
-  if (digits.length === 9 && /^[67]/.test(digits)) return jisty(`420${digits}`);
-
-  if (digits.startsWith('0')) {
-    const kod = kodNarodnosti(narodnost);
-    const bezNuly = digits.slice(1);
-    if (kod && bezNuly && !bezNuly.startsWith('0')) {
-      const cele = `${kod}${bezNuly}`;
-      if (cele.length >= 8 && cele.length <= 15) return jisty(cele);
+  const kod = kodNarodnosti(narodnost);
+  if (kod) {
+    const mistni = digits.startsWith('0') ? digits.slice(1) : digits;
+    if (mistni && !mistni.startsWith('0')) {
+      const cele = mistni.startsWith(kod) ? mistni : `${kod}${mistni}`;
+      const pravidlo = PREDVOLBY.find((p) => p.kod === kod);
+      if (pravidlo && cele.length >= pravidlo.min && cele.length <= pravidlo.max) return jisty(cele);
     }
-    return nejisty();
   }
+
+  if (digits.length === 9 && /^[67]/.test(digits)) return jisty(`420${digits}`);
 
   return nejisty();
 }
