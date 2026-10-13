@@ -36,7 +36,17 @@ const LABELY = [
 ];
 
 export function jePotvrzeniPredmet(subject: string): boolean {
-  return /potvrzen[ií]\s+rezervace/i.test(subject);
+  return /potvrzen[ií]\s+rezervace/i.test(subject) || /reservation\s+confirmation/i.test(subject);
+}
+
+/** Výzva k vyplnění check-inu. Není to hotový check-in s kódy. */
+export function jeVyzvaCheckinu(subject: string): boolean {
+  return /online check-in/i.test(subject);
+}
+
+export function cisloZeSubjectu(subject: string): string | null {
+  const m = subject.match(/(?:rezervace|reservation)\s+(\d{4,})/i);
+  return m ? m[1] : null;
 }
 
 function radky(subject: string, html: string, text: string): string[] {
@@ -87,8 +97,10 @@ function celeCislo(raw: string | null): number | null {
 export function parsujPotvrzeni(subject: string, html = '', text = ''): (DoplnekRezervace & { chybi: string[] }) | null {
   if (!jePotvrzeniPredmet(subject)) return null;
   const lines = radky(subject, html, text);
-  const zeSubjectu = (subject.match(/rezervace\s+(\d{4,})/i) || [])[1] || null;
-  const jmenoZeSubjectu = (subject.match(/rezervace\s+\d{4,}\s*,\s*(.+?)\s*:\s*potvrzen/i) || [])[1]?.trim() || null;
+  const zeSubjectu = cisloZeSubjectu(subject);
+  const jmenoZeSubjectu =
+    (subject.match(/(?:rezervace|reservation)\s+\d{4,}\s*,\s*(.+?)\s*:\s*(?:potvrzen|reservation\s+confirmation)/i) || [])[1]?.trim() ||
+    null;
   const zTela = (najdi(lines, ['číslo rezervace', 'rezervace', 'reservation']) || '').match(/(\d{4,})/);
   const rezervace = zeSubjectu || (zTela ? zTela[1] : '');
   const jmeno = najdi(lines, ['jméno a příjmení', 'jméno', 'klient', 'guest name', 'name']) || jmenoZeSubjectu;

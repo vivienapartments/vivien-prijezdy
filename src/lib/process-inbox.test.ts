@@ -526,6 +526,63 @@ Original-Message-ID: <x>
     expect(rec?.noci).toBe(2);
   });
 
+  it('anglické potvrzení z info@ založí řádek a hostovi nic nepošle', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'fwd-en@test',
+        from: MAJITEL,
+        subject: 'Reservation 120260439, Ada Novak: Reservation confirmation',
+        text: 'Reservation 120260439',
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect((await store.getRezervace('120260439'))?.stitek).toBe('info');
+  });
+
+  it('už označené potvrzení bez řádku se doplní a průvodce neodejde', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    await store.markMessage({
+      messageId: 'stare-potvrzeni@test',
+      processedAt: '2026-10-13T15:36:00.000Z',
+      status: 'skipped_no_data',
+      reason: 'bez čísla rezervace',
+    });
+    const item = await processOneMail(
+      mail({
+        messageId: 'stare-potvrzeni@test',
+        from: MAJITEL,
+        subject: 'Rezervace 120260541, Jan Novák : Potvrzení rezervace',
+        text: 'Telefon: 777 111 222',
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect(await store.getRezervace('120260541')).toBeTruthy();
+  });
+
+  it('výzva k check-inu bez dat založí řádek a průvodce neodejde', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'vyzva@test',
+        from: MAJITEL,
+        subject: 'Váš online check-in - nutnost vyplnění. Rezervace 120260509',
+        text: 'Vyplňte check-in',
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect(await store.getRezervace('120260509')).toBeTruthy();
+  });
+
   it('přeposlaný check-in z info@ se Seznamem neprojde a průvodce neodejde', async () => {
     const { processOneMail } = await import('./process-inbox');
     const store = tmpStore();

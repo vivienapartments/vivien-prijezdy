@@ -7,7 +7,7 @@ import { jazykZPredvolby, normalizujTelefon } from './telefon';
 import { jeMailMajitele, verifyEmailOrigin } from './email-origin';
 import { fetchRecentInboxMails, type InboxMail } from './inbox-mail';
 import { poplatekZData } from './poplatek';
-import { jePotvrzeniPredmet, parsujPotvrzeni } from './potvrzeni-rezervace';
+import { cisloZeSubjectu, jePotvrzeniPredmet, jeVyzvaCheckinu, parsujPotvrzeni } from './potvrzeni-rezervace';
 import { posliPruvodce } from './posli-pruvodce';
 import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
 import {
@@ -144,11 +144,24 @@ function duvodyMailu(ins: MailInspection): Duvod[] {
   return [...ins.duvody];
 }
 
+/** Potvrzení nebo výzva z info@, ke které v přehledu ještě není řádek. Hostovi se nic neposílá. */
+async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<boolean> {
+  const odMajitele = jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '');
+  if (!odMajitele) return false;
+  const id = cisloZeSubjectu(mail.subject);
+  if (!id) return false;
+  const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
+  const potvrzeni = jePotvrzeniPredmet(mail.subject);
+  const vyzva = jeVyzvaCheckinu(mail.subject) && !/VIVIEN-DATA/i.test(telo);
+  if (!potvrzeni && !vyzva) return false;
+  return !(await store.getRezervace(id));
+}
+
 export async function processOneMail(mail: InboxMail, store: ProcessStore): Promise<ProcessItem> {
   const now = new Date().toISOString();
 
   if (await store.isMessageProcessed(mail.messageId)) {
-    return { status: 'already_done' };
+    if (!(await potvrzeniBezRadku(mail, store))) return { status: 'already_done' };
   }
 
   const bounce = parseBounce(mail);
@@ -165,9 +178,16 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
     return zpracujInterni(mail, store, now);
   }
 
-  if (jePotvrzeniPredmet(mail.subject) && jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '')) {
+  const odMajitele = jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '');
+  if (jePotvrzeniPredmet(mail.subject) && odMajitele) {
     const u = parsujPotvrzeni(mail.subject, mail.html, mail.text);
     return zpracujOdMajitele(mail, store, now, u, u?.chybi || []);
+  }
+
+  const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
+  if (jeVyzvaCheckinu(mail.subject) && odMajitele && !/VIVIEN-DATA/i.test(telo)) {
+    const id = cisloZeSubjectu(mail.subject);
+    return zpracujOdMajitele(mail, store, now, id ? { rezervace: id } : null, id ? [] : ['rezervace']);
   }
 
   const body = bodyForParse(mail);
@@ -573,6 +593,46 @@ async function zpracujBounce(
     reason: 'nedoruceno',
   });
   return { rezervace: id, status: 'vraceno', reason: 'nedoruceno' };
+}
+
+export type VypisRadku = {
+  rezervace: string;
+  druh: 'potvrzeni' | 'vyzva' | 'checkin';
+  odInfo: boolean;
+  stavMailu: string;
+  duvod: string;
+  stavRadku: string;
+};
+
+/** Jen čtení. Nic nezakládá a nikomu neposílá. */
+export async function vypisPotvrzeni(store?: ProcessStore): Promise<VypisRadku[]> {
+  const s = store ?? createProcessStore();
+  const user = process.env.IMAP_USER?.trim();
+  const pass = process.env.IMAP_HESLO?.trim();
+  if (!user || !pass) return [];
+  const mails = await fetchRecentInboxMails({ user, pass, days: 2 });
+  const odInfoZ = process.env.MAJITEL_PREPOSILA_Z?.trim() || '';
+  const out: VypisRadku[] = [];
+  for (const mail of mails) {
+    const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
+    let druh: VypisRadku['druh'] | null = null;
+    if (/VIVIEN-DATA/i.test(telo)) druh = 'checkin';
+    else if (jePotvrzeniPredmet(mail.subject)) druh = 'potvrzeni';
+    else if (jeVyzvaCheckinu(mail.subject)) druh = 'vyzva';
+    if (!druh) continue;
+    const id = cisloZeSubjectu(mail.subject) || (telo.match(/REZERVACE:\s*(\d{4,})/i) || [])[1] || '';
+    const msg = mail.messageId ? await s.getMessage(mail.messageId) : null;
+    const rec = id ? await s.getRezervace(id) : null;
+    out.push({
+      rezervace: id || '-',
+      druh,
+      odInfo: jeMailMajitele(mail.from, odInfoZ),
+      stavMailu: msg?.status || 'nezpracovano',
+      duvod: msg?.reason || '',
+      stavRadku: rec?.stav || 'chybi',
+    });
+  }
+  return out;
 }
 
 export async function runInboxProcessing(opts: {
