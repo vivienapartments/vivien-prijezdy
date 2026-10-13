@@ -58,6 +58,8 @@ export type PrehledRadek = {
   odkaz: string | null;
   zprava: string;
   stitek: 'rucne' | 'info' | null;
+  /** Čas předání. null = kódy v průvodci ještě nejsou. */
+  predano: string | null;
 };
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
@@ -254,6 +256,22 @@ export function casPraha(iso: string): string {
   return `${den}. ${mes}. ${hod}:${min}`;
 }
 
+/** Jen hodina a minuta v Praze, třeba 15:42. */
+export function hodinaPraha(iso: string): string {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return '';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Prague',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(t));
+  const hod = parts.find((p) => p.type === 'hour')?.value || '';
+  const min = parts.find((p) => p.type === 'minute')?.value || '';
+  if (!hod || !min) return '';
+  return `${hod}:${min}`;
+}
+
 export function textOtevreni(
   pocet: number | null,
   naposled: string | null,
@@ -438,6 +456,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     zpravy,
     zprava: zpravy.find((z) => z.vychozi)?.text || '',
     stitek: rec.stitek,
+    predano: rec.predano,
   };
 }
 

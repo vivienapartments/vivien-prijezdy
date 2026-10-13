@@ -106,6 +106,7 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     otevrenoPocet: 1,
     otevrenoPoprve: '2026-10-10T09:00:00.000Z',
     otevrenoNaposled: '2026-10-10T09:00:00.000Z',
+    predano: '2026-10-13T13:42:00.000Z',
   };
 
   const bezCasuPozdeji: RezervaceRecord = {

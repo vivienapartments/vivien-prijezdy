@@ -93,6 +93,19 @@ export const vstupText: LText = {
   'zh-Hant': '我們會親自帶您進入房屋。核對證件後啟用密碼。整段住宿期間可在此隨時查看。',
 };
 
+/** Červený nápis pod tečkami, dokud majitel v přehledu neklepne Předáno. 13. 10. 2026. */
+export const kodyCekaji: LText = {
+  cs: 'Zobrazí se po osobním předání apartmánu.',
+  en: 'They will appear after the apartment is handed over in person.',
+  de: 'Sie erscheinen nach der persönlichen Übergabe des Apartments.',
+  pl: 'Pojawią się po osobistym przekazaniu apartamentu.',
+  uk: 'З’являться після особистої передачі апартаментів.',
+  'zh-Hant': '親自交付公寓後才會顯示。',
+  es: 'Se mostrarán tras la entrega personal del apartamento.',
+  fr: 'Ils s’afficheront après la remise en personne de l’appartement.',
+  it: 'Compariranno dopo la consegna di persona dell’appartamento.',
+};
+
 export const kodDumLabel: LText = {
   cs: 'Vstup dům',
   en: 'House entry',

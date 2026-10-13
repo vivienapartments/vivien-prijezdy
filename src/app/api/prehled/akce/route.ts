@@ -47,13 +47,24 @@ export async function POST(request: Request): Promise<NextResponse> {
   } | null;
   const id = (body?.rezervace || '').trim();
   const akce = body?.akce;
-  if (!id || (akce !== 'znovu' && akce !== 'opravit' && akce !== 'odkaz' && akce !== 'cas' && akce !== 'checkin' && akce !== 'telefon')) {
+  if (!id || (akce !== 'znovu' && akce !== 'opravit' && akce !== 'odkaz' && akce !== 'cas' && akce !== 'checkin' && akce !== 'telefon' && akce !== 'predano' && akce !== 'zrusit-predani')) {
     return chyba(400, 'Neznámá akce.');
   }
 
   const store = createProcessStore();
   const rec = await store.getRezervace(id);
   if (!rec) return chyba(404, 'Rezervace v přehledu není.');
+
+  if (akce === 'predano') {
+    const dalsi = pridej(rec, 'Předáno', { predano: new Date().toISOString() });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, predano: dalsi.predano }, { headers: noStore });
+  }
+
+  if (akce === 'zrusit-predani') {
+    await store.setRezervace(id, pridej(rec, 'Zrušeno předání', { predano: null }));
+    return NextResponse.json({ ok: true, predano: null }, { headers: noStore });
+  }
 
   if ((akce === 'znovu' || akce === 'opravit') && rec.stav === 'zruseno') {
     return chyba(400, 'Zrušená rezervace se znovu neposílá.');

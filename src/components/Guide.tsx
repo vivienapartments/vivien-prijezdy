@@ -26,17 +26,26 @@ import {
   wifiHesloProApt,
   wifiPayload,
 } from '@/lib/i18n';
+import type { KodRadek } from '@/lib/kody-pruvodce';
 import type { GuideSecrets } from '@/lib/secrets';
-import {
-  HOUSE_KEY_TAG,
-  apartmentPinOrDoplnit,
-  codesOrder,
-  gardenCodeForApt,
-} from '@/lib/access-codes';
 import * as TX from '@/lib/texts';
 import { ukazatPoplatek, type PoplatekStav } from '@/lib/poplatek';
-import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
+import type { AptId, GuideLang, LText, Prijezd, StayFacts } from '@/lib/types';
 import './guide.scss';
+
+const KOD_TECKY = '••••';
+
+/** Stejné pořadí jako codesOrder. Tady nesmí být čísla kódů. */
+function poradiKodu(apt: AptId): Array<'dum' | 'apt' | 'zahrada'> {
+  if (apt === 'V2' || apt === 'V3') return ['dum', 'zahrada', 'apt'];
+  return ['dum', 'apt', 'zahrada'];
+}
+
+function stitekKodu(kind: 'dum' | 'apt' | 'zahrada'): LText {
+  if (kind === 'dum') return TX.kodDumLabel;
+  if (kind === 'apt') return TX.kodAptLabel;
+  return TX.kodZahradaLabel;
+}
 
 function renderPhoneText(raw: string) {
   return phoneParts(raw).map((part, i) =>
@@ -50,13 +59,40 @@ function renderPhoneText(raw: string) {
   );
 }
 
+function Klic() {
+  return (
+    <svg className="pv-klic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M14.5 2a6.5 6.5 0 0 0-6.3 8.1L2 16.3V20h3.7l1.2-1.2h2.2v-2.2l1.5-1.5A6.5 6.5 0 1 0 14.5 2zm1.2 6.4a1.4 1.4 0 1 1 0-2.8 1.4 1.4 0 0 1 0 2.8z"
+      />
+    </svg>
+  );
+}
+
+function Mrizka() {
+  const klavesy = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
+  return (
+    <div className="pv-mrizka" aria-hidden="true">
+      {klavesy.map((klavesa) => (
+        <span key={klavesa}>{klavesa}</span>
+      ))}
+    </div>
+  );
+}
+
 export type GuideProps = {
   apt: AptId;
   lang: GuideLang;
   secrets: GuideSecrets;
   stay: StayFacts;
-  /** ACCESS_PIN z Better Hotelu (podle pobytu). */
-  accessPin?: string | null;
+  /**
+   * Řádky kódů složené na serveru. null = ještě nepředáno, čísla na stránce nejsou.
+   * Po předání je u domu klíček a u apartmánu mřížka na konci kódu.
+   * Tvar plny přidá navíc obrázek klávesnice, jen v náhledu.
+   */
+  kody?: KodRadek[] | null;
+  tvar?: 'dnes' | 'plny';
   /** Chybí nebo neznámo = box se ukáže. Ne = schovaný. */
   poplatek?: PoplatekStav;
   vikend?: boolean;
@@ -76,7 +112,8 @@ export function Guide({
   lang,
   secrets,
   stay,
-  accessPin = null,
+  kody = null,
+  tvar = 'dnes',
   poplatek = 'neznamo',
   vikend = false,
   initialPrijezd = null,
@@ -89,8 +126,7 @@ export function Guide({
   const aptRec = useMemo(() => aptRecord(apt), [apt]);
   const sections = useMemo(() => visibleSekce(apt, prijezd), [apt, prijezd]);
 
-  const gardenCode = gardenCodeForApt(apt, accessPin);
-  const aptPin = apartmentPinOrDoplnit(accessPin);
+  const gardenCode = kody?.find((radek) => radek.kind === 'zahrada')?.value ?? '';
 
   const fill = (raw: string) =>
     fillPlaceholders(raw, {
@@ -484,35 +520,49 @@ export function Guide({
                           </p>
                         </article>
                         ) : null}
-                        <article className="pv-step pv-step--note">
+                        <article className="pv-step pv-step--note" id="vase-kody">
                           <p className="pv-kicker">{tt(TX.ui.entry)}</p>
                           <h3>{tt(TX.vstupNadpis)}</h3>
-                          <p>{tt(TX.vstupText)}</p>
-                          <dl className="pv-codes">
-                            {codesOrder(apt).map((kind) => {
-                              const label =
-                                kind === 'dum'
-                                  ? TX.kodDumLabel
-                                  : kind === 'apt'
-                                    ? TX.kodAptLabel
-                                    : TX.kodZahradaLabel;
-                              const value =
-                                kind === 'dum'
-                                  ? HOUSE_KEY_TAG
-                                  : kind === 'apt'
-                                    ? aptPin
-                                    : gardenCode;
-                              const missing = value === 'DOPLNIT';
-                              return (
-                                <div className="pv-codes__row" key={kind}>
-                                  <dt>{tt(label)}</dt>
-                                  <dd className={missing ? 'pv-doplnit' : undefined}>
-                                    <strong className="pv-phone">{value}</strong>
-                                  </dd>
-                                </div>
-                              );
-                            })}
-                          </dl>
+                          {kody ? (
+                            <>
+                              <p>{tt(TX.vstupText)}</p>
+                              <dl className="pv-codes">
+                                {kody.map((radek) => {
+                                  const missing = radek.value === 'DOPLNIT';
+                                  const plny = tvar === 'plny' && !missing;
+                                  return (
+                                    <div className="pv-codes__row" key={radek.kind}>
+                                      <dt>{radek.label}</dt>
+                                      <dd className={missing ? 'pv-doplnit' : undefined}>
+                                        <strong className="pv-phone pv-kod-hodnota">
+                                          {!missing && radek.kind === 'dum' ? <Klic /> : null}
+                                          {radek.value}
+                                          {!missing && radek.kind === 'dum' ? <Klic /> : null}
+                                        </strong>
+                                        {plny && radek.kind !== 'dum' ? <Mrizka /> : null}
+                                      </dd>
+                                    </div>
+                                  );
+                                })}
+                              </dl>
+                            </>
+                          ) : (
+                            <>
+                              <dl className="pv-codes">
+                                {poradiKodu(apt).map((kind) => (
+                                  <div className="pv-codes__row" key={kind}>
+                                    <dt>{tt(stitekKodu(kind))}</dt>
+                                    <dd>
+                                      <strong className="pv-phone pv-kod-hodnota pv-kod-tecky" aria-hidden="true">
+                                        {KOD_TECKY}
+                                      </strong>
+                                    </dd>
+                                  </div>
+                                ))}
+                              </dl>
+                              <div className="pv-kody-cekaji">{tt(TX.kodyCekaji)}</div>
+                            </>
+                          )}
                         </article>
                       </>
                     ) : s.id === 'brana-parkoviste' ? (
@@ -831,7 +881,7 @@ export function Guide({
                                 ) : null}
                                 <div>
                                   {tt(k.text) ? <p>{renderPhoneText(tt(k.text))}</p> : null}
-                                  {k.id === 'z3' ? (
+                                  {k.id === 'z3' && gardenCode ? (
                                     <p
                                       className={`pv-step--note${gardenCode.trim() === 'DOPLNIT' ? ' pv-doplnit' : ''}`}
                                     >

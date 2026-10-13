@@ -5,6 +5,7 @@ import { chybejiciWifi } from '@/lib/nastaveni-chyby';
 import { buildPrehledSOdkazy } from '@/lib/prehled-odkazy';
 import { ukazkoveRadky } from '@/lib/prehled-ukazka';
 import { dnesVPraze, posunDen } from '@/lib/prehled';
+import { migracePredaniJednou } from '@/lib/predani';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore } from '@/lib/store';
 import './prehled.scss';
@@ -39,6 +40,13 @@ export default async function PrehledPage({ searchParams }: Props) {
     return <LoginForm />;
   }
   const now = new Date();
+  if (!ukazka && process.env.VERCEL_ENV === 'production') {
+    try {
+      await migracePredaniJednou(createProcessStore(), dnesVPraze(now), now.toISOString());
+    } catch {
+      // Přehled se otevře i když se starší hosté nepodařilo označit.
+    }
+  }
   const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(createProcessStore(), now);
   const dnes = dnesVPraze(now);
   const userAgent = (await headers()).get('user-agent') ?? '';

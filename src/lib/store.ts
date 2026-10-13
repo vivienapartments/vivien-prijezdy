@@ -79,6 +79,8 @@ export type RezervaceRecord = {
   checkinUrl: string | null;
   /** Odkud řádek vznikl, když ho nezaložil automat z Better Hotelu. */
   stitek: 'rucne' | 'info' | null;
+  /** Čas osobního předání. Než je vyplněný, průvodce kódy neukáže. Maže se se záznamem. */
+  predano: string | null;
 };
 
 export type RezervaceEntry = { id: string; record: RezervaceRecord };
@@ -173,6 +175,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       typeof r.telefonRezervacePuvodni === 'string' && r.telefonRezervacePuvodni ? r.telefonRezervacePuvodni : null,
     checkinUrl: typeof r.checkinUrl === 'string' && /^https:\/\//i.test(r.checkinUrl) ? r.checkinUrl : null,
     stitek: r.stitek === 'rucne' || r.stitek === 'info' ? r.stitek : null,
+    predano: typeof r.predano === 'string' && r.predano ? r.predano : null,
   };
 }
 
@@ -212,6 +215,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     telefonRezervacePuvodni: null,
     checkinUrl: null,
     stitek: null,
+    predano: null,
   };
 }
 

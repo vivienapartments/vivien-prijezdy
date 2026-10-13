@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import apartmanyJson from '@/data/apartmany.json';
 import {
   dotazPredOdeslanimZnovu,
+  hodinaPraha,
   nabidnoutOdeslani,
   poplatekKratky,
   souhrnDne,
@@ -84,6 +85,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   const [odkazy, setOdkazy] = useState<Record<string, string>>({});
   const [ulozeneOdkazy, setUlozeneOdkazy] = useState<Record<string, string>>({});
   const [pridat, setPridat] = useState(false);
+  const [predani, setPredani] = useState<Record<string, string | null>>({});
 
   function casRadku(row: PrehledRadek): string {
     return casy[row.rezervace] ?? row.casPrijezdu ?? '';
@@ -91,6 +93,38 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
 
   function telefonRadku(row: PrehledRadek): string {
     return telefony[row.rezervace] ?? row.telefonText ?? '';
+  }
+
+  function predanoRadku(row: PrehledRadek): string | null {
+    if (Object.prototype.hasOwnProperty.call(predani, row.rezervace)) return predani[row.rezervace];
+    return row.predano;
+  }
+
+  function textPredani(iso: string): string {
+    const hod = hodinaPraha(iso);
+    return hod ? `Předáno ${hod}` : 'Předáno';
+  }
+
+  async function ulozPredani(row: PrehledRadek, zapnout: boolean) {
+    if (!zapnout && !window.confirm('Zrušit předání? Host kódy v průvodci neuvidí.')) return;
+    if (ukazka) {
+      setPredani((prev) => ({ ...prev, [row.rezervace]: zapnout ? new Date().toISOString() : null }));
+      return;
+    }
+    setCekam(`${row.rezervace}:predani`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: zapnout ? 'predano' : 'zrusit-predani' }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; predano?: string | null } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Předání se neuložilo.');
+      return;
+    }
+    setPredani((prev) => ({ ...prev, [row.rezervace]: json.predano ?? null }));
   }
 
   async function ulozPridani(event: FormEvent<HTMLFormElement>) {
@@ -346,7 +380,21 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     return (
       <article key={row.rezervace} id={row.rezervace} className={rozbaleno ? 'ph-row is-open' : 'ph-row is-shut'}>
         <div className="ph-shrnuti">
-          <div className="ph-jmeno">{kdo}</div>
+          <div className="ph-hlavicka-hosta">
+            <div className="ph-jmeno">{kdo}</div>
+            {predanoRadku(row) ? (
+              <span className="ph-predano-hotovo">{textPredani(predanoRadku(row) || '')}</span>
+            ) : (
+              <button
+                type="button"
+                className="ph-predano"
+                disabled={cekam !== null}
+                onClick={() => ulozPredani(row, true)}
+              >
+                Předáno
+              </button>
+            )}
+          </div>
           {kde ? <div className="ph-kde">{kde}</div> : null}
           {row.stav === 'bez_checkinu' ? <div className="ph-neni-checkin">Není check-in</div> : null}
           {row.stitek === 'rucne' ? <div className="ph-stitek">přidáno ručně</div> : null}
@@ -478,6 +526,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
             <Pole text={row.posledniPokusText} />
           </div>
           <div className="ph-akce">
+            {predanoRadku(row) ? (
+              <button type="button" disabled={cekam !== null} onClick={() => ulozPredani(row, false)}>
+                Zrušit předání
+              </button>
+            ) : null}
             {nabidnoutOdeslani(row.stav) ? (
               <>
                 <button

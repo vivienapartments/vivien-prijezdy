@@ -170,6 +170,14 @@
   order: 4;
 }
 
+.ph-hlavicka-hosta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem 0.8rem;
+}
+
 .ph-shrnuti .ph-jmeno {
   font-family: var(--font-display), Georgia, serif;
   font-size: 1.45rem;
@@ -298,6 +306,19 @@
 
 .ph-akce-spodek .ph-rozbal {
   margin-top: 0;
+}
+
+.ph button.ph-predano {
+  border-color: #c23b32;
+  background: #c23b32;
+  color: #fff;
+  font-weight: 700;
+}
+
+.ph-predano-hotovo {
+  color: #8dcea0;
+  font-weight: 700;
+  font-size: 1.05rem;
 }
 
 .ph-akce-spodek a.ph-kontakt {
