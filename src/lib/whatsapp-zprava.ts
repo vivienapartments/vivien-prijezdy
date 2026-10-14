@@ -109,6 +109,17 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
   },
 };
 
+const ODKAZ_NIZE: Record<JazykZpravy, string> = {
+  cs: 'Odkaz posíláme níže.',
+  en: 'We are sending the link below.',
+  de: 'Den Link senden wir unten.',
+  pl: 'Link wysyłamy poniżej.',
+  uk: 'Посилання надсилаємо нижче.',
+  'zh-Hant': '連結我們放在下面。',
+  sv: 'Länken skickar vi nedan.',
+  hu: 'A linket alább küldjük.',
+};
+
 const NEOTEVREL: Record<JazykZpravy, string> = {
   cs: 'Dobrý den, abyste se u nás mohli ubytovat a zaparkovat, přečtěte si průvodce k příjezdu a pošlete nám podle něj potřebné údaje. Děkujeme a těšíme se na setkání.',
   en: 'Hello, to check in and park with us, you need to read the arrival guide and send us the details it asks for. Thank you, and we look forward to seeing you.',
@@ -167,10 +178,10 @@ const NAZEV: Record<DruhZpravy, string> = {
   denCas: 'Den příjezdu, čas známe',
 };
 
-function vetaCheckinu(lang: GuideLang | null, zdroj: string | null | undefined): string {
+function vetaCheckinu(lang: GuideLang | null, zdroj: string | null | undefined, sOdkazem = false): string {
   const druh = druhZdroje(zdroj);
   const uvod = textVJazyce(CHECKIN_UVOD, lang);
-  const odkaz = textVJazyce(CHECKIN_ODKAZ[druh], lang);
+  const odkaz = sOdkazem ? textVJazyce(ODKAZ_NIZE, lang) : textVJazyce(CHECKIN_ODKAZ[druh], lang);
   const konec = textVJazyce(CHECKIN_KONEC, lang);
   return `${uvod} ${odkaz} ${konec}`;
 }
@@ -179,8 +190,8 @@ export function textZpravy(lang: GuideLang | null): string {
   return textVJazyce(NEOTEVREL, lang);
 }
 
-export function textCheckinu(lang: GuideLang | null, zdroj?: string | null): string {
-  return vetaCheckinu(lang, zdroj);
+export function textCheckinu(lang: GuideLang | null, zdroj?: string | null, sOdkazem = false): string {
+  return vetaCheckinu(lang, zdroj, sOdkazem);
 }
 
 export function textCasu(lang: GuideLang | null): string {
@@ -196,8 +207,9 @@ export function textDneSCasem(lang: GuideLang | null, cas: string | null): strin
   return textVJazyce(DEN_CAS, lang).replaceAll('{čas}', cisty);
 }
 
-export function zpravaCheckinu(lang: GuideLang | null, zdroj?: string | null): string {
-  return sestav(vetaCheckinu(lang, zdroj), null, lang);
+export function zpravaCheckinu(lang: GuideLang | null, zdroj?: string | null, url?: string | null): string {
+  const ma = Boolean(url && /^https:\/\//i.test(url));
+  return sestav(vetaCheckinu(lang, zdroj, ma), ma ? url!.trim() : null, lang);
 }
 
 export function zpravaHostovi(lang: GuideLang | null, odkaz: string | null): string {
@@ -236,13 +248,14 @@ export function zpravyMenu(opts: {
   lang: GuideLang | null;
   zdroj?: string | null;
   pruvodce: string | null;
+  checkinUrl?: string | null;
   otevrenoPocet: number | null;
   casPrijezdu: string | null;
   prijezd: string | null;
   dnes: string;
 }): ZpravaMenu[] {
   const texty: Record<DruhZpravy, string> = {
-    checkin: zpravaCheckinu(opts.lang, opts.zdroj),
+    checkin: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl),
     neotevrel: zpravaHostovi(opts.lang, opts.pruvodce),
     cas: zpravaCasu(opts.lang),
     denBez: zpravaDne(opts.lang, opts.pruvodce),

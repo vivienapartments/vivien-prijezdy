@@ -15,6 +15,7 @@ export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord, now = new Date
     lang: rec.jazyk,
     zdroj: rec.zdroj,
     pruvodce: odkaz,
+    checkinUrl: rec.checkinUrl,
     otevrenoPocet: rec.otevrenoPocet,
     casPrijezdu: rec.casPrijezdu,
     prijezd: rec.prijezd,

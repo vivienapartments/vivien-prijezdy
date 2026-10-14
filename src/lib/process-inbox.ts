@@ -12,6 +12,7 @@ import {
   jePotvrzeniPredmet,
   jeSpatneJmenoPotvrzeni,
   jeVyzvaCheckinu,
+  odkazCheckinuZVyzvy,
   parsujPotvrzeni,
 } from './potvrzeni-rezervace';
 import { posliPruvodce } from './posli-pruvodce';
@@ -162,7 +163,7 @@ async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<
   if (!potvrzeni && !vyzva) return false;
   const rec = await store.getRezervace(id);
   if (!rec) return true;
-  if (!potvrzeni) return false;
+  if (!potvrzeni) return !rec.checkinUrl && Boolean(odkazCheckinuZVyzvy(mail.html, mail.text));
   if (!rec.apartman || !rec.prijezd || !rec.odjezd || !rec.jmeno) return true;
   return jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject);
 }
@@ -197,7 +198,14 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
   const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
   if (jeVyzvaCheckinu(mail.subject) && odMajitele && !/VIVIEN-DATA/i.test(telo)) {
     const id = cisloZeSubjectu(mail.subject);
-    return zpracujOdMajitele(mail, store, now, id ? { rezervace: id } : null, id ? [] : ['rezervace']);
+    const checkinUrl = odkazCheckinuZVyzvy(mail.html, mail.text);
+    return zpracujOdMajitele(
+      mail,
+      store,
+      now,
+      id ? { rezervace: id, checkinUrl } : null,
+      id ? [] : ['rezervace'],
+    );
   }
 
   const body = bodyForParse(mail);
@@ -451,7 +459,13 @@ async function zpracujOdMajitele(
     { ...vstup, email: cisty },
     {
       stitek: 'info',
-      historie: prev ? 'Opraveno z potvrzení rezervace' : 'Přeposláno z info@',
+      historie: jeVyzvaCheckinu(mail.subject)
+        ? prev
+          ? 'Doplněn odkaz na check-in'
+          : 'Přeposláno z info@'
+        : prev
+          ? 'Opraveno z potvrzení rezervace'
+          : 'Přeposláno z info@',
       chybi: chybiVcetne,
       nahradJmeno,
     },
@@ -622,10 +636,24 @@ export type VypisRadku = {
   apartman: string;
   jmeno: 'ano' | 'chybi' | 'spatne';
   odjezd: 'ano' | 'ne';
+  odkaz: 'ano' | 'ne';
+  cil?: 'formular' | 'jiny' | 'ne';
 };
 
+async function cilOdkazu(url: string): Promise<'formular' | 'jiny' | 'ne'> {
+  try {
+    const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(8000) });
+    const cesta = new URL(res.url).pathname.toLowerCase();
+    const telo = (await res.text()).slice(0, 5000).toLowerCase();
+    if (/check-?in|onlinecheck/.test(cesta) || /check-?in|online check|formul/.test(telo)) return 'formular';
+    return 'jiny';
+  } catch {
+    return 'ne';
+  }
+}
+
 /** Jen čtení. Nic nezakládá a nikomu neposílá. */
-export async function vypisPotvrzeni(store?: ProcessStore): Promise<VypisRadku[]> {
+export async function vypisPotvrzeni(store?: ProcessStore, overeni = false): Promise<VypisRadku[]> {
   const s = store ?? createProcessStore();
   const user = process.env.IMAP_USER?.trim();
   const pass = process.env.IMAP_HESLO?.trim();
@@ -643,6 +671,7 @@ export async function vypisPotvrzeni(store?: ProcessStore): Promise<VypisRadku[]
     const id = cisloZeSubjectu(mail.subject) || (telo.match(/REZERVACE:\s*(\d{4,})/i) || [])[1] || '';
     const msg = mail.messageId ? await s.getMessage(mail.messageId) : null;
     const rec = id ? await s.getRezervace(id) : null;
+    const cil = overeni && rec?.checkinUrl ? await cilOdkazu(rec.checkinUrl) : undefined;
     out.push({
       rezervace: id || '-',
       druh,
@@ -653,6 +682,8 @@ export async function vypisPotvrzeni(store?: ProcessStore): Promise<VypisRadku[]
       apartman: rec?.apartman || 'chybi',
       jmeno: !rec?.jmeno ? 'chybi' : jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject) ? 'spatne' : 'ano',
       odjezd: rec?.odjezd ? 'ano' : 'ne',
+      odkaz: rec?.checkinUrl ? 'ano' : 'ne',
+      ...(cil ? { cil } : {}),
     });
   }
   return out;

@@ -400,6 +400,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     lang: rec.jazyk,
     zdroj: rec.zdroj,
     pruvodce: null,
+    checkinUrl: rec.checkinUrl,
     otevrenoPocet: rec.otevrenoPocet,
     casPrijezdu: rec.casPrijezdu,
     prijezd: rec.prijezd,

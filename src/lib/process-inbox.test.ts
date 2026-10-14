@@ -606,7 +606,101 @@ Original-Message-ID: <x>
     );
     expect(item.status).toBe('bez_checkinu');
     expect(sendGuestEmail).not.toHaveBeenCalled();
-    expect(await store.getRezervace('120260509')).toBeTruthy();
+    expect((await store.getRezervace('120260509'))?.checkinUrl).toBeNull();
+  });
+
+  it('výzva uloží href odkazu a ruční odkaz nepřepíše', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const { odkazCheckinuZVyzvy } = await import('./potvrzeni-rezervace');
+    const html = [
+      '<a href="https://www.google.com/logo.png">logo</a>',
+      '<a href="https://checkin.example.com/formular/120260541?x=1&amp;y=2">Vivien Apartmens Character and Atmosphere / #120260541 / online checkin</a>',
+    ].join('');
+    expect(odkazCheckinuZVyzvy(html)).toBe('https://checkin.example.com/formular/120260541?x=1&y=2');
+    expect(odkazCheckinuZVyzvy(html)).not.toContain('Vivien');
+
+    const store = tmpStore();
+    const predmet = 'Váš online check-in - nutnost vyplnění pro přidělení přístupu - Rezervace 120260541, Vivien Apartmens Character and Atmosphere';
+    const zalozeni = await processOneMail(
+      mail({
+        messageId: 'vyzva-odkaz@test',
+        from: MAJITEL,
+        subject: predmet,
+        text: 'Vyplňte check-in',
+        html,
+      }),
+      store,
+    );
+    expect(zalozeni.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect((await store.getRezervace('120260541'))?.checkinUrl).toBe(
+      'https://checkin.example.com/formular/120260541?x=1&y=2',
+    );
+
+    await store.markMessage({
+      messageId: 'vyzva-odkaz@test',
+      processedAt: '2026-10-14T06:00:00.000Z',
+      status: 'skipped_no_data',
+      reason: 'preposlano',
+      rezervace: '120260541',
+    });
+    const rec = await store.getRezervace('120260541');
+    await store.setRezervace('120260541', { ...rec!, checkinUrl: 'https://rucne.example/formular' });
+    const znovu = await processOneMail(
+      mail({
+        messageId: 'vyzva-odkaz@test',
+        from: MAJITEL,
+        subject: predmet,
+        text: 'Vyplňte check-in',
+        html,
+      }),
+      store,
+    );
+    expect(znovu.status).toBe('already_done');
+    expect((await store.getRezervace('120260541'))?.checkinUrl).toBe('https://rucne.example/formular');
+    expect(await store.listRezervace()).toHaveLength(1);
+  });
+
+  it('už označená výzva doplní prázdný odkaz a druhý řádek nevznikne', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const html = '<a href="https://checkin.example.com/formular/120260556">online checkin</a>';
+    const predmet = 'Váš online check-in - nutnost vyplnění. Rezervace 120260556';
+    await store.markMessage({
+      messageId: 'vyzva-prazdna@test',
+      processedAt: '2026-10-14T06:00:00.000Z',
+      status: 'bez_checkinu',
+      reason: 'preposlano',
+      rezervace: '120260556',
+    });
+    const prazdna = await processOneMail(
+      mail({ messageId: 'jina@test', from: MAJITEL, subject: predmet, text: 'bez odkazu' }),
+      store,
+    );
+    expect(prazdna.status).toBe('bez_checkinu');
+    expect((await store.getRezervace('120260556'))?.checkinUrl).toBeNull();
+
+    await store.markMessage({
+      messageId: 'vyzva-prazdna@test',
+      processedAt: '2026-10-14T06:00:00.000Z',
+      status: 'bez_checkinu',
+      reason: 'preposlano',
+      rezervace: '120260556',
+    });
+    const doplneni = await processOneMail(
+      mail({
+        messageId: 'vyzva-prazdna@test',
+        from: MAJITEL,
+        subject: predmet,
+        text: 'Vyplňte check-in',
+        html,
+      }),
+      store,
+    );
+    expect(doplneni.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect((await store.getRezervace('120260556'))?.checkinUrl).toBe('https://checkin.example.com/formular/120260556');
+    expect(await store.listRezervace()).toHaveLength(1);
   });
 
   it('přeposlaný check-in z info@ se Seznamem neprojde a průvodce neodejde', async () => {

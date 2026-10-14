@@ -55,6 +55,31 @@ export function jeVyzvaCheckinu(subject: string): boolean {
   return /online check-in/i.test(subject);
 }
 
+function dekodujHref(raw: string): string {
+  return raw
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .trim();
+}
+
+/** Skutečná adresa odkazu z HTML. Viditelný text odkazu se neukládá. */
+export function odkazCheckinuZVyzvy(html: string, text = ''): string | null {
+  const zdroj = html || text;
+  const kotvy: { href: string; text: string }[] = [];
+  const re = /<a\b[^>]*\bhref\s*=\s*(?:"([^"]+)"|'([^']+)')[^>]*>([\s\S]*?)<\/a>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(zdroj))) {
+    const href = dekodujHref(m[1] || m[2] || '').replace(/[),.;]+$/, '');
+    const napis = m[3].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (/^https:\/\//i.test(href)) kotvy.push({ href, text: napis });
+  }
+  const podleNapisu = kotvy.find((k) => /online\s*check-?\s*in/i.test(k.text) || /#\s*\d{4,}/.test(k.text));
+  if (podleNapisu) return podleNapisu.href;
+  const podleAdresy = kotvy.find((k) => /check-?in|onlinecheck/i.test(k.href));
+  return podleAdresy?.href || null;
+}
+
 export function cisloZeSubjectu(subject: string): string | null {
   const m = subject.match(/(?:rezervace|reservation)\s+(\d{4,})/i);
   return m ? m[1] : null;

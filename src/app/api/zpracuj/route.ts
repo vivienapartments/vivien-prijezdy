@@ -23,7 +23,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const url = new URL(request.url);
   if (url.searchParams.get('cteni') === '1') {
     try {
-      const vypis = await vypisPotvrzeni();
+      const vypis = await vypisPotvrzeni(undefined, url.searchParams.get('overeni') === '1');
       return NextResponse.json({ ok: true, vypis });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'chyba';

@@ -213,6 +213,11 @@ describe('tlačítka v přehledu', () => {
     });
     expect(sOdkazem.find((z) => z.vychozi)?.text).toContain('na Airbnb.');
     expect(sOdkazem.find((z) => z.vychozi)?.text).not.toContain('https://');
+    const url = 'https://checkin.example.com/formular/120260541';
+    const sFormularem = zpravaCheckinu('cs', 'Booking', url);
+    expect(sFormularem).toContain('Odkaz posíláme níže.');
+    expect(sFormularem).not.toContain('Booking.com');
+    expect(sFormularem).toContain(`\n\n${url}\n\nNikol a rodina VIVIEN`);
   });
 
   it('podpis je pod odkazem a u zprávy bez odkazu hned pod textem', () => {
