@@ -309,10 +309,30 @@
 }
 
 .ph button.ph-predano {
-  border-color: #c23b32;
-  background: #c23b32;
-  color: #fff;
-  font-weight: 700;
+  min-height: 2rem;
+  border-color: var(--pv-line);
+  background: transparent;
+  color: var(--pv-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.ph-predano-dotaz {
+  flex-basis: 100%;
+  margin-top: 0.2rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 8px;
+}
+
+.ph-predano-dotaz p {
+  margin: 0 0 0.45rem;
+  text-align: start;
+  hyphens: manual;
+}
+
+.ph-predano-dotaz button {
+  margin-right: 0.4rem;
 }
 
 .ph-predano-hotovo {

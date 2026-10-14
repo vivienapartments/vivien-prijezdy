@@ -56,7 +56,7 @@ function zdroj(raw: string | null | undefined): string | null {
 export async function doplnRezervaci(
   store: ProcessStore,
   vstup: DoplnekRezervace,
-  opts: { stitek: StitekRezervace; historie: string; chybi?: string[] },
+  opts: { stitek: StitekRezervace; historie: string; chybi?: string[]; nahradJmeno?: boolean },
 ): Promise<{ ok: true; nova: boolean } | { ok: false; error: string }> {
   const id = cisloRezervace(vstup.rezervace);
   if (!id) return { ok: false, error: 'Číslo rezervace napište číslicemi.' };
@@ -89,8 +89,13 @@ export async function doplnRezervaci(
     patch[key] = value as never;
   }
 
-  poloz('jmeno', jmeno || null);
-  poloz('krestni', jmeno ? jmeno.split(' ')[0] : null);
+  if (opts.nahradJmeno && jmeno) {
+    patch.jmeno = jmeno;
+    patch.krestni = jmeno.split(' ')[0] || null;
+  } else {
+    poloz('jmeno', jmeno || null);
+    poloz('krestni', jmeno ? jmeno.split(' ')[0] : null);
+  }
   poloz('emailHosta', email || null);
   poloz('apartman', apartman);
   poloz('prijezd', prijezd);

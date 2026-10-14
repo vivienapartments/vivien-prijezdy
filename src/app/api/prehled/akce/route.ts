@@ -62,7 +62,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'zrusit-predani') {
-    await store.setRezervace(id, pridej(rec, 'Zrušeno předání', { predano: null }));
+    await store.setRezervace(id, pridej(rec, 'Vráceno předání', { predano: null }));
     return NextResponse.json({ ok: true, predano: null }, { headers: noStore });
   }
 

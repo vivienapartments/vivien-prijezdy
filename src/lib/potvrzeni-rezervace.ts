@@ -4,11 +4,16 @@ import type { DoplnekRezervace } from './rezervace-rucne';
 import { aptZTextu } from './vivien-data';
 
 const LABELY = [
+  'rezervace na jméno',
   'jméno a příjmení',
   'jméno',
   'klient',
   'guest name',
   'name',
+  'datum příjezdu',
+  'datum odjezdu',
+  'počet hostů',
+  'reservation number',
   'e-mail',
   'email',
   'telefon',
@@ -49,8 +54,18 @@ export function cisloZeSubjectu(subject: string): string | null {
   return m ? m[1] : null;
 }
 
-function radky(subject: string, html: string, text: string): string[] {
-  return radkyZTela(html, `${subject}\n${text}`).map((line) => line.replace(/^(>\s*)+/, '').trim()).filter(Boolean);
+function radky(html: string, text: string): string[] {
+  const zHtml = html ? radkyZTela(html, '') : [];
+  const zText = text ? radkyZTela('', text) : [];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const line of [...zHtml, ...zText]) {
+    const ciste = line.replace(/^(>\s*)+/, '').trim();
+    if (!ciste || seen.has(ciste)) continue;
+    seen.add(ciste);
+    out.push(ciste);
+  }
+  return out;
 }
 
 function jeLabel(line: string): boolean {
@@ -59,10 +74,11 @@ function jeLabel(line: string): boolean {
 }
 
 function najdi(lines: string[], labels: string[]): string | null {
+  const serazene = [...labels].sort((a, b) => b.length - a.length);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const low = line.toLowerCase();
-    for (const label of labels) {
+    for (const label of serazene) {
       if (low === label || low === `${label}:`) {
         const next = lines[i + 1];
         if (next && !jeLabel(next)) return next.replace(/:$/, '').trim();
@@ -75,6 +91,24 @@ function najdi(lines: string[], labels: string[]): string | null {
     }
   }
   return null;
+}
+
+/** Název ubytování z předmětu. Do jména hosta se nikdy neukládá. */
+export function jmenoUbytovaniZeSubjectu(subject: string): string | null {
+  const m = subject.match(
+    /(?:rezervace|reservation)\s+\d{4,}\s*,\s*(.+?)\s*:\s*(?:potvrzen|reservation\s+confirmation)/i,
+  );
+  const j = m?.[1]?.replace(/\s+/g, ' ').trim();
+  return j || null;
+}
+
+/** Špatně přečtené jméno: v předmětu je název ubytování, ne host. */
+export function jeSpatneJmenoPotvrzeni(jmeno: string | null | undefined, subject = ''): boolean {
+  const j = (jmeno || '').replace(/\s+/g, ' ').trim();
+  if (!j) return false;
+  if (/vivien apartmen/i.test(j) && /atmosphere/i.test(j)) return true;
+  const u = jmenoUbytovaniZeSubjectu(subject);
+  return Boolean(u && j.toLowerCase() === u.toLowerCase());
 }
 
 function datum(raw: string | null): string | null {
@@ -96,22 +130,26 @@ function celeCislo(raw: string | null): number | null {
 /** Potvrzení rezervace z Better Hotelu. Co chybí, zůstane prázdné a je v `chybi`. */
 export function parsujPotvrzeni(subject: string, html = '', text = ''): (DoplnekRezervace & { chybi: string[] }) | null {
   if (!jePotvrzeniPredmet(subject)) return null;
-  const lines = radky(subject, html, text);
+  const lines = radky(html, text);
   const zeSubjectu = cisloZeSubjectu(subject);
-  const jmenoZeSubjectu =
-    (subject.match(/(?:rezervace|reservation)\s+\d{4,}\s*,\s*(.+?)\s*:\s*(?:potvrzen|reservation\s+confirmation)/i) || [])[1]?.trim() ||
-    null;
-  const zTela = (najdi(lines, ['číslo rezervace', 'rezervace', 'reservation']) || '').match(/(\d{4,})/);
+  const zTela = (najdi(lines, ['číslo rezervace', 'reservation number', 'rezervace', 'reservation']) || '').match(/(\d{4,})/);
   const rezervace = zeSubjectu || (zTela ? zTela[1] : '');
-  const jmeno = najdi(lines, ['jméno a příjmení', 'jméno', 'klient', 'guest name', 'name']) || jmenoZeSubjectu;
+  const jmeno = najdi(lines, [
+    'rezervace na jméno',
+    'jméno a příjmení',
+    'guest name',
+    'jméno',
+    'klient',
+    'name',
+  ]);
   const email = najdi(lines, ['e-mail', 'email']);
   const telefon = najdi(lines, ['telefon', 'phone']);
-  const prijezd = datum(najdi(lines, ['příjezd', 'prijezd', 'arrival', 'check-in']));
-  const odjezd = datum(najdi(lines, ['odjezd', 'departure', 'check-out']));
-  const ubytovani = najdi(lines, ['typ ubytování', 'ubytování', 'pokoj', 'apartmán', 'accommodation', 'room']);
+  const prijezd = datum(najdi(lines, ['datum příjezdu', 'příjezd', 'prijezd', 'arrival', 'check-in']));
+  const odjezd = datum(najdi(lines, ['datum odjezdu', 'odjezd', 'departure', 'check-out']));
+  const ubytovani = najdi(lines, ['typ ubytování', 'ubytování', 'apartmán', 'accommodation', 'pokoj', 'room']);
   const apartman = aptZTextu(ubytovani);
-  const osob = celeCislo(najdi(lines, ['počet osob', 'počet hostů', 'guests']));
-  const noci = celeCislo(najdi(lines, ['počet nocí', 'nocí', 'nights']));
+  const osob = celeCislo(najdi(lines, ['počet hostů', 'počet osob', 'guests', 'persons']));
+  const noci = celeCislo(najdi(lines, ['počet nocí', 'nights', 'nocí']));
   const chybi: string[] = [];
   if (!jmeno) chybi.push('jméno');
   if (!telefon || !/\d/.test(telefon)) chybi.push('telefon');

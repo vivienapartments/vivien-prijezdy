@@ -7,7 +7,13 @@ import { jazykZPredvolby, normalizujTelefon } from './telefon';
 import { jeMailMajitele, verifyEmailOrigin } from './email-origin';
 import { fetchRecentInboxMails, type InboxMail } from './inbox-mail';
 import { poplatekZData } from './poplatek';
-import { cisloZeSubjectu, jePotvrzeniPredmet, jeVyzvaCheckinu, parsujPotvrzeni } from './potvrzeni-rezervace';
+import {
+  cisloZeSubjectu,
+  jePotvrzeniPredmet,
+  jeSpatneJmenoPotvrzeni,
+  jeVyzvaCheckinu,
+  parsujPotvrzeni,
+} from './potvrzeni-rezervace';
 import { posliPruvodce } from './posli-pruvodce';
 import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
 import {
@@ -144,7 +150,7 @@ function duvodyMailu(ins: MailInspection): Duvod[] {
   return [...ins.duvody];
 }
 
-/** Potvrzení nebo výzva z info@, ke které v přehledu ještě není řádek. Hostovi se nic neposílá. */
+/** Potvrzení nebo výzva z info@, kterou je ještě potřeba založit nebo opravit. Hostovi se nic neposílá. */
 async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<boolean> {
   const odMajitele = jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '');
   if (!odMajitele) return false;
@@ -154,7 +160,11 @@ async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<
   const potvrzeni = jePotvrzeniPredmet(mail.subject);
   const vyzva = jeVyzvaCheckinu(mail.subject) && !/VIVIEN-DATA/i.test(telo);
   if (!potvrzeni && !vyzva) return false;
-  return !(await store.getRezervace(id));
+  const rec = await store.getRezervace(id);
+  if (!rec) return true;
+  if (!potvrzeni) return false;
+  if (!rec.apartman || !rec.prijezd || !rec.odjezd || !rec.jmeno) return true;
+  return jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject);
 }
 
 export async function processOneMail(mail: InboxMail, store: ProcessStore): Promise<ProcessItem> {
@@ -434,10 +444,17 @@ async function zpracujOdMajitele(
   const email = (vstup.email || '').trim();
   const cisty = email && !problemEmailu(email) ? email : null;
   const chybiVcetne = cisty || !email ? chybi : [...chybi, 'e-mail'];
+  const prev = await store.getRezervace(vstup.rezervace);
+  const nahradJmeno = Boolean(vstup.jmeno) && jeSpatneJmenoPotvrzeni(prev?.jmeno, mail.subject);
   const vysledek = await doplnRezervaci(
     store,
     { ...vstup, email: cisty },
-    { stitek: 'info', historie: 'Přeposláno z info@', chybi: chybiVcetne },
+    {
+      stitek: 'info',
+      historie: prev ? 'Opraveno z potvrzení rezervace' : 'Přeposláno z info@',
+      chybi: chybiVcetne,
+      nahradJmeno,
+    },
   );
   if (!vysledek.ok) {
     await store.markMessage({
@@ -602,6 +619,9 @@ export type VypisRadku = {
   stavMailu: string;
   duvod: string;
   stavRadku: string;
+  apartman: string;
+  jmeno: 'ano' | 'chybi' | 'spatne';
+  odjezd: 'ano' | 'ne';
 };
 
 /** Jen čtení. Nic nezakládá a nikomu neposílá. */
@@ -630,6 +650,9 @@ export async function vypisPotvrzeni(store?: ProcessStore): Promise<VypisRadku[]
       stavMailu: msg?.status || 'nezpracovano',
       duvod: msg?.reason || '',
       stavRadku: rec?.stav || 'chybi',
+      apartman: rec?.apartman || 'chybi',
+      jmeno: !rec?.jmeno ? 'chybi' : jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject) ? 'spatne' : 'ano',
+      odjezd: rec?.odjezd ? 'ano' : 'ne',
     });
   }
   return out;
@@ -663,7 +686,41 @@ export async function runInboxProcessing(opts: {
   };
 
   for (const mail of mails) {
-    const item = await processOneMail(mail, store);
+    let item: ProcessItem;
+    try {
+      item = await processOneMail(mail, store);
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'chyba';
+      const id = cisloZeSubjectu(mail.subject) || undefined;
+      summary.errors += 1;
+      summary.items.push({ status: 'error', reason, rezervace: id });
+      try {
+        const now = new Date().toISOString();
+        if (id) {
+          const prev = await store.getRezervace(id);
+          if (prev) {
+            const veta = 'E-mail se nepodařilo zpracovat.';
+            const duvody = prev.duvody.some((d) => d.veta === veta)
+              ? prev.duvody
+              : [...prev.duvody, duvod('neuplne', veta)];
+            await store.setRezervace(id, sloucit(id, prev, { duvody }, now, veta));
+          }
+        }
+        if (mail.messageId) {
+          await store.markMessage({
+            messageId: mail.messageId,
+            uid: mail.uid,
+            processedAt: now,
+            rezervace: id,
+            status: 'error',
+            reason: reason.slice(0, 180),
+          });
+        }
+      } catch {
+        /* chyba zápisu nesmí shodit další maily */
+      }
+      continue;
+    }
     if (item.status === 'already_done') continue;
     summary.items.push(item);
     if (item.status === 'sent') summary.sent += 1;

@@ -3,6 +3,7 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import apartmanyJson from '@/data/apartmany.json';
 import {
+  casPraha,
   dotazPredOdeslanimZnovu,
   hodinaPraha,
   nabidnoutOdeslani,
@@ -86,6 +87,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   const [ulozeneOdkazy, setUlozeneOdkazy] = useState<Record<string, string>>({});
   const [pridat, setPridat] = useState(false);
   const [predani, setPredani] = useState<Record<string, string | null>>({});
+  const [dotazPredani, setDotazPredani] = useState<{ id: string; druh: 'predano' | 'vratit' } | null>(null);
 
   function casRadku(row: PrehledRadek): string {
     return casy[row.rezervace] ?? row.casPrijezdu ?? '';
@@ -106,7 +108,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   }
 
   async function ulozPredani(row: PrehledRadek, zapnout: boolean) {
-    if (!zapnout && !window.confirm('Zrušit předání? Host kódy v průvodci neuvidí.')) return;
+    setDotazPredani(null);
     if (ukazka) {
       setPredani((prev) => ({ ...prev, [row.rezervace]: zapnout ? new Date().toISOString() : null }));
       return;
@@ -384,16 +386,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
             <div className="ph-jmeno">{kdo}</div>
             {predanoRadku(row) ? (
               <span className="ph-predano-hotovo">{textPredani(predanoRadku(row) || '')}</span>
-            ) : (
-              <button
-                type="button"
-                className="ph-predano"
-                disabled={cekam !== null}
-                onClick={() => ulozPredani(row, true)}
-              >
-                Předáno
-              </button>
-            )}
+            ) : null}
           </div>
           {kde ? <div className="ph-kde">{kde}</div> : null}
           {row.stav === 'bez_checkinu' ? <div className="ph-neni-checkin">Není check-in</div> : null}
@@ -456,6 +449,40 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               {rozbaleno ? 'Skrýt detail ▴' : 'Detail ▾'}
             </button>
             <UlozitKontakt row={row} />
+            {predanoRadku(row) ? (
+              <button
+                type="button"
+                className="ph-predano"
+                disabled={cekam !== null}
+                onClick={() => setDotazPredani({ id: row.rezervace, druh: 'vratit' })}
+              >
+                Vrátit předání
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="ph-predano"
+                disabled={cekam !== null}
+                onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
+              >
+                Předáno
+              </button>
+            )}
+            {dotazPredani?.id === row.rezervace ? (
+              <div className="ph-predano-dotaz">
+                <p>
+                  {dotazPredani.druh === 'predano'
+                    ? 'Opravdu předáno? Hostovi se v průvodci zobrazí vstupní kódy.'
+                    : 'Opravdu vrátit předání? Host v průvodci kódy neuvidí.'}
+                </p>
+                <button type="button" disabled={cekam !== null} onClick={() => ulozPredani(row, dotazPredani.druh === 'predano')}>
+                  {dotazPredani.druh === 'predano' ? 'Ano, předáno' : 'Ano, vrátit'}
+                </button>
+                <button type="button" onClick={() => setDotazPredani(null)}>
+                  Zrušit
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
         <div className="ph-detail">
@@ -526,11 +553,6 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
             <Pole text={row.posledniPokusText} />
           </div>
           <div className="ph-akce">
-            {predanoRadku(row) ? (
-              <button type="button" disabled={cekam !== null} onClick={() => ulozPredani(row, false)}>
-                Zrušit předání
-              </button>
-            ) : null}
             {nabidnoutOdeslani(row.stav) ? (
               <>
                 <button
@@ -565,7 +587,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           {row.historie.length ? (
             <ul className="ph-historie">
               {row.historie.map((h, i) => (
-                <li key={`${h.cas}-${i}`}>{h.co}</li>
+                <li key={`${h.cas}-${i}`}>{casPraha(h.cas) ? `${casPraha(h.cas)} ${h.co}` : h.co}</li>
               ))}
             </ul>
           ) : null}

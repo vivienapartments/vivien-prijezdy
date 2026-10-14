@@ -540,7 +540,9 @@ Original-Message-ID: <x>
     );
     expect(item.status).toBe('bez_checkinu');
     expect(sendGuestEmail).not.toHaveBeenCalled();
-    expect((await store.getRezervace('120260439'))?.stitek).toBe('info');
+    const rec = await store.getRezervace('120260439');
+    expect(rec?.stitek).toBe('info');
+    expect(rec?.jmeno).toBeFalsy();
   });
 
   it('už označené potvrzení bez řádku se doplní a průvodce neodejde', async () => {
@@ -615,5 +617,148 @@ Original-Message-ID: <x>
     );
     expect(item.status).toBe('sent');
     expect(sendGuestEmail).toHaveBeenCalledOnce();
+  });
+
+  const PREDMET_541 = 'Rezervace 120260541, Vivien Apartmens Character and Atmosphere: Potvrzení rezervace';
+  const RADKY_541 = [
+    'Rezervace na jméno: Karolína Košťálová',
+    'Datum příjezdu: 14.10.2026',
+    'Datum odjezdu: 15.10.2026',
+    'Typ ubytování: Ušlechtilý kontrast',
+    'Počet nocí: 1',
+    'Počet hostů: 2',
+  ];
+
+  it('jméno bere z řádku rezervace na jméno, ne z předmětu', async () => {
+    const { parsujPotvrzeni } = await import('./potvrzeni-rezervace');
+    const html = `<table>${RADKY_541.map((r) => {
+      const [a, b] = r.split(': ');
+      return `<tr><td>${a}:</td><td>${b}</td></tr>`;
+    }).join('')}</table>`;
+    const zHtml = parsujPotvrzeni(PREDMET_541, html, '');
+    const zCitace = parsujPotvrzeni(PREDMET_541, '', RADKY_541.map((r) => `> ${r}`).join('\n'));
+    for (const u of [zHtml, zCitace]) {
+      expect(u?.jmeno).toBe('Karolína Košťálová');
+      expect(u?.jmeno).not.toContain('Vivien');
+      expect(u?.apartman).toBe('V4');
+      expect(u?.prijezd).toBe('2026-10-14');
+      expect(u?.odjezd).toBe('2026-10-15');
+      expect(u?.noci).toBe(1);
+      expect(u?.osob).toBe(2);
+      expect(u?.telefon).toBeFalsy();
+    }
+  });
+
+  it('špatné jméno z předmětu se opraví a check-in se nepřepíše', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    await store.markMessage({
+      messageId: 'stare-541@test',
+      processedAt: '2026-10-13T20:49:00.000Z',
+      status: 'skipped_no_data',
+      reason: 'preposlano',
+      rezervace: '120260541',
+    });
+    await store.setRezervace('120260541', {
+      ...(await import('./store')).prazdnaRezervace('120260541', '2026-10-13T20:49:00.000Z'),
+      jmeno: 'Vivien Apartmens Character and Atmosphere',
+      krestni: 'Vivien',
+      stav: 'bez_checkinu',
+      stitek: 'info',
+    });
+    const oprava = await processOneMail(
+      mail({
+        messageId: 'stare-541@test',
+        from: MAJITEL,
+        subject: PREDMET_541,
+        text: RADKY_541.join('\n'),
+      }),
+      store,
+    );
+    expect(oprava.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const po = await store.getRezervace('120260541');
+    expect(po?.jmeno).toBe('Karolína Košťálová');
+    expect(po?.apartman).toBe('V4');
+    expect(po?.odjezd).toBe('2026-10-15');
+
+    sendGuestEmail.mockClear();
+    const checkin = await processOneMail(
+      mail({
+        messageId: 'checkin-541@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com; spf=pass',
+        text: `
+VIVIEN-DATA v1
+REZERVACE: 120260541
+APARTMAN: Ušlechtilý kontrast
+PRIJEZD: 14.10.2026
+ODJEZD: 15.10.2026
+NOCI: 1
+OSOB: 2
+EMAIL: host@example.com
+GUEST_NAME: Karolína
+GUEST_SURNAME: Košťálová
+NARODNOST: CZE
+ACCESS_PIN: 1234
+KLIC: ${BH_KLIC}
+KONEC
+`,
+      }),
+      store,
+    );
+    expect(checkin.status).toBe('sent');
+    expect(sendGuestEmail).toHaveBeenCalledOnce();
+    const poCheckinu = await store.getRezervace('120260541');
+    expect(poCheckinu?.stav).toBe('odeslano');
+    expect(await store.listRezervace()).toHaveLength(1);
+
+    const znovu = await processOneMail(
+      mail({
+        messageId: 'stare-541-znovu@test',
+        from: MAJITEL,
+        subject: PREDMET_541,
+        text: RADKY_541.join('\n'),
+      }),
+      store,
+    );
+    expect(znovu.status).not.toBe('sent');
+    const poZnovu = await store.getRezervace('120260541');
+    expect(poZnovu?.stav).toBe('odeslano');
+    expect(poZnovu?.jmeno).toBe(poCheckinu?.jmeno);
+    expect(poZnovu?.apartman).toBe('V4');
+    expect(await store.listRezervace()).toHaveLength(1);
+    expect(sendGuestEmail).toHaveBeenCalledOnce();
+  });
+
+  it('jeden spadlý e-mail neshodí zpracování ostatních', async () => {
+    const { runInboxProcessing } = await import('./process-inbox');
+    const store = tmpStore();
+    const puvodni = store.isMessageProcessed.bind(store);
+    store.isMessageProcessed = async (id: string) => {
+      if (id === 'boom@test') throw new Error('rozbity mail');
+      return puvodni(id);
+    };
+    const summary = await runInboxProcessing({
+      store,
+      mails: [
+        mail({
+          messageId: 'boom@test',
+          from: MAJITEL,
+          subject: 'Rezervace 120269999, Vivien Apartmens Character and Atmosphere: Potvrzení rezervace',
+          text: 'x',
+        }),
+        mail({
+          messageId: 'dalsi@test',
+          from: MAJITEL,
+          subject: PREDMET_541,
+          text: RADKY_541.join('\n'),
+        }),
+      ],
+    });
+    expect(summary.errors).toBe(1);
+    expect(summary.scanned).toBe(2);
+    expect((await store.getRezervace('120260541'))?.apartman).toBe('V4');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
   });
 });
