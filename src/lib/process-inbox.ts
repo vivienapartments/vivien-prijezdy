@@ -830,7 +830,9 @@ function kodNarodnosti(raw: string | null | undefined): string {
 }
 
 function maMadarskyTelefon(ulozeny: string | null | undefined): boolean {
-  return (ulozeny || '').replace(/\D/g, '').startsWith('36');
+  let c = (ulozeny || '').replace(/\D/g, '');
+  if (c.startsWith('00')) c = c.slice(2);
+  return c.startsWith('36') || /^06\d{8,9}$/.test(c);
 }
 
 const MADARSKA = new Set(['HUN', 'HU', 'HUNGARY', 'MAGYAR', 'MAGYARORSZAG']);
@@ -851,6 +853,7 @@ export async function vypisMadarsko(store?: ProcessStore): Promise<{
     stavMailu: string;
     doplniloBy: 'ano' | 'ne';
   }[];
+  prohledano: number;
 }> {
   const s = store ?? createProcessStore();
   const zaznamy: {
@@ -863,7 +866,7 @@ export async function vypisMadarsko(store?: ProcessStore): Promise<{
   }[] = [];
   for (const { record } of await s.listRezervace()) {
     const narodnost = kodNarodnosti(record.narodnost);
-    const predvolba = maMadarskyTelefon(record.telefon) || maMadarskyTelefon(record.telefonRezervace) ? '36' : 'jina';
+    const predvolba = maMadarskyTelefon(record.telefon) || maMadarskyTelefon(record.telefonRezervace) || maMadarskyTelefon(record.telefonPuvodni) || maMadarskyTelefon(record.telefonRezervacePuvodni) ? '36' : 'jina';
     if (!jeMadarskySignal(record.jazyk, narodnost, predvolba)) continue;
     zaznamy.push({
       rezervace: record.rezervace,
@@ -884,6 +887,7 @@ export async function vypisMadarsko(store?: ProcessStore): Promise<{
     stavMailu: string;
     doplniloBy: 'ano' | 'ne';
   }[] = [];
+  let prohledano = 0;
   const user = process.env.IMAP_USER?.trim();
   const pass = process.env.IMAP_HESLO?.trim();
   if (user && pass) {
@@ -891,10 +895,13 @@ export async function vypisMadarsko(store?: ProcessStore): Promise<{
     for (const mail of fetched) {
       const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
       if (!/VIVIEN-DATA/i.test(telo)) continue;
+      prohledano += 1;
       const ins = inspectVivienMail(bodyForParse(mail), mail.subject);
       const narodnost = kodNarodnosti(ins.narodnost);
-      const predvolba = maMadarskyTelefon(ins.telefon) ? '36' : 'jina';
-      if (!jeMadarskySignal(ins.jazyk, narodnost, predvolba) || !ins.rezervace) continue;
+      const surovyTelefon = telo.match(/GUEST_PHONE:\s*([^\n\r<]{1,40})/i)?.[1] || ins.telefon;
+      const predvolba = maMadarskyTelefon(surovyTelefon) ? '36' : 'jina';
+      const textem = /magyar|hungary|\bHUN\b/i.test(telo);
+      if ((!jeMadarskySignal(ins.jazyk, narodnost, predvolba) && !textem) || !ins.rezervace) continue;
       const rec = await s.getRezervace(ins.rezervace);
       const msg = mail.messageId ? await s.getMessage(mail.messageId) : null;
       maily.push({
@@ -908,7 +915,7 @@ export async function vypisMadarsko(store?: ProcessStore): Promise<{
       });
     }
   }
-  return { zaznamy, maily };
+  return { zaznamy, maily, prohledano };
 }
 
 export async function runInboxProcessing(opts: {
