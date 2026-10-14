@@ -1054,4 +1054,27 @@ KONEC
     expect((await store.getRezervace('120260541'))?.apartman).toBe('V4');
     expect(sendGuestEmail).not.toHaveBeenCalled();
   });
+
+  it('chyba při čtení spamu neshodí check-in', async () => {
+    const { runInboxProcessing } = await import('./process-inbox');
+    const store = tmpStore();
+    const summary = await runInboxProcessing({
+      store,
+      spam: async () => {
+        throw new Error('imap spam');
+      },
+      mails: [
+        mail({
+          messageId: 'msg-spam-ok@test',
+          from: 'noreply@better-hotel.com',
+          authenticationResults: 'dkim=pass header.d=better-hotel.com; spf=pass',
+          text: BLOCK,
+        }),
+      ],
+    });
+    expect(summary.errors).toBe(1);
+    expect(summary.items.some((item) => item.reason === 'Spam se nepodařilo projít.')).toBe(true);
+    expect(summary.sent).toBe(1);
+    expect((await store.getRezervace('120260530'))?.stav).toBe('odeslano');
+  });
 });

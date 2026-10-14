@@ -1,0 +1,44 @@
+---
+description: Jak psát všechny texty pro hosty a lidi (průvodce, e-maily, web), aby nepůsobily jako text od AI
+alwaysApply: true
+---
+
+# Psaní pro lidi (VIVIEN)
+
+Platí pro všechny texty, které čtou hosté nebo veřejnost: průvodce, e-maily, web, SMS a zprávy. Píšeme jako rodinný podnik. Klidně, věcně, vlídně, jako hostitel, který mluví s hostem. Vychází z pravidel Wikipedie „Signs of AI writing“.
+
+## Telefonní čísla (nejdůležitější pravidlo)
+- Číslo se nikdy nesmí rozdělit na dva řádky. V HTML ho obal do `white-space: nowrap`, mezery uvnitř čísla dělej nedělitelné (`&nbsp;`). Platí na webu, v průvodci i v e-mailu.
+- Číslo má jít v mobilu ťuknout (`tel:`).
+
+## Zarovnání
+- Majitel chce text vždy zarovnaný do bloku (průvodce, e-mail, web). Zarovnání vlevo není řešení roztažených mezer.
+- Roztažené mezery řeš dělením slov (`hyphens: auto` se správným `lang`), případně přeformulováním věty. Vždy majiteli nabídni tři varianty.
+
+## Interpunkce
+- Dvojtečky jen výjimečně. Nikdy v nadpisech a v nejdůležitějších větách. Větu raději přeformuluj.
+- Žádné pomlčky „—“ a „–“ ve větách. Použij čárku, tečku nebo závorku. Mezi čísly (časy, data) je pomlčka v pořádku.
+- Vykřičníky skoro vůbec. Emoji ne.
+
+## Čemu se vyhnout (typické znaky AI textu)
+- **Nafouknutá důležitost:** „klíčový“, „zásadní“, „jedinečný“, „svědčí o“, „podtrhuje“, „hraje důležitou roli“.
+- **Reklamní tón:** „úchvatný“, „dech beroucí“, „bohaté kulturní dědictví“, „perfektní“, „dokonalý zážitek“. Popiš konkrétně, co tam je.
+- **Obrat „nejen …, ale i …“** a „nejde o X, ale o Y“.
+- **Trojice za každou cenu:** „klidné, pohodlné a stylové“. Napiš jen to, co je pravda a co host potřebuje.
+- **Prázdné dovětky na konci věty:** „…, což zajišťuje pohodlí“, „…, čímž podtrhuje atmosféru“.
+- **Vatová spojení:** „Navíc“, „Kromě toho“, „V neposlední řadě“, „Je důležité poznamenat“, „Stojí za zmínku“, „Zkrátka“.
+- **Neurčité odvolávky:** „mnoho hostů říká“, „podle odborníků“, pokud to nemáme doložené.
+- **Tučné písmo všude.** Tučně jen to, co host musí najít očima (číslo, čas, kód).
+- **Odrážky s tučným názvem**, který věta za ním jen zopakuje.
+- **Zbytečné shrnutí na konci** („Věříme, že se vám u nás bude líbit…“), pokud nic nového neříká.
+
+## Tón připomínek
+Když host něco neudělal (check-in, neotevřený průvodce, nenapsaný čas), píšeme věcně a pevně, bez „prosím“ a bez prošení: fakt, důsledek, co má udělat. Vlídnost ano, podřízenost nikdy.
+
+## Jak psát
+- Krátké věty. Jedna myšlenka na větu.
+- Nejdřív co má host udělat, pak proč, pak jak. Zákaz až na konci věty.
+- Konkrétní fakta: čísla, časy, místa. Nic nevymýšlej.
+- Oslovuj přímo („napište nám“, „zaparkujte“).
+- Stejná věc se ve všech jazycích píše se stejnou stavbou. Překlad ať zní jako od rodilého mluvčího, ne doslovně.
+- Majiteli vždy nabídni tři varianty textu a počkej, až vybere.

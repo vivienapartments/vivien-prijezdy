@@ -817,110 +817,11 @@ export async function vypisPotvrzeni(store?: ProcessStore, overeni = false): Pro
   return out;
 }
 
-function kodNarodnosti(raw: string | null | undefined): string {
-  if (!raw?.trim()) return 'chybi';
-  const code = raw
-    .trim()
-    .toUpperCase()
-    .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^A-Z0-9]+/g, '');
-  if (!code || code.length > 24) return 'nezname';
-  return code;
-}
-
-function maMadarskyTelefon(ulozeny: string | null | undefined): boolean {
-  let c = (ulozeny || '').replace(/\D/g, '');
-  if (c.startsWith('00')) c = c.slice(2);
-  return c.startsWith('36') || /^06\d{8,9}$/.test(c);
-}
-
-const MADARSKA = new Set(['HUN', 'HU', 'HUNGARY', 'MAGYAR', 'MAGYARORSZAG']);
-
-function jeMadarskySignal(jazyk: string | null | undefined, narodnost: string, predvolba: '36' | 'jina'): boolean {
-  return jazyk === 'hu' || MADARSKA.has(narodnost) || predvolba === '36';
-}
-
-/** Jen signál maďarské hostky. Bez jména, e-mailu a telefonu. */
-export async function vypisMadarsko(store?: ProcessStore): Promise<{
-  zaznamy: { rezervace: string; jazyk: string; narodnost: string; predvolba: '36' | 'jina'; stav: string; apartman: string }[];
-  maily: {
-    rezervace: string;
-    jazykMailu: string;
-    jazykRadku: string;
-    narodnost: string;
-    predvolba: '36' | 'jina';
-    stavMailu: string;
-    doplniloBy: 'ano' | 'ne';
-  }[];
-  prohledano: number;
-}> {
-  const s = store ?? createProcessStore();
-  const zaznamy: {
-    rezervace: string;
-    jazyk: string;
-    narodnost: string;
-    predvolba: '36' | 'jina';
-    stav: string;
-    apartman: string;
-  }[] = [];
-  for (const { record } of await s.listRezervace()) {
-    const narodnost = kodNarodnosti(record.narodnost);
-    const predvolba = maMadarskyTelefon(record.telefon) || maMadarskyTelefon(record.telefonRezervace) || maMadarskyTelefon(record.telefonPuvodni) || maMadarskyTelefon(record.telefonRezervacePuvodni) ? '36' : 'jina';
-    if (!jeMadarskySignal(record.jazyk, narodnost, predvolba)) continue;
-    zaznamy.push({
-      rezervace: record.rezervace,
-      jazyk: record.jazyk || 'chybi',
-      narodnost: MADARSKA.has(narodnost) || narodnost === 'chybi' || /^[A-Z0-9]{2,12}$/.test(narodnost) ? narodnost : 'jina',
-      predvolba,
-      stav: record.stav,
-      apartman: record.apartman || 'chybi',
-    });
-  }
-
-  const maily: {
-    rezervace: string;
-    jazykMailu: string;
-    jazykRadku: string;
-    narodnost: string;
-    predvolba: '36' | 'jina';
-    stavMailu: string;
-    doplniloBy: 'ano' | 'ne';
-  }[] = [];
-  let prohledano = 0;
-  const user = process.env.IMAP_USER?.trim();
-  const pass = process.env.IMAP_HESLO?.trim();
-  if (user && pass) {
-    const fetched = await fetchRecentInboxMails({ user, pass, days: 14 });
-    for (const mail of fetched) {
-      const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
-      if (!/VIVIEN-DATA/i.test(telo)) continue;
-      prohledano += 1;
-      const ins = inspectVivienMail(bodyForParse(mail), mail.subject);
-      const narodnost = kodNarodnosti(ins.narodnost);
-      const surovyTelefon = telo.match(/GUEST_PHONE:\s*([^\n\r<]{1,40})/i)?.[1] || ins.telefon;
-      const predvolba = maMadarskyTelefon(surovyTelefon) ? '36' : 'jina';
-      const textem = /magyar|hungary|\bHUN\b/i.test(telo);
-      if ((!jeMadarskySignal(ins.jazyk, narodnost, predvolba) && !textem) || !ins.rezervace) continue;
-      const rec = await s.getRezervace(ins.rezervace);
-      const msg = mail.messageId ? await s.getMessage(mail.messageId) : null;
-      maily.push({
-        rezervace: ins.rezervace,
-        jazykMailu: ins.jazyk || 'chybi',
-        jazykRadku: rec?.jazyk || 'chybi',
-        narodnost: MADARSKA.has(narodnost) || narodnost === 'chybi' || /^[A-Z0-9]{2,12}$/.test(narodnost) ? narodnost : 'jina',
-        predvolba,
-        stavMailu: msg?.status || 'nezpracovano',
-        doplniloBy: rec && coSeZmenilo(rec, udajeZMailu(ins, rec)).length ? 'ano' : 'ne',
-      });
-    }
-  }
-  return { zaznamy, maily, prohledano };
-}
-
 export async function runInboxProcessing(opts: {
   store?: ProcessStore;
   mails?: InboxMail[];
+  /** Test: nahradí prohlídku spamu. Chyba se zapíše a zpracování běží dál. */
+  spam?: () => Promise<void>;
 } = {}): Promise<ProcessSummary> {
   const store = opts.store ?? createProcessStore();
   await store.purgeExpired();
@@ -996,6 +897,23 @@ export async function runInboxProcessing(opts: {
     } else if (item.status === 'rejected') summary.rejected += 1;
     else if (item.status === 'duplicate') summary.duplicate += 1;
     else if (item.status === 'error' || item.status === 'vraceno') summary.errors += 1;
+  }
+
+  if (!opts.mails || opts.spam) {
+    try {
+      if (opts.spam) await opts.spam();
+      else {
+        const { vytahniHostyZeSpamu } = await import('./spam-schranka');
+        const spam = await vytahniHostyZeSpamu(store);
+        if (spam.chyby) {
+          summary.errors += spam.chyby;
+          summary.items.push({ status: 'error', reason: 'E-mail ve spamu se nepodařilo přesunout.' });
+        }
+      }
+    } catch {
+      summary.errors += 1;
+      summary.items.push({ status: 'error', reason: 'Spam se nepodařilo projít.' });
+    }
   }
 
   return summary;

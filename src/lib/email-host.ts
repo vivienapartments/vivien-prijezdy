@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import apartmanyJson from '@/data/apartmany.json';
 import { ceskyVokativ, narodnostKod } from './osloveni';
 import type { GuideSecrets } from './secrets';
-import type { AptId, GuideLang, LText } from './types';
+import { GUIDE_LANGS, type AptId, type GuideLang, type LText } from './types';
 
 export type GuestEmailInput = {
   lang: GuideLang;
@@ -99,6 +99,16 @@ const subjectL: LText = {
   sv: 'VIKTIGT · Er ankomstguide, utan den kan ni varken parkera eller komma in',
   hu: "FONTOS · Az érkezési útmutató, enélkül nem tudnak parkolni és bejutni",
 };
+
+/** Předměty průvodce ve všech jazycích. Podle nich poznáme odpověď hosta. */
+export function predmetyPruvodce(): string[] {
+  const out = new Set<string>();
+  for (const lang of GUIDE_LANGS) {
+    const s = t(subjectL, lang);
+    if (s) out.add(s);
+  }
+  return [...out];
+}
 
 /** Co průvodce je (cesta + zásadní info). */
 const introBodyL: LText = {

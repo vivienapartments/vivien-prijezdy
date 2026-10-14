@@ -4,7 +4,13 @@ import type { Duvod } from './chyby';
 import type { PoplatekStav } from './poplatek';
 import type { AptId, GuideLang } from './types';
 
-export type MessageStatus = 'sent' | 'skipped_no_data' | 'rejected' | 'duplicate' | 'error';
+export type MessageStatus =
+  | 'sent'
+  | 'skipped_no_data'
+  | 'rejected'
+  | 'duplicate'
+  | 'error'
+  | 'spam_vytazen';
 
 export type MessageRecord = {
   messageId: string;
