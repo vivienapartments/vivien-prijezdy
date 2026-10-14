@@ -96,10 +96,10 @@ describe('tlačítka v přehledu', () => {
       'Dobrý den, napište nám, v kolik zhruba dorazíte. Apartmán předáváme osobně, a bez času příjezdu se nepotkáme. Děkujeme a těšíme se na setkání.',
     );
     expect(textDne('cs')).toBe(
-      'Dobrý den, dnes se na vás těšíme. V kolik zhruba dorazíte? Potřebujeme to vědět, abychom vám mohli apartmán osobně předat.',
+      'Dobrý den, dnes se na vás těšíme. V kolik zhruba dorazíte? Potřebujeme to vědět, abychom vám mohli apartmán osobně předat. Kódy se vám v průvodci zobrazí hned po předání.',
     );
     expect(textDneSCasem('cs', '16:30')).toBe(
-      'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem 16:30, platí to? Kdyby se čas změnil, napište nám prosím hned. Asi 15 minut před příjezdem se nám prosím ozvěte, ať jsme na místě.',
+      'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem 16:30, platí to? Kdyby se čas změnil, napište nám prosím hned. Asi 15 minut před příjezdem se nám prosím ozvěte, ať jsme na místě. Kódy se vám v průvodci zobrazí hned po předání.',
     );
   });
 

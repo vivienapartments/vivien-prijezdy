@@ -113,14 +113,14 @@ export function predmetyPruvodce(): string[] {
 /** Co průvodce je (cesta + zásadní info). */
 const introBodyL: LText = {
   // CS: po oslovení s čárkou malé písmeno (pravopis dopisu)
-  cs: 'připravili jsme pro vás krátkého průvodce příjezdem. Najdete v něm cestu k nám, parkování, bránu, Wi-Fi a kódy. Ať víte, kam jet a co dělat po příjezdu.',
-  en: 'We prepared a short arrival guide for you. You will find the way to us, parking, the gate, Wi-Fi and codes. So you know where to go and what to do after arrival.',
-  de: 'wir haben für Sie einen kurzen Anreiseleitfaden vorbereitet. Darin finden Sie den Weg zu uns, Parken, Tor, WLAN und Codes. Damit Sie wissen, wohin Sie fahren und was nach der Ankunft zu tun ist.',
-  pl: 'przygotowaliśmy dla Was krótką instrukcję przyjazdu. Znajdziecie w niej drogę do nas, parking, bramę, Wi-Fi i kody. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
-  uk: 'ми підготували для вас короткий гід приїзду. У ньому шлях до нас, паркування, брама, Wi-Fi та коди. Щоб ви знали, куди їхати і що робити після прибуття.',
-  'zh-Hant': '我們為您準備了一份簡短的抵達指南。您會找到前往我們這裡的路線、停車、大門、Wi-Fi 與密碼。讓您知道怎麼來、抵達後該做什麼。',
-  sv: 'vi har förberett en kort ankomstguide. I den finns vägen till oss, parkering, grind, Wi-Fi och koder. Så att ni vet vart ni ska och vad ni gör efter ankomsten.',
-  hu: "készítettünk egy rövid érkezési útmutatót. Benne van az út hozzánk, a parkolás, a kapu, a WiFi és a kódok. Hogy tudják, hova menjenek, és mit csináljanak az érkezés után.",
+  cs: 'připravili jsme pro vás krátkého průvodce příjezdem. Najdete v něm cestu k nám, parkování, bránu a Wi-Fi. Vstupní kódy se v něm zobrazí, až vám apartmán osobně předáme. Ať víte, kam jet a co dělat po příjezdu.',
+  en: 'We prepared a short arrival guide for you. You will find the way to us, parking, the gate and Wi-Fi. The entry codes will appear in it only after we hand the apartment over to you in person. So you know where to go and what to do after arrival.',
+  de: 'wir haben für Sie einen kurzen Anreiseleitfaden vorbereitet. Darin finden Sie den Weg zu uns, Parken, Tor und WLAN. Die Eingangscodes erscheinen darin erst, wenn wir Ihnen das Apartment persönlich übergeben. Damit Sie wissen, wohin Sie fahren und was nach der Ankunft zu tun ist.',
+  pl: 'przygotowaliśmy dla Was krótką instrukcję przyjazdu. Znajdziecie w niej drogę do nas, parking, bramę i Wi-Fi. Kody wejścia pojawią się w niej, gdy apartament przekażemy osobiście. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
+  uk: 'ми підготували для вас короткий гід приїзду. У ньому шлях до нас, паркування, брама та Wi-Fi. Вхідні коди з’являться в ньому, коли апартаменти передамо особисто. Щоб ви знали, куди їхати і що робити після прибуття.',
+  'zh-Hant': '我們為您準備了一份簡短的抵達指南。您會找到前往我們這裡的路線、停車、大門與 Wi-Fi。進門密碼會在我們當面把公寓交給您之後才顯示。讓您知道怎麼來、抵達後該做什麼。',
+  sv: 'vi har förberett en kort ankomstguide. I den finns vägen till oss, parkering, grind och Wi-Fi. Ingångskoderna visas där först när vi lämnar över lägenheten personligen. Så att ni vet vart ni ska och vad ni gör efter ankomsten.',
+  hu: 'készítettünk egy rövid érkezési útmutatót. Benne van az út hozzánk, a parkolás, a kapu és a WiFi. A belépési kódok akkor jelennek meg benne, amikor az apartmant személyesen átadjuk. Hogy tudják, hova menjenek, és mit csináljanak az érkezés után.',
 };
 
 /** Nad tlačítkem. Čas příjezdu, ať host nečeká před domem. */

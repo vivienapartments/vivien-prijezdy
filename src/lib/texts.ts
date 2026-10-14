@@ -46,6 +46,51 @@ export const vstupNadpis: LText = {
   hu: "A kódjaik",
 };
 
+/** Úplně nahoře, ještě nad časem příjezdu. Po předání se změní na krátkou větu. */
+export const predaniNadpis: LText = {
+  cs: 'Apartmán vám předáme osobně',
+  en: 'We hand the apartment over in person',
+  de: 'Wir übergeben das Apartment persönlich',
+  pl: 'Apartament przekażemy osobiście',
+  uk: 'Апартаменти передамо особисто',
+  'zh-Hant': '公寓由我們當面交給您',
+  sv: 'Lägenheten lämnar vi över personligen',
+  hu: 'Az apartmant személyesen adjuk át',
+};
+
+export const predaniText: LText = {
+  cs: 'Kódy od domu a apartmánu se vám tady zobrazí až po předání a kontrole dokladů. Bez předání se dovnitř nedostanete, a proto nám napište, v kolik dorazíte.',
+  en: 'The codes for the house and the apartment will appear here only after the handover and the ID check. Without the handover you cannot get in, so write to us with the time you will arrive.',
+  de: 'Die Codes für das Haus und das Apartment erscheinen hier erst nach der Übergabe und der Kontrolle der Ausweise. Ohne Übergabe kommen Sie nicht hinein, schreiben Sie uns deshalb, um wie viel Uhr Sie ankommen.',
+  pl: 'Kody do domu i apartamentu pojawią się tutaj dopiero po przekazaniu i kontroli dokumentów. Bez przekazania nie wejdziecie do środka, napiszcie nam więc, o której dojedziecie.',
+  uk: 'Коди від будинку та апартаментів з’являться тут лише після передачі та перевірки документів. Без передачі ви не потрапите всередину, тому напишіть нам, о котрій приїдете.',
+  'zh-Hant': '房屋和公寓的密碼會在當面交接並核對證件之後才顯示在這裡。沒有交接就進不去，所以請告訴我們您幾點到。',
+  sv: 'Koderna till huset och lägenheten visas här först efter överlämningen och kontrollen av id-handlingar. Utan överlämning kommer ni inte in, så skriv till oss vilken tid ni kommer.',
+  hu: 'A ház és az apartman kódjai itt csak az átadás és az okmányok ellenőrzése után jelennek meg. Átadás nélkül nem jutnak be, ezért írják meg, hánykor érkeznek.',
+};
+
+export const predaniHotovo: LText = {
+  cs: 'Apartmán je předaný.',
+  en: 'The apartment has been handed over.',
+  de: 'Das Apartment ist übergeben.',
+  pl: 'Apartament jest przekazany.',
+  uk: 'Апартаменти передано.',
+  'zh-Hant': '公寓已經交接。',
+  sv: 'Lägenheten är överlämnad.',
+  hu: 'Az apartman átadva.',
+};
+
+export const predaniHotovoOdkaz: LText = {
+  cs: 'Kódy najdete níže.',
+  en: 'You will find the codes below.',
+  de: 'Die Codes finden Sie unten.',
+  pl: 'Kody znajdziecie poniżej.',
+  uk: 'Коди знайдете нижче.',
+  'zh-Hant': '密碼在下面。',
+  sv: 'Koderna finns nedan.',
+  hu: 'A kódok lejjebb vannak.',
+};
+
 /** Nahoře v průvodci, ještě před volbou autem nebo pěšky. */
 export const casPrijezduNadpis: LText = {
   cs: 'Napište nám, v kolik dorazíte',

@@ -66,6 +66,40 @@ describe('kódy až po předání', () => {
     expect(kodyProHosta(false, 'V1', PIN, 'cs')).toBeNull();
   });
 
+  it('box o předání je vidět bez volby autem nebo pěšky', () => {
+    const html = renderToStaticMarkup(
+      createElement(Guide, {
+        apt: 'V1',
+        lang: 'cs',
+        secrets,
+        stay: { noci: 2, osob: 2 },
+        kody: null,
+      }),
+    );
+    const box = html.indexOf('Apartmán vám předáme osobně');
+    const cas = html.indexOf('Napište nám, v kolik dorazíte');
+    expect(box).toBeGreaterThan(-1);
+    expect(cas).toBeGreaterThan(box);
+    expect(html).toContain('Kódy od domu a apartmánu se vám tady zobrazí až po předání a kontrole dokladů.');
+    expect(html).not.toContain('id="vase-kody"');
+  });
+
+  it('po předání se box změní a vede ke kódům', () => {
+    const html = renderToStaticMarkup(
+      createElement(Guide, {
+        apt: 'V1',
+        lang: 'cs',
+        secrets,
+        stay: { noci: 2, osob: 2 },
+        kody: kodyProHosta(true, 'V1', PIN, 'cs'),
+      }),
+    );
+    expect(html).toContain('Apartmán je předaný.');
+    expect(html).toContain('href="#vase-kody"');
+    expect(html).toContain('Kódy najdete níže.');
+    expect(html).not.toContain('<h2>Apartmán vám předáme osobně</h2>');
+  });
+
   it('předáno: kódy v HTML jsou, u domu klíček a u apartmánu mřížka', () => {
     const html = htmlPruvodce(true);
     expect(html).toContain(DUM);

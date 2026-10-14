@@ -341,6 +341,18 @@ export function Guide({
       ) : null}
 
       <main className="pv">
+        <section className={`pv-predani${kody ? ' pv-predani--hotovo' : ''}`} lang={lang}>
+          {kody ? (
+            <p className="pv-predani__text">
+              {tt(TX.predaniHotovo)} <a href="#vase-kody">{tt(TX.predaniHotovoOdkaz)}</a>
+            </p>
+          ) : (
+            <>
+              <h2>{tt(TX.predaniNadpis)}</h2>
+              <p className="pv-predani__text">{tt(TX.predaniText)}</p>
+            </>
+          )}
+        </section>
         <section className="pv-cas" lang={lang}>
           <h2>{tt(TX.casPrijezduNadpis)}</h2>
           <p className="pv-cas__text">{renderPhoneText(tt(TX.casPrijezduText))}</p>

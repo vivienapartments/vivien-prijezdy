@@ -142,26 +142,37 @@ const CAS: Record<JazykZpravy, string> = {
   hu: "Jó napot, írják meg körülbelül, hánykor érkeznek. Az apartmant személyesen adjuk át, az érkezés ideje nélkül nem tudunk önökkel találkozni. Köszönjük, várjuk önöket.",
 };
 
+const VETA_KODY: Record<JazykZpravy, string> = {
+  cs: 'Kódy se vám v průvodci zobrazí hned po předání.',
+  en: 'The codes will appear in the guide right after the handover.',
+  de: 'Die Codes erscheinen im Leitfaden gleich nach der Übergabe.',
+  pl: 'Kody pojawią się w przewodniku zaraz po przekazaniu.',
+  uk: 'Коди з’являться в путівнику одразу після передачі.',
+  'zh-Hant': '密碼會在交接後立刻顯示在指南裡。',
+  sv: 'Koderna visas i guiden direkt efter överlämningen.',
+  hu: 'A kódok az útmutatóban az átadás után azonnal megjelennek.',
+};
+
 const DEN_BEZ: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, dnes se na vás těšíme. V kolik zhruba dorazíte? Potřebujeme to vědět, abychom vám mohli apartmán osobně předat.',
-  en: 'Hello, we are looking forward to seeing you today. Roughly what time will you arrive? We need to know so that we can hand the apartment over to you in person.',
-  de: 'Guten Tag, wir freuen uns heute auf Sie. Um wie viel Uhr kommen Sie ungefähr an? Wir müssen das wissen, damit wir Ihnen das Apartment persönlich übergeben können.',
-  pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. O której mniej więcej będziecie? Musimy to wiedzieć, żebyśmy mogli przekazać wam apartament osobiście.',
-  uk: 'Добрий день, сьогодні на вас чекаємо. Приблизно о котрій приїдете? Нам треба це знати, щоб передати вам апартаменти особисто.',
-  'zh-Hant': '您好，今天期待您的到來。大約幾點到？我們需要知道時間，才能當面把公寓交給您。',
-  sv: 'Hej, vi ser fram emot att träffa er i dag. Ungefär vilken tid kommer ni? Vi behöver veta det för att kunna lämna över lägenheten personligen.',
-  hu: "Jó napot, ma várjuk önöket. Körülbelül hánykor érkeznek? Tudnunk kell, hogy személyesen át tudjuk adni az apartmant.",
+  cs: `Dobrý den, dnes se na vás těšíme. V kolik zhruba dorazíte? Potřebujeme to vědět, abychom vám mohli apartmán osobně předat. ${VETA_KODY.cs}`,
+  en: `Hello, we are looking forward to seeing you today. Roughly what time will you arrive? We need to know so that we can hand the apartment over to you in person. ${VETA_KODY.en}`,
+  de: `Guten Tag, wir freuen uns heute auf Sie. Um wie viel Uhr kommen Sie ungefähr an? Wir müssen das wissen, damit wir Ihnen das Apartment persönlich übergeben können. ${VETA_KODY.de}`,
+  pl: `Dzień dobry, cieszymy się, że dziś przyjedziecie. O której mniej więcej będziecie? Musimy to wiedzieć, żebyśmy mogli przekazać wam apartament osobiście. ${VETA_KODY.pl}`,
+  uk: `Добрий день, сьогодні на вас чекаємо. Приблизно о котрій приїдете? Нам треба це знати, щоб передати вам апартаменти особисто. ${VETA_KODY.uk}`,
+  'zh-Hant': `您好，今天期待您的到來。大約幾點到？我們需要知道時間，才能當面把公寓交給您。${VETA_KODY['zh-Hant']}`,
+  sv: `Hej, vi ser fram emot att träffa er i dag. Ungefär vilken tid kommer ni? Vi behöver veta det för att kunna lämna över lägenheten personligen. ${VETA_KODY.sv}`,
+  hu: `Jó napot, ma várjuk önöket. Körülbelül hánykor érkeznek? Tudnunk kell, hogy személyesen át tudjuk adni az apartmant. ${VETA_KODY.hu}`,
 };
 
 const DEN_CAS: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem {čas}, platí to? Kdyby se čas změnil, napište nám prosím hned. Asi 15 minut před příjezdem se nám prosím ozvěte, ať jsme na místě.',
-  en: 'Hello, we are looking forward to seeing you today. We are expecting you around {čas}. Does that still work? If the time changes, please write to us right away. About 15 minutes before you arrive, please message us so we are there.',
-  de: 'Guten Tag, wir freuen uns heute auf Sie. Wir rechnen mit Ihnen gegen {čas}. Passt das? Wenn sich die Zeit ändert, schreiben Sie uns bitte sofort. Etwa 15 Minuten vor der Ankunft melden Sie sich bitte, damit wir vor Ort sind.',
-  pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. Spodziewamy się Was około {čas}. Zgadza się? Gdyby godzina się zmieniła, napiszcie proszę od razu. Około 15 minut przed przyjazdem odezwijcie się proszę, żebyśmy byli na miejscu.',
-  uk: 'Добрий день, сьогодні на вас чекаємо. Розраховуємо на вас близько {čas}. Це ще актуально? Якщо час зміниться, напишіть нам, будь ласка, одразу. Приблизно за 15 хвилин до приїзду напишіть, будь ласка, щоб ми були на місці.',
-  'zh-Hant': '您好，今天期待您的到來。我們預計您大約 {čas} 到，這個時間還對嗎？如果時間有變，請立刻傳訊息給我們。抵達前大約 15 分鐘請再傳一次，我們才會在現場。',
-  sv: 'Hej, vi ser fram emot att träffa er i dag. Vi räknar med er omkring {čas}. Stämmer det? Om tiden ändras, skriv till oss genast. Ungefär 15 minuter före ankomsten hör ni av er, så att vi är på plats.',
-  hu: "Jó napot, ma várjuk önöket. Körülbelül {čas} körül számítunk önökre. Így marad? Ha az időpont változik, írjanak azonnal. Körülbelül 15 perccel az érkezés előtt írjanak, hogy ott legyünk.",
+  cs: `Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem {čas}, platí to? Kdyby se čas změnil, napište nám prosím hned. Asi 15 minut před příjezdem se nám prosím ozvěte, ať jsme na místě. ${VETA_KODY.cs}`,
+  en: `Hello, we are looking forward to seeing you today. We are expecting you around {čas}. Does that still work? If the time changes, please write to us right away. About 15 minutes before you arrive, please message us so we are there. ${VETA_KODY.en}`,
+  de: `Guten Tag, wir freuen uns heute auf Sie. Wir rechnen mit Ihnen gegen {čas}. Passt das? Wenn sich die Zeit ändert, schreiben Sie uns bitte sofort. Etwa 15 Minuten vor der Ankunft melden Sie sich bitte, damit wir vor Ort sind. ${VETA_KODY.de}`,
+  pl: `Dzień dobry, cieszymy się, że dziś przyjedziecie. Spodziewamy się Was około {čas}. Zgadza się? Gdyby godzina się zmieniła, napiszcie proszę od razu. Około 15 minut przed przyjazdem odezwijcie się proszę, żebyśmy byli na miejscu. ${VETA_KODY.pl}`,
+  uk: `Добрий день, сьогодні на вас чекаємо. Розраховуємо на вас близько {čas}. Це ще актуально? Якщо час зміниться, напишіть нам, будь ласка, одразу. Приблизно за 15 хвилин до приїзду напишіть, будь ласка, щоб ми були на місці. ${VETA_KODY.uk}`,
+  'zh-Hant': `您好，今天期待您的到來。我們預計您大約 {čas} 到，這個時間還對嗎？如果時間有變，請立刻傳訊息給我們。抵達前大約 15 分鐘請再傳一次，我們才會在現場。${VETA_KODY['zh-Hant']}`,
+  sv: `Hej, vi ser fram emot att träffa er i dag. Vi räknar med er omkring {čas}. Stämmer det? Om tiden ändras, skriv till oss genast. Ungefär 15 minuter före ankomsten hör ni av er, så att vi är på plats. ${VETA_KODY.sv}`,
+  hu: `Jó napot, ma várjuk önöket. Körülbelül {čas} körül számítunk önökre. Így marad? Ha az időpont változik, írjanak azonnal. Körülbelül 15 perccel az érkezés előtt írjanak, hogy ott legyünk. ${VETA_KODY.hu}`,
 };
 
 export type DruhZpravy = 'checkin' | 'neotevrel' | 'cas' | 'denBez' | 'denCas';
