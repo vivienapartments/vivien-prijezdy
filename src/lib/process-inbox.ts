@@ -638,17 +638,33 @@ export type VypisRadku = {
   odjezd: 'ano' | 'ne';
   odkaz: 'ano' | 'ne';
   cil?: 'formular' | 'jiny' | 'ne';
+  kam?: 'hotel' | 'mail' | 'jina';
 };
 
-async function cilOdkazu(url: string): Promise<'formular' | 'jiny' | 'ne'> {
+function rodinaAdresy(adresa: string): 'hotel' | 'mail' | 'jina' {
+  const host = new URL(adresa).hostname.toLowerCase();
+  if (host.endsWith('better-hotel.com')) return 'hotel';
+  if (host.includes('mailjet') || host.includes('mailgun') || host.includes('list-manage')) return 'mail';
+  return 'jina';
+}
+
+async function cilOdkazu(url: string): Promise<{ cil: 'formular' | 'jiny' | 'ne'; kam: 'hotel' | 'mail' | 'jina' }> {
   try {
-    const res = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(8000) });
-    const cesta = new URL(res.url).pathname.toLowerCase();
-    const telo = (await res.text()).slice(0, 5000).toLowerCase();
-    if (/check-?in|onlinecheck/.test(cesta) || /check-?in|online check|formul/.test(telo)) return 'formular';
-    return 'jiny';
+    const res = await fetch(url, {
+      redirect: 'follow',
+      signal: AbortSignal.timeout(8000),
+      headers: { accept: 'text/html', 'user-agent': 'Mozilla/5.0' },
+    });
+    const kam = rodinaAdresy(res.url || url);
+    if (!res.ok) return { cil: 'ne', kam };
+    const typ = (res.headers.get('content-type') || '').toLowerCase();
+    if (typ.startsWith('image/') || typ.includes('pdf')) return { cil: 'jiny', kam };
+    const cesta = `${new URL(res.url).hostname} ${new URL(res.url).pathname}`.toLowerCase();
+    const telo = (await res.text()).slice(0, 40000).toLowerCase();
+    if (/check-?in|onlinecheck|formul[aá]ř|formular/.test(`${cesta}\n${telo}`)) return { cil: 'formular', kam };
+    return { cil: 'jiny', kam };
   } catch {
-    return 'ne';
+    return { cil: 'ne', kam: 'jina' };
   }
 }
 
@@ -661,6 +677,7 @@ export async function vypisPotvrzeni(store?: ProcessStore, overeni = false): Pro
   const mails = await fetchRecentInboxMails({ user, pass, days: 2 });
   const odInfoZ = process.env.MAJITEL_PREPOSILA_Z?.trim() || '';
   const out: VypisRadku[] = [];
+  const cache = new Map<string, { cil: 'formular' | 'jiny' | 'ne'; kam: 'hotel' | 'mail' | 'jina' }>();
   for (const mail of mails) {
     const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
     let druh: VypisRadku['druh'] | null = null;
@@ -671,7 +688,11 @@ export async function vypisPotvrzeni(store?: ProcessStore, overeni = false): Pro
     const id = cisloZeSubjectu(mail.subject) || (telo.match(/REZERVACE:\s*(\d{4,})/i) || [])[1] || '';
     const msg = mail.messageId ? await s.getMessage(mail.messageId) : null;
     const rec = id ? await s.getRezervace(id) : null;
-    const cil = overeni && rec?.checkinUrl ? await cilOdkazu(rec.checkinUrl) : undefined;
+    let vysledek: { cil: 'formular' | 'jiny' | 'ne'; kam: 'hotel' | 'mail' | 'jina' } | null = null;
+    if (overeni && rec?.checkinUrl) {
+      vysledek = cache.get(rec.checkinUrl) || (await cilOdkazu(rec.checkinUrl));
+      cache.set(rec.checkinUrl, vysledek);
+    }
     out.push({
       rezervace: id || '-',
       druh,
@@ -683,7 +704,7 @@ export async function vypisPotvrzeni(store?: ProcessStore, overeni = false): Pro
       jmeno: !rec?.jmeno ? 'chybi' : jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject) ? 'spatne' : 'ano',
       odjezd: rec?.odjezd ? 'ano' : 'ne',
       odkaz: rec?.checkinUrl ? 'ano' : 'ne',
-      ...(cil ? { cil } : {}),
+      ...(vysledek ? { cil: vysledek.cil, kam: vysledek.kam } : {}),
     });
   }
   return out;
