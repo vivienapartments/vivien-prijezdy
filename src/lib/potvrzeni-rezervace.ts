@@ -9,10 +9,16 @@ const LABELY = [
   'jméno',
   'klient',
   'guest name',
+  'booking name',
   'name',
   'datum příjezdu',
+  'arrival date',
   'datum odjezdu',
+  'departure date',
+  'accommodation type',
   'počet hostů',
+  'number of guests',
+  'number of nights',
   'reservation number',
   'e-mail',
   'email',
@@ -113,9 +119,10 @@ export function jeSpatneJmenoPotvrzeni(jmeno: string | null | undefined, subject
 
 function datum(raw: string | null): string | null {
   if (!raw) return null;
-  const primo = parseCzechDate(raw.replace(/\s+/g, ''));
+  const bezMezer = raw.replace(/\s+/g, '');
+  const primo = parseCzechDate(bezMezer) || parseCzechDate(bezMezer.replace(/\//g, '.'));
   if (primo) return primo;
-  const m = raw.match(/(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{4})/);
+  const m = raw.match(/(\d{1,2})\s*[./]\s*(\d{1,2})\s*[./]\s*(\d{4})/);
   return m ? parseCzechDate(`${m[1]}.${m[2]}.${m[3]}`) : null;
 }
 
@@ -137,6 +144,7 @@ export function parsujPotvrzeni(subject: string, html = '', text = ''): (Doplnek
   const jmeno = najdi(lines, [
     'rezervace na jméno',
     'jméno a příjmení',
+    'booking name',
     'guest name',
     'jméno',
     'klient',
@@ -144,12 +152,12 @@ export function parsujPotvrzeni(subject: string, html = '', text = ''): (Doplnek
   ]);
   const email = najdi(lines, ['e-mail', 'email']);
   const telefon = najdi(lines, ['telefon', 'phone']);
-  const prijezd = datum(najdi(lines, ['datum příjezdu', 'příjezd', 'prijezd', 'arrival', 'check-in']));
-  const odjezd = datum(najdi(lines, ['datum odjezdu', 'odjezd', 'departure', 'check-out']));
-  const ubytovani = najdi(lines, ['typ ubytování', 'ubytování', 'apartmán', 'accommodation', 'pokoj', 'room']);
+  const prijezd = datum(najdi(lines, ['datum příjezdu', 'arrival date', 'příjezd', 'prijezd', 'arrival', 'check-in']));
+  const odjezd = datum(najdi(lines, ['datum odjezdu', 'departure date', 'odjezd', 'departure', 'check-out']));
+  const ubytovani = najdi(lines, ['typ ubytování', 'accommodation type', 'ubytování', 'apartmán', 'accommodation', 'pokoj', 'room']);
   const apartman = aptZTextu(ubytovani);
-  const osob = celeCislo(najdi(lines, ['počet hostů', 'počet osob', 'guests', 'persons']));
-  const noci = celeCislo(najdi(lines, ['počet nocí', 'nights', 'nocí']));
+  const osob = celeCislo(najdi(lines, ['počet hostů', 'number of guests', 'počet osob', 'guests', 'persons']));
+  const noci = celeCislo(najdi(lines, ['počet nocí', 'number of nights', 'nights', 'nocí']));
   const chybi: string[] = [];
   if (!jmeno) chybi.push('jméno');
   if (!telefon || !/\d/.test(telefon)) chybi.push('telefon');

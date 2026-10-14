@@ -622,48 +622,7 @@ export type VypisRadku = {
   apartman: string;
   jmeno: 'ano' | 'chybi' | 'spatne';
   odjezd: 'ano' | 'ne';
-  tvary?: string[];
 };
-
-/** Jen názvy polí a tvar hodnoty. Žádné jméno, e-mail ani číslo. */
-function tvaryPotvrzeni(html: string, text: string): string[] {
-  const raw = `${html || ''}\n${text || ''}`;
-  const plain = raw
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|tr|li|h[1-6]|td|th)>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ');
-  const lines = plain
-    .split('\n')
-    .map((l) => l.replace(/^(>\s*)+/, '').replace(/\s+/g, ' ').trim())
-    .filter(Boolean);
-  const klic = /arrival|departure|guest|name|room|type|night|date|accommodation|check|reservation|příjezd|prijezd|odjezd|jméno|jmeno|ubyt|host|noc|pokoj|apartment|rezervace/i;
-  function tvar(val: string): string {
-    if (!val) return 'prazdne';
-    if (/@/.test(val)) return 'mail';
-    if (/\d{1,2}[./]\s*\d{1,2}[./]\s*\d{2,4}/.test(val)) return 'datum-tecky';
-    if (/\d{4}-\d{2}-\d{2}/.test(val)) return 'datum-iso';
-    if (/(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|leden|únor|březen|duben|květen|červen|červenec|srpen|září|říjen|listopad|prosinec)/i.test(val)) return 'datum-slovo';
-    if (/^\d+$/.test(val.trim())) return 'cislo';
-    if (/\d/.test(val)) return 's-cislem';
-    return 'text';
-  }
-  const out: string[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const colon = line.indexOf(':');
-    if (colon > 0 && colon <= 48 && klic.test(line.slice(0, colon))) {
-      out.push(`${line.slice(0, colon).trim()} -> ${tvar(line.slice(colon + 1))}`);
-      continue;
-    }
-    if (klic.test(line) && line.length <= 48 && !/@/.test(line) && !/\d{3,}/.test(line)) {
-      out.push(`${line} -> ${tvar(lines[i + 1] || '')}`);
-    }
-  }
-  return [...new Set(out)].slice(0, 40);
-}
 
 /** Jen čtení. Nic nezakládá a nikomu neposílá. */
 export async function vypisPotvrzeni(store?: ProcessStore): Promise<VypisRadku[]> {
@@ -694,7 +653,6 @@ export async function vypisPotvrzeni(store?: ProcessStore): Promise<VypisRadku[]
       apartman: rec?.apartman || 'chybi',
       jmeno: !rec?.jmeno ? 'chybi' : jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject) ? 'spatne' : 'ano',
       odjezd: rec?.odjezd ? 'ano' : 'ne',
-      ...(druh === 'potvrzeni' ? { tvary: tvaryPotvrzeni(mail.html, mail.text) } : {}),
     });
   }
   return out;

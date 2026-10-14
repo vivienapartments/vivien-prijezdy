@@ -545,6 +545,30 @@ Original-Message-ID: <x>
     expect(rec?.jmeno).toBeFalsy();
   });
 
+  it('anglické potvrzení bere booking name a typ ubytování z dalšího řádku', async () => {
+    const { parsujPotvrzeni } = await import('./potvrzeni-rezervace');
+    const predmet = 'Reservation 120260439, Vivien Apartmens Character and Atmosphere: Reservation confirmation';
+    const radky = [
+      'Booking name: Host Test',
+      'Arrival: 14/10/2026',
+      'Departure date: 15/10/2026',
+      'Accommodation type:',
+      'Noble Contrast',
+      'Number of nights: 1',
+      'Number of Guests: 2',
+    ];
+    const html = `<table><tr><td>Booking name:</td><td>Host Test</td></tr><tr><td>Arrival:</td><td>14/10/2026</td></tr><tr><td>Departure date:</td><td>15/10/2026</td></tr><tr><td>Accommodation type:</td><td>Noble Contrast</td></tr><tr><td>Number of nights:</td><td>1</td></tr><tr><td>Number of Guests:</td><td>2</td></tr></table>`;
+    for (const u of [parsujPotvrzeni(predmet, '', radky.join('\n')), parsujPotvrzeni(predmet, html, '')]) {
+      expect(u?.jmeno).toBe('Host Test');
+      expect(u?.jmeno).not.toContain('Vivien');
+      expect(u?.apartman).toBe('V4');
+      expect(u?.prijezd).toBe('2026-10-14');
+      expect(u?.odjezd).toBe('2026-10-15');
+      expect(u?.noci).toBe(1);
+      expect(u?.osob).toBe(2);
+    }
+  });
+
   it('už označené potvrzení bez řádku se doplní a průvodce neodejde', async () => {
     const { processOneMail } = await import('./process-inbox');
     const store = tmpStore();
