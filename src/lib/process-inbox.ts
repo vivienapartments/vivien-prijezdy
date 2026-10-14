@@ -871,7 +871,7 @@ export async function vypisMadarsko(store?: ProcessStore): Promise<{
     zaznamy.push({
       rezervace: record.rezervace,
       jazyk: record.jazyk || 'chybi',
-      narodnost: MADARSKA.has(narodnost) ? narodnost : narodnost === 'chybi' ? 'chybi' : 'jina',
+      narodnost: MADARSKA.has(narodnost) || narodnost === 'chybi' || /^[A-Z0-9]{2,12}$/.test(narodnost) ? narodnost : 'jina',
       predvolba,
       stav: record.stav,
       apartman: record.apartman || 'chybi',
@@ -908,7 +908,7 @@ export async function vypisMadarsko(store?: ProcessStore): Promise<{
         rezervace: ins.rezervace,
         jazykMailu: ins.jazyk || 'chybi',
         jazykRadku: rec?.jazyk || 'chybi',
-        narodnost: MADARSKA.has(narodnost) ? narodnost : narodnost === 'chybi' ? 'chybi' : 'jina',
+        narodnost: MADARSKA.has(narodnost) || narodnost === 'chybi' || /^[A-Z0-9]{2,12}$/.test(narodnost) ? narodnost : 'jina',
         predvolba,
         stavMailu: msg?.status || 'nezpracovano',
         doplniloBy: rec && coSeZmenilo(rec, udajeZMailu(ins, rec)).length ? 'ano' : 'ne',
