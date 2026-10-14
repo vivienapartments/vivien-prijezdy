@@ -204,6 +204,7 @@ export function Guide({
     const p = path.startsWith('/') ? path : `/${path}`;
     if (lang === 'cs') return `https://vivienapartments.cz${p}`;
     if (lang === 'zh-Hant') return `https://vivienapartments.cz/zh${p}`;
+    if (lang === 'sv') return `https://vivienapartments.cz/en${p}`;
     return `https://vivienapartments.cz/${lang}${p}`;
   };
   const quizUrl = sitePath(TX.psApartmany.quizPath);
@@ -321,6 +322,7 @@ export function Guide({
                 <option value="pl">Polski</option>
                 <option value="uk">Українська</option>
                 <option value="zh-Hant">繁體中文</option>
+                <option value="sv">Svenska</option>
               </select>
             </label>
             <label className="pv-dev__check">
@@ -686,10 +688,7 @@ export function Guide({
                                     <p className="pv-wifi__qrhint">{tt(popisky['qr'])}</p>
                                   </>
                                 ) : (
-                                  <p className="pv-wifi__qrmiss">
-                                    QR kód se zobrazí, až bude doplněné heslo WiFi pro tento
-                                    apartmán.
-                                  </p>
+                                  <p className="pv-wifi__qrmiss">{tt(TX.ui.qrMissApt)}</p>
                                 )}
                               </div>
                               <dl className="pv-wifi__creds">

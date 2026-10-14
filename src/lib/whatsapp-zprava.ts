@@ -1,6 +1,6 @@
 import type { GuideLang } from './types';
 
-type JazykZpravy = 'cs' | 'en' | 'de' | 'pl' | 'uk' | 'zh-Hant';
+type JazykZpravy = 'cs' | 'en' | 'de' | 'pl' | 'uk' | 'zh-Hant' | 'sv';
 type ZdrojZpravy = 'booking' | 'airbnb' | 'prima' | 'jiny';
 
 function textVJazyce(tabulka: Record<JazykZpravy, string>, lang: GuideLang | null): string {
@@ -16,6 +16,7 @@ const PODPIS: Record<JazykZpravy, string> = {
   pl: 'Nikol i rodzina VIVIEN',
   uk: 'Nikol і родина VIVIEN',
   'zh-Hant': 'Nikol 與 VIVIEN 家人',
+  sv: 'Nikol och familjen VIVIEN',
 };
 
 /**
@@ -49,6 +50,7 @@ const CHECKIN_UVOD: Record<JazykZpravy, string> = {
   pl: 'Dzień dobry, nie macie jeszcze wypełnionego online check-inu. Bez niego nie możemy wysłać przewodnika do przyjazdu, a bez przewodnika nie zakwaterujecie się u nas ani nie zaparkujecie.',
   uk: 'Добрий день, ви ще не заповнили онлайн-реєстрацію. Без неї ми не можемо надіслати путівник до приїзду, а без путівника ви не заселитеся і не припаркуєтесь.',
   'zh-Hant': '您好，您還沒有完成線上入住登記。沒有它，我們無法寄上抵達指南，沒有指南就無法入住，也無法停車。',
+  sv: 'Hej, ni har inte fyllt i online-incheckningen ännu. Utan den kan vi inte skicka ankomstguiden, och utan guiden kan ni varken bo hos oss eller parkera.',
 };
 
 const CHECKIN_KONEC: Record<JazykZpravy, string> = {
@@ -58,6 +60,7 @@ const CHECKIN_KONEC: Record<JazykZpravy, string> = {
   pl: 'Dziękujemy i do zobaczenia.',
   uk: 'Дякуємо і до зустрічі.',
   'zh-Hant': '謝謝，期待與您見面。',
+  sv: 'Tack, vi ser fram emot att träffas.',
 };
 
 const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
@@ -68,6 +71,7 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
     pl: 'Link znajdziecie w wiadomościach na Booking.com.',
     uk: 'Посилання є у повідомленнях на Booking.com.',
     'zh-Hant': '連結在 Booking.com 的訊息裡。',
+    sv: 'Länken finns i era meddelanden på Booking.com.',
   },
   airbnb: {
     cs: 'Odkaz najdete ve zprávách na Airbnb.',
@@ -76,6 +80,7 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
     pl: 'Link znajdziecie w wiadomościach na Airbnb.',
     uk: 'Посилання є у повідомленнях на Airbnb.',
     'zh-Hant': '連結在 Airbnb 的訊息裡。',
+    sv: 'Länken finns i era meddelanden på Airbnb.',
   },
   prima: {
     cs: 'Odkaz najdete v e-mailu s potvrzením rezervace.',
@@ -84,6 +89,7 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
     pl: 'Link znajdziecie w e-mailu z potwierdzeniem rezerwacji.',
     uk: 'Посилання є в листі з підтвердженням бронювання.',
     'zh-Hant': '連結在預訂確認信裡。',
+    sv: 'Länken finns i mejlet med bokningsbekräftelsen.',
   },
   jiny: {
     cs: 'Odkaz najdete ve zprávách od webu, kde jste rezervovali.',
@@ -92,6 +98,7 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
     pl: 'Link znajdziecie w wiadomościach ze strony, na której rezerwowaliście.',
     uk: 'Посилання є у повідомленнях із сайту, де ви бронювали.',
     'zh-Hant': '連結在您預訂的那個網站的訊息裡。',
+    sv: 'Länken finns i meddelandena från sidan där ni bokade.',
   },
 };
 
@@ -102,6 +109,7 @@ const NEOTEVREL: Record<JazykZpravy, string> = {
   pl: 'Dzień dobry, żebyście mogli się u nas zakwaterować i zaparkować, przeczytajcie przewodnik do przyjazdu i wyślijcie nam według niego potrzebne dane. Dziękujemy i do zobaczenia.',
   uk: 'Добрий день, щоб ви могли заселитися і припаркуватися, прочитайте путівник до приїзду і надішліть нам потрібні дані з нього. Дякуємо і до зустрічі.',
   'zh-Hant': '您好，要入住和停車，先看抵達指南，並依指南把需要的資料傳給我們。謝謝，期待與您見面。',
+  sv: 'Hej, för att kunna checka in och parkera hos oss behöver ni läsa ankomstguiden och skicka oss uppgifterna den ber om. Tack, vi ser fram emot att träffas.',
 };
 
 const CAS: Record<JazykZpravy, string> = {
@@ -111,6 +119,7 @@ const CAS: Record<JazykZpravy, string> = {
   pl: 'Dzień dobry, napiszcie nam, o której mniej więcej przyjedziecie. Apartament przekazujemy osobiście, a bez godziny przyjazdu się nie spotkamy. Dziękujemy i do zobaczenia.',
   uk: 'Добрий день, напишіть нам, приблизно о котрій приїдете. Апартаменти передаємо особисто, і без часу приїзду ми не зустрінемося. Дякуємо і до зустрічі.',
   'zh-Hant': '您好，告訴我們大約幾點到。公寓由我們當面交接，沒有抵達時間就見不到面。謝謝，期待與您見面。',
+  sv: 'Hej, skriv till oss ungefär vilken tid ni kommer. Lägenheten lämnar vi över personligen, och utan er ankomsttid kan vi inte träffa er. Tack, vi ser fram emot att träffas.',
 };
 
 const DEN_BEZ: Record<JazykZpravy, string> = {
@@ -120,6 +129,7 @@ const DEN_BEZ: Record<JazykZpravy, string> = {
   pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. O której mniej więcej będziecie? Musimy to wiedzieć, żebyśmy mogli przekazać wam apartament osobiście.',
   uk: 'Добрий день, сьогодні на вас чекаємо. Приблизно о котрій приїдете? Нам треба це знати, щоб передати вам апартаменти особисто.',
   'zh-Hant': '您好，今天期待您的到來。大約幾點到？我們需要知道時間，才能當面把公寓交給您。',
+  sv: 'Hej, vi ser fram emot att träffa er i dag. Ungefär vilken tid kommer ni? Vi behöver veta det för att kunna lämna över lägenheten personligen.',
 };
 
 const DEN_CAS: Record<JazykZpravy, string> = {
@@ -129,6 +139,7 @@ const DEN_CAS: Record<JazykZpravy, string> = {
   pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. Spodziewamy się Was około {čas}. Zgadza się? Gdyby godzina się zmieniła, napiszcie proszę od razu. Około 15 minut przed przyjazdem odezwijcie się proszę, żebyśmy byli na miejscu.',
   uk: 'Добрий день, сьогодні на вас чекаємо. Розраховуємо на вас близько {čas}. Це ще актуально? Якщо час зміниться, напишіть нам, будь ласка, одразу. Приблизно за 15 хвилин до приїзду напишіть, будь ласка, щоб ми були на місці.',
   'zh-Hant': '您好，今天期待您的到來。我們預計您大約 {čas} 到，這個時間還對嗎？如果時間有變，請立刻傳訊息給我們。抵達前大約 15 分鐘請再傳一次，我們才會在現場。',
+  sv: 'Hej, vi ser fram emot att träffa er i dag. Vi räknar med er omkring {čas}. Stämmer det? Om tiden ändras, skriv till oss genast. Ungefär 15 minuter före ankomsten hör ni av er, så att vi är på plats.',
 };
 
 export type DruhZpravy = 'checkin' | 'neotevrel' | 'cas' | 'denBez' | 'denCas';

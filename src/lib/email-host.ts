@@ -68,6 +68,7 @@ export function greetingLine(
       pl: 'Dzień dobry,',
       uk: 'Добрий день,',
       'zh-Hant': '您好，',
+      sv: 'Hej,',
     },
     lang,
   );
@@ -94,6 +95,7 @@ const subjectL: LText = {
   pl: 'WAŻNE · Wasza instrukcja przyjazdu, bez niej nie zaparkujecie ani nie wejdziecie',
   uk: 'ВАЖЛИВО · Ваш гід приїзду, без нього ви не припаркуєтесь і не зайдете',
   'zh-Hant': '重要 · 您的抵達指南，沒有它無法停車也無法進門',
+  sv: 'VIKTIGT · Er ankomstguide, utan den kan ni varken parkera eller komma in',
 };
 
 /** Co průvodce je (cesta + zásadní info). */
@@ -105,6 +107,7 @@ const introBodyL: LText = {
   pl: 'przygotowaliśmy dla Was krótką instrukcję przyjazdu. Znajdziecie w niej drogę do nas, parking, bramę, Wi-Fi i kody. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
   uk: 'ми підготували для вас короткий гід приїзду. У ньому шлях до нас, паркування, брама, Wi-Fi та коди. Щоб ви знали, куди їхати і що робити після прибуття.',
   'zh-Hant': '我們為您準備了一份簡短的抵達指南。您會找到前往我們這裡的路線、停車、大門、Wi-Fi 與密碼。讓您知道怎麼來、抵達後該做什麼。',
+  sv: 'vi har förberett en kort ankomstguide. I den finns vägen till oss, parkering, grind, Wi-Fi och koder. Så att ni vet vart ni ska och vad ni gör efter ankomsten.',
 };
 
 /** Nad tlačítkem. Čas příjezdu, ať host nečeká před domem. */
@@ -115,6 +118,7 @@ const casPrijezduL: LText = {
   pl: 'Najważniejsze jest, żebyście napisali, o której dojedziecie. Apartament przekażemy osobiście i nie będziecie na nas czekać. Wystarczy SMS albo WhatsApp na +420 604 692 573.',
   uk: 'Найважливіше, щоб ви написали, о котрій приїдете. Апартаменти передамо особисто, і вам не доведеться на нас чекати. Досить SMS або WhatsApp на +420 604 692 573.',
   'zh-Hant': '最重要的是請告訴我們您幾點到。公寓由我們當面交接，您不必等我們。傳簡訊或 WhatsApp 到 +420 604 692 573 即可。',
+  sv: 'Det viktigaste är att ni skriver till oss vilken tid ni kommer. Lägenheten lämnar vi över personligen och ni behöver inte vänta på oss. Det räcker med sms eller WhatsApp till +420 604 692 573.',
 };
 
 const casSmsL: LText = {
@@ -124,6 +128,7 @@ const casSmsL: LText = {
   pl: 'Napisz SMS',
   uk: 'Написати SMS',
   'zh-Hant': '傳送簡訊',
+  sv: 'Skicka sms',
 };
 
 const casWhatsappL: LText = {
@@ -133,6 +138,7 @@ const casWhatsappL: LText = {
   pl: 'Napisz na WhatsApp',
   uk: 'Написати у WhatsApp',
   'zh-Hant': '用 WhatsApp 傳訊',
+  sv: 'Skriv på WhatsApp',
 };
 
 /** CTA nápověda (v HTML tučně). */
@@ -143,6 +149,7 @@ const introOpenL: LText = {
   pl: 'Otwórzcie ją przyciskiem poniżej.',
   uk: 'Відкрийте його кнопкою нижче.',
   'zh-Hant': '請用下方按鈕開啟。',
+  sv: 'Öppna den med knappen nedan.',
 };
 
 const stayL: LText = {
@@ -152,6 +159,7 @@ const stayL: LText = {
   pl: 'Wasz pobyt',
   uk: 'Ваше перебування',
   'zh-Hant': '您的住宿',
+  sv: 'Er vistelse',
 };
 
 const datesL: LText = {
@@ -161,6 +169,7 @@ const datesL: LText = {
   pl: 'Termin',
   uk: 'Термін',
   'zh-Hant': '日期',
+  sv: 'Datum',
 };
 
 const nightsL: LText = {
@@ -170,6 +179,7 @@ const nightsL: LText = {
   pl: 'Liczba nocy',
   uk: 'Кількість ночей',
   'zh-Hant': '晚數',
+  sv: 'Nätter',
 };
 
 const guestsL: LText = {
@@ -179,6 +189,7 @@ const guestsL: LText = {
   pl: 'Liczba osób',
   uk: 'Кількість осіб',
   'zh-Hant': '人數',
+  sv: 'Personer',
 };
 
 const openGuideL: LText = {
@@ -188,6 +199,7 @@ const openGuideL: LText = {
   pl: 'Otwórz instrukcję',
   uk: 'Відкрити гід',
   'zh-Hant': '開啟指南',
+  sv: 'Öppna guiden',
 };
 
 /** Problém: nejdřív majitel, pak Nikol (číslo v podpisu). */
@@ -198,6 +210,7 @@ const helpL: LText = {
   pl: 'Gdyby cokolwiek nie działało, zadzwońcie na +420 604 692 573. Jeśli się nie dodzwonicie, zadzwońcie do Nikol.',
   uk: 'Якщо щось не працює, телефонуйте на +420 604 692 573. Якщо не додзвонитеся, зателефонуйте Nikol.',
   'zh-Hant': '如果有任何問題，請撥 +420 604 692 573。若打不通，請打給 Nikol。',
+  sv: 'Om något inte fungerar, ring +420 604 692 573. Om ni inte kommer fram, ring Nikol.',
 };
 
 const familyL: LText = {
@@ -207,6 +220,7 @@ const familyL: LText = {
   pl: 'Nikol i rodzina VIVIEN',
   uk: 'Nikol і родина VIVIEN',
   'zh-Hant': 'Nikol 與 VIVIEN 全家',
+  sv: 'Nikol och familjen VIVIEN',
 };
 
 const closingL: LText = {
@@ -216,6 +230,7 @@ const closingL: LText = {
   pl: 'Z pozdrowieniami',
   uk: 'З повагою',
   'zh-Hant': '此致',
+  sv: 'Med vänlig hälsning',
 };
 
 /** Úplně na konci mailu: odkaz na veřejný web ({{WEB}} = URL podle jazyka). */
@@ -226,6 +241,7 @@ const webTipL: LText = {
   pl: 'Kolejne wskazówki na pobyt znajdziecie na {{WEB}}. Gdzie zjeść, gdzie na wycieczkę, co się dzieje w mieście i gra odkrywcza po Budziejowicach.',
   uk: 'Інші поради на перебування знайдете на {{WEB}}. Куди на їжу, куди на виїзд, що відбувається в місті та пізнавальна гра Будейовицями.',
   'zh-Hant': '更多住宿提示請見 {{WEB}}。去哪吃飯、去哪一日遊、城裡近期活動，以及布杰約維采探索遊戲。',
+  sv: 'Fler tips för vistelsen finns på {{WEB}}. Vart ni kan äta, vart ni kan åka på utflykt, vad som händer i staden och upptäcktsspelet i Budějovice.',
 };
 
 const psApartmanyL: LText = {
@@ -235,6 +251,7 @@ const psApartmanyL: LText = {
   pl: 'P.S. Mamy pięć apartamentów, każdy z inną atmosferą. Wielu gości o tym nie wie. Gdy będziecie planować kolejny pobyt, możecie wybrać według nastroju. {{QUIZ}}',
   uk: 'P.S. У нас пʼять апартаментів, кожен зі своєю атмосферою. Багато гостей про це не знають. Коли плануватимете наступне перебування, можете обрати за настроєм. {{QUIZ}}',
   'zh-Hant': 'P.S. 我們有五間公寓，各有不同氛圍。很多客人不知道這件事。下次規劃住宿時，可以依心情挑選。{{QUIZ}}',
+  sv: 'P.S. Vi har fem lägenheter, var och en med sin egen stämning. Många gäster vet inte det. När ni planerar nästa vistelse kan ni välja efter humör. {{QUIZ}}',
 };
 
 const psCtaL: LText = {
@@ -244,12 +261,14 @@ const psCtaL: LText = {
   pl: 'Który apartament by Wam pasował?',
   uk: 'Які апартаменти вам підійдуть?',
   'zh-Hant': '哪間公寓適合您？',
+  sv: 'Vilken lägenhet skulle passa er?',
 };
 
 function publicSiteUrl(lang: GuideLang): string {
   const base = 'https://vivienapartments.cz';
   if (lang === 'cs') return `${base}/`;
   if (lang === 'zh-Hant') return `${base}/zh/`;
+  if (lang === 'sv') return `${base}/en/`;
   if (lang === 'en' || lang === 'de' || lang === 'pl' || lang === 'uk' || lang === 'es' || lang === 'fr' || lang === 'it') {
     return `${base}/${lang}/`;
   }

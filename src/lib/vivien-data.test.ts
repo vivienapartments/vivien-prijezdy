@@ -135,5 +135,7 @@ KONEC`,
     expect(langFromNarodnost('Hong Kong')).toBe('zh-Hant');
     expect(langFromNarodnost('CHN')).toBe('zh-Hant');
     expect(langFromNarodnost('China')).toBe('zh-Hant');
+    expect(langFromNarodnost('SWE')).toBe('sv');
+    expect(langFromNarodnost('Sweden')).toBe('sv');
   });
 });
