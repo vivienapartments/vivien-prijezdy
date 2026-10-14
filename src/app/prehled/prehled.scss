@@ -275,10 +275,25 @@
   display: none;
 }
 
-.ph-detail {
-  margin-top: 0.8rem;
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--pv-line);
+.ph-znovu {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.ph-znovu label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+
+.ph-znovu select,
+.ph-znovu button {
+  border-radius: 6px;
 }
 
 .ph-odjeli {

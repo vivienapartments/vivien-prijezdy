@@ -7,7 +7,7 @@ import { jazykZPredvolby, normalizujTelefon } from '@/lib/telefon';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore, type RezervaceRecord, type RezervaceStav } from '@/lib/store';
-import { APT_IDS, GUIDE_LANGS, type AptId, type GuideLang } from '@/lib/types';
+import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -109,6 +109,11 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   let pracovni = rec;
+  if (akce === 'znovu') {
+    const jazyk = (body?.jazyk || rec.jazyk) as GuideLang;
+    if (!GUIDE_LANGS.includes(jazyk)) return chyba(400, 'Vyberte jazyk.');
+    pracovni = { ...rec, jazyk };
+  }
   if (akce === 'opravit') {
     const email = (body?.email || '').trim();
     if (problemEmailu(email)) return chyba(400, 'E-mail má špatný tvar. Nic jsem neopravil.');
@@ -150,8 +155,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     const sent = await posliPruvodce(pracovni, pracovni.krestni);
     const vyhrady = pracovni.duvody.filter((d) => jeVyhrada(d.kod));
     const stav: RezervaceStav = vyhrady.length ? 'odeslano_s_vyhradou' : 'odeslano';
-    const hotovo = pridej(pracovni, akce === 'opravit' ? 'Opraveno a odesláno' : 'Odesláno znovu', {
+    const hotovo = pridej(pracovni, akce === 'opravit' ? 'Opraveno a odesláno' : `Odesláno znovu v jazyce ${LANG_LABELS[pracovni.jazyk!]}`, {
       stav,
+      jazyk: pracovni.jazyk,
       duvody: vyhrady,
       odeslaneMessageId: sent.messageId || pracovni.odeslaneMessageId,
       smtpPokusy: 0,

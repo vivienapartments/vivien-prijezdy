@@ -288,13 +288,13 @@ Original-Message-ID: <x>
       }),
       store,
     );
-    expect(item.status).toBe('duplicate');
+    expect(item.status).toBe('doplneno');
     expect(sendGuestEmail).not.toHaveBeenCalled();
-    const raw = JSON.parse(fs.readFileSync(file, 'utf8')) as {
-      rezervace: Record<string, { status?: string; stav?: string }>;
-    };
-    expect(raw.rezervace['120260530'].status).toBe('odeslano');
-    expect(raw.rezervace['120260530'].stav).toBeUndefined();
+    const rec = await store.getRezervace('120260530');
+    expect(rec?.stav).toBe('odeslano');
+    expect(rec?.apartman).toBeTruthy();
+    expect(rec?.jmeno).toBeTruthy();
+    expect(rec?.historie.some((h) => h.co.startsWith('Doplněno z check-inu'))).toBe(true);
   });
 
   const NOVA = 'Vivien Apartmens Character and Atmosphere | Nová rezervace - #100000001';
@@ -847,6 +847,181 @@ KONEC
     expect(poZnovu?.apartman).toBe('V4');
     expect(await store.listRezervace()).toHaveLength(1);
     expect(sendGuestEmail).toHaveBeenCalledOnce();
+  });
+
+  it('check-in přepíše údaje z info@ a ruční čas příjezdu nechá', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const { prazdnaRezervace } = await import('./store');
+    const store = tmpStore();
+    await store.setRezervace('120269001', {
+      ...prazdnaRezervace('120269001', '2026-10-14T08:00:00.000Z'),
+      jmeno: 'Vivien Apartmens Character and Atmosphere',
+      krestni: 'Vivien',
+      apartman: 'V1',
+      prijezd: '2026-11-01',
+      odjezd: '2026-11-02',
+      jazyk: 'en',
+      stav: 'bez_checkinu',
+      stitek: 'info',
+      casPrijezdu: '16:30',
+      telefonRezervace: '+420777111222',
+      telefonRezervaceWa: '420777111222',
+      checkinUrl: 'https://rucne.example/formular',
+    });
+    const item = await processOneMail(
+      mail({
+        messageId: 'checkin-hu@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com; spf=pass',
+        text: `
+VIVIEN-DATA v1
+REZERVACE: 120269001
+APARTMAN: Ušlechtilý kontrast
+PRIJEZD: 20.11.2026
+ODJEZD: 22.11.2026
+NOCI: 2
+OSOB: 2
+EMAIL: host@example.com
+GUEST_NAME: Anna
+GUEST_SURNAME: Nagy
+NARODNOST: HUN
+GUEST_PHONE: +36301234567
+ZDROJ: Booking.com
+ACCESS_PIN: 1234
+DATE: 14.10.2026
+KLIC: ${BH_KLIC}
+KONEC
+`,
+      }),
+      store,
+    );
+    expect(item.status).toBe('sent');
+    expect(sendGuestEmail).toHaveBeenCalledOnce();
+    const rec = await store.getRezervace('120269001');
+    expect(rec?.jmeno).toBe('Anna Nagy');
+    expect(rec?.jmeno).not.toContain('Vivien');
+    expect(rec?.apartman).toBe('V4');
+    expect(rec?.prijezd).toBe('2026-11-20');
+    expect(rec?.odjezd).toBe('2026-11-22');
+    expect(rec?.jazyk).toBe('hu');
+    expect(rec?.narodnost).toBe('HUN');
+    expect(rec?.casPrijezdu).toBe('16:30');
+    expect(rec?.checkinUrl).toBe('https://rucne.example/formular');
+    expect(rec?.telefon).toBe('+36301234567');
+    expect(rec?.telefonRezervace).toBe('+420777111222');
+    expect(rec?.historie.some((h) => h.co.startsWith('Doplněno z check-inu'))).toBe(true);
+    expect(await store.listRezervace()).toHaveLength(1);
+  });
+
+  it('už odeslaný průvodce se z check-inu doplní a znovu neodejde', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const { prazdnaRezervace } = await import('./store');
+    const store = tmpStore();
+    await store.setRezervace('120269002', {
+      ...prazdnaRezervace('120269002', '2026-10-14T08:00:00.000Z'),
+      jmeno: 'Vivien Apartmens Character and Atmosphere',
+      apartman: 'V1',
+      prijezd: '2026-11-01',
+      odjezd: '2026-11-02',
+      jazyk: 'en',
+      emailHosta: 'host@example.com',
+      accessPin: '9999',
+      stav: 'odeslano',
+      casPrijezdu: '15:00',
+    });
+    await store.markMessage({
+      messageId: 'checkin-stary@test',
+      processedAt: '2026-10-14T08:05:00.000Z',
+      status: 'duplicate',
+      reason: 'Rezervace už odeslána',
+      rezervace: '120269002',
+    });
+    const item = await processOneMail(
+      mail({
+        messageId: 'checkin-stary@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com; spf=pass',
+        text: `
+VIVIEN-DATA v1
+REZERVACE: 120269002
+APARTMAN: Pohodlí v tlumených tónech
+PRIJEZD: 16.11.2026
+ODJEZD: 18.11.2026
+NOCI: 2
+OSOB: 2
+EMAIL: host@example.com
+GUEST_NAME: Anna
+GUEST_SURNAME: Nagy
+NARODNOST: HUN
+ACCESS_PIN: 1234
+KLIC: ${BH_KLIC}
+KONEC
+`,
+      }),
+      store,
+    );
+    expect(item.status).toBe('doplneno');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const rec = await store.getRezervace('120269002');
+    expect(rec?.jmeno).toBe('Anna Nagy');
+    expect(rec?.jazyk).toBe('hu');
+    expect(rec?.stav).toBe('odeslano');
+    expect(rec?.casPrijezdu).toBe('15:00');
+    expect(await store.listRezervace()).toHaveLength(1);
+  });
+
+  it('ruční oprava má přednost před check-inem', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const { prazdnaRezervace } = await import('./store');
+    const store = tmpStore();
+    await store.setRezervace('120269003', {
+      ...prazdnaRezervace('120269003', '2026-10-14T08:00:00.000Z'),
+      jmeno: 'Vivien Apartmens Character and Atmosphere',
+      apartman: 'V2',
+      prijezd: '2026-11-01',
+      odjezd: '2026-11-03',
+      jazyk: 'cs',
+      emailHosta: 'rucne@example.com',
+      accessPin: '4321',
+      stav: 'odeslano',
+      historie: [{ cas: '2026-10-14T08:10:00.000Z', co: 'Údaje opraveny' }],
+    });
+    const item = await processOneMail(
+      mail({
+        messageId: 'checkin-rucni@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com; spf=pass',
+        text: BLOCK.replace('REZERVACE: 120260530', 'REZERVACE: 120269003').replace('NARODNOST: CZE', 'NARODNOST: HUN'),
+      }),
+      store,
+    );
+    expect(item.status).toBe('doplneno');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const rec = await store.getRezervace('120269003');
+    expect(rec?.jazyk).toBe('cs');
+    expect(rec?.apartman).toBe('V2');
+    expect(rec?.emailHosta).toBe('rucne@example.com');
+    expect(rec?.accessPin).toBe('4321');
+    expect(rec?.jmeno).not.toContain('Vivien');
+  });
+
+  it('odkaz znovu v maďarštině má jazyk hu', async () => {
+    const { odkazNaPruvodce } = await import('./posli-pruvodce');
+    const { prazdnaRezervace } = await import('./store');
+    const { verifyToken } = await import('./token');
+    const rec = {
+      ...prazdnaRezervace('120269001', '2026-10-14T08:00:00.000Z'),
+      apartman: 'V4' as const,
+      prijezd: '2026-11-20',
+      odjezd: '2026-11-22',
+      jazyk: 'hu' as const,
+      accessPin: '1234',
+    };
+    const url = odkazNaPruvodce(rec);
+    const token = url?.split('/').pop() || '';
+    const vysledek = verifyToken(token, 'x'.repeat(40));
+    expect(vysledek.ok).toBe(true);
+    if (vysledek.ok) expect(vysledek.payload.l).toBe('hu');
   });
 
   it('jeden spadlý e-mail neshodí zpracování ostatních', async () => {

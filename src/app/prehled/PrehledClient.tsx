@@ -4,7 +4,6 @@ import { useMemo, useState, type FormEvent } from 'react';
 import apartmanyJson from '@/data/apartmany.json';
 import {
   casPraha,
-  dotazPredOdeslanimZnovu,
   hodinaPraha,
   nabidnoutOdeslani,
   poplatekKratky,
@@ -16,6 +15,7 @@ import {
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
+import { langFromNarodnost } from '@/lib/vivien-data';
 import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
@@ -88,6 +88,12 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   const [pridat, setPridat] = useState(false);
   const [predani, setPredani] = useState<Record<string, string | null>>({});
   const [dotazPredani, setDotazPredani] = useState<{ id: string; druh: 'predano' | 'vratit' } | null>(null);
+  const [jazyky, setJazyky] = useState<Record<string, GuideLang>>({});
+  const [dotazZnovu, setDotazZnovu] = useState<string | null>(null);
+
+  function jazykRadku(row: PrehledRadek): GuideLang {
+    return jazyky[row.rezervace] || (row.narodnost?.trim() ? langFromNarodnost(row.narodnost) : row.jazyk || 'cs');
+  }
 
   function casRadku(row: PrehledRadek): string {
     return casy[row.rezervace] ?? row.casPrijezdu ?? '';
@@ -486,6 +492,50 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           </div>
         </div>
         <div className="ph-detail">
+          {nabidnoutOdeslani(row.stav) ? (
+            <div className="ph-znovu">
+              <label>
+                Jazyk průvodce
+                <select
+                  value={jazykRadku(row)}
+                  onChange={(e) => setJazyky((prev) => ({ ...prev, [row.rezervace]: e.target.value as GuideLang }))}
+                >
+                  {GUIDE_LANGS.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {LANG_LABELS[lang]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button
+                type="button"
+                disabled={cekam !== null}
+                onClick={() => setDotazZnovu(row.rezervace)}
+              >
+                Odeslat průvodce znovu
+              </button>
+              {dotazZnovu === row.rezervace ? (
+                <div className="ph-predano-dotaz">
+                  <p>
+                    Poslat průvodce znovu v jazyce {LANG_LABELS[jazykRadku(row)]}? Host dostane nový e-mail.
+                  </p>
+                  <button
+                    type="button"
+                    disabled={cekam !== null}
+                    onClick={() => {
+                      setDotazZnovu(null);
+                      volat(row, 'znovu', { jazyk: jazykRadku(row) });
+                    }}
+                  >
+                    Ano, poslat
+                  </button>
+                  <button type="button" onClick={() => setDotazZnovu(null)}>
+                    Zrušit
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           <div className="ph-cell ph-cell--host" data-label="Host">
             <div className="ph-mail">
               <Pole text={row.email} />
@@ -554,22 +604,9 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           </div>
           <div className="ph-akce">
             {nabidnoutOdeslani(row.stav) ? (
-              <>
-                <button
-                  type="button"
-                  disabled={cekam !== null}
-                  onClick={() => {
-                    const dotaz = dotazPredOdeslanimZnovu(row.stav);
-                    if (dotaz && !window.confirm(dotaz)) return;
-                    volat(row, 'znovu');
-                  }}
-                >
-                  Odeslat znovu
-                </button>
-                <button type="button" onClick={() => setOtevreno(otevreno === row.rezervace ? null : row.rezervace)}>
-                  Opravit a odeslat
-                </button>
-              </>
+              <button type="button" onClick={() => setOtevreno(otevreno === row.rezervace ? null : row.rezervace)}>
+                Opravit a odeslat
+              </button>
             ) : null}
             {row.stav !== 'bez_checkinu' ? (
               <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>

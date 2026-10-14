@@ -119,32 +119,105 @@ function sloucit(
   };
 }
 
+const NAZVY_ZMENY: Partial<Record<keyof RezervaceRecord, string>> = {
+  jmeno: 'jméno',
+  apartman: 'apartmán',
+  prijezd: 'příjezd',
+  odjezd: 'odjezd',
+  noci: 'noci',
+  osob: 'osoby',
+  emailHosta: 'e-mail',
+  narodnost: 'národnost',
+  jazyk: 'jazyk',
+  accessPin: 'PIN',
+  vytvoreno: 'vytvořeno',
+  zdroj: 'zdroj',
+  telefon: 'telefon',
+  poplatek: 'poplatek',
+};
+
+const CHRANENE_RUCNI = new Set<keyof RezervaceRecord>([
+  'emailHosta',
+  'apartman',
+  'prijezd',
+  'odjezd',
+  'noci',
+  'osob',
+  'jazyk',
+  'accessPin',
+]);
+
+function maRucniUdaje(prev: RezervaceRecord | null | undefined): boolean {
+  return Boolean(
+    prev?.historie.some((h) => h.co.startsWith('Údaje opraveny') || h.co.startsWith('Opraveno a odesláno')),
+  );
+}
+
+/** Check-in zapíše jen pole, která v mailu jsou. Ruční oprava a čas příjezdu zůstanou. */
 function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partial<RezervaceRecord> {
-  const data: Partial<RezervaceRecord> = {
-    apartman: ins.apartman,
-    prijezd: ins.prijezd,
-    odjezd: ins.odjezd,
-    noci: ins.noci,
-    osob: ins.osob,
-    jazyk: ins.jazyk,
-    jmeno: ins.jmeno,
-    krestni: ins.krestni,
-    narodnost: ins.narodnost,
-    emailHosta: ins.email,
-    accessPin: ins.accessPin,
-    vytvoreno: ins.vytvoreno,
-    poplatek: poplatekZData(ins.vytvoreno),
-    ...(ins.telefon ? { telefon: ins.telefon, telefonWa: ins.telefonWa, telefonPuvodni: ins.telefonPuvodni } : {}),
-    ...(ins.zdroj ? { zdroj: ins.zdroj } : {}),
-  };
-  if (prev?.telefonRezervacePuvodni && ins.narodnost) {
+  const data: Partial<RezervaceRecord> = {};
+  const rucni = maRucniUdaje(prev);
+  function poloz<K extends keyof RezervaceRecord>(klic: K, hodnota: RezervaceRecord[K] | null | undefined) {
+    if (hodnota == null || hodnota === '') return;
+    if (rucni && CHRANENE_RUCNI.has(klic)) return;
+    data[klic] = hodnota;
+  }
+  poloz('apartman', ins.apartman);
+  poloz('prijezd', ins.prijezd);
+  poloz('odjezd', ins.odjezd);
+  poloz('noci', ins.noci);
+  poloz('osob', ins.osob);
+  poloz('jazyk', ins.jazyk);
+  poloz('jmeno', ins.jmeno);
+  poloz('krestni', ins.krestni);
+  poloz('narodnost', ins.narodnost);
+  poloz('emailHosta', ins.email);
+  poloz('accessPin', ins.accessPin);
+  if (ins.vytvoreno) {
+    poloz('vytvoreno', ins.vytvoreno);
+    poloz('poplatek', poplatekZData(ins.vytvoreno));
+  }
+  if (ins.telefon) {
+    const stare = prev?.telefon;
+    if (stare && stare !== ins.telefon && !prev?.telefonRezervace) {
+      data.telefonRezervace = stare;
+      data.telefonRezervaceWa = prev?.telefonWa ?? null;
+      data.telefonRezervacePuvodni = prev?.telefonPuvodni ?? null;
+    } else if (prev?.telefonRezervacePuvodni && ins.narodnost && !data.telefonRezervace) {
+      const tel = normalizujTelefon(prev.telefonRezervacePuvodni, ins.narodnost);
+      if (tel) {
+        data.telefonRezervace = tel.ulozeny;
+        data.telefonRezervaceWa = tel.wa;
+      }
+    }
+    data.telefon = ins.telefon;
+    data.telefonWa = ins.telefonWa;
+    data.telefonPuvodni = ins.telefonPuvodni;
+  } else if (prev?.telefonRezervacePuvodni && ins.narodnost) {
     const tel = normalizujTelefon(prev.telefonRezervacePuvodni, ins.narodnost);
     if (tel) {
       data.telefonRezervace = tel.ulozeny;
       data.telefonRezervaceWa = tel.wa;
     }
   }
+  if (ins.zdroj) poloz('zdroj', ins.zdroj);
   return data;
+}
+
+export function coSeZmenilo(prev: RezervaceRecord | null, data: Partial<RezervaceRecord>): string[] {
+  if (!prev) return [];
+  const out: string[] = [];
+  for (const klic of Object.keys(NAZVY_ZMENY) as (keyof RezervaceRecord)[]) {
+    const nove = data[klic];
+    if (nove == null || nove === '') continue;
+    if (prev[klic] !== nove) out.push(NAZVY_ZMENY[klic]!);
+  }
+  return out;
+}
+
+function vetaDoplneni(zmeny: string[], pokracovani: string): string {
+  if (!zmeny.length) return pokracovani;
+  return `Doplněno z check-inu: ${zmeny.join(', ')}. ${pokracovani}`;
 }
 
 function duvodyMailu(ins: MailInspection): Duvod[] {
@@ -168,11 +241,33 @@ async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<
   return jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject);
 }
 
+/** Už zpracovaný check-in, který má novější údaje než řádek. Průvodce se z toho sám neposílá podruhé. */
+async function checkinKDoplneni(mail: InboxMail, store: ProcessStore): Promise<boolean> {
+  const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
+  if (!/VIVIEN-DATA/i.test(telo)) return false;
+  const body = bodyForParse(mail);
+  const ins = inspectVivienMail(body, mail.subject);
+  if (!ins.rezervace) return false;
+  const origin = verifyEmailOrigin({
+    from: mail.from,
+    authenticationResults: mail.authenticationResults,
+    body,
+    bhKlic: process.env.BH_KLIC?.trim() || '',
+    majitelPreposilaZ: process.env.MAJITEL_PREPOSILA_Z?.trim() || '',
+  });
+  if (!origin.ok) return false;
+  const prev = await store.getRezervace(ins.rezervace);
+  if (!prev || prev.stav === 'zruseno') return false;
+  return coSeZmenilo(prev, udajeZMailu(ins, prev)).length > 0;
+}
+
 export async function processOneMail(mail: InboxMail, store: ProcessStore): Promise<ProcessItem> {
   const now = new Date().toISOString();
 
   if (await store.isMessageProcessed(mail.messageId)) {
-    if (!(await potvrzeniBezRadku(mail, store))) return { status: 'already_done' };
+    const potvrzeni = await potvrzeniBezRadku(mail, store);
+    const checkin = !potvrzeni && (await checkinKDoplneni(mail, store));
+    if (!potvrzeni && !checkin) return { status: 'already_done' };
   }
 
   const bounce = parseBounce(mail);
@@ -275,6 +370,12 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
     return { rezervace: id, status: 'zruseno', reason: 'zruseno' };
   }
   if (prev?.stav === 'odeslano' || prev?.stav === 'odeslano_s_vyhradou') {
+    const data = udajeZMailu(ins, prev);
+    const zmeny = coSeZmenilo(prev, data);
+    if (zmeny.length) {
+      const rec = sloucit(id, prev, data, now, `Doplněno z check-inu: ${zmeny.join(', ')}`);
+      await store.setRezervace(id, rec);
+    }
     await store.markMessage({
       messageId: mail.messageId,
       uid: mail.uid,
@@ -283,13 +384,15 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
       status: 'duplicate',
       reason: 'Rezervace už odeslána',
     });
-    return { rezervace: id, status: 'duplicate' };
+    return { rezervace: id, status: zmeny.length ? 'doplneno' : 'duplicate' };
   }
 
   const duvody = duvodyMailu(ins);
+  const data = udajeZMailu(ins, prev);
+  const zmeny = coSeZmenilo(prev, data);
 
   if (ins.odjezd && isDepartureExpired(ins.odjezd)) {
-    const rec = sloucit(id, prev, { ...udajeZMailu(ins, prev), duvody, stav: prev?.stav ?? 'neodeslano' }, now, 'Odjezd už prošel');
+    const rec = sloucit(id, prev, { ...data, duvody, stav: prev?.stav ?? 'neodeslano' }, now, vetaDoplneni(zmeny, 'Odjezd už prošel'));
     await store.setRezervace(id, rec);
     await store.markMessage({
       messageId: mail.messageId,
@@ -304,7 +407,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
 
   const blokujici = duvody.filter((d) => jeBlokujici(d.kod));
   if (blokujici.length) {
-    let rec = sloucit(id, prev, { ...udajeZMailu(ins, prev), stav: 'neodeslano', duvody }, now, 'Průvodce neodešel');
+    let rec = sloucit(id, prev, { ...data, stav: 'neodeslano', duvody }, now, vetaDoplneni(zmeny, 'Průvodce neodešel'));
     rec = await upozorniJednou(rec);
     await store.setRezervace(id, rec);
     await store.markMessage({
@@ -318,7 +421,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
     return { rezervace: id, status: 'neodeslano', reason: blokujici[0].kod };
   }
 
-  const koncept = sloucit(id, prev, { ...udajeZMailu(ins, prev), duvody, stav: 'neodeslano' }, now, 'Pokus o odeslání');
+  const koncept = sloucit(id, prev, { ...data, duvody, stav: 'neodeslano' }, now, vetaDoplneni(zmeny, 'Pokus o odeslání'));
   try {
     const sent = await posliPruvodce(koncept, ins.krestni);
     const stav: RezervaceStav = duvody.some((d) => jeVyhrada(d.kod)) ? 'odeslano_s_vyhradou' : 'odeslano';
@@ -326,14 +429,14 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
       id,
       prev,
       {
-        ...udajeZMailu(ins, prev),
+        ...data,
         stav,
         duvody: duvody.filter((d) => jeVyhrada(d.kod)),
         odeslaneMessageId: sent.messageId || prev?.odeslaneMessageId || null,
         smtpPokusy: 0,
       },
       now,
-      stav === 'odeslano_s_vyhradou' ? 'Průvodce odeslán s výhradou' : 'Průvodce odeslán',
+      vetaDoplneni(zmeny, stav === 'odeslano_s_vyhradou' ? 'Průvodce odeslán s výhradou' : 'Průvodce odeslán'),
     );
     await store.setRezervace(id, rec);
     await store.markMessage({
@@ -351,7 +454,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
       id,
       prev,
       {
-        ...udajeZMailu(ins, prev),
+        ...data,
         stav: 'neodeslano',
         duvody: [...duvody.filter((d) => d.kod !== 'smtp_chyba'), smtp],
         smtpPokusy: pokusy,
@@ -637,6 +740,8 @@ export type VypisRadku = {
   jmeno: 'ano' | 'chybi' | 'spatne';
   odjezd: 'ano' | 'ne';
   odkaz: 'ano' | 'ne';
+  jazyk: string;
+  doplneno: 'ano' | 'ne';
   cil?: 'formular' | 'jiny' | 'ne';
   kam?: 'hotel' | 'mail' | 'jina';
 };
@@ -704,6 +809,8 @@ export async function vypisPotvrzeni(store?: ProcessStore, overeni = false): Pro
       jmeno: !rec?.jmeno ? 'chybi' : jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject) ? 'spatne' : 'ano',
       odjezd: rec?.odjezd ? 'ano' : 'ne',
       odkaz: rec?.checkinUrl ? 'ano' : 'ne',
+      jazyk: rec?.jazyk || 'chybi',
+      doplneno: rec?.historie.some((h) => h.co.startsWith('Doplněno z check-inu')) ? 'ano' : 'ne',
       ...(vysledek ? { cil: vysledek.cil, kam: vysledek.kam } : {}),
     });
   }
