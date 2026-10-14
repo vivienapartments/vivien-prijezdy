@@ -44,7 +44,10 @@ const NARODNOST_KOD: Record<string, string> = {
   UKR: '380',
   UKRAINE: '380',
   HUN: '36',
+  HU: '36',
   HUNGARY: '36',
+  MAGYAR: '36',
+  MAGYARORSZAG: '36',
   NLD: '31',
   NETHERLANDS: '31',
   GBR: '44',
@@ -132,7 +135,9 @@ export function normalizujTelefon(raw: string | null | undefined, narodnost?: st
 
   const kod = kodNarodnosti(narodnost);
   if (kod) {
-    const mistni = digits.startsWith('0') ? digits.slice(1) : digits;
+    let mistni = digits;
+    if (kod === '36' && mistni.startsWith('06')) mistni = mistni.slice(2);
+    else if (mistni.startsWith('0')) mistni = mistni.slice(1);
     if (mistni && !mistni.startsWith('0')) {
       const cele = mistni.startsWith(kod) ? mistni : `${kod}${mistni}`;
       const pravidlo = PREDVOLBY.find((p) => p.kod === kod);

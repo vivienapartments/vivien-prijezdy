@@ -126,6 +126,11 @@
     "SE": "sv",
     "SWEDEN": "sv",
     "SVERIGE": "sv",
+    "HUN": "hu",
+    "HU": "hu",
+    "HUNGARY": "hu",
+    "MAGYAR": "hu",
+    "MAGYARORSZAG": "hu",
     "_ostatni": "en"
   },
   "nazvy_apartmanu_pravidlo": "V češtině český + anglický název (např. Zlatá rovnováha / Golden Balance), v ostatních jazycích jen anglický."

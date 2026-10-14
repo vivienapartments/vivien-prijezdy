@@ -13,7 +13,6 @@ import {
   jeSpatneJmenoPotvrzeni,
   jeVyzvaCheckinu,
   parsujPotvrzeni,
-  signalUbytovani,
 } from './potvrzeni-rezervace';
 import { posliPruvodce } from './posli-pruvodce';
 import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
@@ -623,7 +622,6 @@ export type VypisRadku = {
   apartman: string;
   jmeno: 'ano' | 'chybi' | 'spatne';
   odjezd: 'ano' | 'ne';
-  signal?: string;
 };
 
 /** Jen čtení. Nic nezakládá a nikomu neposílá. */
@@ -655,7 +653,6 @@ export async function vypisPotvrzeni(store?: ProcessStore): Promise<VypisRadku[]
       apartman: rec?.apartman || 'chybi',
       jmeno: !rec?.jmeno ? 'chybi' : jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject) ? 'spatne' : 'ano',
       odjezd: rec?.odjezd ? 'ano' : 'ne',
-      ...(druh === 'potvrzeni' && !rec?.apartman ? { signal: signalUbytovani(mail.html, mail.text) } : {}),
     });
   }
   return out;

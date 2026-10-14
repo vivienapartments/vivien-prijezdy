@@ -8,7 +8,8 @@ export type GuideLang =
   | 'es'
   | 'fr'
   | 'it'
-  | 'sv';
+  | 'sv'
+  | 'hu';
 export type AptId = 'V1' | 'V2' | 'V3' | 'V4' | 'V5';
 export type Prijezd = 'auto' | 'pesky';
 export type LText = Record<string, string>;
@@ -24,6 +25,7 @@ export const GUIDE_LANGS: GuideLang[] = [
   'fr',
   'it',
   'sv',
+  'hu',
 ];
 export const APT_IDS: AptId[] = ['V1', 'V2', 'V3', 'V4', 'V5'];
 
@@ -38,6 +40,7 @@ export const LANG_LABELS: Record<GuideLang, string> = {
   fr: 'Français',
   it: 'Italiano',
   sv: 'Svenska',
+  hu: 'Magyar',
 };
 
 export interface AptRecord {

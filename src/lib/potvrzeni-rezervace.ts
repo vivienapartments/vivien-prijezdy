@@ -178,21 +178,3 @@ export function parsujPotvrzeni(subject: string, html = '', text = ''): (Doplnek
     chybi,
   };
 }
-
-/** Jen kód, jestli je v potvrzení název apartmánu. Žádné jméno. */
-export function signalUbytovani(html: string, text: string): string {
-  const lines = radky(html, text);
-  const low = lines.join('\n').toLowerCase();
-  if (/gentle harmony|jemn[aá] harmonie/.test(low)) return 'v-tele-V1';
-  if (/golden balance|zlat[aá] rovnov/.test(low)) return 'v-tele-V2';
-  if (/evening elegance|ve[cč]ern[ií] elegance/.test(low)) return 'v-tele-V3';
-  if (/noble contrast|u[sš]lechtil[yý] kontrast/.test(low)) return 'v-tele-V4';
-  if (/muted tones|tlumen[yý]ch t[oó]n/.test(low)) return 'v-tele-V5';
-  const i = lines.findIndex((l) => l.toLowerCase().startsWith('accommodation type'));
-  if (i < 0) return 'bez-radku';
-  const dalsi = (lines[i + 1] || '').trim();
-  if (!dalsi) return 'prazdny-dalsi';
-  if (dalsi.includes('@')) return 'dalsi-mail';
-  if (/^\d/.test(dalsi)) return 'dalsi-cislo';
-  return `dalsi-slov-${dalsi.split(/\s+/).length}`;
-}

@@ -25,12 +25,14 @@ describe('greetingLine', () => {
     expect(greetingLine('cs', 'Marie', null)).toBe('Dobrý den,');
     expect(greetingLine('de', 'Hans')).toBe('Guten Tag Hans,');
     expect(greetingLine('sv', 'Erik', 'SWE')).toBe('Hej Erik,');
+    expect(greetingLine('hu', 'Anna', 'HUN')).toBe('Jó napot Anna,');
   });
 
   it('bez jména neutrální pozdrav', () => {
     expect(greetingLine('cs', null)).toBe('Dobrý den,');
     expect(greetingLine('de', '')).toBe('Guten Tag,');
     expect(greetingLine('sv', null)).toBe('Hej,');
+    expect(greetingLine('hu', null)).toBe('Jó napot,');
   });
 });
 

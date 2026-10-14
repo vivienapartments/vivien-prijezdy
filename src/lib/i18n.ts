@@ -87,7 +87,7 @@ export function parseApt(raw: string | null | undefined): AptId {
 
 export function parseLang(raw: string | null | undefined): GuideLang {
   const v = raw || '';
-  if (v === 'cs' || v === 'en' || v === 'de' || v === 'pl' || v === 'uk' || v === 'zh-Hant' || v === 'sv') {
+  if (v === 'cs' || v === 'en' || v === 'de' || v === 'pl' || v === 'uk' || v === 'zh-Hant' || v === 'sv' || v === 'hu') {
     return v;
   }
   if (v === 'zh') return 'zh-Hant';
