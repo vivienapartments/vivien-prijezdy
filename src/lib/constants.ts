@@ -1,3 +1,21 @@
+/** Kolik minut před časem příjezdu přijde upozornění majiteli a Nikol. */
+export const PREDSTIH_PRIJEZDU_MIN = 60;
+
+/** Běžný odjezd. Host v průvodci volí od 6:00 po půlhodinách až sem. */
+export const CHECKOUT = '10:00';
+export const ODJEZD_OD = '06:00';
+export const ODJEZD_KROK_MIN = 30;
+/** Rámeček v průvodci od této hodiny dne před odjezdem. */
+export const HODINA_RAMCEKU_ODJEZDU = 12;
+/** Push se seznamem zítřejších odjezdů. */
+export const HODINA_DOTAZU_ODJEZDU = 18;
+/** Připomínka, když dotaz ještě neodešel. */
+export const HODINA_PRIPOMINKY_ODJEZDU = 20;
+/** Ranní souhrn nedoplatků. */
+export const HODINA_NEDOPLATKU = 8;
+/** Kolik minut před známým odjezdem přijde upozornění. */
+export const PREDSTIH_ODJEZDU_MIN = 30;
+
 /** Příplatek za příjezd. Od 20:00, pak 100 Kč za každou započatou půlhodinu, do 23:00. */
 export const PRIPLATEK_OD = 20 * 60;
 export const PRIPLATEK_KROK_MIN = 30;

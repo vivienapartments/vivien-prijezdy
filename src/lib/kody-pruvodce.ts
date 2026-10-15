@@ -9,11 +9,10 @@ export type KodRadek = {
   value: string;
 };
 
-/** Apartmán se na klávesnici potvrzuje mřížkou. Když kód chybí, mřížka se nepřidá. */
-function kodApartmanu(accessPin: string | null): string {
-  const pin = apartmentPinOrDoplnit(accessPin);
-  if (pin === 'DOPLNIT' || pin.endsWith('#')) return pin;
-  return `${pin}#`;
+/** Číslice se na klávesnici potvrzují mřížkou. Když kód chybí, mřížka se nepřidá. */
+function sMrizkou(kod: string): string {
+  if (kod === 'DOPLNIT' || kod.endsWith('#')) return kod;
+  return `${kod}#`;
 }
 
 /** Řádky boxu Vaše kódy. Dům je samotné číslo, klíček kreslí stránka. Apartmán má na konci #. */
@@ -25,8 +24,8 @@ export function kodoveRadky(apt: AptId, accessPin: string | null, lang: GuideLan
       kind === 'dum'
         ? HOUSE_KEY_TAG
         : kind === 'apt'
-          ? kodApartmanu(accessPin)
-          : gardenCodeForApt(apt, accessPin);
+          ? sMrizkou(apartmentPinOrDoplnit(accessPin))
+          : sMrizkou(gardenCodeForApt(apt, accessPin));
     return { kind, label: t(label, lang), value };
   });
 }

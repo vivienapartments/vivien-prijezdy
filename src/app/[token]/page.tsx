@@ -62,6 +62,11 @@ export default async function TokenPage({ params }: Props) {
           predvyplneny: rec?.telefon || '',
           ubytovan: Boolean(rec?.predano),
         }}
+        odjezd={
+          rec
+            ? { den: rec.odjezd, cas: rec.casOdjezdu, rucni: Boolean(rec.rucniZnacky?.some((z) => z.pole === 'casOdjezdu')) }
+            : null
+        }
       />
     </>
   );

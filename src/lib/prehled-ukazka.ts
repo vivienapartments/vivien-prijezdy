@@ -212,7 +212,66 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     predano: '2026-10-15T15:03:00.000Z',
   };
 
-  return [luisa, ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel];
+  const mala: RezervaceRecord = {
+    ...prazdnaRezervace('9021', '2026-10-14T08:00:00.000Z'),
+    apartman: 'V1',
+    prijezd: posunDen(dnes, -2),
+    odjezd: zitra,
+    noci: 3,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Hana Malá',
+    krestni: 'Hana',
+    emailHosta: 'hana.ukazka@example.com',
+    accessPin: '0000',
+    poplatek: 'ne',
+    stav: 'odeslano',
+    telefon: '+420777222111',
+    telefonWa: '420777222111',
+    zdroj: 'Booking',
+    predano: '2026-10-13T15:00:00.000Z',
+  };
+  const kovar: RezervaceRecord = {
+    ...prazdnaRezervace('9022', '2026-10-14T08:00:00.000Z'),
+    apartman: 'V2',
+    prijezd: posunDen(dnes, -1),
+    odjezd: zitra,
+    noci: 4,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Petr Kovář',
+    krestni: 'Petr',
+    emailHosta: 'petr.ukazka@example.com',
+    accessPin: '0000',
+    poplatek: 'ano',
+    stav: 'odeslano',
+    telefon: '+420777222333',
+    telefonWa: '420777222333',
+    zdroj: 'Booking',
+    predano: '2026-10-14T16:00:00.000Z',
+  };
+  const smith: RezervaceRecord = {
+    ...prazdnaRezervace('9024', '2026-10-14T08:00:00.000Z'),
+    apartman: 'V4',
+    prijezd: posunDen(dnes, -3),
+    odjezd: zitra,
+    noci: 4,
+    osob: 1,
+    jazyk: 'en',
+    jmeno: 'John Smith',
+    krestni: 'John',
+    emailHosta: 'john.ukazka@example.com',
+    accessPin: '0000',
+    poplatek: 'ne',
+    stav: 'odeslano',
+    casOdjezdu: '09:30',
+    telefon: '+420777222444',
+    telefonWa: '420777222444',
+    zdroj: 'Airbnb',
+    predano: '2026-10-12T15:00:00.000Z',
+  };
+
+  return [luisa, ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel, mala, kovar, smith];
 }
 
 export function ukazkoveRadky(now = new Date()): PrehledRadek[] {

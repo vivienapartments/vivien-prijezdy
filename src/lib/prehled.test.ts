@@ -35,6 +35,8 @@ import {
   zpravaHostovi,
   zpravaNerozbalen,
   zpravyMenu,
+  ukazatNedojezd,
+  zpravaNedojezdu,
   odkazWhatsApp,
   odkazWhatsAppPrehled,
 } from './whatsapp-zprava';
@@ -259,7 +261,9 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(bez.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana']);
+    expect(bez.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd']);
+    expect(bez.find((z) => z.id === 'nedojezd')?.vychozi).toBe(false);
+    expect(bez.find((z) => z.id === 'nedojezd')?.vystraha).toBe(true);
     expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toBe(
       `${textDneNerozbalen('cs', ['cas', 'zpusob', 'pravidla'])}\n\n${odkaz}\n\nNikol a rodina VIVIEN`,
     );
@@ -274,12 +278,68 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(sCasem.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana']);
+    expect(sCasem.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd']);
+    expect(sCasem.find((z) => z.vychozi)?.id).not.toBe('nedojezd');
     const textSeCasem = sCasem.find((z) => z.id === 'denCas')?.text || '';
     expect(textSeCasem).toBe(`${textDneSCasem('cs', '16:30')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
     expect(textSeCasem).toContain('16:30');
     expect(textSeCasem).not.toContain('4:30');
     expect(zpravaDneSCasem('en', '16:30', odkaz)).toContain('around 16:30');
+  });
+
+  it('poslední výzva je jen den předem a v den příjezdu, a nikdy není předvybraná', () => {
+    const text = zpravaNedojezdu('cs');
+    expect(text).toContain('nedojezd (no-show)');
+    expect(text).toContain('+420\u00A0604\u00A0692\u00A0573');
+    expect(text.endsWith('Nikol a rodina VIVIEN')).toBe(true);
+    expect(zpravaNedojezdu('de')).toContain('Nichtanreise (No-Show)');
+    expect(zpravaNedojezdu('es')).toContain('no presentado (no-show)');
+    expect(zpravaNedojezdu('en')).toContain('no-show');
+    const zaklad = {
+      stav: 'odeslano',
+      otevrenoPocet: 2,
+      chybi: ['cas'] as string[],
+      predano: '',
+      naMiste: false,
+    };
+    expect(ukazatNedojezd({ ...zaklad, casPrijezdu: null, prijezd: '2026-10-15', dnes: '2026-10-15' })).toBe(true);
+    expect(ukazatNedojezd({ ...zaklad, casPrijezdu: null, prijezd: '2026-10-15', dnes: '2026-10-14' })).toBe(true);
+    expect(ukazatNedojezd({ ...zaklad, casPrijezdu: null, prijezd: '2026-10-15', dnes: '2026-10-12' })).toBe(false);
+    expect(
+      ukazatNedojezd({
+        ...zaklad,
+        chybi: [],
+        otevrenoPocet: 2,
+        casPrijezdu: '16:30',
+        prijezd: '2026-10-15',
+        dnes: '2026-10-15',
+      }),
+    ).toBe(false);
+    expect(
+      ukazatNedojezd({
+        ...zaklad,
+        chybi: [],
+        otevrenoPocet: 0,
+        casPrijezdu: '16:30',
+        prijezd: '2026-10-15',
+        dnes: '2026-10-15',
+      }),
+    ).toBe(true);
+    expect(
+      ukazatNedojezd({ ...zaklad, casPrijezdu: null, prijezd: '2026-10-15', dnes: '2026-10-15', predano: '17:03' }),
+    ).toBe(false);
+    const menu = zpravyMenu({
+      stav: 'odeslano',
+      lang: 'cs',
+      pruvodce: null,
+      otevrenoPocet: 2,
+      casPrijezdu: '16:30',
+      prijezd: '2026-10-15',
+      dnes: '2026-10-15',
+      chybi: [],
+    });
+    expect(menu.some((z) => z.id === 'nedojezd')).toBe(false);
+    expect(menu.some((z) => z.vychozi && z.id === 'nedojezd')).toBe(false);
   });
 
   it('check-in se řídí zdrojem a odkaz z políčka do zprávy nedá', () => {

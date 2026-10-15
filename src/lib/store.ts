@@ -30,6 +30,9 @@ export type BehZpracovani = {
   chyba: string;
 };
 
+/** Jednou za den. vecer = 18:00, pripominka = 20:00, rano = 8:00. Hodnota je den v Praze. */
+export type OdjezdBeh = { vecer: string | null; pripominka: string | null; rano: string | null };
+
 export type RezervaceStav =
   | 'odeslano'
   | 'odeslano_s_vyhradou'
@@ -85,6 +88,14 @@ export type RezervaceRecord = {
   zdroj: string | null;
   /** Čas, který host napsal a majitel si ho sem zapsal. Tvar HH:MM. */
   casPrijezdu: string | null;
+  /** Čas odjezdu. HH:MM. Ruční zápis majitele má přednost před hostem. */
+  casOdjezdu: string | null;
+  /** Poslední čas odjezdu zadal host v průvodci. */
+  casOdjezduZadalHost: boolean;
+  /** Kdy majitel poslal dotaz na odjezd. null = ještě ne. */
+  odjezdDotaz: string | null;
+  /** Den a čas odjezdu, na který už odešlo upozornění půl hodiny předem. */
+  odjezdPushPul: string | null;
   /** Telefon z e-mailu o nové rezervaci. Check-in ho nepřepisuje. */
   telefonRezervace: string | null;
   telefonRezervaceWa: string | null;
@@ -126,6 +137,10 @@ export type RezervaceRecord = {
   branaPushRegistrace: string | null;
   /** Den příjezdu, kdy už odešlo ranní upozornění na bránu. */
   branaPushRano: string | null;
+  /** Den a čas příjezdu, na který už odešlo upozornění hodinu předem. Tvar YYYY-MM-DD HH:MM. */
+  prijezdPushCas: string | null;
+  /** Den příjezdu, kdy už odešlo ranní upozornění, že čas neznáme. */
+  prijezdPushNeznamy: string | null;
   /** Majitel odemkl průvodce i bez údajů. Kódy to neodemkne. */
   pruvodceOdemcen: string | null;
   /** Časy uložení z průvodce, kvůli limitu. Bez údajů hosta. */
@@ -140,6 +155,7 @@ export type RucniPole =
   | 'telefon'
   | 'telefonRezervace'
   | 'casPrijezdu'
+  | 'casOdjezdu'
   | 'checkinUrl'
   | 'jmeno'
   | 'emailHosta'
@@ -179,6 +195,7 @@ type StoreData = {
   push?: PushZarizeni[];
   zpracujSelhani?: number;
   zpracujBeh?: BehZpracovani | null;
+  odjezdBeh?: OdjezdBeh | null;
   brana?: unknown;
 };
 
@@ -186,6 +203,7 @@ const RUCNI_KLIC = new Set<RucniPole>([
   'telefon',
   'telefonRezervace',
   'casPrijezdu',
+  'casOdjezdu',
   'checkinUrl',
   'jmeno',
   'emailHosta',
@@ -221,6 +239,8 @@ export interface ProcessStore {
   setBeh(beh: BehZpracovani): Promise<void>;
   getBrana(): Promise<unknown>;
   setBrana(sloty: unknown): Promise<void>;
+  getOdjezdBeh(): Promise<OdjezdBeh | null>;
+  setOdjezdBeh(beh: OdjezdBeh): Promise<void>;
 }
 
 const MESSAGE_TTL_SEC = 90 * 24 * 60 * 60;
@@ -357,6 +377,10 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       (typeof r.casPrijezdu === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.casPrijezdu))
         ? r.casPrijezdu
         : null,
+    casOdjezdu: typeof r.casOdjezdu === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.casOdjezdu) ? r.casOdjezdu : null,
+    casOdjezduZadalHost: r.casOdjezduZadalHost === true,
+    odjezdDotaz: typeof r.odjezdDotaz === 'string' && r.odjezdDotaz ? r.odjezdDotaz : null,
+    odjezdPushPul: typeof r.odjezdPushPul === 'string' && r.odjezdPushPul ? r.odjezdPushPul : null,
     casZadalHost: r.casZadalHost === true,
     zpusobPrijezdu: r.zpusobPrijezdu === 'auto' || r.zpusobPrijezdu === 'pesky' ? r.zpusobPrijezdu : null,
     telefonBrana: typeof r.telefonBrana === 'string' && r.telefonBrana ? r.telefonBrana : null,
@@ -365,6 +389,8 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     branaRegistrovano: typeof r.branaRegistrovano === 'string' && r.branaRegistrovano ? r.branaRegistrovano : null,
     branaPushRegistrace: typeof r.branaPushRegistrace === 'string' && r.branaPushRegistrace ? r.branaPushRegistrace : null,
     branaPushRano: typeof r.branaPushRano === 'string' && r.branaPushRano ? r.branaPushRano : null,
+    prijezdPushCas: typeof r.prijezdPushCas === 'string' && r.prijezdPushCas ? r.prijezdPushCas : null,
+    prijezdPushNeznamy: typeof r.prijezdPushNeznamy === 'string' && r.prijezdPushNeznamy ? r.prijezdPushNeznamy : null,
     pruvodceOdemcen: typeof r.pruvodceOdemcen === 'string' && r.pruvodceOdemcen ? r.pruvodceOdemcen : null,
     hostUlozeni: Array.isArray(r.hostUlozeni) ? r.hostUlozeni.filter((x) => typeof x === 'string') : [],
     rucniZnacky: nactiZnacky(r.rucniZnacky),
@@ -441,6 +467,12 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     branaRegistrovano: null,
     branaPushRegistrace: null,
     branaPushRano: null,
+    prijezdPushCas: null,
+    prijezdPushNeznamy: null,
+    casOdjezdu: null,
+    casOdjezduZadalHost: false,
+    odjezdDotaz: null,
+    odjezdPushPul: null,
     pruvodceOdemcen: null,
     hostUlozeni: [],
     rucniZnacky: [],
@@ -577,6 +609,16 @@ export class FileProcessStore implements ProcessStore {
   async setBrana(sloty: unknown): Promise<void> {
     const data = this.read();
     data.brana = sloty;
+    this.write(data);
+  }
+
+  async getOdjezdBeh(): Promise<OdjezdBeh | null> {
+    return this.read().odjezdBeh ?? null;
+  }
+
+  async setOdjezdBeh(beh: OdjezdBeh): Promise<void> {
+    const data = this.read();
+    data.odjezdBeh = beh;
     this.write(data);
   }
 }
@@ -730,6 +772,22 @@ export class UpstashProcessStore implements ProcessStore {
 
   async setBrana(sloty: unknown): Promise<void> {
     await this.cmd('SET', 'meta:brana', JSON.stringify(sloty));
+  }
+
+  async getOdjezdBeh(): Promise<OdjezdBeh | null> {
+    const v = await this.cmd<string | null>('GET', 'meta:odjezd');
+    if (!v) return null;
+    try {
+      const beh = JSON.parse(v) as OdjezdBeh;
+      const den = (x: unknown) => (typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : null);
+      return { vecer: den(beh.vecer), pripominka: den(beh.pripominka), rano: den(beh.rano) };
+    } catch {
+      return null;
+    }
+  }
+
+  async setOdjezdBeh(beh: OdjezdBeh): Promise<void> {
+    await this.cmd('SET', 'meta:odjezd', JSON.stringify(beh));
   }
 }
 

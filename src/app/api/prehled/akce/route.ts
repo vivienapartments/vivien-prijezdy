@@ -6,7 +6,12 @@ import { nightsBetween } from '@/lib/dates';
 import { jeRucniPole, maRucni, prevzitNavrh, zapisMajitele } from '@/lib/rucni-pole';
 import { jazykZPredvolby, normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA } from '@/lib/priplatek-prijezd';
+import { denPraha } from '@/lib/brana';
+import { posliEmailZpravy, predmetZpravy } from '@/lib/email-zprava';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
+import { polozkyZRezervace } from '@/lib/odjezd';
+import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
+import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore, type RezervaceRecord, type RezervaceStav } from '@/lib/store';
 import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
@@ -50,6 +55,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     kdo?: string;
     castka?: string;
     stav?: string;
+    zprava?: string;
   } | null;
   const id = (body?.rezervace || '').trim();
   const akce = body?.akce;
@@ -59,6 +65,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'opravit' &&
       akce !== 'odkaz' &&
       akce !== 'cas' &&
+      akce !== 'cas-odjezdu' &&
+      akce !== 'odjezd-dotaz' &&
       akce !== 'checkin' &&
       akce !== 'telefon' &&
       akce !== 'predano' &&
@@ -73,6 +81,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'vratit-vyjezd' &&
       akce !== 'brana' &&
       akce !== 'odemknout' &&
+      akce !== 'email' &&
       akce !== 'prevzit')
   ) {
     return chyba(400, 'Neznámá akce.');
@@ -216,6 +225,45 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, hodnota: nove === 'žádný' ? '' : nove }, { headers: noStore });
   }
 
+  if (akce === 'cas-odjezdu') {
+    const surovy = (body?.cas || '').trim();
+    let cas: string | null;
+    if (!surovy) cas = null;
+    else {
+      const vysledek = normalizujCasPrijezdu(surovy);
+      if (!vysledek.ok || vysledek.cas === 'po20') return chyba(400, 'Čas napište jako 0930.');
+      cas = vysledek.cas;
+    }
+    const bylo = rec.casOdjezdu || 'žádný';
+    const nove = cas || 'žádný';
+    if (!cas) {
+      const bez = (rec.rucniZnacky || []).filter((z) => z.pole !== 'casOdjezdu');
+      const dalsi = pridej(rec, bylo === 'žádný' ? '' : `Čas odjezdu ${bylo} → žádný`, {
+        casOdjezdu: null,
+        casOdjezduZadalHost: false,
+        rucniZnacky: bez,
+      });
+      if (bylo === 'žádný') dalsi.historie = rec.historie;
+      await store.setRezervace(id, dalsi);
+      return NextResponse.json({ ok: true, hodnota: '' }, { headers: noStore });
+    }
+    const dalsi = zapisMajitele(
+      rec,
+      'casOdjezdu',
+      { casOdjezdu: cas, casOdjezduZadalHost: false },
+      bylo === nove ? '' : `Čas odjezdu ${bylo} → ${nove}`,
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, hodnota: nove }, { headers: noStore });
+  }
+
+  if (akce === 'odjezd-dotaz') {
+    if (rec.odjezdDotaz) return NextResponse.json({ ok: true, cas: rec.odjezdDotaz }, { headers: noStore });
+    const dalsi = pridej(rec, 'Dotaz na odjezd na WhatsApp', { odjezdDotaz: new Date().toISOString() });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, cas: dalsi.odjezdDotaz }, { headers: noStore });
+  }
+
   if (akce === 'checkin') {
     const vysledek = zkontrolujCheckinOdkaz(body?.url || '');
     if (!vysledek.ok) return chyba(400, 'Odkaz musí začínat https://.');
@@ -249,6 +297,65 @@ export async function POST(request: Request): Promise<NextResponse> {
       zapisMajitele(rec, pole, patch, textStary === textNovy ? '' : `Telefon ${textStary} → ${textNovy}`),
     );
     return NextResponse.json({ ok: true, nejisty: tel.nejisty, hodnota: textNovy }, { headers: noStore });
+  }
+
+  if (akce === 'email') {
+    const druhy: DruhZpravy[] = ['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd', 'odjezd'];
+    const druh = druhy.find((id) => id === body?.zprava);
+    if (!druh) return chyba(400, 'Vyberte zprávu.');
+    const komu = (rec.emailHosta || '').trim();
+    if (!komu || problemEmailu(komu)) return chyba(400, 'Host nemá e-mail.');
+    const kroky = chybejiciKroky({
+      cas: rec.casPrijezdu,
+      zpusob: rec.zpusobPrijezdu,
+      telefonBrana: rec.telefonBrana,
+      spz: rec.spz,
+      spzPujcene: Boolean(rec.spzPujcene),
+      souhlas: Boolean(rec.souhlasPravidel),
+    });
+    let odkaz: string | null = null;
+    try {
+      odkaz = odkazNaPruvodce(rec);
+    } catch {
+      odkaz = null;
+    }
+    const zprava = zpravyMenu({
+      stav: rec.stav,
+      lang: rec.jazyk,
+      zdroj: rec.zdroj,
+      pruvodce: odkaz,
+      checkinUrl: rec.checkinUrl,
+      otevrenoPocet: rec.otevrenoPocet,
+      casPrijezdu: rec.casPrijezdu,
+      prijezd: rec.prijezd,
+      dnes: denPraha(new Date()),
+      chybi: kroky,
+      zpusob: rec.zpusobPrijezdu,
+      souhlas: Boolean(rec.souhlasPravidel),
+      naMiste: Boolean(rec.naMiste),
+      predano: rec.predano || '',
+      odjezd: rec.odjezd,
+      casOdjezdu: rec.casOdjezdu,
+      dluh: polozkyZRezervace(rec),
+      branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
+    }).find((z) => z.id === druh);
+    if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
+    try {
+      await posliEmailZpravy({
+        to: komu,
+        subject: predmetZpravy(druh, rec.jazyk, druh === 'odjezd' ? rec.odjezd : rec.prijezd),
+        text: zprava.text,
+        lang: rec.jazyk,
+        telefon: druh !== 'odjezd',
+      });
+    } catch {
+      return chyba(502, 'E-mail se nepodařilo odeslat.');
+    }
+    await store.setRezervace(
+      id,
+      pridej(rec, `E-mailem: ${zprava.nazev}`, druh === 'odjezd' ? { odjezdDotaz: new Date().toISOString() } : {}),
+    );
+    return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
   }
 
   if (akce === 'odkaz') {

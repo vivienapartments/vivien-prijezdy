@@ -1,3 +1,4 @@
+import { jeSlotOdjezdu, textHostUlozil, zobrazCas } from './odjezd';
 import { verzeAktualni } from './pravidla-verze';
 import { popisekCasu } from './priplatek-prijezd';
 import { maRucni } from './rucni-pole';
@@ -88,6 +89,29 @@ export async function ulozVstupHosta(
       posledniPokus: cas,
     });
   };
+
+  if (telo.akce === 'odjezd') {
+    const cas = (telo.cas || '').trim();
+    if (!jeSlotOdjezdu(cas)) {
+      await spalit();
+      return { ok: false, duvod: 'cas' };
+    }
+    if (maRucni(rec, 'casOdjezdu') && rec.casOdjezdu && rec.casOdjezdu !== cas) {
+      const zapis = poznamenej(rec, 'Host zadal jiný odjezd, ruční čas zůstal', {});
+      await store.setRezervace(id, zapis);
+      await ohlas(store, id, `${popisHosta(rec)} napsal odjezd ${zobrazCas(cas)}, váš čas zůstává`);
+      return { ok: true, cas: rec.casOdjezdu, uroven: urovenZRezervace(rec) };
+    }
+    const bylo = rec.casOdjezdu ? zobrazCas(rec.casOdjezdu) : 'žádný';
+    const nove = zobrazCas(cas);
+    const zapis = poznamenej(rec, `Čas odjezdu ${bylo} → ${nove}`, {
+      casOdjezdu: cas,
+      casOdjezduZadalHost: true,
+    });
+    await store.setRezervace(id, zapis);
+    await ohlas(store, id, textHostUlozil(rec, cas));
+    return { ok: true, cas, uroven: urovenZRezervace(zapis) };
+  }
 
   if (telo.akce === 'dokoncit') {
     const cas = (telo.cas || '').trim();

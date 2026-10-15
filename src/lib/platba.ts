@@ -42,6 +42,7 @@ export function textNezaplaceneho(rec: RezervaceRecord): string {
 }
 
 /** Pošle upozornění a zapíše, že už dnes odešlo. Když telefon ani e-mail neberou, zkusí to příští běh. */
+/** Nahrazeno souhrnem nedoplatků v 8:00. Z běhu /api/zpracuj se už nevolá. */
 export async function upozorniNezaplacene(store: ProcessStore, now = new Date()): Promise<number> {
   const list = await store.listRezervace();
   let pocet = 0;

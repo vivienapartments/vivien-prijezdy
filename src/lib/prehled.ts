@@ -12,6 +12,7 @@ import { fazeHosta, type FazeTon } from './faze-hosta';
 import { zpravyMenu, type ZpravaMenu } from './whatsapp-zprava';
 import { zneniVerze } from './pravidla-verze';
 import { popisekCasu, priplatekCasu, soucetVyjezdu } from './priplatek-prijezd';
+import { polozkyZRezervace, textRozpisu } from './odjezd';
 
 export const STARY_ZAZNAM = 'starý záznam';
 
@@ -64,6 +65,11 @@ export type PrehledRadek = {
   zpravy: ZpravaMenu[];
   zdrojText: string;
   casPrijezdu: string | null;
+  casOdjezdu: string | null;
+  casOdjezduZadalHost: boolean;
+  odjezdDotaz: string | null;
+  /** Text nedoplatku pro seznam odjezdů. Prázdné, když nic nedluží. */
+  dluhText: string;
   vytvorenoText: string;
   odkaz: string | null;
   zprava: string;
@@ -673,6 +679,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     naMiste: Boolean(rec.naMiste),
     predano: rec.predano ? hodinaPraha(rec.predano) : '',
     odjezd: rec.odjezd,
+    casOdjezdu: rec.casOdjezdu,
+    dluh: polozkyZRezervace(rec),
     branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
   });
   const poprve = rec.otevrenoPoprve ? casPraha(rec.otevrenoPoprve) : '';
@@ -723,6 +731,10 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     checkinUrl: rec.checkinUrl,
     zdrojText: chybi(zdrojText(rec.zdroj), stary),
     casPrijezdu: rec.casPrijezdu,
+    casOdjezdu: rec.casOdjezdu,
+    casOdjezduZadalHost: rec.casOdjezduZadalHost,
+    odjezdDotaz: rec.odjezdDotaz,
+    dluhText: textRozpisu(polozkyZRezervace(rec)),
     vytvorenoText: chybi(rec.vytvoreno ? czDenRok(rec.vytvoreno) : '', stary),
     odkaz: null,
     zpravy,

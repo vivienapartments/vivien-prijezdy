@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { Guide } from '@/components/Guide';
 import { HOUSE_KEY_TAG } from './access-codes';
-import { kodyProHosta } from './kody-pruvodce';
+import { kodoveRadky, kodyProHosta } from './kody-pruvodce';
 import { hodinaPraha } from './prehled';
 import {
   maDostatPredani,
@@ -150,5 +150,44 @@ describe('kódy až po předání', () => {
     expect(await migracePredaniJednou(store, dnes, now)).toBe(0);
     expect(await migracePredaniJednou(store, dnes, now)).toBeNull();
     expect(hodinaPraha('2026-10-13T13:42:00.000Z')).toBe('15:42');
+  });
+
+  it('před předáním v HTML není 1234 ani mřížka, po předání je 1234#', () => {
+    const pred = renderToStaticMarkup(
+      createElement(Guide, {
+        apt: 'V1',
+        lang: 'cs',
+        secrets,
+        stay: { noci: 2, osob: 2 },
+        kody: kodyProHosta(false, 'V1', '1234', 'cs'),
+      }),
+    );
+    const box = pred.match(/<section class="pv-piny"[\s\S]*?<\/section>/)?.[0] || '';
+    const textBoxu = box.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, '');
+    expect(textBoxu).not.toMatch(/\d/);
+    expect(textBoxu).not.toContain('#');
+    expect(box).not.toContain('1234');
+    expect(pred).not.toContain('1234#');
+    expect(pred).not.toContain('Zadejte číslice');
+
+    const po = renderToStaticMarkup(
+      createElement(Guide, {
+        apt: 'V3',
+        lang: 'cs',
+        secrets,
+        stay: { noci: 2, osob: 2 },
+        kody: kodyProHosta(true, 'V3', '1234', 'cs'),
+      }),
+    );
+    expect(po).toContain('1234#');
+    expect(po).toContain('Zadejte číslice a potvrďte mřížkou #.');
+    expect(po).toMatch(/pv-piny__hodnota[^>]*>1234#/);
+    const radky = kodoveRadky('V3', '1234', 'cs');
+    expect(radky.find((r) => r.kind === 'dum')?.value).toBe(DUM);
+    expect(radky.find((r) => r.kind === 'apt')?.value).toBe('1234#');
+    expect(radky.find((r) => r.kind === 'zahrada')?.value).toBe('1234#');
+    const ulice = kodoveRadky('V1', '1234', 'cs');
+    expect(ulice.find((r) => r.kind === 'zahrada')?.value).toBe('9000#');
+    expect(ulice.find((r) => r.kind === 'dum')?.value).not.toContain('#');
   });
 });

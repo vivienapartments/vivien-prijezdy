@@ -1,3 +1,5 @@
+import { posunDen } from './brana';
+import { ukazatDotazOdjezdu, zpravaOdjezdu, type PolozkaDluhu } from './odjezd';
 import type { GuideLang } from './types';
 import type { ChybejiciKrok } from './vstup-pruvodce';
 import { fazeHosta } from './faze-hosta';
@@ -275,11 +277,33 @@ const DEN_PRIPLATEK: Record<JazykZpravy, string> = {
   hu: `A ${odHodina} utáni érkezés pótdíja ${kcKrok}\u00A0Kč minden megkezdett félóráért, a tényleges érkezési idő szerint. Most ez {částka}\u00A0Kč lenne, a helyszínen fizetendő.`,
 };
 
-export type DruhZpravy = 'checkin' | 'neotevrel' | 'nerozbalen' | 'denNerozbalen' | 'denCas' | 'brana';
+const TELEFON = '+420\u00A0604\u00A0692\u00A0573';
 
-export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string; vychozi: boolean };
+const NEDOJEZD: Record<GuideLang, string> = {
+  cs: `Dobrý den, stále od vás nemáme čas příjezdu a na naše zprávy nereagujete. Pokud se nám neozvete a do 20:00 nedorazíte, budeme rezervaci považovat za nedojezd (no-show) a pobyt propadá. Napište nám hned, v kolik dorazíte, na ${TELEFON}. Děkujeme.`,
+  en: `Hello, we still do not have your arrival time, and you are not answering our messages. If you do not contact us and you do not arrive by 20:00, we will treat the booking as a no-show and the stay is forfeited. Write to us now with the time you will arrive, at ${TELEFON}. Thank you.`,
+  de: `Guten Tag, wir haben von Ihnen noch keine Ankunftszeit, und Sie antworten nicht auf unsere Nachrichten. Wenn Sie sich nicht melden und bis 20:00 nicht ankommen, behandeln wir die Buchung als Nichtanreise (No-Show) und der Aufenthalt verfällt. Schreiben Sie uns sofort, um wie viel Uhr Sie ankommen, an ${TELEFON}. Danke.`,
+  pl: `Dzień dobry, nadal nie mamy od Was godziny przyjazdu i nie odpowiadacie na nasze wiadomości. Jeśli się nie odezwiecie i nie dojedziecie do 20:00, uznamy rezerwację za niedojazd (no-show), a pobyt przepada. Napiszcie od razu, o której dojedziecie, na ${TELEFON}. Dziękujemy.`,
+  uk: `Добрий день, ми досі не маємо від вас часу приїзду, і ви не відповідаєте на наші повідомлення. Якщо ви не напишете і не приїдете до 20:00, ми вважатимемо бронювання неприбуттям (no-show), і проживання анулюється. Напишіть нам одразу, о котрій приїдете, на ${TELEFON}. Дякуємо.`,
+  'zh-Hant': `您好，我們仍未收到您的抵達時間，您也沒有回覆我們的訊息。如果您不與我們聯繫，而且在 20:00 前沒有抵達，我們會把這筆預訂視為未入住（no-show），住宿即失效。請立刻寫下您幾點到，傳給 ${TELEFON}。謝謝。`,
+  es: `Hola, seguimos sin tener su hora de llegada y no responden a nuestros mensajes. Si no nos escriben y no llegan antes de las 20:00, tomaremos la reserva como no presentado (no-show) y la estancia se pierde. Escríbannos ahora a qué hora llegan, al ${TELEFON}. Gracias.`,
+  fr: `Bonjour, nous n'avons toujours pas votre heure d'arrivée et vous ne répondez pas à nos messages. Si vous ne nous contactez pas et si vous n'arrivez pas avant 20:00, nous considérerons la réservation comme un no-show et le séjour est perdu. Écrivez-nous tout de suite à quelle heure vous arrivez, au ${TELEFON}. Merci.`,
+  it: `Buongiorno, non abbiamo ancora l'orario di arrivo e non rispondete ai nostri messaggi. Se non ci scrivete e non arrivate entro le 20:00, considereremo la prenotazione come mancato arrivo (no-show) e il soggiorno decade. Scriveteci subito a che ora arrivate, al ${TELEFON}. Grazie.`,
+  sv: `Hej, vi har fortfarande ingen ankomsttid från er, och ni svarar inte på våra meddelanden. Om ni inte hör av er och inte kommer före 20:00, räknar vi bokningen som utebliven ankomst (no-show) och vistelsen förfaller. Skriv till oss genast vilken tid ni kommer, till ${TELEFON}. Tack.`,
+  hu: `Jó napot, még mindig nincs meg az érkezés ideje, és nem válaszolnak az üzeneteinkre. Ha nem jelentkeznek, és 20:00-ig nem érkeznek meg, a foglalást meg nem érkezésnek (no-show) vesszük, és a tartózkodás elvész. Írják meg azonnal, hánykor érkeznek, a ${TELEFON} számra. Köszönjük.`,
+};
 
-const PORADI: DruhZpravy[] = ['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana'];
+const PODPIS_HOST: Record<GuideLang, string> = {
+  ...PODPIS,
+  fr: 'Nikol et la famille VIVIEN',
+  it: 'Nikol e la famiglia VIVIEN',
+};
+
+export type DruhZpravy = 'checkin' | 'neotevrel' | 'nerozbalen' | 'denNerozbalen' | 'denCas' | 'brana' | 'nedojezd' | 'odjezd';
+
+export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string; vychozi: boolean; vystraha: boolean };
+
+const PORADI: DruhZpravy[] = ['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd', 'odjezd'];
 
 const NAZEV: Record<DruhZpravy, string> = {
   checkin: 'Vyplňte check-in',
@@ -288,6 +312,8 @@ const NAZEV: Record<DruhZpravy, string> = {
   denNerozbalen: 'Den příjezdu, průvodce nerozbalen',
   denCas: 'Den příjezdu, čas známe',
   brana: 'Chybí údaje k bráně',
+  nedojezd: 'Poslední výzva (nedojezd)',
+  odjezd: 'Dotaz na odjezd',
 };
 
 function vetaCheckinu(lang: GuideLang | null, zdroj: string | null | undefined, sOdkazem = false): string {
@@ -357,6 +383,36 @@ export function zpravaDneSCasem(lang: GuideLang | null, cas: string | null, odka
   return sestav(textDneSCasem(lang, cas), odkaz, lang);
 }
 
+export function zpravaNedojezdu(lang: GuideLang | null): string {
+  const text = lang && NEDOJEZD[lang] ? NEDOJEZD[lang] : NEDOJEZD.en;
+  const podpis = lang && PODPIS_HOST[lang] ? PODPIS_HOST[lang] : PODPIS_HOST.en;
+  return `${text}\n\n${podpis}`;
+}
+
+/** Jen den příjezdu a den před ním, když chybí čas nebo host nereaguje. Po předání už ne. */
+export function ukazatNedojezd(opts: {
+  stav: string;
+  otevrenoPocet: number | null;
+  casPrijezdu: string | null;
+  prijezd: string | null;
+  dnes: string;
+  chybi?: string[];
+  predano?: string;
+  naMiste?: boolean;
+}): boolean {
+  if (opts.stav === 'zruseno' || opts.predano || opts.naMiste) return false;
+  if (!opts.prijezd || !opts.dnes) return false;
+  if (opts.dnes !== opts.prijezd && opts.dnes !== posunDen(opts.prijezd, -1)) return false;
+  const maCas = Boolean(opts.casPrijezdu && /^([01]\d|2[0-3]):[0-5]\d$/.test(opts.casPrijezdu));
+  const nereaguje =
+    opts.otevrenoPocet == null ||
+    opts.otevrenoPocet === 0 ||
+    Boolean(opts.chybi && opts.chybi.length > 0) ||
+    opts.stav === 'bez_checkinu' ||
+    opts.stav === 'neodeslano';
+  return !maCas || nereaguje;
+}
+
 /** Která zpráva sedí na fázi hosta. Řádky menu se kvůli tomu neprohazují. */
 export function hlavniZprava(opts: {
   stav: string;
@@ -410,6 +466,8 @@ export function zpravyMenu(opts: {
   naMiste?: boolean;
   predano?: string;
   odjezd?: string | null;
+  casOdjezdu?: string | null;
+  dluh?: PolozkaDluhu[];
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const texty: Record<DruhZpravy, string> = {
@@ -419,9 +477,29 @@ export function zpravyMenu(opts: {
     denNerozbalen: zpravaDneNerozbalen(opts.lang, chybi, opts.pruvodce),
     denCas: zpravaDneSCasem(opts.lang, opts.casPrijezdu, opts.pruvodce),
     brana: zpravaBrany(opts.lang),
+    nedojezd: zpravaNedojezdu(opts.lang),
+    odjezd: zpravaOdjezdu(opts.lang, opts.dluh || [], opts.pruvodce),
   };
   const hlavni = hlavniZprava(opts);
-  return PORADI.map((id) => ({ id, nazev: NAZEV[id], text: texty[id], vychozi: id === hlavni }));
+  const videt = PORADI.filter((id) => {
+    if (id === 'nedojezd') return ukazatNedojezd({ ...opts, chybi });
+    if (id === 'odjezd') {
+      return ukazatDotazOdjezdu({
+        stav: opts.stav,
+        odjezd: opts.odjezd,
+        dnes: opts.dnes,
+        casOdjezdu: opts.casOdjezdu,
+      });
+    }
+    return true;
+  });
+  return videt.map((id) => ({
+    id,
+    nazev: NAZEV[id],
+    text: texty[id],
+    vychozi: id === hlavni,
+    vystraha: id === 'nedojezd',
+  }));
 }
 
 export function odkazWhatsApp(wa: string, zprava: string): string {

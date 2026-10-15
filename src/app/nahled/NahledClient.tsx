@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Guide } from '@/components/Guide';
+import { denPraha, posunDen } from '@/lib/brana';
 import { parseApt, parseLang } from '@/lib/i18n';
 import { kodyProHosta } from '@/lib/kody-pruvodce';
 import type { GuideSecrets } from '@/lib/secrets';
@@ -110,6 +111,11 @@ export function NahledClient({ secrets, searchParams }: Props) {
       onVstup={zapisVstup}
       showDevBar
       onDevChange={write}
+      odjezd={
+        one(searchParams.odjezd) === '1'
+          ? { den: posunDen(denPraha(new Date()), 1), cas: one(searchParams.odjezdCas), rucni: false }
+          : null
+      }
     />
   );
 }

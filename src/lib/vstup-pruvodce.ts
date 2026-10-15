@@ -144,5 +144,5 @@ export function smiUlozit(znacky: string[], ted = Date.now()): boolean {
 }
 
 export type VysledekUlozeni =
-  | { ok: true; uroven: UrovenPruvodce }
+  | { ok: true; uroven: UrovenPruvodce; cas?: string }
   | { ok: false; duvod: 'token' | 'cas' | 'telefon' | 'spz' | 'zpusob' | 'souhlas' | 'limit' | 'chybi' };

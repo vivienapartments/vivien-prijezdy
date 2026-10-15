@@ -70,6 +70,11 @@ export default async function PruvodceHostaPage({ params, searchParams }: Props)
             predvyplneny: '',
             ubytovan: predano,
           }}
+          odjezd={{
+            den: rec.odjezd,
+            cas: rec.casOdjezdu,
+            rucni: Boolean(rec.rucniZnacky?.some((z) => z.pole === 'casOdjezdu')),
+          }}
         />
       </div>
     </>

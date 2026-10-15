@@ -20,6 +20,7 @@ import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { langFromNarodnost } from '@/lib/vivien-data';
+import { jeHodina, seradOdjezdy, ukazatCasNaKarte, zobrazCas, zpravaOdjezdu } from '@/lib/odjezd';
 import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
@@ -96,6 +97,7 @@ export function PrehledClient({
   const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState<string | null>(null);
   const [casy, setCasy] = useState<Record<string, string>>({});
+  const [casyOdjezdu, setCasyOdjezdu] = useState<Record<string, string>>({});
   const [volba, setVolba] = useState<Record<string, string>>({});
   const [odkazy, setOdkazy] = useState<Record<string, string>>({});
   const [pridat, setPridat] = useState(false);
@@ -110,6 +112,8 @@ export function PrehledClient({
   const [jazyky, setJazyky] = useState<Record<string, GuideLang>>({});
   const [dotazZnovu, setDotazZnovu] = useState<string | null>(null);
   const [dotazDalsi, setDotazDalsi] = useState<{ id: string; druh: 'brana' | 'odemknout' } | null>(null);
+  const [dotazEmail, setDotazEmail] = useState<{ id: string; email: string } | null>(null);
+  const [dotazOdjezd, setDotazOdjezd] = useState<string | null>(null);
   const [poplatekOtevren, setPoplatekOtevren] = useState<Record<string, boolean>>({});
 
   function jazykRadku(row: PrehledRadek): GuideLang {
@@ -120,6 +124,11 @@ export function PrehledClient({
     if (casy[row.rezervace] != null) return casy[row.rezervace];
     if (row.casPrijezdu === 'po20' || row.casPrijezdu === 'po23') return popisekCasu(row.casPrijezdu);
     return row.casPrijezdu ?? '';
+  }
+
+  function casOdjezduRadku(row: PrehledRadek): string {
+    if (casyOdjezdu[row.rezervace] != null) return casyOdjezdu[row.rezervace];
+    return jeHodina(row.casOdjezdu) ? row.casOdjezdu : '';
   }
 
   function telefonRadku(row: PrehledRadek): string {
@@ -302,6 +311,49 @@ export function PrehledClient({
     });
   }, [radky, stav, hledat, den, dnes, zitra, jenNeotevreni, jenBezCheckinu]);
 
+  async function posliEmail(row: PrehledRadek, druh?: string) {
+    const zprava = druh ?? volba[row.rezervace] ?? row.zpravy.find((z) => z.vychozi)?.id;
+    if (!zprava) return;
+    if (ukazka) {
+      setDotazEmail(null);
+      setDotazOdjezd(null);
+      if (zprava === 'odjezd') {
+        const ted = new Date().toISOString();
+        setRadky((prev) => prev.map((r) => (r.rezervace === row.rezervace ? { ...r, odjezdDotaz: ted } : r)));
+      }
+      setHlaska('V náhledu se e-mail neodešle.');
+      return;
+    }
+    setCekam(`${row.rezervace}:email`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'email', zprava }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; nazev?: string } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'E-mail se nepodařilo odeslat.');
+      return;
+    }
+    setDotazEmail(null);
+    const nazev = json.nazev || 'zpráva';
+    const ted = new Date().toISOString();
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              odjezdDotaz: zprava === 'odjezd' ? ted : r.odjezdDotaz,
+              historie: [...r.historie, { cas: ted, co: `E-mailem: ${nazev}` }].slice(-40),
+            }
+          : r,
+      ),
+    );
+    setHlaska(`E-mail „${nazev}“ je odeslaný.`);
+  }
+
   async function volat(
     row: PrehledRadek,
     akce: 'znovu' | 'odkaz' | 'opravit' | 'brana' | 'odemknout',
@@ -355,6 +407,52 @@ export function PrehledClient({
     return { ok: true, hodnota: hotovo };
   }
 
+  async function ulozOdjezd(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
+    const vysledek = normalizujCasPrijezdu(hodnota);
+    if (!vysledek.ok) return { ok: false };
+    const cas = vysledek.cas ?? '';
+    if (ukazka) {
+      setCasyOdjezdu((prev) => ({ ...prev, [row.rezervace]: cas }));
+      return { ok: true, hodnota: cas };
+    }
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'cas-odjezdu', cas }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; hodnota?: string } | null;
+    if (!res.ok || !json?.ok) return { ok: false };
+    const hotovo = json.hodnota ?? cas;
+    setCasyOdjezdu((prev) => ({ ...prev, [row.rezervace]: hotovo }));
+    return { ok: true, hodnota: hotovo };
+  }
+
+  async function oznacDotaz(row: PrehledRadek) {
+    const ted = new Date().toISOString();
+    if (!ukazka) {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: row.rezervace, akce: 'odjezd-dotaz' }),
+      });
+      if (!res.ok) {
+        setHlaska('Dotaz se nepodařilo označit.');
+        return;
+      }
+    }
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              odjezdDotaz: ted,
+              historie: [...r.historie, { cas: ted, co: 'Dotaz na odjezd na WhatsApp' }].slice(-40),
+            }
+          : r,
+      ),
+    );
+  }
+
   function naMisteRadku(row: PrehledRadek): string | null {
     if (Object.prototype.hasOwnProperty.call(naMisteStav, row.rezervace)) return naMisteStav[row.rezervace];
     return row.naMiste;
@@ -406,8 +504,14 @@ export function PrehledClient({
     return { ok: true, hodnota: ulozeno == null ? '' : String(ulozeno) };
   }
 
+  function textDotazuOdjezdu(row: PrehledRadek): string {
+    if (vyberPoplatku(row).kdy) return zpravaOdjezdu(jazykRadku(row), [], row.odkaz);
+    return row.zpravy.find((z) => z.id === 'odjezd')?.text || zpravaOdjezdu(jazykRadku(row), [], row.odkaz);
+  }
+
   function zpravaRadku(row: PrehledRadek): string {
     const id = volba[row.rezervace] ?? row.zpravy.find((z) => z.vychozi)?.id;
+    if (id === 'odjezd') return textDotazuOdjezdu(row);
     return row.zpravy.find((z) => z.id === id)?.text || row.zprava;
   }
 
@@ -633,6 +737,17 @@ export function PrehledClient({
         onUloz={(text) => ulozCas(row, text)}
       />
     );
+    const odjezdCas = casOdjezduRadku(row);
+    const odjezdPole = (
+      <PoleSUlozenim
+        key={`${row.rezervace}-odjezd`}
+        label="Odjezd"
+        hodnota={odjezdCas}
+        poznamka={row.casOdjezduZadalHost && !casyOdjezdu[row.rezervace] ? <span className="ph-od-hosta"> zadal host</span> : null}
+        vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
+        onUloz={(text) => ulozOdjezd(row, text)}
+      />
+    );
     const soucetPole = (
       <div className="ph-soucet">
         {rozpis.radky.map((radek) => (
@@ -663,13 +778,15 @@ export function PrehledClient({
         />
       </div>
     );
-    const zpravaRamecek = row.zpravy.length && wa ? (
+    const emailHosta = row.email.includes('@') ? row.email : '';
+    const zpravaRamecek = row.zpravy.length && (wa || emailHosta) ? (
       <fieldset className="ph-menu">
         <legend>Zpráva</legend>
         {row.zpravy.map((z) => {
           const vybrano = (volba[row.rezervace] ?? row.zpravy.find((polozka) => polozka.vychozi)?.id) === z.id;
+          const trida = [vybrano ? 'is-on' : '', z.vystraha ? 'is-vystraha' : ''].filter(Boolean).join(' ');
           return (
-            <label key={z.id} className={vybrano ? 'is-on' : ''}>
+            <label key={z.id} className={trida}>
               <input
                 type="radio"
                 name={`zprava-${row.rezervace}`}
@@ -691,6 +808,30 @@ export function PrehledClient({
       >
         Napsat na WhatsApp
       </a>
+    ) : null;
+    const emailTlacitko = emailHosta ? (
+      <button type="button" className="ph-wa" onClick={() => setDotazEmail({ id: row.rezervace, email: emailHosta })}>
+        Poslat e-mailem
+      </button>
+    ) : null;
+    const akceZpravy = whatsapp || emailTlacitko ? (
+      <div className="ph-zpravy-akce">
+        {whatsapp}
+        {emailTlacitko}
+        {dotazEmail?.id === row.rezervace ? (
+          <div className="ph-predano-dotaz">
+            <p>
+              Poslat e-mail na <span className="ph-tel">{dotazEmail.email}</span>?
+            </p>
+            <button type="button" disabled={cekam !== null} onClick={() => void posliEmail(row)}>
+              Ano
+            </button>
+            <button type="button" onClick={() => setDotazEmail(null)}>
+              Zrušit
+            </button>
+          </div>
+        ) : null}
+      </div>
     ) : null;
     const predaniTlacitko = predanoKdy ? (
       <button
@@ -782,6 +923,9 @@ export function PrehledClient({
           <span className={`ph-faze ph-faze--${row.fazeTon}`}>Fáze · {row.fazeText}</span>
         </div>
         {ukazatPrijezd ? <div className="ph-prijezd-cas">Příjezd {casText}</div> : null}
+        {ukazatCasNaKarte(row.odjezd, dnes) && jeHodina(odjezdCas) ? (
+          <div className="ph-prijezd-cas">Odjezd {zobrazCas(odjezdCas)}</div>
+        ) : null}
         {dil.radek}
         {poplatekRadek}
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
@@ -795,7 +939,7 @@ export function PrehledClient({
           </>
         ) : null}
         {cekajici === 'namiste' ? namisteTlacitko : null}
-        {whatsapp}
+        {akceZpravy}
         <button
           type="button"
           className="ph-rozbal"
@@ -836,6 +980,7 @@ export function PrehledClient({
           {cekajici === 'odpoved' ? null : dil.odpoved}
           {dil.detail}
           {casPole}
+          {odjezdPole}
           {!row.pruvodceOdemcen ? (
             <button
               type="button"
@@ -1279,6 +1424,87 @@ export function PrehledClient({
       </div>
 
       {aktivni.length === 0 && odjeli.length === 0 ? <p className="ph-prazdno">Nic tu není.</p> : null}
+
+      {[
+        { den: dnes, nadpis: 'Dnešní odjezdy', kotva: 'odjezdy-dnes' },
+        { den: zitra, nadpis: 'Zítřejší odjezdy', kotva: 'odjezdy-zitra' },
+      ].map((sekce) => {
+        const hoste = seradOdjezdy(radky.filter((r) => r.stav !== 'zruseno' && r.odjezd === sekce.den));
+        if (!hoste.length) return null;
+        return (
+          <section key={sekce.kotva} id={sekce.kotva} className="ph-odjezdy">
+            <h2>{sekce.nadpis}</h2>
+            <ul>
+              {hoste.map((row) => {
+                const cas = casOdjezduRadku(row);
+                const znamy = jeHodina(cas);
+                const dluh = vyberPoplatku(row).kdy ? '' : row.dluhText;
+                const dotaz = row.odjezdDotaz ? hodinaPraha(row.odjezdDotaz) : '';
+                const text = textDotazuOdjezdu(row);
+                const wa = row.telefonWa;
+                const email = row.email.includes('@') ? row.email : '';
+                return (
+                  <li key={row.rezervace} className={znamy ? 'is-hotovo' : undefined}>
+                    <a href={`#${row.rezervace}`}>{row.jmeno || 'Host'}</a>
+                    {' · '}
+                    {row.apartman || 'bez apartmánu'}
+                    {' · '}
+                    {znamy ? `Odjezd ${zobrazCas(cas)}` : 'čas neznámý'}
+                    {dluh ? ` · ${dluh}` : ''}
+                    {znamy ? null : dotaz ? (
+                      <span>{` · Dotaz odeslán ${dotaz}`}</span>
+                    ) : (
+                      <span className="ph-odjezdy__akce">
+                        {wa ? (
+                          <a
+                            className="ph-wa"
+                            href={odkazWhatsAppPrehled(wa, text, userAgent)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const href = odkazWhatsAppPrehled(wa, text, userAgent);
+                              void oznacDotaz(row).then(() => window.open(href, '_blank', 'noopener,noreferrer'));
+                            }}
+                          >
+                            Napsat na WhatsApp
+                          </a>
+                        ) : null}
+                        {email ? (
+                          <button type="button" className="ph-wa" onClick={() => setDotazOdjezd(row.rezervace)}>
+                            Poslat e-mailem
+                          </button>
+                        ) : null}
+                        <details>
+                          <summary>Text zprávy</summary>
+                          <p>{text}</p>
+                        </details>
+                      </span>
+                    )}
+                    {dotazOdjezd === row.rezervace ? (
+                      <div className="ph-predano-dotaz">
+                        <p>
+                          Poslat e-mail na <span className="ph-tel">{email}</span>?
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDotazOdjezd(null);
+                            void posliEmail(row, 'odjezd');
+                          }}
+                        >
+                          Ano
+                        </button>
+                        <button type="button" onClick={() => setDotazOdjezd(null)}>
+                          Zrušit
+                        </button>
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
 
       {aktivni.map((row) => kartaHosta(row))}
 

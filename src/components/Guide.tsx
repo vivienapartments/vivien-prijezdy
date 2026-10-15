@@ -34,6 +34,7 @@ import { DOTAZ_PREDANI_MS } from '@/lib/pruvodce-majitel';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import { pruvodceRozbalen, urovenPruvodce, type UrovenPruvodce } from '@/lib/vstup-pruvodce';
 import * as VT from '@/lib/vstup-texty';
+import { OdjezdRamecek } from './OdjezdRamecek';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import './guide.scss';
 
@@ -153,6 +154,7 @@ function PinyNahore({
             );
           })}
         </dl>
+        <p className="pv-piny__navod">{tt(VT.pinyMrizka)}</p>
       </section>
     );
   }
@@ -203,6 +205,8 @@ export type GuideProps = {
     /** Apartmán už je předaný. Červený box s časem se neukáže. */
     ubytovan?: boolean;
   };
+  /** Den odjezdu a uložený čas. Rámeček se sám schová mimo okno. */
+  odjezd?: { den: string | null; cas: string | null; rucni?: boolean } | null;
   onVstup?: (next: VstupHodnoty) => void;
   showDevBar?: boolean;
   onDevChange?: (next: { apt: AptId; lang: GuideLang; vikend: boolean; prijezd: Prijezd | null }) => void;
@@ -218,6 +222,7 @@ export function Guide({
   vikend = false,
   initialPrijezd = null,
   vstup,
+  odjezd = null,
   onVstup,
   showDevBar = false,
   onDevChange,
@@ -513,6 +518,14 @@ export function Guide({
       ) : null}
 
       <main className="pv">
+        <OdjezdRamecek
+          lang={lang}
+          den={odjezd?.den ?? null}
+          cas={odjezd?.cas ?? null}
+          rucni={Boolean(odjezd?.rucni)}
+          token={vstup?.cteni ? null : (vstup?.token ?? null)}
+          cteni={Boolean(vstup?.cteni) || !vstup?.token}
+        />
         <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />
         {ubytovan ? null : (
           <VstupHosta

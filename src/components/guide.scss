@@ -1556,6 +1556,12 @@ a.pv-phone.pv-phone--zari {
   white-space: nowrap;
 }
 
+.pv-piny__navod {
+  margin-top: 0.65rem;
+  font-size: 0.82rem;
+  font-weight: 450;
+}
+
 .pv-piny__sipka {
   display: flex;
   justify-content: center;
@@ -1594,4 +1600,80 @@ a.pv-phone.pv-phone--zari {
 
 .pv-vstup__vitej {
   margin-top: 0.7rem;
+}
+
+.pv-odjezd {
+  margin: 0 0 1rem;
+  margin-left: var(--pv-axis-inset);
+  padding: 1.05rem 1.1rem 1.15rem;
+  background: #f4ead7;
+  border: 2px solid #a68445;
+  border-radius: 14px;
+  color: #1c1712;
+
+  h2 {
+    margin: 0 0 0.7rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+    font-weight: 650;
+    line-height: 1.25;
+    color: #1c1712;
+  }
+
+  p {
+    color: #3d3428;
+  }
+
+  select {
+    width: 100%;
+    font: inherit;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid #c4a574;
+    background: #fffdf8;
+  }
+
+  button {
+    margin-top: 0.7rem;
+    font: inherit;
+    font-weight: 700;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    border: 0;
+    background: #1c1712;
+    color: #f4ead7;
+  }
+}
+
+.pv-odjezd__poznamka {
+  margin: 0.45rem 0 0;
+  color: #5c5348;
+}
+
+.pv-odjezd--radek {
+  padding: 0.7rem 1rem;
+
+  p {
+    margin: 0;
+    font-weight: 700;
+  }
+
+  button {
+    margin: 0;
+    padding: 0;
+    background: none;
+    color: #6d5420;
+    text-decoration: underline;
+  }
+}
+
+.pv-odjezd__zmenit {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #6d5420;
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
 }

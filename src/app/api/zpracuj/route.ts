@@ -3,7 +3,8 @@ import { cistaChyba } from '@/lib/cista-chyba';
 import { runInboxProcessing, vypisPotvrzeni } from '@/lib/process-inbox';
 import { createProcessStore } from '@/lib/store';
 import { upozorniBranu } from '@/lib/brana-upozorneni';
-import { upozorniNezaplacene } from '@/lib/platba';
+import { upozorniOdjezdy } from '@/lib/odjezd-upozorneni';
+import { upozorniPrijezd } from '@/lib/prijezd-upozorneni';
 import { poBehZpracovani } from '@/lib/upozorneni';
 
 export const runtime = 'nodejs';
@@ -47,8 +48,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       chyba: cistaChyba(posledni?.reason || ''),
     });
     await poBehZpracovani(store, true);
-    await upozorniNezaplacene(store).catch(() => undefined);
     await upozorniBranu(store).catch(() => undefined);
+    await upozorniPrijezd(store).catch(() => undefined);
+    await upozorniOdjezdy(store).catch(() => undefined);
     return NextResponse.json({
       ok: true,
       scanned: summary.scanned,
@@ -75,8 +77,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       })
       .catch(() => undefined);
     await poBehZpracovani(store, false);
-    await upozorniNezaplacene(store).catch(() => undefined);
     await upozorniBranu(store).catch(() => undefined);
+    await upozorniPrijezd(store).catch(() => undefined);
+    await upozorniOdjezdy(store).catch(() => undefined);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

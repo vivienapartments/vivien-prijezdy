@@ -459,6 +459,20 @@ export const pinyCekaji: LText = {
   hu: 'Itt lesznek a PIN-kódok. Lent válasszák ki az időt és az érkezés módját, és erősítsék meg a szabályokat.',
 };
 
+export const pinyMrizka: LText = {
+  cs: 'Zadejte číslice a potvrďte mřížkou #.',
+  en: 'Enter the digits and confirm with the # key.',
+  de: 'Geben Sie die Ziffern ein und bestätigen Sie mit der Taste #.',
+  pl: 'Wpiszcie cyfry i potwierdźcie kratką #.',
+  uk: 'Введіть цифри і підтвердьте ґраткою #.',
+  'zh-Hant': '輸入數字，並以 # 確認。',
+  es: 'Escriban los números y confirmen con la tecla #.',
+  fr: 'Saisissez les chiffres et confirmez avec la touche #.',
+  it: 'Inserite le cifre e confermate con il tasto #.',
+  sv: 'Skriv in siffrorna och bekräfta med #.',
+  hu: 'Írják be a számjegyeket, és erősítsék meg a # jellel.',
+};
+
 export const pinyHotovo: LText = {
   cs: 'Hotovo. PINy se vám tady zobrazí při osobním předání.',
   en: 'Done. Your PIN codes will appear here at the personal handover.',
