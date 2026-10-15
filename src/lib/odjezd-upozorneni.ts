@@ -1,5 +1,5 @@
 import { denPraha, hodinaPraha, posunDen } from './brana';
-import { HODINA_DOTAZU_ODJEZDU, HODINA_NEDOPLATKU, HODINA_PRIPOMINKY_ODJEZDU } from './constants';
+import { HODINA_DOTAZU_ODJEZDU, HODINA_PRIPOMINKY_ODJEZDU } from './constants';
 import {
   chybiDotaz,
   hosteNaDen,
@@ -9,7 +9,6 @@ import {
   polozkyZRezervace,
   textPripominky,
   textPulHodiny,
-  textSouhrnu,
   textVecer,
 } from './odjezd';
 import type { ProcessStore } from './store';
@@ -45,7 +44,6 @@ export async function upozorniOdjezdy(
   const hodina = hodinaPraha(now);
   const beh = nactiOdjezdBeh(await store.getOdjezdBeh());
   const zitrejsi = hosteNaDen(list, zitra);
-  const dnesni = hosteNaDen(list, dnes);
 
   if (hodina >= HODINA_DOTAZU_ODJEZDU && beh.vecer !== dnes && zitrejsi.length) {
     const text = textVecer(zitrejsi.length);
@@ -62,18 +60,6 @@ export async function upozorniOdjezdy(
     const jak = await posli(store, text, '/prehled#odjezdy-zitra');
     if (jak !== 'nic') {
       beh.pripominka = dnes;
-      pocet += 1;
-    }
-  }
-
-  const dluhy = dnesni
-    .map((rec) => ({ rec, polozky: polozkyZRezervace(rec) }))
-    .filter((r) => r.polozky.length);
-  if (hodina >= HODINA_NEDOPLATKU && beh.rano !== dnes && dluhy.length) {
-    const text = textSouhrnu(dluhy);
-    const jak = await posli(store, text, '/prehled#odjezdy-dnes');
-    if (jak !== 'nic') {
-      beh.rano = dnes;
       pocet += 1;
     }
   }

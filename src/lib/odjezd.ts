@@ -459,12 +459,14 @@ export function maUpozornitPul(rec: RezervaceRecord, now = new Date()): boolean 
 }
 
 export function prazdnyOdjezdBeh(): OdjezdBeh {
-  return { vecer: null, pripominka: null, rano: null };
+  return { vecer: null, pripominka: null, rano: null, uklid: null };
 }
 
 export function nactiOdjezdBeh(raw: unknown): OdjezdBeh {
   const b = raw && typeof raw === 'object' ? (raw as OdjezdBeh) : prazdnyOdjezdBeh();
   const den = (v: unknown) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
-  return { vecer: den(b.vecer), pripominka: den(b.pripominka), rano: den(b.rano) };
+  const uklid =
+    typeof b.uklid === 'string' && /^\d{4}-\d{2}-\d{2}:(?:V[1-5](?:,V[1-5])*)?$/.test(b.uklid) ? b.uklid : null;
+  return { vecer: den(b.vecer), pripominka: den(b.pripominka), rano: den(b.rano), uklid };
 }
 

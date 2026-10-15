@@ -70,6 +70,8 @@ export type PrehledRadek = {
   odjezdDotaz: string | null;
   /** Text nedoplatku pro seznam odjezdů. Prázdné, když nic nedluží. */
   dluhText: string;
+  uklizenoKdy: string | null;
+  uklizenoKdo: 'pravoslav' | 'nikol' | null;
   vytvorenoText: string;
   odkaz: string | null;
   zprava: string;
@@ -735,6 +737,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     casOdjezduZadalHost: rec.casOdjezduZadalHost,
     odjezdDotaz: rec.odjezdDotaz,
     dluhText: textRozpisu(polozkyZRezervace(rec)),
+    uklizenoKdy: rec.uklizenoKdy,
+    uklizenoKdo: rec.uklizenoKdo,
     vytvorenoText: chybi(rec.vytvoreno ? czDenRok(rec.vytvoreno) : '', stary),
     odkaz: null,
     zpravy,

@@ -166,7 +166,7 @@ describe('odjezd', () => {
     expect(en).toContain('Standard check-out is by 10:00.');
   });
 
-  it('souhrn v 8:00 sečte všechny druhy a po Zaplaceno nic nepošle', async () => {
+  it('text souhrnu sečte druhy a samostatný push v 8:00 už neodejde', async () => {
     const now = casVPraze('2026-10-16', 8, 5);
     const dluh = host({
       rezervace: '2',
@@ -191,11 +191,7 @@ describe('odjezd', () => {
       texty.push(text);
       return 'push';
     });
-    expect(texty).toHaveLength(1);
-    expect(texty[0].startsWith('Dnes odjíždí a dluží:')).toBe(true);
-    expect(rovne(texty[0])).toContain('poplatek z pobytu');
-    expect(rovne(texty[0])).toContain('pozdní příjezd');
-    expect(rovne(texty[0])).toContain('opakovaná cesta');
+    expect(texty).toEqual([]);
 
     const zaplaceno = { ...dluh, rezervace: '3', zaplaceno: '2026-10-16T07:00:00.000Z' };
     const po = pamet([zaplaceno]);

@@ -24,6 +24,7 @@ import { jeHodina, seradOdjezdy, ukazatCasNaKarte, zobrazCas, zpravaOdjezdu } fr
 import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
+import { Dnesek } from './Dnesek';
 import { nactiBranu, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
@@ -1312,6 +1313,8 @@ export function PrehledClient({
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
       </header>
+
+      <Dnesek radky={rows} dnes={dnes} ukazka={ukazka} brana={brana} vPrehledu />
 
       <button type="button" className="ph-rozbal" onClick={() => setPridat((v) => !v)}>
         {pridat ? 'Skrýt formulář' : 'Přidat rezervaci'}

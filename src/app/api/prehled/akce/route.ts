@@ -9,6 +9,7 @@ import { novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA } from '@/lib/priplatek-p
 import { denPraha } from '@/lib/brana';
 import { posliEmailZpravy, predmetZpravy } from '@/lib/email-zprava';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
+import { oznacUklid, vratUklid } from '@/lib/dnesek';
 import { polozkyZRezervace } from '@/lib/odjezd';
 import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
@@ -74,6 +75,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'na-miste' &&
       akce !== 'zrusit-na-miste' &&
       akce !== 'priplatek' &&
+      akce !== 'uklid' &&
+      akce !== 'vratit-uklid' &&
       akce !== 'zaplaceno' &&
       akce !== 'poplatek' &&
       akce !== 'zrusit-zaplaceni' &&
@@ -126,6 +129,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     const dalsi = zapisMajitele(rec, 'priplatekRucni', { priplatekRucni: kc }, `Příplatek za čas ${kc} Kč`);
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, priplatekRucni: kc }, { headers: noStore });
+  }
+
+  if (akce === 'uklid') {
+    const kdo = body?.kdo === 'pravoslav' || body?.kdo === 'nikol' ? body.kdo : null;
+    if (!kdo) return chyba(400, 'Chybí, kdo uklízel.');
+    const dalsi = oznacUklid(rec, kdo);
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json(
+      { ok: true, uklizenoKdy: dalsi.uklizenoKdy, uklizenoKdo: dalsi.uklizenoKdo },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'vratit-uklid') {
+    const dalsi = vratUklid(rec);
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true }, { headers: noStore });
   }
 
   if (akce === 'zaplaceno') {

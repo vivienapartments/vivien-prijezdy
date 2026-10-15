@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { buildGuestEmail } from '@/lib/email-host';
 import { htmlEmailuHostovi, predmetZpravy } from '@/lib/email-zprava';
 import { textSouhrnu, zpravaOdjezdu } from '@/lib/odjezd';
+import { sestavDnesek, textRano, textZmenyPoradi, type HostDne } from '@/lib/dnesek';
 import { textCasNeznamy, textHodinuPred } from '@/lib/prijezd-upozorneni';
 import { zpravaNedojezdu } from '@/lib/whatsapp-zprava';
 import { NahledEmail } from './NahledEmail';
@@ -42,6 +43,60 @@ export default async function NahledEmailPage({ searchParams }: Props) {
           <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.35 }}>
             {textCasNeznamy({ apartman: 'V3', jmeno: 'Jan Novák', rezervace: '1' })}
           </p>
+        </article>
+      </main>
+    );
+  }
+  if (druh === 'dnes') {
+    const den = '2026-10-16';
+    const zaklad = (rezervace: string, apartman: HostDne['apartman']): HostDne => ({
+      rezervace,
+      apartman,
+      jmeno: 'Host',
+      prijezd: null,
+      odjezd: null,
+      casPrijezdu: null,
+      casOdjezdu: null,
+      stav: 'odeslano',
+      zpusob: null,
+      brana: null,
+      faze: '',
+      dluh: '',
+      uklizenoKdy: null,
+      uklizenoKdo: null,
+    });
+    const rano = textRano(
+      sestavDnesek(
+        [
+          { ...zaklad('4', 'V4'), odjezd: den, casOdjezdu: '09:30', dluh: '200 Kč (poplatek z pobytu)' },
+          { ...zaklad('2', 'V2'), odjezd: den },
+          { ...zaklad('1', 'V1'), odjezd: den },
+          { ...zaklad('5', 'V4'), prijezd: den, casPrijezdu: '13:00' },
+          { ...zaklad('6', 'V2'), prijezd: den, casPrijezdu: '16:00' },
+        ],
+        den,
+      ),
+    );
+    const zmena = textZmenyPoradi(
+      sestavDnesek(
+        [
+          { ...zaklad('4', 'V4'), odjezd: den, casOdjezdu: '09:30' },
+          { ...zaklad('2', 'V2'), odjezd: den },
+          { ...zaklad('5', 'V4'), prijezd: den, casPrijezdu: '14:00' },
+          { ...zaklad('6', 'V2'), prijezd: den, casPrijezdu: '12:30' },
+        ],
+        den,
+      ),
+    );
+    return (
+      <main style={{ minHeight: '100vh', margin: 0, padding: '1.2rem', background: '#1c1712', color: '#f5efe3', fontFamily: 'Georgia, serif' }}>
+        <article style={{ maxWidth: '22rem', padding: '0.9rem 1rem', borderRadius: '1.1rem', background: '#2a241c', border: '1px solid #c9a84c' }}>
+          <p style={{ margin: '0 0 0.25rem', fontSize: '0.78rem', letterSpacing: '0.04em' }}>VIVIEN</p>
+          <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.35 }}>{rano}</p>
+        </article>
+        <article style={{ maxWidth: '22rem', marginTop: '0.8rem', padding: '0.9rem 1rem', borderRadius: '1.1rem', background: '#2a241c', border: '1px solid #c9a84c' }}>
+          <p style={{ margin: '0 0 0.25rem', fontSize: '0.78rem', letterSpacing: '0.04em' }}>VIVIEN</p>
+          <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.35 }}>{zmena}</p>
         </article>
       </main>
     );

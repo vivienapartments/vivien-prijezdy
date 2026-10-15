@@ -174,6 +174,22 @@ export function hodinaPraha(now: Date): number {
   return Number(parts.find((p) => p.type === 'hour')?.value || '0');
 }
 
+export function minutaPraha(now: Date): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Prague',
+    minute: '2-digit',
+  }).formatToParts(now);
+  return Number(parts.find((p) => p.type === 'minute')?.value || '0');
+}
+
+/** První běh v danou minutu i později. Cron nechodí přesně na čas. */
+export function jePoCase(now: Date, hodina: number, minuta: number): boolean {
+  const h = hodinaPraha(now);
+  if (h > hodina) return true;
+  if (h < hodina) return false;
+  return minutaPraha(now) >= minuta;
+}
+
 export function posunDen(ymd: string, dny: number): string {
   const [y, m, d] = ymd.split('-').map(Number);
   const dt = new Date(Date.UTC(y, m - 1, d + dny));

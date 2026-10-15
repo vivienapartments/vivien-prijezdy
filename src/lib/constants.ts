@@ -11,8 +11,9 @@ export const HODINA_RAMCEKU_ODJEZDU = 12;
 export const HODINA_DOTAZU_ODJEZDU = 18;
 /** Připomínka, když dotaz ještě neodešel. */
 export const HODINA_PRIPOMINKY_ODJEZDU = 20;
-/** Ranní souhrn nedoplatků. */
-export const HODINA_NEDOPLATKU = 8;
+/** Ranní přehled dne. Nedoplatky jsou jeho součástí, samostatně už nechodí. */
+export const HODINA_RANIHO_DNE = 7;
+export const MINUTA_RANIHO_DNE = 30;
 /** Kolik minut před známým odjezdem přijde upozornění. */
 export const PREDSTIH_ODJEZDU_MIN = 30;
 

@@ -1166,3 +1166,85 @@
 .ph-brana-uprava input {
   min-width: 0;
 }
+
+.ph-dnesek {
+  margin: 0 0 1.4rem;
+  padding: 0.9rem 0.85rem 1rem;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  border-radius: 0.9rem;
+  background: rgba(201, 168, 76, 0.06);
+}
+
+.ph-dnesek h1,
+.ph-dnesek h2 {
+  margin: 1rem 0 0.35rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  font-size: 1.35rem;
+  color: var(--color-gold);
+}
+
+.ph-dnesek h1,
+.ph-dnesek > h2 {
+  margin-top: 0;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+}
+
+.ph-dnesek a {
+  color: inherit;
+}
+
+.ph-dnesek__den {
+  margin: 0 0 0.2rem;
+  color: var(--pv-muted, #b7aa9a);
+}
+
+.ph-dnesek ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-dnesek__radek {
+  margin: 0.45rem 0 0;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid rgba(245, 239, 227, 0.14);
+  border-radius: 0.7rem;
+  line-height: 1.4;
+}
+
+.ph-dnesek__radek.is-uklizeno {
+  background: rgba(90, 160, 110, 0.2);
+  border-color: #6aaf7a;
+}
+
+.ph-dnesek__prvni {
+  color: var(--color-gold);
+  font-weight: 700;
+}
+
+.ph-dnesek__neznamy {
+  color: #ff5a5a;
+  font-weight: 700;
+}
+
+.ph-dnesek__akce {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  margin: 0.45rem 0 0;
+}
+
+.ph-dnesek button {
+  min-height: 2.6rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--color-gold);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-gold);
+}
+
+.ph-dnesek__prazdno {
+  margin: 0;
+}
