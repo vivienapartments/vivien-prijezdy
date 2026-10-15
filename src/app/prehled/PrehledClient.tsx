@@ -778,7 +778,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
                 disabled={cekam !== null}
                 onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
               >
-                Předáno
+                Předat
               </button>
             )}
             {poplatek?.kdy ? (
@@ -876,11 +876,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               <div className="ph-predano-dotaz">
                 <p>
                   {dotazPredani.druh === 'predano'
-                    ? 'Opravdu předáno? Hostovi se v průvodci zobrazí vstupní kódy.'
+                    ? 'Opravdu předat apartmán? Hostovi se v průvodci zobrazí vstupní kódy.'
                     : 'Opravdu vrátit předání? Host v průvodci kódy neuvidí.'}
                 </p>
                 <button type="button" disabled={cekam !== null} onClick={() => ulozPredani(row, dotazPredani.druh === 'predano')}>
-                  {dotazPredani.druh === 'predano' ? 'Ano, předáno' : 'Ano, vrátit'}
+                  {dotazPredani.druh === 'predano' ? 'Ano, předat' : 'Ano, vrátit'}
                 </button>
                 <button type="button" onClick={() => setDotazPredani(null)}>
                   Zrušit
