@@ -94,6 +94,8 @@ function Beh({ beh }: { beh: BehZpracovani | null }) {
     </section>
   );
 }
+
+export default async function KontrolaPage() {
   if (!(await prehledPrihlasen())) {
     return <LoginForm dal="/prehled/kontrola" />;
   }
