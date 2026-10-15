@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { LoginForm } from '../LoginForm';
 import { KONTROLA_DNY, radkyKontroly, type RadekKontroly } from '@/lib/kontrola-prijezdu';
 import { prehledPrihlasen } from '@/lib/prehled-session';
@@ -94,7 +95,7 @@ export default async function KontrolaPage() {
       <h1>Kontrola příjezdů</h1>
       <p>Jen čtení. Nic se neukládá a nikomu se neposílá.</p>
       <p>
-        <a href="/prehled">Zpět na přehled</a>
+        <Link href="/prehled">Zpět na přehled</Link>
       </p>
       {chyba ? <p>Úložiště se nepovedlo přečíst.</p> : null}
       {KONTROLA_DNY.map((den) => {
