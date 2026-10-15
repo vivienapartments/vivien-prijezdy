@@ -851,7 +851,16 @@
   margin-top: 2.5rem;
 }
 
-.ph-kontrola h2 {
+.ph-kontrola-beh {
+  margin: 0.8rem 0 1.2rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 14px;
+}
+
+.ph-kontrola-beh p {
+  margin: 0.2rem 0;
+}
   margin: 1.6rem 0 0.6rem;
   font-family: var(--font-display), Georgia, serif;
   font-weight: 500;

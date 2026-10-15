@@ -11,6 +11,7 @@ import {
   cisloZeSubjectu,
   jePotvrzeniPredmet,
   jeSpatneJmenoPotvrzeni,
+  cisloZVyzvy,
   jeVyzvaCheckinu,
   odkazCheckinuZVyzvy,
   parsujPotvrzeni,
@@ -214,12 +215,14 @@ function duvodyMailu(ins: MailInspection): Duvod[] {
 async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<boolean> {
   const odMajitele = jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '');
   if (!odMajitele) return false;
-  const id = cisloZeSubjectu(mail.subject);
-  if (!id) return false;
   const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
   const potvrzeni = jePotvrzeniPredmet(mail.subject);
   const vyzva = jeVyzvaCheckinu(mail.subject) && !/VIVIEN-DATA/i.test(telo);
   if (!potvrzeni && !vyzva) return false;
+  const id = vyzva
+    ? cisloZVyzvy(mail.subject, mail.html, mail.text)
+    : cisloZeSubjectu(mail.subject);
+  if (!id) return false;
   const rec = await store.getRezervace(id);
   if (!rec) return true;
   if (!potvrzeni) return !rec.checkinUrl && Boolean(odkazCheckinuZVyzvy(mail.html, mail.text));
@@ -278,7 +281,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
 
   const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
   if (jeVyzvaCheckinu(mail.subject) && odMajitele && !/VIVIEN-DATA/i.test(telo)) {
-    const id = cisloZeSubjectu(mail.subject);
+    const id = cisloZVyzvy(mail.subject, mail.html, mail.text);
     const checkinUrl = odkazCheckinuZVyzvy(mail.html, mail.text);
     return zpracujOdMajitele(
       mail,

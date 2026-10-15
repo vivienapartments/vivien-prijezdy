@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { LoginForm } from '../LoginForm';
 import { KONTROLA_DNY, radkyKontroly, type RadekKontroly } from '@/lib/kontrola-prijezdu';
+import { casPraha } from '@/lib/prehled';
 import { prehledPrihlasen } from '@/lib/prehled-session';
-import { createProcessStore } from '@/lib/store';
+import { createProcessStore, type BehZpracovani } from '@/lib/store';
 import '../prehled.scss';
 
 export const dynamic = 'force-dynamic';
@@ -78,16 +79,33 @@ function Karta({ radek }: { radek: RadekKontroly }) {
   );
 }
 
-export default async function KontrolaPage() {
+function Beh({ beh }: { beh: BehZpracovani | null }) {
+  if (!beh) {
+    return <p>Poslední čtení schránky ještě není zapsané. Ukáže se po dalším běhu automatu.</p>;
+  }
+  const cas = casPraha(beh.cas) || beh.cas;
+  return (
+    <section className="ph-kontrola-beh">
+      <h2>Poslední čtení schránky</h2>
+      <p>Čas {cas}</p>
+      <p>Přihlášení do schránky {beh.schranka === 'ano' ? 'ano' : 'ne'}</p>
+      <p>Přečteno e-mailů {beh.mailu}</p>
+      <p>Poslední chyba {beh.chyba || 'žádná'}</p>
+    </section>
+  );
+}
   if (!(await prehledPrihlasen())) {
     return <LoginForm dal="/prehled/kontrola" />;
   }
 
   let radky: RadekKontroly[] = [];
+  let beh: BehZpracovani | null = null;
   let chyba = false;
   try {
-    const vse = await createProcessStore().listRezervace();
+    const store = createProcessStore();
+    const vse = await store.listRezervace();
     radky = radkyKontroly(vse.map((e) => e.record));
+    beh = await store.getBeh();
   } catch {
     chyba = true;
   }
@@ -99,6 +117,7 @@ export default async function KontrolaPage() {
       <p>
         <Link href="/prehled">Zpět na přehled</Link>
       </p>
+      <Beh beh={beh} />
       {chyba ? <p>Úložiště se nepovedlo přečíst.</p> : null}
       {KONTROLA_DNY.map((den) => {
         const denni = radky.filter((r) => r.den === den);

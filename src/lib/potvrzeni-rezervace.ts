@@ -50,9 +50,13 @@ export function jePotvrzeniPredmet(subject: string): boolean {
   return /potvrzen[ií]\s+rezervace/i.test(subject) || /reservation\s+confirmation/i.test(subject);
 }
 
-/** Výzva k vyplnění check-inu. Není to hotový check-in s kódy. */
+function srovnejPomlcky(s: string): string {
+  return s.replace(/[\u2010\u2011\u2012\u2013\u2014\u2212]/g, '-');
+}
+
+/** Výzva k vyplnění check-inu. Není to hotový check-in s kódy. Čeština i angličtina. */
 export function jeVyzvaCheckinu(subject: string): boolean {
-  return /online check-in/i.test(subject);
+  return /online check-in/i.test(srovnejPomlcky(subject));
 }
 
 function dekodujHref(raw: string): string {
@@ -81,7 +85,16 @@ export function odkazCheckinuZVyzvy(html: string, text = ''): string | null {
 }
 
 export function cisloZeSubjectu(subject: string): string | null {
-  const m = subject.match(/(?:rezervace|reservation)\s+(\d{4,})/i);
+  const s = srovnejPomlcky(subject);
+  const m = s.match(/(?:rezervace|reservation)\s*(?:no\.?|č\.|#|:)?\s*#?\s*(\d{4,})/i);
+  return m ? m[1] : null;
+}
+
+/** Číslo z předmětu, nebo z textu odkazu „#120260xxx / online checkin“. */
+export function cisloZVyzvy(subject: string, html = '', text = ''): string | null {
+  const zeSubjectu = cisloZeSubjectu(subject);
+  if (zeSubjectu) return zeSubjectu;
+  const m = `${html}\n${text}`.match(/#\s*(\d{4,})/);
   return m ? m[1] : null;
 }
 

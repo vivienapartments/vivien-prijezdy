@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { InboxMail } from './inbox-mail';
-import { FileProcessStore } from './store';
+import { FileProcessStore, prazdnaRezervace } from './store';
 
 const BH_KLIC = 'test-bh-key-24chars!!ok';
 const MAJITEL = 'info@vivienapartments.cz';
@@ -763,6 +763,61 @@ Original-Message-ID: <x>
     expect(sendGuestEmail).not.toHaveBeenCalled();
     expect((await store.getRezervace('120260556'))?.checkinUrl).toBe('https://checkin.example.com/formular/120260556');
     expect(await store.listRezervace()).toHaveLength(1);
+  });
+
+  it('anglická výzva od info@ uloží odkaz a nic nepošle', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const { jeVyzvaCheckinu } = await import('./potvrzeni-rezervace');
+    const predmet = 'Your online check\u2011in \u2013 required to receive access - Reservation #120260700';
+    expect(jeVyzvaCheckinu(predmet)).toBe(true);
+    const store = tmpStore();
+    const html =
+      '<a href="https://checkin.example.com/formular/120260700">Vivien apartments / #120260700 / online checkin</a>';
+    const item = await processOneMail(
+      mail({
+        messageId: 'en-vyzva@test',
+        from: `Vivien apartments <${MAJITEL}>`,
+        subject: predmet,
+        text: 'Please complete the online check-in',
+        html,
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect((await store.getRezervace('120260700'))?.checkinUrl).toBe('https://checkin.example.com/formular/120260700');
+  });
+
+  it('výzva po hotovém check-inu doplní prázdný odkaz a průvodce znovu neodejde', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const rec = prazdnaRezervace('120260701', '2026-10-15T08:00:00.000Z');
+    rec.stav = 'odeslano';
+    rec.jmeno = 'Luis Garcia';
+    rec.telefon = '+420777111222';
+    rec.apartman = 'V2';
+    rec.prijezd = '2026-10-15';
+    rec.odjezd = '2026-10-17';
+    await store.setRezervace(rec.rezervace, rec);
+    const html =
+      '<a href="https://checkin.example.com/formular/120260701">Vivien apartments / #120260701 / online checkin</a>';
+    const item = await processOneMail(
+      mail({
+        messageId: 'en-po-checkinu@test',
+        from: `Vivien apartments <${MAJITEL}>`,
+        subject: 'Your online check-in \u2013 required to receive access',
+        text: 'Please complete the online check-in',
+        html,
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const po = await store.getRezervace('120260701');
+    expect(po?.checkinUrl).toBe('https://checkin.example.com/formular/120260701');
+    expect(po?.stav).toBe('odeslano');
+    expect(po?.jmeno).toBe('Luis Garcia');
+    expect(po?.telefon).toBe('+420777111222');
   });
 
   it('přeposlaný check-in z info@ se Seznamem neprojde a průvodce neodejde', async () => {

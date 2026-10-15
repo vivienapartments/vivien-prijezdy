@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cistaChyba } from '@/lib/cista-chyba';
 import { runInboxProcessing, vypisPotvrzeni } from '@/lib/process-inbox';
 import { createProcessStore } from '@/lib/store';
 import { upozorniNezaplacene } from '@/lib/platba';
@@ -37,6 +38,13 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     const summary = await runInboxProcessing();
     const store = createProcessStore();
+    const posledni = [...summary.items].reverse().find((i) => i.reason);
+    await store.setBeh({
+      cas: new Date().toISOString(),
+      schranka: 'ano',
+      mailu: summary.scanned,
+      chyba: cistaChyba(posledni?.reason || ''),
+    });
     await poBehZpracovani(store, true);
     await upozorniNezaplacene(store).catch(() => undefined);
     return NextResponse.json({
@@ -56,6 +64,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'chyba';
     const store = createProcessStore();
+    await store
+      .setBeh({
+        cas: new Date().toISOString(),
+        schranka: 'ne',
+        mailu: 0,
+        chyba: cistaChyba(message) || 'čtení selhalo',
+      })
+      .catch(() => undefined);
     await poBehZpracovani(store, false);
     await upozorniNezaplacene(store).catch(() => undefined);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });

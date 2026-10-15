@@ -22,6 +22,14 @@ export type MessageRecord = {
   reason?: string;
 };
 
+/** Poslední běh /api/zpracuj. Bez hesel a bez obsahu mailů. */
+export type BehZpracovani = {
+  cas: string;
+  schranka: 'ano' | 'ne';
+  mailu: number;
+  chyba: string;
+};
+
 export type RezervaceStav =
   | 'odeslano'
   | 'odeslano_s_vyhradou'
@@ -165,6 +173,7 @@ type StoreData = {
   rezervace: Record<string, RezervaceRecord>;
   push?: PushZarizeni[];
   zpracujSelhani?: number;
+  zpracujBeh?: BehZpracovani | null;
 };
 
 const RUCNI_KLIC = new Set<RucniPole>([
@@ -202,6 +211,8 @@ export interface ProcessStore {
   savePush(list: PushZarizeni[]): Promise<void>;
   getSelhani(): Promise<number>;
   setSelhani(pocet: number): Promise<void>;
+  getBeh(): Promise<BehZpracovani | null>;
+  setBeh(beh: BehZpracovani): Promise<void>;
 }
 
 const MESSAGE_TTL_SEC = 90 * 24 * 60 * 60;
@@ -215,7 +226,16 @@ const STAVY: RezervaceStav[] = [
 ];
 
 function emptyData(): StoreData {
-  return { messages: {}, rezervace: {}, push: [], zpracujSelhani: 0 };
+  return { messages: {}, rezervace: {}, push: [], zpracujSelhani: 0, zpracujBeh: null };
+}
+
+export function nactiBeh(raw: unknown): BehZpracovani | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const b = raw as BehZpracovani;
+  if ((b.schranka !== 'ano' && b.schranka !== 'ne') || typeof b.cas !== 'string') return null;
+  const mailu = typeof b.mailu === 'number' && b.mailu >= 0 ? Math.floor(b.mailu) : 0;
+  const chyba = typeof b.chyba === 'string' ? b.chyba.slice(0, 180) : '';
+  return { cas: b.cas, schranka: b.schranka, mailu, chyba };
 }
 
 function nactiZnacky(raw: unknown): RucniZnacka[] {
@@ -434,6 +454,7 @@ export class FileProcessStore implements ProcessStore {
         rezervace: parsed.rezervace || {},
         push: nactiPush(parsed.push),
         zpracujSelhani: typeof parsed.zpracujSelhani === 'number' ? parsed.zpracujSelhani : 0,
+        zpracujBeh: nactiBeh(parsed.zpracujBeh),
       };
     } catch {
       return emptyData();
@@ -518,6 +539,16 @@ export class FileProcessStore implements ProcessStore {
 
   async getSelhani(): Promise<number> {
     return this.read().zpracujSelhani || 0;
+  }
+
+  async getBeh(): Promise<BehZpracovani | null> {
+    return this.read().zpracujBeh || null;
+  }
+
+  async setBeh(beh: BehZpracovani): Promise<void> {
+    const data = this.read();
+    data.zpracujBeh = nactiBeh(beh);
+    this.write(data);
   }
 
   async setSelhani(pocet: number): Promise<void> {
@@ -646,6 +677,22 @@ export class UpstashProcessStore implements ProcessStore {
 
   async setSelhani(pocet: number): Promise<void> {
     await this.cmd('SET', 'meta:selhani', String(pocet));
+  }
+
+  async getBeh(): Promise<BehZpracovani | null> {
+    const v = await this.cmd<string | null>('GET', 'meta:beh');
+    if (!v) return null;
+    try {
+      return nactiBeh(JSON.parse(v));
+    } catch {
+      return null;
+    }
+  }
+
+  async setBeh(beh: BehZpracovani): Promise<void> {
+    const cisty = nactiBeh(beh);
+    if (!cisty) return;
+    await this.cmd('SET', 'meta:beh', JSON.stringify(cisty));
   }
 }
 
