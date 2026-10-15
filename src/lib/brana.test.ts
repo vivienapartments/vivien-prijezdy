@@ -20,7 +20,7 @@ import {
   type BranaSlot,
   type HostProBranu,
 } from './brana';
-import { otevriSmsBrany } from './brana-akce';
+import { otevriSmsBrany, zajistiVychoziBranu } from './brana-akce';
 import { FileProcessStore, prazdnaRezervace } from './store';
 import fs from 'fs';
 import os from 'os';
@@ -174,5 +174,17 @@ describe('uložení čekání', () => {
     expect(vyberPozici(sloty, 'V1', TED)).toBe(150);
     expect(vyberPozici(sloty, 'V5', TED)).toBe(166);
     expect(jeVolna(sloty.find((s) => s.pozice === 168)!, new Date('2026-10-16T13:00:00.000Z'))).toBe(true);
+  });
+
+  it('prázdný stav brány se doplní a potvrzený se nepřepíše', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'brana-'));
+    const store = new FileProcessStore(path.join(dir, 'store.json'));
+    const prvni = await zajistiVychoziBranu(store);
+    expect(textKonce(prvni.sloty.find((s) => s.pozice === 153)?.konec || null)).toBe('26. 10. 16:00');
+    expect(prvni.potvrzeno).toBeNull();
+    await store.setBrana({ sloty: prvni.sloty, potvrzeno: TED.toISOString() });
+    const druhe = await zajistiVychoziBranu(store);
+    expect(druhe.potvrzeno).toBe(TED.toISOString());
+    expect(textKonce(druhe.sloty.find((s) => s.pozice === 168)?.konec || null)).toBe('16. 10. 14:00');
   });
 });

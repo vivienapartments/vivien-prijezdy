@@ -49,9 +49,13 @@ export default async function PrehledPage({ searchParams }: Props) {
   if (!ukazka && process.env.VERCEL_ENV === 'production') {
     try {
       await migracePredaniJednou(store, dnesVPraze(now), now.toISOString());
-      branaDoc = await zajistiVychoziBranu(store);
     } catch {
       // Přehled se otevře i když se starší hosté nepodařilo označit.
+    }
+    try {
+      branaDoc = await zajistiVychoziBranu(store);
+    } catch {
+      // Stav brány se doplní při dalším otevření.
     }
   } else if (!ukazka) {
     branaDoc = nactiDokument(await store.getBrana());

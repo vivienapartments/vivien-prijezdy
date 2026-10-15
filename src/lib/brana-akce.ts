@@ -44,14 +44,19 @@ function nahrad(sloty: BranaSlot[], slot: BranaSlot): BranaSlot[] {
   return sloty.map((s) => (s.pozice === slot.pozice ? slot : s));
 }
 
+function branaJePrazdna(doc: BranaDokument): boolean {
+  return doc.sloty.every((s) => !s.telefon && !s.konec && s.stav === 'prazdna');
+}
+
 export async function zajistiVychoziBranu(store: ProcessStore): Promise<BranaDokument> {
   const raw = await store.getBrana();
-  if (raw == null) {
-    const doc: BranaDokument = { sloty: vychoziBrana(), potvrzeno: null };
-    await store.setBrana(doc);
-    return doc;
+  const doc = nactiDokument(raw);
+  if ((raw == null || branaJePrazdna(doc)) && !doc.potvrzeno) {
+    const novy: BranaDokument = { sloty: vychoziBrana(), potvrzeno: null };
+    await store.setBrana(novy);
+    return novy;
   }
-  return nactiDokument(raw);
+  return doc;
 }
 
 async function ulozSloty(store: ProcessStore, sloty: BranaSlot[]): Promise<void> {
