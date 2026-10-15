@@ -256,6 +256,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   function telefonPole(row: PrehledRadek) {
     return (
       <PoleSUlozenim
+        key={`${row.rezervace}-telefon`}
         label="Telefon"
         hodnota={telefonRadku(row)}
         vstup={{ inputMode: 'tel', autoComplete: 'off' }}
@@ -534,7 +535,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     const rozbaleno = jeRozbaleno(row);
     const kdo = row.jmeno && row.jmeno !== STARY_ZAZNAM ? row.jmeno : row.rezervace;
     const termin = terminKratky(row.prijezd, row.odjezd);
-    const kde = [row.apartman, termin].filter(Boolean).join(' · ');
+    const apartman = row.apartmanNazev || row.apartman;
     const pruvodce = textPruvodce(row);
     const chyba = vetaChyby(row);
     const wa = row.telefonWa || row.jinyTelefonWa;
@@ -557,10 +558,12 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
       vyjezdy: jizdy,
     });
     return (
-      <article className={rozbaleno ? 'ph-row' : 'ph-row is-shut'} id={row.rezervace}>
+      <article key={row.rezervace} className={rozbaleno ? 'ph-row' : 'ph-row is-shut'} id={row.rezervace}>
         <div className="ph-karta-hlavicka">
           <div className="ph-jmeno">{kdo}</div>
-          {kde ? <div className="ph-kde">{kde}</div> : null}
+          {apartman ? <div className="ph-apt">{apartman}</div> : null}
+          {termin ? <div className="ph-kde">{termin}</div> : null}
+          {row.poplatekText ? <div className="ph-stitek">{row.poplatekText}</div> : null}
         </div>
         <div className="ph-znacky">
           {predanoKdy ? <span className="ph-znacka ph-znacka--ano">{textPredani(predanoKdy)}</span> : null}
@@ -585,6 +588,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
         {telefonPole(row)}
         {row.jinyTelefonKtery ? (
             <PoleSUlozenim
+              key={`${row.rezervace}-druhe`}
               label="Druhé číslo"
               hodnota={row.jinyTelefonText || ''}
               vstup={{ inputMode: 'tel', autoComplete: 'off' }}
@@ -592,10 +596,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
             />
           ) : null}
           <PoleSUlozenim
+            key={`${row.rezervace}-cas`}
             label="Čas příjezdu"
             hodnota={casRadku(row)}
             poznamka={row.casZadalHost ? <span className="ph-od-hosta"> zadal host</span> : null}
-            vstup={{ inputMode: 'numeric' }}
+            vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
             onUloz={(text) => ulozCas(row, text)}
           />
           {row.navrhy.map((n) => (
@@ -709,9 +714,10 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               </button>
             )}
             <PoleSUlozenim
+              key={`${row.rezervace}-priplatek`}
               label="Příplatek za čas ručně"
               hodnota={rucniCastka == null ? '' : String(rucniCastka)}
-              vstup={{ inputMode: 'numeric', placeholder: 'nechat výpočet' }}
+              vstup={{ inputMode: 'numeric', autoComplete: 'off', placeholder: 'nechat výpočet' }}
               onUloz={(text) => ulozPriplatek(row, text)}
             />
           </div>
@@ -969,9 +975,10 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
             ) : null}
             {row.stav === 'bez_checkinu' ? (
               <PoleSUlozenim
+                key={`${row.rezervace}-checkin`}
                 label="Odkaz na check-in"
                 hodnota={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
-                vstup={{ placeholder: 'https://' }}
+                vstup={{ autoComplete: 'off', placeholder: 'https://' }}
                 onUloz={(text) => ulozOdkaz(row, text)}
               />
             ) : null}
@@ -1034,7 +1041,6 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
         {chybiWifi.length ? (
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
-        <Upozorneni />
       </header>
 
       <button type="button" className="ph-rozbal" onClick={() => setPridat((v) => !v)}>
@@ -1166,6 +1172,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
         </section>
       ) : null}
 
+      <Upozorneni />
     </main>
   );
 }
@@ -1187,8 +1194,9 @@ function PoleSUlozenim({
   const [stav, setStav] = useState<'nic' | 'ok' | 'chyba'>('nic');
   const zeServeru = useRef(hodnota);
   useEffect(() => {
-    setText((rozepsano) => (rozepsano === zeServeru.current ? hodnota : rozepsano));
+    const predchozi = zeServeru.current;
     zeServeru.current = hodnota;
+    setText((rozepsano) => (rozepsano === predchozi ? hodnota : rozepsano));
   }, [hodnota]);
 
   return (
