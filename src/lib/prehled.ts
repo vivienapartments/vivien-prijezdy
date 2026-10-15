@@ -181,6 +181,23 @@ export function poplatekKratky(stav: PoplatekStav, noci: number | null, osob: nu
   return '';
 }
 
+export type CekajiciUkon = 'predani' | 'odpoved' | 'registrace' | 'namiste';
+
+/** Jediný úkon v hlavním náhledu. Po předání žádný. */
+export function cekajiciUkon(v: {
+  predano: boolean;
+  naMiste: boolean;
+  denPrijezdu: boolean;
+  parkovani: string;
+}): CekajiciUkon | null {
+  if (v.predano) return null;
+  if (v.naMiste) return 'predani';
+  if (v.parkovani === 'potvrdit') return 'odpoved';
+  if (v.parkovani === 'registrovat' || v.parkovani === 'upravit') return 'registrace';
+  if (v.denPrijezdu) return 'namiste';
+  return null;
+}
+
 export type PoplatekNahled = {
   text: string;
   /** Rozpis pod částkou. Prázdné, když se poplatek nevybírá. */

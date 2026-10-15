@@ -185,7 +185,34 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     otevrenoNaposled: '2026-10-08T10:00:00.000Z',
   };
 
-  return [ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel];
+  const luisa: RezervaceRecord = {
+    ...prazdnaRezervace('9010', '2026-10-15T08:00:00.000Z'),
+    apartman: 'V3',
+    prijezd: '2026-10-15',
+    odjezd: '2026-10-17',
+    noci: 2,
+    osob: 2,
+    jazyk: 'es',
+    jmeno: 'Luisa García Valero',
+    krestni: 'Luisa',
+    narodnost: 'ESP',
+    emailHosta: 'luisa.ukazka@example.com',
+    accessPin: '0000',
+    vytvoreno: '2026-09-20',
+    poplatek: 'ne',
+    stav: 'odeslano',
+    telefon: '+420700111222',
+    telefonWa: '420700111222',
+    zdroj: 'Booking',
+    casPrijezdu: '16:00',
+    zpusobPrijezdu: 'auto',
+    telefonBrana: '+420700111222',
+    spz: '1C20001',
+    otevrenoPocet: 2,
+    predano: '2026-10-15T15:03:00.000Z',
+  };
+
+  return [luisa, ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel];
 }
 
 export function ukazkoveRadky(now = new Date()): PrehledRadek[] {

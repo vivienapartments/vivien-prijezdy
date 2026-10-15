@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { apartmanPozice, denKonce, jeVolna, jmenoNaPozici, prazdnaBrana, stavParkovani, textKonce, type BranaSlot, type NahledBrany } from '@/lib/brana';
 import type { PrehledRadek } from '@/lib/prehled';
 import { textTelefonu } from '@/lib/telefon';
@@ -14,6 +14,14 @@ type RadkaProps = {
   cekam: boolean;
   onSloty: (sloty: BranaSlot[]) => void;
   onHlaska: (text: string) => void;
+  deti: (dil: ParkovaniDil) => ReactNode;
+};
+
+export type ParkovaniDil = {
+  radek: ReactNode;
+  registrace: ReactNode | null;
+  odpoved: ReactNode | null;
+  detail: ReactNode;
 };
 
 function hostZ(row: PrehledRadek) {
@@ -29,7 +37,7 @@ function hostZ(row: PrehledRadek) {
   };
 }
 
-export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, cekam, onSloty, onHlaska }: RadkaProps) {
+export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, cekam, onSloty, onHlaska, deti }: RadkaProps) {
   const [sms, setSms] = useState('');
   const [druhe, setDruhe] = useState('');
   const [dotaz, setDotaz] = useState(false);
@@ -106,59 +114,91 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
     }
   }
 
-  const smsAkce = stav.akce === 'registrovat' || stav.akce === 'upravit';
+  const smsAkce = stav.akce === 'registrovat' || stav.akce === 'upravit' || stav.akce === 'brzy';
   const muzeZneplatnit = stav.ton === 'zelena' && stav.pozice != null && stav.akce === 'nic';
+  const nahledZapis = nahled && nahled.druh !== 'zneplatnit' ? nahled : null;
+  const nahledPryc = nahled && nahled.druh === 'zneplatnit' ? nahled : null;
 
-  return (
-    <div className={`ph-parkovani ph-parkovani--${stav.ton}`}>
-      <div>{stav.text}</div>
-      {stav.tlacitko ? (
-        <button
-          type="button"
-          disabled={cekam || stav.neaktivni || (smsAkce && !ukazka && (!potvrzena || !pripravena))}
-          onClick={() => {
-            if (stav.akce === 'potvrdit') void zavolej('potvrdit');
-            else void ukazNahled('zapis');
-          }}
-        >
-          {stav.tlacitko}
+  function nahledBox(ukaz: NahledBrany) {
+    return (
+      <div className="ph-parkovani__dotaz">
+        {ukaz.druh === 'zneplatnit' ? (
+          <p>
+            Pozice {ukaz.pozice}: v bráně nastavíme konec na teď, {ukaz.konec}.
+          </p>
+        ) : (
+          <p>
+            Pozice {ukaz.pozice}: zapíšeme <span className="ph-tel">{ukaz.telefon}</span> do {ukaz.konec}.
+            {ukaz.staryTelefon ? (
+              <>
+                {' '}
+                Teď tam je <span className="ph-tel">{ukaz.staryTelefon}</span> do {ukaz.staryKonec}.
+              </>
+            ) : null}
+          </p>
+        )}
+        <button type="button" disabled={cekam} onClick={() => void otevriSms(nahledDruhe ? { druhe: nahledDruhe } : undefined)}>
+          Otevřít SMS
         </button>
-      ) : null}
-      {nahled ? (
-        <div className="ph-parkovani__dotaz">
-          {nahled.druh === 'zneplatnit' ? (
-            <p>
-              Pozice {nahled.pozice}: v bráně nastavíme konec na teď, {nahled.konec}.
-            </p>
-          ) : (
-            <p>
-              Pozice {nahled.pozice}: zapíšeme <span className="ph-tel">{nahled.telefon}</span> do {nahled.konec}.
-              {nahled.staryTelefon ? (
-                <>
-                  {' '}
-                  Teď tam je <span className="ph-tel">{nahled.staryTelefon}</span> do {nahled.staryKonec}.
-                </>
-              ) : null}
-            </p>
-          )}
-          <button type="button" disabled={cekam} onClick={() => void otevriSms(nahledDruhe ? { druhe: nahledDruhe } : undefined)}>
-            Otevřít SMS
-          </button>
-          <button type="button" onClick={() => setNahled(null)}>
-            Nechat
-          </button>
-        </div>
-      ) : null}
-      {sms ? (
-        <button type="button" onClick={() => void kopirovat()}>
-          Zkopírovat SMS
+        <button type="button" onClick={() => setNahled(null)}>
+          Nechat
         </button>
-      ) : null}
+      </div>
+    );
+  }
+
+  const registrace = stav.tlacitko && stav.akce !== 'potvrdit' ? (
+    <div className="ph-parkovani-akce">
+      <button
+        type="button"
+        disabled={cekam || stav.neaktivni || (smsAkce && !ukazka && (!potvrzena || !pripravena))}
+        onClick={() => void ukazNahled('zapis')}
+      >
+        {stav.tlacitko}
+      </button>
+      {nahledZapis ? nahledBox(nahledZapis) : null}
       {smsAkce && !potvrzena && !ukazka ? (
         <div className="ph-parkovani__poznamka">Nejdřív dole potvrďte, že stav brány souhlasí.</div>
       ) : null}
       {smsAkce && potvrzena && !pripravena && !ukazka ? (
         <div className="ph-parkovani__poznamka">Chybí heslo nebo číslo brány.</div>
+      ) : null}
+    </div>
+  ) : null;
+
+  const odpovedPole = stav.akce === 'potvrdit' ? (
+    <label className="ph-parkovani__druhe">
+      Vložit odpověď brány
+      <span>
+        <input value={odpoved} onChange={(e) => setOdpoved(e.target.value)} autoComplete="off" />
+        <button
+          type="button"
+          disabled={cekam || !odpoved.trim()}
+          onClick={() => {
+            void zavolej('odpoved', { odpoved }).then((json) => {
+              if (json) setOdpoved('');
+            });
+          }}
+        >
+          Porovnat
+        </button>
+      </span>
+      {chybaOdpovedi ? <span className="ph-parkovani__chyba">{chybaOdpovedi}</span> : null}
+    </label>
+  ) : null;
+
+  const detail = (
+    <div className="ph-parkovani-detail">
+      {stav.druhe ? (
+        <label className="ph-parkovani__druhe">
+          Druhé číslo
+          <span>
+            <input value={druhe} onChange={(e) => setDruhe(e.target.value)} inputMode="tel" autoComplete="off" />
+            <button type="button" disabled={cekam || !druhe.trim()} onClick={() => void ukazNahled('zapis', { druhe })}>
+              Přidat na další pozici
+            </button>
+          </span>
+        </label>
       ) : null}
       {stav.zrusit ? (
         dotaz ? (
@@ -177,44 +217,35 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
           </button>
         )
       ) : null}
-      {stav.akce === 'potvrdit' ? (
-        <label className="ph-parkovani__druhe">
-          Vložit odpověď brány
-          <span>
-            <input value={odpoved} onChange={(e) => setOdpoved(e.target.value)} autoComplete="off" />
-            <button
-              type="button"
-              disabled={cekam || !odpoved.trim()}
-              onClick={() => {
-                void zavolej('odpoved', { odpoved }).then((json) => {
-                  if (json) setOdpoved('');
-                });
-              }}
-            >
-              Porovnat
-            </button>
-          </span>
-          {chybaOdpovedi ? <span className="ph-parkovani__chyba">{chybaOdpovedi}</span> : null}
-        </label>
-      ) : null}
       {muzeZneplatnit ? (
         <button type="button" disabled={cekam} onClick={() => void ukazNahled('zneplatnit')}>
           Zneplatnit v bráně
         </button>
       ) : null}
-      {stav.druhe ? (
-        <label className="ph-parkovani__druhe">
-          Druhé číslo
-          <span>
-            <input value={druhe} onChange={(e) => setDruhe(e.target.value)} inputMode="tel" autoComplete="off" />
-            <button type="button" disabled={cekam || !druhe.trim()} onClick={() => void ukazNahled('zapis', { druhe })}>
-              Přidat na další pozici
-            </button>
-          </span>
-        </label>
+      {nahledPryc ? nahledBox(nahledPryc) : null}
+      {sms ? (
+        <button type="button" onClick={() => void kopirovat()}>
+          Zkopírovat SMS
+        </button>
+      ) : null}
+      {stav.akce === 'potvrdit' ? (
+        <button type="button" disabled={cekam} onClick={() => void zavolej('potvrdit')}>
+          Brána potvrdila
+        </button>
       ) : null}
     </div>
   );
+
+  return deti({
+    radek: (
+      <div className={`ph-parkovani ph-parkovani--${stav.ton}`}>
+        <div>{stav.text}</div>
+      </div>
+    ),
+    registrace,
+    odpoved: odpovedPole,
+    detail,
+  });
 }
 
 type TabulkaProps = {

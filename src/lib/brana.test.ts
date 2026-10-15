@@ -196,8 +196,8 @@ describe('uložení čekání', () => {
     const zavreno = await otevriSmsBrany(store, { rezervace: '55', ios: false, now: TED });
     expect(zavreno.ok).toBe(false);
     const sloty = vychoziBrana();
-    expect(textKonce(sloty.find((s) => s.pozice === 153)?.konec || null)).toBe('26. 10. 16:00');
-    expect(textKonce(sloty.find((s) => s.pozice === 168)?.konec || null)).toBe('16. 10. 14:00');
+    expect(textKonce(sloty.find((s) => s.pozice === 153)?.konec || null)).toBe('26.\u00A010.\u00A016:00');
+    expect(textKonce(sloty.find((s) => s.pozice === 168)?.konec || null)).toBe('16.\u00A010.\u00A014:00');
     expect(jeVolna(sloty.find((s) => s.pozice === 153)!, TED)).toBe(false);
     expect(jeVolna(sloty.find((s) => s.pozice === 168)!, TED)).toBe(false);
     expect(jeVolna(sloty.find((s) => s.pozice === 150)!, TED)).toBe(true);
@@ -210,12 +210,12 @@ describe('uložení čekání', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'brana-'));
     const store = new FileProcessStore(path.join(dir, 'store.json'));
     const prvni = await zajistiVychoziBranu(store);
-    expect(textKonce(prvni.sloty.find((s) => s.pozice === 153)?.konec || null)).toBe('26. 10. 16:00');
+    expect(textKonce(prvni.sloty.find((s) => s.pozice === 153)?.konec || null)).toBe('26.\u00A010.\u00A016:00');
     expect(prvni.potvrzeno).toBeNull();
     await store.setBrana({ sloty: prvni.sloty, potvrzeno: TED.toISOString() });
     const druhe = await zajistiVychoziBranu(store);
     expect(druhe.potvrzeno).toBe(TED.toISOString());
-    expect(textKonce(druhe.sloty.find((s) => s.pozice === 168)?.konec || null)).toBe('16. 10. 14:00');
+    expect(textKonce(druhe.sloty.find((s) => s.pozice === 168)?.konec || null)).toBe('16.\u00A010.\u00A014:00');
   });
 
   it('náhled řekne pozici a staré číslo, odpověď brány srovná a zneplatnění čeká na potvrzení', async () => {
@@ -239,7 +239,7 @@ describe('uložení čekání', () => {
     const nahled = await nahledBrany(store, { rezervace: '55', now: TED });
     expect(nahled.ok).toBe(true);
     if (!nahled.ok) return;
-    expect(nahled.veta).toBe('Pozice 158: zapíšeme +420 777 111 222 do 20. 10. 16:00. Teď tam je +420 777 000 111 do 14. 10. 16:00.');
+    expect(nahled.veta).toBe('Pozice 158: zapíšeme +420 777 111 222 do 20.\u00A010.\u00A016:00. Teď tam je +420 777 000 111 do 14.\u00A010.\u00A016:00.');
     expect(nahled.veta).not.toContain('1234');
     const sms = await otevriSmsBrany(store, { rezervace: '55', ios: false, now: TED });
     expect(sms.ok).toBe(true);

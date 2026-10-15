@@ -3,6 +3,7 @@ import {
   dotazPredOdeslanimZnovu,
   nabidnoutOdeslani,
   poplatekKratky,
+  cekajiciUkon,
   poplatekNahled,
   radekZRezervace,
   seradRadky,
@@ -121,6 +122,12 @@ describe('tlačítka v přehledu', () => {
     expect(terminKratky('2026-10-12', null)).toBe('12.10.');
     expect(poplatekKratky('ano', 2, 2)).toBe('Poplatek 200 Kč');
     expect(poplatekKratky('ne', 2, 2)).toBe('Poplatek ne');
+    expect(cekajiciUkon({ predano: true, naMiste: true, denPrijezdu: true, parkovani: 'registrovat' })).toBeNull();
+    expect(cekajiciUkon({ predano: false, naMiste: true, denPrijezdu: true, parkovani: 'potvrdit' })).toBe('predani');
+    expect(cekajiciUkon({ predano: false, naMiste: false, denPrijezdu: true, parkovani: 'potvrdit' })).toBe('odpoved');
+    expect(cekajiciUkon({ predano: false, naMiste: false, denPrijezdu: true, parkovani: 'registrovat' })).toBe('registrace');
+    expect(cekajiciUkon({ predano: false, naMiste: false, denPrijezdu: true, parkovani: 'nic' })).toBe('namiste');
+    expect(cekajiciUkon({ predano: false, naMiste: false, denPrijezdu: false, parkovani: 'nic' })).toBeNull();
     const bez = poplatekNahled({ poplatek: 'ne', noci: 2, osob: 2, cas: '21:10', vyjezdy: [{ castka: 300 }], zaplaceno: false });
     expect(bez.text).toBe('Poplatek ne');
     expect(bez.rozpis).toBeNull();

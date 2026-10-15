@@ -104,6 +104,14 @@ export function ukazkovaBrana(now = new Date()): BranaSlot[] {
     rezervace: '9001',
     ktery: 'hlavni',
   };
+  sloty[8] = {
+    ...sloty[8],
+    telefon: '+420700111222',
+    konec: konecZOdjezdu('2026-10-17'),
+    stav: 'plati',
+    rezervace: '9010',
+    ktery: 'hlavni',
+  };
   return sloty;
 }
 
@@ -233,7 +241,7 @@ export function textKonce(iso: string | null): string {
   if (!prikaz || prikaz.length !== 10) return '';
   const den = Number(prikaz.slice(4, 6));
   const mesic = Number(prikaz.slice(2, 4));
-  return `${den}. ${mesic}. ${prikaz.slice(6, 8)}:${prikaz.slice(8, 10)}`;
+  return `${den}.\u00A0${mesic}.\u00A0${prikaz.slice(6, 8)}:${prikaz.slice(8, 10)}`;
 }
 
 /** Číslo do příkazu brány. Bez jisté předvolby nic. */
@@ -441,7 +449,7 @@ export function stavParkovani(host: HostProBranu, sloty: BranaSlot[], now: Date)
       };
     }
     return {
-      text: `Parkování: má místo · pozice ${slot.pozice} · do ${textKonce(slot.konec)}`,
+      text: `Parkování: má místo · pozice ${slot.pozice} · do\u00A0${textKonce(slot.konec)}`,
       ton: 'zelena',
       akce: 'nic',
       pozice: slot.pozice,
