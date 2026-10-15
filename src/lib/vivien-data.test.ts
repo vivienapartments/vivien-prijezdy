@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { t } from './i18n';
+import { casPrijezduNadpis, kodyCekaji } from './texts';
 import { inspectVivienMail, jmenoProPrehled, langFromNarodnost, parseVivienData } from './vivien-data';
 
 const SAMPLE = `
@@ -139,5 +141,13 @@ KONEC`,
     expect(langFromNarodnost('Sweden')).toBe('sv');
     expect(langFromNarodnost('HUN')).toBe('hu');
     expect(langFromNarodnost('Hungary')).toBe('hu');
+    expect(langFromNarodnost('ESP')).toBe('es');
+    expect(langFromNarodnost('Spain')).toBe('es');
+    expect(langFromNarodnost('España')).toBe('es');
+  });
+
+  it('španělský průvodce není anglický text', () => {
+    expect(t(casPrijezduNadpis, 'es')).toBe('Díganos a qué hora llegan');
+    expect(t(kodyCekaji, 'es')).not.toBe(t(kodyCekaji, 'en'));
   });
 });

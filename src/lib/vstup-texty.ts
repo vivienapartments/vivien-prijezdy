@@ -14,6 +14,7 @@ export const vstupNadpis: LText = {
   uk: 'Без часу приїзду ви не заселитеся',
   'zh-Hant': '沒有抵達時間就無法入住',
   sv: 'Utan ankomsttid kan ni inte checka in',
+  es: 'Sin hora de llegada no se alojan',
   hu: 'Érkezési idő nélkül nem tudnak bejelentkezni',
 };
 
@@ -25,6 +26,7 @@ export const vstupUvod: LText = {
   uk: 'Кожне з цих правил має свою історію. Домовмося про них одразу на початку, щоб потім не хмуритися одне на одного.',
   'zh-Hant': '每一條規則背後都有自己的故事。我們一開始就說好，免得後來彼此不高興。',
   sv: 'Var och en av de här reglerna har sin egen historia. Låt oss komma överens om dem redan från början, så att vi inte behöver se sura ut mot varandra sedan.',
+  es: 'Cada una de estas reglas tiene su historia. Acordémoslas ya al principio, para que luego no tengamos que mirarnos mal.',
   hu: 'Mindegyik szabálynak megvan a maga története. Egyeztessünk róluk mindjárt az elején, hogy később ne kelljen egymásra rosszallóan néznünk.',
 };
 
@@ -36,6 +38,7 @@ export const vstupSouhlas: LText = {
   uk: 'Я розумію правила приїзду і погоджуюся з ними.',
   'zh-Hant': '我了解抵達規則並同意。',
   sv: 'Jag förstår ankomstreglerna och samtycker till dem.',
+  es: 'Entiendo las reglas de llegada y estoy de acuerdo.',
   hu: 'Értem az érkezési szabályokat, és egyetértek velük.',
 };
 
@@ -48,6 +51,7 @@ export const vstupPravidla: LText[] = [
     uk: 'Час приїзду оберіть тут. Досить приблизно, зміну одразу виправте.',
     'zh-Hant': '請在這裡選抵達時間。大約即可，有變就立刻改。',
     sv: 'Välj ankomsttiden här. Ett ungefär räcker, och ändras den rättar ni den genast.',
+    es: 'Elijan aquí la hora de llegada. Basta una hora aproximada, y si cambia, corríjanla enseguida.',
     hu: 'Az érkezés idejét itt válasszák ki. Elég a hozzávetőleges idő, a változást azonnal javítsák.',
   },
   {
@@ -58,6 +62,7 @@ export const vstupPravidla: LText[] = [
     uk: 'Коли напишете нам за чверть години наперед, що будете на місці, чекаємо ми на вас. На домовлений час потім чекаємо 10 хвилин. Якщо ви не приїдете і нам доведеться виїхати знову, за це беремо {{VYJEZD}} Kč.',
     'zh-Hant': '當您在一刻鐘前寫說會到，等的人是我們。約定時間我們接著等 10 分鐘。如果您沒到，我們得再出來一趟，這次收 {{VYJEZD}} Kč。',
     sv: 'När ni skriver till oss en kvart i förväg att ni kommer att vara på plats, är det vi som väntar på er. Den avtalade tiden väntar vi sedan 10 minuter. Om ni inte kommer och vi måste åka ut igen tar vi {{VYJEZD}} Kč för det.',
+    es: 'Cuando nos escriben con un cuarto de hora de antelación que ya van a estar, esperamos nosotros. Después esperamos 10 minutos desde la hora acordada. Si no llegan y tenemos que salir otra vez, cobramos {{VYJEZD}} Kč por ese viaje.',
     hu: 'Amikor negyedórával előre megírják, hogy ott lesznek, mi várunk önökre. A megbeszélt időpontra utána 10 percet várunk. Ha nem érkeznek meg, és újra ki kell jönnünk, ezért {{VYJEZD}} Kč-t számítunk fel.',
   },
   {
@@ -68,6 +73,7 @@ export const vstupPravidla: LText[] = [
     uk: 'Коли не дасте нам час наперед, чекаєте ви на нас, аж до години. Щойно напишете, що ви на місці, апартаменти передамо протягом години.',
     'zh-Hant': '當您沒有事先給時間，等的人是您，最多一小時。您寫說已經到了，我們會在一小時內把公寓交給您。',
     sv: 'När ni inte ger oss en tid i förväg, är det ni som väntar på oss, upp till en timme. När ni skriver att ni är på plats lämnar vi över lägenheten inom en timme.',
+    es: 'Cuando no nos dan la hora por adelantado, esperan ustedes, hasta una hora. En cuanto escriban que ya están, entregamos el apartamento en el plazo de una hora.',
     hu: 'Amikor nem adják meg előre az időt, önök várnak ránk, akár egy órát. Amint megírják, hogy megérkeztek, az apartmant egy órán belül átadjuk.',
   },
   {
@@ -78,6 +84,7 @@ export const vstupPravidla: LText[] = [
     uk: `Заселення з 14:00 до ${od}. Пізніше платите ${kc} Kč за кожні розпочаті пів години за фактичним приїздом, на місці. Після ${dokonce} лише за домовленістю.`,
     'zh-Hant': `入住時間是 14:00 到 ${od}。更晚則按實際抵達時間，每開始計算的半小時在現場付 ${kc} Kč。${dokonce} 之後只能事先說好。`,
     sv: `Incheckning är från 14:00 till ${od}. Senare betalar ni ${kc} Kč för varje påbörjad halvtimme efter den verkliga ankomsten, på plats. Efter ${dokonce} bara om vi kommer överens.`,
+    es: `El check-in es de 14:00 a ${od}. Después pagan ${kc} Kč por cada media hora empezada, según la llegada real, en el momento. Después de las ${dokonce}, solo si lo acordamos.`,
     hu: `A bejelentkezés 14:00-tól ${od}-ig tart. Később a tényleges érkezés szerint minden megkezdett félóráért ${kc} Kč pótdíjat fizetnek, a helyszínen. ${dokonce} után csak megbeszélés után.`,
   },
   {
@@ -88,6 +95,7 @@ export const vstupPravidla: LText[] = [
     uk: 'PIN-коди отримаєте під час особистої передачі після перевірки документів.',
     'zh-Hant': 'PIN 碼在當面交接、查驗證件之後交給您。',
     sv: 'PIN-koderna får ni vid den personliga överlämningen, efter kontroll av handlingarna.',
+    es: 'Los códigos PIN los reciben en la entrega personal, después de revisar los documentos.',
     hu: 'A PIN-kódokat a személyes átadáskor kapják meg, az iratok ellenőrzése után.',
   },
   {
@@ -98,6 +106,7 @@ export const vstupPravidla: LText[] = [
     uk: 'Якщо до 20:00 не приїдете і не озветеся, це неявка.',
     'zh-Hant': '如果 20:00 前沒到，也沒有聯絡我們，視為未入住。',
     sv: 'Om ni inte är här senast 20:00 och inte hör av er, räknas det som utebliven ankomst.',
+    es: 'Si a las 20:00 no han llegado y no han avisado, cuenta como no presentado.',
     hu: 'Ha 20:00-ig nem érkeznek meg, és nem is szólnak, az meg nem jelenés.',
   },
 ];
@@ -110,6 +119,7 @@ export const vstupCenik: LText = {
   uk: 'Доплати після 20:00',
   'zh-Hant': '20:00 之後的加價',
   sv: 'Tillägg efter 20:00',
+  es: 'Suplementos después de las 20:00',
   hu: 'Pótdíjak 20:00 után',
 };
 
@@ -121,6 +131,7 @@ export const vstupPriplatek: LText = {
   uk: 'доплата',
   'zh-Hant': '加價',
   sv: 'tillägg',
+  es: 'suplemento',
   hu: 'pótdíj',
 };
 
@@ -132,6 +143,7 @@ export const vstupDo: LText = {
   uk: 'до',
   'zh-Hant': '到',
   sv: 'till',
+  es: 'hasta',
   hu: 'ig',
 };
 
@@ -143,6 +155,7 @@ export const vstupPo23: LText = {
   uk: 'Після 23:00 · лише за домовленістю',
   'zh-Hant': '23:00 之後 · 只能事先說好',
   sv: 'Efter 23:00 · bara om vi kommer överens',
+  es: 'Después de las 23:00 · solo si lo acordamos',
   hu: '23:00 után · csak megbeszélés után',
 };
 
@@ -154,6 +167,7 @@ export const vstupPozde: LText = {
   uk: 'Після 23:00 лише за домовленістю. Напишіть нам на +420 604 692 573.',
   'zh-Hant': '23:00 之後只能事先說好。請寫信到 +420 604 692 573。',
   sv: 'Efter 23:00 bara om vi kommer överens. Skriv till oss på +420 604 692 573.',
+  es: 'Después de las 23:00 solo si lo acordamos. Escríbannos al +420 604 692 573.',
   hu: '23:00 után csak megbeszélés után. Írjanak a +420 604 692 573 számra.',
 };
 
@@ -165,6 +179,7 @@ export const vstupBranaNadpis: LText = {
   uk: 'Без реєстрації на брамі ви не припаркуєтесь',
   'zh-Hant': '沒有在大門登記就無法停車',
   sv: 'Utan registrering vid grinden kan ni inte parkera',
+  es: 'Sin registro en la barrera no pueden aparcar',
   hu: 'Kapuregisztráció nélkül nem tudnak parkolni',
 };
 
@@ -176,6 +191,7 @@ export const vstupBranaText: LText = {
   uk: 'Номер, з якого відкриєте браму, треба зареєструвати заздалегідь. В останню мить це не вийде.',
   'zh-Hant': '用來開門的電話號碼必須事先登記。臨時來不及。',
   sv: 'Numret ni öppnar grinden med måste vi registrera i förväg. I sista stund går det inte.',
+  es: 'El número con el que abrirán la barrera lo tenemos que registrar antes. En el último momento no se puede.',
   hu: 'A számot, amelyről a kaput nyitják, előre kell rögzítenünk. Az utolsó pillanatban ez nem megy.',
 };
 
@@ -187,6 +203,7 @@ export const vstupChybaTelefon: LText = {
   uk: 'Перевірте номер. Потрібен і з кодом країни, наприклад +420.',
   'zh-Hant': '請檢查號碼。必須含國碼，例如 +420。',
   sv: 'Kontrollera numret. Det måste ha landsnummer, till exempel +420.',
+  es: 'Revisen el número. Tiene que llevar el prefijo, por ejemplo +420.',
   hu: 'Ellenőrizzék a számot. Kell az előhívó is, például +420.',
 };
 
@@ -198,6 +215,7 @@ export const vstupChybaSpz: LText = {
   uk: 'Перевірте номер авто. Досить літер і цифр.',
   'zh-Hant': '請檢查車牌。字母和數字即可。',
   sv: 'Kontrollera registreringsskylten. Bokstäver och siffror räcker.',
+  es: 'Revisen la matrícula. Bastan letras y números.',
   hu: 'Ellenőrizzék a rendszámot. Betű és szám elég.',
 };
 
@@ -209,6 +227,7 @@ export const vstupChybaUlozeni: LText = {
   uk: 'Не вдалося зберегти. Напишіть нам на +420 604 692 573.',
   'zh-Hant': '沒有存成功。請寫信到 +420 604 692 573。',
   sv: 'Det gick inte att spara. Skriv till oss på +420 604 692 573.',
+  es: 'No se ha guardado. Escríbannos al +420 604 692 573.',
   hu: 'A mentés nem sikerült. Írjanak a +420 604 692 573 számra.',
 };
 
@@ -220,6 +239,7 @@ export const vstupCeka: LText = {
   uk: 'Наступні кроки з’являться, коли заповните дані вище.',
   'zh-Hant': '填完上面的資料後，才會出現後面的步驟。',
   sv: 'Nästa steg visas när ni har fyllt i uppgifterna ovan.',
+  es: 'Los siguientes pasos aparecen cuando rellenen lo de arriba.',
   hu: 'A további lépések akkor jelennek meg, ha a fenti adatokat kitöltötték.',
 };
 
@@ -231,6 +251,7 @@ export const vstupHotovo: LText = {
   uk: 'Апартаменти передано.',
   'zh-Hant': '公寓已經交接。',
   sv: 'Lägenheten är överlämnad.',
+  es: 'El apartamento está entregado.',
   hu: 'Az apartman átadva.',
 };
 
@@ -242,6 +263,7 @@ export const vstupHotovoOdkaz: LText = {
   uk: 'Коди знайдете нижче.',
   'zh-Hant': '密碼在下面。',
   sv: 'Koderna finns nedan.',
+  es: 'Los códigos están más abajo.',
   hu: 'A kódok lejjebb vannak.',
 };
 
@@ -253,6 +275,7 @@ export const vstupUlozit: LText = {
   uk: 'Зберегти',
   'zh-Hant': '儲存',
   sv: 'Spara',
+  es: 'Guardar',
   hu: 'Mentés',
 };
 
@@ -264,6 +287,7 @@ export const vstupZmenit: LText = {
   uk: 'Змінити',
   'zh-Hant': '修改',
   sv: 'Ändra',
+  es: 'Cambiar',
   hu: 'Módosítás',
 };
 
@@ -275,6 +299,7 @@ export const vstupPesky: LText = {
   uk: 'Пішки, поїздом або автобусом',
   'zh-Hant': '步行、火車或公車',
   sv: 'Till fots, med tåg eller buss',
+  es: 'A pie, en tren o en autobús',
   hu: 'Gyalog, vonattal vagy autóbusszal',
 };
 
@@ -286,6 +311,7 @@ export const vstupAutem: LText = {
   uk: 'Автомобілем',
   'zh-Hant': '開車',
   sv: 'Med bil',
+  es: 'En coche',
   hu: 'Autóval',
 };
 
@@ -297,6 +323,7 @@ export const vstupPo20: LText = {
   uk: 'Після 20:00',
   'zh-Hant': '20:00 之後',
   sv: 'Efter 20:00',
+  es: 'Después de las 20:00',
   hu: '20:00 után',
 };
 
@@ -308,6 +335,7 @@ export const vstupTelefon: LText = {
   uk: 'Телефон для брами',
   'zh-Hant': '大門用的電話',
   sv: 'Telefon till grinden',
+  es: 'Teléfono para la barrera',
   hu: 'Telefon a kapuhoz',
 };
 
@@ -319,6 +347,7 @@ export const vstupSpz: LText = {
   uk: 'Номер авто',
   'zh-Hant': '車牌',
   sv: 'Registreringsnummer',
+  es: 'Matrícula',
   hu: 'Rendszám',
 };
 
@@ -330,6 +359,7 @@ export const vstupPripominkaSpz: LText = {
   uk: 'Номер авто ще бракує. Допишіть його, коли будете знати.',
   'zh-Hant': '車牌還沒有。知道以後請補上。',
   sv: 'Registreringsskylten saknas ännu. Fyll i den när ni vet den.',
+  es: 'Falta la matrícula. Añádanla cuando la sepan.',
   hu: 'A rendszám még hiányzik. Írják be, amikor megtudják.',
 };
 
@@ -341,6 +371,7 @@ export const vstupCekaCas: LText = {
   uk: 'Оберіть час',
   'zh-Hant': '選擇時間',
   sv: 'Välj tid',
+  es: 'Elijan una hora',
   hu: 'Válasszanak időt',
 };
 
@@ -352,6 +383,7 @@ export const vstupKolem: LText = {
   uk: 'Приїдете близько',
   'zh-Hant': '大約',
   sv: 'Ni kommer omkring',
+  es: 'Llegan alrededor de',
   hu: 'Körülbelül ekkor érkeznek',
 };
 
@@ -363,6 +395,7 @@ export const vstupBranaKratce: LText = {
   uk: 'брама',
   'zh-Hant': '大門',
   sv: 'grind',
+  es: 'barrera',
   hu: 'kapu',
 };
 
@@ -374,6 +407,7 @@ export const vstupSpzPozdeji: LText = {
   uk: 'Номер допишете пізніше',
   'zh-Hant': '車牌稍後補',
   sv: 'Skylten fyller ni i senare',
+  es: 'La matrícula la añaden más tarde',
   hu: 'A rendszámot később írják be',
 };
 
@@ -385,6 +419,7 @@ export const vstupPujcene: LText = {
   uk: 'Авто орендоване, номер допишу пізніше',
   'zh-Hant': '車子是租的，車牌稍後補',
   sv: 'Bilen är hyrd, jag fyller i skylten senare',
+  es: 'El coche es de alquiler, la matrícula la añado más tarde',
   hu: 'Az autó bérelt, a rendszámot később írom be',
 };
 
@@ -396,6 +431,7 @@ export const pinyNadpis: LText = {
   uk: 'Ваші вхідні PIN-коди',
   'zh-Hant': '您的入口 PIN 碼',
   sv: 'Era PIN-koder för entrén',
+  es: 'Sus códigos PIN de entrada',
   hu: 'A belépő PIN-kódjaik',
 };
 
@@ -407,6 +443,7 @@ export const pinyCekaji: LText = {
   uk: 'Тут будуть ваші PIN-коди. Нижче виберіть час і спосіб приїзду та підтвердьте правила.',
   'zh-Hant': 'PIN 碼會出現在這裡。請在下面選擇時間和抵達方式，並確認規則。',
   sv: 'Här kommer era PIN-koder. Nedan väljer ni tid och sätt att komma, och bekräftar reglerna.',
+  es: 'Sus códigos PIN estarán aquí. Abajo elijan la hora y cómo llegan, y confirmen las reglas.',
   hu: 'Itt lesznek a PIN-kódok. Lent válasszák ki az időt és az érkezés módját, és erősítsék meg a szabályokat.',
 };
 
@@ -418,6 +455,7 @@ export const pinyHotovo: LText = {
   uk: 'Готово. PIN-коди з’являться тут під час особистої передачі.',
   'zh-Hant': '完成了。PIN 碼會在當面交接時顯示在這裡。',
   sv: 'Klart. PIN-koderna visas här vid den personliga överlämningen.',
+  es: 'Hecho. Sus códigos PIN aparecen aquí en la entrega personal.',
   hu: 'Kész. A PIN-kódok a személyes átadáskor jelennek meg itt.',
 };
 
@@ -429,6 +467,7 @@ export const vstupCasPopisek: LText = {
   uk: 'Виберіть приблизний час',
   'zh-Hant': '選擇大約的時間',
   sv: 'Välj en ungefärlig tid',
+  es: 'Elijan una hora aproximada',
   hu: 'Válasszanak hozzávetőleges időt',
 };
 
@@ -440,6 +479,7 @@ export const vstupJak: LText = {
   uk: 'Як ви приїдете',
   'zh-Hant': '您如何抵達',
   sv: 'Hur ni kommer',
+  es: 'Cómo llegan',
   hu: 'Hogyan érkeznek',
 };
 
@@ -451,6 +491,7 @@ export const vstupUlozitPiny: LText = {
   uk: 'Зберегти і далі до PIN-кодів',
   'zh-Hant': '儲存並前往 PIN 碼',
   sv: 'Spara och gå vidare till PIN-koderna',
+  es: 'Guardar y seguir a los códigos PIN',
   hu: 'Mentés, és tovább a PIN-kódokhoz',
 };
 
@@ -462,6 +503,7 @@ export const vstupChybiCas: LText = {
   uk: 'Виберіть час.',
   'zh-Hant': '請選擇時間。',
   sv: 'Välj en tid.',
+  es: 'Elijan una hora.',
   hu: 'Válasszanak időt.',
 };
 
@@ -473,6 +515,7 @@ export const vstupChybiZpusob: LText = {
   uk: 'Виберіть, як приїдете.',
   'zh-Hant': '請選擇抵達方式。',
   sv: 'Välj hur ni kommer.',
+  es: 'Elijan cómo llegan.',
   hu: 'Válasszák ki, hogyan érkeznek.',
 };
 
@@ -484,6 +527,7 @@ export const vstupChybiPravidla: LText = {
   uk: 'Підтвердьте правила приїзду.',
   'zh-Hant': '請確認抵達規則。',
   sv: 'Bekräfta ankomstreglerna.',
+  es: 'Confirmen las reglas de llegada.',
   hu: 'Erősítsék meg az érkezési szabályokat.',
 };
 
@@ -495,6 +539,7 @@ export const vstupPeskyKratce: LText = {
   uk: 'пішки',
   'zh-Hant': '步行',
   sv: 'till fots',
+  es: 'a pie',
   hu: 'gyalog',
 };
 
@@ -506,6 +551,7 @@ export const vstupAutemKratce: LText = {
   uk: 'автомобілем',
   'zh-Hant': '開車',
   sv: 'med bil',
+  es: 'en coche',
   hu: 'autóval',
 };
 
@@ -517,6 +563,7 @@ export const vstupRadek: LText = {
   uk: 'Приїзд близько',
   'zh-Hant': '大約',
   sv: 'Ankomst omkring',
+  es: 'Llegada alrededor de',
   hu: 'Érkezés körülbelül',
 };
 
@@ -528,6 +575,7 @@ export const vstupPravidlaOk: LText = {
   uk: 'правила підтверджено',
   'zh-Hant': '規則已確認',
   sv: 'reglerna bekräftade',
+  es: 'reglas confirmadas',
   hu: 'szabályok megerősítve',
 };
 
@@ -539,6 +587,7 @@ export const vstupZamekCesta: LText = {
   uk: 'Шлях до нас',
   'zh-Hant': '來我們這裡的路',
   sv: 'Vägen till oss',
+  es: 'El camino hasta nosotros',
   hu: 'Az út hozzánk',
 };
 
@@ -550,6 +599,7 @@ export const vstupZamekParkovani: LText = {
   uk: 'Паркування і брама',
   'zh-Hant': '停車和大門',
   sv: 'Parkering och grinden',
+  es: 'Aparcamiento y barrera',
   hu: 'Parkolás és a kapu',
 };
 
@@ -561,6 +611,7 @@ export const vstupZamekWifi: LText = {
   uk: 'WiFi',
   'zh-Hant': 'WiFi',
   sv: 'WiFi',
+  es: 'WiFi',
   hu: 'WiFi',
 };
 
@@ -572,5 +623,6 @@ export const vstupViteji: LText = {
   uk: 'Раді будемо вас привітати.',
   'zh-Hant': '期待迎接您。',
   sv: 'Vi ser fram emot att välkomna er.',
+  es: 'Nos alegra recibirles.',
   hu: 'Örülünk, hogy üdvözölhetjük önöket.',
 };

@@ -495,6 +495,7 @@ export function Guide({
                 <option value="zh-Hant">繁體中文</option>
                 <option value="sv">Svenska</option>
                 <option value="hu">Magyar</option>
+                <option value="es">Español</option>
               </select>
             </label>
             <label className="pv-dev__check">

@@ -67,6 +67,7 @@ describe('telefon hosta', () => {
     expect(normalizujTelefon('903123456', 'SVK')?.ulozeny).toBe('+421903123456');
     expect(normalizujTelefon('0701234567', 'SWE')?.ulozeny).toBe('+46701234567');
     expect(normalizujTelefon('06301234567', 'HUN')?.ulozeny).toBe('+36301234567');
+    expect(normalizujTelefon('612345678', 'ESP')?.ulozeny).toBe('+34612345678');
     expect(normalizujTelefon('6641234567', 'AUT')?.ulozeny).toBe('+436641234567');
     expect(textTelefonu(normalizujTelefon('170 1234567', 'DEU')!.ulozeny)).toBe('+49 1701234567');
   });

@@ -75,7 +75,7 @@ describe('kontrola příjezdů', () => {
 
   it('u čísla bez předvolby řekne, proč není WhatsApp', () => {
     const rec = host('1', '2026-10-15');
-    rec.telefon = '34 612 345 678';
+    rec.telefon = '812 345 678';
     rec.telefonWa = null;
     rec.narodnost = null;
     rec.telefonRezervace = '+420777111222';
@@ -85,6 +85,7 @@ describe('kontrola příjezdů', () => {
     expect(r.whatsapp).toBe('ne, chybí předvolba');
     expect(r.whatsappDruhe).toBe('ano');
     expect(whatsappDuvod(null, null, null)).toBe('číslo není');
+    expect(whatsappDuvod('34 612 345 678', null, 'ESP')).toBe('ano');
   });
 
   it('ukáže jen poslední tři věty historie', () => {

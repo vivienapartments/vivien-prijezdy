@@ -131,6 +131,11 @@
     "HUNGARY": "hu",
     "MAGYAR": "hu",
     "MAGYARORSZAG": "hu",
+    "ESP": "es",
+    "ES": "es",
+    "SPAIN": "es",
+    "ESPANA": "es",
+    "SPANISH": "es",
     "_ostatni": "en"
   },
   "nazvy_apartmanu_pravidlo": "V češtině český + anglický název (např. Zlatá rovnováha / Golden Balance), v ostatních jazycích jen anglický."

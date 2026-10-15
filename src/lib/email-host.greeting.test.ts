@@ -26,6 +26,7 @@ describe('greetingLine', () => {
     expect(greetingLine('de', 'Hans')).toBe('Guten Tag Hans,');
     expect(greetingLine('sv', 'Erik', 'SWE')).toBe('Hej Erik,');
     expect(greetingLine('hu', 'Anna', 'HUN')).toBe('Jó napot Anna,');
+    expect(greetingLine('es', 'Luis', 'ESP')).toBe('Hola Luis,');
   });
 
   it('bez jména neutrální pozdrav', () => {

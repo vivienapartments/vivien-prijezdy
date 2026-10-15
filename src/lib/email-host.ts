@@ -71,6 +71,7 @@ export function greetingLine(
       uk: 'Добрий день,',
       'zh-Hant': '您好，',
       sv: 'Hej,',
+      es: 'Hola,',
       hu: "Jó napot,",
     },
     lang,
@@ -99,6 +100,7 @@ const subjectL: LText = {
   uk: 'ВАЖЛИВО · Ваш гід приїзду, без нього ви не припаркуєтесь і не зайдете',
   'zh-Hant': '重要 · 您的抵達指南，沒有它無法停車也無法進門',
   sv: 'VIKTIGT · Er ankomstguide, utan den kan ni varken parkera eller komma in',
+  es: 'IMPORTANTE · Su guía de llegada, sin ella no pueden aparcar ni entrar',
   hu: "FONTOS · Az érkezési útmutató, enélkül nem tudnak parkolni és bejutni",
 };
 
@@ -122,6 +124,7 @@ const introBodyL: LText = {
   uk: 'ми підготували для вас короткий гід приїзду. Відкрийте гід і вкажіть, о котрій приїдете. Тоді з’явиться шлях до нас, паркування і брама. Вхідні коди з’являться в ньому, коли апартаменти передамо особисто. Щоб ви знали, куди їхати і що робити після прибуття.',
   'zh-Hant': '我們為您準備了一份簡短的抵達指南。請打開指南並填上您幾點到。之後會看到前往我們這裡的路線、停車和大門。進門密碼會在我們當面把公寓交給您之後才顯示。讓您知道怎麼來、抵達後該做什麼。',
   sv: 'vi har förberett en kort ankomstguide. Öppna guiden och fyll i vilken tid ni kommer. Sedan visas vägen till oss, parkeringen och grinden. Ingångskoderna visas där först när vi lämnar över lägenheten personligen. Så att ni vet vart ni ska och vad ni gör efter ankomsten.',
+  es: 'les hemos preparado una guía breve de llegada. Abran la guía y pongan a qué hora llegan. Después verán el camino hasta nosotros, el aparcamiento y la barrera. Los códigos de entrada aparecen en ella solo cuando les entregamos el apartamento en persona. Así saben adónde ir y qué hacer al llegar.',
   hu: 'készítettünk egy rövid érkezési útmutatót. Nyissák meg az útmutatót, és írják be, hánykor érkeznek. Utána megjelenik az út hozzánk, a parkolás és a kapu. A belépési kódok akkor jelennek meg benne, amikor az apartmant személyesen átadjuk. Hogy tudják, hova menjenek, és mit csináljanak az érkezés után.',
 };
 
@@ -134,6 +137,7 @@ const casPrijezduL: LText = {
   uk: 'Найважливіше, щоб ви написали, о котрій приїдете. Апартаменти передамо особисто, і вам не доведеться на нас чекати. Досить SMS або WhatsApp на +420 604 692 573.',
   'zh-Hant': '最重要的是請告訴我們您幾點到。公寓由我們當面交接，您不必等我們。傳簡訊或 WhatsApp 到 +420 604 692 573 即可。',
   sv: 'Det viktigaste är att ni skriver till oss vilken tid ni kommer. Lägenheten lämnar vi över personligen och ni behöver inte vänta på oss. Det räcker med sms eller WhatsApp till +420 604 692 573.',
+  es: 'Lo más importante es que nos escriban a qué hora llegan. El apartamento se lo entregamos en persona y no tendrán que esperarnos. Basta un SMS o un WhatsApp al +420 604 692 573.',
   hu: "A legfontosabb, hogy írják meg, hánykor érkeznek. Az apartmant személyesen adjuk át, és nem kell ránk várniuk. Elég egy SMS vagy WhatsApp a +420 604 692 573 számra.",
 };
 
@@ -145,6 +149,7 @@ const casSmsL: LText = {
   uk: 'Написати SMS',
   'zh-Hant': '傳送簡訊',
   sv: 'Skicka sms',
+  es: 'Escribir un SMS',
   hu: "SMS küldése",
 };
 
@@ -156,6 +161,7 @@ const casWhatsappL: LText = {
   uk: 'Написати у WhatsApp',
   'zh-Hant': '用 WhatsApp 傳訊',
   sv: 'Skriv på WhatsApp',
+  es: 'Escribir por WhatsApp',
   hu: "Írás WhatsAppon",
 };
 
@@ -176,6 +182,7 @@ const uvodNovaL: LText = {
   uk: 'надсилаємо вам гід приїзду. Він лише для ваших апартаментів, і в ньому знайдете шлях до нас, паркування і браму.',
   'zh-Hant': '我們寄上抵達指南。這份指南只給您的公寓，裡面有來我們這裡的路、停車和大門。',
   sv: 'vi skickar er ankomstguiden. Den gäller bara er lägenhet, och där finns vägen till oss, parkeringen och grinden.',
+  es: 'les enviamos la guía de llegada. Es solo para su apartamento, y en ella está el camino hasta nosotros, el aparcamiento y la barrera.',
   hu: 'elküldjük az érkezési útmutatót. Csak az önök apartmanjához szól, és benne megtalálják az utat hozzánk, a parkolást és a kaput.',
 };
 
@@ -188,6 +195,7 @@ const duleziteNovaL: LText = {
   uk: 'Найважливіше: у вашому гіді чекають вхідні PIN-коди до будинку й апартаментів. Щоб дістатися до них, відкрийте гід, виберіть час і спосіб приїзду та підтвердьте правила. Це займе хвилину.',
   'zh-Hant': '最重要的是：您的指南裡有房屋和公寓的入口 PIN 碼。要看到它們，請打開指南，選擇抵達時間和方式，並確認規則。大約一分鐘。',
   sv: 'Det viktigaste: i er guide väntar PIN-koderna till huset och lägenheten. För att komma till dem, öppna guiden, välj tid och sätt att komma, och bekräfta reglerna. Det tar en minut.',
+  es: 'Lo más importante es que en su guía esperan los códigos PIN de la casa y del apartamento. Para llegar a ellos, abran la guía, elijan la hora y cómo llegan, y confirmen las reglas. Lleva un minuto.',
   hu: 'A legfontosabb: az útmutatóban ott várnak a ház és az apartman belépő PIN-kódjai. Hogy elérjék őket, nyissák meg az útmutatót, válasszák ki az időt és az érkezés módját, és erősítsék meg a szabályokat. Egy perc.',
 };
 
@@ -199,6 +207,7 @@ const dumNovaL: LText = {
   uk: 'VIVIEN є маленьким сімейним будинком, і про гостей дбаємо самі, без рецепції і без чужих людей. Апартаменти передамо особисто, все покажемо, і тоді ви отримаєте PIN-коди. Коли знаємо, о котрій приїдете, чекаємо ми на вас.',
   'zh-Hant': 'VIVIEN 是一棟小型家族住宅，客人由我們自己照顧，沒有櫃檯，也沒有外人。公寓由我們當面交接，帶您看過一切，然後您會拿到 PIN 碼。我們知道您幾點到，就由我們等候。',
   sv: 'VIVIEN är ett litet familjehus och vi tar hand om gästerna själva, utan reception och utan utomstående. Lägenheten lämnar vi över personligen, visar er allt, och sedan får ni PIN-koderna. När vi vet när ni kommer är det vi som väntar på er.',
+  es: 'VIVIEN es una casa familiar pequeña y de los huéspedes nos ocupamos nosotros, sin recepción y sin personal de fuera. El apartamento se lo entregamos en persona, se lo enseñamos todo y después reciben los códigos PIN. Cuando sabemos a qué hora llegan, esperamos nosotros.',
   hu: 'A VIVIEN egy kis családi ház, a vendégekről mi magunk gondoskodunk, recepció és idegenek nélkül. Az apartmant személyesen adjuk át, mindent megmutatunk, és utána megkapják a PIN-kódokat. Ha tudjuk, mikor érkeznek, mi várunk önökre.',
 };
 
@@ -210,6 +219,7 @@ const checkinNovaL: LText = {
   uk: 'Заселення є з 14:00 до 20:00. Пізніший приїзд є за доплату.',
   'zh-Hant': '入住時間是 14:00 到 20:00。較晚抵達需加付費用。',
   sv: 'Incheckning är från 14:00 till 20:00. En senare ankomst har ett tillägg.',
+  es: 'El check-in es de 14:00 a 20:00. Una llegada más tarde lleva suplemento.',
   hu: 'A bejelentkezés 14:00-tól 20:00-ig tart. A későbbi érkezés felár ellenében lehetséges.',
 };
 
@@ -222,6 +232,7 @@ const introOpenL: LText = {
   uk: 'Відкрийте його кнопкою нижче.',
   'zh-Hant': '請用下方按鈕開啟。',
   sv: 'Öppna den med knappen nedan.',
+  es: 'Ábranla con el botón de abajo.',
   hu: "Nyissák meg az alábbi gombbal.",
 };
 
@@ -240,6 +251,7 @@ const stayL: LText = {
   uk: 'Ваше перебування',
   'zh-Hant': '您的住宿',
   sv: 'Er vistelse',
+  es: 'Su estancia',
   hu: "A tartózkodásuk",
 };
 
@@ -251,6 +263,7 @@ const datesL: LText = {
   uk: 'Термін',
   'zh-Hant': '日期',
   sv: 'Datum',
+  es: 'Fechas',
   hu: "Dátumok",
 };
 
@@ -262,6 +275,7 @@ const nightsL: LText = {
   uk: 'Кількість ночей',
   'zh-Hant': '晚數',
   sv: 'Nätter',
+  es: 'Noches',
   hu: "Éjszakák",
 };
 
@@ -273,6 +287,7 @@ const guestsL: LText = {
   uk: 'Кількість осіб',
   'zh-Hant': '人數',
   sv: 'Personer',
+  es: 'Huéspedes',
   hu: "Vendégek",
 };
 
@@ -284,6 +299,7 @@ const openGuideL: LText = {
   uk: 'Відкрити гід',
   'zh-Hant': '開啟指南',
   sv: 'Öppna guiden',
+  es: 'Abrir la guía',
   hu: "Útmutató megnyitása",
 };
 
@@ -296,6 +312,7 @@ const helpL: LText = {
   uk: 'Якщо щось не працює, телефонуйте на +420 604 692 573. Якщо не додзвонитеся, зателефонуйте Nikol.',
   'zh-Hant': '如果有任何問題，請撥 +420 604 692 573。若打不通，請打給 Nikol。',
   sv: 'Om något inte fungerar, ring +420 604 692 573. Om ni inte kommer fram, ring Nikol.',
+  es: 'Si algo no funciona, llamen al +420 604 692 573. Si no contestamos, llamen a Nikol.',
   hu: "Ha valami nem működik, hívják a +420 604 692 573 számot. Ha nem érik el, hívják Nikolt.",
 };
 
@@ -307,6 +324,7 @@ const familyL: LText = {
   uk: 'Nikol і родина VIVIEN',
   'zh-Hant': 'Nikol 與 VIVIEN 全家',
   sv: 'Nikol och familjen VIVIEN',
+  es: 'Nikol y la familia VIVIEN',
   hu: "Nikol és a VIVIEN család",
 };
 
@@ -318,6 +336,7 @@ const closingL: LText = {
   uk: 'З повагою',
   'zh-Hant': '此致',
   sv: 'Med vänlig hälsning',
+  es: 'Un saludo',
   hu: "Üdvözlettel",
 };
 
@@ -330,6 +349,7 @@ const webTipL: LText = {
   uk: 'Інші поради на перебування знайдете на {{WEB}}. Куди на їжу, куди на виїзд, що відбувається в місті та пізнавальна гра Будейовицями.',
   'zh-Hant': '更多住宿提示請見 {{WEB}}。去哪吃飯、去哪一日遊、城裡近期活動，以及布杰約維采探索遊戲。',
   sv: 'Fler tips för vistelsen finns på {{WEB}}. Vart ni kan äta, vart ni kan åka på utflykt, vad som händer i staden och upptäcktsspelet i Budějovice.',
+  es: 'Más ideas para la estancia están en {{WEB}}. Dónde comer, adónde ir de excursión, qué hay en la ciudad y el juego para conocer Budějovice.',
   hu: "További tippek a tartózkodáshoz a {{WEB}} oldalon vannak. Hol egyenek, hova menjenek kirándulni, mi történik a városban, és a felfedező játék Budějovicében.",
 };
 
@@ -341,6 +361,7 @@ const psApartmanyL: LText = {
   uk: 'P.S. У нас пʼять апартаментів, кожен зі своєю атмосферою. Багато гостей про це не знають. Коли плануватимете наступне перебування, можете обрати за настроєм. {{QUIZ}}',
   'zh-Hant': 'P.S. 我們有五間公寓，各有不同氛圍。很多客人不知道這件事。下次規劃住宿時，可以依心情挑選。{{QUIZ}}',
   sv: 'P.S. Vi har fem lägenheter, var och en med sin egen stämning. Många gäster vet inte det. När ni planerar nästa vistelse kan ni välja efter humör. {{QUIZ}}',
+  es: 'P.D. Tenemos cinco apartamentos, cada uno con un ambiente distinto. Muchos huéspedes no lo saben. Cuando planeen otra estancia, pueden elegir según el ánimo. {{QUIZ}}',
   hu: "U.i. Öt apartmanunk van, mindegyik más hangulatú. Sok vendég nem tudja ezt. Amikor a következő tartózkodást tervezik, hangulat szerint választhatnak. {{QUIZ}}",
 };
 
@@ -352,6 +373,7 @@ const psCtaL: LText = {
   uk: 'Які апартаменти вам підійдуть?',
   'zh-Hant': '哪間公寓適合您？',
   sv: 'Vilken lägenhet skulle passa er?',
+  es: '¿Qué apartamento les vendría bien?',
   hu: "Melyik apartman illene önökhöz?",
 };
 
@@ -772,6 +794,7 @@ const upominkaPredmetL: LText = {
   uk: 'Ваші вхідні PIN-коди на вас чекають',
   'zh-Hant': '您的入口 PIN 碼在等您',
   sv: 'Era PIN-koder för entrén väntar på er',
+  es: 'Sus códigos PIN de entrada les esperan',
   hu: 'A belépő PIN-kódjaik várják önöket',
 };
 
