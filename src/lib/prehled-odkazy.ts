@@ -1,6 +1,7 @@
 import { odkazNaPruvodce } from './posli-pruvodce';
 import { dnesVPraze, radekZRezervace, seradRadky, type PrehledRadek } from './prehled';
 import type { ProcessStore, RezervaceRecord } from './store';
+import { chybejiciKroky } from './vstup-pruvodce';
 import { zpravyMenu } from './whatsapp-zprava';
 
 export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord, now = new Date()): PrehledRadek {
@@ -10,6 +11,14 @@ export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord, now = new Date
   } catch {
     odkaz = null;
   }
+  const kroky = chybejiciKroky({
+    cas: rec.casPrijezdu,
+    zpusob: rec.zpusobPrijezdu,
+    telefonBrana: rec.telefonBrana,
+    spz: rec.spz,
+    spzPujcene: Boolean(rec.spzPujcene),
+    souhlas: Boolean(rec.souhlasPravidel),
+  });
   const zpravy = zpravyMenu({
     stav: rec.stav,
     lang: rec.jazyk,
@@ -20,6 +29,8 @@ export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord, now = new Date
     casPrijezdu: rec.casPrijezdu,
     prijezd: rec.prijezd,
     dnes: dnesVPraze(now),
+    chybi: kroky,
+    branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
   });
   return { ...row, odkaz, zpravy, zprava: zpravy.find((z) => z.vychozi)?.text || '' };
 }

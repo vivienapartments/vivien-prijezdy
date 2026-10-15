@@ -1,3 +1,9 @@
+/** Příplatek za příjezd. Od 20:00, pak 100 Kč za každou započatou půlhodinu, do 23:00. */
+export const PRIPLATEK_OD = 20 * 60;
+export const PRIPLATEK_KROK_MIN = 30;
+export const PRIPLATEK_KC = 100;
+export const PRIPLATEK_DO = 23 * 60;
+
 export const PARKING_ADDRESS = 'Chelčického 95/15';
 export const HOUSE_ADDRESS = 'Nádražní 108/43, 370 01 České Budějovice';
 export const NIKOL_PHONE = '+420 702 153 573';

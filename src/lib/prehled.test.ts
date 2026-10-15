@@ -10,6 +10,8 @@ import {
   terminKratky,
   textOtevreni,
   textPoplatku,
+  rozpisPlateb,
+  textVybranehoPoplatku,
   vetaChyby,
   type PrehledRadek,
 } from './prehled';
@@ -19,16 +21,17 @@ import { GUIDE_LANGS } from './types';
 import {
   druhZdroje,
   hlavniZprava,
-  textCasu,
   textCheckinu,
-  textDne,
+  textBrany,
+  textDneNerozbalen,
   textDneSCasem,
+  textNerozbalen,
   textZpravy,
-  zpravaCasu,
   zpravaCheckinu,
-  zpravaDne,
+  zpravaDneNerozbalen,
   zpravaDneSCasem,
   zpravaHostovi,
+  zpravaNerozbalen,
   zpravyMenu,
   odkazWhatsApp,
   odkazWhatsAppPrehled,
@@ -80,7 +83,7 @@ describe('tlačítka v přehledu', () => {
 
   it('česká zpráva na WhatsApp je schválené znění', () => {
     expect(textZpravy('cs')).toBe(
-      'Dobrý den, abyste se u nás mohli ubytovat a zaparkovat, přečtěte si průvodce k příjezdu a pošlete nám podle něj potřebné údaje. Děkujeme a těšíme se na setkání.',
+      'Dobrý den, ve vašem průvodci k příjezdu čekají vstupní PINy do domu a apartmánu. Abyste se k nim dostali, otevřete průvodce, vyberte čas a způsob příjezdu a potvrďte pravidla. Děkujeme a těšíme se na setkání.',
     );
     expect(textCheckinu('cs', 'Booking')).toBe(
       'Dobrý den, ještě nemáte vyplněný online check-in. Bez něj vám nemůžeme poslat průvodce k příjezdu, a bez průvodce se u nás neubytujete ani nezaparkujete. Odkaz najdete ve zprávách na Booking.com. Děkujeme a těšíme se na setkání.',
@@ -92,15 +95,23 @@ describe('tlačítka v přehledu', () => {
     expect(textCheckinu('de', 'Booking')).not.toContain('Wegweiser');
     expect(textCheckinu('de', 'Booking').toLowerCase()).not.toContain('bitte');
     expect(textCheckinu('en', 'Booking').toLowerCase()).not.toContain('please');
-    expect(textCasu('cs')).toBe(
-      'Dobrý den, napište nám, v kolik zhruba dorazíte. Apartmán předáváme osobně, a bez času příjezdu se nepotkáme. Děkujeme a těšíme se na setkání.',
+    expect(textNerozbalen('cs', ['cas'])).toBe(
+      'Dobrý den, abyste se dostali ke svým vstupním PINům, v průvodci k příjezdu ještě vyberte čas příjezdu. Zabere to minutu. Děkujeme a těšíme se na setkání.',
     );
-    expect(textDne('cs')).toBe(
-      'Dobrý den, dnes se na vás těšíme. V kolik zhruba dorazíte? Potřebujeme to vědět, abychom vám mohli apartmán osobně předat. Kódy se vám v průvodci zobrazí hned po předání.',
+    expect(textNerozbalen('cs', ['cas'])).not.toContain('potvrďte pravidla');
+    expect(textNerozbalen('cs', ['zpusob', 'pravidla'])).toContain('vyberte, jak přijedete a potvrďte pravidla');
+    expect(textNerozbalen('cs', ['zpusob', 'pravidla'])).not.toContain('vyberte čas příjezdu');
+    expect(textBrany('cs')).toBe(
+      'Dobrý den, v průvodci doplňte telefon pro bránu a SPZ. Bez registrace v bráně nezaparkujete. Děkujeme a těšíme se na setkání.',
+    );
+    expect(textDneNerozbalen('cs', ['cas', 'pravidla'])).toBe(
+      'Dobrý den, dnes se na vás těšíme. Abyste se dostali ke svým vstupním PINům, v průvodci ještě vyberte čas příjezdu a potvrďte pravidla. Zabere to minutu. Děkujeme.',
     );
     expect(textDneSCasem('cs', '16:30')).toBe(
-      'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem 16:30, platí to? Kdyby se čas změnil, napište nám prosím hned. Asi 15 minut před příjezdem se nám prosím ozvěte, ať jsme na místě. Kódy se vám v průvodci zobrazí hned po předání.',
+      'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem 16:30. Asi čtvrt hodiny předem nám napište, že budete na místě, a budeme vás čekat. Na domluvený čas čekáme 10 minut. Kdyby se čas změnil, opravte ho v průvodci nebo nám napište.',
     );
+    expect(textDneSCasem('cs', '21:00')).toContain('teď by to bylo 200\u00A0Kč');
+    expect(textDneSCasem('cs', '21:00')).toContain('100\u00A0Kč za každou započatou půlhodinu');
   });
 
   it('krátký termín a poplatek do sbaleného řádku', () => {
@@ -109,9 +120,55 @@ describe('tlačítka v přehledu', () => {
     expect(terminKratky('2026-10-12', null)).toBe('12.10.');
     expect(poplatekKratky('ano', 2, 2)).toBe('Poplatek 200 Kč');
     expect(poplatekKratky('ne', 2, 2)).toBe('Poplatek ne');
+    const vecer = rozpisPlateb({
+      poplatek: 'ano',
+      noci: 2,
+      osob: 2,
+      cas: '21:00',
+      vyjezdy: [{ castka: 300 }],
+    });
+    expect(vecer.radky.map((radek) => `${radek.nazev} ${radek.text}`)).toEqual([
+      'Městský poplatek 200\u00A0Kč',
+      'Příplatek za čas 200\u00A0Kč',
+      'Další příjezd 300\u00A0Kč',
+    ]);
+    expect(vecer.soucet).toBe(700);
+    expect(vecer.uplny).toBe(true);
+    const rano = rozpisPlateb({ poplatek: 'ano', noci: 2, osob: 2, cas: '16:30', vyjezdy: [] });
+    expect(rano.soucet).toBe(200);
+    expect(rano.radky[1]?.text).toBe('0\u00A0Kč');
+    const domluva = rozpisPlateb({ poplatek: 'ano', noci: 2, osob: 2, cas: 'po23', vyjezdy: [] });
+    expect(domluva.uplny).toBe(false);
+    expect(domluva.radky[1]?.text).toBe('po domluvě');
+    expect(domluva.soucet).toBe(200);
+    const skutecny = rozpisPlateb({
+      poplatek: 'ano',
+      noci: 2,
+      osob: 2,
+      cas: '21:00',
+      skutecny: '21:45',
+      vyjezdy: [],
+    });
+    expect(skutecny.radky[1]?.text).toBe('400\u00A0Kč');
+    expect(skutecny.radky[1]?.dovetek).toBe('odhad 200\u00A0Kč');
+    expect(skutecny.soucet).toBe(600);
+    const rucni = rozpisPlateb({
+      poplatek: 'ano',
+      noci: 2,
+      osob: 2,
+      cas: '21:00',
+      skutecny: '21:45',
+      rucni: 50,
+      vyjezdy: [],
+    });
+    expect(rucni.radky[1]?.text).toBe('50\u00A0Kč');
+    expect(rucni.soucet).toBe(250);
+    expect(rucni.navrhKc).toBe(400);
     expect(vetaChyby({ stav: 'neodeslano', telefonNejisty: false, jinyTelefonNejisty: false })).toBe(
       'Průvodce se neodeslal.',
     );
+    expect(textVybranehoPoplatku('2026-10-13T13:50:00.000Z', 'ja')).toContain('Poplatek vybral já');
+    expect(textVybranehoPoplatku('2026-10-13T13:50:00.000Z', 'nikol')).toContain('Poplatek vybrala Nikol');
     expect(vetaChyby({ stav: 'odeslano', telefonNejisty: true, jinyTelefonNejisty: false })).toBe(
       'Ověřte předvolbu.',
     );
@@ -146,14 +203,21 @@ describe('tlačítka v přehledu', () => {
       hlavniZprava({ stav: 'odeslano', otevrenoPocet: 0, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11' }),
     ).toBe('neotevrel');
     expect(
-      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-12', dnes: '2026-10-11' }),
-    ).toBe('cas');
+      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-12', dnes: '2026-10-11', chybi: ['cas', 'zpusob', 'pravidla'] }),
+    ).toBe('nerozbalen');
     expect(
-      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: '16:30', prijezd: '2026-10-11', dnes: '2026-10-11' }),
+      hlavniZprava({
+        stav: 'odeslano',
+        otevrenoPocet: 2,
+        casPrijezdu: '16:30',
+        prijezd: '2026-10-11',
+        dnes: '2026-10-11',
+        chybi: [],
+      }),
     ).toBe('denCas');
     expect(
-      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11' }),
-    ).toBe('denBez');
+      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11', chybi: ['cas'] }),
+    ).toBe('denNerozbalen');
   });
 
   it('den příjezdu má dvě verze podle políčka času', () => {
@@ -168,9 +232,10 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(bez.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'cas', 'denBez', 'denCas']);
-    expect(bez.find((z) => z.vychozi)?.id).toBe('denBez');
-    expect(bez.find((z) => z.id === 'denBez')?.text).toBe(`${textDne('cs')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
+    expect(bez.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana']);
+    expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toBe(
+      `${textDneNerozbalen('cs', ['cas', 'zpusob', 'pravidla'])}\n\n${odkaz}\n\nNikol a rodina VIVIEN`,
+    );
 
     const sCasem = zpravyMenu({
       stav: 'odeslano',
@@ -182,8 +247,7 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(sCasem.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'cas', 'denBez', 'denCas']);
-    expect(sCasem.find((z) => z.vychozi)?.id).toBe('denCas');
+    expect(sCasem.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana']);
     const textSeCasem = sCasem.find((z) => z.id === 'denCas')?.text || '';
     expect(textSeCasem).toBe(`${textDneSCasem('cs', '16:30')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
     expect(textSeCasem).toContain('16:30');
@@ -223,11 +287,12 @@ describe('tlačítka v přehledu', () => {
   it('podpis je pod odkazem a u zprávy bez odkazu hned pod textem', () => {
     const odkaz = 'https://pruvodce.example/host';
     const pruvodce = zpravaHostovi('cs', odkaz);
-    const cas = zpravaCasu('cs');
-    const den = zpravaDne('cs', odkaz);
+    const cas = zpravaNerozbalen('cs', ['cas'], null);
+    const den = zpravaDneNerozbalen('cs', ['cas'], odkaz);
     expect(pruvodce).toBe(`${textZpravy('cs')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
     expect(den.indexOf(odkaz)).toBeLessThan(den.indexOf('Nikol a rodina VIVIEN'));
-    expect(cas).toBe(`${textCasu('cs')}\n\nNikol a rodina VIVIEN`);
+    expect(cas).toBe(`${textNerozbalen('cs', ['cas'])}\n\nNikol a rodina VIVIEN`);
+    expect(cas).not.toContain('potvrďte pravidla');
     expect(cas).not.toContain('https://');
     expect(zpravaHostovi('en', odkaz)).toContain('Nikol and the VIVIEN family');
     expect(zpravaHostovi('de', odkaz)).toContain('Nikol und Familie VIVIEN');
@@ -245,6 +310,22 @@ describe('tlačítka v přehledu', () => {
     expect(textOtevreni(3, '2026-10-10T12:32:00.000Z').ton).toBe('ano');
     expect(textOtevreni(0, null)).toEqual({ text: 'Zatím neotevřel', ton: 'ne' });
     expect(textOtevreni(null, null)).toEqual({ text: 'Nevíme', ton: 'nevim' });
+  });
+
+  it('otevřený průvodce bez času je samostatný stav', () => {
+    const otevrel = radekZRezervace({
+      ...prazdnaRezervace('1', '2026-10-01T00:00:00.000Z'),
+      otevrenoPocet: 1,
+      casPrijezdu: null,
+    });
+    const neotevrel = radekZRezervace({
+      ...prazdnaRezervace('2', '2026-10-01T00:00:00.000Z'),
+      otevrenoPocet: 0,
+      casPrijezdu: null,
+    });
+    expect(otevrel.rozbalenText).toBe('Průvodce nerozbalen · chybí: čas, způsob příjezdu, pravidla');
+    expect(otevrel.rozbalen).toBe(false);
+    expect(neotevrel.rozbalenText).toBe(otevrel.rozbalenText);
   });
 
   it('kdo už odjel, je dole, nejbližší příjezd nahoře', () => {

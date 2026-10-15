@@ -86,6 +86,15 @@ export async function rozhodniSpam(
       await akce.presunout(zprava);
       for (const id of rozhodnuti.rezervace) {
         await poznamenej(store, id, VETA_SPAM, false);
+        try {
+          const rec = await store.getRezervace(id);
+          if (!rec) continue;
+          const { popisHosta, poznamenejUpozorneni, upozorniMajitele } = await import('./upozorneni');
+          const jak = await upozorniMajitele(store, `${popisHosta(rec)}: e-mail byl ve spamu`, `/prehled#${id}`);
+          await poznamenejUpozorneni(store, id, jak);
+        } catch {
+          /* upozornění nesmí shodit přesun */
+        }
       }
       await store.markMessage({
         messageId: klic,

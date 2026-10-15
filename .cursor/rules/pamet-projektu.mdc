@@ -20,6 +20,7 @@ Zapiš ho do `STAV-PRO-CLAUDE.md`, do sekce „Rozhodnutí majitele“ s datem. 
 - Nikdy nemaž ani hromadně nepřepisuj záznamy v Upstash. Kdo průvodce dostal, nesmí ho dostat znovu.
 
 ## Nejdůležitější rozhodnutí (podrobně v STAV-PRO-CLAUDE.md)
+- Co majitel zadá ručně v přehledu, je nejsvatější. Automat to nikdy nepřepíše. Ani check-in, ani e-mail z Better Hotelu, ani potvrzení z info@, ani host v průvodci, ani oprava starých řádků. Platí pro telefon a druhé číslo, čas příjezdu, odkaz na check-in, jméno, e-mail, apartmán, termín, počet osob, jazyk, předání, městský poplatek a kdo ho vybral. Jiná hodnota se jen ukáže jako poznámka s tlačítkem Použít.
 - E-mail hostovi obsahuje jen souhrn pobytu a tlačítko na průvodce. Kódy, WiFi ani parkování v něm nejsou.
 - Pozdrav je jen křestní jméno (`GUEST_NAME`). Nikdy ne pane/paní a nikdy ne příjmení.
 - `GUEST_SURNAME` slouží jen pro přehled.
@@ -27,7 +28,7 @@ Zapiš ho do `STAV-PRO-CLAUDE.md`, do sekce „Rozhodnutí majitele“ s datem. 
 - Zahrada: V1, V4, V5 mají pevný kód, V2 a V3 PIN apartmánu.
 - WiFi je pevná a nikdy neblokuje odeslání.
 - Číslo pro hosty je +420 604 692 573. Je v průvodci a v e-mailu. Na veřejném webu nikdy. Soukromé číslo majitele v projektu není.
-- Čas příjezdu i žádost o stání host posílá SMS nebo přes WhatsApp na 604 692 573. Autem v jedné zprávě: čas, stání, telefon na bránu, SPZ.
+- Čas příjezdu, telefon pro bránu a SPZ host vyplní v průvodci. Bez času další kroky neuvidí. Autem bez telefonu pro bránu neuvidí cestu na parkování. Asi 15 minut před příjezdem napíše na +420 604 692 573.
 - Bránu otevírá jen klasický hovor.
 - Předání apartmánu je osobní. Kódy aktivujeme až po předání.
 - Městský poplatek: box jen u rezervací vytvořených od 5. 10. 2026 (BH `DATE`). Neznámé datum = box ukázat.

@@ -1,6 +1,8 @@
 import { duvod, problemEmailu } from './chyby';
 import { nightsBetween } from './dates';
+import { oznacRucni, vynechRucni } from './rucni-pole';
 import { jazykZPredvolby, normalizujTelefon } from './telefon';
+import type { RucniPole } from './store';
 import {
   prazdnaRezervace,
   type ProcessStore,
@@ -113,6 +115,9 @@ export async function doplnRezervaci(
   const cisloProJazyk = patch.telefonRezervace || prev?.telefonRezervace || null;
   if (cisloProJazyk && prazdne(prev?.jazyk)) patch.jazyk = jazykZPredvolby(cisloProJazyk);
 
+  const od = opts.stitek === 'info' ? 'potvrzeni' : 'rezervace';
+  const chraneny = prev ? vynechRucni(prev, patch, od) : patch;
+
   const nova = !prev;
   if (nova) {
     patch.stav = 'bez_checkinu' satisfies RezervaceStav;
@@ -121,16 +126,30 @@ export async function doplnRezervaci(
     if (opts.chybi?.length) patch.duvody = [duvod('neuplne', `Nepřečteno: ${opts.chybi.join(', ')}.`)];
   }
 
-  if (Object.keys(patch).length === 0) return { ok: true, nova: false };
+  if (Object.keys(chraneny).length === 0) return { ok: true, nova: false };
 
   const zaklad = prev ?? prazdnaRezervace(id, now);
   const rec: RezervaceRecord = {
     ...zaklad,
-    ...patch,
+    ...chraneny,
     rezervace: id,
     posledniPokus: now,
     historie: [...zaklad.historie, { cas: now, co: opts.historie }].slice(-40),
   };
+  if (opts.stitek === 'rucne') {
+    const pole: RucniPole[] = [];
+    if (chraneny.jmeno) pole.push('jmeno');
+    if (chraneny.emailHosta) pole.push('emailHosta');
+    if (chraneny.apartman) pole.push('apartman');
+    if (chraneny.prijezd) pole.push('prijezd');
+    if (chraneny.odjezd) pole.push('odjezd');
+    if (chraneny.noci) pole.push('noci');
+    if (chraneny.osob) pole.push('osob');
+    if (chraneny.jazyk) pole.push('jazyk');
+    if (chraneny.telefonRezervace) pole.push('telefonRezervace');
+    if (chraneny.checkinUrl) pole.push('checkinUrl');
+    if (pole.length) rec.rucniZnacky = oznacRucni(rec, pole, now);
+  }
   await store.setRezervace(id, rec);
   return { ok: true, nova };
 }

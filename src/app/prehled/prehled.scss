@@ -266,6 +266,68 @@
   font-weight: 700;
 }
 
+.ph-od-hosta {
+  margin-left: 0.35rem;
+  font-weight: 650;
+  color: #f0d78c;
+}
+
+.ph-chybi,
+.ph-rozbalen {
+  margin-top: 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.ph-chybi {
+  color: #ff8a80;
+}
+
+.ph-rozbalen {
+  color: #8dcea0;
+}
+
+.ph-brana {
+  margin-top: 0.35rem;
+  font-weight: 650;
+}
+
+.ph-brana--ne {
+  color: #f0a35e;
+}
+
+.ph-brana--ano {
+  color: #8dcea0;
+}
+
+.ph-prijezd {
+  margin-top: 0.35rem;
+  font-weight: 650;
+}
+
+.ph-soucet {
+  margin-top: 0.45rem;
+  display: grid;
+  gap: 0.12rem;
+  font-weight: 600;
+}
+
+.ph-soucet__kc {
+  white-space: nowrap;
+  font-weight: 750;
+}
+
+.ph-soucet__dovetek {
+  display: block;
+  color: var(--pv-muted);
+  font-weight: 450;
+}
+
+.ph-soucet__celkem {
+  margin-top: 0.15rem;
+  font-weight: 800;
+}
+
 .ph-poplatek-kratky {
   margin-top: 0.35rem;
   font-weight: 600;
@@ -311,7 +373,8 @@
   border-radius: 6px;
 }
 
-.ph-akce-spodek {
+.ph-akce-spodek,
+.ph-akce-skupiny {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
@@ -319,8 +382,43 @@
   margin-top: 0.55rem;
 }
 
-.ph-akce-spodek .ph-rozbal {
+.ph-akce-rada {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+  flex: 1 1 100%;
+}
+
+.ph-akce-spodek .ph-rozbal,
+.ph-akce-skupiny .ph-rozbal {
   margin-top: 0;
+}
+
+@media (min-width: 1100px) {
+  .ph-akce-skupiny {
+    flex-wrap: wrap;
+    gap: 0.55rem 0.85rem;
+  }
+
+  .ph-akce-rada {
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+  }
+}
+
+.ph a.ph-hostuv-pruvodce {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: var(--color-gold);
+  color: #1c1712;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .ph button.ph-predano {
@@ -332,8 +430,18 @@
   font-weight: 500;
 }
 
+.ph button.ph-predano-vyrazne {
+  min-height: 2.6rem;
+  padding: 0.45rem 1.05rem;
+  border-color: #1f7a3a;
+  background: #1f7a3a;
+  color: #f3fff6;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
 .ph-predano-dotaz {
-  flex-basis: 100%;
+  flex: 1 1 100%;
   margin-top: 0.2rem;
   padding: 0.55rem 0.7rem;
   border: 1px solid var(--pv-line);
@@ -356,7 +464,58 @@
   font-size: 1.05rem;
 }
 
-.ph-akce-spodek a.ph-kontakt {
+.ph-znacky {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+}
+
+.ph-souhlas-zneni {
+  margin: 0.7rem 0;
+
+  p {
+    margin: 0.25rem 0;
+    white-space: pre-line;
+    text-align: start;
+  }
+
+  p:first-child {
+    font-weight: 750;
+  }
+}
+
+.ph-znacka {
+  display: inline-block;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ph-znacka--ano {
+  background: #1f7a3a;
+  color: #f3fff6;
+}
+
+.ph-znacka--ne {
+  background: #9f1239;
+  color: #fff;
+}
+
+.ph button.ph-zaplatit {
+  min-height: 2.2rem;
+  border-color: #9f1239;
+  background: #9f1239;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.ph-akce-spodek a.ph-kontakt,
+.ph-akce-rada a.ph-kontakt {
   border-radius: 6px;
 }
 
@@ -631,6 +790,63 @@
   margin-top: 0.35rem;
 }
 
+.ph-pole-rada {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.ph-pole-rada input {
+  flex: 1;
+  min-width: 0;
+}
+
+.ph-ulozit,
+.ph-push-vyp {
+  border: 0;
+  border-radius: 999px;
+  background: #c4a46a;
+  color: #1c1712;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.7rem;
+  white-space: nowrap;
+}
+
+.ph-ulozeno {
+  color: #8dcea0;
+  font-size: 0.85rem;
+}
+
+.ph-neulozeno {
+  color: #ff8a80;
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.ph-navrh {
+  margin: 0.15rem 0;
+  color: var(--pv-muted);
+  font-size: 0.9rem;
+}
+
+.ph-navrh button {
+  border: 0;
+  background: transparent;
+  color: #e7c98a;
+  font: inherit;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.ph-push {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-top: 0.4rem;
+}
+
 .ph-historie {
   grid-column: 1 / -1;
   margin: 0.2rem 0 0;
@@ -651,7 +867,7 @@
   .ph-row {
     display: flex;
     flex-direction: column;
-    max-width: 40rem;
+    max-width: 72rem;
   }
 
   .ph-cell::before {

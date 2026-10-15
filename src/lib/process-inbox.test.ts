@@ -377,6 +377,67 @@ Original-Message-ID: <x>
     expect(po?.telefonRezervace).toBe('+420777123456');
   });
 
+  it('ručně uložený telefon přežije check-in i další e-mail z Better Hotelu', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const { prazdnaRezervace } = await import('./store');
+    const { zapisMajitele } = await import('./rucni-pole');
+    const store = tmpStore();
+    const id = '100000009';
+    const zaklad = zapisMajitele(
+      {
+        ...prazdnaRezervace(id, '2026-10-14T08:00:00.000Z'),
+        stav: 'odeslano',
+        apartman: 'V1',
+        prijezd: '2026-11-20',
+        odjezd: '2026-11-22',
+        noci: 2,
+        osob: 2,
+        jazyk: 'cs',
+        jmeno: 'Jana Malá',
+        emailHosta: 'jana.mala@example.com',
+        accessPin: '1234',
+        telefon: '+420777000111',
+        telefonWa: '420777000111',
+        telefonRezervace: '+420777000222',
+        telefonRezervaceWa: '420777000222',
+      },
+      ['telefon', 'telefonRezervace'],
+      {},
+      'Telefon uložen',
+    );
+    await store.setRezervace(id, zaklad);
+    const checkin = BLOCK.replace('REZERVACE: 120260530', `REZERVACE: ${id}`).replace(
+      'EMAIL: host@example.com',
+      'EMAIL: jana.mala@example.com\nGUEST_NAME: Jana\nGUEST_SURNAME: Malá\nGUEST_PHONE: +420777999888\nDATE: 6.10.2026',
+    );
+    await processOneMail(
+      mail({
+        messageId: 'rucni-checkin@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com',
+        text: checkin,
+      }),
+      store,
+    );
+    const poCheckinu = await store.getRezervace(id);
+    expect(poCheckinu?.telefon).toBe('+420777000111');
+    expect(poCheckinu?.navrhy.some((n) => n.pole === 'telefon' && n.od === 'check-in')).toBe(true);
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+
+    await processOneMail(
+      interni({
+        messageId: 'rucni-rez@test',
+        subject: NOVA.replace('100000001', id),
+        text: TELO.replaceAll('100000001', id).replace('777 123 456', '777 555 666'),
+      }),
+      store,
+    );
+    const poRezervaci = await store.getRezervace(id);
+    expect(poRezervaci?.telefon).toBe('+420777000111');
+    expect(poRezervaci?.telefonRezervace).toBe('+420777000222');
+    expect(poRezervaci?.navrhy.some((n) => n.pole === 'telefonRezervace')).toBe(true);
+  });
+
   it('zrušení zastaví odeslání průvodce', async () => {
     const { processOneMail } = await import('./process-inbox');
     const store = tmpStore();
@@ -469,7 +530,8 @@ Original-Message-ID: <x>
     const po = await store.getRezervace('120260530');
     expect(po?.stav).toBe('odeslano');
     expect(po?.telefonRezervace).toBe('+420777123456');
-    expect(po?.apartman).toBe('V5');
+    expect(po?.apartman).toBe('V3');
+    expect(po?.navrhy.some((n) => n.pole === 'apartman' && n.hodnota === 'V5')).toBe(true);
   });
 
   it('přeposlaná nová rezervace z info@ založí řádek a hostovi nic nepošle', async () => {

@@ -1,5 +1,6 @@
 import { sOdkazem } from './prehled-odkazy';
 import { dnesVPraze, posunDen, radekZRezervace, seradRadky, type PrehledRadek } from './prehled';
+import { verzeAktualni } from './pravidla-verze';
 import { prazdnaRezervace, type RezervaceRecord } from './store';
 
 /** Jen místní náhled přehledu. Na ostrém webu se tahle data neukážou. */
@@ -24,6 +25,8 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     vytvoreno: '2026-10-06',
     poplatek: 'ano',
     stav: 'odeslano',
+    rucniZnacky: [{ pole: 'telefon', cas: '2026-10-14T08:00:00.000Z' }],
+    navrhy: [{ pole: 'telefon', od: 'check-in', hodnota: '+420777999000' }],
     telefon: '+420777111222',
     telefonWa: '420777111222',
     telefonPuvodni: '777 111 222',
@@ -31,7 +34,13 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     telefonRezervaceWa: '420777123456',
     telefonRezervacePuvodni: '777 123 456',
     zdroj: 'Booking.com',
-    casPrijezdu: null,
+    casPrijezdu: '16:30',
+    casZadalHost: true,
+    souhlasPravidel: { kdy: '2026-10-14T12:15:00.000Z', jazyk: 'cs', verze: verzeAktualni() },
+    zpusobPrijezdu: 'auto',
+    telefonBrana: '+420777111222',
+    spz: '1C23456',
+    branaRegistrovano: null,
     otevrenoPocet: 3,
     otevrenoPoprve: '2026-10-10T12:32:00.000Z',
     otevrenoNaposled: '2026-10-10T12:32:00.000Z',
@@ -107,6 +116,8 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     otevrenoPoprve: '2026-10-10T09:00:00.000Z',
     otevrenoNaposled: '2026-10-10T09:00:00.000Z',
     predano: '2026-10-13T13:42:00.000Z',
+    zaplaceno: '2026-10-13T13:50:00.000Z',
+    poplatekVybral: 'nikol',
   };
 
   const bezCasuPozdeji: RezervaceRecord = {

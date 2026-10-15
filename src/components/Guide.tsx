@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import QRCode from 'qrcode';
 import {
   HOUSE_ADDRESS,
@@ -30,27 +30,44 @@ import type { KodRadek } from '@/lib/kody-pruvodce';
 import type { GuideSecrets } from '@/lib/secrets';
 import * as TX from '@/lib/texts';
 import { ukazatPoplatek, type PoplatekStav } from '@/lib/poplatek';
-import type { AptId, GuideLang, LText, Prijezd, StayFacts } from '@/lib/types';
+import { DOTAZ_PREDANI_MS } from '@/lib/pruvodce-majitel';
+import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
+import { pruvodceRozbalen, urovenPruvodce, type UrovenPruvodce } from '@/lib/vstup-pruvodce';
+import * as VT from '@/lib/vstup-texty';
+import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import './guide.scss';
 
-const KOD_TECKY = '••••';
+const SBALENE = new Set(['wifi', 'zahrada', 'posezeni-venku', 'televize', 'pravidla', 'odjezd']);
 
-/** Stejné pořadí jako codesOrder. Tady nesmí být čísla kódů. */
-function poradiKodu(apt: AptId): Array<'dum' | 'apt' | 'zahrada'> {
-  if (apt === 'V2' || apt === 'V3') return ['dum', 'zahrada', 'apt'];
-  return ['dum', 'apt', 'zahrada'];
+function SbalenaSekce({
+  ano,
+  nadpis,
+  veta,
+  children,
+}: {
+  ano: boolean;
+  nadpis: string;
+  veta: string;
+  children: ReactNode;
+}) {
+  if (!ano) return <>{children}</>;
+  return (
+    <details className="pv-sbal">
+      <summary>
+        <span className="pv-sbal__text">
+          <span className="pv-sbal__nadpis">{nadpis}</span>
+          {veta ? <span className="pv-sbal__veta">{veta}</span> : null}
+        </span>
+      </summary>
+      {children}
+    </details>
+  );
 }
 
-function stitekKodu(kind: 'dum' | 'apt' | 'zahrada'): LText {
-  if (kind === 'dum') return TX.kodDumLabel;
-  if (kind === 'apt') return TX.kodAptLabel;
-  return TX.kodZahradaLabel;
-}
-
-function renderPhoneText(raw: string) {
+function renderPhoneText(raw: string, zari = false) {
   return phoneParts(raw).map((part, i) =>
     part.href ? (
-      <a key={i} className="pv-phone" href={part.href}>
+      <a key={i} className={zari ? 'pv-phone pv-phone--zari' : 'pv-phone'} href={part.href}>
         {part.text.replace(/ /g, '\u00a0')}
       </a>
     ) : (
@@ -70,14 +87,80 @@ function Klic() {
   );
 }
 
-function Mrizka() {
-  const klavesy = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'];
+function ZamekPinu() {
   return (
-    <div className="pv-mrizka" aria-hidden="true">
-      {klavesy.map((klavesa) => (
-        <span key={klavesa}>{klavesa}</span>
-      ))}
-    </div>
+    <svg className="pv-ikona pv-ikona--zamek" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M7 10V7a5 5 0 0 1 10 0v3h1.2A1.8 1.8 0 0 1 20 11.8v8.4A1.8 1.8 0 0 1 18.2 22H5.8A1.8 1.8 0 0 1 4 20.2v-8.4A1.8 1.8 0 0 1 5.8 10H7zm2 0h6V7a3 3 0 0 0-6 0v3z"
+      />
+    </svg>
+  );
+}
+
+function Fajfka() {
+  return (
+    <svg className="pv-ikona pv-ikona--fajfka" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.5-4.5 1.4 1.4-5.9 5.9z"
+      />
+    </svg>
+  );
+}
+
+function SipkaDolu() {
+  return (
+    <svg className="pv-piny__sipka-ikona" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+      <path fill="currentColor" d="M12 16.5 5.5 10l1.4-1.4L12 13.7l5.1-5.1L18.5 10z" />
+    </svg>
+  );
+}
+
+function PinyNahore({ lang, kody, hotovo }: { lang: GuideLang; kody: KodRadek[] | null; hotovo: boolean }) {
+  const tt = (map: Parameters<typeof t>[0]) => t(map, lang);
+  if (kody && kody.length) {
+    return (
+      <section className="pv-piny pv-piny--predano" id="vase-piny" lang={lang}>
+        <h2>
+          <Fajfka />
+          <span>{tt(VT.pinyNadpis)}</span>
+        </h2>
+        <dl className="pv-codes">
+          {kody.map((radek) => {
+            const missing = radek.value === 'DOPLNIT';
+            return (
+              <div className="pv-codes__row" key={radek.kind}>
+                <dt>{radek.label}</dt>
+                <dd className={missing ? 'pv-doplnit' : undefined}>
+                  <strong className="pv-phone pv-kod-hodnota pv-piny__hodnota">
+                    {!missing && radek.kind === 'dum' ? <Klic /> : null}
+                    {radek.value}
+                    {!missing && radek.kind === 'dum' ? <Klic /> : null}
+                  </strong>
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+      </section>
+    );
+  }
+  return (
+    <>
+      <section className={`pv-piny${hotovo ? ' pv-piny--hotovo' : ''}`} lang={lang}>
+        <h2>
+          {hotovo ? <Fajfka /> : <ZamekPinu />}
+          <span>{tt(VT.pinyNadpis)}</span>
+        </h2>
+        <p>{hotovo ? tt(VT.pinyHotovo) : tt(VT.pinyCekaji)}</p>
+      </section>
+      {hotovo ? null : (
+        <a className="pv-piny__sipka" href="#pv-vstup">
+          <SipkaDolu />
+        </a>
+      )}
+    </>
   );
 }
 
@@ -96,15 +179,20 @@ export type GuideProps = {
   /** Chybí nebo neznámo = box se ukáže. Ne = schovaný. */
   poplatek?: PoplatekStav;
   vikend?: boolean;
-  /** Výchozí příjezd (dev náhled); host na token stránce volí sám. */
+  /** Výchozí příjezd, jen když stránka údaje hosta nepředá. */
   initialPrijezd?: Prijezd | null;
+  /** Údaje z rezervace. Když jsou, klik v průvodci další kroky sám neotevře. */
+  vstup?: {
+    token: string | null;
+    /** Náhled majitele. Políčka jen ke čtení, nic se neukládá. */
+    cteni?: boolean;
+    uroven: UrovenPruvodce;
+    hodnoty: VstupHodnoty;
+    predvyplneny: string;
+  };
+  onVstup?: (next: VstupHodnoty) => void;
   showDevBar?: boolean;
-  onDevChange?: (next: {
-    apt: AptId;
-    lang: GuideLang;
-    vikend: boolean;
-    prijezd: Prijezd | null;
-  }) => void;
+  onDevChange?: (next: { apt: AptId; lang: GuideLang; vikend: boolean; prijezd: Prijezd | null }) => void;
 };
 
 export function Guide({
@@ -113,20 +201,43 @@ export function Guide({
   secrets,
   stay,
   kody = null,
-  tvar = 'dnes',
   poplatek = 'neznamo',
   vikend = false,
   initialPrijezd = null,
+  vstup,
+  onVstup,
   showDevBar = false,
   onDevChange,
 }: GuideProps) {
   const [prijezd, setPrijezd] = useState<Prijezd | null>(initialPrijezd);
+  const [lokalne, setLokalne] = useState<VstupHodnoty | null>(null);
   const [wifiQr, setWifiQr] = useState<string | null>(null);
   const [gardenQr, setGardenQr] = useState<string | null>(null);
+  const [ziveKody, setZiveKody] = useState<KodRadek[] | null>(kody ?? null);
+  const hodnoty = vstup?.hodnoty ?? lokalne ?? { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false };
+  const uroven: UrovenPruvodce = vstup
+    ? vstup.uroven
+    : urovenPruvodce({
+        cas: hodnoty.cas,
+        zpusob: hodnoty.zpusob,
+        telefonBrana: hodnoty.telefon || null,
+        spz: hodnoty.spz || null,
+        spzPujcene: hodnoty.pujcene,
+        souhlas: hodnoty.souhlas,
+        odemceno: false,
+      });
+  const zUrovne: Prijezd | null =
+    uroven === 'pesky' ? 'pesky' : uroven === 'auto' || uroven === 'cele' ? 'auto' : null;
+  const prijezdSekci = vstup ? zUrovne : zUrovne ?? prijezd;
   const aptRec = useMemo(() => aptRecord(apt), [apt]);
-  const sections = useMemo(() => visibleSekce(apt, prijezd), [apt, prijezd]);
+  const sections = useMemo(
+    () => visibleSekce(apt, prijezdSekci).filter((s) => s.id !== 'zadost-o-parkovani'),
+    [apt, prijezdSekci],
+  );
+  const kreslene = useMemo(() => (prijezdSekci ? sections : []), [prijezdSekci, sections]);
+  const ukazWifi = kreslene.some((s) => s.id === 'wifi');
 
-  const gardenCode = kody?.find((radek) => radek.kind === 'zahrada')?.value ?? '';
+  const gardenCode = ziveKody?.find((radek) => radek.kind === 'zahrada')?.value ?? '';
 
   const fill = (raw: string) =>
     fillPlaceholders(raw, {
@@ -148,7 +259,7 @@ export function Guide({
   }, [initialPrijezd]);
 
   useEffect(() => {
-    if (!prijezd) {
+    if (!ukazWifi) {
       setWifiQr(null);
       setGardenQr(null);
       return;
@@ -185,19 +296,39 @@ export function Guide({
     return () => {
       cancelled = true;
     };
-  }, [prijezd, apt, aptRec.wifi.ssid, secrets]);
+  }, [ukazWifi, apt, aptRec.wifi.ssid, secrets]);
 
-  const choose = (mode: Prijezd) => {
-    setPrijezd(mode);
-    onDevChange?.({ apt, lang, vikend, prijezd: mode });
-  };
+  useEffect(() => {
+    setZiveKody(kody ?? null);
+  }, [kody]);
 
-  const reset = () => {
-    setPrijezd(null);
-    onDevChange?.({ apt, lang, vikend, prijezd: null });
-  };
+  useEffect(() => {
+    const token = vstup?.token;
+    if (!token || vstup?.cteni || ziveKody) return;
+    let zruseno = false;
+    const dotaz = () => {
+      fetch('/api/pruvodce/stav', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token }),
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: { predano?: boolean; kody?: KodRadek[] | null } | null) => {
+          if (zruseno || !data?.predano || !Array.isArray(data.kody) || data.kody.length === 0) return;
+          setZiveKody(data.kody);
+        })
+        .catch(() => undefined);
+    };
+    window.addEventListener('online', dotaz);
+    const id = window.setInterval(dotaz, DOTAZ_PREDANI_MS);
+    return () => {
+      zruseno = true;
+      window.clearInterval(id);
+      window.removeEventListener('online', dotaz);
+    };
+  }, [vstup?.token, vstup?.cteni, ziveKody]);
 
-  const wifiSekce = sections.find((s) => s.id === 'wifi');
+  const wifiSekce = kreslene.find((s) => s.id === 'wifi');
   const popisky = wifiSekce?.popisky_wifi ?? {};
 
   const sitePath = (path: string) => {
@@ -208,7 +339,7 @@ export function Guide({
     return `https://vivienapartments.cz/${lang}${p}`;
   };
   const quizUrl = sitePath(TX.psApartmany.quizPath);
-  const kontaktIndex = sections.findIndex((s) => s.id === 'kontakt');
+  const kontaktIndex = kreslene.findIndex((s) => s.id === 'kontakt');
 
   const renderTipsSection = (num: number) => (
     <li
@@ -220,6 +351,15 @@ export function Guide({
         <span className="pv-flow__num">{num}</span>
       </div>
       <div className="pv-flow__card">
+        <details className="pv-sbal">
+          <summary>
+            <span className="pv-sbal__text">
+              <span className="pv-sbal__nadpis">
+                {num}. {tt(TX.tipyNaWebu.title)}
+              </span>
+              <span className="pv-sbal__veta">{tt(TX.tipyNaWebu.lead)}</span>
+            </span>
+          </summary>
         <div className="pv-flow__card-head">
           <h2 className="pv-flow__title">
             {num}. {tt(TX.tipyNaWebu.title)}
@@ -241,6 +381,7 @@ export function Guide({
             </li>
           ))}
         </ul>
+        </details>
       </div>
     </li>
   );
@@ -255,6 +396,13 @@ export function Guide({
         <span className="pv-flow__num">{num}</span>
       </div>
       <div className="pv-flow__card">
+        <details className="pv-sbal">
+          <summary>
+            <span className="pv-sbal__text">
+              <span className="pv-sbal__nadpis">{tt(TX.psApartmany.title)}</span>
+              <span className="pv-sbal__veta">{tt(TX.psApartmany.text)}</span>
+            </span>
+          </summary>
         <div className="pv-ps__box">
           <p className="pv-kicker">{tt(TX.psApartmany.kicker)}</p>
           <h2 className="pv-flow__title">{tt(TX.psApartmany.title)}</h2>
@@ -265,6 +413,7 @@ export function Guide({
             </a>
           </p>
         </div>
+        </details>
       </div>
     </li>
   );
@@ -341,70 +490,30 @@ export function Guide({
       ) : null}
 
       <main className="pv">
-        <section className={`pv-predani${kody ? ' pv-predani--hotovo' : ''}`} lang={lang}>
-          {kody ? (
-            <p className="pv-predani__text">
-              {tt(TX.predaniHotovo)} <a href="#vase-kody">{tt(TX.predaniHotovoOdkaz)}</a>
-            </p>
-          ) : (
-            <>
-              <h2>{tt(TX.predaniNadpis)}</h2>
-              <p className="pv-predani__text">{tt(TX.predaniText)}</p>
-            </>
-          )}
-        </section>
-        <section className="pv-cas" lang={lang}>
-          <h2>{tt(TX.casPrijezduNadpis)}</h2>
-          <p className="pv-cas__text">{renderPhoneText(tt(TX.casPrijezduText))}</p>
-          <p className="pv-cas__checkin">{tt(TX.casPrijezduCheckin)}</p>
-          <div className="pv-cas__actions">
-            <a className="pv-cas__btn" href="sms:+420604692573">
-              {tt(TX.casPrijezduSms)}
-            </a>
-            <a
-              className="pv-cas__btn"
-              href="https://wa.me/420604692573"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              {tt(TX.casPrijezduWhatsapp)}
-            </a>
-          </div>
-        </section>
-        <section className="pv-hub">
-          <p className="pv-kicker">{tt(TX.hub.kicker)}</p>
-          <h2 className="pv-hub__title">{tt(TX.hub.title)}</h2>
-          <p className="pv-hub__lead">{tt(TX.hub.lead)}</p>
-          <div className="pv-hub__choices">
-            <button
-              type="button"
-              className={`pv-hub__choice${prijezd === 'auto' ? ' pv-hub__choice--on' : ''}`}
-              onClick={() => choose('auto')}
-            >
-              <span className="pv-hub__choice-kicker">{tt(TX.hub.autoKicker)}</span>
-              <span className="pv-hub__choice-title">{tt(TX.hub.autoTitle)}</span>
-              <span className="pv-hub__choice-text">{tt(TX.hub.autoText)}</span>
-            </button>
-            <button
-              type="button"
-              className={`pv-hub__choice${prijezd === 'pesky' ? ' pv-hub__choice--on' : ''}`}
-              onClick={() => choose('pesky')}
-            >
-              <span className="pv-hub__choice-kicker">{tt(TX.hub.walkKicker)}</span>
-              <span className="pv-hub__choice-title">{tt(TX.hub.walkTitle)}</span>
-              <span className="pv-hub__choice-text">{tt(TX.hub.walkText)}</span>
-            </button>
-          </div>
-          {prijezd ? (
-            <button type="button" className="pv-hub__reset" onClick={reset}>
-              {tt(TX.hub.reset)}
-            </button>
-          ) : null}
-        </section>
+        <PinyNahore lang={lang} kody={ziveKody} hotovo={pruvodceRozbalen({
+          cas: hodnoty.cas,
+          zpusob: hodnoty.zpusob,
+          telefonBrana: hodnoty.telefon || null,
+          spz: hodnoty.spz || null,
+          spzPujcene: hodnoty.pujcene,
+          souhlas: hodnoty.souhlas,
+        })} />
+        <VstupHosta
+          lang={lang}
+          predano={Boolean(ziveKody)}
+          token={vstup?.cteni ? null : (vstup?.token ?? null)}
+          cteni={Boolean(vstup?.cteni)}
+          hodnoty={hodnoty}
+          predvyplneny={vstup?.predvyplneny ?? ''}
+          onUlozeno={(next) => {
+            if (vstup) onVstup?.(next);
+            else setLokalne(next);
+          }}
+        />
 
-        {prijezd ? (
+        {kreslene.length ? (
           <ol className="pv-flow pv-flow--axis" aria-label="Kroky průvodce">
-            {sections.flatMap((s, si) => {
+            {kreslene.flatMap((s, si) => {
               const insertBefore =
                 kontaktIndex >= 0 && s.id === 'kontakt'
                   ? [renderTipsSection(kontaktIndex + 1)]
@@ -427,6 +536,20 @@ export function Guide({
                     <span className="pv-flow__num">{displayNum}</span>
                   </div>
                   <div className="pv-flow__card">
+                    <SbalenaSekce
+                      ano={SBALENE.has(s.id)}
+                      nadpis={`${displayNum}. ${sectionNavLabel(s, lang)}`}
+                      veta={
+                        s.id === 'wifi' && popisky['nad_nadpisem']
+                          ? tt(popisky['nad_nadpisem'])
+                          : (() => {
+                              const prvni = kroky[0]?.text ? tt(kroky[0].text) : '';
+                              const tecka = prvni.indexOf('.');
+                              if (tecka > 0 && tecka < 180) return prvni.slice(0, tecka + 1);
+                              return prvni.slice(0, 140);
+                            })()
+                      }
+                    >
                     {s.id === 'zadost-o-parkovani' ? (
                       <>
                         {kroky.map((k) => (
@@ -535,50 +658,6 @@ export function Guide({
                           </p>
                         </article>
                         ) : null}
-                        <article className="pv-step pv-step--note" id="vase-kody">
-                          <p className="pv-kicker">{tt(TX.ui.entry)}</p>
-                          <h3>{tt(TX.vstupNadpis)}</h3>
-                          {kody ? (
-                            <>
-                              <p>{tt(TX.vstupText)}</p>
-                              <dl className="pv-codes">
-                                {kody.map((radek) => {
-                                  const missing = radek.value === 'DOPLNIT';
-                                  const plny = tvar === 'plny' && !missing;
-                                  return (
-                                    <div className="pv-codes__row" key={radek.kind}>
-                                      <dt>{radek.label}</dt>
-                                      <dd className={missing ? 'pv-doplnit' : undefined}>
-                                        <strong className="pv-phone pv-kod-hodnota">
-                                          {!missing && radek.kind === 'dum' ? <Klic /> : null}
-                                          {radek.value}
-                                          {!missing && radek.kind === 'dum' ? <Klic /> : null}
-                                        </strong>
-                                        {plny && radek.kind !== 'dum' ? <Mrizka /> : null}
-                                      </dd>
-                                    </div>
-                                  );
-                                })}
-                              </dl>
-                            </>
-                          ) : (
-                            <>
-                              <dl className="pv-codes">
-                                {poradiKodu(apt).map((kind) => (
-                                  <div className="pv-codes__row" key={kind}>
-                                    <dt>{tt(stitekKodu(kind))}</dt>
-                                    <dd>
-                                      <strong className="pv-phone pv-kod-hodnota pv-kod-tecky" aria-hidden="true">
-                                        {KOD_TECKY}
-                                      </strong>
-                                    </dd>
-                                  </div>
-                                ))}
-                              </dl>
-                              <div className="pv-kody-cekaji">{tt(TX.kodyCekaji)}</div>
-                            </>
-                          )}
-                        </article>
                       </>
                     ) : s.id === 'brana-parkoviste' ? (
                       <>
@@ -588,23 +667,34 @@ export function Guide({
                           </h2>
                         </div>
                         <div className={vikend ? 'pv-sec--weekend' : undefined}>
-                          {kroky.map((k, i) => (
-                            <article
-                              key={k.id}
-                              className={`pv-step${k.typ === 'upozorneni' ? ' pv-step--hi' : ''}`}
-                            >
-                              <p className="pv-kicker">{tt(TX.ui.step)} {stepLabel(i)}</p>
-                              <h3>{tt(k.nadpis)}</h3>
-                              {tt(k.text) ? <p>{renderPhoneText(tt(k.text))}</p> : null}
-                              {k.body?.length ? (
-                                <ul>
-                                  {k.body.map((b, bi) => (
-                                    <li key={bi}>{tt(b)}</li>
-                                  ))}
-                                </ul>
-                              ) : null}
-                            </article>
-                          ))}
+                          {kroky.map((k, i) => {
+                            const clanek = (
+                              <article
+                                key={k.id}
+                                className={`pv-step${k.typ === 'upozorneni' ? ' pv-step--hi' : ''}`}
+                              >
+                                <p className="pv-kicker">{tt(TX.ui.step)} {stepLabel(i)}</p>
+                                <h3>{tt(k.nadpis)}</h3>
+                                {tt(k.text) ? <p>{renderPhoneText(tt(k.text), k.id === 'brana-otevreno')}</p> : null}
+                                {k.body?.length ? (
+                                  <ul>
+                                    {k.body.map((b, bi) => (
+                                      <li key={bi}>{tt(b)}</li>
+                                    ))}
+                                  </ul>
+                                ) : null}
+                              </article>
+                            );
+                            if (k.id !== 'brana-problem') return clanek;
+                            return (
+                              <details key={k.id} className="pv-sbal">
+                                <summary>
+                                  <span className="pv-sbal__nadpis">{tt(k.nadpis)}</span>
+                                </summary>
+                                {clanek}
+                              </details>
+                            );
+                          })}
                         </div>
                       </>
                     ) : s.id === 'pesky-parkoviste-dum' ? (
@@ -892,7 +982,27 @@ export function Guide({
                                   </figure>
                                 ) : null}
                                 <div>
-                                  {tt(k.text) ? <p>{renderPhoneText(tt(k.text))}</p> : null}
+                                  {tt(k.text) ? (
+                                    k.id === 'casy' ? (
+                                      <p className="pv-casy">
+                                        {tt(k.text)
+                                          .split('\n')
+                                          .filter(Boolean)
+                                          .map((radek) => (
+                                            <span key={radek}>{radek}</span>
+                                          ))}
+                                      </p>
+                                    ) : k.id === 'kontakt' ? (
+                                      <p className="pv-kontakt">
+                                        {renderPhoneText(tt(k.text).split(' · ')[0] || '')}
+                                        {tt(k.text).includes(' · ') ? (
+                                          <span className="pv-kontakt__mail">{tt(k.text).split(' · ')[1]}</span>
+                                        ) : null}
+                                      </p>
+                                    ) : (
+                                      <p>{renderPhoneText(tt(k.text))}</p>
+                                    )
+                                  ) : null}
                                   {k.id === 'z3' && gardenCode ? (
                                     <p
                                       className={`pv-step--note${gardenCode.trim() === 'DOPLNIT' ? ' pv-doplnit' : ''}`}
@@ -914,6 +1024,7 @@ export function Guide({
                         })}
                       </>
                     )}
+                    </SbalenaSekce>
                   </div>
                 </li>
               );

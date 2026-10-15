@@ -57,9 +57,8 @@ function zaznam(id: string, prijezd: string | null, odjezd: string | null, extra
 describe('kódy až po předání', () => {
   it('nepředáno: v HTML není kód domu, apartmánu ani zahrady', () => {
     const html = htmlPruvodce(false);
-    expect(html).toContain('Zobrazí se po osobním předání apartmánu.');
-    expect(html).toContain('Vstup dům');
-    expect(html).toContain('••••');
+    expect(html).toContain('Tady budou vaše PINy.');
+    expect(html).not.toContain('Vstup dům');
     expect(html).not.toContain(DUM);
     expect(html).not.toContain(PIN);
     expect(html).not.toContain('pv-klic');
@@ -76,12 +75,13 @@ describe('kódy až po předání', () => {
         kody: null,
       }),
     );
-    const box = html.indexOf('Apartmán vám předáme osobně');
-    const cas = html.indexOf('Napište nám, v kolik dorazíte');
-    expect(box).toBeGreaterThan(-1);
-    expect(cas).toBeGreaterThan(box);
-    expect(html).toContain('Kódy od domu a apartmánu se vám tady zobrazí až po předání a kontrole dokladů.');
+    expect(html).toContain('Bez času příjezdu se neubytujete');
+    expect(html).toContain('Tady budou vaše PINy.');
+    expect(html).not.toContain('Další kroky se ukážou');
+    expect(html).not.toContain('Napište nám, v kolik dorazíte');
+    expect(html).not.toContain('Ukážeme vám jen to, co potřebujete');
     expect(html).not.toContain('id="vase-kody"');
+    expect(html).not.toContain('id="pv-parkovani"');
   });
 
   it('po předání se box změní a vede ke kódům', () => {
@@ -94,9 +94,10 @@ describe('kódy až po předání', () => {
         kody: kodyProHosta(true, 'V1', PIN, 'cs'),
       }),
     );
-    expect(html).toContain('Apartmán je předaný.');
-    expect(html).toContain('href="#vase-kody"');
-    expect(html).toContain('Kódy najdete níže.');
+    expect(html).toContain('id="vase-piny"');
+    expect(html).toContain(PIN);
+    expect(html).not.toContain('Apartmán je předaný.');
+    expect(html).not.toContain('Kódy najdete níže.');
     expect(html).not.toContain('<h2>Apartmán vám předáme osobně</h2>');
   });
 

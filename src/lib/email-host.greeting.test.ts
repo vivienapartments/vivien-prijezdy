@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildGuestEmail, greetingLine } from './email-host';
+import { buildGuestEmail, EMAIL_STARA_CS, greetingLine, skladbaEmailu } from './email-host';
 import { cleanGuestFirstName, parseVivienData } from './vivien-data';
 
 describe('greetingLine', () => {
@@ -68,16 +68,36 @@ KONEC`);
       guideUrl: 'http://127.0.0.1:3000/x',
       intendedTo: 'host@example.com',
     });
-    const veta = html.indexOf('Nejdůležitější je, abyste nám napsali, v kolik dorazíte');
+    expect(skladbaEmailu()).toBe('nova');
+    const box = html.indexOf('Nejdůležitější: ve vašem průvodci čekají vstupní PINy');
     const tlacitko = html.indexOf('background:#c9a84c;border-radius:28px');
-    expect(veta).toBeGreaterThan(-1);
-    expect(tlacitko).toBeGreaterThan(veta);
+    const pobyt = html.indexOf('Váš pobyt');
+    expect(box).toBeGreaterThan(-1);
+    expect(tlacitko).toBeGreaterThan(box);
+    expect(pobyt).toBeGreaterThan(tlacitko);
+    expect(html).toContain('bgcolor="#f6cfc6"');
+    expect(html).toContain('background-color:#f6cfc6');
+    expect(html).toContain('background-image:none');
+    expect(html).toContain('border:2px solid #c4554c');
+    expect(html).not.toContain('linear-gradient');
+    expect(html).toContain('border-radius:14px');
+    expect(html).toContain('color:#1c1210');
     expect(html).toContain('white-space:nowrap');
+    expect(html).toContain('display:block');
+    expect(html).toContain('+420&nbsp;604&nbsp;692&nbsp;573');
+    expect(html).toContain('+420&nbsp;702&nbsp;153&nbsp;573');
+    expect(html).toContain('posíláme vám průvodce příjezdem');
+    expect(html).toContain('VIVIEN je malý rodinný dům');
+    expect(html).toContain('Check-in je od');
+    expect(html).not.toContain('Napsat SMS');
+    expect(html).not.toContain('Otevřete ho tlačítkem níže.');
     expect(html).toContain('Nikol a rodina VIVIEN');
-    expect(text).toContain('Nejdůležitější je, abyste nám napsali, v kolik dorazíte');
-    expect(text).toContain('Najdete v něm cestu k nám, parkování, bránu a Wi-Fi.');
-    expect(text).toContain('Vstupní kódy se v něm zobrazí, až vám apartmán osobně předáme.');
+    expect(text).toContain('Nejdůležitější: ve vašem průvodci čekají vstupní PINy');
+    expect(text).toContain('posíláme vám průvodce příjezdem');
     expect(text).not.toContain('Wi-Fi a kódy');
+    expect(EMAIL_STARA_CS.uvod).toContain('připravili jsme pro vás krátkého průvodce');
+    expect(EMAIL_STARA_CS.box).toContain('Nejdůležitější je, abyste nám napsali');
+    expect(EMAIL_STARA_CS.podTlacitkem).toBe('Otevřete ho tlačítkem níže.');
     const predmet = 'DŮLEŽITÉ · Váš průvodce příjezdem, bez něj nezaparkujete ani nevejdete';
     expect(subject === predmet || subject === `[TEST] ${predmet}`).toBe(true);
     expect(html).toContain(`<title>${predmet}</title>`);

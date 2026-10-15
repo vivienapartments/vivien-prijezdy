@@ -4,7 +4,12 @@ import type { ProcessStore, RezervaceRecord, RezervaceStav } from './store';
 import { normalizujTelefon, textTelefonu } from './telefon';
 import type { AptId, GuideLang } from './types';
 import { LANG_LABELS } from './types';
+import { vetaNavrhu } from './rucni-pole';
+import type { RucniPole } from './store';
+import { chybejiciKroky, type ChybejiciKrok } from './vstup-pruvodce';
 import { zpravyMenu, type ZpravaMenu } from './whatsapp-zprava';
+import { zneniVerze } from './pravidla-verze';
+import { priplatekCasu, soucetVyjezdu } from './priplatek-prijezd';
 
 export const STARY_ZAZNAM = 'starý záznam';
 
@@ -60,6 +65,26 @@ export type PrehledRadek = {
   stitek: 'rucne' | 'info' | null;
   /** Čas předání. null = kódy v průvodci ještě nejsou. */
   predano: string | null;
+  /** Kdy host napsal, že je na místě. */
+  naMiste: string | null;
+  /** Ruční příplatek za čas. null = počítá se sám. */
+  priplatekRucni: number | null;
+  /** Čas, kdy byl vybraný městský poplatek. null = ještě není vybraný. */
+  zaplaceno: string | null;
+  poplatekVybral: 'ja' | 'nikol' | null;
+  vyjezdy: { id: string; kdy: string; castka: number }[];
+  souhlas: { kdy: string; jazyk: string; verze: string } | null;
+  souhlasZneni: string | null;
+  casZadalHost: boolean;
+  zpusobPrijezdu: 'auto' | 'pesky' | null;
+  telefonBrana: string | null;
+  spz: string | null;
+  spzPujcene: boolean;
+  branaRegistrovano: string | null;
+  pruvodceOdemcen: string | null;
+  rozbalen: boolean;
+  rozbalenText: string;
+  navrhy: { pole: RucniPole; veta: string; hodnota: string }[];
 };
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
@@ -149,6 +174,20 @@ export function poplatekKratky(stav: PoplatekStav, noci: number | null, osob: nu
   return '';
 }
 
+/** Štítek v přehledu. Kdo vybral městský poplatek. */
+export function textVybranehoPoplatku(kdy: string, kdo: 'ja' | 'nikol' | null): string {
+  const hod = hodinaPraha(kdy);
+  const cas = hod ? ` ${hod}` : '';
+  if (kdo === 'nikol') return `Poplatek vybrala Nikol${cas}`;
+  if (kdo === 'ja') return `Poplatek vybral já${cas}`;
+  return hod ? `Poplatek vybrán ${hod}` : 'Poplatek vybrán';
+}
+
+export function textSouhlasu(kdy: string): string {
+  const hod = hodinaPraha(kdy);
+  return hod ? `Souhlasí s pravidly ${hod}` : 'Souhlasí s pravidly';
+}
+
 /** Jedna červená věta ve sbaleném řádku, když se mail neodeslal, vrátil, nebo číslo není jisté. */
 export function vetaChyby(row: {
   stav: RezervaceStav;
@@ -179,6 +218,109 @@ export function textPoplatku(stav: PoplatekStav, noci: number | null, osob: numb
     return `Poplatek: ${kc} Kč (${noci} ${sklon(noci, 'noc', 'noci', 'nocí')} × ${osob} ${sklon(osob, 'osoba', 'osoby', 'osob')})`;
   }
   return 'Poplatek: ano';
+}
+
+export type RadekPlatby = {
+  nazev: string;
+  text: string;
+  dovetek: string;
+};
+
+export type RozpisPlateb = {
+  radky: RadekPlatby[];
+  soucet: number;
+  /** Všechny tři částky známe. Po domluvě a neznámý čas součet ještě není celý. */
+  uplny: boolean;
+  /** Když majitel zadal jinou částku, než vychází z času. */
+  navrhKc: number | null;
+};
+
+function kcText(kc: number): string {
+  return `${kc}\u00A0Kč`;
+}
+
+function radekCasu(v: { cas: string | null; skutecny?: string | null; rucni?: number | null }): {
+  text: string;
+  dovetek: string;
+  kc: number | null;
+  uplny: boolean;
+  navrhKc: number | null;
+} {
+  const odhad = priplatekCasu(v.cas);
+  const maSkutecny = Boolean(v.skutecny && v.skutecny.trim());
+  const skutecny = maSkutecny ? priplatekCasu(v.skutecny) : null;
+  const vypocet = skutecny ?? odhad;
+  const vypocetKc = vypocet.stav === 'castka' || vypocet.stav === 'nic' ? vypocet.kc : null;
+
+  if (typeof v.rucni === 'number' && Number.isFinite(v.rucni) && v.rucni >= 0) {
+    const kc = Math.round(v.rucni);
+    return {
+      text: kcText(kc),
+      dovetek: 'ručně',
+      kc,
+      uplny: true,
+      navrhKc: vypocetKc != null && vypocetKc !== kc ? vypocetKc : null,
+    };
+  }
+
+  if (vypocet.stav === 'neznamo') {
+    return { text: 'neznáme', dovetek: '', kc: null, uplny: false, navrhKc: null };
+  }
+  if (vypocet.stav === 'domluva') {
+    return { text: 'po domluvě', dovetek: '', kc: null, uplny: false, navrhKc: null };
+  }
+  const jinyOdhad =
+    maSkutecny && (odhad.stav === 'castka' || odhad.stav === 'nic') && odhad.kc !== vypocet.kc;
+  return {
+    text: kcText(vypocet.kc),
+    dovetek: jinyOdhad ? `odhad ${kcText(odhad.kc)}` : '',
+    kc: vypocet.kc,
+    uplny: true,
+    navrhKc: null,
+  };
+}
+
+/** Městský poplatek, příplatek za čas a další příjezd. Každá částka zvlášť a součet. */
+export function rozpisPlateb(v: {
+  poplatek: PoplatekStav;
+  noci: number | null;
+  osob: number | null;
+  cas: string | null;
+  /** Hodina skutečného příjezdu. Nejdřív Host je na místě, jinak Předáno. */
+  skutecny?: string | null;
+  /** Částka, kterou majitel uložil ručně. */
+  rucni?: number | null;
+  vyjezdy: { castka: number }[];
+}): RozpisPlateb {
+  const radky: RadekPlatby[] = [];
+  let soucet = 0;
+  let uplny = true;
+
+  if (v.poplatek === 'ne') {
+    radky.push({ nazev: 'Městský poplatek', text: 'ne', dovetek: '' });
+  } else if (v.poplatek === 'neznamo' || !v.noci || !v.osob || v.noci < 1 || v.osob < 1) {
+    radky.push({ nazev: 'Městský poplatek', text: 'neznámo', dovetek: '' });
+    uplny = false;
+  } else {
+    const kc = v.noci * v.osob * 50;
+    soucet += kc;
+    radky.push({
+      nazev: 'Městský poplatek',
+      text: kcText(kc),
+      dovetek: `${v.noci} ${sklon(v.noci, 'noc', 'noci', 'nocí')} × ${v.osob} ${sklon(v.osob, 'osoba', 'osoby', 'osob')}`,
+    });
+  }
+
+  const cas = radekCasu(v);
+  if (!cas.uplny) uplny = false;
+  if (cas.kc != null) soucet += cas.kc;
+  radky.push({ nazev: 'Příplatek za čas', text: cas.text, dovetek: cas.dovetek });
+
+  const vyjezd = soucetVyjezdu(v.vyjezdy);
+  soucet += vyjezd;
+  radky.push({ nazev: 'Další příjezd', text: kcText(vyjezd), dovetek: '' });
+
+  return { radky, soucet, uplny, navrhKc: cas.navrhKc };
 }
 
 const VLAJKY: Record<string, string> = {
@@ -395,6 +537,14 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
             : chybi('', stary));
   const otev = textOtevreni(rec.otevrenoPocet, rec.otevrenoNaposled);
   const telefony = telefonyPrehledu(rec);
+  const kroky = chybejiciKroky({
+    cas: rec.casPrijezdu,
+    zpusob: rec.zpusobPrijezdu,
+    telefonBrana: rec.telefonBrana,
+    spz: rec.spz,
+    spzPujcene: Boolean(rec.spzPujcene),
+    souhlas: Boolean(rec.souhlasPravidel),
+  });
   const zpravy = zpravyMenu({
     stav: rec.stav,
     lang: rec.jazyk,
@@ -405,6 +555,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     casPrijezdu: rec.casPrijezdu,
     prijezd: rec.prijezd,
     dnes: dnesVPraze(),
+    chybi: kroky,
+    branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
   });
   const poprve = rec.otevrenoPoprve ? casPraha(rec.otevrenoPoprve) : '';
   const naposled = rec.otevrenoNaposled ? casPraha(rec.otevrenoNaposled) : '';
@@ -458,7 +610,34 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     zprava: zpravy.find((z) => z.vychozi)?.text || '',
     stitek: rec.stitek,
     predano: rec.predano,
+    naMiste: rec.naMiste,
+    priplatekRucni: rec.priplatekRucni,
+    zaplaceno: rec.zaplaceno,
+    poplatekVybral: rec.poplatekVybral,
+    vyjezdy: rec.vyjezdy || [],
+    souhlas: rec.souhlasPravidel,
+    souhlasZneni: rec.souhlasPravidel ? zneniVerze(rec.souhlasPravidel.verze) : null,
+    casZadalHost: rec.casZadalHost,
+    zpusobPrijezdu: rec.zpusobPrijezdu,
+    telefonBrana: rec.telefonBrana,
+    spz: rec.spz,
+    spzPujcene: rec.spzPujcene,
+    branaRegistrovano: rec.branaRegistrovano,
+    pruvodceOdemcen: rec.pruvodceOdemcen,
+    rozbalen: kroky.length === 0,
+    rozbalenText: textRozbaleni(kroky),
+    navrhy: (rec.navrhy || []).map((n) => ({ pole: n.pole, veta: vetaNavrhu(n), hodnota: n.hodnota })),
   };
+}
+
+function textRozbaleni(kroky: ChybejiciKrok[]): string {
+  if (!kroky.length) return 'Průvodce rozbalen';
+  const nazev: Record<ChybejiciKrok, string> = {
+    cas: 'čas',
+    zpusob: 'způsob příjezdu',
+    pravidla: 'pravidla',
+  };
+  return `Průvodce nerozbalen · chybí: ${kroky.map((krok) => nazev[krok]).join(', ')}`;
 }
 
 /** Nejbližší příjezd nahoře. Kdo už odjel, je až dole. */

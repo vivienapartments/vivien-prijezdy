@@ -1,22 +1,26 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import apartmanyJson from '@/data/apartmany.json';
 import {
   casPraha,
   hodinaPraha,
   nabidnoutOdeslani,
-  poplatekKratky,
   souhrnDne,
+  rozpisPlateb,
   STARY_ZAZNAM,
   terminKratky,
+  textVybranehoPoplatku,
+  textSouhlasu,
   vetaChyby,
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
+import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { langFromNarodnost } from '@/lib/vivien-data';
 import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
+import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
 type Stav = PrehledRadek['stav'];
@@ -81,22 +85,29 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState<string | null>(null);
   const [casy, setCasy] = useState<Record<string, string>>({});
-  const [ulozene, setUlozene] = useState<Record<string, string>>({});
   const [volba, setVolba] = useState<Record<string, string>>({});
   const [odkazy, setOdkazy] = useState<Record<string, string>>({});
-  const [ulozeneOdkazy, setUlozeneOdkazy] = useState<Record<string, string>>({});
   const [pridat, setPridat] = useState(false);
   const [predani, setPredani] = useState<Record<string, string | null>>({});
+  const [naMisteStav, setNaMisteStav] = useState<Record<string, string | null>>({});
+  const [priplatekStav, setPriplatekStav] = useState<Record<string, number | null>>({});
   const [dotazPredani, setDotazPredani] = useState<{ id: string; druh: 'predano' | 'vratit' } | null>(null);
+  const [platby, setPlatby] = useState<Record<string, { kdy: string | null; kdo: 'ja' | 'nikol' | null }>>({});
+  const [vyjezdy, setVyjezdy] = useState<Record<string, VyjezdPolozka[]>>({});
+  const [dotazVyjezdu, setDotazVyjezdu] = useState<{ id: string; druh: 'pridat' | 'vratit' } | null>(null);
+  const [dotazPlatby, setDotazPlatby] = useState<{ id: string; druh: 'vybrat' | 'vratit' } | null>(null);
   const [jazyky, setJazyky] = useState<Record<string, GuideLang>>({});
   const [dotazZnovu, setDotazZnovu] = useState<string | null>(null);
+  const [dotazDalsi, setDotazDalsi] = useState<{ id: string; druh: 'brana' | 'odemknout' } | null>(null);
 
   function jazykRadku(row: PrehledRadek): GuideLang {
     return jazyky[row.rezervace] || (row.narodnost?.trim() ? langFromNarodnost(row.narodnost) : row.jazyk || 'cs');
   }
 
   function casRadku(row: PrehledRadek): string {
-    return casy[row.rezervace] ?? row.casPrijezdu ?? '';
+    if (casy[row.rezervace] != null) return casy[row.rezervace];
+    if (row.casPrijezdu === 'po20' || row.casPrijezdu === 'po23') return popisekCasu(row.casPrijezdu);
+    return row.casPrijezdu ?? '';
   }
 
   function telefonRadku(row: PrehledRadek): string {
@@ -111,6 +122,80 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   function textPredani(iso: string): string {
     const hod = hodinaPraha(iso);
     return hod ? `Předáno ${hod}` : 'Předáno';
+  }
+
+  function vyberPoplatku(row: PrehledRadek): { kdy: string | null; kdo: 'ja' | 'nikol' | null } {
+    if (Object.prototype.hasOwnProperty.call(platby, row.rezervace)) return platby[row.rezervace];
+    return { kdy: row.zaplaceno, kdo: row.poplatekVybral };
+  }
+
+  async function ulozPoplatek(row: PrehledRadek, kdo: 'ja' | 'nikol' | null) {
+    setDotazPlatby(null);
+    if (ukazka) {
+      setPlatby((prev) => ({
+        ...prev,
+        [row.rezervace]: kdo ? { kdy: new Date().toISOString(), kdo } : { kdy: null, kdo: null },
+      }));
+      return;
+    }
+    setCekam(`${row.rezervace}:platba`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce: kdo ? 'zaplaceno' : 'zrusit-zaplaceni',
+        kdo: kdo || undefined,
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      zaplaceno?: string | null;
+      poplatekVybral?: 'ja' | 'nikol' | null;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Poplatek se neuložil.');
+      return;
+    }
+    setPlatby((prev) => ({
+      ...prev,
+      [row.rezervace]: { kdy: json.zaplaceno ?? null, kdo: json.poplatekVybral ?? null },
+    }));
+  }
+
+  function vyjezdyRadku(row: PrehledRadek): VyjezdPolozka[] {
+    if (Object.prototype.hasOwnProperty.call(vyjezdy, row.rezervace)) return vyjezdy[row.rezervace];
+    return row.vyjezdy || [];
+  }
+
+  async function ulozVyjezd(row: PrehledRadek, pridatVyjezd: boolean) {
+    setDotazVyjezdu(null);
+    const stavajici = vyjezdyRadku(row);
+    if (!pridatVyjezd && stavajici.length === 0) return;
+    if (ukazka) {
+      const dalsi = pridatVyjezd
+        ? [...stavajici, novyVyjezd(new Date().toISOString())]
+        : vratPosledniVyjezd(stavajici);
+      setVyjezdy((prev) => ({ ...prev, [row.rezervace]: dalsi }));
+      return;
+    }
+    setCekam(`${row.rezervace}:vyjezd`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: pridatVyjezd ? 'vyjezd' : 'vratit-vyjezd' }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; vyjezdy?: VyjezdPolozka[] } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Výjezd se neuložil.');
+      return;
+    }
+    setVyjezdy((prev) => ({ ...prev, [row.rezervace]: json.vyjezdy || [] }));
   }
 
   async function ulozPredani(row: PrehledRadek, zapnout: boolean) {
@@ -170,16 +255,12 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
 
   function telefonPole(row: PrehledRadek) {
     return (
-      <label className="ph-tel-pole">
-        Telefon
-        <input
-          value={telefonRadku(row)}
-          inputMode="tel"
-          autoComplete="off"
-          onChange={(e) => setTelefony((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
-          onBlur={(e) => ulozTelefon(row, row.telefonKtery || 'rezervace', e.target.value)}
-        />
-      </label>
+      <PoleSUlozenim
+        label="Telefon"
+        hodnota={telefonRadku(row)}
+        vstup={{ inputMode: 'tel', autoComplete: 'off' }}
+        onUloz={(text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
+      />
     );
   }
 
@@ -213,7 +294,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     });
   }, [radky, stav, hledat, den, dnes, zitra, jenNeotevreni, jenBezCheckinu]);
 
-  async function volat(row: PrehledRadek, akce: 'znovu' | 'odkaz' | 'opravit', extra?: Record<string, string>) {
+  async function volat(
+    row: PrehledRadek,
+    akce: 'znovu' | 'odkaz' | 'opravit' | 'brana' | 'odemknout',
+    extra?: Record<string, string>,
+  ) {
     setCekam(`${row.rezervace}:${akce}`);
     setHlaska('');
     const res = await fetch('/api/prehled/akce', {
@@ -239,36 +324,78 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     window.location.reload();
   }
 
-  async function ulozCas(row: PrehledRadek, hodnota: string) {
-    const vysledek = normalizujCasPrijezdu(hodnota);
-    if (!vysledek.ok) {
-      setHlaska('Čas napište jako 1630.');
-      return;
-    }
-    const cas = vysledek.cas ?? '';
-    const puvodni = ulozene[row.rezervace] ?? row.casPrijezdu ?? '';
-    setCasy((prev) => ({ ...prev, [row.rezervace]: cas }));
-    if (cas === puvodni) {
-      setHlaska('');
-      return;
-    }
+  async function ulozCas(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
+    const surovy = hodnota.trim();
+    const poDvacate = surovy === 'po20' || /^po\s*20/i.test(surovy);
+    const vysledek = poDvacate ? { ok: true as const, cas: 'po20' } : normalizujCasPrijezdu(hodnota);
+    if (!vysledek.ok) return { ok: false };
+    const cas = vysledek.cas === 'po20' ? 'po 20:00' : vysledek.cas ?? '';
+    const odeslat = vysledek.cas === 'po20' ? 'po20' : cas;
     if (ukazka) {
-      setUlozene((prev) => ({ ...prev, [row.rezervace]: cas }));
-      setHlaska('');
+      setCasy((prev) => ({ ...prev, [row.rezervace]: cas }));
+      return { ok: true, hodnota: cas };
+    }
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'cas', cas: odeslat }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; hodnota?: string } | null;
+    if (!res.ok || !json?.ok) return { ok: false };
+    const hotovo = json.hodnota ?? cas;
+    setCasy((prev) => ({ ...prev, [row.rezervace]: hotovo }));
+    return { ok: true, hodnota: hotovo };
+  }
+
+  function naMisteRadku(row: PrehledRadek): string | null {
+    if (Object.prototype.hasOwnProperty.call(naMisteStav, row.rezervace)) return naMisteStav[row.rezervace];
+    return row.naMiste;
+  }
+
+  function priplatekRadku(row: PrehledRadek): number | null {
+    if (Object.prototype.hasOwnProperty.call(priplatekStav, row.rezervace)) return priplatekStav[row.rezervace];
+    return row.priplatekRucni;
+  }
+
+  async function ulozNaMiste(row: PrehledRadek, zapnout: boolean) {
+    if (ukazka) {
+      setNaMisteStav((prev) => ({ ...prev, [row.rezervace]: zapnout ? new Date().toISOString() : null }));
       return;
     }
+    setCekam(`${row.rezervace}:miste`);
     setHlaska('');
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rezervace: row.rezervace, akce: 'cas', cas }),
+      body: JSON.stringify({ rezervace: row.rezervace, akce: zapnout ? 'na-miste' : 'zrusit-na-miste' }),
     });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; naMiste?: string | null } | null;
+    setCekam(null);
     if (!res.ok || !json?.ok) {
-      setHlaska(json?.error || 'Čas se neuložil.');
+      setHlaska(json?.error || 'Čas na místě se neuložil.');
       return;
     }
-    setUlozene((prev) => ({ ...prev, [row.rezervace]: cas }));
+    setNaMisteStav((prev) => ({ ...prev, [row.rezervace]: json.naMiste ?? null }));
+  }
+
+  async function ulozPriplatek(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
+    const surovy = hodnota.trim();
+    if (surovy && !/^\d{1,5}$/.test(surovy)) return { ok: false };
+    const kc = surovy ? Number(surovy) : null;
+    if (ukazka) {
+      setPriplatekStav((prev) => ({ ...prev, [row.rezervace]: kc }));
+      return { ok: true, hodnota: surovy };
+    }
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'priplatek', castka: surovy }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; priplatekRucni?: number | null } | null;
+    if (!res.ok || !json?.ok) return { ok: false };
+    const ulozeno = json.priplatekRucni ?? null;
+    setPriplatekStav((prev) => ({ ...prev, [row.rezervace]: ulozeno }));
+    return { ok: true, hodnota: ulozeno == null ? '' : String(ulozeno) };
   }
 
   function zpravaRadku(row: PrehledRadek): string {
@@ -276,35 +403,33 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     return row.zpravy.find((z) => z.id === id)?.text || row.zprava;
   }
 
-  async function ulozOdkaz(row: PrehledRadek, hodnota: string) {
+  async function ulozOdkaz(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
     const url = hodnota.trim();
-    const puvodni = ulozeneOdkazy[row.rezervace] ?? row.checkinUrl ?? '';
-    if (url === puvodni) return;
-    setHlaska('');
+    if (ukazka) {
+      setOdkazy((prev) => ({ ...prev, [row.rezervace]: url }));
+      return { ok: true, hodnota: url };
+    }
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rezervace: row.rezervace, akce: 'checkin', url }),
     });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
-    if (!res.ok || !json?.ok) {
-      setHlaska(json?.error || 'Odkaz se neuložil.');
-      return;
-    }
-    setUlozeneOdkazy((prev) => ({ ...prev, [row.rezervace]: url }));
-    window.location.reload();
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; hodnota?: string } | null;
+    if (!res.ok || !json?.ok) return { ok: false };
+    const hotovo = json.hodnota ?? url;
+    setOdkazy((prev) => ({ ...prev, [row.rezervace]: hotovo }));
+    return { ok: true, hodnota: hotovo };
   }
 
-  async function ulozTelefon(row: PrehledRadek, ktery: 'checkin' | 'rezervace', hodnota: string) {
+  async function ulozTelefon(
+    row: PrehledRadek,
+    ktery: 'checkin' | 'rezervace',
+    hodnota: string,
+  ): Promise<{ ok: boolean; hodnota?: string }> {
     const cislo = hodnota.trim();
-    if (!cislo) return;
-    const ukazane = (ktery === row.jinyTelefonKtery ? row.jinyTelefonText : row.telefonText) || '';
-    if (cislo === ukazane.trim()) return;
+    if (!cislo) return { ok: false };
     const tel = normalizujTelefon(cislo, row.narodnost);
-    if (!tel) {
-      setHlaska('Napište číslo.');
-      return;
-    }
+    if (!tel) return { ok: false };
     if (ukazka) {
       const text = textTelefonu(tel.ulozeny);
       setRadky((prev) =>
@@ -330,21 +455,49 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
       if (ktery !== row.jinyTelefonKtery || ktery === row.telefonKtery) {
         setTelefony((prev) => ({ ...prev, [row.rezervace]: text }));
       }
-      setHlaska('');
-      return;
+      return { ok: true, hodnota: text };
     }
-    setHlaska('');
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rezervace: row.rezervace, akce: 'telefon', ktery, cislo }),
     });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
-    if (!res.ok || !json?.ok) {
-      setHlaska(json?.error || 'Číslo se neuložilo.');
-      return;
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; hodnota?: string } | null;
+    if (!res.ok || !json?.ok) return { ok: false };
+    const hotovo = json.hodnota || textTelefonu(tel.ulozeny);
+    if (ktery === (row.telefonKtery || 'rezervace')) {
+      setTelefony((prev) => ({ ...prev, [row.rezervace]: hotovo }));
+    } else {
+      setRadky((prev) =>
+        prev.map((r) => (r.rezervace === row.rezervace ? { ...r, jinyTelefonText: hotovo } : r)),
+      );
     }
-    window.location.reload();
+    return { ok: true, hodnota: hotovo };
+  }
+
+  async function prevzit(row: PrehledRadek, pole: PrehledRadek['navrhy'][number]['pole'], hodnota: string) {
+    if (!ukazka) {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: row.rezervace, akce: 'prevzit', pole }),
+      });
+      const json = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+      if (!res.ok || !json?.ok) {
+        setHlaska('Neuloženo, zkuste znovu');
+        return;
+      }
+    }
+    setRadky((prev) =>
+      prev.map((r) => (r.rezervace === row.rezervace ? { ...r, navrhy: r.navrhy.filter((n) => n.pole !== pole) } : r)),
+    );
+    if (pole === 'casPrijezdu') {
+      const cas = hodnota === 'po20' ? 'po 20:00' : hodnota;
+      setCasy((prev) => ({ ...prev, [row.rezervace]: cas }));
+    }
+    if (pole === 'telefon' || pole === 'telefonRezervace') {
+      setTelefony((prev) => ({ ...prev, [row.rezervace]: textTelefonu(hodnota) }));
+    }
   }
 
   async function kopirovatZpravu(row: PrehledRadek) {
@@ -385,32 +538,183 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     const pruvodce = textPruvodce(row);
     const chyba = vetaChyby(row);
     const wa = row.telefonWa || row.jinyTelefonWa;
+    const predanoKdy = predanoRadku(row);
+    const poplatek = row.poplatek === 'ne' || row.stav === 'zruseno' ? null : vyberPoplatku(row);
+    const jizdy = vyjezdyRadku(row);
+    const casSoucet = Object.prototype.hasOwnProperty.call(casy, row.rezervace)
+      ? casy[row.rezervace].trim() || null
+      : row.casPrijezdu;
+    const naMisteKdy = naMisteRadku(row);
+    const skutecnyCas = (naMisteKdy && hodinaPraha(naMisteKdy)) || (predanoKdy && hodinaPraha(predanoKdy)) || null;
+    const rucniCastka = priplatekRadku(row);
+    const rozpis = rozpisPlateb({
+      poplatek: row.poplatek,
+      noci: row.noci,
+      osob: row.osob,
+      cas: casSoucet,
+      skutecny: skutecnyCas,
+      rucni: rucniCastka,
+      vyjezdy: jizdy,
+    });
     return (
-      <article key={row.rezervace} id={row.rezervace} className={rozbaleno ? 'ph-row is-open' : 'ph-row is-shut'}>
-        <div className="ph-shrnuti">
-          <div className="ph-hlavicka-hosta">
-            <div className="ph-jmeno">{kdo}</div>
-            {predanoRadku(row) ? (
-              <span className="ph-predano-hotovo">{textPredani(predanoRadku(row) || '')}</span>
-            ) : null}
-          </div>
+      <article className={rozbaleno ? 'ph-row' : 'ph-row is-shut'} id={row.rezervace}>
+        <div className="ph-karta-hlavicka">
+          <div className="ph-jmeno">{kdo}</div>
           {kde ? <div className="ph-kde">{kde}</div> : null}
-          {row.stav === 'bez_checkinu' ? <div className="ph-neni-checkin">Není check-in</div> : null}
-          {row.stitek === 'rucne' ? <div className="ph-stitek">přidáno ručně</div> : null}
-          {row.stitek === 'info' ? <div className="ph-stitek">přeposláno z info@</div> : null}
-          {pruvodce ? <div className={`ph-pruvodce ph-pruvodce--${pruvodce.ton}`}>{pruvodce.text}</div> : null}
-          {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
-          {telefonPole(row)}
-          <label className="ph-cas ph-cas-prijezd">
-            Čas příjezdu
-            <input
-              value={casRadku(row)}
-              inputMode="numeric"
-              onChange={(e) => setCasy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
-              onBlur={(e) => ulozCas(row, e.target.value)}
+        </div>
+        <div className="ph-znacky">
+          {predanoKdy ? <span className="ph-znacka ph-znacka--ano">{textPredani(predanoKdy)}</span> : null}
+          {poplatek?.kdy ? (
+            <span className="ph-znacka ph-znacka--ano">{textVybranehoPoplatku(poplatek.kdy, poplatek.kdo)}</span>
+          ) : poplatek ? (
+            <span className="ph-znacka ph-znacka--ne">Poplatek městu není vybraný</span>
+          ) : null}
+          {jizdy.map((jizda) => (
+            <span key={jizda.id} className="ph-znacka ph-znacka--ne">
+              Opakovaný výjezd {jizda.castka} Kč
+            </span>
+          ))}
+          {row.souhlas ? (
+            <span className="ph-znacka ph-znacka--ano">{textSouhlasu(row.souhlas.kdy)}</span>
+          ) : (
+            <span className="ph-znacka ph-znacka--ne">Pravidla nezaškrtl</span>
+          )}
+        </div>
+        {pruvodce ? <div className={`ph-pruvodce ph-pruvodce--${pruvodce.ton}`}>{pruvodce.text}</div> : null}
+        {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
+        {telefonPole(row)}
+        {row.jinyTelefonKtery ? (
+            <PoleSUlozenim
+              label="Druhé číslo"
+              hodnota={row.jinyTelefonText || ''}
+              vstup={{ inputMode: 'tel', autoComplete: 'off' }}
+              onUloz={(text) => ulozTelefon(row, row.jinyTelefonKtery || 'rezervace', text)}
             />
-          </label>
-          <div className="ph-poplatek-kratky">{poplatekKratky(row.poplatek, row.noci, row.osob)}</div>
+          ) : null}
+          <PoleSUlozenim
+            label="Čas příjezdu"
+            hodnota={casRadku(row)}
+            poznamka={row.casZadalHost ? <span className="ph-od-hosta"> zadal host</span> : null}
+            vstup={{ inputMode: 'numeric' }}
+            onUloz={(text) => ulozCas(row, text)}
+          />
+          {row.navrhy.map((n) => (
+            <p key={n.pole} className="ph-navrh">
+              {n.veta}
+              {' · '}
+              <button type="button" onClick={() => prevzit(row, n.pole, n.hodnota)}>
+                Použít
+              </button>
+            </p>
+          ))}
+          {row.zpusobPrijezdu === 'pesky' ? <div className="ph-prijezd">Pěšky</div> : null}
+          {row.zpusobPrijezdu === 'auto' && (row.telefonBrana || row.spz || row.spzPujcene) ? (
+            <div className={`ph-brana${row.branaRegistrovano ? ' ph-brana--ano' : ' ph-brana--ne'}`}>
+              Brána {row.telefonBrana ? textTelefonu(row.telefonBrana) : 'bez telefonu'}
+              {' · '}
+              {row.spzPujcene ? 'SPZ později' : row.spz ? `SPZ ${row.spz.length > 4 ? `${row.spz.slice(0, -4)} ${row.spz.slice(-4)}` : row.spz}` : 'bez SPZ'}
+            </div>
+          ) : null}
+          <div className={row.rozbalen ? 'ph-rozbalen' : 'ph-chybi'}>{row.rozbalenText}</div>
+          {row.zpusobPrijezdu === 'auto' && row.telefonBrana && !row.branaRegistrovano ? (
+            <button
+              type="button"
+              className="ph-predano"
+              disabled={cekam !== null}
+              onClick={() => setDotazDalsi({ id: row.rezervace, druh: 'brana' })}
+            >
+              Zaregistrováno v bráně
+            </button>
+          ) : null}
+          {!row.pruvodceOdemcen ? (
+            <button
+              type="button"
+              className="ph-predano"
+              disabled={cekam !== null}
+              onClick={() => setDotazDalsi({ id: row.rezervace, druh: 'odemknout' })}
+            >
+              Odemknout průvodce
+            </button>
+          ) : (
+            <div className="ph-pruvodce ph-pruvodce--ano">Průvodce je odemčený</div>
+          )}
+          {dotazDalsi?.id === row.rezervace ? (
+            <div className="ph-predano-dotaz">
+              <p>
+                {dotazDalsi.druh === 'brana'
+                  ? 'Opravdu označit, že telefon je zaregistrovaný v bráně?'
+                  : 'Opravdu odemknout celý průvodce? Kódy se tím neotevřou.'}
+              </p>
+              <button
+                type="button"
+                disabled={cekam !== null}
+                onClick={() => {
+                  const druh = dotazDalsi.druh;
+                  setDotazDalsi(null);
+                  if (ukazka) {
+                    setRadky((prev) =>
+                      prev.map((r) =>
+                        r.rezervace === row.rezervace
+                          ? {
+                              ...r,
+                              branaRegistrovano: druh === 'brana' ? new Date().toISOString() : r.branaRegistrovano,
+                              pruvodceOdemcen: druh === 'odemknout' ? new Date().toISOString() : r.pruvodceOdemcen,
+                            }
+                          : r,
+                      ),
+                    );
+                    return;
+                  }
+                  void volat(row, druh);
+                }}
+              >
+                Ano
+              </button>
+              <button type="button" onClick={() => setDotazDalsi(null)}>
+                Zrušit
+              </button>
+            </div>
+          ) : null}
+          <div className="ph-soucet">
+            {rozpis.radky.map((radek) => (
+              <div key={radek.nazev}>
+                {radek.nazev} <span className="ph-soucet__kc">{radek.text}</span>
+                {radek.dovetek ? <span className="ph-soucet__dovetek">{radek.dovetek}</span> : null}
+              </div>
+            ))}
+            <div className="ph-soucet__celkem">
+              {rozpis.uplny ? 'Součet' : 'Součet zatím'}{' '}
+              <span className="ph-soucet__kc">{`${rozpis.soucet}\u00A0Kč`}</span>
+            </div>
+            {rozpis.navrhKc != null ? (
+              <div>
+                Podle času by to bylo <span className="ph-soucet__kc">{`${rozpis.navrhKc}\u00A0Kč`}</span>
+                {' · '}
+                <button type="button" onClick={() => void ulozPriplatek(row, String(rozpis.navrhKc))}>
+                  Použít
+                </button>
+              </div>
+            ) : null}
+            {naMisteKdy ? (
+              <div>
+                Host je na místě <span className="ph-soucet__kc">{hodinaPraha(naMisteKdy)}</span>
+                {' · '}
+                <button type="button" onClick={() => void ulozNaMiste(row, false)}>
+                  Vrátit
+                </button>
+              </div>
+            ) : (
+              <button type="button" className="ph-predano" onClick={() => void ulozNaMiste(row, true)}>
+                Host je na místě
+              </button>
+            )}
+            <PoleSUlozenim
+              label="Příplatek za čas ručně"
+              hodnota={rucniCastka == null ? '' : String(rucniCastka)}
+              vstup={{ inputMode: 'numeric', placeholder: 'nechat výpočet' }}
+              onUloz={(text) => ulozPriplatek(row, text)}
+            />
+          </div>
           {row.zpravy.length && wa ? (
             <fieldset className="ph-menu">
               <legend>Zpráva</legend>
@@ -430,32 +734,29 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               })}
             </fieldset>
           ) : null}
-          {wa ? (
-            <div className="ph-wa-rada">
-              <a
-                className="ph-wa"
-                href={odkazWhatsAppPrehled(wa, zpravaRadku(row), userAgent)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Napsat na WhatsApp
-              </a>
-              <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
-                Zkopírovat zprávu
-              </button>
-            </div>
-          ) : null}
-          <div className="ph-akce-spodek">
-            <button
-              type="button"
-              className="ph-rozbal"
-              aria-expanded={rozbaleno}
-              onClick={() => setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))}
-            >
-              {rozbaleno ? 'Skrýt detail ▴' : 'Detail ▾'}
-            </button>
-            <UlozitKontakt row={row} />
-            {predanoRadku(row) ? (
+          <div className="ph-akce-skupiny">
+            {wa || row.telefonText || row.jinyTelefonText ? (
+              <div className="ph-akce-rada ph-akce-rada--zprava">
+                {wa ? (
+                  <>
+                    <a
+                      className="ph-wa"
+                      href={odkazWhatsAppPrehled(wa, zpravaRadku(row), userAgent)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Napsat na WhatsApp
+                    </a>
+                    <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
+                      Zkopírovat zprávu
+                    </button>
+                  </>
+                ) : null}
+                <UlozitKontakt row={row} />
+              </div>
+            ) : null}
+            <div className="ph-akce-rada ph-akce-rada--predani">
+            {predanoKdy ? (
               <button
                 type="button"
                 className="ph-predano"
@@ -467,13 +768,104 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
             ) : (
               <button
                 type="button"
-                className="ph-predano"
+                className="ph-predano ph-predano-vyrazne"
                 disabled={cekam !== null}
                 onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
               >
                 Předáno
               </button>
             )}
+            {poplatek?.kdy ? (
+              <button
+                type="button"
+                className="ph-predano"
+                disabled={cekam !== null}
+                onClick={() => setDotazPlatby({ id: row.rezervace, druh: 'vratit' })}
+              >
+                Vrátit poplatek
+              </button>
+            ) : poplatek ? (
+              <button
+                type="button"
+                className="ph-zaplatit"
+                disabled={cekam !== null}
+                onClick={() => setDotazPlatby({ id: row.rezervace, druh: 'vybrat' })}
+              >
+                Poplatek vybrán
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="ph-predano"
+              disabled={cekam !== null}
+              onClick={() => setDotazVyjezdu({ id: row.rezervace, druh: 'pridat' })}
+            >
+              Opakovaný výjezd
+            </button>
+            {jizdy.length ? (
+              <button
+                type="button"
+                className="ph-predano"
+                disabled={cekam !== null}
+                onClick={() => setDotazVyjezdu({ id: row.rezervace, druh: 'vratit' })}
+              >
+                Vrátit výjezd
+              </button>
+            ) : null}
+            </div>
+            <div className="ph-akce-rada ph-akce-rada--pruvodce">
+              <a className="ph-hostuv-pruvodce" href={odkazPruvodceMajitele(row.rezervace, ukazka)}>
+                Průvodce hosta
+              </a>
+              <button
+                type="button"
+                className="ph-rozbal"
+                aria-expanded={rozbaleno}
+                onClick={() => setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))}
+              >
+                {rozbaleno ? 'Skrýt detail ▴' : 'Detail ▾'}
+              </button>
+            </div>
+            {dotazPlatby?.id === row.rezervace ? (
+              <div className="ph-predano-dotaz">
+                {dotazPlatby.druh === 'vybrat' ? (
+                  <>
+                    <p>Kdo vybral poplatek městu?</p>
+                    <button type="button" disabled={cekam !== null} onClick={() => ulozPoplatek(row, 'ja')}>
+                      Já
+                    </button>
+                    <button type="button" disabled={cekam !== null} onClick={() => ulozPoplatek(row, 'nikol')}>
+                      Nikol
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p>Opravdu vrátit? Zůstane, že poplatek městu není vybraný.</p>
+                    <button type="button" disabled={cekam !== null} onClick={() => ulozPoplatek(row, null)}>
+                      Ano, vrátit
+                    </button>
+                  </>
+                )}
+                <button type="button" onClick={() => setDotazPlatby(null)}>
+                  Zrušit
+                </button>
+              </div>
+            ) : null}
+            {dotazVyjezdu?.id === row.rezervace ? (
+              <div className="ph-predano-dotaz">
+                <p>
+                  {dotazVyjezdu.druh === 'pridat'
+                    ? `Host nedorazil do ${CEKANI_MINUT} minut po domluveném čase. Započítat ${VYJEZD_CASTKA} Kč?`
+                    : `Opravdu vrátit poslední výjezd? Částka ${jizdy[jizdy.length - 1]?.castka ?? VYJEZD_CASTKA} Kč se odečte.`}
+                </p>
+                <button type="button" disabled={cekam !== null} onClick={() => ulozVyjezd(row, dotazVyjezdu.druh === 'pridat')}>
+                  {dotazVyjezdu.druh === 'pridat' ? 'Ano, započítat' : 'Ano, vrátit'}
+                </button>
+                <button type="button" onClick={() => setDotazVyjezdu(null)}>
+                  Zrušit
+                </button>
+              </div>
+            ) : null}
             {dotazPredani?.id === row.rezervace ? (
               <div className="ph-predano-dotaz">
                 <p>
@@ -490,8 +882,13 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               </div>
             ) : null}
           </div>
-        </div>
         <div className="ph-detail">
+          {row.souhlasZneni ? (
+            <div className="ph-souhlas-zneni">
+              <p>Znění, které host odsouhlasil</p>
+              <p>{row.souhlasZneni}</p>
+            </div>
+          ) : null}
           {nabidnoutOdeslani(row.stav) ? (
             <div className="ph-znovu">
               <label>
@@ -571,21 +968,13 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               </div>
             ) : null}
             {row.stav === 'bez_checkinu' ? (
-              <label className="ph-cas ph-checkin">
-                Odkaz na check-in
-                <input
-                  value={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
-                  placeholder="https://"
-                  onChange={(e) => setOdkazy((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
-                  onBlur={(e) => ulozOdkaz(row, e.target.value)}
-                />
-              </label>
+              <PoleSUlozenim
+                label="Odkaz na check-in"
+                hodnota={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
+                vstup={{ placeholder: 'https://' }}
+                onUloz={(text) => ulozOdkaz(row, text)}
+              />
             ) : null}
-          </div>
-          <div className="ph-cell" data-label="Apartmán">
-            <Pole text={row.apartmanNazev} />
-            {row.pobytText ? <div className="ph-pobyt">{row.pobytText}</div> : null}
-            <div className="ph-poplatek">{row.poplatekText}</div>
           </div>
           <div className="ph-cell" data-label="Příjezd">
             <Pole text={row.termin} />
@@ -645,6 +1034,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
         {chybiWifi.length ? (
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
+        <Upozorneni />
       </header>
 
       <button type="button" className="ph-rozbal" onClick={() => setPridat((v) => !v)}>
@@ -778,6 +1168,154 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
 
     </main>
   );
+}
+
+function PoleSUlozenim({
+  label,
+  hodnota,
+  onUloz,
+  poznamka,
+  vstup,
+}: {
+  label: string;
+  hodnota: string;
+  poznamka?: ReactNode;
+  vstup?: InputHTMLAttributes<HTMLInputElement>;
+  onUloz: (text: string) => Promise<{ ok: boolean; hodnota?: string }>;
+}) {
+  const [text, setText] = useState(hodnota);
+  const [stav, setStav] = useState<'nic' | 'ok' | 'chyba'>('nic');
+  const zeServeru = useRef(hodnota);
+  useEffect(() => {
+    setText((rozepsano) => (rozepsano === zeServeru.current ? hodnota : rozepsano));
+    zeServeru.current = hodnota;
+  }, [hodnota]);
+
+  return (
+    <label className="ph-cas ph-pole">
+      {label}
+      {poznamka}
+      <span className="ph-pole-rada">
+        <input
+          {...vstup}
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            setStav('nic');
+          }}
+        />
+        <button
+          type="button"
+          className="ph-ulozit"
+          onClick={async () => {
+            const vysledek = await onUloz(text);
+            if (!vysledek.ok) {
+              setStav('chyba');
+              return;
+            }
+            const hotovo = vysledek.hodnota ?? text;
+            zeServeru.current = hotovo;
+            setText(hotovo);
+            setStav('ok');
+          }}
+        >
+          Uložit
+        </button>
+      </span>
+      {stav === 'ok' ? <span className="ph-ulozeno">Uloženo ✓</span> : null}
+      {stav === 'chyba' ? <span className="ph-neulozeno">Neuloženo, zkuste znovu</span> : null}
+    </label>
+  );
+}
+
+function Upozorneni() {
+  const [klic, setKlic] = useState('');
+  const [zarizeni, setZarizeni] = useState<{ nazev: string; endpoint: string }[]>([]);
+  const [hlaska, setHlaska] = useState('');
+
+  useEffect(() => {
+    let zive = true;
+    fetch('/api/prehled/push')
+      .then((res) => res.json())
+      .then((json: { ok?: boolean; publicKey?: string; zarizeni?: { nazev: string; endpoint: string }[] }) => {
+        if (!zive || !json?.ok) return;
+        setKlic(json.publicKey || '');
+        setZarizeni(json.zarizeni || []);
+      })
+      .catch(() => undefined);
+    return () => {
+      zive = false;
+    };
+  }, []);
+
+  async function zapnout() {
+    setHlaska('');
+    if (!klic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setHlaska('Upozornění ještě nejsou nastavená.');
+      return;
+    }
+    const povoleni = await Notification.requestPermission();
+    if (povoleni !== 'granted') {
+      setHlaska('Upozornění jsou v telefonu vypnutá.');
+      return;
+    }
+    const reg = await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: klicNaBajty(klic),
+    });
+    const jsonSub = sub.toJSON();
+    const res = await fetch('/api/prehled/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        akce: 'zapnout',
+        nazev: navigator.userAgent.includes('Android') ? 'Android' : 'Telefon',
+        endpoint: jsonSub.endpoint,
+        keys: jsonSub.keys,
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; zarizeni?: { nazev: string; endpoint: string }[] } | null;
+    if (!res.ok || !json?.ok) {
+      setHlaska('Upozornění se nepodařilo zapnout.');
+      return;
+    }
+    setZarizeni(json.zarizeni || []);
+    setHlaska('Upozornění jsou zapnutá.');
+  }
+
+  async function vypnout(endpoint: string) {
+    const res = await fetch('/api/prehled/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ akce: 'vypnout', endpoint }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; zarizeni?: { nazev: string; endpoint: string }[] } | null;
+    if (res.ok && json?.ok) setZarizeni(json.zarizeni || []);
+  }
+
+  return (
+    <div className="ph-push">
+      <button type="button" className="ph-ulozit" onClick={() => void zapnout()}>
+        Zapnout upozornění
+      </button>
+      {zarizeni.map((z) => (
+        <button key={z.endpoint} type="button" className="ph-push-vyp" onClick={() => void vypnout(z.endpoint)}>
+          Vypnout {z.nazev}
+        </button>
+      ))}
+      {hlaska ? <span className="ph-push-stav">{hlaska}</span> : null}
+    </div>
+  );
+}
+
+function klicNaBajty(klic: string): ArrayBuffer {
+  const pad = '='.repeat((4 - (klic.length % 4)) % 4);
+  const raw = atob((klic + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  const out = new ArrayBuffer(raw.length);
+  const pohled = new Uint8Array(out);
+  for (let i = 0; i < raw.length; i += 1) pohled[i] = raw.charCodeAt(i);
+  return out;
 }
 
 function OpravitForm({

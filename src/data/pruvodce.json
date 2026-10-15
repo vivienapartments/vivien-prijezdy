@@ -1434,14 +1434,14 @@
             "hu": "Időpontok"
           },
           "text": {
-            "cs": "Check-in 14:00 až 20:00, check-out do 10:00.",
-            "en": "Check-in 14:00 to 20:00, check-out by 10:00.",
-            "de": "Check-in 14:00 bis 20:00 Uhr, Check-out bis 10:00 Uhr.",
-            "pl": "Check-in 14:00-20:00, check-out do 10:00.",
-            "uk": "Check-in 14:00-20:00, check-out до 10:00.",
-            "zh-Hant": "入住 14:00-20:00，退房至 10:00。",
-            "sv": "Incheckning 14:00–20:00, utcheckning senast 10:00.",
-            "hu": "Bejelentkezés 14:00–20:00, kijelentkezés legkésőbb 10:00."
+            "cs": "Check-in 14:00 až 20:00.\nCheck-out do 10:00.",
+            "en": "Check-in 14:00 to 20:00.\nCheck-out by 10:00.",
+            "de": "Check-in 14:00 bis 20:00 Uhr.\nCheck-out bis 10:00 Uhr.",
+            "pl": "Check-in 14:00-20:00.\nCheck-out do 10:00.",
+            "uk": "Check-in 14:00-20:00.\nCheck-out до 10:00.",
+            "zh-Hant": "入住 14:00-20:00。\n退房至 10:00。",
+            "sv": "Incheckning 14:00–20:00.\nUtcheckning senast 10:00.",
+            "hu": "Bejelentkezés 14:00–20:00.\nKijelentkezés legkésőbb 10:00."
           },
           "stav": "hotovo"
         },

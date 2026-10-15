@@ -1,4 +1,7 @@
 import type { GuideLang } from './types';
+import type { ChybejiciKrok } from './vstup-pruvodce';
+import { PRIPLATEK_KC, PRIPLATEK_OD } from './constants';
+import { casZMinut, priplatekProCas } from './priplatek-prijezd';
 
 type JazykZpravy = 'cs' | 'en' | 'de' | 'pl' | 'uk' | 'zh-Hant' | 'sv' | 'hu';
 type ZdrojZpravy = 'booking' | 'airbnb' | 'prima' | 'jiny';
@@ -121,72 +124,150 @@ const ODKAZ_NIZE: Record<JazykZpravy, string> = {
 };
 
 const NEOTEVREL: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, abyste se u nás mohli ubytovat a zaparkovat, přečtěte si průvodce k příjezdu a pošlete nám podle něj potřebné údaje. Děkujeme a těšíme se na setkání.',
-  en: 'Hello, to check in and park with us, you need to read the arrival guide and send us the details it asks for. Thank you, and we look forward to seeing you.',
-  de: 'Guten Tag, damit Sie bei uns übernachten und parken können, lesen Sie den Leitfaden zur Anreise und schicken Sie uns die darin genannten Angaben. Vielen Dank, wir freuen uns auf Sie.',
-  pl: 'Dzień dobry, żebyście mogli się u nas zakwaterować i zaparkować, przeczytajcie przewodnik do przyjazdu i wyślijcie nam według niego potrzebne dane. Dziękujemy i do zobaczenia.',
-  uk: 'Добрий день, щоб ви могли заселитися і припаркуватися, прочитайте путівник до приїзду і надішліть нам потрібні дані з нього. Дякуємо і до зустрічі.',
-  'zh-Hant': '您好，要入住和停車，先看抵達指南，並依指南把需要的資料傳給我們。謝謝，期待與您見面。',
-  sv: 'Hej, för att kunna checka in och parkera hos oss behöver ni läsa ankomstguiden och skicka oss uppgifterna den ber om. Tack, vi ser fram emot att träffas.',
-  hu: "Jó napot, a bejelentkezéshez és a parkoláshoz el kell olvasniuk az érkezési útmutatót, és el kell küldeniük, amit kér. Köszönjük, várjuk önöket.",
+  cs: 'Dobrý den, ve vašem průvodci k příjezdu čekají vstupní PINy do domu a apartmánu. Abyste se k nim dostali, otevřete průvodce, vyberte čas a způsob příjezdu a potvrďte pravidla. Děkujeme a těšíme se na setkání.',
+  en: 'Hello, your entry PIN codes for the house and the apartment are waiting in your arrival guide. To reach them, open the guide, choose the time and how you arrive, and confirm the rules. Thank you, and we look forward to seeing you.',
+  de: 'Guten Tag, in Ihrem Anreiseleitfaden warten die Eingangs-PIN-Codes für das Haus und das Apartment. Um zu ihnen zu kommen, öffnen Sie den Leitfaden, wählen Sie die Zeit und die Art der Anreise und bestätigen Sie die Regeln. Vielen Dank, wir freuen uns auf Sie.',
+  pl: 'Dzień dobry, w Waszym przewodniku do przyjazdu czekają kody PIN do domu i apartamentu. Żeby do nich dojść, otwórzcie przewodnik, wybierzcie godzinę i sposób przyjazdu i potwierdźcie zasady. Dziękujemy i do zobaczenia.',
+  uk: 'Добрий день, у вашому путівнику до приїзду чекають вхідні PIN-коди до будинку й апартаментів. Щоб дістатися до них, відкрийте путівник, виберіть час і спосіб приїзду та підтвердьте правила. Дякуємо і до зустрічі.',
+  'zh-Hant': '您好，您的抵達指南裡有房屋和公寓的入口 PIN 碼。要看到它們，請打開指南，選擇抵達時間和方式，並確認規則。謝謝，期待與您見面。',
+  sv: 'Hej, i er ankomstguide väntar PIN-koderna till huset och lägenheten. För att komma till dem, öppna guiden, välj tid och sätt att komma, och bekräfta reglerna. Tack, vi ser fram emot att träffas.',
+  hu: 'Jó napot, az érkezési útmutatóban ott várnak a ház és az apartman belépő PIN-kódjai. Hogy elérjék őket, nyissák meg az útmutatót, válasszák ki az időt és az érkezés módját, és erősítsék meg a szabályokat. Köszönjük, várjuk önöket.',
 };
 
-const CAS: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, napište nám, v kolik zhruba dorazíte. Apartmán předáváme osobně, a bez času příjezdu se nepotkáme. Děkujeme a těšíme se na setkání.',
-  en: 'Hello, tell us roughly what time you will arrive. We hand the apartment over in person, and without your arrival time we won\'t be able to meet you. Thank you, and we look forward to seeing you.',
-  de: 'Guten Tag, schreiben Sie uns, um wie viel Uhr Sie ungefähr ankommen. Wir übergeben das Apartment persönlich, und ohne Ihre Ankunftszeit können wir uns nicht treffen. Vielen Dank, wir freuen uns auf Sie.',
-  pl: 'Dzień dobry, napiszcie nam, o której mniej więcej przyjedziecie. Apartament przekazujemy osobiście, a bez godziny przyjazdu się nie spotkamy. Dziękujemy i do zobaczenia.',
-  uk: 'Добрий день, напишіть нам, приблизно о котрій приїдете. Апартаменти передаємо особисто, і без часу приїзду ми не зустрінемося. Дякуємо і до зустрічі.',
-  'zh-Hant': '您好，告訴我們大約幾點到。公寓由我們當面交接，沒有抵達時間就見不到面。謝謝，期待與您見面。',
-  sv: 'Hej, skriv till oss ungefär vilken tid ni kommer. Lägenheten lämnar vi över personligen, och utan er ankomsttid kan vi inte träffa er. Tack, vi ser fram emot att träffas.',
-  hu: "Jó napot, írják meg körülbelül, hánykor érkeznek. Az apartmant személyesen adjuk át, az érkezés ideje nélkül nem tudunk önökkel találkozni. Köszönjük, várjuk önöket.",
+const BRANA: Record<JazykZpravy, string> = {
+  cs: 'Dobrý den, v průvodci doplňte telefon pro bránu a SPZ. Bez registrace v bráně nezaparkujete. Děkujeme a těšíme se na setkání.',
+  en: 'Hello, in the guide add the phone for the gate and the licence plate. Without registration at the gate you cannot park. Thank you, and we look forward to seeing you.',
+  de: 'Guten Tag, ergänzen Sie im Leitfaden das Telefon für das Tor und das Kennzeichen. Ohne Anmeldung am Tor können Sie nicht parken. Vielen Dank, wir freuen uns auf Sie.',
+  pl: 'Dzień dobry, w przewodniku dopiszcie telefon do bramy i tablicę. Bez rejestracji w bramie nie zaparkujecie. Dziękujemy i do zobaczenia.',
+  uk: 'Добрий день, у путівнику допишіть телефон для брами і номер авто. Без реєстрації на брамі ви не припаркуєтесь. Дякуємо і до зустрічі.',
+  'zh-Hant': '您好，請在指南裡補上大門用的電話和車牌。沒有在大門登記就無法停車。謝謝，期待與您見面。',
+  sv: 'Hej, fyll i guiden telefonen till grinden och registreringsnumret. Utan registrering vid grinden kan ni inte parkera. Tack, vi ser fram emot att träffas.',
+  hu: 'Jó napot, az útmutatóban írják be a kapuhoz való telefont és a rendszámot. Kapuregisztráció nélkül nem tudnak parkolni. Köszönjük, várjuk önöket.',
 };
 
-const VETA_KODY: Record<JazykZpravy, string> = {
-  cs: 'Kódy se vám v průvodci zobrazí hned po předání.',
-  en: 'The codes will appear in the guide right after the handover.',
-  de: 'Die Codes erscheinen im Leitfaden gleich nach der Übergabe.',
-  pl: 'Kody pojawią się w przewodniku zaraz po przekazaniu.',
-  uk: 'Коди з’являться в путівнику одразу після передачі.',
-  'zh-Hant': '密碼會在交接後立刻顯示在指南裡。',
-  sv: 'Koderna visas i guiden direkt efter överlämningen.',
-  hu: 'A kódok az útmutatóban az átadás után azonnal megjelennek.',
+const FRAZE_KROKU: Record<'cas' | 'zpusob' | 'pravidla', Record<JazykZpravy, string>> = {
+  cas: {
+    cs: 'vyberte čas příjezdu',
+    en: 'choose the arrival time',
+    de: 'die Ankunftszeit wählen',
+    pl: 'wybierzcie godzinę przyjazdu',
+    uk: 'виберіть час приїзду',
+    'zh-Hant': '選擇抵達時間',
+    sv: 'välja ankomsttiden',
+    hu: 'válasszák ki az érkezés idejét',
+  },
+  zpusob: {
+    cs: 'vyberte, jak přijedete',
+    en: 'choose how you arrive',
+    de: 'wählen, wie Sie anreisen',
+    pl: 'wybierzcie, jak przyjedziecie',
+    uk: 'виберіть, як приїдете',
+    'zh-Hant': '選擇抵達方式',
+    sv: 'välja hur ni kommer',
+    hu: 'válasszák ki, hogyan érkeznek',
+  },
+  pravidla: {
+    cs: 'potvrďte pravidla',
+    en: 'confirm the rules',
+    de: 'die Regeln bestätigen',
+    pl: 'potwierdźcie zasady',
+    uk: 'підтвердьте правила',
+    'zh-Hant': '確認規則',
+    sv: 'bekräfta reglerna',
+    hu: 'erősítsék meg a szabályokat',
+  },
 };
 
-const DEN_BEZ: Record<JazykZpravy, string> = {
-  cs: `Dobrý den, dnes se na vás těšíme. V kolik zhruba dorazíte? Potřebujeme to vědět, abychom vám mohli apartmán osobně předat. ${VETA_KODY.cs}`,
-  en: `Hello, we are looking forward to seeing you today. Roughly what time will you arrive? We need to know so that we can hand the apartment over to you in person. ${VETA_KODY.en}`,
-  de: `Guten Tag, wir freuen uns heute auf Sie. Um wie viel Uhr kommen Sie ungefähr an? Wir müssen das wissen, damit wir Ihnen das Apartment persönlich übergeben können. ${VETA_KODY.de}`,
-  pl: `Dzień dobry, cieszymy się, że dziś przyjedziecie. O której mniej więcej będziecie? Musimy to wiedzieć, żebyśmy mogli przekazać wam apartament osobiście. ${VETA_KODY.pl}`,
-  uk: `Добрий день, сьогодні на вас чекаємо. Приблизно о котрій приїдете? Нам треба це знати, щоб передати вам апартаменти особисто. ${VETA_KODY.uk}`,
-  'zh-Hant': `您好，今天期待您的到來。大約幾點到？我們需要知道時間，才能當面把公寓交給您。${VETA_KODY['zh-Hant']}`,
-  sv: `Hej, vi ser fram emot att träffa er i dag. Ungefär vilken tid kommer ni? Vi behöver veta det för att kunna lämna över lägenheten personligen. ${VETA_KODY.sv}`,
-  hu: `Jó napot, ma várjuk önöket. Körülbelül hánykor érkeznek? Tudnunk kell, hogy személyesen át tudjuk adni az apartmant. ${VETA_KODY.hu}`,
+const SPOJKA: Record<JazykZpravy, string> = {
+  cs: 'a',
+  en: 'and',
+  de: 'und',
+  pl: 'i',
+  uk: 'і',
+  'zh-Hant': '、',
+  sv: 'och',
+  hu: 'és',
+};
+
+function spojKroky(lang: GuideLang | null, chybi: ChybejiciKrok[]): string {
+  const jazyk: JazykZpravy = lang && lang in SPOJKA ? (lang as JazykZpravy) : 'en';
+  const casti = (chybi.length ? chybi : (['cas', 'zpusob', 'pravidla'] as ChybejiciKrok[])).map((krok) => FRAZE_KROKU[krok][jazyk]);
+  if (casti.length <= 1) return casti[0] || '';
+  if (jazyk === 'zh-Hant') return casti.join(SPOJKA[jazyk]);
+  return `${casti.slice(0, -1).join(', ')} ${SPOJKA[jazyk]} ${casti[casti.length - 1]}`;
+}
+
+const UPOMINKA: Record<JazykZpravy, string> = {
+  cs: 'Ve vašem průvodci čekají vstupní PINy do domu a apartmánu. Abyste se k nim dostali, ještě {kroky}. Zabere to minutu.',
+  en: 'Your entry PIN codes for the house and the apartment are waiting in your guide. To reach them, you still need to {kroky}. It takes a minute.',
+  de: 'In Ihrem Leitfaden warten die Eingangs-PIN-Codes für das Haus und das Apartment. Um zu ihnen zu kommen, müssen Sie noch {kroky}. Das dauert eine Minute.',
+  pl: 'W Waszej instrukcji czekają kody PIN do domu i apartamentu. Żeby do nich dojść, jeszcze {kroky}. Zajmie to minutę.',
+  uk: 'У вашому гіді чекають вхідні PIN-коди до будинку й апартаментів. Щоб дістатися до них, ще {kroky}. Це займе хвилину.',
+  'zh-Hant': '您的指南裡有房屋和公寓的入口 PIN 碼。要看到它們，請再 {kroky}。大約一分鐘。',
+  sv: 'I er guide väntar PIN-koderna till huset och lägenheten. För att komma till dem behöver ni fortfarande {kroky}. Det tar en minut.',
+  hu: 'Az útmutatóban ott várnak a ház és az apartman belépő PIN-kódjai. Hogy elérjék őket, még {kroky}. Egy perc.',
+};
+
+const NEROZBALEN: Record<JazykZpravy, string> = {
+  cs: 'Dobrý den, abyste se dostali ke svým vstupním PINům, v průvodci k příjezdu ještě {kroky}. Zabere to minutu. Děkujeme a těšíme se na setkání.',
+  en: 'Hello, to reach your entry PIN codes, in the arrival guide you still need to {kroky}. It takes a minute. Thank you, and we look forward to seeing you.',
+  de: 'Guten Tag, um zu Ihren Eingangs-PIN-Codes zu kommen, müssen Sie im Anreiseleitfaden noch {kroky}. Das dauert eine Minute. Vielen Dank, wir freuen uns auf Sie.',
+  pl: 'Dzień dobry, żebyście doszli do swoich kodów PIN, w przewodniku do przyjazdu jeszcze {kroky}. Zajmie to minutę. Dziękujemy i do zobaczenia.',
+  uk: 'Добрий день, щоб дістатися до своїх вхідних PIN-кодів, у путівнику до приїзду ще {kroky}. Це займе хвилину. Дякуємо і до зустрічі.',
+  'zh-Hant': '您好，要看到您的入口 PIN 碼，請在抵達指南裡再 {kroky}。大約一分鐘。謝謝，期待與您見面。',
+  sv: 'Hej, för att komma till era PIN-koder behöver ni i ankomstguiden fortfarande {kroky}. Det tar en minut. Tack, vi ser fram emot att träffas.',
+  hu: 'Jó napot, hogy elérjék a belépő PIN-kódjaikat, az érkezési útmutatóban még {kroky}. Egy perc. Köszönjük, várjuk önöket.',
+};
+
+const DEN_NEROZBALEN: Record<JazykZpravy, string> = {
+  cs: 'Dobrý den, dnes se na vás těšíme. Abyste se dostali ke svým vstupním PINům, v průvodci ještě {kroky}. Zabere to minutu. Děkujeme.',
+  en: 'Hello, we are looking forward to seeing you today. To reach your entry PIN codes, in the guide you still need to {kroky}. It takes a minute. Thank you.',
+  de: 'Guten Tag, wir freuen uns heute auf Sie. Um zu Ihren Eingangs-PIN-Codes zu kommen, müssen Sie im Leitfaden noch {kroky}. Das dauert eine Minute. Vielen Dank.',
+  pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. Żebyście doszli do swoich kodów PIN, w przewodniku jeszcze {kroky}. Zajmie to minutę. Dziękujemy.',
+  uk: 'Добрий день, сьогодні на вас чекаємо. Щоб дістатися до своїх вхідних PIN-кодів, у путівнику ще {kroky}. Це займе хвилину. Дякуємо.',
+  'zh-Hant': '您好，今天期待您的到來。要看到您的入口 PIN 碼，請在指南裡再 {kroky}。大約一分鐘。謝謝。',
+  sv: 'Hej, vi ser fram emot att träffa er i dag. För att komma till era PIN-koder behöver ni i guiden fortfarande {kroky}. Det tar en minut. Tack.',
+  hu: 'Jó napot, ma várjuk önöket. Hogy elérjék a belépő PIN-kódjaikat, az útmutatóban még {kroky}. Egy perc. Köszönjük.',
 };
 
 const DEN_CAS: Record<JazykZpravy, string> = {
-  cs: `Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem {čas}, platí to? Kdyby se čas změnil, napište nám prosím hned. Asi 15 minut před příjezdem se nám prosím ozvěte, ať jsme na místě. ${VETA_KODY.cs}`,
-  en: `Hello, we are looking forward to seeing you today. We are expecting you around {čas}. Does that still work? If the time changes, please write to us right away. About 15 minutes before you arrive, please message us so we are there. ${VETA_KODY.en}`,
-  de: `Guten Tag, wir freuen uns heute auf Sie. Wir rechnen mit Ihnen gegen {čas}. Passt das? Wenn sich die Zeit ändert, schreiben Sie uns bitte sofort. Etwa 15 Minuten vor der Ankunft melden Sie sich bitte, damit wir vor Ort sind. ${VETA_KODY.de}`,
-  pl: `Dzień dobry, cieszymy się, że dziś przyjedziecie. Spodziewamy się Was około {čas}. Zgadza się? Gdyby godzina się zmieniła, napiszcie proszę od razu. Około 15 minut przed przyjazdem odezwijcie się proszę, żebyśmy byli na miejscu. ${VETA_KODY.pl}`,
-  uk: `Добрий день, сьогодні на вас чекаємо. Розраховуємо на вас близько {čas}. Це ще актуально? Якщо час зміниться, напишіть нам, будь ласка, одразу. Приблизно за 15 хвилин до приїзду напишіть, будь ласка, щоб ми були на місці. ${VETA_KODY.uk}`,
-  'zh-Hant': `您好，今天期待您的到來。我們預計您大約 {čas} 到，這個時間還對嗎？如果時間有變，請立刻傳訊息給我們。抵達前大約 15 分鐘請再傳一次，我們才會在現場。${VETA_KODY['zh-Hant']}`,
-  sv: `Hej, vi ser fram emot att träffa er i dag. Vi räknar med er omkring {čas}. Stämmer det? Om tiden ändras, skriv till oss genast. Ungefär 15 minuter före ankomsten hör ni av er, så att vi är på plats. ${VETA_KODY.sv}`,
-  hu: `Jó napot, ma várjuk önöket. Körülbelül {čas} körül számítunk önökre. Így marad? Ha az időpont változik, írjanak azonnal. Körülbelül 15 perccel az érkezés előtt írjanak, hogy ott legyünk. ${VETA_KODY.hu}`,
+  cs: 'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem {čas}. Asi čtvrt hodiny předem nám napište, že budete na místě, a budeme vás čekat. Na domluvený čas čekáme 10 minut. Kdyby se čas změnil, opravte ho v průvodci nebo nám napište.',
+  en: 'Hello, we are looking forward to seeing you today. We are expecting you around {čas}. About a quarter of an hour beforehand, write to us that you will be there, and we will be waiting for you. We wait 10 minutes past the agreed time. If the time changes, correct it in the guide or write to us.',
+  de: 'Guten Tag, wir freuen uns heute auf Sie. Wir rechnen mit Ihnen gegen {čas}. Etwa eine Viertelstunde vorher schreiben Sie uns, dass Sie da sein werden, und wir warten auf Sie. Auf die vereinbarte Zeit warten wir 10 Minuten. Wenn sich die Zeit ändert, korrigieren Sie sie im Leitfaden oder schreiben Sie uns.',
+  pl: 'Dzień dobry, cieszymy się, że dziś przyjedziecie. Spodziewamy się Was około {čas}. Około kwadransa wcześniej napiszcie, że będziecie na miejscu, a będziemy na Was czekać. Na umówioną godzinę czekamy 10 minut. Gdyby godzina się zmieniła, poprawcie ją w przewodniku albo napiszcie nam.',
+  uk: 'Добрий день, сьогодні на вас чекаємо. Розраховуємо на вас близько {čas}. Приблизно за чверть години напишіть, що будете на місці, і ми вас чекатимемо. На домовлений час чекаємо 10 хвилин. Якщо час зміниться, виправте його в путівнику або напишіть нам.',
+  'zh-Hant': '您好，今天期待您的到來。我們預計您大約 {čas} 到。請在大約一刻鐘前寫說您會到，我們會等您。約定時間我們等 10 分鐘。如果時間有變，請在指南裡改，或寫訊息給我們。',
+  sv: 'Hej, vi ser fram emot att träffa er i dag. Vi räknar med er omkring {čas}. Ungefär en kvart i förväg skriver ni att ni kommer att vara på plats, så väntar vi på er. Vi väntar 10 minuter efter den avtalade tiden. Om tiden ändras, rätta den i guiden eller skriv till oss.',
+  hu: 'Jó napot, ma várjuk önöket. Körülbelül {čas} körül számítunk önökre. Negyedórával előtte írják meg, hogy ott lesznek, és mi várunk önökre. A megbeszélt időpontra 10 percet várunk. Ha az időpont változik, javítsák ki az útmutatóban, vagy írjanak nekünk.',
 };
 
-export type DruhZpravy = 'checkin' | 'neotevrel' | 'cas' | 'denBez' | 'denCas';
+const odHodina = casZMinut(PRIPLATEK_OD);
+const kcKrok = String(PRIPLATEK_KC);
+
+const DEN_PRIPLATEK: Record<JazykZpravy, string> = {
+  cs: `Příjezd po ${odHodina} je za příplatek ${kcKrok}\u00A0Kč za každou započatou půlhodinu podle skutečného času, teď by to bylo {částka}\u00A0Kč, platí se na místě.`,
+  en: `Arrival after ${odHodina} is a surcharge of ${kcKrok}\u00A0Kč for each half-hour started, based on the actual time of arrival. Right now that would be {částka}\u00A0Kč, paid on the spot.`,
+  de: `Eine Anreise nach ${odHodina} kostet einen Zuschlag von ${kcKrok}\u00A0Kč für jede angefangene halbe Stunde nach der tatsächlichen Ankunftszeit. Jetzt wären das {částka}\u00A0Kč, zahlbar vor Ort.`,
+  pl: `Przyjazd po ${odHodina} jest za dopłatą ${kcKrok}\u00A0Kč za każdą rozpoczętą półgodzinę według rzeczywistej godziny przyjazdu. Teraz byłoby to {částka}\u00A0Kč, płatne na miejscu.`,
+  uk: `Приїзд після ${odHodina} з доплатою ${kcKrok}\u00A0Kč за кожні розпочаті пів години за фактичним часом приїзду. Зараз це було б {částka}\u00A0Kč, сплачується на місці.`,
+  'zh-Hant': `${odHodina} 後抵達按實際抵達時間，每開始計算的半小時加價 ${kcKrok}\u00A0Kč。現在是 {částka}\u00A0Kč，在現場支付。`,
+  sv: `Ankomst efter ${odHodina} kostar ett tillägg på ${kcKrok}\u00A0Kč för varje påbörjad halvtimme efter den verkliga ankomsten. Just nu skulle det bli {částka}\u00A0Kč, och det betalas på plats.`,
+  hu: `A ${odHodina} utáni érkezés pótdíja ${kcKrok}\u00A0Kč minden megkezdett félóráért, a tényleges érkezési idő szerint. Most ez {částka}\u00A0Kč lenne, a helyszínen fizetendő.`,
+};
+
+export type DruhZpravy = 'checkin' | 'neotevrel' | 'nerozbalen' | 'denNerozbalen' | 'denCas' | 'brana';
 
 export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string; vychozi: boolean };
 
-const PORADI: DruhZpravy[] = ['checkin', 'neotevrel', 'cas', 'denBez', 'denCas'];
+const PORADI: DruhZpravy[] = ['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana'];
 
 const NAZEV: Record<DruhZpravy, string> = {
   checkin: 'Vyplňte check-in',
   neotevrel: 'Neotevřel průvodce',
-  cas: 'Nenapsal čas',
-  denBez: 'Den příjezdu, čas neznáme',
+  nerozbalen: 'Průvodce nerozbalen',
+  denNerozbalen: 'Den příjezdu, průvodce nerozbalen',
   denCas: 'Den příjezdu, čas známe',
+  brana: 'Chybí údaje k bráně',
 };
 
 function vetaCheckinu(lang: GuideLang | null, zdroj: string | null | undefined, sOdkazem = false): string {
@@ -205,17 +286,30 @@ export function textCheckinu(lang: GuideLang | null, zdroj?: string | null, sOdk
   return vetaCheckinu(lang, zdroj, sOdkazem);
 }
 
-export function textCasu(lang: GuideLang | null): string {
-  return textVJazyce(CAS, lang);
+export function textNerozbalen(lang: GuideLang | null, chybi: ChybejiciKrok[]): string {
+  return textVJazyce(NEROZBALEN, lang).replaceAll('{kroky}', spojKroky(lang, chybi));
 }
 
-export function textDne(lang: GuideLang | null): string {
-  return textVJazyce(DEN_BEZ, lang);
+export function textBrany(lang: GuideLang | null): string {
+  return textVJazyce(BRANA, lang);
+}
+
+export function textDneNerozbalen(lang: GuideLang | null, chybi: ChybejiciKrok[]): string {
+  return textVJazyce(DEN_NEROZBALEN, lang).replaceAll('{kroky}', spojKroky(lang, chybi));
+}
+
+export function textUpominky(lang: GuideLang | null, chybi: ChybejiciKrok[]): string {
+  const veta = textVJazyce(UPOMINKA, lang).replaceAll('{kroky}', spojKroky(lang, chybi));
+  return veta;
 }
 
 export function textDneSCasem(lang: GuideLang | null, cas: string | null): string {
   const cisty = cas && /^([01]\d|2[0-3]):[0-5]\d$/.test(cas) ? cas : '';
-  return textVJazyce(DEN_CAS, lang).replaceAll('{čas}', cisty);
+  const zaklad = textVJazyce(DEN_CAS, lang).replaceAll('{čas}', cisty);
+  const kc = cisty ? priplatekProCas(cisty) : null;
+  if (!kc) return zaklad;
+  const veta = textVJazyce(DEN_PRIPLATEK, lang).replaceAll('{částka}', String(kc));
+  return `${zaklad} ${veta}`;
 }
 
 export function zpravaCheckinu(lang: GuideLang | null, zdroj?: string | null, url?: string | null): string {
@@ -227,12 +321,16 @@ export function zpravaHostovi(lang: GuideLang | null, odkaz: string | null): str
   return sestav(textZpravy(lang), odkaz, lang);
 }
 
-export function zpravaCasu(lang: GuideLang | null): string {
-  return sestav(textCasu(lang), null, lang);
+export function zpravaNerozbalen(lang: GuideLang | null, chybi: ChybejiciKrok[], odkaz: string | null): string {
+  return sestav(textNerozbalen(lang, chybi), odkaz, lang);
 }
 
-export function zpravaDne(lang: GuideLang | null, odkaz: string | null): string {
-  return sestav(textDne(lang), odkaz, lang);
+export function zpravaBrany(lang: GuideLang | null): string {
+  return sestav(textBrany(lang), null, lang);
+}
+
+export function zpravaDneNerozbalen(lang: GuideLang | null, chybi: ChybejiciKrok[], odkaz: string | null): string {
+  return sestav(textDneNerozbalen(lang, chybi), odkaz, lang);
 }
 
 export function zpravaDneSCasem(lang: GuideLang | null, cas: string | null, odkaz: string | null): string {
@@ -246,11 +344,16 @@ export function hlavniZprava(opts: {
   casPrijezdu: string | null;
   prijezd: string | null;
   dnes: string;
+  chybi?: ChybejiciKrok[];
+  branaChybi?: boolean;
 }): DruhZpravy {
   if (opts.stav === 'bez_checkinu') return 'checkin';
   if (opts.otevrenoPocet === 0) return 'neotevrel';
-  if (opts.prijezd && opts.prijezd === opts.dnes) return opts.casPrijezdu ? 'denCas' : 'denBez';
-  if (!opts.casPrijezdu) return 'cas';
+  const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
+  const rozbalen = chybi.length === 0;
+  if (opts.prijezd && opts.prijezd === opts.dnes) return rozbalen ? 'denCas' : 'denNerozbalen';
+  if (!rozbalen && opts.branaChybi && !chybi.includes('cas') && !chybi.includes('pravidla')) return 'brana';
+  if (!rozbalen) return 'nerozbalen';
   return 'neotevrel';
 }
 
@@ -264,13 +367,17 @@ export function zpravyMenu(opts: {
   casPrijezdu: string | null;
   prijezd: string | null;
   dnes: string;
+  chybi?: ChybejiciKrok[];
+  branaChybi?: boolean;
 }): ZpravaMenu[] {
+  const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const texty: Record<DruhZpravy, string> = {
     checkin: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl),
     neotevrel: zpravaHostovi(opts.lang, opts.pruvodce),
-    cas: zpravaCasu(opts.lang),
-    denBez: zpravaDne(opts.lang, opts.pruvodce),
+    nerozbalen: zpravaNerozbalen(opts.lang, chybi, opts.pruvodce),
+    denNerozbalen: zpravaDneNerozbalen(opts.lang, chybi, opts.pruvodce),
     denCas: zpravaDneSCasem(opts.lang, opts.casPrijezdu, opts.pruvodce),
+    brana: zpravaBrany(opts.lang),
   };
   const hlavni = hlavniZprava(opts);
   return PORADI.map((id) => ({ id, nazev: NAZEV[id], text: texty[id], vychozi: id === hlavni }));

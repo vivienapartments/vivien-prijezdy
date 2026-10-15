@@ -16,6 +16,7 @@ import {
   parsujPotvrzeni,
 } from './potvrzeni-rezervace';
 import { posliPruvodce } from './posli-pruvodce';
+import { vynechRucni } from './rucni-pole';
 import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
 import {
   createProcessStore,
@@ -136,30 +137,11 @@ const NAZVY_ZMENY: Partial<Record<keyof RezervaceRecord, string>> = {
   poplatek: 'poplatek',
 };
 
-const CHRANENE_RUCNI = new Set<keyof RezervaceRecord>([
-  'emailHosta',
-  'apartman',
-  'prijezd',
-  'odjezd',
-  'noci',
-  'osob',
-  'jazyk',
-  'accessPin',
-]);
-
-function maRucniUdaje(prev: RezervaceRecord | null | undefined): boolean {
-  return Boolean(
-    prev?.historie.some((h) => h.co.startsWith('Údaje opraveny') || h.co.startsWith('Opraveno a odesláno')),
-  );
-}
-
-/** Check-in zapíše jen pole, která v mailu jsou. Ruční oprava a čas příjezdu zůstanou. */
+/** Check-in zapíše jen pole, která v mailu jsou. Co majitel uložil ručně, zůstane. */
 function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partial<RezervaceRecord> {
   const data: Partial<RezervaceRecord> = {};
-  const rucni = maRucniUdaje(prev);
   function poloz<K extends keyof RezervaceRecord>(klic: K, hodnota: RezervaceRecord[K] | null | undefined) {
     if (hodnota == null || hodnota === '') return;
-    if (rucni && CHRANENE_RUCNI.has(klic)) return;
     data[klic] = hodnota;
   }
   poloz('apartman', ins.apartman);
@@ -201,7 +183,11 @@ function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partia
     }
   }
   if (ins.zdroj) poloz('zdroj', ins.zdroj);
-  return data;
+  return vynechRucni(prev, data, 'check-in');
+}
+
+function maCoUlozit(prev: RezervaceRecord | null, data: Partial<RezervaceRecord>): boolean {
+  return coSeZmenilo(prev, data).length > 0 || Boolean(data.navrhy);
 }
 
 export function coSeZmenilo(prev: RezervaceRecord | null, data: Partial<RezervaceRecord>): string[] {
@@ -258,7 +244,7 @@ async function checkinKDoplneni(mail: InboxMail, store: ProcessStore): Promise<b
   if (!origin.ok) return false;
   const prev = await store.getRezervace(ins.rezervace);
   if (!prev || prev.stav === 'zruseno') return false;
-  return coSeZmenilo(prev, udajeZMailu(ins, prev)).length > 0;
+  return maCoUlozit(prev, udajeZMailu(ins, prev));
 }
 
 export async function processOneMail(mail: InboxMail, store: ProcessStore): Promise<ProcessItem> {
@@ -372,8 +358,11 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
   if (prev?.stav === 'odeslano' || prev?.stav === 'odeslano_s_vyhradou') {
     const data = udajeZMailu(ins, prev);
     const zmeny = coSeZmenilo(prev, data);
-    if (zmeny.length) {
-      const rec = sloucit(id, prev, data, now, `Doplněno z check-inu: ${zmeny.join(', ')}`);
+    if (maCoUlozit(prev, data)) {
+      const veta = zmeny.length
+        ? `Doplněno z check-inu: ${zmeny.join(', ')}`
+        : 'Check-in uvedl jinou hodnotu, ruční údaj zůstal';
+      const rec = sloucit(id, prev, data, now, veta);
       await store.setRezervace(id, rec);
     }
     await store.markMessage({
@@ -478,7 +467,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
   }
 }
 
-function udajeInterni(u: InterniUdaje, stav: RezervaceStav): Partial<RezervaceRecord> {
+function udajeInterni(u: InterniUdaje, stav: RezervaceStav, prev?: RezervaceRecord | null): Partial<RezervaceRecord> {
   const data: Partial<RezervaceRecord> = { stav };
   if (u.apartman) data.apartman = u.apartman;
   if (u.prijezd) data.prijezd = u.prijezd;
@@ -508,7 +497,7 @@ function udajeInterni(u: InterniUdaje, stav: RezervaceStav): Partial<RezervaceRe
   if (veta && stav === 'bez_checkinu') {
     data.duvody = [duvod('neuplne', `Čeká na online check-in. ${veta}`)];
   }
-  return data;
+  return vynechRucni(prev, data, 'rezervace');
 }
 
 function historieInterni(u: InterniUdaje, stav: RezervaceStav, odeslano: boolean): string {
@@ -638,7 +627,7 @@ async function zpracujInterni(mail: InboxMail, store: ProcessStore, now: string)
     stav = prev.stav;
   }
 
-  const rec = sloucit(id, prev, udajeInterni(u, stav), now, historieInterni(u, stav, odeslano));
+  const rec = sloucit(id, prev, udajeInterni(u, stav, prev), now, historieInterni(u, stav, odeslano));
   await store.setRezervace(id, rec);
 
   const zmeniloSe =

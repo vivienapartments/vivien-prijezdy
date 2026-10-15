@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import type { Duvod } from './chyby';
 import type { PoplatekStav } from './poplatek';
+import type { VyjezdPolozka } from './priplatek-prijezd';
 import type { AptId, GuideLang } from './types';
 
 export type MessageStatus =
@@ -87,6 +88,73 @@ export type RezervaceRecord = {
   stitek: 'rucne' | 'info' | null;
   /** Čas osobního předání. Než je vyplněný, průvodce kódy neukáže. Maže se se záznamem. */
   predano: string | null;
+  /** Kdy host napsal, že je na místě. Příplatek se bere odtud, jinak z předání. */
+  naMiste: string | null;
+  /** Ruční příplatek za čas. Když je vyplněný, výpočet ho nepřepíše. */
+  priplatekRucni: number | null;
+  /** Čas, kdy byl vybraný městský poplatek. */
+  zaplaceno: string | null;
+  /** Kdo městský poplatek vybral. */
+  poplatekVybral: 'ja' | 'nikol' | null;
+  /** Den odjezdu, kdy už odešlo ranní upozornění, že něco není zaplacené. */
+  platbaUpozorneno: string | null;
+  /** Další výjezdy, každý 300 Kč, dokud není vybraný. Maže se se záznamem. */
+  vyjezdy: VyjezdPolozka[];
+  /** Souhlas hosta s pravidly příjezdu. Verze drží znění, které viděl. */
+  souhlasPravidel: { kdy: string; jazyk: string; verze: string } | null;
+  /** Poslední čas příjezdu zadal host v průvodci. */
+  casZadalHost: boolean;
+  /** auto, nebo pěšky / vlak / autobus. */
+  zpusobPrijezdu: 'auto' | 'pesky' | null;
+  /** Telefon, ze kterého host otevírá bránu. */
+  telefonBrana: string | null;
+  /** SPZ bez mezer. */
+  spz: string | null;
+  /** Půjčené auto, SPZ doplní později. */
+  spzPujcene: boolean;
+  /** Majitel označil, že číslo je v bráně. */
+  branaRegistrovano: string | null;
+  /** Majitel odemkl průvodce i bez údajů. Kódy to neodemkne. */
+  pruvodceOdemcen: string | null;
+  /** Časy uložení z průvodce, kvůli limitu. Bez údajů hosta. */
+  hostUlozeni: string[];
+  /** Pole, která majitel uložil v přehledu. Automat je nepřepíše. */
+  rucniZnacky: RucniZnacka[];
+  /** Jiná hodnota od automatu nebo hosta. Majitel ji může převzít. */
+  navrhy: NavrhPole[];
+};
+
+export type RucniPole =
+  | 'telefon'
+  | 'telefonRezervace'
+  | 'casPrijezdu'
+  | 'checkinUrl'
+  | 'jmeno'
+  | 'emailHosta'
+  | 'apartman'
+  | 'prijezd'
+  | 'odjezd'
+  | 'noci'
+  | 'osob'
+  | 'jazyk'
+  | 'predano'
+  | 'priplatekRucni'
+  | 'zaplaceno'
+  | 'poplatekVybral'
+  | 'accessPin';
+
+export type OdkudNavrh = 'check-in' | 'rezervace' | 'host' | 'potvrzeni';
+
+export type NavrhPole = { pole: RucniPole; od: OdkudNavrh; hodnota: string };
+
+export type RucniZnacka = { pole: RucniPole; cas: string };
+
+export type PushZarizeni = {
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  nazev: string;
+  cas: string;
 };
 
 export type RezervaceEntry = { id: string; record: RezervaceRecord };
@@ -95,7 +163,31 @@ export type MessageEntry = { id: string; record: MessageRecord };
 type StoreData = {
   messages: Record<string, MessageRecord>;
   rezervace: Record<string, RezervaceRecord>;
+  push?: PushZarizeni[];
+  zpracujSelhani?: number;
 };
+
+const RUCNI_KLIC = new Set<RucniPole>([
+  'telefon',
+  'telefonRezervace',
+  'casPrijezdu',
+  'checkinUrl',
+  'jmeno',
+  'emailHosta',
+  'apartman',
+  'prijezd',
+  'odjezd',
+  'noci',
+  'osob',
+  'jazyk',
+  'predano',
+  'priplatekRucni',
+  'zaplaceno',
+  'poplatekVybral',
+  'accessPin',
+]);
+
+const ODKUD = new Set<OdkudNavrh>(['check-in', 'rezervace', 'host', 'potvrzeni']);
 
 export interface ProcessStore {
   isMessageProcessed(messageId: string): Promise<boolean>;
@@ -106,6 +198,10 @@ export interface ProcessStore {
   listRezervace(): Promise<RezervaceEntry[]>;
   listMessages(): Promise<MessageEntry[]>;
   purgeExpired(now?: Date): Promise<number>;
+  listPush(): Promise<PushZarizeni[]>;
+  savePush(list: PushZarizeni[]): Promise<void>;
+  getSelhani(): Promise<number>;
+  setSelhani(pocet: number): Promise<void>;
 }
 
 const MESSAGE_TTL_SEC = 90 * 24 * 60 * 60;
@@ -119,7 +215,42 @@ const STAVY: RezervaceStav[] = [
 ];
 
 function emptyData(): StoreData {
-  return { messages: {}, rezervace: {} };
+  return { messages: {}, rezervace: {}, push: [], zpracujSelhani: 0 };
+}
+
+function nactiZnacky(raw: unknown): RucniZnacka[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (z): z is RucniZnacka =>
+      Boolean(z) &&
+      typeof z === 'object' &&
+      RUCNI_KLIC.has((z as RucniZnacka).pole) &&
+      typeof (z as RucniZnacka).cas === 'string',
+  );
+}
+
+function nactiNavrhy(raw: unknown): NavrhPole[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (n): n is NavrhPole =>
+      Boolean(n) &&
+      typeof n === 'object' &&
+      RUCNI_KLIC.has((n as NavrhPole).pole) &&
+      ODKUD.has((n as NavrhPole).od) &&
+      typeof (n as NavrhPole).hodnota === 'string',
+  );
+}
+
+function nactiPush(raw: unknown): PushZarizeni[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (z): z is PushZarizeni =>
+      Boolean(z) &&
+      typeof z === 'object' &&
+      typeof (z as PushZarizeni).endpoint === 'string' &&
+      typeof (z as PushZarizeni).p256dh === 'string' &&
+      typeof (z as PushZarizeni).auth === 'string',
+  );
 }
 
 /** Smazat v poledne UTC třetí den po dni odjezdu. */
@@ -127,6 +258,24 @@ export function smazatPoOdjezdu(odjezdYmd: string): Date | null {
   const [y, m, d] = odjezdYmd.split('-').map(Number);
   if (!y || !m || !d) return null;
   return new Date(Date.UTC(y, m - 1, d + 3, 12, 0, 0));
+}
+
+function nactiVyjezdy(raw: unknown): VyjezdPolozka[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const v = item as Record<string, unknown>;
+    if (typeof v.id !== 'string' || !v.id || typeof v.kdy !== 'string' || !v.kdy) return [];
+    if (typeof v.castka !== 'number' || v.castka <= 0) return [];
+    return [{ id: v.id, kdy: v.kdy, castka: v.castka }];
+  });
+}
+
+function nactiSouhlas(raw: unknown): RezervaceRecord['souhlasPravidel'] {
+  if (!raw || typeof raw !== 'object') return null;
+  const s = raw as Record<string, unknown>;
+  if (typeof s.kdy !== 'string' || typeof s.jazyk !== 'string' || typeof s.verze !== 'string') return null;
+  return { kdy: s.kdy, jazyk: s.jazyk, verze: s.verze };
 }
 
 function jeStav(value: unknown): value is RezervaceStav {
@@ -174,7 +323,22 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     telefonWa: typeof r.telefonWa === 'string' && r.telefonWa ? r.telefonWa : null,
     telefonPuvodni: typeof r.telefonPuvodni === 'string' && r.telefonPuvodni ? r.telefonPuvodni : null,
     zdroj: typeof r.zdroj === 'string' && r.zdroj ? r.zdroj : null,
-    casPrijezdu: typeof r.casPrijezdu === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.casPrijezdu) ? r.casPrijezdu : null,
+    casPrijezdu:
+      r.casPrijezdu === 'po20' ||
+      r.casPrijezdu === 'po23' ||
+      (typeof r.casPrijezdu === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.casPrijezdu))
+        ? r.casPrijezdu
+        : null,
+    casZadalHost: r.casZadalHost === true,
+    zpusobPrijezdu: r.zpusobPrijezdu === 'auto' || r.zpusobPrijezdu === 'pesky' ? r.zpusobPrijezdu : null,
+    telefonBrana: typeof r.telefonBrana === 'string' && r.telefonBrana ? r.telefonBrana : null,
+    spz: typeof r.spz === 'string' && r.spz ? r.spz : null,
+    spzPujcene: r.spzPujcene === true,
+    branaRegistrovano: typeof r.branaRegistrovano === 'string' && r.branaRegistrovano ? r.branaRegistrovano : null,
+    pruvodceOdemcen: typeof r.pruvodceOdemcen === 'string' && r.pruvodceOdemcen ? r.pruvodceOdemcen : null,
+    hostUlozeni: Array.isArray(r.hostUlozeni) ? r.hostUlozeni.filter((x) => typeof x === 'string') : [],
+    rucniZnacky: nactiZnacky(r.rucniZnacky),
+    navrhy: nactiNavrhy(r.navrhy),
     telefonRezervace: typeof r.telefonRezervace === 'string' && r.telefonRezervace ? r.telefonRezervace : null,
     telefonRezervaceWa: typeof r.telefonRezervaceWa === 'string' && r.telefonRezervaceWa ? r.telefonRezervaceWa : null,
     telefonRezervacePuvodni:
@@ -182,6 +346,16 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     checkinUrl: typeof r.checkinUrl === 'string' && /^https:\/\//i.test(r.checkinUrl) ? r.checkinUrl : null,
     stitek: r.stitek === 'rucne' || r.stitek === 'info' ? r.stitek : null,
     predano: typeof r.predano === 'string' && r.predano ? r.predano : null,
+    naMiste: typeof r.naMiste === 'string' && r.naMiste ? r.naMiste : null,
+    priplatekRucni:
+      typeof r.priplatekRucni === 'number' && Number.isFinite(r.priplatekRucni) && r.priplatekRucni >= 0
+        ? Math.round(r.priplatekRucni)
+        : null,
+    zaplaceno: typeof r.zaplaceno === 'string' && r.zaplaceno ? r.zaplaceno : null,
+    poplatekVybral: r.poplatekVybral === 'ja' || r.poplatekVybral === 'nikol' ? r.poplatekVybral : null,
+    platbaUpozorneno: typeof r.platbaUpozorneno === 'string' && r.platbaUpozorneno ? r.platbaUpozorneno : null,
+    vyjezdy: nactiVyjezdy(r.vyjezdy),
+    souhlasPravidel: nactiSouhlas(r.souhlasPravidel),
   };
 }
 
@@ -222,6 +396,23 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     checkinUrl: null,
     stitek: null,
     predano: null,
+    naMiste: null,
+    priplatekRucni: null,
+    zaplaceno: null,
+    poplatekVybral: null,
+    platbaUpozorneno: null,
+    vyjezdy: [],
+    souhlasPravidel: null,
+    casZadalHost: false,
+    zpusobPrijezdu: null,
+    telefonBrana: null,
+    spz: null,
+    spzPujcene: false,
+    branaRegistrovano: null,
+    pruvodceOdemcen: null,
+    hostUlozeni: [],
+    rucniZnacky: [],
+    navrhy: [],
   };
 }
 
@@ -241,6 +432,8 @@ export class FileProcessStore implements ProcessStore {
       return {
         messages: parsed.messages || {},
         rezervace: parsed.rezervace || {},
+        push: nactiPush(parsed.push),
+        zpracujSelhani: typeof parsed.zpracujSelhani === 'number' ? parsed.zpracujSelhani : 0,
       };
     } catch {
       return emptyData();
@@ -311,6 +504,26 @@ export class FileProcessStore implements ProcessStore {
     }
     if (removed) this.write(data);
     return removed;
+  }
+
+  async listPush(): Promise<PushZarizeni[]> {
+    return this.read().push || [];
+  }
+
+  async savePush(list: PushZarizeni[]): Promise<void> {
+    const data = this.read();
+    data.push = list;
+    this.write(data);
+  }
+
+  async getSelhani(): Promise<number> {
+    return this.read().zpracujSelhani || 0;
+  }
+
+  async setSelhani(pocet: number): Promise<void> {
+    const data = this.read();
+    data.zpracujSelhani = pocet;
+    this.write(data);
   }
 }
 
@@ -413,6 +626,26 @@ export class UpstashProcessStore implements ProcessStore {
 
   async purgeExpired(): Promise<number> {
     return 0;
+  }
+
+  async listPush(): Promise<PushZarizeni[]> {
+    const v = await this.cmd<string | null>('GET', 'push:zarizeni');
+    if (!v) return [];
+    return nactiPush(JSON.parse(v));
+  }
+
+  async savePush(list: PushZarizeni[]): Promise<void> {
+    await this.cmd('SET', 'push:zarizeni', JSON.stringify(list));
+  }
+
+  async getSelhani(): Promise<number> {
+    const v = await this.cmd<string | null>('GET', 'meta:selhani');
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  async setSelhani(pocet: number): Promise<void> {
+    await this.cmd('SET', 'meta:selhani', String(pocet));
   }
 }
 

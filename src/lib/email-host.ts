@@ -3,6 +3,8 @@ import apartmanyJson from '@/data/apartmany.json';
 import { ceskyVokativ, narodnostKod } from './osloveni';
 import type { GuideSecrets } from './secrets';
 import { GUIDE_LANGS, type AptId, type GuideLang, type LText } from './types';
+import type { ChybejiciKrok } from './vstup-pruvodce';
+import { textUpominky } from './whatsapp-zprava';
 
 export type GuestEmailInput = {
   lang: GuideLang;
@@ -113,14 +115,14 @@ export function predmetyPruvodce(): string[] {
 /** Co průvodce je (cesta + zásadní info). */
 const introBodyL: LText = {
   // CS: po oslovení s čárkou malé písmeno (pravopis dopisu)
-  cs: 'připravili jsme pro vás krátkého průvodce příjezdem. Najdete v něm cestu k nám, parkování, bránu a Wi-Fi. Vstupní kódy se v něm zobrazí, až vám apartmán osobně předáme. Ať víte, kam jet a co dělat po příjezdu.',
-  en: 'We prepared a short arrival guide for you. You will find the way to us, parking, the gate and Wi-Fi. The entry codes will appear in it only after we hand the apartment over to you in person. So you know where to go and what to do after arrival.',
-  de: 'wir haben für Sie einen kurzen Anreiseleitfaden vorbereitet. Darin finden Sie den Weg zu uns, Parken, Tor und WLAN. Die Eingangscodes erscheinen darin erst, wenn wir Ihnen das Apartment persönlich übergeben. Damit Sie wissen, wohin Sie fahren und was nach der Ankunft zu tun ist.',
-  pl: 'przygotowaliśmy dla Was krótką instrukcję przyjazdu. Znajdziecie w niej drogę do nas, parking, bramę i Wi-Fi. Kody wejścia pojawią się w niej, gdy apartament przekażemy osobiście. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
-  uk: 'ми підготували для вас короткий гід приїзду. У ньому шлях до нас, паркування, брама та Wi-Fi. Вхідні коди з’являться в ньому, коли апартаменти передамо особисто. Щоб ви знали, куди їхати і що робити після прибуття.',
-  'zh-Hant': '我們為您準備了一份簡短的抵達指南。您會找到前往我們這裡的路線、停車、大門與 Wi-Fi。進門密碼會在我們當面把公寓交給您之後才顯示。讓您知道怎麼來、抵達後該做什麼。',
-  sv: 'vi har förberett en kort ankomstguide. I den finns vägen till oss, parkering, grind och Wi-Fi. Ingångskoderna visas där först när vi lämnar över lägenheten personligen. Så att ni vet vart ni ska och vad ni gör efter ankomsten.',
-  hu: 'készítettünk egy rövid érkezési útmutatót. Benne van az út hozzánk, a parkolás, a kapu és a WiFi. A belépési kódok akkor jelennek meg benne, amikor az apartmant személyesen átadjuk. Hogy tudják, hova menjenek, és mit csináljanak az érkezés után.',
+  cs: 'připravili jsme pro vás krátkého průvodce příjezdem. Otevřete průvodce a vyplňte, v kolik dorazíte. Pak se vám ukáže cesta k nám, parkování i brána. Vstupní kódy se v něm zobrazí, až vám apartmán osobně předáme. Ať víte, kam jet a co dělat po příjezdu.',
+  en: 'We prepared a short arrival guide for you. Open the guide and fill in what time you will arrive. Then you will see the way to us, parking and the gate. The entry codes will appear in it only after we hand the apartment over to you in person. So you know where to go and what to do after arrival.',
+  de: 'wir haben für Sie einen kurzen Anreiseleitfaden vorbereitet. Öffnen Sie den Leitfaden und tragen Sie ein, um wie viel Uhr Sie ankommen. Dann sehen Sie den Weg zu uns, das Parken und das Tor. Die Eingangscodes erscheinen darin erst, wenn wir Ihnen das Apartment persönlich übergeben. Damit Sie wissen, wohin Sie fahren und was nach der Ankunft zu tun ist.',
+  pl: 'przygotowaliśmy dla Was krótką instrukcję przyjazdu. Otwórzcie przewodnik i wpiszcie, o której dojedziecie. Potem zobaczy się droga do nas, parking i brama. Kody wejścia pojawią się w nim, gdy apartament przekażemy osobiście. Żebyście wiedzieli, dokąd jechać i co robić po przyjeździe.',
+  uk: 'ми підготували для вас короткий гід приїзду. Відкрийте гід і вкажіть, о котрій приїдете. Тоді з’явиться шлях до нас, паркування і брама. Вхідні коди з’являться в ньому, коли апартаменти передамо особисто. Щоб ви знали, куди їхати і що робити після прибуття.',
+  'zh-Hant': '我們為您準備了一份簡短的抵達指南。請打開指南並填上您幾點到。之後會看到前往我們這裡的路線、停車和大門。進門密碼會在我們當面把公寓交給您之後才顯示。讓您知道怎麼來、抵達後該做什麼。',
+  sv: 'vi har förberett en kort ankomstguide. Öppna guiden och fyll i vilken tid ni kommer. Sedan visas vägen till oss, parkeringen och grinden. Ingångskoderna visas där först när vi lämnar över lägenheten personligen. Så att ni vet vart ni ska och vad ni gör efter ankomsten.',
+  hu: 'készítettünk egy rövid érkezési útmutatót. Nyissák meg az útmutatót, és írják be, hánykor érkeznek. Utána megjelenik az út hozzánk, a parkolás és a kapu. A belépési kódok akkor jelennek meg benne, amikor az apartmant személyesen átadjuk. Hogy tudják, hova menjenek, és mit csináljanak az érkezés után.',
 };
 
 /** Nad tlačítkem. Čas příjezdu, ať host nečeká před domem. */
@@ -157,7 +159,61 @@ const casWhatsappL: LText = {
   hu: "Írás WhatsAppon",
 };
 
-/** CTA nápověda (v HTML tučně). */
+/**
+ * Kterou skladbu mail posílá. 'nova' je návrh z 14. 10. 2026.
+ * 'stara' je věta, která hostům chodí dnes. Texty staré verze zůstávají níž.
+ */
+export function skladbaEmailu(): 'nova' | 'stara' {
+  return 'nova';
+}
+
+/** Hned po oslovení. Nová verze. */
+const uvodNovaL: LText = {
+  cs: 'posíláme vám průvodce příjezdem. Je jen pro váš apartmán a najdete v něm cestu k nám, parkování i bránu.',
+  en: 'we are sending you the arrival guide. It is only for your apartment, and in it you will find the way to us, parking and the gate.',
+  de: 'wir schicken Ihnen den Anreiseleitfaden. Er gilt nur für Ihr Apartment, und darin finden Sie den Weg zu uns, das Parken und das Tor.',
+  pl: 'wysyłamy Wam instrukcję przyjazdu. Jest tylko dla Waszego apartamentu i znajdziecie w niej drogę do nas, parking i bramę.',
+  uk: 'надсилаємо вам гід приїзду. Він лише для ваших апартаментів, і в ньому знайдете шлях до нас, паркування і браму.',
+  'zh-Hant': '我們寄上抵達指南。這份指南只給您的公寓，裡面有來我們這裡的路、停車和大門。',
+  sv: 'vi skickar er ankomstguiden. Den gäller bara er lägenhet, och där finns vägen till oss, parkeringen och grinden.',
+  hu: 'elküldjük az érkezési útmutatót. Csak az önök apartmanjához szól, és benne megtalálják az utat hozzánk, a parkolást és a kaput.',
+};
+
+/** Výrazný tučný box. Tlačítka SMS a WhatsApp v něm nejsou. */
+const duleziteNovaL: LText = {
+  cs: 'Nejdůležitější: ve vašem průvodci čekají vstupní PINy do domu a apartmánu. Abyste se k nim dostali, otevřete průvodce, vyberte čas a způsob příjezdu a potvrďte pravidla. Zabere to minutu.',
+  en: 'The most important thing: your entry PIN codes for the house and the apartment are waiting in your guide. To reach them, open the guide, choose the time and how you arrive, and confirm the rules. It takes a minute.',
+  de: 'Das Wichtigste: In Ihrem Leitfaden warten die Eingangs-PIN-Codes für das Haus und das Apartment. Um zu ihnen zu kommen, öffnen Sie den Leitfaden, wählen Sie die Zeit und die Art der Anreise und bestätigen Sie die Regeln. Das dauert eine Minute.',
+  pl: 'Najważniejsze: w Waszej instrukcji czekają kody PIN do domu i apartamentu. Żeby do nich dojść, otwórzcie instrukcję, wybierzcie godzinę i sposób przyjazdu i potwierdźcie zasady. Zajmie to minutę.',
+  uk: 'Найважливіше: у вашому гіді чекають вхідні PIN-коди до будинку й апартаментів. Щоб дістатися до них, відкрийте гід, виберіть час і спосіб приїзду та підтвердьте правила. Це займе хвилину.',
+  'zh-Hant': '最重要的是：您的指南裡有房屋和公寓的入口 PIN 碼。要看到它們，請打開指南，選擇抵達時間和方式，並確認規則。大約一分鐘。',
+  sv: 'Det viktigaste: i er guide väntar PIN-koderna till huset och lägenheten. För att komma till dem, öppna guiden, välj tid och sätt att komma, och bekräfta reglerna. Det tar en minut.',
+  hu: 'A legfontosabb: az útmutatóban ott várnak a ház és az apartman belépő PIN-kódjai. Hogy elérjék őket, nyissák meg az útmutatót, válasszák ki az időt és az érkezés módját, és erősítsék meg a szabályokat. Egy perc.',
+};
+
+const dumNovaL: LText = {
+  cs: 'VIVIEN je malý rodinný dům a o hosty se staráme sami, bez recepce a cizích lidí. Apartmán vám předáme osobně, všechno ukážeme a pak dostanete PINy. Když víme, kdy přijedete, čekáme my na vás.',
+  en: 'VIVIEN is a small family house and we look after the guests ourselves, with no reception and no outside staff. We hand the apartment over in person, show you everything, and then you get the PIN codes. When we know when you are arriving, we are the ones waiting for you.',
+  de: 'VIVIEN ist ein kleines Familienhaus, und wir kümmern uns selbst um die Gäste, ohne Rezeption und ohne fremde Leute. Das Apartment übergeben wir persönlich, zeigen Ihnen alles, und dann bekommen Sie die PIN-Codes. Wenn wir wissen, wann Sie ankommen, warten wir auf Sie.',
+  pl: 'VIVIEN to mały rodzinny dom i o gości dbamy sami, bez recepcji i obcych ludzi. Apartament przekażemy osobiście, wszystko pokażemy, a potem dostaniecie kody PIN. Kiedy wiemy, o której przyjedziecie, czekamy my na Was.',
+  uk: 'VIVIEN є маленьким сімейним будинком, і про гостей дбаємо самі, без рецепції і без чужих людей. Апартаменти передамо особисто, все покажемо, і тоді ви отримаєте PIN-коди. Коли знаємо, о котрій приїдете, чекаємо ми на вас.',
+  'zh-Hant': 'VIVIEN 是一棟小型家族住宅，客人由我們自己照顧，沒有櫃檯，也沒有外人。公寓由我們當面交接，帶您看過一切，然後您會拿到 PIN 碼。我們知道您幾點到，就由我們等候。',
+  sv: 'VIVIEN är ett litet familjehus och vi tar hand om gästerna själva, utan reception och utan utomstående. Lägenheten lämnar vi över personligen, visar er allt, och sedan får ni PIN-koderna. När vi vet när ni kommer är det vi som väntar på er.',
+  hu: 'A VIVIEN egy kis családi ház, a vendégekről mi magunk gondoskodunk, recepció és idegenek nélkül. Az apartmant személyesen adjuk át, mindent megmutatunk, és utána megkapják a PIN-kódokat. Ha tudjuk, mikor érkeznek, mi várunk önökre.',
+};
+
+const checkinNovaL: LText = {
+  cs: 'Check-in je od 14:00 do 20:00. Pozdější příjezd je za příplatek.',
+  en: 'Check-in is from 14:00 to 20:00. A later arrival has a surcharge.',
+  de: 'Check-in ist von 14:00 bis 20:00. Eine spätere Ankunft kostet einen Zuschlag.',
+  pl: 'Check-in jest od 14:00 do 20:00. Późniejszy przyjazd jest za dopłatą.',
+  uk: 'Заселення є з 14:00 до 20:00. Пізніший приїзд є за доплату.',
+  'zh-Hant': '入住時間是 14:00 到 20:00。較晚抵達需加付費用。',
+  sv: 'Incheckning är från 14:00 till 20:00. En senare ankomst har ett tillägg.',
+  hu: 'A bejelentkezés 14:00-tól 20:00-ig tart. A későbbi érkezés felár ellenében lehetséges.',
+};
+
+/** CTA nápověda (v HTML tučně). Jen stará verze mailu. */
 const introOpenL: LText = {
   cs: 'Otevřete ho tlačítkem níže.',
   en: 'Open it with the button below.',
@@ -167,6 +223,13 @@ const introOpenL: LText = {
   'zh-Hant': '請用下方按鈕開啟。',
   sv: 'Öppna den med knappen nedan.',
   hu: "Nyissák meg az alábbi gombbal.",
+};
+
+/** Staré české věty. Ať jdou vrátit, i když se skládá nová verze. */
+export const EMAIL_STARA_CS = {
+  uvod: introBodyL.cs,
+  box: casPrijezduL.cs,
+  podTlacitkem: introOpenL.cs,
 };
 
 const stayL: LText = {
@@ -346,16 +409,27 @@ function escapeAttr(s: string): string {
   return escapeHtml(s).replace(/'/g, '&#39;');
 }
 
-/** Číslo v mailu: tel odkaz, nowrap a nedělitelné mezery, ať se nezalomí. */
+/**
+ * Číslo na vlastním řádku. Mezery jsou &nbsp; a řádek se neláme.
+ * Vlastní řádek je poslední řádek kusu textu nad ním, takže se mezery neroztáhnou.
+ */
 function telAnchor(display: string, bold: boolean): string {
   const digits = display.replace(/\D/g, '');
-  const shown = display.trim().replace(/ /g, '\u00a0');
+  const shown = display.trim().replace(/ /g, '&nbsp;');
   const weight = bold ? 'font-weight:700;' : '';
-  return `<a href="tel:+${digits}" style="color:#e8d5a3;text-decoration:underline;text-underline-offset:0.12em;${weight}white-space:nowrap;">${shown}</a>`;
+  return `<a href="tel:+${digits}" style="display:block;color:#e8d5a3;text-decoration:underline;text-underline-offset:0.12em;${weight}white-space:nowrap;">${shown}</a>`;
 }
 
 function withPhones(text: string): string {
-  return escapeHtml(text).replace(/\+420 \d{3} \d{3} \d{3}/g, (m) => telAnchor(m, true));
+  return escapeHtml(text).replace(/\+420 \d{3} \d{3} \d{3}(\.)?/g, (_m, dot: string | undefined) => {
+    const number = _m.replace(/\.$/, '');
+    const anchor = telAnchor(number, true);
+    return dot ? anchor.replace('</a>', '.</a>') : anchor;
+  });
+}
+
+function withTimes(escaped: string): string {
+  return escaped.replace(/\d{1,2}:\d{2}/g, (m) => `<span style="white-space:nowrap;">${m}</span>`);
 }
 
 function msgButton(href: string, label: string, serif: string): string {
@@ -407,34 +481,7 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
     serif,
   });
 
-  const html = `<!DOCTYPE html>
-<html lang="${escapeAttr(lang)}" style="background:#1c1712;">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark" />
-  <meta name="supported-color-schemes" content="dark" />
-  <title>${escapeHtml(subjectBase)}</title>
-</head>
-<body style="margin:0;padding:0;background:#1c1712;color:#e8dfc8;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#1c1712;padding:28px 12px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#241e18;border:1px solid #3d342a;border-radius:10px;">
-          <tr>
-            <td style="padding:28px 28px 8px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td align="center" style="padding:0 0 22px;">
-                    <img src="${escapeAttr(logoSrc)}" width="96" height="96" alt="VIVIEN Apartments" style="display:block;width:96px;height:auto;border:0;" />
-                  </td>
-                </tr>
-                <tr><td style="padding:0 0 16px;font-family:${serif};font-size:20px;line-height:1.4;color:#f5efe3;">${escapeHtml(greeting)}</td></tr>
-                <tr><td style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
-                  <div lang="${escapeAttr(lang)}" style="${sazba}">${escapeHtml(t(introBodyL, lang))}</div>
-                  <div style="padding-top:26px;"><strong style="color:#f5efe3;font-weight:700;">${escapeHtml(t(introOpenL, lang))}</strong></div>
-                </td></tr>
-                <tr>
+  const pobyt = `<tr>
                   <td style="padding:0 0 22px;">
                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#2a221c;border-radius:8px;">
                       <tr>
@@ -450,7 +497,15 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                       </tr>
                     </table>
                   </td>
-                </tr>
+                </tr>`;
+
+  const telo =
+    skladbaEmailu() === 'stara'
+      ? `<tr><td style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
+                  <div lang="${escapeAttr(lang)}" style="${sazba}">${escapeHtml(t(introBodyL, lang))}</div>
+                  <div style="padding-top:26px;"><strong style="color:#f5efe3;font-weight:700;">${escapeHtml(t(introOpenL, lang))}</strong></div>
+                </td></tr>
+                ${pobyt}
                 <tr>
                   <td style="padding:0 0 18px;">
                     <div lang="${escapeAttr(lang)}" style="padding:12px 14px;background:#2a221c;border:1px solid #c9a84c;border-radius:8px;font-family:${serif};font-size:16px;line-height:1.5;color:#f5efe3;${sazba}">
@@ -466,7 +521,83 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   <td align="center" style="padding:8px 0 22px;">
                     ${cta}
                   </td>
+                </tr>`
+      : `<tr><td style="padding:0 0 18px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
+                  <div lang="${escapeAttr(lang)}" style="${sazba}">${escapeHtml(t(uvodNovaL, lang))}</div>
+                </td></tr>
+                <tr>
+                  <td style="padding:0 0 18px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-radius:14px;overflow:hidden;">
+                      <tr>
+                        <td lang="${escapeAttr(lang)}" bgcolor="#f6cfc6" style="background-color:#f6cfc6;background-image:none;border:2px solid #c4554c;border-radius:14px;padding:14px 16px;font-family:${serif};font-size:17px;line-height:1.45;color:#1c1210;font-weight:700;text-align:left;color-scheme:light;">
+                          <span style="color:#1c1210;">${escapeHtml(t(duleziteNovaL, lang))}</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
                 </tr>
+                <tr>
+                  <td align="center" style="padding:4px 0 22px;">
+                    ${cta}
+                  </td>
+                </tr>
+                <tr><td lang="${escapeAttr(lang)}" style="padding:0 0 16px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;${sazba}">${escapeHtml(t(dumNovaL, lang))}</td></tr>
+                <tr><td lang="${escapeAttr(lang)}" style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;${sazba}">${withTimes(escapeHtml(t(checkinNovaL, lang)))}</td></tr>
+                ${pobyt}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="${escapeAttr(lang)}" style="background:#1c1712;">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <meta name="supported-color-schemes" content="dark" />
+  <title>${escapeHtml(subjectBase)}</title>
+  <style>
+    td[bgcolor="#f6cfc6"] {
+      background-color: #f6cfc6 !important;
+      background-image: none !important;
+      color: #1c1210 !important;
+    }
+    td[bgcolor="#f6cfc6"] span {
+      color: #1c1210 !important;
+      background: none !important;
+    }
+    @media (prefers-color-scheme: dark) {
+      td[bgcolor="#f6cfc6"] {
+        background-color: #f6cfc6 !important;
+        background-image: none !important;
+        color: #1c1210 !important;
+      }
+      td[bgcolor="#f6cfc6"] span {
+        color: #1c1210 !important;
+        background: none !important;
+      }
+    }
+    [data-ogsc] td[bgcolor="#f6cfc6"], [data-ogsc] td[bgcolor="#f6cfc6"] span {
+      color: #1c1210 !important;
+    }
+    [data-ogsb] td[bgcolor="#f6cfc6"] {
+      background-color: #f6cfc6 !important;
+      background-image: none !important;
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#1c1712;color:#e8dfc8;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#1c1712;padding:28px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#241e18;border:1px solid #3d342a;border-radius:10px;">
+          <tr>
+            <td style="padding:28px 28px 8px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding:0 0 22px;">
+                    <img src="${escapeAttr(logoSrc)}" width="96" height="96" alt="VIVIEN Apartments" style="display:block;width:96px;height:auto;border:0;" />
+                  </td>
+                </tr>
+                <tr><td style="padding:0 0 16px;font-family:${serif};font-size:20px;line-height:1.4;color:#f5efe3;">${escapeHtml(greeting)}</td></tr>
+                ${telo}
                 <tr>
                   <td lang="${escapeAttr(lang)}" style="padding:18px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:15px;line-height:1.55;color:#cbbba8;${sazba}">
                     ${withPhones(t(helpL, lang))}
@@ -505,33 +636,65 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
 </body>
 </html>`;
 
-  const text = [
-    greeting,
-    '',
-    t(introBodyL, lang),
-    t(introOpenL, lang),
-    '',
-    t(stayL, lang),
-    nameText,
-    '',
-    `${t(datesL, lang)}: ${term}`,
-    `${t(nightsL, lang)}: ${nociLabel}`,
-    `${t(guestsL, lang)}: ${osobLabel}`,
-    '',
-    t(casPrijezduL, lang),
-    '',
-    `${t(openGuideL, lang)}: ${input.guideUrl}`,
-    '',
-    t(helpL, lang),
-    '',
-    t(closingL, lang),
-    t(familyL, lang),
-    '+420 702 153 573',
-    '',
-    webTipPlain(lang),
-    '',
-    psApartmanyPlain(lang),
-  ].join('\n');
+  const text =
+    skladbaEmailu() === 'stara'
+      ? [
+          greeting,
+          '',
+          t(introBodyL, lang),
+          t(introOpenL, lang),
+          '',
+          t(stayL, lang),
+          nameText,
+          '',
+          `${t(datesL, lang)}: ${term}`,
+          `${t(nightsL, lang)}: ${nociLabel}`,
+          `${t(guestsL, lang)}: ${osobLabel}`,
+          '',
+          t(casPrijezduL, lang),
+          '',
+          `${t(openGuideL, lang)}: ${input.guideUrl}`,
+          '',
+          t(helpL, lang),
+          '',
+          t(closingL, lang),
+          t(familyL, lang),
+          '+420 702 153 573',
+          '',
+          webTipPlain(lang),
+          '',
+          psApartmanyPlain(lang),
+        ].join('\n')
+      : [
+          greeting,
+          '',
+          t(uvodNovaL, lang),
+          '',
+          t(duleziteNovaL, lang),
+          '',
+          `${t(openGuideL, lang)}: ${input.guideUrl}`,
+          '',
+          t(dumNovaL, lang),
+          '',
+          t(checkinNovaL, lang),
+          '',
+          t(stayL, lang),
+          nameText,
+          '',
+          `${t(datesL, lang)}: ${term}`,
+          `${t(nightsL, lang)}: ${nociLabel}`,
+          `${t(guestsL, lang)}: ${osobLabel}`,
+          '',
+          t(helpL, lang),
+          '',
+          t(closingL, lang),
+          t(familyL, lang),
+          '+420 702 153 573',
+          '',
+          webTipPlain(lang),
+          '',
+          psApartmanyPlain(lang),
+        ].join('\n');
 
   return { subject, html, text };
 }
@@ -599,4 +762,38 @@ export async function sendGuestEmail(opts: {
   });
 
   return { to, messageId: info.messageId };
+}
+
+const upominkaPredmetL: LText = {
+  cs: 'Vaše vstupní PINy na vás čekají',
+  en: 'Your entry PIN codes are waiting for you',
+  de: 'Ihre Eingangs-PIN-Codes warten auf Sie',
+  pl: 'Wasze kody PIN do wejścia na was czekają',
+  uk: 'Ваші вхідні PIN-коди на вас чекають',
+  'zh-Hant': '您的入口 PIN 碼在等您',
+  sv: 'Era PIN-koder för entrén väntar på er',
+  hu: 'A belépő PIN-kódjaik várják önöket',
+};
+
+/** Upomínka den předem. Sama se neposílá, dokud na to není samostatný běh. */
+export function buildUpominkaEmail(input: {
+  lang: GuideLang;
+  jmeno: string | null;
+  guideUrl: string;
+  chybi: ChybejiciKrok[];
+}): { subject: string; text: string; html: string } {
+  const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+  const predmet = t(upominkaPredmetL, input.lang);
+  const subject = testMode ? `[TEST] ${predmet}` : predmet;
+  const uvod = greetingLine(input.lang, input.jmeno, null);
+  const telo = textUpominky(input.lang, input.chybi);
+  const podpis = t(familyL, input.lang);
+  const text = `${uvod}\n\n${telo}\n\n${input.guideUrl}\n\n${podpis}`;
+  const html = `<div style="font-family:Georgia,'Times New Roman',serif;color:#1c1210;line-height:1.45;">
+<p>${escapeHtml(uvod)}</p>
+<p style="background:#f6cfc6;border:2px solid #c4554c;border-radius:14px;padding:14px 16px;font-weight:700;">${escapeHtml(telo)}</p>
+<p><a href="${escapeAttr(input.guideUrl)}">${escapeHtml(input.guideUrl)}</a></p>
+<p>${escapeHtml(podpis)}</p>
+</div>`;
+  return { subject, text, html };
 }
