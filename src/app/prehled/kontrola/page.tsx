@@ -46,10 +46,12 @@ function Karta({ radek }: { radek: RadekKontroly }) {
             <th scope="row">Telefon</th>
             <td className="ph-kontrola-tel">{radek.telefon}</td>
           </tr>
+          <tr>{bunka('WhatsApp', radek.whatsapp)}</tr>
           <tr>
             <th scope="row">Druhé číslo</th>
             <td className="ph-kontrola-tel">{radek.druhe}</td>
           </tr>
+          <tr>{bunka('WhatsApp u druhého', radek.whatsappDruhe)}</tr>
           <tr>{bunka('Čas příjezdu', cas)}</tr>
           <tr>{bunka('Předáno', predano)}</tr>
           <tr>{bunka('Check-in VIVIEN-DATA', radek.checkin)}</tr>

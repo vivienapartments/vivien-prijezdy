@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { prazdnaRezervace } from './store';
-import { checkinVivien, kdoPredal, kdoZadalCas, radkyKontroly, vznikText } from './kontrola-prijezdu';
+import { checkinVivien, kdoPredal, kdoZadalCas, radkyKontroly, vznikText, whatsappDuvod } from './kontrola-prijezdu';
 
 function host(id: string, prijezd: string) {
   const rec = prazdnaRezervace(id, '2026-10-15T08:00:00.000Z');
@@ -71,6 +71,20 @@ describe('kontrola příjezdů', () => {
       { cas: '2026-10-07T08:00:00.000Z', co: 'Doplněno z check-inu: vytvořeno. Průvodce odeslán' },
     ];
     expect(vznikText(rec)).toBe('6. 10. 2026, check-in VIVIEN-DATA');
+  });
+
+  it('u čísla bez předvolby řekne, proč není WhatsApp', () => {
+    const rec = host('1', '2026-10-15');
+    rec.telefon = '34 612 345 678';
+    rec.telefonWa = null;
+    rec.narodnost = null;
+    rec.telefonRezervace = '+420777111222';
+    rec.telefonRezervaceWa = '420777111222';
+    const r = radkyKontroly([rec])[0];
+    expect(whatsappDuvod(rec.telefon, rec.telefonWa, rec.narodnost)).toBe('ne, chybí předvolba');
+    expect(r.whatsapp).toBe('ne, chybí předvolba');
+    expect(r.whatsappDruhe).toBe('ano');
+    expect(whatsappDuvod(null, null, null)).toBe('číslo není');
   });
 
   it('ukáže jen poslední tři věty historie', () => {

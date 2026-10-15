@@ -1,6 +1,6 @@
 import { apartmany } from './guide-data';
 import { pobytText, textPoplatku, casPraha } from './prehled';
-import { textTelefonu } from './telefon';
+import { normalizujTelefon, textTelefonu } from './telefon';
 import type { AptId } from './types';
 import type { RezervaceRecord } from './store';
 
@@ -15,7 +15,9 @@ export type RadekKontroly = {
   termin: string;
   pobyt: string;
   telefon: string;
+  whatsapp: string;
   druhe: string;
+  whatsappDruhe: string;
   cas: string;
   casKdo: string;
   predano: string;
@@ -44,6 +46,18 @@ function cislo(ulozeny: string | null): string {
   const s = (ulozeny || '').trim();
   if (!s) return 'není';
   return textTelefonu(s);
+}
+
+/** Stejné pravidlo jako tlačítko v přehledu. Číslo bez předvolby WhatsApp schová. */
+export function whatsappDuvod(ulozeny: string | null, wa: string | null, narodnost: string | null): string {
+  const s = (ulozeny || '').trim();
+  if (!s) return 'číslo není';
+  const znovu = normalizujTelefon(s, narodnost);
+  const waHotove = znovu && !znovu.nejisty ? znovu.wa : wa;
+  if (waHotove) return 'ano';
+  const compact = s.replace(/[\s()./\\\-–—]/g, '');
+  if (!compact.startsWith('+') && !compact.startsWith('00')) return 'ne, chybí předvolba';
+  return 'ne, číslo je nejisté';
 }
 
 export function kdoZadalCas(rec: RezervaceRecord): string {
@@ -109,7 +123,9 @@ export function radekKontroly(rec: RezervaceRecord): RadekKontroly | null {
     termin: `${prijezd} – ${odjezd}`,
     pobyt: pobytText(rec.noci, rec.osob) || 'není',
     telefon: cislo(rec.telefon),
+    whatsapp: whatsappDuvod(rec.telefon, rec.telefonWa, rec.narodnost),
     druhe: cislo(rec.telefonRezervace),
+    whatsappDruhe: whatsappDuvod(rec.telefonRezervace, rec.telefonRezervaceWa, rec.narodnost),
     cas: rec.casPrijezdu || 'není',
     casKdo: kdoZadalCas(rec),
     predano: rec.predano ? casPraha(rec.predano) || rec.predano : 'ne',
