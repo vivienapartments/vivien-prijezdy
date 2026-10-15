@@ -334,7 +334,34 @@
 
 .ph-poplatek-kratky {
   margin-top: 0.35rem;
-  font-weight: 600;
+  font-weight: 650;
+}
+
+.ph button.ph-poplatek-tlacitko {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 650;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ph-poplatek-rozpis {
+  margin-top: 0.15rem;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.ph-poplatek-rozpis p {
+  margin: 0.15rem 0 0;
+}
+
+.ph-namiste {
+  margin-top: 0.45rem;
+  font-weight: 650;
 }
 
 .ph-row.is-shut .ph-detail {

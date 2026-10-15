@@ -3,6 +3,7 @@ import {
   dotazPredOdeslanimZnovu,
   nabidnoutOdeslani,
   poplatekKratky,
+  poplatekNahled,
   radekZRezervace,
   seradRadky,
   souhrnDne,
@@ -120,6 +121,25 @@ describe('tlačítka v přehledu', () => {
     expect(terminKratky('2026-10-12', null)).toBe('12.10.');
     expect(poplatekKratky('ano', 2, 2)).toBe('Poplatek 200 Kč');
     expect(poplatekKratky('ne', 2, 2)).toBe('Poplatek ne');
+    const bez = poplatekNahled({ poplatek: 'ne', noci: 2, osob: 2, cas: '21:10', vyjezdy: [{ castka: 300 }], zaplaceno: false });
+    expect(bez.text).toBe('Poplatek ne');
+    expect(bez.rozpis).toBeNull();
+    const rozpis = poplatekNahled({
+      poplatek: 'ano',
+      noci: 2,
+      osob: 2,
+      cas: '21:10',
+      vyjezdy: [{ castka: 300 }],
+      zaplaceno: false,
+    });
+    expect(rozpis.text).toBe('Poplatek 800 Kč');
+    expect(rozpis.rozpis).toBe(
+      '2 osoby × 2 noci × 50 Kč = 200 Kč · pozdní příjezd 21:10 = 300 Kč · opakovaný výjezd 300 Kč',
+    );
+    expect(rozpis.stav).toBe('nevybráno');
+    expect(
+      poplatekNahled({ poplatek: 'ano', noci: 2, osob: 2, cas: '16:30', vyjezdy: [], zaplaceno: true }).stav,
+    ).toBe('zaplaceno');
     const vecer = rozpisPlateb({
       poplatek: 'ano',
       noci: 2,

@@ -11,7 +11,7 @@ import { chybejiciKroky, type ChybejiciKrok } from './vstup-pruvodce';
 import { fazeHosta, type FazeTon } from './faze-hosta';
 import { zpravyMenu, type ZpravaMenu } from './whatsapp-zprava';
 import { zneniVerze } from './pravidla-verze';
-import { priplatekCasu, soucetVyjezdu } from './priplatek-prijezd';
+import { popisekCasu, priplatekCasu, soucetVyjezdu } from './priplatek-prijezd';
 
 export const STARY_ZAZNAM = 'starý záznam';
 
@@ -179,6 +179,72 @@ export function poplatekKratky(stav: PoplatekStav, noci: number | null, osob: nu
   if (noci && osob && noci > 0 && osob > 0) return `Poplatek ${noci * osob * 50} Kč`;
   if (stav === 'ano') return 'Poplatek ano';
   return '';
+}
+
+export type PoplatekNahled = {
+  text: string;
+  /** Rozpis pod částkou. Prázdné, když se poplatek nevybírá. */
+  rozpis: string | null;
+  stav: 'nevybráno' | 'zaplaceno' | null;
+};
+
+/** Částka v hlavním náhledu. Rozpis je městský poplatek, pozdní příjezd a opakovaný výjezd. */
+export function poplatekNahled(v: {
+  poplatek: PoplatekStav;
+  noci: number | null;
+  osob: number | null;
+  cas: string | null;
+  skutecny?: string | null;
+  rucni?: number | null;
+  vyjezdy: { castka: number }[];
+  zaplaceno: boolean;
+}): PoplatekNahled {
+  if (v.poplatek === 'ne') return { text: 'Poplatek ne', rozpis: null, stav: null };
+  if (v.poplatek !== 'ano') return { text: 'Poplatek neznámo', rozpis: null, stav: null };
+
+  const casti: string[] = [];
+  let soucet = 0;
+  let maCislo = false;
+
+  if (v.noci && v.osob && v.noci > 0 && v.osob > 0) {
+    const kc = v.noci * v.osob * 50;
+    soucet += kc;
+    maCislo = true;
+    casti.push(
+      `${v.osob} ${sklon(v.osob, 'osoba', 'osoby', 'osob')} × ${v.noci} ${sklon(v.noci, 'noc', 'noci', 'nocí')} × 50 Kč = ${kc} Kč`,
+    );
+  }
+
+  const casPouzity = (v.skutecny && v.skutecny.trim()) || v.cas || '';
+  const rucni = typeof v.rucni === 'number' && Number.isFinite(v.rucni) && v.rucni >= 0 ? Math.round(v.rucni) : null;
+  if (rucni != null && rucni > 0) {
+    soucet += rucni;
+    maCislo = true;
+    const kdy = popisekCasu(casPouzity);
+    casti.push(kdy ? `pozdní příjezd ${kdy} = ${rucni} Kč` : `pozdní příjezd = ${rucni} Kč`);
+  } else if (rucni == null) {
+    const vypocet = priplatekCasu(casPouzity);
+    if (vypocet.stav === 'castka' && vypocet.kc > 0) {
+      soucet += vypocet.kc;
+      maCislo = true;
+      casti.push(`pozdní příjezd ${popisekCasu(casPouzity)} = ${vypocet.kc} Kč`);
+    } else if (vypocet.stav === 'domluva') {
+      casti.push(`pozdní příjezd ${popisekCasu(casPouzity) || 'po 23:00'} po domluvě`);
+    }
+  }
+
+  const vyjezd = soucetVyjezdu(v.vyjezdy);
+  if (vyjezd > 0) {
+    soucet += vyjezd;
+    maCislo = true;
+    casti.push(`opakovaný výjezd ${vyjezd} Kč`);
+  }
+
+  return {
+    text: maCislo ? `Poplatek ${soucet} Kč` : 'Poplatek ano',
+    rozpis: casti.join(' · '),
+    stav: v.zaplaceno ? 'zaplaceno' : 'nevybráno',
+  };
 }
 
 /** Štítek v přehledu. Kdo vybral městský poplatek. */

@@ -7,10 +7,10 @@ import {
   hodinaPraha,
   nabidnoutOdeslani,
   souhrnDne,
+  poplatekNahled,
   rozpisPlateb,
   STARY_ZAZNAM,
   terminKratky,
-  textVybranehoPoplatku,
   textPoplatku,
   vetaChyby,
   type PrehledRadek,
@@ -109,6 +109,7 @@ export function PrehledClient({
   const [jazyky, setJazyky] = useState<Record<string, GuideLang>>({});
   const [dotazZnovu, setDotazZnovu] = useState<string | null>(null);
   const [dotazDalsi, setDotazDalsi] = useState<{ id: string; druh: 'brana' | 'odemknout' } | null>(null);
+  const [poplatekOtevren, setPoplatekOtevren] = useState<Record<string, boolean>>({});
 
   function jazykRadku(row: PrehledRadek): GuideLang {
     return jazyky[row.rezervace] || (row.narodnost?.trim() ? langFromNarodnost(row.narodnost) : row.jazyk || 'cs');
@@ -588,15 +589,86 @@ export function PrehledClient({
       rucni: rucniCastka,
       vyjezdy: jizdy,
     });
+    const nahledPoplatku = poplatekNahled({
+      poplatek: row.poplatek,
+      noci: row.noci,
+      osob: row.osob,
+      cas: casSoucet,
+      skutecny: skutecnyCas,
+      rucni: rucniCastka,
+      vyjezdy: jizdy,
+      zaplaceno: Boolean(poplatek?.kdy),
+    });
+    const poplatekRozbalen = Boolean(poplatekOtevren[row.rezervace]);
+    const casVHlavnim = !predanoKdy && !naMisteKdy;
+    const casPole = (
+      <PoleSUlozenim
+        key={`${row.rezervace}-cas`}
+        label="Čas příjezdu"
+        hodnota={casRadku(row)}
+        poznamka={row.casZadalHost ? <span className="ph-od-hosta"> zadal host</span> : null}
+        vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
+        onUloz={(text) => ulozCas(row, text)}
+      />
+    );
+    const soucetPole = (
+      <div className="ph-soucet">
+        {rozpis.radky.map((radek) => (
+          <div key={radek.nazev}>
+            {radek.nazev} <span className="ph-soucet__kc">{radek.text}</span>
+            {radek.dovetek ? <span className="ph-soucet__dovetek">{radek.dovetek}</span> : null}
+          </div>
+        ))}
+        <div className="ph-soucet__celkem">
+          {rozpis.uplny ? 'Součet' : 'Součet zatím'}{' '}
+          <span className="ph-soucet__kc">{`${rozpis.soucet}\u00A0Kč`}</span>
+        </div>
+        {rozpis.navrhKc != null ? (
+          <div>
+            Podle času by to bylo <span className="ph-soucet__kc">{`${rozpis.navrhKc}\u00A0Kč`}</span>
+            {' · '}
+            <button type="button" onClick={() => void ulozPriplatek(row, String(rozpis.navrhKc))}>
+              Použít
+            </button>
+          </div>
+        ) : null}
+        <PoleSUlozenim
+          key={`${row.rezervace}-priplatek`}
+          label="Příplatek za čas ručně"
+          hodnota={rucniCastka == null ? '' : String(rucniCastka)}
+          vstup={{ inputMode: 'numeric', autoComplete: 'off', placeholder: 'nechat výpočet' }}
+          onUloz={(text) => ulozPriplatek(row, text)}
+        />
+      </div>
+    );
     return (
       <article key={row.rezervace} className={rozbaleno ? 'ph-row' : 'ph-row is-shut'} id={row.rezervace}>
         <div className="ph-karta-hlavicka">
           <div className="ph-jmeno">{kdo}</div>
           {apartman ? <div className="ph-apt">{apartman}</div> : null}
           {termin ? <div className="ph-kde">{termin}</div> : null}
-          {row.poplatekText ? <div className="ph-stitek">{row.poplatekText}</div> : null}
-          {row.poplatekZdroj ? <div className="ph-poznamka">{row.poplatekZdroj}</div> : null}
         </div>
+        {nahledPoplatku.rozpis == null ? (
+          <div className="ph-poplatek-kratky">{nahledPoplatku.text}</div>
+        ) : (
+          <div className="ph-poplatek-kratky">
+            <button
+              type="button"
+              className="ph-poplatek-tlacitko"
+              aria-expanded={poplatekRozbalen}
+              onClick={() => setPoplatekOtevren((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))}
+            >
+              {nahledPoplatku.text} {poplatekRozbalen ? '▴' : '▾'}
+            </button>
+            {poplatekRozbalen ? (
+              <div className="ph-poplatek-rozpis">
+                {nahledPoplatku.rozpis ? <p>{nahledPoplatku.rozpis}</p> : null}
+                {nahledPoplatku.stav ? <p>{nahledPoplatku.stav}</p> : null}
+                {row.poplatekZdroj ? <p className="ph-poznamka">{row.poplatekZdroj}</p> : null}
+              </div>
+            ) : null}
+          </div>
+        )}
         <ParkovaniRadek
           row={row}
           sloty={sloty}
@@ -609,11 +681,6 @@ export function PrehledClient({
         />
         <div className="ph-znacky">
           <span className={`ph-faze ph-faze--${row.fazeTon}`}>Fáze · {row.fazeText}</span>
-          {poplatek?.kdy ? (
-            <span className="ph-znacka ph-znacka--ano">{textVybranehoPoplatku(poplatek.kdy, poplatek.kdo)}</span>
-          ) : poplatek ? (
-            <span className="ph-znacka ph-znacka--ne">Poplatek městu není vybraný</span>
-          ) : null}
           {row.poplatek === 'neznamo' && !row.poplatekOdhad ? (
             <span className="ph-poplatek-volba">
               <button type="button" disabled={cekam !== null} onClick={() => zvolPoplatek(row, 'ano')}>
@@ -624,11 +691,13 @@ export function PrehledClient({
               </button>
             </span>
           ) : null}
-          {jizdy.map((jizda) => (
-            <span key={jizda.id} className="ph-znacka ph-znacka--ne">
-              Opakovaný výjezd {jizda.castka} Kč
-            </span>
-          ))}
+          {row.poplatek !== 'ano'
+            ? jizdy.map((jizda) => (
+                <span key={jizda.id} className="ph-znacka ph-znacka--ne">
+                  Opakovaný výjezd {jizda.castka} Kč
+                </span>
+              ))
+            : null}
         </div>
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
         {telefonPole(row)}
@@ -651,14 +720,7 @@ export function PrehledClient({
             Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
           </div>
         ) : null}
-          <PoleSUlozenim
-            key={`${row.rezervace}-cas`}
-            label="Čas příjezdu"
-            hodnota={casRadku(row)}
-            poznamka={row.casZadalHost ? <span className="ph-od-hosta"> zadal host</span> : null}
-            vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
-            onUloz={(text) => ulozCas(row, text)}
-          />
+          {casVHlavnim ? casPole : null}
           {row.navrhy.map((n) => (
             <p key={n.pole} className="ph-navrh">
               {n.veta}
@@ -720,47 +782,19 @@ export function PrehledClient({
               </button>
             </div>
           ) : null}
-          <div className="ph-soucet">
-            {rozpis.radky.map((radek) => (
-              <div key={radek.nazev}>
-                {radek.nazev} <span className="ph-soucet__kc">{radek.text}</span>
-                {radek.dovetek ? <span className="ph-soucet__dovetek">{radek.dovetek}</span> : null}
-              </div>
-            ))}
-            <div className="ph-soucet__celkem">
-              {rozpis.uplny ? 'Součet' : 'Součet zatím'}{' '}
-              <span className="ph-soucet__kc">{`${rozpis.soucet}\u00A0Kč`}</span>
-            </div>
-            {rozpis.navrhKc != null ? (
-              <div>
-                Podle času by to bylo <span className="ph-soucet__kc">{`${rozpis.navrhKc}\u00A0Kč`}</span>
-                {' · '}
-                <button type="button" onClick={() => void ulozPriplatek(row, String(rozpis.navrhKc))}>
-                  Použít
-                </button>
-              </div>
-            ) : null}
-            {naMisteKdy ? (
-              <div>
-                Host je na místě <span className="ph-soucet__kc">{hodinaPraha(naMisteKdy)}</span>
-                {' · '}
-                <button type="button" onClick={() => void ulozNaMiste(row, false)}>
-                  Vrátit
-                </button>
-              </div>
-            ) : (
-              <button type="button" className="ph-predano" onClick={() => void ulozNaMiste(row, true)}>
-                Host je na místě
+          {naMisteKdy ? (
+            <div className="ph-namiste">
+              Host je na místě <span className="ph-soucet__kc">{hodinaPraha(naMisteKdy)}</span>
+              {' · '}
+              <button type="button" onClick={() => void ulozNaMiste(row, false)}>
+                Vrátit
               </button>
-            )}
-            <PoleSUlozenim
-              key={`${row.rezervace}-priplatek`}
-              label="Příplatek za čas ručně"
-              hodnota={rucniCastka == null ? '' : String(rucniCastka)}
-              vstup={{ inputMode: 'numeric', autoComplete: 'off', placeholder: 'nechat výpočet' }}
-              onUloz={(text) => ulozPriplatek(row, text)}
-            />
-          </div>
+            </div>
+          ) : (
+            <button type="button" className="ph-predano" onClick={() => void ulozNaMiste(row, true)}>
+              Host je na místě
+            </button>
+          )}
           {row.zpravy.length && wa ? (
             <fieldset className="ph-menu">
               <legend>Zpráva</legend>
@@ -929,6 +963,8 @@ export function PrehledClient({
             ) : null}
           </div>
         <div className="ph-detail">
+          {casVHlavnim ? null : casPole}
+          {soucetPole}
           {row.souhlasZneni ? (
             <div className="ph-souhlas-zneni">
               <p>Znění, které host odsouhlasil</p>
