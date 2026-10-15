@@ -851,6 +851,53 @@
   margin-top: 2.5rem;
 }
 
+.ph-kontrola h2 {
+  margin: 1.6rem 0 0.6rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 500;
+  color: var(--color-gold);
+}
+
+.ph-kontrola-karta {
+  margin: 0 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 14px;
+}
+
+.ph-kontrola-karta h3 {
+  margin: 0 0 0.45rem;
+  font-size: 1.15rem;
+}
+
+.ph-kontrola-karta table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ph-kontrola-karta th,
+.ph-kontrola-karta td {
+  padding: 0.28rem 0.4rem 0.28rem 0;
+  vertical-align: top;
+  text-align: left;
+  line-height: 1.35;
+}
+
+.ph-kontrola-karta th {
+  width: 11rem;
+  color: var(--pv-muted, #c8bfb0);
+  font-weight: 600;
+}
+
+.ph-kontrola-karta ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.ph-kontrola-tel {
+  white-space: nowrap;
+}
+
 .ph-historie {
   grid-column: 1 / -1;
   margin: 0.2rem 0 0;

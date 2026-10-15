@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-export function LoginForm() {
+export function LoginForm({ dal = '/prehled' }: { dal?: string }) {
   const [chyba, setChyba] = useState('');
   const [cekam, setCekam] = useState(false);
 
@@ -22,7 +22,7 @@ export function LoginForm() {
       setChyba(json?.error || 'Přihlášení se nepovedlo.');
       return;
     }
-    window.location.href = '/prehled';
+    window.location.href = dal.startsWith('/prehled') ? dal : '/prehled';
   }
 
   return (
