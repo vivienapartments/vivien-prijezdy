@@ -47,12 +47,11 @@ export function normalizujSpz(raw: string): { ok: true; spz: string } | { ok: fa
   return { ok: true, spz };
 }
 
-/** Telefon pro bránu musí být jisté číslo s předvolbou. Nejisté se neuloží. */
-export function telefonProBranu(
-  raw: string,
-  narodnost?: string | null,
-): { ok: true; ulozeny: string; wa: string | null } | { ok: false } {
-  const tel = normalizujTelefon(raw, narodnost);
+/** Telefon pro bránu musí začínat + nebo 00. Bez předvolby se neuloží a nic se nedomýšlí. */
+export function telefonProBranu(raw: string): { ok: true; ulozeny: string; wa: string | null } | { ok: false } {
+  const compact = (raw || '').trim().replace(/[\s()./\\\-–—]/g, '');
+  if (!compact.startsWith('+') && !compact.startsWith('00')) return { ok: false };
+  const tel = normalizujTelefon(raw);
   if (!tel || tel.nejisty || !tel.ulozeny.startsWith('+')) return { ok: false };
   return { ok: true, ulozeny: tel.ulozeny, wa: tel.wa };
 }

@@ -322,7 +322,11 @@ export function VstupHosta({ lang, predano, token, cteni = false, hodnoty, predv
                 {tt(VT.vstupTelefon)}
                 <input type="tel" autoComplete="tel" value={telefon} onChange={(e) => setTelefon(e.target.value)} disabled={cteni} />
               </label>
-              {chybaTelefonu ? <p className="pv-vstup__chyba">{chybaTelefonu}</p> : null}
+              {chybaTelefonu ? (
+                <p className="pv-vstup__chyba">
+                  {chybaTelefonu} <span className="pv-phone">+420&nbsp;777&nbsp;123&nbsp;456</span>. {tt(VT.vstupChybaTelefonKonec)}
+                </p>
+              ) : null}
               <label>
                 {tt(VT.vstupSpz)}
                 <input value={spz} onChange={(e) => setSpz(e.target.value)} disabled={cteni || pujcene} />

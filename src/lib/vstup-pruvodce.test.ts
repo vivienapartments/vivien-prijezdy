@@ -210,6 +210,8 @@ describe('průvodce se otevře až po údajích', () => {
     await store.setRezervace(id, prazdnaRezervace(id, '2026-10-14T00:00:00.000Z'));
     const token = tokenPro(id);
     expect(telefonProBranu('123').ok).toBe(false);
+    expect(telefonProBranu('777111222').ok).toBe(false);
+    expect(telefonProBranu('+420 777 111 222').ok).toBe(true);
     expect(normalizujSpz('!').ok).toBe(false);
     expect((await ulozVstupHosta(store, token, { akce: 'prijezd', zpusob: 'auto', telefon: '123', spz: '1C23456' })).ok).toBe(
       false,
@@ -240,7 +242,7 @@ describe('průvodce se otevře až po údajích', () => {
     const stejny = await ulozVstupHosta(store, token, {
       akce: 'prijezd',
       zpusob: 'auto',
-      telefon: '777111222',
+      telefon: '+420 777 111 222',
       spz: '1C2 3456',
     });
     expect(stejny.ok).toBe(true);

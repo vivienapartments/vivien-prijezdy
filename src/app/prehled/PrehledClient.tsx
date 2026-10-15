@@ -21,6 +21,8 @@ import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { langFromNarodnost } from '@/lib/vivien-data';
 import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
+import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
+import { nactiBranu, type BranaSlot } from '@/lib/brana';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
 type Stav = PrehledRadek['stav'];
@@ -47,6 +49,9 @@ type Props = {
   ukazka?: boolean;
   /** User-Agent prohlížeče. Na Androidu z něj vznikne odkaz na WhatsApp Business. */
   userAgent?: string;
+  brana?: BranaSlot[];
+  branaPotvrzena?: boolean;
+  branaPripravena?: boolean;
 };
 
 function Pole({ text }: { text: string }) {
@@ -64,8 +69,20 @@ function UlozitKontakt({ row }: { row: PrehledRadek }) {
   );
 }
 
-export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, userAgent = '' }: Props) {
+export function PrehledClient({
+  rows,
+  dnes,
+  zitra,
+  chybiWifi,
+  ukazka = false,
+  userAgent = '',
+  brana = [],
+  branaPotvrzena = false,
+  branaPripravena = false,
+}: Props) {
   const [radky, setRadky] = useState(rows);
+  const [sloty, setSloty] = useState<BranaSlot[]>(() => nactiBranu(brana));
+  const [branaOk, setBranaOk] = useState(branaPotvrzena);
   const [telefony, setTelefony] = useState<Record<string, string>>({});
   const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
   const [stav, setStav] = useState<'' | Stav>('');
@@ -580,6 +597,16 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           {row.poplatekText ? <div className="ph-stitek">{row.poplatekText}</div> : null}
           {row.poplatekZdroj ? <div className="ph-poznamka">{row.poplatekZdroj}</div> : null}
         </div>
+        <ParkovaniRadek
+          row={row}
+          sloty={sloty}
+          pripravena={branaPripravena}
+          potvrzena={branaOk}
+          ukazka={ukazka}
+          cekam={cekam !== null}
+          onSloty={setSloty}
+          onHlaska={setHlaska}
+        />
         <div className="ph-znacky">
           <span className={`ph-faze ph-faze--${row.fazeTon}`}>Fáze · {row.fazeText}</span>
           {poplatek?.kdy ? (
@@ -649,16 +676,6 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               {row.spzPujcene ? 'SPZ později' : row.spz ? `SPZ ${row.spz.length > 4 ? `${row.spz.slice(0, -4)} ${row.spz.slice(-4)}` : row.spz}` : 'bez SPZ'}
             </div>
           ) : null}
-          {row.zpusobPrijezdu === 'auto' && row.telefonBrana && !row.branaRegistrovano ? (
-            <button
-              type="button"
-              className="ph-predano"
-              disabled={cekam !== null}
-              onClick={() => setDotazDalsi({ id: row.rezervace, druh: 'brana' })}
-            >
-              Zaregistrováno v bráně
-            </button>
-          ) : null}
           {!row.pruvodceOdemcen ? (
             <button
               type="button"
@@ -673,11 +690,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           )}
           {dotazDalsi?.id === row.rezervace ? (
             <div className="ph-predano-dotaz">
-              <p>
-                {dotazDalsi.druh === 'brana'
-                  ? 'Opravdu označit, že telefon je zaregistrovaný v bráně?'
-                  : 'Opravdu odemknout celý průvodce? Kódy se tím neotevřou.'}
-              </p>
+              <p>Opravdu odemknout celý průvodce? Kódy se tím neotevřou.</p>
               <button
                 type="button"
                 disabled={cekam !== null}
@@ -690,8 +703,7 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
                         r.rezervace === row.rezervace
                           ? {
                               ...r,
-                              branaRegistrovano: druh === 'brana' ? new Date().toISOString() : r.branaRegistrovano,
-                              pruvodceOdemcen: druh === 'odemknout' ? new Date().toISOString() : r.pruvodceOdemcen,
+                              pruvodceOdemcen: new Date().toISOString(),
                             }
                           : r,
                       ),
@@ -1220,6 +1232,20 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           {odjeliOtevreno ? odjeli.map((row) => kartaHosta(row)) : null}
         </section>
       ) : null}
+
+      <BranaTabulka
+        sloty={sloty}
+        radky={radky}
+        ukazka={ukazka}
+        potvrzena={branaOk}
+        onPotvrzeno={() => setBranaOk(true)}
+        onSloty={setSloty}
+        onHlaska={setHlaska}
+        onHost={(id) => {
+          setRozbalene((prev) => ({ ...prev, [id]: true }));
+          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
+      />
 
       <Upozorneni />
     </main>

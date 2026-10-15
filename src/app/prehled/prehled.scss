@@ -971,3 +971,67 @@
     display: block;
   }
 }
+
+.ph-parkovani {
+  margin: 0.35rem 0 0.15rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.ph-parkovani button,
+.ph-brana-sekce button {
+  margin: 0.35rem 0.35rem 0 0;
+}
+
+.ph-parkovani--seda { color: #b7aa9a; }
+.ph-parkovani--cervena { color: #ffb4c0; }
+.ph-parkovani--oranzova { color: #f0b45a; }
+.ph-parkovani--zelena { color: #8dcea0; }
+
+.ph-parkovani__poznamka,
+.ph-parkovani__dotaz {
+  font-weight: 500;
+  color: #d9cbb8;
+}
+
+.ph-brana-sekce {
+  margin-top: 1.6rem;
+}
+
+.ph-brana-radek {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(217, 203, 184, 0.25);
+}
+
+.ph-brana-radek__hlava {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: baseline;
+  font-weight: 750;
+}
+
+.ph-brana-stav--zelena { color: #8dcea0; }
+.ph-brana-stav--oranzova { color: #f0b45a; }
+.ph-brana-stav--seda { color: #b7aa9a; }
+
+.ph-brana-host,
+.ph-brana-uprava,
+.ph-brana-nastaveni__radek {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.ph-brana-nastaveni {
+  margin-top: 1rem;
+}
+
+.ph-brana-nastaveni__radek input,
+.ph-brana-uprava input {
+  min-width: 0;
+}

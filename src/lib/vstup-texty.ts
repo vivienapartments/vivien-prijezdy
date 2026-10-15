@@ -196,15 +196,27 @@ export const vstupBranaText: LText = {
 };
 
 export const vstupChybaTelefon: LText = {
-  cs: 'Zkontrolujte číslo. Musí být i s předvolbou, např. +420.',
-  en: 'Check the number. It must include the country code, for example +420.',
-  de: 'Prüfen Sie die Nummer. Sie braucht die Vorwahl, zum Beispiel +420.',
-  pl: 'Sprawdźcie numer. Musi być z kierunkowym, na przykład +420.',
-  uk: 'Перевірте номер. Потрібен і з кодом країни, наприклад +420.',
-  'zh-Hant': '請檢查號碼。必須含國碼，例如 +420。',
-  sv: 'Kontrollera numret. Det måste ha landsnummer, till exempel +420.',
-  es: 'Revisen el número. Tiene que llevar el prefijo, por ejemplo +420.',
-  hu: 'Ellenőrizzék a számot. Kell az előhívó is, például +420.',
+  cs: 'Číslo napište i s předvolbou, třeba',
+  en: 'Write the number with the country code, for example',
+  de: 'Schreiben Sie die Nummer mit der Vorwahl, zum Beispiel',
+  pl: 'Numer wpiszcie z kierunkowym, na przykład',
+  uk: 'Номер напишіть із кодом країни, наприклад',
+  'zh-Hant': '請連國碼一起寫號碼，例如',
+  sv: 'Skriv numret med landsnummer, till exempel',
+  es: 'Escriban el número con el prefijo, por ejemplo',
+  hu: 'A számot írják előhívóval, például',
+};
+
+export const vstupChybaTelefonKonec: LText = {
+  cs: 'Bez ní vás brána nepustí.',
+  en: 'Without it the gate will not let you in.',
+  de: 'Ohne sie lässt Sie die Schranke nicht herein.',
+  pl: 'Bez niego brama was nie wpuści.',
+  uk: 'Без нього брама вас не впустить.',
+  'zh-Hant': '沒有國碼，柵欄不會讓您進去。',
+  sv: 'Utan det släpper grinden inte in er.',
+  es: 'Sin él la barrera no les dejará entrar.',
+  hu: 'Enélkül a kapu nem engedi be önöket.',
 };
 
 export const vstupChybaSpz: LText = {

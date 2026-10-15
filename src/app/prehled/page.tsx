@@ -4,6 +4,8 @@ import { PrehledClient } from './PrehledClient';
 import { chybejiciWifi } from '@/lib/nastaveni-chyby';
 import { buildPrehledSOdkazy } from '@/lib/prehled-odkazy';
 import { ukazkoveRadky } from '@/lib/prehled-ukazka';
+import { nactiDokument, ukazkovaBrana } from '@/lib/brana';
+import { zajistiVychoziBranu } from '@/lib/brana-akce';
 import { dnesVPraze, posunDen } from '@/lib/prehled';
 import { migracePredaniJednou } from '@/lib/predani';
 import { prehledPrihlasen } from '@/lib/prehled-session';
@@ -40,14 +42,22 @@ export default async function PrehledPage({ searchParams }: Props) {
     return <LoginForm />;
   }
   const now = new Date();
+  const store = createProcessStore();
+  let branaDoc = ukazka
+    ? { sloty: ukazkovaBrana(now), potvrzeno: 'ukazka' }
+    : nactiDokument(null);
   if (!ukazka && process.env.VERCEL_ENV === 'production') {
     try {
-      await migracePredaniJednou(createProcessStore(), dnesVPraze(now), now.toISOString());
+      await migracePredaniJednou(store, dnesVPraze(now), now.toISOString());
+      branaDoc = await zajistiVychoziBranu(store);
     } catch {
       // Přehled se otevře i když se starší hosté nepodařilo označit.
     }
+  } else if (!ukazka) {
+    branaDoc = nactiDokument(await store.getBrana());
   }
-  const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(createProcessStore(), now);
+  const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(store, now);
+  const branaPripravena = Boolean(process.env.BRANA_HESLO?.trim() && process.env.BRANA_CISLO?.trim());
   const dnes = dnesVPraze(now);
   const userAgent = (await headers()).get('user-agent') ?? '';
   return (
@@ -58,6 +68,9 @@ export default async function PrehledPage({ searchParams }: Props) {
       chybiWifi={chybejiciWifi()}
       ukazka={ukazka}
       userAgent={userAgent}
+      brana={branaDoc.sloty}
+      branaPotvrzena={Boolean(branaDoc.potvrzeno)}
+      branaPripravena={branaPripravena}
     />
   );
 }

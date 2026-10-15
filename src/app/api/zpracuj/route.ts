@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cistaChyba } from '@/lib/cista-chyba';
 import { runInboxProcessing, vypisPotvrzeni } from '@/lib/process-inbox';
 import { createProcessStore } from '@/lib/store';
+import { upozorniBranu } from '@/lib/brana-upozorneni';
 import { upozorniNezaplacene } from '@/lib/platba';
 import { poBehZpracovani } from '@/lib/upozorneni';
 
@@ -47,6 +48,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
     await poBehZpracovani(store, true);
     await upozorniNezaplacene(store).catch(() => undefined);
+    await upozorniBranu(store).catch(() => undefined);
     return NextResponse.json({
       ok: true,
       scanned: summary.scanned,
@@ -74,6 +76,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       .catch(() => undefined);
     await poBehZpracovani(store, false);
     await upozorniNezaplacene(store).catch(() => undefined);
+    await upozorniBranu(store).catch(() => undefined);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

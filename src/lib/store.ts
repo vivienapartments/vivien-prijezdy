@@ -122,6 +122,10 @@ export type RezervaceRecord = {
   spzPujcene: boolean;
   /** Majitel označil, že číslo je v bráně. */
   branaRegistrovano: string | null;
+  /** Už odešlo upozornění, ať se brána zaregistruje. */
+  branaPushRegistrace: string | null;
+  /** Den příjezdu, kdy už odešlo ranní upozornění na bránu. */
+  branaPushRano: string | null;
   /** Majitel odemkl průvodce i bez údajů. Kódy to neodemkne. */
   pruvodceOdemcen: string | null;
   /** Časy uložení z průvodce, kvůli limitu. Bez údajů hosta. */
@@ -175,6 +179,7 @@ type StoreData = {
   push?: PushZarizeni[];
   zpracujSelhani?: number;
   zpracujBeh?: BehZpracovani | null;
+  brana?: unknown;
 };
 
 const RUCNI_KLIC = new Set<RucniPole>([
@@ -214,6 +219,8 @@ export interface ProcessStore {
   setSelhani(pocet: number): Promise<void>;
   getBeh(): Promise<BehZpracovani | null>;
   setBeh(beh: BehZpracovani): Promise<void>;
+  getBrana(): Promise<unknown>;
+  setBrana(sloty: unknown): Promise<void>;
 }
 
 const MESSAGE_TTL_SEC = 90 * 24 * 60 * 60;
@@ -227,7 +234,7 @@ const STAVY: RezervaceStav[] = [
 ];
 
 function emptyData(): StoreData {
-  return { messages: {}, rezervace: {}, push: [], zpracujSelhani: 0, zpracujBeh: null };
+  return { messages: {}, rezervace: {}, push: [], zpracujSelhani: 0, zpracujBeh: null, brana: null };
 }
 
 export function nactiBeh(raw: unknown): BehZpracovani | null {
@@ -356,6 +363,8 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     spz: typeof r.spz === 'string' && r.spz ? r.spz : null,
     spzPujcene: r.spzPujcene === true,
     branaRegistrovano: typeof r.branaRegistrovano === 'string' && r.branaRegistrovano ? r.branaRegistrovano : null,
+    branaPushRegistrace: typeof r.branaPushRegistrace === 'string' && r.branaPushRegistrace ? r.branaPushRegistrace : null,
+    branaPushRano: typeof r.branaPushRano === 'string' && r.branaPushRano ? r.branaPushRano : null,
     pruvodceOdemcen: typeof r.pruvodceOdemcen === 'string' && r.pruvodceOdemcen ? r.pruvodceOdemcen : null,
     hostUlozeni: Array.isArray(r.hostUlozeni) ? r.hostUlozeni.filter((x) => typeof x === 'string') : [],
     rucniZnacky: nactiZnacky(r.rucniZnacky),
@@ -430,6 +439,8 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     spz: null,
     spzPujcene: false,
     branaRegistrovano: null,
+    branaPushRegistrace: null,
+    branaPushRano: null,
     pruvodceOdemcen: null,
     hostUlozeni: [],
     rucniZnacky: [],
@@ -456,6 +467,7 @@ export class FileProcessStore implements ProcessStore {
         push: nactiPush(parsed.push),
         zpracujSelhani: typeof parsed.zpracujSelhani === 'number' ? parsed.zpracujSelhani : 0,
         zpracujBeh: nactiBeh(parsed.zpracujBeh),
+        brana: parsed.brana ?? null,
       };
     } catch {
       return emptyData();
@@ -555,6 +567,16 @@ export class FileProcessStore implements ProcessStore {
   async setSelhani(pocet: number): Promise<void> {
     const data = this.read();
     data.zpracujSelhani = pocet;
+    this.write(data);
+  }
+
+  async getBrana(): Promise<unknown> {
+    return this.read().brana ?? null;
+  }
+
+  async setBrana(sloty: unknown): Promise<void> {
+    const data = this.read();
+    data.brana = sloty;
     this.write(data);
   }
 }
@@ -694,6 +716,20 @@ export class UpstashProcessStore implements ProcessStore {
     const cisty = nactiBeh(beh);
     if (!cisty) return;
     await this.cmd('SET', 'meta:beh', JSON.stringify(cisty));
+  }
+
+  async getBrana(): Promise<unknown> {
+    const v = await this.cmd<string | null>('GET', 'meta:brana');
+    if (!v) return null;
+    try {
+      return JSON.parse(v) as unknown;
+    } catch {
+      return null;
+    }
+  }
+
+  async setBrana(sloty: unknown): Promise<void> {
+    await this.cmd('SET', 'meta:brana', JSON.stringify(sloty));
   }
 }
 

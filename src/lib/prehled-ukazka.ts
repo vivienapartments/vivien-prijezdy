@@ -89,6 +89,7 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     zdroj: 'Booking',
     checkinUrl: 'https://checkin.example.com/ukazka',
     otevrenoPocet: 0,
+    zpusobPrijezdu: 'pesky',
   };
 
   const bezCasu: RezervaceRecord = {
@@ -109,6 +110,9 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     stav: 'odeslano',
     telefon: '+420777222333',
     telefonWa: '420777222333',
+    zpusobPrijezdu: 'auto',
+    telefonBrana: '+420777222333',
+    spz: '1C29876',
     telefonPuvodni: '777 222 333',
     zdroj: 'přímá',
     casPrijezdu: null,

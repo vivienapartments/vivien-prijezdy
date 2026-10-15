@@ -108,7 +108,7 @@ export async function ulozVstupHosta(
     let spz: string | null = null;
     let pujcene = false;
     if (zpusob === 'auto') {
-      const tel = telefonProBranu(telo.telefon || '', rec.narodnost);
+      const tel = telefonProBranu(telo.telefon || '');
       if (!tel.ok) {
         await spalit();
         return { ok: false, duvod: 'telefon' };
@@ -215,7 +215,7 @@ export async function ulozVstupHosta(
       );
       return { ok: true, uroven: urovenZRezervace({ ...rec, zpusobPrijezdu: 'pesky' }) };
     }
-    const tel = telefonProBranu(telo.telefon || '', rec.narodnost);
+    const tel = telefonProBranu(telo.telefon || '');
     if (!tel.ok) {
       await spalit();
       return { ok: false, duvod: 'telefon' };
