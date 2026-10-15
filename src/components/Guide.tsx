@@ -34,7 +34,9 @@ import { DOTAZ_PREDANI_MS } from '@/lib/pruvodce-majitel';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import { pruvodceRozbalen, urovenPruvodce, type UrovenPruvodce } from '@/lib/vstup-pruvodce';
 import * as VT from '@/lib/vstup-texty';
+import { textStavu, type OknoPohled } from '@/lib/okno-pobytu';
 import { OdjezdRamecek } from './OdjezdRamecek';
+import { OknoHosta } from './OknoHosta';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import './guide.scss';
 
@@ -207,6 +209,7 @@ export type GuideProps = {
   };
   /** Den odjezdu a uložený čas. Rámeček se sám schová mimo okno. */
   odjezd?: { den: string | null; cas: string | null; rucni?: boolean } | null;
+  okno?: OknoPohled | null;
   onVstup?: (next: VstupHodnoty) => void;
   showDevBar?: boolean;
   onDevChange?: (next: { apt: AptId; lang: GuideLang; vikend: boolean; prijezd: Prijezd | null }) => void;
@@ -223,6 +226,7 @@ export function Guide({
   initialPrijezd = null,
   vstup,
   odjezd = null,
+  okno = null,
   onVstup,
   showDevBar = false,
   onDevChange,
@@ -518,6 +522,14 @@ export function Guide({
       ) : null}
 
       <main className="pv">
+        {okno ? (
+          <OknoHosta
+            lang={lang}
+            token={vstup?.cteni ? null : (vstup?.token ?? null)}
+            cteni={Boolean(vstup?.cteni) || !vstup?.token}
+            okno={okno}
+          />
+        ) : null}
         <OdjezdRamecek
           lang={lang}
           den={odjezd?.den ?? null}
@@ -525,6 +537,7 @@ export function Guide({
           rucni={Boolean(odjezd?.rucni)}
           token={vstup?.cteni ? null : (vstup?.token ?? null)}
           cteni={Boolean(vstup?.cteni) || !vstup?.token}
+          nejpozdeji={okno?.nejpozdeji}
         />
         <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />
         {ubytovan ? null : (
@@ -535,6 +548,8 @@ export function Guide({
             cteni={Boolean(vstup?.cteni)}
             hodnoty={hodnoty}
             predvyplneny={vstup?.predvyplneny ?? ''}
+            nejdrive={okno?.slotyPrijezd[0]}
+            stavZadosti={textStavu(lang, 'prijezd', okno?.zadostPrijezd ?? null)}
             onUlozeno={(next) => {
               if (vstup) onVstup?.(next);
               else setLokalne(next);

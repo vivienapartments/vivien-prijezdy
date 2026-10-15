@@ -4,6 +4,7 @@ import { ceskyVokativ, narodnostKod } from './osloveni';
 import type { GuideSecrets } from './secrets';
 import { GUIDE_LANGS, type AptId, type GuideLang, type LText } from './types';
 import type { ChybejiciKrok } from './vstup-pruvodce';
+import { odkazSekce, tlacitkoEmailu, vetaEmailu } from './okno-pobytu';
 import { textUpominky } from './whatsapp-zprava';
 
 export type GuestEmailInput = {
@@ -502,6 +503,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
     label: t(openGuideL, lang),
     serif,
   });
+  const oknoOdkaz = odkazSekce(input.guideUrl);
+  const oknoRadek = `<tr><td lang="${escapeAttr(lang)}" style="padding:0 0 22px;font-family:${serif};font-size:16px;line-height:1.55;color:#e8dfc8;${sazba}">${escapeHtml(vetaEmailu(lang))}<div style="padding-top:14px;text-align:center;">${ctaHtml({ href: oknoOdkaz, label: tlacitkoEmailu(lang), serif })}</div></td></tr>`;
 
   const pobyt = `<tr>
                   <td style="padding:0 0 22px;">
@@ -543,7 +546,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   <td align="center" style="padding:8px 0 22px;">
                     ${cta}
                   </td>
-                </tr>`
+                </tr>
+                ${oknoRadek}`
       : `<tr><td style="padding:0 0 18px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
                   <div lang="${escapeAttr(lang)}" style="${sazba}">${escapeHtml(t(uvodNovaL, lang))}</div>
                 </td></tr>
@@ -563,6 +567,7 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                     ${cta}
                   </td>
                 </tr>
+                ${oknoRadek}
                 <tr><td lang="${escapeAttr(lang)}" style="padding:0 0 16px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;${sazba}">${escapeHtml(t(dumNovaL, lang))}</td></tr>
                 <tr><td lang="${escapeAttr(lang)}" style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;${sazba}">${withTimes(escapeHtml(t(checkinNovaL, lang)))}</td></tr>
                 ${pobyt}`;
@@ -677,6 +682,9 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
           '',
           `${t(openGuideL, lang)}: ${input.guideUrl}`,
           '',
+          vetaEmailu(lang),
+          `${tlacitkoEmailu(lang)}: ${odkazSekce(input.guideUrl)}`,
+          '',
           t(helpL, lang),
           '',
           t(closingL, lang),
@@ -695,6 +703,9 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
           t(duleziteNovaL, lang),
           '',
           `${t(openGuideL, lang)}: ${input.guideUrl}`,
+          '',
+          vetaEmailu(lang),
+          `${tlacitkoEmailu(lang)}: ${odkazSekce(input.guideUrl)}`,
           '',
           t(dumNovaL, lang),
           '',
@@ -811,10 +822,13 @@ export function buildUpominkaEmail(input: {
   const uvod = greetingLine(input.lang, input.jmeno, null);
   const telo = textUpominky(input.lang, input.chybi);
   const podpis = t(familyL, input.lang);
-  const text = `${uvod}\n\n${telo}\n\n${input.guideUrl}\n\n${podpis}`;
+  const oknoOdkaz = odkazSekce(input.guideUrl);
+  const text = `${uvod}\n\n${telo}\n\n${vetaEmailu(input.lang)}\n${tlacitkoEmailu(input.lang)}: ${oknoOdkaz}\n\n${input.guideUrl}\n\n${podpis}`;
   const html = `<div style="font-family:Georgia,'Times New Roman',serif;color:#1c1210;line-height:1.45;">
 <p>${escapeHtml(uvod)}</p>
 <p style="background:#f6cfc6;border:2px solid #c4554c;border-radius:14px;padding:14px 16px;font-weight:700;">${escapeHtml(telo)}</p>
+<p>${escapeHtml(vetaEmailu(input.lang))}</p>
+<p><a href="${escapeAttr(oknoOdkaz)}">${escapeHtml(tlacitkoEmailu(input.lang))}</a></p>
 <p><a href="${escapeAttr(input.guideUrl)}">${escapeHtml(input.guideUrl)}</a></p>
 <p>${escapeHtml(podpis)}</p>
 </div>`;

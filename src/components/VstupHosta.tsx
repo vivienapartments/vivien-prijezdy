@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
+import { casyDrive, popisekDrive, type TextStavu } from '@/lib/okno-pobytu';
 import { CAS_PO_23, VYJEZD_CASTKA, priplatekProCas } from '@/lib/priplatek-prijezd';
 import * as TX from '@/lib/texts';
 import type { GuideLang } from '@/lib/types';
@@ -33,6 +34,9 @@ type Props = {
   hodnoty: VstupHodnoty;
   predvyplneny: string;
   onUlozeno: (next: VstupHodnoty) => void;
+  /** Nejdřívější nabízený čas. Výchozí je 11:00. */
+  nejdrive?: string;
+  stavZadosti?: TextStavu | null;
 };
 
 function sJednotkou(text: string) {
@@ -126,7 +130,17 @@ function Zamek() {
   );
 }
 
-export function VstupHosta({ lang, predano, token, cteni = false, hodnoty, predvyplneny, onUlozeno }: Props) {
+export function VstupHosta({
+  lang,
+  predano,
+  token,
+  cteni = false,
+  hodnoty,
+  predvyplneny,
+  onUlozeno,
+  nejdrive = '11:00',
+  stavZadosti = null,
+}: Props) {
   const tt = (map: Parameters<typeof t>[0]) => t(map, lang);
   const [uprava, setUprava] = useState(false);
   const [cas, setCas] = useState(hodnoty.cas || '');
@@ -282,11 +296,26 @@ export function VstupHosta({ lang, predano, token, cteni = false, hodnoty, predv
           <div className="pv-vstup__pole">
             <label>
               {tt(VT.vstupCasPopisek)}
-              <select value={cas} onChange={(e) => setCas(e.target.value)} disabled={cteni}>
+              <span className="pv-cenik" id="cenik-prijezd">
+                {casyDrive(nejdrive).map((hodina) => (
+                  <button
+                    key={hodina}
+                    type="button"
+                    className={cas === hodina ? 'is-on' : ''}
+                    disabled={cteni}
+                    onClick={() => setCas(hodina)}
+                  >
+                    {popisekDrive(lang, hodina)}
+                  </button>
+                ))}
+              </span>
+              <select value={casyDrive(nejdrive).includes(cas) ? '' : cas} onChange={(e) => setCas(e.target.value)} disabled={cteni}>
                 <option value="">{tt(VT.vstupCekaCas)}</option>
                 {moznostiCasu(tt(VT.vstupPriplatek), tt(VT.vstupPo23))}
               </select>
             </label>
+            {stavZadosti?.kratce ? <p className="pv-vstup__stav">{stavZadosti.kratce}</p> : null}
+            {stavZadosti?.veta ? <p className="pv-vstup__stav">{stavZadosti.veta}</p> : null}
             {pokus && !jeCasHosta(cas) ? <p className="pv-vstup__chyba">{tt(VT.vstupChybiCas)}</p> : null}
           </div>
           <h3>{tt(VT.vstupJak)}</h3>

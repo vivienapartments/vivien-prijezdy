@@ -48,6 +48,20 @@ export type RezervaceStav =
 
 export type HistorieAkce = { cas: string; co: string };
 
+export type ZadostOkna = {
+  cas: string;
+  kc: number;
+  stav: 'ceka' | 'potvrzeno' | 'nelze';
+  kdy: string;
+  od: 'pruvodce' | 'objednat' | 'pripraveno';
+  /** Předchozí noc je volná, nebo ten den do apartmánu nikdo nepřijede. */
+  hned: boolean;
+  /** Push po úklidu už odešel. */
+  upozorneno: boolean;
+};
+
+export type ObjednatPokus = { od: number; pocet: number };
+
 export type RezervaceRecord = {
   rezervace: string;
   apartman: AptId | null;
@@ -105,6 +119,10 @@ export type RezervaceRecord = {
   uklizenoKdy: string | null;
   /** Kdo úklid označil. */
   uklizenoKdo: 'pravoslav' | 'nikol' | null;
+  /** Žádost o dřívější příjezd. Platí až po potvrzení majitele. */
+  zadostPrijezd: ZadostOkna | null;
+  /** Žádost o pozdější odjezd. Platí až po potvrzení majitele. */
+  zadostOdjezd: ZadostOkna | null;
   /** Telefon z e-mailu o nové rezervaci. Check-in ho nepřepisuje. */
   telefonRezervace: string | null;
   telefonRezervaceWa: string | null;
@@ -206,6 +224,7 @@ type StoreData = {
   zpracujBeh?: BehZpracovani | null;
   odjezdBeh?: OdjezdBeh | null;
   brana?: unknown;
+  objednatPokusy?: Record<string, ObjednatPokus>;
 };
 
 const RUCNI_KLIC = new Set<RucniPole>([
@@ -250,6 +269,8 @@ export interface ProcessStore {
   setBrana(sloty: unknown): Promise<void>;
   getOdjezdBeh(): Promise<OdjezdBeh | null>;
   setOdjezdBeh(beh: OdjezdBeh): Promise<void>;
+  getObjednatPokusy(): Promise<Record<string, ObjednatPokus>>;
+  setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void>;
 }
 
 const MESSAGE_TTL_SEC = 90 * 24 * 60 * 60;
@@ -335,6 +356,37 @@ function nactiSouhlas(raw: unknown): RezervaceRecord['souhlasPravidel'] {
   return { kdy: s.kdy, jazyk: s.jazyk, verze: s.verze };
 }
 
+function nactiZadost(raw: unknown): ZadostOkna | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const z = raw as ZadostOkna;
+  if (typeof z.cas !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(z.cas)) return null;
+  if (z.stav !== 'ceka' && z.stav !== 'potvrzeno' && z.stav !== 'nelze') return null;
+  if (typeof z.kc !== 'number' || z.kc <= 0) return null;
+  const od = z.od === 'objednat' || z.od === 'pripraveno' ? z.od : 'pruvodce';
+  return {
+    cas: z.cas,
+    kc: Math.round(z.kc),
+    stav: z.stav,
+    kdy: typeof z.kdy === 'string' ? z.kdy : '',
+    od,
+    hned: z.hned === true,
+    upozorneno: z.upozorneno === true,
+  };
+}
+
+export function nactiObjednatPokusy(raw: unknown, now = Date.now()): Record<string, ObjednatPokus> {
+  if (!raw || typeof raw !== 'object') return {};
+  const ven: Record<string, ObjednatPokus> = {};
+  for (const [klic, hodnota] of Object.entries(raw as Record<string, unknown>)) {
+    if (!/^[a-f0-9]{8,64}$/.test(klic) || !hodnota || typeof hodnota !== 'object') continue;
+    const p = hodnota as ObjednatPokus;
+    if (typeof p.od !== 'number' || typeof p.pocet !== 'number') continue;
+    if (now - p.od > 2 * 60 * 60 * 1000) continue;
+    ven[klic] = { od: p.od, pocet: Math.max(0, Math.floor(p.pocet)) };
+  }
+  return ven;
+}
+
 function jeStav(value: unknown): value is RezervaceStav {
   return typeof value === 'string' && STAVY.includes(value as RezervaceStav);
 }
@@ -392,6 +444,8 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     odjezdPushPul: typeof r.odjezdPushPul === 'string' && r.odjezdPushPul ? r.odjezdPushPul : null,
     uklizenoKdy: typeof r.uklizenoKdy === 'string' && r.uklizenoKdy ? r.uklizenoKdy : null,
     uklizenoKdo: r.uklizenoKdo === 'pravoslav' || r.uklizenoKdo === 'nikol' ? r.uklizenoKdo : null,
+    zadostPrijezd: nactiZadost(r.zadostPrijezd),
+    zadostOdjezd: nactiZadost(r.zadostOdjezd),
     casZadalHost: r.casZadalHost === true,
     zpusobPrijezdu: r.zpusobPrijezdu === 'auto' || r.zpusobPrijezdu === 'pesky' ? r.zpusobPrijezdu : null,
     telefonBrana: typeof r.telefonBrana === 'string' && r.telefonBrana ? r.telefonBrana : null,
@@ -486,6 +540,8 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     odjezdPushPul: null,
     uklizenoKdy: null,
     uklizenoKdo: null,
+    zadostPrijezd: null,
+    zadostOdjezd: null,
     pruvodceOdemcen: null,
     hostUlozeni: [],
     rucniZnacky: [],
@@ -632,6 +688,16 @@ export class FileProcessStore implements ProcessStore {
   async setOdjezdBeh(beh: OdjezdBeh): Promise<void> {
     const data = this.read();
     data.odjezdBeh = beh;
+    this.write(data);
+  }
+
+  async getObjednatPokusy(): Promise<Record<string, ObjednatPokus>> {
+    return nactiObjednatPokusy(this.read().objednatPokusy);
+  }
+
+  async setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void> {
+    const data = this.read();
+    data.objednatPokusy = nactiObjednatPokusy(pokusy);
     this.write(data);
   }
 }
@@ -803,6 +869,20 @@ export class UpstashProcessStore implements ProcessStore {
 
   async setOdjezdBeh(beh: OdjezdBeh): Promise<void> {
     await this.cmd('SET', 'meta:odjezd', JSON.stringify(beh));
+  }
+
+  async getObjednatPokusy(): Promise<Record<string, ObjednatPokus>> {
+    const v = await this.cmd<string | null>('GET', 'meta:objednat');
+    if (!v) return {};
+    try {
+      return nactiObjednatPokusy(JSON.parse(v));
+    } catch {
+      return {};
+    }
+  }
+
+  async setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void> {
+    await this.cmd('SET', 'meta:objednat', JSON.stringify(nactiObjednatPokusy(pokusy)));
   }
 }
 

@@ -72,6 +72,8 @@ export type PrehledRadek = {
   dluhText: string;
   uklizenoKdy: string | null;
   uklizenoKdo: 'pravoslav' | 'nikol' | null;
+  zadostPrijezd: RezervaceRecord['zadostPrijezd'];
+  zadostOdjezd: RezervaceRecord['zadostOdjezd'];
   vytvorenoText: string;
   odkaz: string | null;
   zprava: string;
@@ -739,6 +741,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     dluhText: textRozpisu(polozkyZRezervace(rec)),
     uklizenoKdy: rec.uklizenoKdy,
     uklizenoKdo: rec.uklizenoKdo,
+    zadostPrijezd: rec.zadostPrijezd,
+    zadostOdjezd: rec.zadostOdjezd,
     vytvorenoText: chybi(rec.vytvoreno ? czDenRok(rec.vytvoreno) : '', stary),
     odkaz: null,
     zpravy,

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { stavParkovani, type BranaSlot } from '@/lib/brana';
 import { sestavDnesek, textUklizeno, type HostDne, type KdoUklidil } from '@/lib/dnesek';
+import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
 import type { PrehledRadek } from '@/lib/prehled';
 
 type Props = {
@@ -72,6 +73,8 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
   const [misto, setMisto] = useState<Record<string, { kdy: string; kdo: KdoUklidil } | null>>({});
   const [ptam, setPtam] = useState<string | null>(null);
   const [chyba, setChyba] = useState('');
+  const [nabidka, setNabidka] = useState<{ id: string; jmeno: string } | null>(null);
+  const [nabidkaStav, setNabidkaStav] = useState('');
   const maNeco = pohled.uklid.length + pohled.odjezdy.length + pohled.prijezdy.length + pohled.nedoplatky.length > 0;
 
   function hotovo(rezervace: string, kdy: string | null, kdo: KdoUklidil | null) {
@@ -80,18 +83,36 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
     return null;
   }
 
+  function hostKNabidce(odjezdId: string) {
+    const od = radky.find((r) => r.rezervace === odjezdId);
+    if (!od?.apartman) return null;
+    return (
+      radky.find(
+        (r) =>
+          r.apartman === od.apartman &&
+          r.prijezd === dnes &&
+          r.rezervace !== od.rezervace &&
+          !r.predano &&
+          (!r.casPrijezdu || r.casPrijezdu > '14:00'),
+      ) || null
+    );
+  }
+
   async function zapis(id: string, akce: 'uklid' | 'vratit-uklid', kdo?: KdoUklidil) {
     setChyba('');
+    let zApi: { id: string; jmeno: string } | null = null;
     if (!ukazka) {
       const res = await fetch('/api/prehled/akce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rezervace: id, akce, kdo }),
       });
+      const json = (await res.json().catch(() => null)) as { nabidka?: { id: string; jmeno: string } | null } | null;
       if (!res.ok) {
         setChyba('Úklid se nepodařilo zapsat.');
         return;
       }
+      zApi = json?.nabidka || null;
     }
     if (akce === 'vratit-uklid') {
       setMisto((stav) => ({ ...stav, [id]: null }));
@@ -100,6 +121,41 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
     if (!kdo) return;
     setMisto((stav) => ({ ...stav, [id]: { kdy: new Date().toISOString(), kdo } }));
     setPtam(null);
+    const host = ukazka ? hostKNabidce(id) : null;
+    const dalsi = zApi || (host ? { id: host.rezervace, jmeno: host.jmeno } : null);
+    if (dalsi) {
+      setNabidka(dalsi);
+      setNabidkaStav('');
+    }
+  }
+
+  async function odeslatNabidku(jak: 'email' | 'whatsapp' | 'ne') {
+    if (!nabidka || jak === 'ne') {
+      setNabidka(null);
+      return;
+    }
+    if (ukazka) {
+      setNabidkaStav('V ukázce se nic neposílá.');
+      return;
+    }
+    const row = radky.find((r) => r.rezervace === nabidka.id);
+    if (jak === 'whatsapp' && row?.telefonWa) {
+      const text = textPripraveno(row.jazyk, row.odkaz ? odkazPripraveno(row.odkaz) : '');
+      window.open(`https://wa.me/${row.telefonWa}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+      await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: nabidka.id, akce: 'pripraveno-whatsapp' }),
+      });
+    }
+    if (jak === 'email') {
+      await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: nabidka.id, akce: 'email', zprava: 'pripraveno' }),
+      });
+    }
+    setNabidka(null);
   }
 
   if (!maNeco) {
@@ -230,6 +286,22 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
         </div>
       ) : null}
 
+      {nabidka ? (
+        <div className="ph-okno">
+          <p>Dát hostovi vědět, že je apartmán připravený?</p>
+          <p>{nabidka.jmeno}</p>
+          <button type="button" onClick={() => void odeslatNabidku('email')}>
+            Poslat e-mailem
+          </button>
+          <button type="button" onClick={() => void odeslatNabidku('whatsapp')}>
+            Napsat na WhatsApp
+          </button>
+          <button type="button" onClick={() => void odeslatNabidku('ne')}>
+            Ne
+          </button>
+          {nabidkaStav ? <p>{nabidkaStav}</p> : null}
+        </div>
+      ) : null}
       {chyba ? <p className="ph-chyba">{chyba}</p> : null}
     </section>
   );

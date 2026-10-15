@@ -17,6 +17,7 @@ import {
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
+import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
 import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { langFromNarodnost } from '@/lib/vivien-data';
@@ -56,6 +57,16 @@ type Props = {
   branaPotvrzena?: boolean;
   branaPripravena?: boolean;
 };
+
+function vetaZadosti(row: PrehledRadek, druh: 'prijezd' | 'odjezd'): string {
+  const z = druh === 'prijezd' ? row.zadostPrijezd : row.zadostOdjezd;
+  if (!z) return '';
+  const casti = (row.jmeno || '').trim().split(/\s+/).filter(Boolean);
+  const kdo = casti.length ? casti[casti.length - 1] : row.rezervace;
+  const cas = z.cas.replace(/^0(\d:)/, '$1');
+  const sloveso = druh === 'prijezd' ? 'přijet' : 'odjet';
+  return `${row.apartman || 'Apartmán'} ${kdo} chce ${sloveso} ve ${cas} (+${z.kc} Kč)`;
+}
 
 function Pole({ text }: { text: string }) {
   if (!text) return null;
@@ -97,6 +108,7 @@ export function PrehledClient({
   const [otevreno, setOtevreno] = useState<string | null>(null);
   const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState<string | null>(null);
+  const [oknoHotovo, setOknoHotovo] = useState<Record<string, true>>({});
   const [casy, setCasy] = useState<Record<string, string>>({});
   const [casyOdjezdu, setCasyOdjezdu] = useState<Record<string, string>>({});
   const [volba, setVolba] = useState<Record<string, string>>({});
@@ -385,6 +397,30 @@ export function PrehledClient({
     window.location.reload();
   }
 
+  async function oknoAkce(
+    row: PrehledRadek,
+    akce: 'potvrdit-prijezd' | 'nelze-prijezd' | 'potvrdit-odjezd' | 'nelze-odjezd',
+  ) {
+    const klic = `${row.rezervace}:${akce}`;
+    if (ukazka) {
+      setOknoHotovo((stav) => ({ ...stav, [klic]: true }));
+      return;
+    }
+    setCekam(klic);
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce }),
+    });
+    setCekam(null);
+    if (!res.ok) {
+      const json = (await res.json().catch(() => null)) as { error?: string } | null;
+      setHlaska(json?.error || 'Akce se nepovedla.');
+      return;
+    }
+    window.location.reload();
+  }
+
   async function ulozCas(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
     const surovy = hodnota.trim();
     const poDvacate = surovy === 'po20' || /^po\s*20/i.test(surovy);
@@ -510,10 +546,30 @@ export function PrehledClient({
     return row.zpravy.find((z) => z.id === 'odjezd')?.text || zpravaOdjezdu(jazykRadku(row), [], row.odkaz);
   }
 
+  function zpravyRadku(row: PrehledRadek) {
+    const uklizeno = radky.some(
+      (r) => r.apartman && r.apartman === row.apartman && r.odjezd === dnes && r.uklizenoKdy && r.rezervace !== row.rezervace,
+    );
+    const cas = row.casPrijezdu;
+    const po = !cas || cas > '14:00';
+    if (!uklizeno || row.predano || row.prijezd !== dnes || !po || row.zpravy.some((z) => z.id === 'pripraveno')) return row.zpravy;
+    return [
+      ...row.zpravy,
+      {
+        id: 'pripraveno' as const,
+        nazev: 'Apartmán je připravený',
+        text: textPripraveno(row.jazyk, row.odkaz ? odkazPripraveno(row.odkaz) : ''),
+        vychozi: false,
+        vystraha: false,
+      },
+    ];
+  }
+
   function zpravaRadku(row: PrehledRadek): string {
-    const id = volba[row.rezervace] ?? row.zpravy.find((z) => z.vychozi)?.id;
+    const seznam = zpravyRadku(row);
+    const id = volba[row.rezervace] ?? seznam.find((z) => z.vychozi)?.id;
     if (id === 'odjezd') return textDotazuOdjezdu(row);
-    return row.zpravy.find((z) => z.id === id)?.text || row.zprava;
+    return seznam.find((z) => z.id === id)?.text || row.zprava;
   }
 
   async function ulozOdkaz(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
@@ -780,11 +836,12 @@ export function PrehledClient({
       </div>
     );
     const emailHosta = row.email.includes('@') ? row.email : '';
-    const zpravaRamecek = row.zpravy.length && (wa || emailHosta) ? (
+    const zpravyHosta = zpravyRadku(row);
+    const zpravaRamecek = zpravyHosta.length && (wa || emailHosta) ? (
       <fieldset className="ph-menu">
         <legend>Zpráva</legend>
-        {row.zpravy.map((z) => {
-          const vybrano = (volba[row.rezervace] ?? row.zpravy.find((polozka) => polozka.vychozi)?.id) === z.id;
+        {zpravyHosta.map((z) => {
+          const vybrano = (volba[row.rezervace] ?? zpravyHosta.find((polozka) => polozka.vychozi)?.id) === z.id;
           const trida = [vybrano ? 'is-on' : '', z.vystraha ? 'is-vystraha' : ''].filter(Boolean).join(' ');
           return (
             <label key={z.id} className={trida}>
@@ -923,6 +980,26 @@ export function PrehledClient({
         <div className="ph-znacky">
           <span className={`ph-faze ph-faze--${row.fazeTon}`}>Fáze · {row.fazeText}</span>
         </div>
+        {[
+          row.zadostPrijezd?.stav === 'ceka' && !oknoHotovo[`${row.rezervace}:potvrdit-prijezd`] && !oknoHotovo[`${row.rezervace}:nelze-prijezd`]
+            ? { akce: 'prijezd' as const, text: vetaZadosti(row, 'prijezd') }
+            : null,
+          row.zadostOdjezd?.stav === 'ceka' && !oknoHotovo[`${row.rezervace}:potvrdit-odjezd`] && !oknoHotovo[`${row.rezervace}:nelze-odjezd`]
+            ? { akce: 'odjezd' as const, text: vetaZadosti(row, 'odjezd') }
+            : null,
+        ]
+          .filter((polozka): polozka is { akce: 'prijezd' | 'odjezd'; text: string } => Boolean(polozka))
+          .map((polozka) => (
+            <div key={polozka.akce} className="ph-okno">
+              <p>{polozka.text}</p>
+              <button type="button" onClick={() => void oknoAkce(row, polozka.akce === 'prijezd' ? 'potvrdit-prijezd' : 'potvrdit-odjezd')}>
+                Potvrdit
+              </button>
+              <button type="button" onClick={() => void oknoAkce(row, polozka.akce === 'prijezd' ? 'nelze-prijezd' : 'nelze-odjezd')}>
+                Nelze
+              </button>
+            </div>
+          ))}
         {ukazatPrijezd ? <div className="ph-prijezd-cas">Příjezd {casText}</div> : null}
         {ukazatCasNaKarte(row.odjezd, dnes) && jeHodina(odjezdCas) ? (
           <div className="ph-prijezd-cas">Odjezd {zobrazCas(odjezdCas)}</div>

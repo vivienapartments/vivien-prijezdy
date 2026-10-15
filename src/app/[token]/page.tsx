@@ -3,6 +3,7 @@ import { Guide } from '@/components/Guide';
 import { OtevreniBeacon } from '@/components/OtevreniBeacon';
 import { Expired } from '@/components/Expired';
 import { kodyProHosta } from '@/lib/kody-pruvodce';
+import { oknoProHosta } from '@/lib/okno-pobytu';
 import { poplatekZTokenu } from '@/lib/poplatek';
 import { loadSecrets } from '@/lib/secrets';
 import { createProcessStore } from '@/lib/store';
@@ -36,6 +37,14 @@ export default async function TokenPage({ params }: Props) {
   const rec = await store.getRezervace(r);
   const vstupHosta = vstupZRezervace(rec);
   const predano = Boolean(rec?.predano);
+  const okno = rec
+    ? oknoProHosta(
+        rec,
+        (await store.listRezervace()).map((e) => e.record),
+        new Date(),
+        urovenZRezervace(rec) !== 'nic',
+      )
+    : null;
 
   return (
     <>
@@ -67,6 +76,7 @@ export default async function TokenPage({ params }: Props) {
             ? { den: rec.odjezd, cas: rec.casOdjezdu, rucni: Boolean(rec.rucniZnacky?.some((z) => z.pole === 'casOdjezdu')) }
             : null
         }
+        okno={okno}
       />
     </>
   );

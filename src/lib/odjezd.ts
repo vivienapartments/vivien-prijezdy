@@ -11,7 +11,7 @@ function popis(rec: Pick<RezervaceRecord, 'apartman' | 'jmeno' | 'rezervace'>): 
   return `${rec.apartman || 'Apartmán'} ${prijmeni}`;
 }
 
-export type DruhDluhu = 'poplatek' | 'prijezd' | 'cesta';
+export type DruhDluhu = 'poplatek' | 'prijezd' | 'cesta' | 'drive' | 'pozde';
 export type PolozkaDluhu = { druh: DruhDluhu; kc: number };
 
 export type VstupDluhu = {
@@ -25,22 +25,26 @@ export type VstupDluhu = {
   naMiste: string | null;
   predano: string | null;
   vyjezdy: { castka: number }[];
+  /** Potvrzený příplatek za dřívější příjezd. Bez potvrzení se nepřičte. */
+  priplatekDrive?: number | null;
+  /** Potvrzený příplatek za pozdější odjezd. */
+  priplatekPozde?: number | null;
 };
 
 const PORADI_APT: Record<string, number> = { V1: 1, V2: 2, V3: 3, V4: 4, V5: 5 };
 
 const NAZEV: Record<GuideLang, Record<DruhDluhu, string>> = {
-  cs: { poplatek: 'poplatek z pobytu', prijezd: 'pozdní příjezd', cesta: 'opakovaná cesta' },
-  en: { poplatek: 'city tax', prijezd: 'late arrival', cesta: 'extra trip' },
-  de: { poplatek: 'Ortstaxe', prijezd: 'späte Anreise', cesta: 'weitere Fahrt' },
-  pl: { poplatek: 'opłata miejscowa', prijezd: 'późny przyjazd', cesta: 'kolejny dojazd' },
-  uk: { poplatek: 'міський збір', prijezd: 'пізній приїзд', cesta: 'повторна поїздка' },
-  'zh-Hant': { poplatek: '城市稅', prijezd: '較晚抵達', cesta: '再次接送' },
-  es: { poplatek: 'tasa municipal', prijezd: 'llegada tardía', cesta: 'viaje extra' },
-  fr: { poplatek: 'taxe de séjour', prijezd: 'arrivée tardive', cesta: 'trajet supplémentaire' },
-  it: { poplatek: 'tassa di soggiorno', prijezd: 'arrivo tardivo', cesta: 'corsa in più' },
-  sv: { poplatek: 'stadsskatt', prijezd: 'sen ankomst', cesta: 'extra resa' },
-  hu: { poplatek: 'idegenforgalmi adó', prijezd: 'késői érkezés', cesta: 'ismételt út' },
+  cs: { poplatek: 'poplatek z pobytu', prijezd: 'pozdní příjezd', cesta: 'opakovaná cesta', drive: 'dřívější příjezd', pozde: 'pozdější odjezd' },
+  en: { poplatek: 'city tax', prijezd: 'late arrival', cesta: 'extra trip', drive: 'earlier arrival', pozde: 'later departure' },
+  de: { poplatek: 'Ortstaxe', prijezd: 'späte Anreise', cesta: 'weitere Fahrt', drive: 'frühere Anreise', pozde: 'spätere Abreise' },
+  pl: { poplatek: 'opłata miejscowa', prijezd: 'późny przyjazd', cesta: 'kolejny dojazd', drive: 'wcześniejszy przyjazd', pozde: 'późniejszy wyjazd' },
+  uk: { poplatek: 'міський збір', prijezd: 'пізній приїзд', cesta: 'повторна поїздка', drive: 'ранній приїзд', pozde: 'пізніший виїзд' },
+  'zh-Hant': { poplatek: '城市稅', prijezd: '較晚抵達', cesta: '再次接送', drive: '提早入住', pozde: '延遲退房' },
+  es: { poplatek: 'tasa municipal', prijezd: 'llegada tardía', cesta: 'viaje extra', drive: 'llegada anticipada', pozde: 'salida más tarde' },
+  fr: { poplatek: 'taxe de séjour', prijezd: 'arrivée tardive', cesta: 'trajet supplémentaire', drive: 'arrivée plus tôt', pozde: 'départ plus tard' },
+  it: { poplatek: 'tassa di soggiorno', prijezd: 'arrivo tardivo', cesta: 'corsa in più', drive: 'arrivo anticipato', pozde: 'partenza posticipata' },
+  sv: { poplatek: 'stadsskatt', prijezd: 'sen ankomst', cesta: 'extra resa', drive: 'tidigare ankomst', pozde: 'senare avresa' },
+  hu: { poplatek: 'idegenforgalmi adó', prijezd: 'késői érkezés', cesta: 'ismételt út', drive: 'korábbi érkezés', pozde: 'későbbi távozás' },
 };
 
 function jazyk(lang: GuideLang | null): GuideLang {
@@ -119,6 +123,8 @@ export function polozkyDluhu(v: VstupDluhu): PolozkaDluhu[] {
   }
   const cesta = soucetVyjezdu(v.vyjezdy || []);
   if (cesta > 0) ven.push({ druh: 'cesta', kc: cesta });
+  if (typeof v.priplatekDrive === 'number' && v.priplatekDrive > 0) ven.push({ druh: 'drive', kc: Math.round(v.priplatekDrive) });
+  if (typeof v.priplatekPozde === 'number' && v.priplatekPozde > 0) ven.push({ druh: 'pozde', kc: Math.round(v.priplatekPozde) });
   return ven;
 }
 
@@ -134,6 +140,8 @@ export function polozkyZRezervace(rec: RezervaceRecord): PolozkaDluhu[] {
     naMiste: rec.naMiste,
     predano: rec.predano,
     vyjezdy: rec.vyjezdy || [],
+    priplatekDrive: rec.zadostPrijezd?.stav === 'potvrzeno' ? rec.zadostPrijezd.kc : null,
+    priplatekPozde: rec.zadostOdjezd?.stav === 'potvrzeno' ? rec.zadostOdjezd.kc : null,
   });
 }
 

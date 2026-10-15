@@ -1,4 +1,5 @@
 import { PRIPLATEK_DO, PRIPLATEK_KROK_MIN } from './constants';
+import { jeCasDrive } from './okno-pobytu';
 import { CAS_PO_23, jeCasSPriplatkem } from './priplatek-prijezd';
 import { normalizujTelefon } from './telefon';
 import type { RezervaceRecord } from './store';
@@ -38,7 +39,13 @@ export type ChybejiciKrok = 'cas' | 'zpusob' | 'pravidla';
 
 export function jeCasHosta(cas: string | null | undefined): boolean {
   if (!cas) return false;
-  return cas === CAS_PO_20 || cas === CAS_PO_23 || (CASY_VYBERU as readonly string[]).includes(cas) || jeCasSPriplatkem(cas);
+  return (
+    cas === CAS_PO_20 ||
+    cas === CAS_PO_23 ||
+    (CASY_VYBERU as readonly string[]).includes(cas) ||
+    jeCasSPriplatkem(cas) ||
+    jeCasDrive(cas)
+  );
 }
 
 export function normalizujSpz(raw: string): { ok: true; spz: string } | { ok: false } {

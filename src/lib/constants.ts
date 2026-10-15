@@ -23,6 +23,19 @@ export const PRIPLATEK_KROK_MIN = 30;
 export const PRIPLATEK_KC = 100;
 export const PRIPLATEK_DO = 23 * 60;
 
+/** Dřívější příjezd a pozdější odjezd. 75 Kč za každou započatou půlhodinu, jen po potvrzení. */
+export const OKNO_KC = 75;
+export const PRIJEZD_STANDARD = 14 * 60;
+export const PRIJEZD_NEJDRIV = 11 * 60;
+export const ODJEZD_STANDARD = 10 * 60;
+export const ODJEZD_NEJPOZDEJI = 14 * 60;
+export const UKLID_MIN = 60;
+export const MEZERA_PO_ODJEZDU_MIN = 30;
+export const MEZERA_PRED_PRIJEZDEM_MIN = 180;
+export const ODJEZD_KDYZ_CAS_NEZNAMY = 11 * 60;
+export const PRIPRAVENO_PRED_MIN = 30;
+export const OBJEDNAT_POKUSU = 5;
+
 export const PARKING_ADDRESS = 'Chelčického 95/15';
 export const HOUSE_ADDRESS = 'Nádražní 108/43, 370 01 České Budějovice';
 export const NIKOL_PHONE = '+420 702 153 573';

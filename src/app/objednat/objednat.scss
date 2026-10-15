@@ -1,0 +1,56 @@
+.obj {
+  max-width: 36rem;
+  margin: 0 auto;
+  padding: 1.4rem 1.1rem 3rem;
+  color: #1c1712;
+  background: #f4ead7;
+  font-family: Georgia, 'Times New Roman', serif;
+  text-align: justify;
+  hyphens: auto;
+
+  h1,
+  h2 {
+    text-align: left;
+    font-weight: 650;
+  }
+
+  label,
+  button,
+  select,
+  input {
+    display: block;
+    width: 100%;
+    margin: 0.35rem 0 0.8rem;
+    font: inherit;
+  }
+
+  button {
+    width: auto;
+    margin-right: 0.4rem;
+    padding: 0.45rem 0.8rem;
+  }
+
+  .obj-jazyk {
+    text-align: right;
+  }
+
+  .pv-cenik {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0.4rem 0 0.8rem;
+
+    button {
+      width: 100%;
+      text-align: left;
+      background: #fffaf1;
+      border: 1px solid #a68445;
+      border-radius: 8px;
+      color: #1c1712;
+    }
+
+    button.is-on {
+      background: #1c1712;
+      color: #f5efe3;
+    }
+  }
+}

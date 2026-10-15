@@ -1,3 +1,4 @@
+import { jeCasDrive, jeCasPozde, zadostOdjezdu, zadostPrijezdu, zrusitZadost } from './okno-pobytu';
 import { jeSlotOdjezdu, textHostUlozil, zobrazCas } from './odjezd';
 import { verzeAktualni } from './pravidla-verze';
 import { popisekCasu } from './priplatek-prijezd';
@@ -72,6 +73,10 @@ export async function ulozVstupHosta(
     pujcene?: boolean;
     souhlas?: boolean;
     jazyk?: string;
+    casPrijezd?: string;
+    casOdjezd?: string;
+    zrusit?: string;
+    od?: string;
   },
 ): Promise<VysledekUlozeni> {
   const overeni = verifyToken(token);
@@ -90,8 +95,55 @@ export async function ulozVstupHosta(
     });
   };
 
+  const vsechny = async () => (await store.listRezervace()).map((e) => e.record);
+
+  if (telo.akce === 'okno') {
+    const vse = await vsechny();
+    const now = new Date();
+    let pracovni = rec;
+    const pushe: string[] = [];
+    if (telo.zrusit === 'prijezd' || telo.zrusit === 'oboji') pracovni = zrusitZadost(pracovni, 'prijezd', now) || pracovni;
+    if (telo.zrusit === 'odjezd' || telo.zrusit === 'oboji') pracovni = zrusitZadost(pracovni, 'odjezd', now) || pracovni;
+    const odkud = telo.od === 'pripraveno' ? 'pripraveno' : 'pruvodce';
+    if (telo.casPrijezd) {
+      const v = zadostPrijezdu(pracovni, vse, telo.casPrijezd, odkud, now);
+      if (!v) {
+        await spalit();
+        return { ok: false, duvod: 'cas' };
+      }
+      pracovni = v.rec;
+      pushe.push(v.push);
+    }
+    if (telo.casOdjezd) {
+      const v = zadostOdjezdu(pracovni, vse, telo.casOdjezd, 'pruvodce', now);
+      if (!v) {
+        await spalit();
+        return { ok: false, duvod: 'cas' };
+      }
+      pracovni = v.rec;
+      pushe.push(v.push);
+    }
+    const casUlozeni = now.toISOString();
+    const zapis = { ...pracovni, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
+    await store.setRezervace(id, zapis);
+    for (const text of pushe) await ohlas(store, id, text);
+    return { ok: true, uroven: urovenZRezervace(zapis) };
+  }
+
   if (telo.akce === 'odjezd') {
     const cas = (telo.cas || '').trim();
+    if (jeCasPozde(cas)) {
+      const v = zadostOdjezdu(rec, await vsechny(), cas, 'pruvodce', new Date());
+      if (!v) {
+        await spalit();
+        return { ok: false, duvod: 'cas' };
+      }
+      const casUlozeni = new Date().toISOString();
+      const zapis = { ...v.rec, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
+      await store.setRezervace(id, zapis);
+      await ohlas(store, id, v.push);
+      return { ok: true, cas: rec.casOdjezdu || undefined, uroven: urovenZRezervace(zapis) };
+    }
     if (!jeSlotOdjezdu(cas)) {
       await spalit();
       return { ok: false, duvod: 'cas' };
@@ -148,6 +200,28 @@ export async function ulozVstupHosta(
       }
       telefonBrana = tel.ulozeny;
     }
+    if (jeCasDrive(cas)) {
+      const v = zadostPrijezdu(rec, await vsechny(), cas, 'pruvodce', new Date());
+      if (!v) {
+        await spalit();
+        return { ok: false, duvod: 'cas' };
+      }
+      const souhlas = doplnSouhlas(v.rec, true, telo.jazyk);
+      const casUlozeni = new Date().toISOString();
+      const zapis = {
+        ...v.rec,
+        ...souhlas.patch,
+        zpusobPrijezdu: zpusob as 'auto' | 'pesky' | null,
+        telefonBrana,
+        spz,
+        spzPujcene: pujcene,
+        hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20),
+        historie: souhlas.veta ? [...v.rec.historie, { cas: casUlozeni, co: souhlas.veta }].slice(-40) : v.rec.historie,
+      };
+      await store.setRezervace(id, zapis);
+      await ohlas(store, id, v.push);
+      return { ok: true, cas: zapis.casPrijezdu || undefined, uroven: urovenZRezervace(zapis) };
+    }
     const novy = popisekCasu(cas);
     const souhlas = doplnSouhlas(rec, true, telo.jazyk);
     const rucniCas = maRucni(rec, 'casPrijezdu') && rec.casPrijezdu !== cas;
@@ -166,6 +240,7 @@ export async function ulozVstupHosta(
         spz,
         spzPujcene: pujcene,
         branaRegistrovano: zmenaTelefonu ? null : rec.branaRegistrovano,
+        zadostPrijezd: rec.zadostPrijezd?.stav === 'potvrzeno' ? rec.zadostPrijezd : null,
         navrhy,
         ...souhlas.patch,
       },

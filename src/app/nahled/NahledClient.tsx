@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Guide } from '@/components/Guide';
 import { denPraha, posunDen } from '@/lib/brana';
+import { casyDrive } from '@/lib/okno-pobytu';
 import { parseApt, parseLang } from '@/lib/i18n';
 import { kodyProHosta } from '@/lib/kody-pruvodce';
 import type { GuideSecrets } from '@/lib/secrets';
@@ -114,6 +115,21 @@ export function NahledClient({ secrets, searchParams }: Props) {
       odjezd={
         one(searchParams.odjezd) === '1'
           ? { den: posunDen(denPraha(new Date()), 1), cas: one(searchParams.odjezdCas), rucni: false }
+          : null
+      }
+      okno={
+        one(searchParams.pripraveno) === '1'
+          ? {
+              zeleny: true,
+              sekcePrijezd: false,
+              sekceOdjezd: false,
+              slotyZelene: ['12:00', '12:30', '13:00', '13:30'],
+              slotyPrijezd: casyDrive('11:00'),
+              slotyOdjezd: [],
+              nejpozdeji: '14:00',
+              zadostPrijezd: null,
+              zadostOdjezd: null,
+            }
           : null
       }
     />

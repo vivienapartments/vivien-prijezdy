@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { denPraha } from '@/lib/brana';
+import { casyPozde, popisekOdjezd } from '@/lib/okno-pobytu';
 import { jeHodina, slotsOdjezdu, TEXT_ODJEZDU, ukazatRamecekOdjezdu, zobrazCas } from '@/lib/odjezd';
 import type { GuideLang } from '@/lib/types';
 
@@ -12,9 +13,11 @@ type Props = {
   rucni: boolean;
   token: string | null;
   cteni: boolean;
+  /** Nejpozdější nabízený čas. Výchozí je 14:00. */
+  nejpozdeji?: string;
 };
 
-export function OdjezdRamecek({ lang, den, cas, rucni, token, cteni }: Props) {
+export function OdjezdRamecek({ lang, den, cas, rucni, token, cteni, nejpozdeji = '14:00' }: Props) {
   const [ulozeny, setUlozeny] = useState(jeHodina(cas) ? cas : '');
   const [otevreno, setOtevreno] = useState(!jeHodina(cas));
   const [vyber, setVyber] = useState(jeHodina(cas) ? cas : slotsOdjezdu()[0]);
@@ -78,7 +81,19 @@ export function OdjezdRamecek({ lang, den, cas, rucni, token, cteni }: Props) {
               {zobrazCas(slot)}
             </option>
           ))}
+          {casyPozde(nejpozdeji).map((slot) => (
+            <option key={slot} value={slot}>
+              {popisekOdjezd(lang, slot)}
+            </option>
+          ))}
         </select>
+        <span className="pv-cenik">
+          {casyPozde(nejpozdeji).map((slot) => (
+            <button key={slot} type="button" className={vyber === slot ? 'is-on' : ''} onClick={() => setVyber(slot)}>
+              {popisekOdjezd(lang, slot)}
+            </button>
+          ))}
+        </span>
       </label>
       <p className="pv-odjezd__poznamka">{text.poznamka}</p>
       <button type="button" disabled={cekam || zamceno} onClick={() => void ulozit()}>

@@ -101,6 +101,25 @@ export default async function NahledEmailPage({ searchParams }: Props) {
       </main>
     );
   }
+  if (druh === 'okno') {
+    return (
+      <main style={{ minHeight: '100vh', margin: 0, padding: '1.2rem', background: '#1c1712', color: '#f5efe3', fontFamily: 'Georgia, serif' }}>
+        <article style={{ maxWidth: '22rem', padding: '0.9rem 1rem', borderRadius: '1.1rem', background: '#2a241c', border: '1px solid #c9a84c' }}>
+          <p style={{ margin: '0 0 0.25rem', fontSize: '0.78rem', letterSpacing: '0.04em' }}>VIVIEN</p>
+          <p style={{ margin: 0, fontSize: '1.05rem', lineHeight: 1.35 }}>V3 Novák chce přijet ve 12:00 (+300 Kč)</p>
+        </article>
+        <article style={{ maxWidth: '22rem', marginTop: '0.8rem', padding: '0.9rem 1rem', borderRadius: '0.8rem', background: '#2a241c', border: '1px solid #c9a84c' }}>
+          <p style={{ margin: '0 0 0.7rem' }}>V3 Novák chce přijet ve 12:00 (+300 Kč)</p>
+          <button type="button" style={{ marginRight: '0.4rem', padding: '0.45rem 0.8rem', borderRadius: '0.5rem', border: '1px solid #c9a84c', background: '#c9a84c', color: '#1c1712' }}>
+            Potvrdit
+          </button>
+          <button type="button" style={{ padding: '0.45rem 0.8rem', borderRadius: '0.5rem', border: '1px solid #c9a84c', background: 'transparent', color: '#f5efe3' }}>
+            Nelze
+          </button>
+        </article>
+      </main>
+    );
+  }
   if (druh === 'odjezd') {
     const text = zpravaOdjezdu('cs', [{ druh: 'poplatek', kc: 400 }], 'https://vivien-prijezdy-six.vercel.app/nahled');
     const souhrn = textSouhrnu([

@@ -10,6 +10,8 @@ import { denPraha } from '@/lib/brana';
 import { posliEmailZpravy, predmetZpravy } from '@/lib/email-zprava';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
+import { aplikujNelze, aplikujPotvrzeni, oznacUpozorneno, poUklidu, predmetPripraveno } from '@/lib/okno-pobytu';
+import { upozorniMajitele } from '@/lib/upozorneni';
 import { polozkyZRezervace } from '@/lib/odjezd';
 import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
@@ -77,6 +79,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'priplatek' &&
       akce !== 'uklid' &&
       akce !== 'vratit-uklid' &&
+      akce !== 'potvrdit-prijezd' &&
+      akce !== 'nelze-prijezd' &&
+      akce !== 'potvrdit-odjezd' &&
+      akce !== 'nelze-odjezd' &&
+      akce !== 'pripraveno-whatsapp' &&
       akce !== 'zaplaceno' &&
       akce !== 'poplatek' &&
       akce !== 'zrusit-zaplaceni' &&
@@ -136,10 +143,36 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!kdo) return chyba(400, 'Chybí, kdo uklízel.');
     const dalsi = oznacUklid(rec, kdo);
     await store.setRezervace(id, dalsi);
+    const vse = (await store.listRezervace()).map((e) => e.record);
+    const nabidka = poUklidu(dalsi, vse, new Date());
+    if (nabidka.cekajici && nabidka.push) {
+      const jak = await upozorniMajitele(store, nabidka.push, `/prehled#${nabidka.cekajici.rezervace}`);
+      if (jak !== 'nic') await store.setRezervace(nabidka.cekajici.rezervace, oznacUpozorneno(nabidka.cekajici));
+    }
     return NextResponse.json(
-      { ok: true, uklizenoKdy: dalsi.uklizenoKdy, uklizenoKdo: dalsi.uklizenoKdo },
+      {
+        ok: true,
+        uklizenoKdy: dalsi.uklizenoKdy,
+        uklizenoKdo: dalsi.uklizenoKdo,
+        nabidka: nabidka.nabidka,
+        odeslanoHostovi: false,
+      },
       { headers: noStore },
     );
+  }
+
+  if (akce === 'potvrdit-prijezd' || akce === 'potvrdit-odjezd' || akce === 'nelze-prijezd' || akce === 'nelze-odjezd') {
+    const druh = akce.endsWith('prijezd') ? 'prijezd' : 'odjezd';
+    const vse = (await store.listRezervace()).map((e) => e.record);
+    const dalsi = akce.startsWith('potvrdit') ? aplikujPotvrzeni(rec, druh, vse, new Date()) : aplikujNelze(rec, druh, new Date());
+    if (!dalsi) return chyba(400, 'Teď to nejde potvrdit.');
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
+  if (akce === 'pripraveno-whatsapp') {
+    await store.setRezervace(id, pridej(rec, 'WhatsApp: Apartmán je připravený'));
+    return NextResponse.json({ ok: true }, { headers: noStore });
   }
 
   if (akce === 'vratit-uklid') {
@@ -320,7 +353,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'email') {
-    const druhy: DruhZpravy[] = ['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd', 'odjezd'];
+    const druhy: DruhZpravy[] = ['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd', 'odjezd', 'pripraveno'];
     const druh = druhy.find((id) => id === body?.zprava);
     if (!druh) return chyba(400, 'Vyberte zprávu.');
     const komu = (rec.emailHosta || '').trim();
@@ -358,15 +391,16 @@ export async function POST(request: Request): Promise<NextResponse> {
       casOdjezdu: rec.casOdjezdu,
       dluh: polozkyZRezervace(rec),
       branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
+      pripraveno: druh === 'pripraveno',
     }).find((z) => z.id === druh);
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
     try {
       await posliEmailZpravy({
         to: komu,
-        subject: predmetZpravy(druh, rec.jazyk, druh === 'odjezd' ? rec.odjezd : rec.prijezd),
+        subject: druh === 'pripraveno' ? predmetPripraveno(rec.jazyk) : predmetZpravy(druh, rec.jazyk, druh === 'odjezd' ? rec.odjezd : rec.prijezd),
         text: zprava.text,
         lang: rec.jazyk,
-        telefon: druh !== 'odjezd',
+        telefon: druh !== 'odjezd' && druh !== 'pripraveno',
       });
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');

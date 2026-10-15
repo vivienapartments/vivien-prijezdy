@@ -1167,6 +1167,21 @@
   min-width: 0;
 }
 
+.ph-okno {
+  margin: 0.55rem 0;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid #c9a84c;
+  border-radius: 0.7rem;
+
+  p {
+    margin: 0 0 0.5rem;
+  }
+
+  button + button {
+    margin-left: 0.4rem;
+  }
+}
+
 .ph-dnesek {
   margin: 0 0 1.4rem;
   padding: 0.9rem 0.85rem 1rem;
