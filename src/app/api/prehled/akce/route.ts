@@ -49,6 +49,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     pole?: string;
     kdo?: string;
     castka?: string;
+    stav?: string;
   } | null;
   const id = (body?.rezervace || '').trim();
   const akce = body?.akce;
@@ -66,6 +67,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'zrusit-na-miste' &&
       akce !== 'priplatek' &&
       akce !== 'zaplaceno' &&
+      akce !== 'poplatek' &&
       akce !== 'zrusit-zaplaceni' &&
       akce !== 'vyjezd' &&
       akce !== 'vratit-vyjezd' &&
@@ -132,6 +134,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       { ok: true, zaplaceno: dalsi.zaplaceno, poplatekVybral: dalsi.poplatekVybral },
       { headers: noStore },
     );
+  }
+
+  if (akce === 'poplatek') {
+    const stav = body?.stav === 'ano' || body?.stav === 'ne' ? body.stav : null;
+    if (!stav) return chyba(400, 'Chybí volba poplatku.');
+    const veta = stav === 'ano' ? 'Poplatek zvolen: vybírat' : 'Poplatek zvolen: v ceně';
+    const dalsi = zapisMajitele(rec, 'poplatek', { poplatek: stav }, veta);
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, poplatek: stav }, { headers: noStore });
   }
 
   if (akce === 'zrusit-zaplaceni') {

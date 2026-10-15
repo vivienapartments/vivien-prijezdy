@@ -475,6 +475,41 @@
   margin-top: 0.45rem;
 }
 
+.ph-faze {
+  display: inline-block;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-size: 1.12rem;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.ph-faze--cervena {
+  background: #9f1239;
+  color: #fff;
+}
+
+.ph-faze--oranzova {
+  background: #c2410c;
+  color: #fff;
+}
+
+.ph-faze--zelena {
+  background: #1f7a3a;
+  color: #f3fff6;
+}
+
+.ph-faze--seda {
+  background: #4b5563;
+  color: #f3f4f6;
+}
+
+.ph-predvolba {
+  color: #ff2d2d;
+  font-weight: 750;
+  margin: 0.2rem 0 0.55rem;
+}
+
 .ph-souhlas-zneni {
   margin: 0.7rem 0;
 

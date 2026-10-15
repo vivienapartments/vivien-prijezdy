@@ -214,10 +214,11 @@ function duvodyMailu(ins: MailInspection): Duvod[] {
 /** Potvrzení nebo výzva z info@, kterou je ještě potřeba založit nebo opravit. Hostovi se nic neposílá. */
 async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<boolean> {
   const odMajitele = jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '');
-  if (!odMajitele) return false;
   const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
   const potvrzeni = jePotvrzeniPredmet(mail.subject);
   const vyzva = jeVyzvaCheckinu(mail.subject) && !/VIVIEN-DATA/i.test(telo);
+  const odHotel = vyzva && jeVyzvaHotel(mail);
+  if (!odMajitele && !odHotel) return false;
   if (!potvrzeni && !vyzva) return false;
   const id = vyzva
     ? cisloZVyzvy(mail.subject, mail.html, mail.text)
@@ -226,8 +227,17 @@ async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<
   const rec = await store.getRezervace(id);
   if (!rec) return true;
   if (!potvrzeni) return !rec.checkinUrl && Boolean(odkazCheckinuZVyzvy(mail.html, mail.text));
+  if (!odMajitele) return false;
   if (!rec.apartman || !rec.prijezd || !rec.odjezd || !rec.jmeno) return true;
   return jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject);
+}
+
+function jeVyzvaHotel(mail: InboxMail): boolean {
+  const from = mail.from.toLowerCase();
+  const auth = (mail.authenticationResults || '').toLowerCase();
+  const odHotel = from.includes('better-hotel.com') || from.includes('betterhotel');
+  const podpis = mail.dkimBetterHotel === true || /dkim=pass[^;]*header\.d=better-hotel\.com/.test(auth);
+  return odHotel && podpis;
 }
 
 /** Už zpracovaný check-in, který má novější údaje než řádek. Průvodce se z toho sám neposílá podruhé. */
@@ -290,6 +300,10 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
       id ? { rezervace: id, checkinUrl } : null,
       id ? [] : ['rezervace'],
     );
+  }
+
+  if (jeVyzvaCheckinu(mail.subject) && jeVyzvaHotel(mail) && !/VIVIEN-DATA/i.test(telo)) {
+    return zpracujVyzvuHotel(mail, store, now);
   }
 
   const body = bodyForParse(mail);
@@ -524,6 +538,63 @@ function doplnekZInterni(u: InterniUdaje): DoplnekRezervace {
     noci: u.noci,
     zdroj: u.zdroj,
     checkinUrl: u.checkinUrl,
+  };
+}
+
+async function zpracujVyzvuHotel(mail: InboxMail, store: ProcessStore, now: string): Promise<ProcessItem> {
+  const id = cisloZVyzvy(mail.subject, mail.html, mail.text);
+  const checkinUrl = odkazCheckinuZVyzvy(mail.html, mail.text);
+  if (!id || !checkinUrl) {
+    await store.markMessage({
+      messageId: mail.messageId,
+      uid: mail.uid,
+      processedAt: now,
+      rezervace: id || undefined,
+      status: 'skipped_no_data',
+      reason: 'výzva bez odkazu',
+    });
+    return { rezervace: id || undefined, status: 'skipped_no_data', reason: 'výzva bez odkazu' };
+  }
+  const prev = await store.getRezervace(id);
+  if (!prev) {
+    await store.markMessage({
+      messageId: mail.messageId,
+      uid: mail.uid,
+      processedAt: now,
+      rezervace: id,
+      status: 'skipped_no_data',
+      reason: 'výzva čeká na řádek',
+    });
+    return { rezervace: id, status: 'skipped_no_data', reason: 'výzva čeká na řádek' };
+  }
+  if (prev.checkinUrl) {
+    await store.markMessage({
+      messageId: mail.messageId,
+      uid: mail.uid,
+      processedAt: now,
+      rezervace: id,
+      status: 'skipped_no_data',
+      reason: 'odkaz už je',
+    });
+    return { rezervace: id, status: 'duplicate', reason: 'odkaz už je' };
+  }
+  const vysledek = await doplnRezervaci(store, { rezervace: id, checkinUrl }, {
+    stitek: 'info',
+    historie: 'Doplněn odkaz na check-in',
+    chybi: [],
+  });
+  await store.markMessage({
+    messageId: mail.messageId,
+    uid: mail.uid,
+    processedAt: now,
+    rezervace: id,
+    status: vysledek.ok ? 'skipped_no_data' : 'rejected',
+    reason: vysledek.ok ? 'odkaz z Better Hotelu' : vysledek.error,
+  });
+  return {
+    rezervace: id,
+    status: vysledek.ok ? 'doplneno' : 'rejected',
+    reason: vysledek.ok ? undefined : vysledek.error,
   };
 }
 

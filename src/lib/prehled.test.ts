@@ -217,7 +217,7 @@ describe('tlačítka v přehledu', () => {
     ).toBe('denCas');
     expect(
       hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11', chybi: ['cas'] }),
-    ).toBe('denNerozbalen');
+    ).toBe('nerozbalen');
   });
 
   it('den příjezdu má dvě verze podle políčka času', () => {
@@ -299,10 +299,11 @@ describe('tlačítka v přehledu', () => {
     expect(zpravaHostovi('de', null).toLowerCase()).not.toContain('bitte');
   });
 
-  it('poplatek ukáže částku, ne, nebo neznámo', () => {
+  it('poplatek ukáže částku, v ceně, nebo otazník', () => {
     expect(textPoplatku('ano', 2, 2)).toBe('Poplatek: 200 Kč (2 noci × 2 osoby)');
-    expect(textPoplatku('ne', 2, 2)).toBe('Poplatek: ne');
-    expect(textPoplatku('neznamo', null, null)).toBe('Poplatek: neznámo');
+    expect(textPoplatku('ne', 2, 2)).toBe('Poplatek: 200 Kč, v ceně');
+    expect(textPoplatku('neznamo', 2, 2)).toBe('Poplatek: 200 Kč ?');
+    expect(textPoplatku('neznamo', null, null)).toBe('Poplatek: ?');
   });
 
   it('otevření má tři stavy', () => {

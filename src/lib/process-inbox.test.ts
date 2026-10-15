@@ -820,6 +820,62 @@ Original-Message-ID: <x>
     expect(po?.telefon).toBe('+420777111222');
   });
 
+  it('výzva od Better Hotelu uloží odkaz jen k hotovému řádku a nic nepošle', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const bezRadku = await processOneMail(
+      mail({
+        messageId: 'bh-vyzva-prazdna@test',
+        from: 'Better Hotel <noreply@better-hotel.com>',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com',
+        subject: 'Your online check-in – required to receive access #120260800',
+        html: '<a href="https://checkin.example.com/formular/120260800">online check-in #120260800</a>',
+      }),
+      store,
+    );
+    expect(bezRadku.status).toBe('skipped_no_data');
+    expect(await store.getRezervace('120260800')).toBeNull();
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+
+    const rec = prazdnaRezervace('120260801', '2026-10-15T08:00:00.000Z');
+    rec.stav = 'odeslano';
+    rec.jmeno = 'Maria';
+    rec.checkinUrl = 'https://checkin.example.com/rucni';
+    rec.rucniZnacky = [{ pole: 'checkinUrl', cas: '2026-10-15T08:00:00.000Z' }];
+    await store.setRezervace(rec.rezervace, rec);
+    const rucni = await processOneMail(
+      mail({
+        messageId: 'bh-vyzva-rucni@test',
+        from: 'Better Hotel <noreply@better-hotel.com>',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com',
+        subject: 'Your online check-in – required to receive access #120260801',
+        html: '<a href="https://checkin.example.com/formular/120260801">online check-in #120260801</a>',
+      }),
+      store,
+    );
+    expect(rucni.reason).toBe('odkaz už je');
+    expect((await store.getRezervace('120260801'))?.checkinUrl).toBe('https://checkin.example.com/rucni');
+
+    const prazdny = prazdnaRezervace('120260802', '2026-10-15T08:00:00.000Z');
+    prazdny.stav = 'odeslano';
+    prazdny.jmeno = 'Maria';
+    await store.setRezervace(prazdny.rezervace, prazdny);
+    const doplneno = await processOneMail(
+      mail({
+        messageId: 'bh-vyzva-doplnit@test',
+        from: 'Better Hotel <noreply@better-hotel.com>',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com',
+        subject: 'Your online check-in – required to receive access #120260802',
+        html: '<a href="https://checkin.example.com/formular/120260802">online check-in #120260802</a>',
+      }),
+      store,
+    );
+    expect(doplneno.status).toBe('doplneno');
+    expect((await store.getRezervace('120260802'))?.checkinUrl).toBe('https://checkin.example.com/formular/120260802');
+    expect((await store.getRezervace('120260802'))?.stav).toBe('odeslano');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+  });
+
   it('přeposlaný check-in z info@ se Seznamem neprojde a průvodce neodejde', async () => {
     const { processOneMail } = await import('./process-inbox');
     const store = tmpStore();
@@ -927,8 +983,8 @@ Original-Message-ID: <x>
 VIVIEN-DATA v1
 REZERVACE: 120260541
 APARTMAN: Ušlechtilý kontrast
-PRIJEZD: 14.10.2026
-ODJEZD: 15.10.2026
+PRIJEZD: 14.11.2026
+ODJEZD: 15.11.2026
 NOCI: 1
 OSOB: 2
 EMAIL: host@example.com

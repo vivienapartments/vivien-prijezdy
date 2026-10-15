@@ -11,7 +11,7 @@ import {
   STARY_ZAZNAM,
   terminKratky,
   textVybranehoPoplatku,
-  textSouhlasu,
+  textPoplatku,
   vetaChyby,
   type PrehledRadek,
 } from '@/lib/prehled';
@@ -48,13 +48,6 @@ type Props = {
   /** User-Agent prohlížeče. Na Androidu z něj vznikne odkaz na WhatsApp Business. */
   userAgent?: string;
 };
-
-function textPruvodce(row: PrehledRadek): { text: string; ton: 'ano' | 'ne' | 'nevim' } | null {
-  if (row.stav === 'bez_checkinu') return null;
-  if (row.otevrenoPocet == null) return { text: 'Nevíme', ton: 'nevim' };
-  if (row.otevrenoPocet <= 0) return { text: 'Průvodce neotevřen', ton: 'ne' };
-  return { text: `Průvodce otevřen ${row.otevrenoPocet}×`, ton: 'ano' };
-}
 
 function Pole({ text }: { text: string }) {
   if (!text) return null;
@@ -117,11 +110,6 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
   function predanoRadku(row: PrehledRadek): string | null {
     if (Object.prototype.hasOwnProperty.call(predani, row.rezervace)) return predani[row.rezervace];
     return row.predano;
-  }
-
-  function textPredani(iso: string): string {
-    const hod = hodinaPraha(iso);
-    return hod ? `Předáno ${hod}` : 'Předáno';
   }
 
   function vyberPoplatku(row: PrehledRadek): { kdy: string | null; kdo: 'ja' | 'nikol' | null } {
@@ -466,14 +454,41 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     const json = (await res.json().catch(() => null)) as { ok?: boolean; hodnota?: string } | null;
     if (!res.ok || !json?.ok) return { ok: false };
     const hotovo = json.hodnota || textTelefonu(tel.ulozeny);
-    if (ktery === (row.telefonKtery || 'rezervace')) {
-      setTelefony((prev) => ({ ...prev, [row.rezervace]: hotovo }));
-    } else {
-      setRadky((prev) =>
-        prev.map((r) => (r.rezervace === row.rezervace ? { ...r, jinyTelefonText: hotovo } : r)),
-      );
-    }
+    const hlavni = ktery === (row.telefonKtery || 'rezervace');
+    setRadky((prev) =>
+      prev.map((r) => {
+        if (r.rezervace !== row.rezervace) return r;
+        if (hlavni) return { ...r, telefonText: hotovo, telefonWa: tel.wa, telefonNejisty: tel.nejisty };
+        return { ...r, jinyTelefonText: hotovo, jinyTelefonWa: tel.wa, jinyTelefonNejisty: tel.nejisty };
+      }),
+    );
+    if (hlavni) setTelefony((prev) => ({ ...prev, [row.rezervace]: hotovo }));
     return { ok: true, hodnota: hotovo };
+  }
+
+  async function zvolPoplatek(row: PrehledRadek, stav: 'ano' | 'ne') {
+    const text = textPoplatku(stav, row.noci, row.osob);
+    const hotovo = {
+      poplatek: stav,
+      poplatekText: text,
+      poplatekZdroj: 'zvolil majitel',
+      poplatekOdhad: false,
+    };
+    if (ukazka) {
+      setRadky((prev) => prev.map((r) => (r.rezervace === row.rezervace ? { ...r, ...hotovo } : r)));
+      return;
+    }
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'poplatek', stav }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean } | null;
+    if (!res.ok || !json?.ok) {
+      setHlaska('Poplatek se neuložil.');
+      return;
+    }
+    setRadky((prev) => prev.map((r) => (r.rezervace === row.rezervace ? { ...r, ...hotovo } : r)));
   }
 
   async function prevzit(row: PrehledRadek, pole: PrehledRadek['navrhy'][number]['pole'], hodnota: string) {
@@ -536,7 +551,6 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
     const kdo = row.jmeno && row.jmeno !== STARY_ZAZNAM ? row.jmeno : row.rezervace;
     const termin = terminKratky(row.prijezd, row.odjezd);
     const apartman = row.apartmanNazev || row.apartman;
-    const pruvodce = textPruvodce(row);
     const chyba = vetaChyby(row);
     const wa = row.telefonWa || row.jinyTelefonWa;
     const predanoKdy = predanoRadku(row);
@@ -564,28 +578,38 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
           {apartman ? <div className="ph-apt">{apartman}</div> : null}
           {termin ? <div className="ph-kde">{termin}</div> : null}
           {row.poplatekText ? <div className="ph-stitek">{row.poplatekText}</div> : null}
+          {row.poplatekZdroj ? <div className="ph-poznamka">{row.poplatekZdroj}</div> : null}
         </div>
         <div className="ph-znacky">
-          {predanoKdy ? <span className="ph-znacka ph-znacka--ano">{textPredani(predanoKdy)}</span> : null}
+          <span className={`ph-faze ph-faze--${row.fazeTon}`}>Fáze · {row.fazeText}</span>
           {poplatek?.kdy ? (
             <span className="ph-znacka ph-znacka--ano">{textVybranehoPoplatku(poplatek.kdy, poplatek.kdo)}</span>
           ) : poplatek ? (
             <span className="ph-znacka ph-znacka--ne">Poplatek městu není vybraný</span>
+          ) : null}
+          {row.poplatek === 'neznamo' && !row.poplatekOdhad ? (
+            <span className="ph-poplatek-volba">
+              <button type="button" disabled={cekam !== null} onClick={() => zvolPoplatek(row, 'ano')}>
+                Vybírat
+              </button>
+              <button type="button" disabled={cekam !== null} onClick={() => zvolPoplatek(row, 'ne')}>
+                V ceně
+              </button>
+            </span>
           ) : null}
           {jizdy.map((jizda) => (
             <span key={jizda.id} className="ph-znacka ph-znacka--ne">
               Opakovaný výjezd {jizda.castka} Kč
             </span>
           ))}
-          {row.souhlas ? (
-            <span className="ph-znacka ph-znacka--ano">{textSouhlasu(row.souhlas.kdy)}</span>
-          ) : (
-            <span className="ph-znacka ph-znacka--ne">Pravidla nezaškrtl</span>
-          )}
         </div>
-        {pruvodce ? <div className={`ph-pruvodce ph-pruvodce--${pruvodce.ton}`}>{pruvodce.text}</div> : null}
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
         {telefonPole(row)}
+        {row.telefonNejisty ? (
+          <div className="ph-predvolba">
+            Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+          </div>
+        ) : null}
         {row.jinyTelefonKtery ? (
             <PoleSUlozenim
               key={`${row.rezervace}-druhe`}
@@ -595,6 +619,11 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               onUloz={(text) => ulozTelefon(row, row.jinyTelefonKtery || 'rezervace', text)}
             />
           ) : null}
+        {row.jinyTelefonKtery && row.jinyTelefonNejisty ? (
+          <div className="ph-predvolba">
+            Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+          </div>
+        ) : null}
           <PoleSUlozenim
             key={`${row.rezervace}-cas`}
             label="Čas příjezdu"
@@ -620,7 +649,6 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               {row.spzPujcene ? 'SPZ později' : row.spz ? `SPZ ${row.spz.length > 4 ? `${row.spz.slice(0, -4)} ${row.spz.slice(-4)}` : row.spz}` : 'bez SPZ'}
             </div>
           ) : null}
-          <div className={row.rozbalen ? 'ph-rozbalen' : 'ph-chybi'}>{row.rozbalenText}</div>
           {row.zpusobPrijezdu === 'auto' && row.telefonBrana && !row.branaRegistrovano ? (
             <button
               type="button"
@@ -955,12 +983,20 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
               </div>
             ) : null}
             {row.telefonPuvodni ? <div className="ph-puvodni">napsáno {row.telefonPuvodni}</div> : null}
-            {row.telefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
+            {row.telefonNejisty ? (
+              <div className="ph-predvolba">
+                Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+              </div>
+            ) : null}
             {row.jinyTelefonText ? (
               <div className="ph-tel-jiny">
                 jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
                 {row.jinyTelefonPuvodni ? <span className="ph-puvodni"> napsáno {row.jinyTelefonPuvodni}</span> : null}
-                {row.jinyTelefonNejisty ? <div className="ph-poznamka">ověřte předvolbu</div> : null}
+                {row.jinyTelefonNejisty ? (
+                  <div className="ph-predvolba">
+                    Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+                  </div>
+                ) : null}
                 {row.jinyTelefonWa && row.telefonWa && row.jinyTelefonWa !== row.telefonWa ? (
                   <a
                     className="ph-wa ph-wa--maly"
@@ -973,14 +1009,27 @@ export function PrehledClient({ rows, dnes, zitra, chybiWifi, ukazka = false, us
                 ) : null}
               </div>
             ) : null}
-            {row.stav === 'bez_checkinu' ? (
-              <PoleSUlozenim
-                key={`${row.rezervace}-checkin`}
-                label="Odkaz na check-in"
-                hodnota={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
-                vstup={{ autoComplete: 'off', placeholder: 'https://' }}
-                onUloz={(text) => ulozOdkaz(row, text)}
-              />
+            {!row.odjezd || row.odjezd >= dnes ? (
+              <>
+                <PoleSUlozenim
+                  key={`${row.rezervace}-checkin`}
+                  label="Odkaz na check-in"
+                  hodnota={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
+                  vstup={{ autoComplete: 'off', placeholder: 'https://' }}
+                  onUloz={(text) => ulozOdkaz(row, text)}
+                />
+                {odkazy[row.rezervace] || row.checkinUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = odkazy[row.rezervace] || row.checkinUrl || '';
+                      if (url) void navigator.clipboard.writeText(url);
+                    }}
+                  >
+                    Zkopírovat odkaz
+                  </button>
+                ) : null}
+              </>
             ) : null}
           </div>
           <div className="ph-cell" data-label="Příjezd">

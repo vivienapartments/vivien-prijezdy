@@ -1,5 +1,6 @@
 import type { GuideLang } from './types';
 import type { ChybejiciKrok } from './vstup-pruvodce';
+import { fazeHosta } from './faze-hosta';
 import { PRIPLATEK_KC, PRIPLATEK_OD } from './constants';
 import { casZMinut, priplatekProCas } from './priplatek-prijezd';
 
@@ -337,7 +338,7 @@ export function zpravaDneSCasem(lang: GuideLang | null, cas: string | null, odka
   return sestav(textDneSCasem(lang, cas), odkaz, lang);
 }
 
-/** Která zpráva sedí na stav hosta. Řádky menu se kvůli tomu neprohazují. */
+/** Která zpráva sedí na fázi hosta. Řádky menu se kvůli tomu neprohazují. */
 export function hlavniZprava(opts: {
   stav: string;
   otevrenoPocet: number | null;
@@ -346,15 +347,31 @@ export function hlavniZprava(opts: {
   dnes: string;
   chybi?: ChybejiciKrok[];
   branaChybi?: boolean;
+  zpusob?: 'auto' | 'pesky' | null;
+  souhlas?: boolean;
+  naMiste?: boolean;
+  predano?: string;
+  odjezd?: string | null;
 }): DruhZpravy {
-  if (opts.stav === 'bez_checkinu') return 'checkin';
-  if (opts.otevrenoPocet === 0) return 'neotevrel';
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
-  const rozbalen = chybi.length === 0;
-  if (opts.prijezd && opts.prijezd === opts.dnes) return rozbalen ? 'denCas' : 'denNerozbalen';
-  if (!rozbalen && opts.branaChybi && !chybi.includes('cas') && !chybi.includes('pravidla')) return 'brana';
-  if (!rozbalen) return 'nerozbalen';
-  return 'neotevrel';
+  const faze = fazeHosta({
+    stav: opts.stav,
+    otevrenoPocet: opts.otevrenoPocet,
+    cas: opts.casPrijezdu,
+    zpusob: opts.zpusob ?? (chybi.includes('zpusob') ? null : 'pesky'),
+    telefonBrana: null,
+    spz: null,
+    spzPujcene: false,
+    souhlas: opts.souhlas ?? !chybi.includes('pravidla'),
+    naMiste: Boolean(opts.naMiste),
+    predano: opts.predano || '',
+    odjezd: opts.odjezd ?? null,
+    dnes: opts.dnes,
+  });
+  if (faze.id === 1) return 'checkin';
+  if (faze.id === 2) return 'neotevrel';
+  if (faze.id === 3) return 'nerozbalen';
+  return 'denCas';
 }
 
 export function zpravyMenu(opts: {
@@ -369,6 +386,11 @@ export function zpravyMenu(opts: {
   dnes: string;
   chybi?: ChybejiciKrok[];
   branaChybi?: boolean;
+  zpusob?: 'auto' | 'pesky' | null;
+  souhlas?: boolean;
+  naMiste?: boolean;
+  predano?: string;
+  odjezd?: string | null;
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const texty: Record<DruhZpravy, string> = {

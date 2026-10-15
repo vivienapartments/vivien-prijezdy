@@ -149,6 +149,7 @@ export type RucniPole =
   | 'priplatekRucni'
   | 'zaplaceno'
   | 'poplatekVybral'
+  | 'poplatek'
   | 'accessPin';
 
 export type OdkudNavrh = 'check-in' | 'rezervace' | 'host' | 'potvrzeni';

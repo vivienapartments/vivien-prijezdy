@@ -1,12 +1,14 @@
 import apartmanyJson from '@/data/apartmany.json';
 import type { PoplatekStav } from './poplatek';
+import { castkaPoplatku, poplatekZData, hraniceRezervace } from './poplatek';
 import type { ProcessStore, RezervaceRecord, RezervaceStav } from './store';
 import { normalizujTelefon, textTelefonu } from './telefon';
 import type { AptId, GuideLang } from './types';
 import { LANG_LABELS } from './types';
-import { vetaNavrhu } from './rucni-pole';
+import { vetaNavrhu, maRucni } from './rucni-pole';
 import type { RucniPole } from './store';
 import { chybejiciKroky, type ChybejiciKrok } from './vstup-pruvodce';
+import { fazeHosta, type FazeTon } from './faze-hosta';
 import { zpravyMenu, type ZpravaMenu } from './whatsapp-zprava';
 import { zneniVerze } from './pravidla-verze';
 import { priplatekCasu, soucetVyjezdu } from './priplatek-prijezd';
@@ -40,6 +42,9 @@ export type PrehledRadek = {
   accessPin: string | null;
   poplatek: PoplatekStav;
   poplatekText: string;
+  poplatekZdroj: string;
+  /** Číslo rezervace je nad hranicí, datum vzniku ještě není. Do úložiště se nezapisuje. */
+  poplatekOdhad: boolean;
   otevrenoPocet: number | null;
   otevreniText: string;
   otevreniTon: OtevreniTon;
@@ -84,6 +89,8 @@ export type PrehledRadek = {
   pruvodceOdemcen: string | null;
   rozbalen: boolean;
   rozbalenText: string;
+  fazeText: string;
+  fazeTon: FazeTon;
   navrhy: { pole: RucniPole; veta: string; hodnota: string }[];
 };
 
@@ -211,13 +218,20 @@ export function pobytText(noci: number | null, osob: number | null): string {
 }
 
 export function textPoplatku(stav: PoplatekStav, noci: number | null, osob: number | null): string {
-  if (stav === 'ne') return 'Poplatek: ne';
-  if (stav === 'neznamo') return 'Poplatek: neznámo';
-  if (noci && osob && noci > 0 && osob > 0) {
-    const kc = noci * osob * 50;
+  const kc = castkaPoplatku(noci, osob);
+  const castka = kc == null ? '' : `${kc} Kč`;
+  if (stav === 'ne') return castka ? `Poplatek: ${castka}, v ceně` : 'Poplatek: v ceně';
+  if (stav === 'neznamo') return castka ? `Poplatek: ${castka} ?` : 'Poplatek: ?';
+  if (kc != null && noci && osob) {
     return `Poplatek: ${kc} Kč (${noci} ${sklon(noci, 'noc', 'noci', 'nocí')} × ${osob} ${sklon(osob, 'osoba', 'osoby', 'osob')})`;
   }
   return 'Poplatek: ano';
+}
+
+function zdrojPoplatku(rec: RezervaceRecord): string {
+  if (maRucni(rec, 'poplatek')) return 'zvolil majitel';
+  if (rec.vytvoreno && poplatekZData(rec.vytvoreno) !== 'neznamo') return 'z data vzniku';
+  return '';
 }
 
 export type RadekPlatby = {
@@ -545,6 +559,21 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     spzPujcene: Boolean(rec.spzPujcene),
     souhlas: Boolean(rec.souhlasPravidel),
   });
+  const dnes = dnesVPraze();
+  const faze = fazeHosta({
+    stav: rec.stav,
+    otevrenoPocet: rec.otevrenoPocet,
+    cas: rec.casPrijezdu,
+    zpusob: rec.zpusobPrijezdu,
+    telefonBrana: rec.telefonBrana,
+    spz: rec.spz,
+    spzPujcene: Boolean(rec.spzPujcene),
+    souhlas: Boolean(rec.souhlasPravidel),
+    naMiste: Boolean(rec.naMiste),
+    predano: rec.predano ? hodinaPraha(rec.predano) : '',
+    odjezd: rec.odjezd,
+    dnes,
+  });
   const zpravy = zpravyMenu({
     stav: rec.stav,
     lang: rec.jazyk,
@@ -554,8 +583,13 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     otevrenoPocet: rec.otevrenoPocet,
     casPrijezdu: rec.casPrijezdu,
     prijezd: rec.prijezd,
-    dnes: dnesVPraze(),
+    dnes,
     chybi: kroky,
+    zpusob: rec.zpusobPrijezdu,
+    souhlas: Boolean(rec.souhlasPravidel),
+    naMiste: Boolean(rec.naMiste),
+    predano: rec.predano ? hodinaPraha(rec.predano) : '',
+    odjezd: rec.odjezd,
     branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
   });
   const poprve = rec.otevrenoPoprve ? casPraha(rec.otevrenoPoprve) : '';
@@ -586,6 +620,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     accessPin: rec.accessPin,
     poplatek: rec.poplatek,
     poplatekText: textPoplatku(rec.poplatek, rec.noci, rec.osob),
+    poplatekZdroj: zdrojPoplatku(rec),
+    poplatekOdhad: false,
     otevrenoPocet: rec.otevrenoPocet,
     otevreniText: otev.text,
     otevreniTon: otev.ton,
@@ -626,6 +662,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     pruvodceOdemcen: rec.pruvodceOdemcen,
     rozbalen: kroky.length === 0,
     rozbalenText: textRozbaleni(kroky),
+    fazeText: faze.text,
+    fazeTon: faze.ton,
     navrhy: (rec.navrhy || []).map((n) => ({ pole: n.pole, veta: vetaNavrhu(n), hodnota: n.hodnota })),
   };
 }
@@ -663,8 +701,20 @@ export function seradRadky(rows: PrehledRadek[], now = new Date()): PrehledRadek
 
 export async function buildPrehled(store: ProcessStore, now = new Date()): Promise<PrehledRadek[]> {
   const entries = await store.listRezervace();
+  const hranice = hraniceRezervace(entries.map((e) => e.record));
   return seradRadky(
-    entries.map(({ record }) => radekZRezervace(record)),
+    entries.map(({ record }) => {
+      const radek = radekZRezervace(record);
+      if (record.poplatek !== 'neznamo' || hranice == null || maRucni(record, 'poplatek')) return radek;
+      const n = Number(String(record.rezervace).replace(/\D/g, ''));
+      if (!Number.isFinite(n) || n < hranice) return radek;
+      return {
+        ...radek,
+        poplatekText: textPoplatku('ano', record.noci, record.osob),
+        poplatekZdroj: `odhad, od rezervace ${hranice}`,
+        poplatekOdhad: true,
+      };
+    }),
     now,
   );
 }

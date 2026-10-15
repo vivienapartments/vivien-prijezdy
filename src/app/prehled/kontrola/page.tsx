@@ -39,6 +39,7 @@ function Karta({ radek }: { radek: RadekKontroly }) {
       </h3>
       <table>
         <tbody>
+          <tr>{bunka('Fáze', radek.faze)}</tr>
           <tr>{bunka('Číslo rezervace', radek.rezervace)}</tr>
           <tr>{bunka('Apartmán', radek.apartman)}</tr>
           <tr>{bunka('Termín', radek.termin)}</tr>

@@ -24,6 +24,23 @@ export function poplatekZData(vytvoreno: string | null | undefined): PoplatekSta
   return den >= POPLATEK_OD ? 'ano' : 'ne';
 }
 
+/** Nejnižší číslo rezervace, která vznikla 5. 10. 2026 nebo později. Vyšší číslo bez data poplatek vybírá. */
+export function hraniceRezervace(zaznamy: { rezervace: string; vytvoreno: string | null }[]): number | null {
+  let min: number | null = null;
+  for (const z of zaznamy) {
+    if (poplatekZData(z.vytvoreno) !== 'ano') continue;
+    const n = Number(String(z.rezervace).replace(/\D/g, ''));
+    if (!Number.isFinite(n) || n <= 0) continue;
+    if (min == null || n < min) min = n;
+  }
+  return min;
+}
+
+export function castkaPoplatku(noci: number | null, osob: number | null): number | null {
+  if (!noci || !osob || noci < 1 || osob < 1) return null;
+  return noci * osob * 50;
+}
+
 /** Neznámé datum se chová jako dnes: box se ukáže. Schová se jen když víme, že poplatek neplatí. */
 export function ukazatPoplatek(stav: PoplatekStav | null | undefined): boolean {
   return stav !== 'ne';

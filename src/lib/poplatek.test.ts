@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { poplatekZData, poplatekZTokenu, ukazatPoplatek } from './poplatek';
+import { poplatekZData, poplatekZTokenu, ukazatPoplatek, hraniceRezervace } from './poplatek';
 
 describe('městský poplatek podle data vytvoření', () => {
   it('rezervace z 4. 10. box schová', () => {
@@ -23,5 +23,16 @@ describe('městský poplatek podle data vytvoření', () => {
   it('starý token bez příznaku box ukáže', () => {
     expect(poplatekZTokenu(undefined)).toBe('neznamo');
     expect(ukazatPoplatek(poplatekZTokenu(undefined))).toBe(true);
+  });
+
+  it('najde nejnižší rezervaci s poplatkem', () => {
+    expect(
+      hraniceRezervace([
+        { rezervace: '120260900', vytvoreno: '2026-10-04' },
+        { rezervace: '120260910', vytvoreno: '2026-10-06' },
+        { rezervace: '120260905', vytvoreno: '2026-10-05' },
+      ]),
+    ).toBe(120260905);
+    expect(hraniceRezervace([{ rezervace: '1', vytvoreno: null }])).toBeNull();
   });
 });

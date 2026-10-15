@@ -38,6 +38,7 @@ const VSECHNA: RucniPole[] = [
   'priplatekRucni',
   'zaplaceno',
   'poplatekVybral',
+  'poplatek',
   'accessPin',
 ];
 
@@ -150,6 +151,8 @@ export function prevzitNavrh(rec: RezervaceRecord, pole: RucniPole): RezervaceRe
     patch.zaplaceno = n.hodnota || null;
   } else if (pole === 'poplatekVybral') {
     patch.poplatekVybral = n.hodnota === 'ja' || n.hodnota === 'nikol' ? n.hodnota : null;
+  } else if (pole === 'poplatek') {
+    patch.poplatek = n.hodnota === 'ano' || n.hodnota === 'ne' ? n.hodnota : 'neznamo';
   } else if (pole === 'telefon') {
     patch.telefon = n.hodnota;
   } else if (pole === 'telefonRezervace') {
