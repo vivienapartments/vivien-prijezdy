@@ -914,6 +914,34 @@
   margin-top: 2.5rem;
 }
 
+.ph-odkazy-schranka {
+  margin-top: 1.6rem;
+}
+
+.ph-odkazy-schranka p {
+  margin: 0.4rem 0;
+}
+
+.ph-odkazy-tabulka {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 0.6rem;
+}
+
+.ph-odkazy-tabulka table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.ph-odkazy-tabulka th,
+.ph-odkazy-tabulka td {
+  text-align: left;
+  padding: 0.35rem 0.45rem;
+  border-bottom: 1px solid rgba(245, 239, 227, 0.12);
+  vertical-align: top;
+}
+
 .ph-kontrola-beh {
   margin: 0.8rem 0 1.2rem;
   padding: 0.8rem 1rem;

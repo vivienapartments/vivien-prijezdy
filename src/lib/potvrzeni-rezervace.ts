@@ -67,21 +67,114 @@ function dekodujHref(raw: string): string {
     .trim();
 }
 
-/** Skutečná adresa odkazu z HTML. Viditelný text odkazu se neukládá. */
-export function odkazCheckinuZVyzvy(html: string, text = ''): string | null {
-  const zdroj = html || text;
-  const kotvy: { href: string; text: string }[] = [];
+function cistyOdkaz(raw: string): string {
+  return dekodujHref(raw).replace(/[),.;]+$/, '').trim();
+}
+
+function hostOdkazu(href: string): string {
+  try {
+    return new URL(href).hostname.toLowerCase().replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+
+/** Web, obrázek a logo se jako odkaz na check-in neberou. */
+function beremeOdkaz(href: string, napis = ''): boolean {
+  if (!/^https:\/\//i.test(href)) return false;
+  const host = hostOdkazu(href);
+  if (!host) return false;
+  if (host === 'vivienapartments.cz' || host.endsWith('.vivienapartments.cz')) return false;
+  if (/\.(png|jpe?g|gif|webp|svg|ico)(\?|$)/i.test(href)) return false;
+  if (/\/logo/i.test(href) || /\blogo\b/i.test(napis)) return false;
+  return true;
+}
+
+type Kotva = { href: string; text: string };
+
+function kotvyZHtml(zdroj: string): Kotva[] {
+  const kotvy: Kotva[] = [];
   const re = /<a\b[^>]*\bhref\s*=\s*(?:"([^"]+)"|'([^']+)')[^>]*>([\s\S]*?)<\/a>/gi;
   let m: RegExpExecArray | null;
   while ((m = re.exec(zdroj))) {
-    const href = dekodujHref(m[1] || m[2] || '').replace(/[),.;]+$/, '');
+    const href = cistyOdkaz(m[1] || m[2] || '');
     const napis = m[3].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    if (/^https:\/\//i.test(href)) kotvy.push({ href, text: napis });
+    if (href) kotvy.push({ href, text: napis });
   }
-  const podleNapisu = kotvy.find((k) => /online\s*check-?\s*in/i.test(k.text) || /#\s*\d{4,}/.test(k.text));
+  return kotvy;
+}
+
+function volneOdkazy(zdroj: string): string[] {
+  const bezTagu = zdroj.replace(/<[^>]+>/g, ' ');
+  const out: string[] = [];
+  const re = /https:\/\/[^\s<>"']+/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(bezTagu))) {
+    const href = cistyOdkaz(m[0]);
+    if (href) out.push(href);
+  }
+  return out;
+}
+
+/**
+ * Věta, za kterou Better Hotel dává odkaz. Čeština je z ostré výzvy.
+ * Anglická je předmět výzvy, když se objeví v těle, a věta se stejným smyslem.
+ */
+const VETY_ODKAZU = [
+  /odkaz pro vypln[eě]n[ií]\s+najdete zde/i,
+  /your online check-in\s*[-–—]\s*required to receive access/i,
+  /you(?:'ll| will)? find the link[^.]{0,80}?here/i,
+  /the link[^.]{0,80}?can be found here/i,
+];
+
+function textSAdresami(zdroj: string): string {
+  return zdroj
+    .replace(/<a\b[^>]*\bhref\s*=\s*(?:"([^"]+)"|'([^']+)')[^>]*>/gi, (_, a: string, b: string) => ` ${cistyOdkaz(a || b || '')} `)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ');
+}
+
+function odkazZaVetou(zdroj: string): string | null {
+  const text = textSAdresami(zdroj);
+  let od = -1;
+  for (const veta of VETY_ODKAZU) {
+    const m = veta.exec(text);
+    if (m && (od < 0 || m.index < od)) od = m.index + m[0].length;
+  }
+  if (od < 0) return null;
+  const re = /https:\/\/[^\s<>"']+/gi;
+  re.lastIndex = od;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    if (m.index > od + 500) return null;
+    const href = cistyOdkaz(m[0]);
+    if (beremeOdkaz(href)) return href;
+  }
+  return null;
+}
+
+function jeMev(href: string): boolean {
+  const host = hostOdkazu(href);
+  return host === 'mev.im' || host.endsWith('.mev.im');
+}
+
+/** Skutečná adresa odkazu. Viditelný text odkazu se neukládá. */
+export function odkazCheckinuZVyzvy(html: string, text = ''): string | null {
+  const zdroj = `${html}\n${text}`;
+  const kotvy = kotvyZHtml(html || text);
+  const podleNapisu = kotvy.find(
+    (k) => beremeOdkaz(k.href, k.text) && (/online\s*check-?\s*in/i.test(k.text) || /#\s*\d{4,}/.test(k.text)),
+  );
   if (podleNapisu) return podleNapisu.href;
-  const podleAdresy = kotvy.find((k) => /check-?in|onlinecheck/i.test(k.href));
-  return podleAdresy?.href || null;
+
+  const vsechny = [...kotvy.map((k) => k.href), ...volneOdkazy(zdroj)];
+  const mev = vsechny.find((href) => beremeOdkaz(href) && jeMev(href));
+  if (mev) return mev;
+
+  const podleAdresy = vsechny.find((href) => beremeOdkaz(href) && /check-?in|onlinecheck/i.test(href));
+  if (podleAdresy) return podleAdresy;
+
+  return odkazZaVetou(zdroj);
 }
 
 export function cisloZeSubjectu(subject: string): string | null {

@@ -1311,6 +1311,7 @@ export function PrehledClient({
         }}
       />
 
+      {ukazka ? null : <OdkazyZeSchranky />}
       <Upozorneni />
     </main>
   );
@@ -1372,6 +1373,108 @@ function PoleSUlozenim({
       {stav === 'ok' ? <span className="ph-ulozeno">Uloženo ✓</span> : null}
       {stav === 'chyba' ? <span className="ph-neulozeno">Neuloženo, zkuste znovu</span> : null}
     </label>
+  );
+}
+
+type RadekOdkazu = {
+  rezervace: string;
+  host: string;
+  nalezen: string;
+  naKarte: string;
+  stane: string;
+};
+
+function OdkazyZeSchranky() {
+  const [radky, setRadky] = useState<RadekOdkazu[] | null>(null);
+  const [cekam, setCekam] = useState('');
+  const [hlaska, setHlaska] = useState('');
+  const [potvrdit, setPotvrdit] = useState(false);
+
+  async function nacti(akce: 'ukazat' | 'doplnit') {
+    setCekam(akce);
+    setHlaska('');
+    const res = await fetch('/api/prehled/checkin-odkazy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ akce }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      radky?: RadekOdkazu[];
+      doplneno?: { rezervace: string; host: string }[];
+    } | null;
+    setCekam('');
+    if (!res.ok || !json?.ok || !json.radky) {
+      setHlaska(json?.error || 'Schránku se nepodařilo přečíst.');
+      return;
+    }
+    setRadky(json.radky);
+    setPotvrdit(false);
+    if (akce === 'doplnit') {
+      const kdo = (json.doplneno || []).map((r) => `${r.rezervace} ${r.host}`).join(', ');
+      setHlaska(kdo ? `Doplněno u ${json.doplneno?.length}: ${kdo}.` : 'Doplněno nikde. Odkaz už na kartách je.');
+    }
+  }
+
+  const jdeDoplnit = Boolean(radky?.some((r) => r.stane === 'doplní se'));
+
+  return (
+    <section className="ph-odkazy-schranka">
+      <p>Odkazy na check-in ze schránky</p>
+      <button type="button" className="ph-ulozit" disabled={cekam !== ''} onClick={() => void nacti('ukazat')}>
+        {cekam === 'ukazat' ? 'Čtu schránku…' : 'Ukázat'}
+      </button>
+      {hlaska ? <p>{hlaska}</p> : null}
+      {radky ? (
+        <div className="ph-odkazy-tabulka">
+          <table>
+            <thead>
+              <tr>
+                <th>Rezervace</th>
+                <th>Host</th>
+                <th>Odkaz nalezen</th>
+                <th>Na kartě už je</th>
+                <th>Co se stane</th>
+              </tr>
+            </thead>
+            <tbody>
+              {radky.length ? (
+                radky.map((r) => (
+                  <tr key={r.rezervace}>
+                    <td>{r.rezervace}</td>
+                    <td>{r.host}</td>
+                    <td>{r.nalezen}</td>
+                    <td>{r.naKarte}</td>
+                    <td>{r.stane}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5}>Za 30 dní tu žádná výzva k check-inu není.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+      {jdeDoplnit && !potvrdit ? (
+        <button type="button" className="ph-ulozit" disabled={cekam !== ''} onClick={() => setPotvrdit(true)}>
+          Doplnit
+        </button>
+      ) : null}
+      {potvrdit ? (
+        <div className="ph-predano-dotaz">
+          <p>Doplnit odkaz jen tam, kde na kartě žádný není?</p>
+          <button type="button" disabled={cekam !== ''} onClick={() => void nacti('doplnit')}>
+            {cekam === 'doplnit' ? 'Doplňuji…' : 'Ano, doplnit'}
+          </button>
+          <button type="button" onClick={() => setPotvrdit(false)}>
+            Zrušit
+          </button>
+        </div>
+      ) : null}
+    </section>
   );
 }
 

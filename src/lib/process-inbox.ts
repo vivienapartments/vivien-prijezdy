@@ -4,7 +4,7 @@ import { parseBounce, stejneMessageId } from './bounce';
 import { duvod, jeBlokujici, jeVyhrada, problemEmailu, type Duvod } from './chyby';
 import { nightsBetween } from './dates';
 import { jazykZPredvolby, normalizujTelefon } from './telefon';
-import { jeMailMajitele, verifyEmailOrigin } from './email-origin';
+import { hlavickaMaAdresu, jeMailMajitele, verifyEmailOrigin } from './email-origin';
 import { fetchRecentInboxMails, type InboxMail } from './inbox-mail';
 import { poplatekZData } from './poplatek';
 import {
@@ -211,15 +211,24 @@ function duvodyMailu(ins: MailInspection): Duvod[] {
   return [...ins.duvody];
 }
 
+/** Odesílatel nebo příjemce je info@. Velká písmena v adrese nevadí. */
+function jeOdInfo(mail: InboxMail): boolean {
+  const majitel = process.env.MAJITEL_PREPOSILA_Z?.trim() || '';
+  return jeMailMajitele(mail.from, majitel) || hlavickaMaAdresu(mail.to || '', majitel);
+}
+
 /** Potvrzení nebo výzva z info@, kterou je ještě potřeba založit nebo opravit. Hostovi se nic neposílá. */
 async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<boolean> {
-  const odMajitele = jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '');
+  const odOdesilatele = jeMailMajitele(mail.from, process.env.MAJITEL_PREPOSILA_Z?.trim() || '');
   const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
   const potvrzeni = jePotvrzeniPredmet(mail.subject);
   const vyzva = jeVyzvaCheckinu(mail.subject) && !/VIVIEN-DATA/i.test(telo);
   const odHotel = vyzva && jeVyzvaHotel(mail);
-  if (!odMajitele && !odHotel) return false;
-  if (!potvrzeni && !vyzva) return false;
+  if (vyzva) {
+    if (!jeOdInfo(mail) && !odHotel) return false;
+  } else if (!potvrzeni || !odOdesilatele) {
+    return false;
+  }
   const id = vyzva
     ? cisloZVyzvy(mail.subject, mail.html, mail.text)
     : cisloZeSubjectu(mail.subject);
@@ -227,7 +236,7 @@ async function potvrzeniBezRadku(mail: InboxMail, store: ProcessStore): Promise<
   const rec = await store.getRezervace(id);
   if (!rec) return true;
   if (!potvrzeni) return !rec.checkinUrl && Boolean(odkazCheckinuZVyzvy(mail.html, mail.text));
-  if (!odMajitele) return false;
+  if (!odOdesilatele) return false;
   if (!rec.apartman || !rec.prijezd || !rec.odjezd || !rec.jmeno) return true;
   return jeSpatneJmenoPotvrzeni(rec.jmeno, mail.subject);
 }
@@ -290,7 +299,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
   }
 
   const telo = `${mail.subject}\n${mail.text}\n${mail.html}`;
-  if (jeVyzvaCheckinu(mail.subject) && odMajitele && !/VIVIEN-DATA/i.test(telo)) {
+  if (jeVyzvaCheckinu(mail.subject) && jeOdInfo(mail) && !/VIVIEN-DATA/i.test(telo)) {
     const id = cisloZVyzvy(mail.subject, mail.html, mail.text);
     const checkinUrl = odkazCheckinuZVyzvy(mail.html, mail.text);
     return zpracujOdMajitele(

@@ -2,6 +2,8 @@ export type InboxMail = {
   uid: number;
   messageId: string;
   from: string;
+  /** Příjemce a kopie. Porovnání adres je bez ohledu na velká písmena. */
+  to: string;
   subject: string;
   date: Date | null;
   authenticationResults: string | null;
@@ -102,10 +104,18 @@ export async function fetchRecentInboxMails(opts: {
           ? `${msg.envelope.from[0].name ? `${msg.envelope.from[0].name} ` : ''}<${msg.envelope.from[0].address || ''}>`
           : '');
 
+      const schranka = (hodnota: { text?: string } | { text?: string }[] | undefined): string => {
+        if (!hodnota) return '';
+        if (Array.isArray(hodnota)) return hodnota.map((v) => v.text || '').filter(Boolean).join(', ');
+        return hodnota.text || '';
+      };
+      const to = [schranka(parsed.to), schranka(parsed.cc)].filter(Boolean).join(', ');
+
       out.push({
         uid: msg.uid,
         messageId,
         from,
+        to,
         subject,
         date: asDate(parsed.date) || asDate(msg.envelope?.date),
         authenticationResults,

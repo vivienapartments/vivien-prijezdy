@@ -15,11 +15,29 @@ function extractEmail(from: string): string {
   return (m ? m[1] : from).trim().toLowerCase();
 }
 
+/** Všechny adresy z hlavičky, malými písmeny. */
+export function adresyZHlavicky(hlavicka: string): string[] {
+  const nalezene = new Set<string>();
+  const re = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(hlavicka))) nalezene.add(m[0].toLowerCase());
+  if (!nalezene.size) {
+    const jedna = extractEmail(hlavicka);
+    if (jedna.includes('@')) nalezene.add(jedna);
+  }
+  return [...nalezene];
+}
+
+/** Odesílatel nebo příjemce sedí s adresou. Velká a malá písmena nehrají roli. */
+export function hlavickaMaAdresu(hlavicka: string, hledana: string): boolean {
+  const cil = extractEmail(hledana);
+  if (!cil || !cil.includes('@')) return false;
+  return adresyZHlavicky(hlavicka).includes(cil);
+}
+
 /** Jen shoda odesílatele s MAJITEL_PREPOSILA_Z. Bez SPF a DKIM. */
 export function jeMailMajitele(from: string, majitelPreposilaZ: string): boolean {
-  const majitel = extractEmail(majitelPreposilaZ);
-  if (!majitel || !majitel.includes('@')) return false;
-  return extractEmail(from) === majitel;
+  return hlavickaMaAdresu(from, majitelPreposilaZ);
 }
 
 function domainOf(email: string): string {

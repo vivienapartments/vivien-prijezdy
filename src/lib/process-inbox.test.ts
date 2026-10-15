@@ -26,6 +26,7 @@ function mail(partial: Partial<InboxMail> & Pick<InboxMail, 'messageId' | 'from'
     date: new Date(),
     authenticationResults: null,
     html: '',
+    to: '',
     ...partial,
   };
 }
@@ -874,6 +875,58 @@ Original-Message-ID: <x>
     expect((await store.getRezervace('120260802'))?.checkinUrl).toBe('https://checkin.example.com/formular/120260802');
     expect((await store.getRezervace('120260802'))?.stav).toBe('odeslano');
     expect(sendGuestEmail).not.toHaveBeenCalled();
+  });
+
+  it('krátký odkaz mev.im se uloží i od odesílatele velkými písmeny a nic se nepošle', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const { odkazCheckinuZVyzvy } = await import('./potvrzeni-rezervace');
+    const html = [
+      '<a href="https://vivienapartments.cz/logo.png">logo</a>',
+      '<p>Odkaz pro vyplnění najdete zde:</p>',
+      '<a href="https://mev.im/SVcal">https://mev.im/SVcal</a>',
+    ].join('');
+    expect(odkazCheckinuZVyzvy(html)).toBe('https://mev.im/SVcal');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'mev-velka@test',
+        from: 'VIVIEN <INFO@VIVIENAPARTMENTS.CZ>',
+        to: 'INFO@VIVIENAPARTMENTS.CZ',
+        subject:
+          'Váš online check-in - nutnost vyplnění pro přidělení přístupu - Rezervace 120260493, Vivien Apartmens Character and Atmosphere',
+        text: 'Odkaz pro vyplnění najdete zde: https://mev.im/SVcal',
+        html,
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect((await store.getRezervace('120260493'))?.checkinUrl).toBe('https://mev.im/SVcal');
+  });
+
+  it('výzva na příjemce velkými písmeny doplní odkaz i po hotovém check-inu', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const rec = prazdnaRezervace('120260494', '2026-10-15T08:00:00.000Z');
+    rec.stav = 'odeslano';
+    rec.jmeno = 'Eva Zimanová';
+    await store.setRezervace(rec.rezervace, rec);
+    const item = await processOneMail(
+      mail({
+        messageId: 'mev-po@test',
+        from: 'Scheduler <noreply@example.com>',
+        to: 'INFO@VIVIENAPARTMENTS.CZ',
+        subject: 'Your online check-in – required to receive access - Reservation 120260494',
+        html: '<p>You will find the link here:</p><a href="https://mev.im/En">https://mev.im/En</a>',
+      }),
+      store,
+    );
+    expect(item.status).toBe('bez_checkinu');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const po = await store.getRezervace('120260494');
+    expect(po?.checkinUrl).toBe('https://mev.im/En');
+    expect(po?.stav).toBe('odeslano');
+    expect(po?.jmeno).toBe('Eva Zimanová');
   });
 
   it('přeposlaný check-in z info@ se Seznamem neprojde a průvodce neodejde', async () => {
