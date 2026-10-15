@@ -1,4 +1,5 @@
 import {
+  duvodOdpovedi,
   jeVolna,
   konecPrikaz,
   konecZOdjezdu,
@@ -9,13 +10,17 @@ import {
   smsOdkaz,
   snimekSlotu,
   telefonNa00,
+  textKonce,
+  textNahledu,
   uplatniSnimek,
   vyberPozici,
   vychoziBrana,
   type BranaDokument,
   type BranaKtery,
   type BranaSlot,
+  type NahledBrany,
 } from './brana';
+import { textTelefonu } from './telefon';
 import { telefonProBranu } from './vstup-pruvodce';
 import type { ProcessStore, RezervaceRecord } from './store';
 
@@ -64,12 +69,24 @@ async function ulozSloty(store: ProcessStore, sloty: BranaSlot[]): Promise<void>
   await store.setBrana({ sloty, potvrzeno: doc.potvrzeno });
 }
 
-export async function otevriSmsBrany(
+type Priprava = {
+  rec: RezervaceRecord;
+  sloty: BranaSlot[];
+  pozice: number;
+  ktery: BranaKtery;
+  tel: string;
+  telefon00: string;
+  konecIso: string;
+  konec: string;
+  puvodni: BranaSlot;
+  hlavni: BranaSlot | null;
+  druhy: boolean;
+};
+
+async function priprav(
   store: ProcessStore,
-  opts: { rezervace: string; ios: boolean; druhe?: string | null; now?: Date },
-): Promise<BranaVysledek> {
-  const nastaveni = nastaveniBrany();
-  if (!nastaveni) return { ok: false, error: 'Doplňte na Vercelu BRANA_HESLO a BRANA_CISLO.' };
+  opts: { rezervace: string; druhe?: string | null; now?: Date },
+): Promise<{ ok: true; data: Priprava } | { ok: false; error: string }> {
   const now = opts.now || new Date();
   const doc = nactiDokument(await store.getBrana());
   if (!doc.potvrzeno) return { ok: false, error: 'Nejdřív potvrďte, že stav brány souhlasí.' };
@@ -105,32 +122,136 @@ export async function otevriSmsBrany(
 
   const obsazeno = poziceSCislem(sloty, tel.ulozeny, pozice, now);
   if (obsazeno) return { ok: false, error: `Tohle číslo už je na pozici ${obsazeno}.` };
-
-  const text = slozPrikaz(nastaveni.heslo, pozice, telefon00, konec);
-  if (!text) return { ok: false, error: 'Zprávu se nepodařilo složit.' };
-
   const puvodni = sloty.find((s) => s.pozice === pozice) || prazdnySlot(pozice);
-  const predchozi = puvodni.stav === 'ceka' && puvodni.predchozi ? puvodni.predchozi : snimekSlotu(puvodni);
+  if (!jeVolna(puvodni, now) && puvodni.rezervace !== rec.rezervace) {
+    return { ok: false, error: 'Tahle pozice ještě platí.' };
+  }
+  return {
+    ok: true,
+    data: {
+      rec,
+      sloty,
+      pozice,
+      ktery,
+      tel: tel.ulozeny,
+      telefon00,
+      konecIso,
+      konec,
+      puvodni,
+      hlavni,
+      druhy,
+    },
+  };
+}
+
+function nahledZ(data: Priprava, now: Date): NahledBrany {
+  const vyprsela = Boolean(data.puvodni.telefon && jeVolna(data.puvodni, now));
+  return {
+    pozice: data.pozice,
+    telefon: textTelefonu(data.tel),
+    konec: textKonce(data.konecIso),
+    staryTelefon: vyprsela && data.puvodni.telefon ? textTelefonu(data.puvodni.telefon) : null,
+    staryKonec: vyprsela ? textKonce(data.puvodni.konec) : null,
+    druh: 'zapis',
+  };
+}
+
+export async function nahledBrany(
+  store: ProcessStore,
+  opts: { rezervace: string; druhe?: string | null; now?: Date },
+): Promise<{ ok: true; nahled: NahledBrany; veta: string } | { ok: false; error: string }> {
+  const pripraveno = await priprav(store, opts);
+  if (!pripraveno.ok) return pripraveno;
+  const nahled = nahledZ(pripraveno.data, opts.now || new Date());
+  return { ok: true, nahled, veta: textNahledu(nahled) };
+}
+
+function zapisCekani(data: Priprava, now: Date, konecIso = data.konecIso): BranaSlot[] {
+  const predchozi = data.puvodni.stav === 'ceka' && data.puvodni.predchozi ? data.puvodni.predchozi : snimekSlotu(data.puvodni);
   const slot: BranaSlot = {
-    ...puvodni,
-    telefon: tel.ulozeny,
+    ...data.puvodni,
+    telefon: data.tel,
     konec: konecIso,
     stav: 'ceka',
-    rezervace: rec.rezervace,
+    rezervace: data.rec.rezervace,
     rucni: false,
-    ktery,
+    ktery: data.ktery,
     cekaOd: now.toISOString(),
     predchozi,
   };
-  const dalsi = nahrad(sloty, slot);
+  return nahrad(data.sloty, slot);
+}
+
+export async function otevriSmsBrany(
+  store: ProcessStore,
+  opts: { rezervace: string; ios: boolean; druhe?: string | null; now?: Date },
+): Promise<BranaVysledek> {
+  const nastaveni = nastaveniBrany();
+  if (!nastaveni) return { ok: false, error: 'Doplňte na Vercelu BRANA_HESLO a BRANA_CISLO.' };
+  const now = opts.now || new Date();
+  const pripraveno = await priprav(store, opts);
+  if (!pripraveno.ok) return pripraveno;
+  const data = pripraveno.data;
+  const text = slozPrikaz(nastaveni.heslo, data.pozice, data.telefon00, data.konec);
+  if (!text) return { ok: false, error: 'Zprávu se nepodařilo složit.' };
+  const dalsi = zapisCekani(data, now);
   await ulozSloty(store, dalsi);
-  const veta = druhy
-    ? `Brána: druhé číslo čeká na potvrzení, pozice ${pozice}`
-    : hlavni
-      ? `Brána: úprava čeká na potvrzení, pozice ${pozice}`
-      : `Brána: čeká na potvrzení, pozice ${pozice}`;
-  await store.setRezervace(rec.rezervace, poznamenej(rec, veta));
-  return { ok: true, pozice, odkaz: smsOdkaz(nastaveni.cislo, text, opts.ios), text, sloty: dalsi };
+  const veta = data.druhy
+    ? `Brána: druhé číslo čeká na potvrzení, pozice ${data.pozice}`
+    : data.hlavni
+      ? `Brána: úprava čeká na potvrzení, pozice ${data.pozice}`
+      : `Brána: čeká na potvrzení, pozice ${data.pozice}`;
+  await store.setRezervace(data.rec.rezervace, poznamenej(data.rec, veta));
+  return { ok: true, pozice: data.pozice, odkaz: smsOdkaz(nastaveni.cislo, text, opts.ios), text, sloty: dalsi };
+}
+
+export async function zneplatniBranu(
+  store: ProcessStore,
+  opts: { rezervace: string; pozice: number; ios: boolean; now?: Date },
+): Promise<BranaVysledek> {
+  const nastaveni = nastaveniBrany();
+  if (!nastaveni) return { ok: false, error: 'Doplňte na Vercelu BRANA_HESLO a BRANA_CISLO.' };
+  const now = opts.now || new Date();
+  const doc = nactiDokument(await store.getBrana());
+  if (!doc.potvrzeno) return { ok: false, error: 'Nejdřív potvrďte, že stav brány souhlasí.' };
+  const rec = await store.getRezervace(opts.rezervace);
+  if (!rec) return { ok: false, error: 'Rezervace v přehledu není.' };
+  const slot = doc.sloty.find((s) => s.pozice === opts.pozice && s.rezervace === rec.rezervace && s.stav === 'plati');
+  const telefon00 = telefonNa00(slot?.telefon);
+  const konec = konecPrikaz(now.toISOString());
+  if (!slot || !telefon00 || !konec) return { ok: false, error: 'Tuhle pozici teď zneplatnit nejde.' };
+  const text = slozPrikaz(nastaveni.heslo, slot.pozice, telefon00, konec);
+  if (!text) return { ok: false, error: 'Zprávu se nepodařilo složit.' };
+  const ceka: BranaSlot = {
+    ...slot,
+    konec: now.toISOString(),
+    stav: 'ceka',
+    cekaOd: now.toISOString(),
+    predchozi: snimekSlotu(slot),
+  };
+  const dalsi = nahrad(doc.sloty, ceka);
+  await ulozSloty(store, dalsi);
+  await store.setRezervace(rec.rezervace, poznamenej(rec, `Brána: zneplatnění čeká na potvrzení, pozice ${slot.pozice}`));
+  return { ok: true, pozice: slot.pozice, odkaz: smsOdkaz(nastaveni.cislo, text, opts.ios), text, sloty: dalsi };
+}
+
+export async function nahledZneplatneni(
+  store: ProcessStore,
+  opts: { rezervace: string; pozice: number; now?: Date },
+): Promise<{ ok: true; nahled: NahledBrany; veta: string } | { ok: false; error: string }> {
+  const now = opts.now || new Date();
+  const doc = nactiDokument(await store.getBrana());
+  const slot = doc.sloty.find((s) => s.pozice === opts.pozice && s.rezervace === opts.rezervace && s.stav === 'plati');
+  if (!slot) return { ok: false, error: 'Tuhle pozici teď zneplatnit nejde.' };
+  const nahled: NahledBrany = {
+    pozice: slot.pozice,
+    telefon: textTelefonu(slot.telefon || ''),
+    konec: textKonce(now.toISOString()),
+    staryTelefon: null,
+    staryKonec: null,
+    druh: 'zneplatnit',
+  };
+  return { ok: true, nahled, veta: textNahledu(nahled) };
 }
 
 export async function potvrdBranu(
@@ -146,9 +267,31 @@ export async function potvrdBranu(
   const hotovo: BranaSlot = { ...slot, stav: 'plati', cekaOd: null, predchozi: null };
   const dalsi = nahrad(sloty, hotovo);
   await ulozSloty(store, dalsi);
-  const patch = slot.ktery === 'druhy' ? {} : { branaRegistrovano: new Date().toISOString() };
-  await store.setRezervace(rezervace, poznamenej(rec, `Brána potvrdila, pozice ${pozice}`, patch));
+  const konecCas = slot.konec ? new Date(slot.konec).getTime() : Number.NaN;
+  const zneplatneni = Number.isFinite(konecCas) && konecCas <= Date.now();
+  const patch =
+    slot.ktery === 'druhy' ? {} : { branaRegistrovano: zneplatneni ? null : new Date().toISOString() };
+  const veta = zneplatneni ? `Brána: pozice ${pozice} zneplatněna` : `Brána potvrdila, pozice ${pozice}`;
+  await store.setRezervace(rezervace, poznamenej(rec, veta, patch));
   return { ok: true, sloty: dalsi };
+}
+
+export async function potvrdOdpovedi(
+  store: ProcessStore,
+  rezervace: string,
+  pozice: number,
+  odpoved: string,
+): Promise<{ ok: true; sloty: BranaSlot[] } | { ok: false; error: string }> {
+  const sloty = nactiDokument(await store.getBrana()).sloty;
+  const slot = sloty.find((s) => s.pozice === pozice && s.rezervace === rezervace && s.stav === 'ceka');
+  if (!slot) return { ok: false, error: 'Tahle pozice nečeká na potvrzení.' };
+  const duvod = duvodOdpovedi(odpoved, slot);
+  if (duvod) {
+    const rec = await store.getRezervace(rezervace);
+    if (rec) await store.setRezervace(rezervace, poznamenej(rec, `Brána: odpověď nesedí, pozice ${pozice}`));
+    return { ok: false, error: duvod };
+  }
+  return potvrdBranu(store, rezervace, pozice);
 }
 
 export async function zrusParkovani(

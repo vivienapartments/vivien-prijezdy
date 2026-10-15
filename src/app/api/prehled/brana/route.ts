@@ -1,5 +1,16 @@
 import { NextResponse } from 'next/server';
-import { otevriSmsBrany, potvrdBranu, potvrdStavBrany, ulozRucniBranu, zrusParkovani, type RucniVstup } from '@/lib/brana-akce';
+import {
+  nahledBrany,
+  nahledZneplatneni,
+  otevriSmsBrany,
+  potvrdBranu,
+  potvrdOdpovedi,
+  potvrdStavBrany,
+  ulozRucniBranu,
+  zneplatniBranu,
+  zrusParkovani,
+  type RucniVstup,
+} from '@/lib/brana-akce';
 import { jeIos } from '@/lib/brana';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore } from '@/lib/store';
@@ -19,21 +30,46 @@ export async function POST(request: Request): Promise<NextResponse> {
     rezervace?: string;
     pozice?: number;
     druhe?: string;
+    odpoved?: string;
     radky?: RucniVstup[];
   } | null;
   const akce = body?.akce;
   const store = createProcessStore();
   const ios = jeIos(request.headers.get('user-agent') || '');
 
-  if (akce === 'sms') {
+  if (akce === 'nahled' || akce === 'nahled-zneplatnit') {
     const id = (body?.rezervace || '').trim();
     if (!id) return chyba(400, 'Chybí rezervace.');
-    const vysledek = await otevriSmsBrany(store, { rezervace: id, ios, druhe: body?.druhe });
+    const vysledek =
+      akce === 'nahled'
+        ? await nahledBrany(store, { rezervace: id, druhe: body?.druhe })
+        : await nahledZneplatneni(store, { rezervace: id, pozice: body?.pozice || 0 });
+    if (!vysledek.ok) return chyba(400, vysledek.error);
+    return NextResponse.json({ ok: true, nahled: vysledek.nahled, veta: vysledek.veta }, { headers: noStore });
+  }
+
+  if (akce === 'sms' || akce === 'zneplatnit') {
+    const id = (body?.rezervace || '').trim();
+    if (!id) return chyba(400, 'Chybí rezervace.');
+    const vysledek =
+      akce === 'zneplatnit'
+        ? await zneplatniBranu(store, { rezervace: id, pozice: body?.pozice || 0, ios })
+        : await otevriSmsBrany(store, { rezervace: id, ios, druhe: body?.druhe });
     if (!vysledek.ok) return chyba(400, vysledek.error);
     return NextResponse.json(
       { ok: true, pozice: vysledek.pozice, odkaz: vysledek.odkaz, text: vysledek.text, sloty: vysledek.sloty },
       { headers: noStore },
     );
+  }
+
+  if (akce === 'odpoved') {
+    const id = (body?.rezervace || '').trim();
+    const pozice = body?.pozice;
+    const odpoved = body?.odpoved || '';
+    if (!id || typeof pozice !== 'number' || !odpoved.trim()) return chyba(400, 'Chybí odpověď brány.');
+    const vysledek = await potvrdOdpovedi(store, id, pozice, odpoved);
+    if (!vysledek.ok) return chyba(400, vysledek.error);
+    return NextResponse.json({ ok: true, sloty: vysledek.sloty }, { headers: noStore });
   }
 
   if (akce === 'potvrdit' || akce === 'zrusit') {

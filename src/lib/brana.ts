@@ -1,4 +1,5 @@
 import type { AptId } from './types';
+import { textTelefonu } from './telefon';
 import { telefonProBranu } from './vstup-pruvodce';
 
 /** Konec platnosti je den odjezdu v tuto hodinu, pražský čas. */
@@ -255,6 +256,55 @@ export function jeIos(ua: string): boolean {
 }
 
 /** Odkaz otevře SMS. Mřížka je schovaná, ať se zpráva neusekne. */
+export type NahledBrany = {
+  pozice: number;
+  telefon: string;
+  konec: string;
+  staryTelefon: string | null;
+  staryKonec: string | null;
+  druh: 'zapis' | 'zneplatnit';
+};
+
+export function textNahledu(n: NahledBrany): string {
+  if (n.druh === 'zneplatnit') return `Pozice ${n.pozice}: v bráně nastavíme konec na teď, ${n.konec}.`;
+  let veta = `Pozice ${n.pozice}: zapíšeme ${n.telefon} do ${n.konec}.`;
+  if (n.staryTelefon) veta += ` Teď tam je ${n.staryTelefon} do ${n.staryKonec}.`;
+  return veta;
+}
+
+export function jmenoNaPozici(slot: BranaSlot, hoste: { rezervace: string; jmeno: string }[]): string {
+  if (!slot.rezervace) return '';
+  const host = hoste.find((h) => h.rezervace === slot.rezervace);
+  if (!host?.jmeno || host.jmeno === 'starý záznam') return slot.rezervace;
+  return host.jmeno;
+}
+
+export function telefonRadku(slot: BranaSlot): string {
+  return slot.telefon ? textTelefonu(slot.telefon) : '';
+}
+
+/** Odpověď brány. Celý text se neukládá. */
+export function prectiOdpoved(raw: string): { pozice: number; telefon00: string; konec: string } | null {
+  const text = raw.trim().replace(/\s+/g, ' ');
+  const m = text.match(/^(\d{3}):(00\d{8,15}) From:\d{2}-\d{2}-\d{2},\d{2}:\d{2} To:(\d{2})-(\d{2})-(\d{2}),(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const pozice = Number(m[1]);
+  if (pozice < BRANA_OD || pozice > BRANA_DO) return null;
+  return { pozice, telefon00: m[2], konec: `${m[3]}${m[4]}${m[5]}${m[6]}${m[7]}` };
+}
+
+/** Null, když odpověď sedí s tím, co jsme na pozici poslali. */
+export function duvodOdpovedi(raw: string, slot: BranaSlot): string | null {
+  const ctena = prectiOdpoved(raw);
+  if (!ctena) return 'Odpověď brány se nepřečetla.';
+  if (ctena.pozice !== slot.pozice) return 'Brána uložila jinou pozici.';
+  const nas = telefonNa00(slot.telefon);
+  if (!nas || ctena.telefon00 !== nas) return 'Brána uložila jiné číslo.';
+  const konec = slot.konec ? konecPrikaz(slot.konec) : null;
+  if (!konec || ctena.konec !== konec) return 'Brána uložila jiný konec.';
+  return null;
+}
+
 export function smsOdkaz(cislo: string, text: string, ios: boolean): string {
   const cil = cislo.replace(/[^\d+]/g, '');
   const body = encodeURIComponent(text);
@@ -262,6 +312,7 @@ export function smsOdkaz(cislo: string, text: string, ios: boolean): string {
 }
 
 export function jeVolna(slot: BranaSlot, now: Date): boolean {
+  if (slot.stav === 'ceka') return false;
   if (!slot.telefon && slot.stav === 'prazdna') return true;
   if (!slot.konec) return false;
   const cas = new Date(slot.konec).getTime();

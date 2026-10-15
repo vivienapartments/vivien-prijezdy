@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { apartmanPozice, denKonce, jeVolna, prazdnaBrana, stavParkovani, textKonce, type BranaSlot } from '@/lib/brana';
+import { apartmanPozice, denKonce, jeVolna, jmenoNaPozici, prazdnaBrana, stavParkovani, textKonce, type BranaSlot, type NahledBrany } from '@/lib/brana';
 import type { PrehledRadek } from '@/lib/prehled';
 import { textTelefonu } from '@/lib/telefon';
 
@@ -33,12 +33,16 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
   const [sms, setSms] = useState('');
   const [druhe, setDruhe] = useState('');
   const [dotaz, setDotaz] = useState(false);
+  const [nahled, setNahled] = useState<NahledBrany | null>(null);
+  const [nahledDruhe, setNahledDruhe] = useState<string | undefined>(undefined);
+  const [odpoved, setOdpoved] = useState('');
+  const [chybaOdpovedi, setChybaOdpovedi] = useState('');
   const stav = stavParkovani(hostZ(row), sloty, new Date());
 
-  async function posli(akce: 'sms' | 'potvrdit' | 'zrusit', extra?: { druhe?: string }) {
+  async function zavolej(akce: string, extra?: { druhe?: string; odpoved?: string }) {
     if (ukazka) {
       onHlaska('V náhledu se SMS neotevře.');
-      return;
+      return null;
     }
     onHlaska('');
     const res = await fetch('/api/prehled/brana', {
@@ -47,8 +51,9 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
       body: JSON.stringify({
         akce,
         rezervace: row.rezervace,
-        pozice: stav.pozice ?? undefined,
+        pozice: nahled?.pozice ?? stav.pozice ?? undefined,
         druhe: extra?.druhe,
+        odpoved: extra?.odpoved,
       }),
     });
     const json = (await res.json().catch(() => null)) as {
@@ -57,14 +62,36 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
       odkaz?: string;
       text?: string;
       sloty?: BranaSlot[];
+      nahled?: NahledBrany;
     } | null;
     if (!res.ok || !json?.ok) {
-      onHlaska(json?.error || 'Bránu se nepodařilo připravit.');
-      return;
+      const hlaska = json?.error || 'Bránu se nepodařilo připravit.';
+      if (akce === 'odpoved') setChybaOdpovedi(hlaska);
+      else onHlaska(hlaska);
+      return null;
     }
     if (json.sloty) onSloty(json.sloty);
-    if (akce === 'sms' && json.odkaz) {
+    return json;
+  }
+
+  async function ukazNahled(druh: 'zapis' | 'zneplatnit', extra?: { druhe?: string }) {
+    setChybaOdpovedi('');
+    if (ukazka) {
+      onHlaska('V náhledu se SMS neotevře.');
+      return;
+    }
+    const json = await zavolej(druh === 'zneplatnit' ? 'nahled-zneplatnit' : 'nahled', extra);
+    if (json?.nahled) {
+      setNahled(json.nahled);
+      setNahledDruhe(extra?.druhe);
+    }
+  }
+
+  async function otevriSms(extra?: { druhe?: string }) {
+    const json = await zavolej(nahled?.druh === 'zneplatnit' ? 'zneplatnit' : 'sms', extra);
+    if (json?.odkaz) {
       setSms(json.text || '');
+      setNahled(null);
       window.location.href = json.odkaz;
     }
   }
@@ -80,6 +107,7 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
   }
 
   const smsAkce = stav.akce === 'registrovat' || stav.akce === 'upravit';
+  const muzeZneplatnit = stav.ton === 'zelena' && stav.pozice != null && stav.akce === 'nic';
 
   return (
     <div className={`ph-parkovani ph-parkovani--${stav.ton}`}>
@@ -89,12 +117,37 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
           type="button"
           disabled={cekam || stav.neaktivni || (smsAkce && !ukazka && (!potvrzena || !pripravena))}
           onClick={() => {
-            if (stav.akce === 'potvrdit') void posli('potvrdit');
-            else void posli('sms');
+            if (stav.akce === 'potvrdit') void zavolej('potvrdit');
+            else void ukazNahled('zapis');
           }}
         >
           {stav.tlacitko}
         </button>
+      ) : null}
+      {nahled ? (
+        <div className="ph-parkovani__dotaz">
+          {nahled.druh === 'zneplatnit' ? (
+            <p>
+              Pozice {nahled.pozice}: v bráně nastavíme konec na teď, {nahled.konec}.
+            </p>
+          ) : (
+            <p>
+              Pozice {nahled.pozice}: zapíšeme <span className="ph-tel">{nahled.telefon}</span> do {nahled.konec}.
+              {nahled.staryTelefon ? (
+                <>
+                  {' '}
+                  Teď tam je <span className="ph-tel">{nahled.staryTelefon}</span> do {nahled.staryKonec}.
+                </>
+              ) : null}
+            </p>
+          )}
+          <button type="button" disabled={cekam} onClick={() => void otevriSms(nahledDruhe ? { druhe: nahledDruhe } : undefined)}>
+            Otevřít SMS
+          </button>
+          <button type="button" onClick={() => setNahled(null)}>
+            Nechat
+          </button>
+        </div>
       ) : null}
       {sms ? (
         <button type="button" onClick={() => void kopirovat()}>
@@ -111,7 +164,7 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
         dotaz ? (
           <div className="ph-parkovani__dotaz">
             Brána o tom neví, číslo v ní platí dál do {textKonce(sloty.find((s) => s.pozice === stav.pozice)?.konec || null)}.
-            <button type="button" disabled={cekam} onClick={() => void posli('zrusit').then(() => setDotaz(false))}>
+            <button type="button" disabled={cekam} onClick={() => void zavolej('zrusit').then(() => setDotaz(false))}>
               Zrušit parkování
             </button>
             <button type="button" onClick={() => setDotaz(false)}>
@@ -124,12 +177,37 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
           </button>
         )
       ) : null}
+      {stav.akce === 'potvrdit' ? (
+        <label className="ph-parkovani__druhe">
+          Vložit odpověď brány
+          <span>
+            <input value={odpoved} onChange={(e) => setOdpoved(e.target.value)} autoComplete="off" />
+            <button
+              type="button"
+              disabled={cekam || !odpoved.trim()}
+              onClick={() => {
+                void zavolej('odpoved', { odpoved }).then((json) => {
+                  if (json) setOdpoved('');
+                });
+              }}
+            >
+              Porovnat
+            </button>
+          </span>
+          {chybaOdpovedi ? <span className="ph-parkovani__chyba">{chybaOdpovedi}</span> : null}
+        </label>
+      ) : null}
+      {muzeZneplatnit ? (
+        <button type="button" disabled={cekam} onClick={() => void ukazNahled('zneplatnit')}>
+          Zneplatnit v bráně
+        </button>
+      ) : null}
       {stav.druhe ? (
         <label className="ph-parkovani__druhe">
           Druhé číslo
           <span>
             <input value={druhe} onChange={(e) => setDruhe(e.target.value)} inputMode="tel" autoComplete="off" />
-            <button type="button" disabled={cekam || !druhe.trim()} onClick={() => void posli('sms', { druhe })}>
+            <button type="button" disabled={cekam || !druhe.trim()} onClick={() => void ukazNahled('zapis', { druhe })}>
               Přidat na další pozici
             </button>
           </span>
@@ -160,12 +238,6 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
   const [dotaz, setDotaz] = useState('');
   const prazdne = sloty.every((s) => !s.telefon && s.stav === 'prazdna');
   const now = new Date();
-
-  function jmeno(id: string | null): string {
-    if (!id) return '';
-    const row = radky.find((r) => r.rezervace === id);
-    return row?.jmeno && row.jmeno !== 'starý záznam' ? row.jmeno : id;
-  }
 
   function stavRadku(slot: BranaSlot): { text: string; ton: string } {
     if (jeVolna(slot, now) && (slot.telefon || slot.konec)) return { text: 'vypršelo', ton: 'seda' };
@@ -243,7 +315,7 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
               </div>
               {slot.rezervace ? (
                 <button type="button" className="ph-brana-host" onClick={() => onHost(slot.rezervace || '')}>
-                  {jmeno(slot.rezervace)}
+                  {jmenoNaPozici(slot, radky)}
                 </button>
               ) : null}
               {slot.telefon ? <div className="ph-tel">{textTelefonu(slot.telefon)}</div> : null}

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   BRANA_ZACATEK,
+  duvodOdpovedi,
   jeVolna,
+  jmenoNaPozici,
   konecPrikaz,
   konecZOdjezdu,
   nactiBranu,
@@ -20,7 +22,7 @@ import {
   type BranaSlot,
   type HostProBranu,
 } from './brana';
-import { otevriSmsBrany, zajistiVychoziBranu } from './brana-akce';
+import { nahledBrany, otevriSmsBrany, potvrdBranu, zajistiVychoziBranu, zneplatniBranu } from './brana-akce';
 import { FileProcessStore, prazdnaRezervace } from './store';
 import fs from 'fs';
 import os from 'os';
@@ -139,7 +141,12 @@ describe('uložení čekání', () => {
     expect(vysledek.pozice).toBe(158);
     expect(vysledek.text.startsWith('1234A158#00420777111222#')).toBe(true);
     const ulozeno = nactiBranu(await store.getBrana());
-    expect(ulozeno.find((s) => s.pozice === 158)?.stav).toBe('ceka');
+    const slot158 = ulozeno.find((s) => s.pozice === 158);
+    expect(slot158?.stav).toBe('ceka');
+    expect(slot158?.rezervace).toBe('55');
+    expect(slot158?.telefon).toBe('+420777111222');
+    expect(jmenoNaPozici(slot158!, [{ rezervace: '55', jmeno: 'Lucie Horáková' }])).toBe('Lucie Horáková');
+    expect(jmenoNaPozici({ ...slot158!, rezervace: null }, [{ rezervace: '55', jmeno: 'Lucie Horáková' }])).toBe('');
     const po = await store.getRezervace('55');
     const veta = po?.historie.at(-1)?.co || '';
     expect(veta).toContain('pozice 158');
@@ -186,5 +193,54 @@ describe('uložení čekání', () => {
     const druhe = await zajistiVychoziBranu(store);
     expect(druhe.potvrzeno).toBe(TED.toISOString());
     expect(textKonce(druhe.sloty.find((s) => s.pozice === 168)?.konec || null)).toBe('16. 10. 14:00');
+  });
+
+  it('náhled řekne pozici a staré číslo, odpověď brány srovná a zneplatnění čeká na potvrzení', async () => {
+    process.env.BRANA_HESLO = '1234';
+    process.env.BRANA_CISLO = '00420000000000';
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'brana-'));
+    const store = new FileProcessStore(path.join(dir, 'store.json'));
+    const rec = {
+      ...prazdnaRezervace('55', TED.toISOString()),
+      apartman: 'V3' as const,
+      prijezd: '2026-10-18',
+      odjezd: '2026-10-20',
+      zpusobPrijezdu: 'auto' as const,
+      telefonBrana: '+420777111222',
+      jmeno: 'Lucie Horáková',
+    };
+    await store.setRezervace('55', rec);
+    const sloty = prazdnaBrana();
+    sloty[8] = slot(158, konecZOdjezdu('2026-10-14') || '');
+    await store.setBrana({ sloty, potvrzeno: TED.toISOString() });
+    const nahled = await nahledBrany(store, { rezervace: '55', now: TED });
+    expect(nahled.ok).toBe(true);
+    if (!nahled.ok) return;
+    expect(nahled.veta).toBe('Pozice 158: zapíšeme +420 777 111 222 do 20. 10. 16:00. Teď tam je +420 777 000 111 do 14. 10. 16:00.');
+    expect(nahled.veta).not.toContain('1234');
+    const sms = await otevriSmsBrany(store, { rezervace: '55', ios: false, now: TED });
+    expect(sms.ok).toBe(true);
+    if (!sms.ok) return;
+    const ceka = nactiBranu(await store.getBrana()).find((s) => s.pozice === 158)!;
+    expect(jmenoNaPozici(ceka, [{ rezervace: '55', jmeno: 'Lucie Horáková' }])).toBe('Lucie Horáková');
+    expect(duvodOdpovedi('158:00420000000000 From:99-01-01,00:00 To:26-10-20,16:00', ceka)).toBe('Brána uložila jiné číslo.');
+    expect(duvodOdpovedi('158:00420777111222 From:99-01-01,00:00 To:26-10-20,16:00', ceka)).toBeNull();
+    await potvrdBranu(store, '55', 158);
+    const pryc = await zneplatniBranu(store, { rezervace: '55', pozice: 158, ios: true, now: TED });
+    expect(pryc.ok).toBe(true);
+    if (!pryc.ok) return;
+    expect(pryc.text.endsWith('#2610151200#')).toBe(true);
+    expect(pryc.text).not.toContain('2610201600');
+    expect(pryc.odkaz.startsWith('sms:00420000000000&body=')).toBe(true);
+    const cekaKonec = nactiBranu(await store.getBrana()).find((s) => s.pozice === 158)!;
+    expect(cekaKonec.stav).toBe('ceka');
+    expect(jeVolna(cekaKonec, TED)).toBe(false);
+    expect(cekaKonec.rezervace).toBe('55');
+    await potvrdBranu(store, '55', 158);
+    const po = nactiBranu(await store.getBrana()).find((s) => s.pozice === 158)!;
+    expect(jeVolna(po, new Date(TED.getTime() + 60_000))).toBe(true);
+    const historie = (await store.getRezervace('55'))?.historie.map((h) => h.co).join(' ') || '';
+    expect(historie).not.toContain('1234');
+    expect(historie).not.toContain('777');
   });
 });
