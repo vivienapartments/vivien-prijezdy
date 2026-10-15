@@ -165,6 +165,36 @@ describe('průvodce se otevře až po údajích', () => {
     expect(pesky).not.toContain('Přijedete autem? Napište nám hned');
   });
 
+  it('ubytovaný host nevidí červený box a průvodce má otevřený', () => {
+    const rec = {
+      ...prazdnaRezervace('1', '2026-10-14T00:00:00.000Z'),
+      prijezd: '2099-01-01',
+      predano: '2026-10-15T10:00:00.000Z',
+    };
+    expect(urovenZRezervace(rec)).toBe('cele');
+    expect(urovenZRezervace({ ...rec, predano: null })).toBe('nic');
+    const text = renderToStaticMarkup(
+      createElement(Guide, {
+        apt: 'V1',
+        lang: 'cs',
+        secrets,
+        stay: { noci: 2, osob: 2 },
+        kody: kodyProHosta(true, 'V1', PIN, 'cs'),
+        vstup: {
+          token: null,
+          uroven: 'cele',
+          ubytovan: true,
+          hodnoty: { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false },
+          predvyplneny: '',
+        },
+      }),
+    );
+    expect(text).not.toContain('Bez času příjezdu se neubytujete');
+    expect(text).not.toContain('Tady budou vaše PINy.');
+    expect(text).toContain('id="pv-wifi"');
+    expect(text).toContain(PIN);
+  });
+
   it('odemknutí ukáže vše kromě kódů', () => {
     const text = html('cele', false);
     expect(text).toContain('id="pv-wifi"');

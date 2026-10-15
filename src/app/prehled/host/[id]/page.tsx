@@ -68,6 +68,7 @@ export default async function PruvodceHostaPage({ params, searchParams }: Props)
               souhlas: Boolean(rec.souhlasPravidel),
             },
             predvyplneny: '',
+            ubytovan: predano,
           }}
         />
       </div>

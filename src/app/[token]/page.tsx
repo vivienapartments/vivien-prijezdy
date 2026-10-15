@@ -60,6 +60,7 @@ export default async function TokenPage({ params }: Props) {
             souhlas: Boolean(rec?.souhlasPravidel),
           },
           predvyplneny: rec?.telefon || '',
+          ubytovan: Boolean(rec?.predano),
         }}
       />
     </>

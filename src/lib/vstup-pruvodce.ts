@@ -127,7 +127,10 @@ export function casOtevria(cas: string | null): boolean {
 }
 
 export function urovenZRezervace(rec: RezervaceRecord | null): UrovenPruvodce {
-  return urovenPruvodce(vstupZRezervace(rec));
+  const uroven = urovenPruvodce(vstupZRezervace(rec));
+  if (uroven !== 'nic') return uroven;
+  if (rec?.predano) return 'cele';
+  return 'nic';
 }
 
 const OKNO_MS = 10 * 60 * 1000;

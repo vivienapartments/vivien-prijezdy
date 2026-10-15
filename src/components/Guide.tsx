@@ -117,7 +117,17 @@ function SipkaDolu() {
   );
 }
 
-function PinyNahore({ lang, kody, hotovo }: { lang: GuideLang; kody: KodRadek[] | null; hotovo: boolean }) {
+function PinyNahore({
+  lang,
+  kody,
+  hotovo,
+  skrytVyzvu = false,
+}: {
+  lang: GuideLang;
+  kody: KodRadek[] | null;
+  hotovo: boolean;
+  skrytVyzvu?: boolean;
+}) {
   const tt = (map: Parameters<typeof t>[0]) => t(map, lang);
   if (kody && kody.length) {
     return (
@@ -146,6 +156,7 @@ function PinyNahore({ lang, kody, hotovo }: { lang: GuideLang; kody: KodRadek[] 
       </section>
     );
   }
+  if (skrytVyzvu) return null;
   return (
     <>
       <section className={`pv-piny${hotovo ? ' pv-piny--hotovo' : ''}`} lang={lang}>
@@ -189,6 +200,8 @@ export type GuideProps = {
     uroven: UrovenPruvodce;
     hodnoty: VstupHodnoty;
     predvyplneny: string;
+    /** Apartmán už je předaný. Červený box s časem se neukáže. */
+    ubytovan?: boolean;
   };
   onVstup?: (next: VstupHodnoty) => void;
   showDevBar?: boolean;
@@ -215,6 +228,15 @@ export function Guide({
   const [gardenQr, setGardenQr] = useState<string | null>(null);
   const [ziveKody, setZiveKody] = useState<KodRadek[] | null>(kody ?? null);
   const hodnoty = vstup?.hodnoty ?? lokalne ?? { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false };
+  const ubytovan = Boolean(vstup?.ubytovan);
+  const krokyHotove = pruvodceRozbalen({
+    cas: hodnoty.cas,
+    zpusob: hodnoty.zpusob,
+    telefonBrana: hodnoty.telefon || null,
+    spz: hodnoty.spz || null,
+    spzPujcene: hodnoty.pujcene,
+    souhlas: hodnoty.souhlas,
+  });
   const uroven: UrovenPruvodce = vstup
     ? vstup.uroven
     : urovenPruvodce({
@@ -490,26 +512,21 @@ export function Guide({
       ) : null}
 
       <main className="pv">
-        <PinyNahore lang={lang} kody={ziveKody} hotovo={pruvodceRozbalen({
-          cas: hodnoty.cas,
-          zpusob: hodnoty.zpusob,
-          telefonBrana: hodnoty.telefon || null,
-          spz: hodnoty.spz || null,
-          spzPujcene: hodnoty.pujcene,
-          souhlas: hodnoty.souhlas,
-        })} />
-        <VstupHosta
-          lang={lang}
-          predano={Boolean(ziveKody)}
-          token={vstup?.cteni ? null : (vstup?.token ?? null)}
-          cteni={Boolean(vstup?.cteni)}
-          hodnoty={hodnoty}
-          predvyplneny={vstup?.predvyplneny ?? ''}
-          onUlozeno={(next) => {
-            if (vstup) onVstup?.(next);
-            else setLokalne(next);
-          }}
-        />
+        <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />
+        {ubytovan ? null : (
+          <VstupHosta
+            lang={lang}
+            predano={Boolean(ziveKody)}
+            token={vstup?.cteni ? null : (vstup?.token ?? null)}
+            cteni={Boolean(vstup?.cteni)}
+            hodnoty={hodnoty}
+            predvyplneny={vstup?.predvyplneny ?? ''}
+            onUlozeno={(next) => {
+              if (vstup) onVstup?.(next);
+              else setLokalne(next);
+            }}
+          />
+        )}
 
         {kreslene.length ? (
           <ol className="pv-flow pv-flow--axis" aria-label="Kroky průvodce">
