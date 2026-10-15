@@ -38,11 +38,19 @@ function poznamenej(rec: RezervaceRecord, co: string, patch: Partial<RezervaceRe
   };
 }
 
+function cti(nazev: string): string {
+  return (process.env[nazev] || '').trim();
+}
+
 function nastaveniBrany(): { heslo: string; cislo: string } | null {
-  const heslo = process.env.BRANA_HESLO?.trim() || '';
-  const cislo = process.env.BRANA_CISLO?.trim() || '';
+  const heslo = cti('BRANA_HESLO');
+  const cislo = cti('BRANA_CISLO') || cti('BRANA_TELEFON');
   if (!heslo || !cislo || /\s/.test(heslo)) return null;
   return { heslo, cislo };
+}
+
+export function branaJePripravena(): boolean {
+  return nastaveniBrany() !== null;
 }
 
 function nahrad(sloty: BranaSlot[], slot: BranaSlot): BranaSlot[] {
@@ -187,7 +195,7 @@ export async function otevriSmsBrany(
   opts: { rezervace: string; ios: boolean; druhe?: string | null; now?: Date },
 ): Promise<BranaVysledek> {
   const nastaveni = nastaveniBrany();
-  if (!nastaveni) return { ok: false, error: 'Doplňte na Vercelu BRANA_HESLO a BRANA_CISLO.' };
+  if (!nastaveni) return { ok: false, error: 'Chybí heslo nebo číslo brány.' };
   const now = opts.now || new Date();
   const pripraveno = await priprav(store, opts);
   if (!pripraveno.ok) return pripraveno;
@@ -210,7 +218,7 @@ export async function zneplatniBranu(
   opts: { rezervace: string; pozice: number; ios: boolean; now?: Date },
 ): Promise<BranaVysledek> {
   const nastaveni = nastaveniBrany();
-  if (!nastaveni) return { ok: false, error: 'Doplňte na Vercelu BRANA_HESLO a BRANA_CISLO.' };
+  if (!nastaveni) return { ok: false, error: 'Chybí heslo nebo číslo brány.' };
   const now = opts.now || new Date();
   const doc = nactiDokument(await store.getBrana());
   if (!doc.potvrzeno) return { ok: false, error: 'Nejdřív potvrďte, že stav brány souhlasí.' };

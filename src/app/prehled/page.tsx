@@ -5,7 +5,7 @@ import { chybejiciWifi } from '@/lib/nastaveni-chyby';
 import { buildPrehledSOdkazy } from '@/lib/prehled-odkazy';
 import { ukazkoveRadky } from '@/lib/prehled-ukazka';
 import { nactiDokument, ukazkovaBrana } from '@/lib/brana';
-import { zajistiVychoziBranu } from '@/lib/brana-akce';
+import { branaJePripravena, zajistiVychoziBranu } from '@/lib/brana-akce';
 import { dnesVPraze, posunDen } from '@/lib/prehled';
 import { migracePredaniJednou } from '@/lib/predani';
 import { prehledPrihlasen } from '@/lib/prehled-session';
@@ -61,7 +61,7 @@ export default async function PrehledPage({ searchParams }: Props) {
     branaDoc = nactiDokument(await store.getBrana());
   }
   const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(store, now);
-  const branaPripravena = Boolean(process.env.BRANA_HESLO?.trim() && process.env.BRANA_CISLO?.trim());
+  const branaPripravena = branaJePripravena();
   const dnes = dnesVPraze(now);
   const userAgent = (await headers()).get('user-agent') ?? '';
   return (

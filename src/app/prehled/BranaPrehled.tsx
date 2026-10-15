@@ -158,7 +158,7 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
         <div className="ph-parkovani__poznamka">Nejdřív dole potvrďte, že stav brány souhlasí.</div>
       ) : null}
       {smsAkce && potvrzena && !pripravena && !ukazka ? (
-        <div className="ph-parkovani__poznamka">Doplňte BRANA_HESLO a BRANA_CISLO.</div>
+        <div className="ph-parkovani__poznamka">Chybí heslo nebo číslo brány.</div>
       ) : null}
       {stav.zrusit ? (
         dotaz ? (

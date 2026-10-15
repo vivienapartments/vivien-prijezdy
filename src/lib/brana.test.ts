@@ -155,6 +155,29 @@ describe('uložení čekání', () => {
     expect(nactiDokument(await store.getBrana()).potvrzeno).toBe(TED.toISOString());
   });
 
+  it('SMS jde na číslo, kterým se brána volá, když samostatné číslo není', async () => {
+    delete process.env.BRANA_CISLO;
+    process.env.BRANA_HESLO = '1234';
+    process.env.BRANA_TELEFON = '+420700000000';
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'brana-'));
+    const store = new FileProcessStore(path.join(dir, 'store.json'));
+    const rec = {
+      ...prazdnaRezervace('55', TED.toISOString()),
+      apartman: 'V3' as const,
+      prijezd: '2026-10-18',
+      odjezd: '2026-10-20',
+      zpusobPrijezdu: 'auto' as const,
+      telefonBrana: '+420777111222',
+    };
+    await store.setRezervace('55', rec);
+    await store.setBrana({ sloty: prazdnaBrana(), potvrzeno: TED.toISOString() });
+    const vysledek = await otevriSmsBrany(store, { rezervace: '55', ios: false, now: TED });
+    expect(vysledek.ok).toBe(true);
+    if (!vysledek.ok) return;
+    expect(vysledek.odkaz.startsWith('sms:+420700000000?body=')).toBe(true);
+    delete process.env.BRANA_TELEFON;
+  });
+
   it('bez potvrzení stavu zprávu nesloží a výchozí pozice 153 a 168 drží', async () => {
     process.env.BRANA_HESLO = '1234';
     process.env.BRANA_CISLO = '00420000000000';
