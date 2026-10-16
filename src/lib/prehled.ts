@@ -74,6 +74,8 @@ export type PrehledRadek = {
   uklizenoKdo: 'pravoslav' | 'nikol' | null;
   zadostPrijezd: RezervaceRecord['zadostPrijezd'];
   zadostOdjezd: RezervaceRecord['zadostOdjezd'];
+  /** Rozbitý záznam z úložiště. V seznamu je jen červená věta, karta se neskládá. */
+  nelzeNacist?: boolean;
   vytvorenoText: string;
   odkaz: string | null;
   zprava: string;
@@ -802,24 +804,56 @@ export function seradRadky(rows: PrehledRadek[], now = new Date()): PrehledRadek
   });
 }
 
+export function kartaNelzeNacist(id: string): PrehledRadek {
+  return {
+    rezervace: id || '?',
+    nelzeNacist: true,
+    jmeno: '',
+    email: '',
+    prijezd: null,
+    odjezd: null,
+    stav: 'neodeslano',
+  } as PrehledRadek;
+}
+
+/** Jedna rozbitá rezervace nesmí shodit ostatní karty. */
+export function radkyBezPadu(
+  entries: { id: string; record: RezervaceRecord; chybaNahrani?: boolean }[],
+  now: Date,
+  sloz: (record: RezervaceRecord) => PrehledRadek,
+): PrehledRadek[] {
+  const chyby: PrehledRadek[] = [];
+  const ok: PrehledRadek[] = [];
+  for (const entry of entries) {
+    const id = entry.id || entry.record?.rezervace || '?';
+    if (entry.chybaNahrani) {
+      chyby.push(kartaNelzeNacist(id));
+      continue;
+    }
+    try {
+      ok.push(sloz(entry.record));
+    } catch {
+      chyby.push(kartaNelzeNacist(id));
+    }
+  }
+  return [...chyby, ...seradRadky(ok, now)];
+}
+
 export async function buildPrehled(store: ProcessStore, now = new Date()): Promise<PrehledRadek[]> {
   const entries = await store.listRezervace();
-  const hranice = hraniceRezervace(entries.map((e) => e.record));
-  return seradRadky(
-    entries.map(({ record }) => {
-      const radek = radekZRezervace(record);
-      if (record.poplatek !== 'neznamo' || hranice == null || maRucni(record, 'poplatek')) return radek;
-      const n = Number(String(record.rezervace).replace(/\D/g, ''));
-      if (!Number.isFinite(n) || n < hranice) return radek;
-      return {
-        ...radek,
-        poplatekText: textPoplatku('ano', record.noci, record.osob),
-        poplatekZdroj: `odhad, od rezervace ${hranice}`,
-        poplatekOdhad: true,
-      };
-    }),
-    now,
-  );
+  const hranice = hraniceRezervace(entries.filter((e) => !e.chybaNahrani).map((e) => e.record));
+  return radkyBezPadu(entries, now, (record) => {
+    const radek = radekZRezervace(record);
+    if (record.poplatek !== 'neznamo' || hranice == null || maRucni(record, 'poplatek')) return radek;
+    const n = Number(String(record.rezervace).replace(/\D/g, ''));
+    if (!Number.isFinite(n) || n < hranice) return radek;
+    return {
+      ...radek,
+      poplatekText: textPoplatku('ano', record.noci, record.osob),
+      poplatekZdroj: `odhad, od rezervace ${hranice}`,
+      poplatekOdhad: true,
+    };
+  });
 }
 
 export function posunDen(ymd: string, dny: number): string {

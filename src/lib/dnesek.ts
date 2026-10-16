@@ -67,6 +67,8 @@ export type DnesekPohled = {
   odjezdy: OdjezdRadek[];
   prijezdy: PrijezdRadek[];
   nedoplatky: DluhRadek[];
+  /** Čísla rezervací, jejichž řádek se nepodařilo složit. */
+  chyby: string[];
 };
 
 function minuty(cas: string): number {
@@ -167,7 +169,25 @@ function seradPodleCasu<T>(list: T[], cas: (t: T) => string | null, apt: (t: T) 
 }
 
 export function sestavDnesek(hoste: HostDne[], dnes: string): DnesekPohled {
-  const zivi = hoste.filter((h) => h.stav !== 'zruseno');
+  const chyby: string[] = [];
+  const zivi: HostDne[] = [];
+  for (const h of hoste) {
+    try {
+      if (!h || h.stav === 'zruseno') continue;
+      void h.odjezd;
+      void h.prijezd;
+      void h.apartman;
+      zivi.push(h);
+    } catch {
+      let id = '?';
+      try {
+        id = h?.rezervace || '?';
+      } catch {
+        id = '?';
+      }
+      chyby.push(id);
+    }
+  }
   const odjezdyHoste = zivi.filter((h) => h.odjezd === dnes);
   const prijezdyHoste = zivi.filter((h) => h.prijezd === dnes);
 
@@ -257,6 +277,7 @@ export function sestavDnesek(hoste: HostDne[], dnes: string): DnesekPohled {
     nedoplatky: odjezdy
       .filter((r) => r.dluh)
       .map((r) => ({ rezervace: r.rezervace, apartman: r.apartman, jmeno: r.jmeno, text: r.dluh })),
+    chyby,
   };
 }
 

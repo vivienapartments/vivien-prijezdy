@@ -48,7 +48,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       mailu: summary.scanned,
       chyba: cistaChyba(posledni?.reason || ''),
     });
-    await poBehZpracovani(store, true);
+    await poBehZpracovani(store, true).catch(() => undefined);
     await upozorniBranu(store).catch(() => undefined);
     await upozorniPrijezd(store).catch(() => undefined);
     await upozorniOdjezdy(store).catch(() => undefined);
@@ -78,7 +78,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         chyba: cistaChyba(message) || 'čtení selhalo',
       })
       .catch(() => undefined);
-    await poBehZpracovani(store, false);
+    await poBehZpracovani(store, false).catch(() => undefined);
     await upozorniBranu(store).catch(() => undefined);
     await upozorniPrijezd(store).catch(() => undefined);
     await upozorniOdjezdy(store).catch(() => undefined);

@@ -311,6 +311,7 @@ export function PrehledClient({
     const q = hledat.trim().toLowerCase();
     const denYmd = den === 'dnes' ? dnes : den === 'zitra' ? zitra : '';
     return radky.filter((row) => {
+      if (row.nelzeNacist) return false;
       if (denYmd && row.prijezd !== denYmd) return false;
       if (jenNeotevreni && (row.otevrenoPocet !== 0 || row.stav === 'bez_checkinu')) return false;
       if (jenBezCheckinu && row.stav !== 'bez_checkinu') return false;
@@ -1382,6 +1383,13 @@ export function PrehledClient({
 
   return (
     <main className="ph">
+      {radky
+        .filter((row) => row.nelzeNacist)
+        .map((row) => (
+          <p key={row.rezervace} className="ph-chyba">
+            Kartu {row.rezervace} se nepodařilo načíst
+          </p>
+        ))}
       <header className="ph-top">
         <h1>Přehled rezervací</h1>
         {radekDne('dnes', 'Dnes přijíždí', dnesSouhrn)}

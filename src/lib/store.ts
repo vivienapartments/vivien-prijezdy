@@ -213,7 +213,7 @@ export type PushZarizeni = {
   cas: string;
 };
 
-export type RezervaceEntry = { id: string; record: RezervaceRecord };
+export type RezervaceEntry = { id: string; record: RezervaceRecord; chybaNahrani?: boolean };
 export type MessageEntry = { id: string; record: MessageRecord };
 
 type StoreData = {
@@ -710,19 +710,31 @@ export class UpstashProcessStore implements ProcessStore {
   ) {}
 
   private async cmd<T>(...args: (string | number)[]): Promise<T> {
+    // Upstash REST bere jen text. Číslo (třeba COUNT 100) vrací HTTP 400 a shodí celý přehled.
+    const prikaz = args.map((arg) => String(arg));
     const res = await fetch(this.url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(args),
+      body: JSON.stringify(prikaz),
     });
-    if (!res.ok) {
-      throw new Error(`Upstash HTTP ${res.status}`);
+    const raw = await res.text();
+    let json: { result?: T; error?: string } = {};
+    try {
+      json = JSON.parse(raw) as { result?: T; error?: string };
+    } catch {
+      json = {};
     }
-    const json = (await res.json()) as { result: T };
-    return json.result;
+    if (!res.ok || json.error) {
+      const duvod = String(json.error || raw || '')
+        .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]')
+        .replace(/\s+/g, ' ')
+        .slice(0, 160);
+      throw new Error(`Upstash HTTP ${res.status}${duvod ? `: ${duvod}` : ''}`);
+    }
+    return json.result as T;
   }
 
   private msgKey(id: string): string {
@@ -734,14 +746,26 @@ export class UpstashProcessStore implements ProcessStore {
   }
 
   private async scanKeys(match: string): Promise<string[]> {
-    const keys: string[] = [];
-    let cursor = '0';
-    do {
-      const result = await this.cmd<[string, string[]]>('SCAN', cursor, 'MATCH', match, 'COUNT', 100);
-      cursor = String(result[0]);
-      keys.push(...(result[1] || []));
-    } while (cursor !== '0');
-    return keys;
+    try {
+      const keys: string[] = [];
+      let cursor = '0';
+      do {
+        const result = await this.cmd<[string, string[]]>('SCAN', cursor, 'MATCH', match, 'COUNT', '100');
+        if (!result || !Array.isArray(result)) break;
+        cursor = String(result[0]);
+        keys.push(...(result[1] || []));
+      } while (cursor !== '0');
+      return keys;
+    } catch (err) {
+      const keys = await this.cmd<string[]>('KEYS', match).catch(() => {
+        throw err;
+      });
+      return Array.isArray(keys) ? keys : [];
+    }
+  }
+
+  private chybejiciZaznam(id: string): RezervaceEntry {
+    return { id, record: prazdnaRezervace(id, new Date(0).toISOString()), chybaNahrani: true };
   }
 
   async isMessageProcessed(messageId: string): Promise<boolean> {
@@ -779,11 +803,19 @@ export class UpstashProcessStore implements ProcessStore {
     const keys = await this.scanKeys('rez:*');
     const out: RezervaceEntry[] = [];
     for (const key of keys) {
-      const v = await this.cmd<string | null>('GET', key);
-      if (!v) continue;
-      const id = key.slice(4);
-      const record = asRezervace(id, JSON.parse(v));
-      if (record) out.push({ id, record });
+      const id = key.startsWith('rez:') ? key.slice(4) : key;
+      try {
+        const v = await this.cmd<string | null>('GET', key);
+        if (!v) continue;
+        const record = asRezervace(id, JSON.parse(v));
+        if (!record) {
+          out.push(this.chybejiciZaznam(id));
+          continue;
+        }
+        out.push({ id, record });
+      } catch {
+        out.push(this.chybejiciZaznam(id));
+      }
     }
     return out;
   }

@@ -1,5 +1,5 @@
 import { odkazNaPruvodce } from './posli-pruvodce';
-import { dnesVPraze, radekZRezervace, seradRadky, type PrehledRadek } from './prehled';
+import { dnesVPraze, radkyBezPadu, radekZRezervace, type PrehledRadek } from './prehled';
 import type { ProcessStore, RezervaceRecord } from './store';
 import { chybejiciKroky } from './vstup-pruvodce';
 import { polozkyZRezervace } from './odjezd';
@@ -45,8 +45,5 @@ export function sOdkazem(row: PrehledRadek, rec: RezervaceRecord, now = new Date
 
 export async function buildPrehledSOdkazy(store: ProcessStore, now = new Date()): Promise<PrehledRadek[]> {
   const entries = await store.listRezervace();
-  return seradRadky(
-    entries.map(({ record }) => sOdkazem(radekZRezervace(record), record, now)),
-    now,
-  );
+  return radkyBezPadu(entries, now, (record) => sOdkazem(radekZRezervace(record), record, now));
 }

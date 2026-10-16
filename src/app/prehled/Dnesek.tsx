@@ -66,16 +66,20 @@ function odkazHosta(id: string, ukazka: boolean, vPrehledu: boolean): string {
 }
 
 export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = false }: Props) {
+  const chybne = radky.filter((row) => row.nelzeNacist).map((row) => row.rezervace);
   const pohled = sestavDnesek(
-    radky.map((row) => hostZRadku(row, brana)),
+    radky.filter((row) => !row.nelzeNacist).map((row) => hostZRadku(row, brana)),
     dnes,
   );
+  const chybyKaret = vPrehledu ? pohled.chyby : [...chybne, ...pohled.chyby];
   const [misto, setMisto] = useState<Record<string, { kdy: string; kdo: KdoUklidil } | null>>({});
   const [ptam, setPtam] = useState<string | null>(null);
   const [chyba, setChyba] = useState('');
   const [nabidka, setNabidka] = useState<{ id: string; jmeno: string } | null>(null);
   const [nabidkaStav, setNabidkaStav] = useState('');
-  const maNeco = pohled.uklid.length + pohled.odjezdy.length + pohled.prijezdy.length + pohled.nedoplatky.length > 0;
+  const maNeco =
+    pohled.uklid.length + pohled.odjezdy.length + pohled.prijezdy.length + pohled.nedoplatky.length + chybyKaret.length >
+    0;
 
   function hotovo(rezervace: string, kdy: string | null, kdo: KdoUklidil | null) {
     if (Object.prototype.hasOwnProperty.call(misto, rezervace)) return misto[rezervace];
@@ -176,6 +180,11 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
         <h1>Dnešek</h1>
       )}
       <p className="ph-dnesek__den">{datum(dnes)}</p>
+      {chybyKaret.map((id) => (
+        <p key={id} className="ph-chyba">
+          Kartu {id} se nepodařilo načíst
+        </p>
+      ))}
 
       {pohled.uklid.length ? (
         <div>
