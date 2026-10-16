@@ -1,5 +1,6 @@
 import { casVPraze, hodinaPraha, minutaPraha } from './brana';
 import { PREVZETI_NEZNAMY_HODINA, PREVZETI_PO_HODINACH } from './constants';
+import type { DruhDluhu } from './odjezd';
 import type { RezervaceRecord } from './store';
 
 export type Zalozka = 'prijezdy' | 'dnes' | 'dluhy' | 'hledat';
@@ -193,6 +194,94 @@ function vzdalenost(h: HostHledani, dnes: string): number {
   const datum = h.prijezd || h.odjezd;
   if (!datum) return Number.MAX_SAFE_INTEGER;
   return Math.abs(Date.parse(datum) - Date.parse(dnes));
+}
+
+const JAK_PLATBY: Record<string, string> = {
+  hotove: 'hotově',
+  karta: 'kartou',
+  prevod: 'převodem',
+  cena: 'v ceně rezervace',
+};
+
+export type RadekPlatbyHosta = {
+  druh: DruhDluhu;
+  nazev: string;
+  kc: number;
+  zaplacena: boolean;
+  jak: string | null;
+  kdo: string | null;
+  kdy: string | null;
+  vypocet: string | null;
+};
+
+export type NahledPlateb = {
+  text: string;
+  ton: 'seda' | 'normal' | 'zelena';
+  poznamka: string | null;
+  radky: RadekPlatbyHosta[];
+};
+
+function kdyPlatby(iso: string | null): string | null {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return null;
+  return new Intl.DateTimeFormat('cs-CZ', {
+    timeZone: 'Europe/Prague',
+    day: 'numeric',
+    month: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(t));
+}
+
+/** Řádek Platby na kartě. Počítá se z položek dluhu, ne jen z poplatku z pobytu. */
+export function nahledPlateb(v: {
+  poplatek: 'ano' | 'ne' | 'neznamo';
+  noci: number | null;
+  osob: number | null;
+  polozky: { druh: DruhDluhu; kc: number; nazev: string }[];
+  platby: { druh: DruhDluhu; kc: number; jak: string; kdo: 'pravoslav' | 'nikol'; kdy: string }[];
+  zaplaceno: string | null;
+  poplatekVybral?: 'ja' | 'nikol' | null;
+}): NahledPlateb {
+  const mapa = new Map(v.platby.map((p) => [p.druh, p]));
+  const legacy = Boolean(v.zaplaceno) && v.platby.length === 0;
+  const kdoLegacy = v.poplatekVybral === 'nikol' ? 'Nikol' : v.zaplaceno ? 'Pravoslav' : null;
+  const vypocet =
+    v.poplatek === 'ano' && v.noci && v.osob && v.noci > 0 && v.osob > 0 ? `${v.osob} × ${v.noci} × 50 Kč` : null;
+  const radky = v.polozky.map((p) => {
+    const platba = mapa.get(p.druh);
+    const zaplacena = Boolean(platba) || legacy;
+    return {
+      druh: p.druh,
+      nazev: p.nazev,
+      kc: platba?.kc ?? p.kc,
+      zaplacena,
+      jak: platba ? JAK_PLATBY[platba.jak] || null : null,
+      kdo: platba ? (platba.kdo === 'nikol' ? 'Nikol' : 'Pravoslav') : legacy ? kdoLegacy : null,
+      kdy: platba ? kdyPlatby(platba.kdy) : legacy ? kdyPlatby(v.zaplaceno) : null,
+      vypocet: p.druh === 'poplatek' ? vypocet : null,
+    };
+  });
+  const suma = (xs: { kc: number }[]) => xs.reduce((s, r) => s + r.kc, 0);
+  const nezap = radky.filter((r) => !r.zaplacena);
+  const zap = radky.filter((r) => r.zaplacena);
+  let text = 'Platby: nic';
+  let ton: NahledPlateb['ton'] = 'seda';
+  if (suma(nezap) > 0) {
+    text = `Platby: ${formatKc(suma(nezap))}`;
+    ton = 'normal';
+  } else if (suma(zap) > 0) {
+    text = `Platby: zaplaceno ${formatKc(suma(zap))} ✓`;
+    ton = 'zelena';
+  }
+  const poznamka =
+    v.poplatek === 'ne'
+      ? 'poplatek z pobytu: ne (rezervace před 5. 10.)'
+      : v.poplatek === 'neznamo'
+        ? 'Poplatek neznámo'
+        : null;
+  return { text, ton, poznamka, radky };
 }
 
 export function hledejHosty(hoste: HostHledani[], dotaz: string, filtr: FiltrHledani, dnes: string, zitra: string): HostHledani[] {

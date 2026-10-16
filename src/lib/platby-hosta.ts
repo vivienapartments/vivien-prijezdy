@@ -92,3 +92,23 @@ export function vratPlatbu(rec: RezervaceRecord, druh: DruhDluhu | 'vse', now = 
 export function dluhZmizel(rec: RezervaceRecord): boolean {
   return polozkyZRezervace(rec).length === 0;
 }
+
+/**
+ * Staré zaplaceno bez seznamu platí jen pro položky, které na kartě jsou teď.
+ * Nová položka, která přibude potom, zůstane nezaplacená.
+ */
+export function prevedZaplaceno(rec: RezervaceRecord): RezervaceRecord | null {
+  if (!rec.zaplaceno || (rec.platby || []).length > 0) return null;
+  const vse = polozkyVsechny(rec);
+  if (!vse.length) return null;
+  const kdo = rec.poplatekVybral === 'nikol' ? 'nikol' : 'pravoslav';
+  const kdy = rec.zaplaceno;
+  return zapisMajitele(
+    rec,
+    'zaplaceno',
+    {
+      platby: vse.map((p) => ({ druh: p.druh, kc: p.kc, jak: 'hotove' as const, kdo, kdy })),
+    },
+    'Dřívější zaplaceno platí pro položky, které v tu chvíli byly.',
+  );
+}

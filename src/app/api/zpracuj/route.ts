@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cistaChyba } from '@/lib/cista-chyba';
 import { runInboxProcessing, vypisPotvrzeni } from '@/lib/process-inbox';
-import { createProcessStore, pocetPrikazu, prodluzKartyJednou, type ProcessStore } from '@/lib/store';
+import { createProcessStore, pocetPrikazu, prevedPlatbyJednou, prodluzKartyJednou, type ProcessStore } from '@/lib/store';
 import { upozorniBranu } from '@/lib/brana-upozorneni';
 import { upozorniDnes } from '@/lib/dnesek-upozorneni';
 import { upozorniOdjezdy } from '@/lib/odjezd-upozorneni';
@@ -49,6 +49,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (prodlouzeno != null) console.log(`Uchovani karet prodlouzeno: ${prodlouzeno}`);
   } catch {
     console.error('Uchovani karet selhalo');
+  }
+  try {
+    const prevedeno = await prevedPlatbyJednou(store);
+    if (prevedeno != null) console.log(`Platby prevedeny: ${prevedeno}`);
+  } catch {
+    console.error('Prevod plateb selhal');
   }
   try {
     const summary = await runInboxProcessing({ store });

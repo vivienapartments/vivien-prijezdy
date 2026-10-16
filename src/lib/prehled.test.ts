@@ -90,8 +90,9 @@ describe('tlačítka v přehledu', () => {
       'Dobrý den, ve vašem průvodci k příjezdu čekají vstupní PINy do domu a apartmánu. Abyste se k nim dostali, otevřete průvodce, vyberte čas a způsob příjezdu a potvrďte pravidla. Děkujeme a těšíme se na setkání.',
     );
     expect(textCheckinu('cs', 'Booking')).toBe(
-      'Dobrý den, ještě nemáte vyplněný online check-in. Bez něj vám nemůžeme poslat průvodce k příjezdu, a bez průvodce se u nás neubytujete ani nezaparkujete. Odkaz najdete ve zprávách na Booking.com. Děkujeme a těšíme se na setkání.',
+      'Dobrý den, ještě nemáte vyplněný online check-in. Hned po něm vám pošleme průvodce k příjezdu se vstupními PINy do domu a apartmánu. Bez check-inu se u nás neubytujete ani nezaparkujete. Vyplnění zabere jen chvilku.\n\nOdkaz najdete ve zprávách na Booking.com.\n\nDěkujeme a moc se na vás těšíme.',
     );
+    expect(textCheckinu('cs', 'Booking')).not.toContain('odkaz je tady:');
     expect(textCheckinu('cs', 'Airbnb')).toContain('ve zprávách na Airbnb.');
     expect(textCheckinu('cs', 'přímá')).toContain('v e-mailu s potvrzením rezervace.');
     expect(textCheckinu('cs', 'Expedia')).toContain('ve zprávách od webu, kde jste rezervovali.');
@@ -366,9 +367,10 @@ describe('tlačítka v přehledu', () => {
     expect(sOdkazem.find((z) => z.vychozi)?.text).not.toContain('https://');
     const url = 'https://checkin.example.com/formular/120260541';
     const sFormularem = zpravaCheckinu('cs', 'Booking', url);
-    expect(sFormularem).toContain('Odkaz posíláme níže.');
+    expect(sFormularem).toContain('odkaz je tady:');
+    expect(sFormularem).not.toContain('Odkaz posíláme níže.');
     expect(sFormularem).not.toContain('Booking.com');
-    expect(sFormularem).toContain(`\n\n${url}\n\nNikol a rodina VIVIEN`);
+    expect(sFormularem).toContain(`\n\n${url}\n\nDěkujeme a moc se na vás těšíme.\n\nNikol a rodina VIVIEN`);
   });
 
   it('podpis je pod odkazem a u zprávy bez odkazu hned pod textem', () => {

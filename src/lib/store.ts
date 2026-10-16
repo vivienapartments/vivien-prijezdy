@@ -5,6 +5,7 @@ import { UCHOVAT_KARTU_MESICU } from './constants';
 import type { PoplatekStav } from './poplatek';
 import type { VyjezdPolozka } from './priplatek-prijezd';
 import type { AptId, GuideLang } from './types';
+import { prevedZaplaceno } from './platby-hosta';
 
 export type MessageStatus =
   | 'sent'
@@ -1040,6 +1041,7 @@ export function pocetPrikazu(store: ProcessStore): number | null {
 }
 
 const MIGRACE_UCHOVANI = 'migrace-uchovani-24';
+const MIGRACE_PLATBY = 'migrace-platby-polozky';
 
 /**
  * Jednou po nasazení prodlouží dobu karet v Upstash. Souborové úložiště vrací null.
@@ -1054,6 +1056,28 @@ export async function prodluzKartyJednou(store: ProcessStore, now = new Date()):
     processedAt: now.toISOString(),
     status: 'skipped_no_data',
     reason: `prodlouzeno:${n}`,
+  });
+  return n;
+}
+
+/** Jednou zapíše staré zaplaceno jako položky, které na kartě v tu chvíli jsou. */
+export async function prevedPlatbyJednou(store: ProcessStore, now = new Date()): Promise<number | null> {
+  if (!(store instanceof UpstashProcessStore)) return null;
+  if (await store.isMessageProcessed(MIGRACE_PLATBY)) return null;
+  const seznam = await store.listRezervace();
+  let n = 0;
+  for (const e of seznam) {
+    if (e.chybaNahrani || !e.record) continue;
+    const dalsi = prevedZaplaceno(e.record);
+    if (!dalsi) continue;
+    await store.setRezervace(e.id, dalsi);
+    n += 1;
+  }
+  await store.markMessage({
+    messageId: MIGRACE_PLATBY,
+    processedAt: now.toISOString(),
+    status: 'skipped_no_data',
+    reason: `prevedeno:${n}`,
   });
   return n;
 }

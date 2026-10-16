@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { casVPraze } from './brana';
-import { maUpozornitPul } from './odjezd';
-import { dluhZmizel, vratPlatbu, zaplatDruhy } from './platby-hosta';
+import { maUpozornitPul, nazevDluhu, polozkyVsechny, polozkyZRezervace } from './odjezd';
+import { dluhZmizel, prevedZaplaceno, vratPlatbu, zaplatDruhy } from './platby-hosta';
 import { prazdnaRezervace, type RezervaceRecord } from './store';
 import { zapisMajitele } from './rucni-pole';
 import {
@@ -11,6 +11,7 @@ import {
   jeNove,
   jeVDnesnichOdjezdech,
   otisk,
+  nahledPlateb,
   seradNedoplatky,
   textHromadne,
   textStarychDluhu,
@@ -164,5 +165,94 @@ describe('záložky a hledání', () => {
     expect(textStarychDluhu(2, 600)).toBe('Starší nedoplatky: 2 hosté, 600 Kč');
     expect(textStarychDluhu(0, 0)).toBeNull();
     expect(textHromadne(5, 2400)).toBe('Označit 5 hostů (2 400 Kč) jako zaplacené?');
+  });
+});
+
+function kartaPlatby(patch: Partial<RezervaceRecord> = {}): RezervaceRecord {
+  return {
+    ...prazdnaRezervace('8001', '2026-09-01T08:00:00.000Z'),
+    apartman: 'V2',
+    prijezd: '2026-10-16',
+    odjezd: '2026-10-18',
+    noci: 2,
+    osob: 2,
+    poplatek: 'ne',
+    stav: 'odeslano',
+    casPrijezdu: '21:00',
+    ...patch,
+  };
+}
+
+function nahledZ(rec: RezervaceRecord) {
+  return nahledPlateb({
+    poplatek: rec.poplatek,
+    noci: rec.noci,
+    osob: rec.osob,
+    polozky: polozkyVsechny(rec).map((p) => ({ ...p, nazev: nazevDluhu(p.druh) })),
+    platby: rec.platby || [],
+    zaplaceno: rec.zaplaceno,
+    poplatekVybral: rec.poplatekVybral,
+  });
+}
+
+describe('platby i bez poplatku z pobytu', () => {
+  it('poplatek ne a příjezd ve 21:00 je 200 Kč a po zaplacení zmizí z nedoplatků', () => {
+    const rec = kartaPlatby();
+    expect(nahledZ(rec).text).toBe('Platby: 200 Kč');
+    expect(nahledZ(rec).poznamka).toBe('poplatek z pobytu: ne (rezervace před 5. 10.)');
+    expect(polozkyZRezervace(rec)).toEqual([{ druh: 'prijezd', kc: 200 }]);
+    const zap = zaplatDruhy(rec, ['vse'], 'hotove', 'pravoslav', new Date('2026-10-16T19:00:00.000Z'));
+    expect(dluhZmizel(zap)).toBe(true);
+    expect(nahledZ(zap).text).toBe('Platby: zaplaceno 200 Kč ✓');
+    expect(nahledZ(zap).ton).toBe('zelena');
+    const zpet = vratPlatbu(zap, 'prijezd');
+    expect(polozkyZRezervace(zpet)).toEqual([{ druh: 'prijezd', kc: 200 }]);
+  });
+
+  it('zaplacený poplatek nechá v nedoplatcích jen pozdní příjezd', () => {
+    const rec = kartaPlatby({ poplatek: 'ano' });
+    const jen = zaplatDruhy(rec, ['poplatek'], 'karta', 'nikol');
+    expect(polozkyZRezervace(jen).map((p) => p.druh)).toEqual(['prijezd']);
+    expect(nahledZ(jen).text).toBe('Platby: 200 Kč');
+  });
+
+  it('cesta přidaná po zaplacení zůstane jako jediný dluh', () => {
+    const zap = zaplatDruhy(kartaPlatby({ poplatek: 'ano' }), ['vse'], 'prevod', 'pravoslav');
+    const sCestou = { ...zap, vyjezdy: [{ id: 'c1', kdy: '2026-10-16T20:00:00.000Z', castka: 300 }] };
+    expect(polozkyZRezervace(sCestou).map((p) => p.druh)).toEqual(['cesta']);
+  });
+
+  it('staré zaplaceno kryje jen položky z té chvíle', () => {
+    const stare = kartaPlatby({
+      poplatek: 'ano',
+      zaplaceno: '2026-10-16T12:00:00.000Z',
+      poplatekVybral: 'ja',
+    });
+    const prevedene = prevedZaplaceno(stare);
+    expect(prevedene?.platby.map((p) => p.druh).sort()).toEqual(['poplatek', 'prijezd']);
+    const sCestou = {
+      ...prevedene!,
+      vyjezdy: [{ id: 'c2', kdy: '2026-10-16T21:00:00.000Z', castka: 300 }],
+    };
+    expect(polozkyZRezervace(sCestou).map((p) => p.druh)).toEqual(['cesta']);
+  });
+
+  it('poplatek neznámo nebrání zaplatit cestu', () => {
+    const rec = kartaPlatby({
+      poplatek: 'neznamo',
+      casPrijezdu: '16:00',
+      vyjezdy: [{ id: 'c3', kdy: '2026-10-16T18:00:00.000Z', castka: 300 }],
+    });
+    expect(nahledZ(rec).poznamka).toBe('Poplatek neznámo');
+    expect(polozkyZRezervace(rec)).toEqual([{ druh: 'cesta', kc: 300 }]);
+    const zap = zaplatDruhy(rec, ['cesta'], 'cena', 'pravoslav');
+    expect(dluhZmizel(zap)).toBe(true);
+    expect(nahledZ(zap).text).toBe('Platby: zaplaceno 300 Kč ✓');
+  });
+
+  it('bez dluhu a s poplatkem ne je na kartě nic', () => {
+    const rec = kartaPlatby({ casPrijezdu: '16:00' });
+    expect(nahledZ(rec).text).toBe('Platby: nic');
+    expect(nahledZ(rec).ton).toBe('seda');
   });
 });

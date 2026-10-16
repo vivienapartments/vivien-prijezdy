@@ -15,6 +15,11 @@ function textVJazyce(tabulka: Record<JazykZpravy, string>, lang: GuideLang | nul
   return tabulka.en;
 }
 
+function textHosta(tabulka: Record<GuideLang, string>, lang: GuideLang | null): string {
+  if (lang && lang in tabulka) return tabulka[lang];
+  return tabulka.en;
+}
+
 /** Podpis pod každou zprávou. Čeština, angličtina a němčina jsou dané. */
 const PODPIS: Record<JazykZpravy, string> = {
   cs: 'Nikol a rodina VIVIEN',
@@ -52,28 +57,60 @@ export function druhZdroje(raw: string | null | undefined): ZdrojZpravy {
   return 'jiny';
 }
 
-const CHECKIN_UVOD: Record<JazykZpravy, string> = {
-  cs: 'Dobrý den, ještě nemáte vyplněný online check-in. Bez něj vám nemůžeme poslat průvodce k příjezdu, a bez průvodce se u nás neubytujete ani nezaparkujete.',
-  en: 'Hello, you have not completed the online check-in yet. Without it we cannot send you the arrival guide, and without the guide you cannot stay with us or park.',
-  de: 'Guten Tag, Ihr Online-Check-in ist noch nicht ausgefüllt. Ohne ihn können wir Ihnen den Leitfaden zur Anreise nicht schicken, und ohne den Leitfaden können Sie bei uns weder übernachten noch parken.',
-  pl: 'Dzień dobry, nie macie jeszcze wypełnionego online check-inu. Bez niego nie możemy wysłać przewodnika do przyjazdu, a bez przewodnika nie zakwaterujecie się u nas ani nie zaparkujecie.',
-  uk: 'Добрий день, ви ще не заповнили онлайн-реєстрацію. Без неї ми не можемо надіслати путівник до приїзду, а без путівника ви не заселитеся і не припаркуєтесь.',
-  'zh-Hant': '您好，您還沒有完成線上入住登記。沒有它，我們無法寄上抵達指南，沒有指南就無法入住，也無法停車。',
-  sv: 'Hej, ni har inte fyllt i online-incheckningen ännu. Utan den kan vi inte skicka ankomstguiden, och utan guiden kan ni varken bo hos oss eller parkera.',
-  es: 'Hola, todavía no han rellenado el check-in en línea. Sin él no podemos enviarles la guía de llegada, y sin la guía no se alojan ni aparcan.',
-  hu: "Jó napot, az online bejelentkezést még nem töltötték ki. Enélkül nem tudjuk elküldeni az érkezési útmutatót, útmutató nélkül pedig nem tudnak nálunk megszállni és parkolni.",
+const CHECKIN_UVOD: Record<GuideLang, string> = {
+  cs: 'Dobrý den, ještě nemáte vyplněný online check-in. Hned po něm vám pošleme průvodce k příjezdu se vstupními PINy do domu a apartmánu. Bez check-inu se u nás neubytujete ani nezaparkujete.',
+  en: 'Hello, you have not completed the online check-in yet. Right after it we will send you the arrival guide with your entry PIN codes for the house and the apartment. Without the check-in you cannot stay with us or park.',
+  de: 'Guten Tag, Ihr Online-Check-in ist noch nicht ausgefüllt. Gleich danach schicken wir Ihnen den Leitfaden zur Anreise mit den PIN-Codes für das Haus und das Apartment. Ohne den Check-in übernachten Sie bei uns nicht und parken nicht.',
+  pl: 'Dzień dobry, nie macie jeszcze wypełnionego online check-inu. Zaraz po nim wyślemy przewodnik do przyjazdu z kodami PIN do domu i apartamentu. Bez check-inu nie zakwaterujecie się u nas ani nie zaparkujecie.',
+  uk: 'Добрий день, ви ще не заповнили онлайн-реєстрацію. Одразу після неї надішлемо путівник до приїзду з PIN-кодами до будинку й апартаменту. Без реєстрації ви не заселитеся і не припаркуєтесь.',
+  'zh-Hant': '您好，您還沒有完成線上入住登記。完成後我們立刻寄上抵達指南，裡面有房子和公寓的進入 PIN 碼。沒有入住登記就無法入住，也無法停車。',
+  es: 'Hola, todavía no han rellenado el check-in en línea. Justo después les enviaremos la guía de llegada con los códigos PIN de entrada a la casa y al apartamento. Sin el check-in no se alojan ni aparcan.',
+  fr: "Bonjour, vous n'avez pas encore rempli le check-in en ligne. Juste après, nous vous enverrons le guide d'arrivée avec les codes PIN d'entrée de la maison et de l'appartement. Sans le check-in, vous ne pouvez ni loger chez nous ni vous garer.",
+  it: "Buongiorno, non avete ancora compilato il check-in online. Subito dopo vi invieremo la guida all'arrivo con i codici PIN di ingresso per la casa e l'appartamento. Senza il check-in non potete alloggiare da noi né parcheggiare.",
+  sv: 'Hej, ni har inte fyllt i online-incheckningen ännu. Direkt efter den skickar vi ankomstguiden med PIN-koderna till huset och lägenheten. Utan incheckningen kan ni varken bo hos oss eller parkera.',
+  hu: 'Jó napot, az online bejelentkezést még nem töltötték ki. Rögtön utána elküldjük az érkezési útmutatót a ház és az apartman belépő PIN-kódjaival. Bejelentkezés nélkül nem tudnak nálunk megszállni és parkolni.',
 };
 
-const CHECKIN_KONEC: Record<JazykZpravy, string> = {
-  cs: 'Děkujeme a těšíme se na setkání.',
-  en: 'Thank you, and we look forward to seeing you.',
-  de: 'Vielen Dank, wir freuen uns auf Sie.',
-  pl: 'Dziękujemy i do zobaczenia.',
-  uk: 'Дякуємо і до зустрічі.',
-  'zh-Hant': '謝謝，期待與您見面。',
-  sv: 'Tack, vi ser fram emot att träffas.',
-  es: 'Gracias, nos alegramos de verles.',
-  hu: "Köszönjük, várjuk önöket.",
+const CHECKIN_CHVILKA: Record<GuideLang, string> = {
+  cs: 'Vyplnění zabere jen chvilku.',
+  en: 'It only takes a moment.',
+  de: 'Das Ausfüllen dauert nur einen Moment.',
+  pl: 'Wypełnienie zajmuje tylko chwilę.',
+  uk: 'Заповнення займе лише хвилину.',
+  'zh-Hant': '填寫只需要一下子。',
+  es: 'Rellenarlo lleva solo un momento.',
+  fr: "Le remplissage ne prend qu'un instant.",
+  it: 'La compilazione richiede solo un momento.',
+  sv: 'Det tar bara en stund.',
+  hu: 'A kitöltés csak egy pillanat.',
+};
+
+const CHECKIN_TADY: Record<GuideLang, string> = {
+  cs: 'Vyplnění zabere jen chvilku, odkaz je tady:',
+  en: 'It only takes a moment, here is the link:',
+  de: 'Das Ausfüllen dauert nur einen Moment, der Link ist hier:',
+  pl: 'Wypełnienie zajmuje tylko chwilę, link jest tutaj:',
+  uk: 'Заповнення займе лише хвилину, посилання ось тут:',
+  'zh-Hant': '填寫只需要一下子，連結在這裡：',
+  es: 'Rellenarlo lleva solo un momento, el enlace está aquí:',
+  fr: "Le remplissage ne prend qu'un instant, le lien est ici:",
+  it: 'La compilazione richiede solo un momento, il link è qui:',
+  sv: 'Det tar bara en stund, länken finns här:',
+  hu: 'A kitöltés csak egy pillanat, a link itt van:',
+};
+
+const CHECKIN_KONEC: Record<GuideLang, string> = {
+  cs: 'Děkujeme a moc se na vás těšíme.',
+  en: 'Thank you, we are very much looking forward to seeing you.',
+  de: 'Vielen Dank, wir freuen uns sehr auf Sie.',
+  pl: 'Dziękujemy i bardzo czekamy na spotkanie.',
+  uk: 'Дякуємо і дуже чекаємо на зустріч.',
+  'zh-Hant': '謝謝，我們非常期待見到您。',
+  es: 'Gracias, nos alegramos mucho de verles.',
+  fr: 'Merci, nous avons très hâte de vous voir.',
+  it: "Grazie, non vediamo l'ora di vedervi.",
+  sv: 'Tack, vi ser mycket fram emot att träffa er.',
+  hu: 'Köszönjük, nagyon várjuk önöket.',
 };
 
 const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
@@ -123,16 +160,19 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
   },
 };
 
-const ODKAZ_NIZE: Record<JazykZpravy, string> = {
-  cs: 'Odkaz posíláme níže.',
-  en: 'We are sending the link below.',
-  de: 'Den Link senden wir unten.',
-  pl: 'Link wysyłamy poniżej.',
-  uk: 'Посилання надсилаємо нижче.',
-  'zh-Hant': '連結我們放在下面。',
-  sv: 'Länken skickar vi nedan.',
-  es: 'El enlace va más abajo.',
-  hu: 'A linket alább küldjük.',
+const CHECKIN_ODKAZ_FR_IT: Partial<Record<GuideLang, Record<ZdrojZpravy, string>>> = {
+  fr: {
+    booking: 'Vous trouverez le lien dans vos messages sur Booking.com.',
+    airbnb: 'Vous trouverez le lien dans vos messages sur Airbnb.',
+    prima: "Vous trouverez le lien dans l'e-mail de confirmation de la réservation.",
+    jiny: 'Vous trouverez le lien dans les messages du site où vous avez réservé.',
+  },
+  it: {
+    booking: 'Il link è nei messaggi su Booking.com.',
+    airbnb: 'Il link è nei messaggi su Airbnb.',
+    prima: "Il link è nell'e-mail di conferma della prenotazione.",
+    jiny: 'Il link è nei messaggi del sito dove avete prenotato.',
+  },
 };
 
 const NEOTEVREL: Record<JazykZpravy, string> = {
@@ -319,11 +359,12 @@ const NAZEV: Record<DruhZpravy, string> = {
 };
 
 function vetaCheckinu(lang: GuideLang | null, zdroj: string | null | undefined, sOdkazem = false): string {
+  const uvod = textHosta(CHECKIN_UVOD, lang);
+  const konec = textHosta(CHECKIN_KONEC, lang);
+  if (sOdkazem) return `${uvod} ${textHosta(CHECKIN_TADY, lang)}\n\n${konec}`;
   const druh = druhZdroje(zdroj);
-  const uvod = textVJazyce(CHECKIN_UVOD, lang);
-  const odkaz = sOdkazem ? textVJazyce(ODKAZ_NIZE, lang) : textVJazyce(CHECKIN_ODKAZ[druh], lang);
-  const konec = textVJazyce(CHECKIN_KONEC, lang);
-  return `${uvod} ${odkaz} ${konec}`;
+  const odkaz = (lang && CHECKIN_ODKAZ_FR_IT[lang]?.[druh]) || textVJazyce(CHECKIN_ODKAZ[druh], lang);
+  return `${uvod} ${textHosta(CHECKIN_CHVILKA, lang)}\n\n${odkaz}\n\n${konec}`;
 }
 
 export function textZpravy(lang: GuideLang | null): string {
@@ -362,7 +403,9 @@ export function textDneSCasem(lang: GuideLang | null, cas: string | null): strin
 
 export function zpravaCheckinu(lang: GuideLang | null, zdroj?: string | null, url?: string | null): string {
   const ma = Boolean(url && /^https:\/\//i.test(url));
-  return sestav(vetaCheckinu(lang, zdroj, ma), ma ? url!.trim() : null, lang);
+  if (!ma) return sestav(vetaCheckinu(lang, zdroj, false), null, lang);
+  const telo = `${textHosta(CHECKIN_UVOD, lang)} ${textHosta(CHECKIN_TADY, lang)}\n\n${url!.trim()}\n\n${textHosta(CHECKIN_KONEC, lang)}`;
+  return sestav(telo, null, lang);
 }
 
 export function zpravaHostovi(lang: GuideLang | null, odkaz: string | null): string {

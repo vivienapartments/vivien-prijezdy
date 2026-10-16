@@ -387,6 +387,16 @@
   font-weight: 650;
 }
 
+.ph-platby--seda,
+.ph-platby--seda button.ph-poplatek-tlacitko {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ph-platby--zelena,
+.ph-platby--zelena button.ph-poplatek-tlacitko {
+  color: #8dcea0;
+}
+
 .ph button.ph-poplatek-tlacitko {
   min-height: 0;
   padding: 0;

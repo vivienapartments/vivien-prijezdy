@@ -427,7 +427,26 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     zdroj: 'Airbnb',
   };
 
-  return [luisa, ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel, jelinek, mala, kovar, smith, odjezdV5, odjezdV2, odjezdV1, odjezdV4, prijezdV5, prijezdV2];
+  const helena: RezervaceRecord = {
+    ...prazdnaRezervace('7100', '2026-09-20T08:00:00.000Z'),
+    apartman: 'V3',
+    prijezd: dnes,
+    odjezd: posunDen(dnes, 2),
+    noci: 2,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Helena Nováková',
+    krestni: 'Helena',
+    emailHosta: 'helena.ukazka@example.com',
+    accessPin: '0000',
+    vytvoreno: '2026-09-20',
+    poplatek: 'ne',
+    stav: 'odeslano',
+    casPrijezdu: '21:00',
+    zdroj: 'Booking',
+  };
+
+  return [luisa, ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel, jelinek, helena, mala, kovar, smith, odjezdV5, odjezdV2, odjezdV1, odjezdV4, prijezdV5, prijezdV2];
 }
 
 export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
