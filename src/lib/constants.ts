@@ -14,6 +14,13 @@ export const HODINA_PRIPOMINKY_ODJEZDU = 20;
 /** Ranní přehled dne. Nedoplatky jsou jeho součástí, samostatně už nechodí. */
 export const HODINA_RANIHO_DNE = 7;
 export const MINUTA_RANIHO_DNE = 30;
+/** Jednou v pondělí, jen když zbyly nedoplatky hostů, kteří už odjeli. */
+export const HODINA_STARYCH_DLUHU = 8;
+/** Po odjezdu karta zmizí z dnešních odjezdů sama, když nikdo neklepne na Převzato. */
+export const PREVZETI_PO_HODINACH = 2;
+export const PREVZETI_NEZNAMY_HODINA = 12;
+/** Nedoplatky, spory, stálí hosté a poplatek z pobytu. Zprávy mají vlastní dobu. */
+export const UCHOVAT_KARTU_MESICU = 24;
 /** Kolik minut před známým odjezdem přijde upozornění. */
 export const PREDSTIH_ODJEZDU_MIN = 30;
 

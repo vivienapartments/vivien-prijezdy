@@ -25,7 +25,7 @@ function hodinaPraha(now: Date): number {
 
 /** Ráno v den odjezdu, jednou, dokud není vybraný městský poplatek nebo opakovaný výjezd. */
 export function maUpozornitPlatbu(rec: RezervaceRecord, now = new Date()): boolean {
-  if (rec.stav === 'zruseno') return false;
+  if (rec.stav === 'zruseno' || rec.prevzatoKdy) return false;
   if (!rec.odjezd || rec.odjezd !== denPraha(now)) return false;
   if (rec.platbaUpozorneno === rec.odjezd) return false;
   if (hodinaPraha(now) < RANI_HODINA) return false;

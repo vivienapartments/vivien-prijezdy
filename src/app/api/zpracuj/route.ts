@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cistaChyba } from '@/lib/cista-chyba';
 import { runInboxProcessing, vypisPotvrzeni } from '@/lib/process-inbox';
-import { createProcessStore, pocetPrikazu, type ProcessStore } from '@/lib/store';
+import { createProcessStore, pocetPrikazu, prodluzKartyJednou, type ProcessStore } from '@/lib/store';
 import { upozorniBranu } from '@/lib/brana-upozorneni';
 import { upozorniDnes } from '@/lib/dnesek-upozorneni';
 import { upozorniOdjezdy } from '@/lib/odjezd-upozorneni';
@@ -44,6 +44,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const store = createProcessStore();
+  try {
+    const prodlouzeno = await prodluzKartyJednou(store);
+    if (prodlouzeno != null) console.log(`Uchovani karet prodlouzeno: ${prodlouzeno}`);
+  } catch {
+    console.error('Uchovani karet selhalo');
+  }
   try {
     const summary = await runInboxProcessing({ store });
     const posledni = [...summary.items].reverse().find((i) => i.reason);

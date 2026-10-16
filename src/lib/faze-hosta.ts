@@ -29,11 +29,14 @@ export type FazeVstup = {
   predano: string;
   odjezd: string | null;
   dnes: string;
+  /** Hodina převzetí, třeba 10:15. Když je vyplněná, host už odjel i v den odjezdu. */
+  prevzato?: string;
 };
 
 /** Jen aktuální krok. Pozdější štítky se neukazují, dokud host v té fázi není. */
 export function fazeHosta(v: FazeVstup): FazeHosta {
   if (v.stav === 'zruseno') return { id: 7, text: 'Zrušeno', ton: 'seda' };
+  if (v.prevzato) return { id: 7, text: `Odjel ${v.prevzato}`, ton: 'seda' };
   if (v.odjezd && v.dnes && v.odjezd < v.dnes) return { id: 7, text: 'Odjel', ton: 'seda' };
   if (v.predano) return { id: 6, text: `Předáno ${v.predano}`, ton: 'zelena' };
   if (v.naMiste) return { id: 5, text: 'Host je na místě', ton: 'zelena' };

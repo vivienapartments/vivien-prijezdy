@@ -5,7 +5,7 @@ import { nactiOdjezdBeh } from './odjezd';
 import type { ProcessStore } from './store';
 import { upozorniMajitele } from './upozorneni';
 
-const STRANKA = '/prehled/dnes';
+const STRANKA = '/prehled?zalozka=dnes';
 
 function poradiDnes(klic: string | null, den: string): string | null {
   const predpona = `${den}:`;
@@ -22,7 +22,7 @@ export async function upozorniDnes(
   if (!jePoCase(now, HODINA_RANIHO_DNE, MINUTA_RANIHO_DNE)) return 0;
   const list = (await store.listRezervace()).map((e) => e.record);
   const dnes = denPraha(now);
-  const pohled = sestavDnesek(list.map(hostZRezervace), dnes);
+  const pohled = sestavDnesek(list.map(hostZRezervace), dnes, now);
   const beh = nactiOdjezdBeh(await store.getOdjezdBeh());
   const klic = klicUklidu(dnes, pohled);
   const maDen = pohled.odjezdy.length > 0 || pohled.prijezdy.length > 0;

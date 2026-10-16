@@ -1263,3 +1263,56 @@
 .ph-dnesek__prazdno {
   margin: 0;
 }
+
+.ph-zalozky {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.8rem 0;
+}
+
+.ph-zalozky button {
+  min-height: 2.6rem;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.ph-zalozky button.is-on {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+}
+
+.ph-zalozky button.is-nove {
+  border-color: #e07a7a;
+  color: #e07a7a;
+}
+
+.ph-jmeno {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ph-dluhy li.is-zruseno,
+.ph-hledat li.is-zruseno {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ph-dluhy ul,
+.ph-hledat ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ph-dluhy li,
+.ph-hledat li {
+  margin: 0 0 0.9rem;
+}

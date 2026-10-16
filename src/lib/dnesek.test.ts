@@ -153,7 +153,7 @@ describe('dnešek', () => {
     expect(volani).toEqual([
       {
         text: 'Dnes: 3 odjezdy, 2 příjezdy, 1 nedoplatek. Uklidit první V4 (host v 13:00), pak V2.',
-        url: '/prehled/dnes',
+        url: '/prehled?zalozka=dnes',
       },
     ]);
 

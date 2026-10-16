@@ -185,6 +185,28 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     otevrenoNaposled: '2026-10-08T10:00:00.000Z',
   };
 
+  const jelinek: RezervaceRecord = {
+    ...prazdnaRezervace('7002', '2026-09-01T08:00:00.000Z'),
+    apartman: 'V2',
+    prijezd: posunDen(dnes, -6),
+    odjezd: posunDen(dnes, -3),
+    noci: 3,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Jan Jelínek',
+    krestni: 'Jan',
+    narodnost: 'CZE',
+    emailHosta: 'jan.ukazka@example.com',
+    accessPin: '0000',
+    vytvoreno: '2026-09-01',
+    poplatek: 'ano',
+    stav: 'odeslano',
+    telefon: '+420777000111',
+    telefonWa: '420777000111',
+    zdroj: 'Booking',
+    casOdjezdu: '10:00',
+  };
+
   const luisa: RezervaceRecord = {
     ...prazdnaRezervace('9010', '2026-10-15T08:00:00.000Z'),
     apartman: 'V3',
@@ -405,7 +427,7 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     zdroj: 'Airbnb',
   };
 
-  return [luisa, ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel, mala, kovar, smith, odjezdV5, odjezdV2, odjezdV1, odjezdV4, prijezdV5, prijezdV2];
+  return [luisa, ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel, jelinek, mala, kovar, smith, odjezdV5, odjezdV2, odjezdV1, odjezdV4, prijezdV5, prijezdV2];
 }
 
 export function ukazkoveRadky(now = new Date()): PrehledRadek[] {

@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { FileProcessStore, prazdnaRezervace } from './store';
 
 describe('FileProcessStore', () => {
-  it('maže rezervaci 3 dny po odjezdu a zprávu až po 90 dnech', async () => {
+  it('drží rezervaci 24 měsíců po odjezdu a zprávu 90 dní', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vivien-store-'));
     const store = new FileProcessStore(path.join(dir, 'store.json'));
 
@@ -24,15 +24,38 @@ describe('FileProcessStore', () => {
       odeslaneMessageId: 'a@b',
     });
 
-    const jeste = await store.purgeExpired(new Date('2020-01-04T11:00:00.000Z'));
-    expect(jeste).toBe(0);
+    const poPetiDnech = await store.purgeExpired(new Date('2020-01-06T12:00:00.000Z'));
+    expect(poPetiDnech).toBe(0);
     expect((await store.getRezervace('99'))?.jmeno).toBe('Novák');
     expect(await store.isMessageProcessed('a@b')).toBe(true);
 
-    const removed = await store.purgeExpired(new Date('2020-01-04T12:00:01.000Z'));
-    expect(removed).toBe(1);
+    const poDobe = await store.purgeExpired(new Date('2022-01-01T12:00:01.000Z'));
     expect(await store.getRezervace('99')).toBeNull();
-    expect(await store.isMessageProcessed('a@b')).toBe(true);
+    expect(poDobe).toBeGreaterThan(0);
+  });
+
+  it('smaže rezervaci až 25 měsíců po odjezdu', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vivien-store-'));
+    const store = new FileProcessStore(path.join(dir, 'store.json'));
+    await store.setRezervace('stara', {
+      ...prazdnaRezervace('stara', '2024-09-16T00:00:00.000Z'),
+      stav: 'odeslano',
+      odjezd: '2024-09-16',
+      emailHosta: 'host@example.com',
+      jmeno: 'Stará',
+    });
+    await store.setRezervace('cerstva', {
+      ...prazdnaRezervace('cerstva', '2026-10-11T00:00:00.000Z'),
+      stav: 'odeslano',
+      odjezd: '2026-10-11',
+      emailHosta: 'host@example.com',
+      jmeno: 'Čerstvá',
+    });
+
+    const now = new Date('2026-10-16T12:00:00.000Z');
+    await store.purgeExpired(now);
+    expect(await store.getRezervace('cerstva')).not.toBeNull();
+    expect(await store.getRezervace('stara')).toBeNull();
   });
 
   it('maže zpracovanou zprávu po 90 dnech', async () => {

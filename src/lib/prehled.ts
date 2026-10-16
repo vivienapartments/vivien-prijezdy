@@ -1,7 +1,7 @@
 import apartmanyJson from '@/data/apartmany.json';
 import type { PoplatekStav } from './poplatek';
 import { castkaPoplatku, poplatekZData, hraniceRezervace } from './poplatek';
-import type { ProcessStore, RezervaceRecord, RezervaceStav } from './store';
+import type { PlatbaPolozky, ProcessStore, RezervaceRecord, RezervaceStav } from './store';
 import { normalizujTelefon, textTelefonu } from './telefon';
 import type { AptId, GuideLang } from './types';
 import { LANG_LABELS } from './types';
@@ -12,7 +12,8 @@ import { fazeHosta, type FazeTon } from './faze-hosta';
 import { zpravyMenu, type ZpravaMenu } from './whatsapp-zprava';
 import { zneniVerze } from './pravidla-verze';
 import { popisekCasu, priplatekCasu, soucetVyjezdu } from './priplatek-prijezd';
-import { polozkyZRezervace, textRozpisu } from './odjezd';
+import { nazevDluhu, polozkyVsechny, polozkyZRezervace, textRozpisu, type DruhDluhu } from './odjezd';
+import { casPrevzetiText } from './zalozky';
 
 export const STARY_ZAZNAM = 'starý záznam';
 
@@ -70,6 +71,9 @@ export type PrehledRadek = {
   odjezdDotaz: string | null;
   /** Text nedoplatku pro seznam odjezdů. Prázdné, když nic nedluží. */
   dluhText: string;
+  dluhPolozky: { druh: DruhDluhu; kc: number; nazev: string }[];
+  platby: PlatbaPolozky[];
+  prevzatoKdy: string | null;
   uklizenoKdy: string | null;
   uklizenoKdo: 'pravoslav' | 'nikol' | null;
   zadostPrijezd: RezervaceRecord['zadostPrijezd'];
@@ -201,8 +205,9 @@ export function cekajiciUkon(v: {
   naMiste: boolean;
   denPrijezdu: boolean;
   parkovani: string;
+  odjel?: boolean;
 }): CekajiciUkon | null {
-  if (v.predano) return null;
+  if (v.odjel || v.predano) return null;
   if (v.naMiste) return 'predani';
   if (v.parkovani === 'potvrdit') return 'odpoved';
   if (v.parkovani === 'registrovat' || v.parkovani === 'upravit') return 'registrace';
@@ -668,6 +673,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     predano: rec.predano ? hodinaPraha(rec.predano) : '',
     odjezd: rec.odjezd,
     dnes,
+    prevzato: casPrevzetiText(rec.prevzatoKdy),
   });
   const zpravy = zpravyMenu({
     stav: rec.stav,
@@ -741,6 +747,9 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     casOdjezduZadalHost: rec.casOdjezduZadalHost,
     odjezdDotaz: rec.odjezdDotaz,
     dluhText: textRozpisu(polozkyZRezervace(rec)),
+    dluhPolozky: polozkyVsechny(rec).map((p) => ({ druh: p.druh, kc: p.kc, nazev: nazevDluhu(p.druh) })),
+    platby: rec.platby || [],
+    prevzatoKdy: rec.prevzatoKdy,
     uklizenoKdy: rec.uklizenoKdy,
     uklizenoKdo: rec.uklizenoKdo,
     zadostPrijezd: rec.zadostPrijezd,

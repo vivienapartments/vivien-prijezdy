@@ -1,7 +1,8 @@
-import { CHECKOUT } from './constants';
+import { CHECKOUT, PREVZETI_NEZNAMY_HODINA, PREVZETI_PO_HODINACH } from './constants';
 import { jeHodina, polozkyZRezervace, textRozpisu, zobrazCas } from './odjezd';
 import type { RezervaceRecord } from './store';
 import { APT_IDS, type AptId } from './types';
+import { casPrevzetiText, casPrevzetiVyprsel, jeVDnesnichOdjezdech } from './zalozky';
 
 export type KdoUklidil = 'pravoslav' | 'nikol';
 
@@ -21,6 +22,7 @@ export type HostDne = {
   dluh: string;
   uklizenoKdy: string | null;
   uklizenoKdo: KdoUklidil | null;
+  prevzatoKdy?: string | null;
 };
 
 export type UklidRadek = {
@@ -144,7 +146,26 @@ export function hostZRezervace(rec: RezervaceRecord): HostDne {
     dluh: textRozpisu(polozkyZRezervace(rec)),
     uklizenoKdy: rec.uklizenoKdy,
     uklizenoKdo: rec.uklizenoKdo,
+    prevzatoKdy: rec.prevzatoKdy,
   };
+}
+
+function textUvolneni(h: HostDne, dnes: string, now?: Date): string {
+  if (h.prevzatoKdy) {
+    const cas = casPrevzetiText(h.prevzatoKdy);
+    return cas ? `uvolněno ${zobrazCas(cas)}` : 'uvolněno';
+  }
+  if (now && casPrevzetiVyprsel(h.casOdjezdu, dnes, now)) {
+    if (jeHodina(h.casOdjezdu)) {
+      const [hod, min] = h.casOdjezdu.split(':').map(Number);
+      const celkem = hod * 60 + min + PREVZETI_PO_HODINACH * 60;
+      const hh = String(Math.floor(celkem / 60) % 24).padStart(2, '0');
+      const mm = String(celkem % 60).padStart(2, '0');
+      return `uvolněno ${zobrazCas(`${hh}:${mm}`)}`;
+    }
+    return `uvolněno ${PREVZETI_NEZNAMY_HODINA}:00`;
+  }
+  return jeHodina(h.casOdjezdu) ? `uvolní v ${zobrazCas(h.casOdjezdu)}` : `odjezd do ${CHECKOUT}`;
 }
 
 function textZpusobu(zpusob: HostDne['zpusob']): string {
@@ -168,7 +189,7 @@ function seradPodleCasu<T>(list: T[], cas: (t: T) => string | null, apt: (t: T) 
   });
 }
 
-export function sestavDnesek(hoste: HostDne[], dnes: string): DnesekPohled {
+export function sestavDnesek(hoste: HostDne[], dnes: string, now?: Date): DnesekPohled {
   const chyby: string[] = [];
   const zivi: HostDne[] = [];
   for (const h of hoste) {
@@ -188,11 +209,20 @@ export function sestavDnesek(hoste: HostDne[], dnes: string): DnesekPohled {
       chyby.push(id);
     }
   }
-  const odjezdyHoste = zivi.filter((h) => h.odjezd === dnes);
+  const vsichniOdjezdy = zivi.filter((h) => h.odjezd === dnes);
+  const odjezdyHoste = now
+    ? vsichniOdjezdy.filter((h) =>
+        jeVDnesnichOdjezdech(
+          { odjezd: h.odjezd, casOdjezdu: h.casOdjezdu, prevzatoKdy: h.prevzatoKdy || null, stav: h.stav },
+          dnes,
+          now,
+        ),
+      )
+    : vsichniOdjezdy;
   const prijezdyHoste = zivi.filter((h) => h.prijezd === dnes);
 
   const podleApt = new Map<string, HostDne[]>();
-  for (const host of odjezdyHoste) {
+  for (const host of vsichniOdjezdy) {
     if (!host.apartman) continue;
     const list = podleApt.get(host.apartman) || [];
     list.push(host);
@@ -218,7 +248,7 @@ export function sestavDnesek(hoste: HostDne[], dnes: string): DnesekPohled {
     uklid.push({
       rezervace: odchod.rezervace,
       apartman: apt,
-      uvolni: jeHodina(odchod.casOdjezdu) ? `uvolní v ${zobrazCas(odchod.casOdjezdu)}` : `odjezd do ${CHECKOUT}`,
+      uvolni: textUvolneni(odchod, dnes, now),
       dalsi: !dalsi
         ? 'dnes nikdo nepřijede'
         : prijezdCas

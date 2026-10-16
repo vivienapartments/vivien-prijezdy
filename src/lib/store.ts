@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import type { Duvod } from './chyby';
+import { UCHOVAT_KARTU_MESICU } from './constants';
 import type { PoplatekStav } from './poplatek';
 import type { VyjezdPolozka } from './priplatek-prijezd';
 import type { AptId, GuideLang } from './types';
@@ -30,12 +31,25 @@ export type BehZpracovani = {
   chyba: string;
 };
 
-/** Jednou za den. vecer = 18:00, pripominka = 20:00, rano = 7:30 přehled dne. uklid = poslední pořadí. */
+/** Jednou za den. vecer = 18:00, pripominka = 20:00, rano = 7:30 přehled dne. uklid = poslední pořadí. pondeli = souhrn starších nedoplatků. */
 export type OdjezdBeh = {
   vecer: string | null;
   pripominka: string | null;
   rano: string | null;
   uklid: string | null;
+  pondeli: string | null;
+};
+
+export type JakPlatby = 'hotove' | 'karta' | 'prevod' | 'cena';
+export type DruhPlatby = 'poplatek' | 'prijezd' | 'cesta' | 'drive' | 'pozde';
+
+/** Jedna zaplacená položka. Prázdné platby a vyplněné zaplaceno znamenají starší „zaplaceno vše“. */
+export type PlatbaPolozky = {
+  druh: DruhPlatby;
+  kc: number;
+  jak: JakPlatby;
+  kdo: 'pravoslav' | 'nikol';
+  kdy: string;
 };
 
 export type RezervaceStav =
@@ -138,10 +152,16 @@ export type RezervaceRecord = {
   naMiste: string | null;
   /** Ruční příplatek za čas. Když je vyplněný, výpočet ho nepřepíše. */
   priplatekRucni: number | null;
-  /** Čas, kdy byl vybraný městský poplatek. */
+  /** Čas, kdy byl vybraný městský poplatek. S prázdnými platbami kryje vše, co v tu chvíli bylo. */
   zaplaceno: string | null;
+  /** Jednotlivé zaplacené položky. Nová položka po zaplacení zůstane dluhem. */
+  platby: PlatbaPolozky[];
   /** Kdo městský poplatek vybral. */
   poplatekVybral: 'ja' | 'nikol' | null;
+  /** Kdy jsme apartmán od hosta převzali. null = ještě je v dnešních odjezdech. */
+  prevzatoKdy: string | null;
+  /** true, když odjezd doplnil automat, ne klepnutí. */
+  prevzatoAuto: boolean;
   /** Den odjezdu, kdy už odešlo ranní upozornění, že něco není zaplacené. */
   platbaUpozorneno: string | null;
   /** Další výjezdy, každý 300 Kč, dokud není vybraný. Maže se se záznamem. */
@@ -331,11 +351,33 @@ function nactiPush(raw: unknown): PushZarizeni[] {
   );
 }
 
-/** Smazat v poledne UTC třetí den po dni odjezdu. */
+/**
+ * Smazat v poledne UTC po UCHOVAT_KARTU_MESICU měsících od dne odjezdu.
+ * 24 měsíců drží nedoplatky, spory, stálé hosty a poplatek z pobytu.
+ * Zprávy mají vlastní dobu (MESSAGE_TTL_SEC) a tahle funkce se jich netýká.
+ */
 export function smazatPoOdjezdu(odjezdYmd: string): Date | null {
   const [y, m, d] = odjezdYmd.split('-').map(Number);
   if (!y || !m || !d) return null;
-  return new Date(Date.UTC(y, m - 1, d + 3, 12, 0, 0));
+  const celkem = m - 1 + UCHOVAT_KARTU_MESICU;
+  return new Date(Date.UTC(y + Math.floor(celkem / 12), celkem % 12, d, 12, 0, 0));
+}
+
+const DRUHY_PLATBY: DruhPlatby[] = ['poplatek', 'prijezd', 'cesta', 'drive', 'pozde'];
+const JAKY_PLATBY: JakPlatby[] = ['hotove', 'karta', 'prevod', 'cena'];
+
+function nactiPlatby(raw: unknown): PlatbaPolozky[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const v = item as Record<string, unknown>;
+    if (!DRUHY_PLATBY.includes(v.druh as DruhPlatby)) return [];
+    if (!JAKY_PLATBY.includes(v.jak as JakPlatby)) return [];
+    if (v.kdo !== 'pravoslav' && v.kdo !== 'nikol') return [];
+    if (typeof v.kdy !== 'string' || !v.kdy) return [];
+    if (typeof v.kc !== 'number' || !Number.isFinite(v.kc) || v.kc < 0) return [];
+    return [{ druh: v.druh as DruhPlatby, kc: Math.round(v.kc), jak: v.jak as JakPlatby, kdo: v.kdo, kdy: v.kdy }];
+  });
 }
 
 function nactiVyjezdy(raw: unknown): VyjezdPolozka[] {
@@ -473,7 +515,10 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
         ? Math.round(r.priplatekRucni)
         : null,
     zaplaceno: typeof r.zaplaceno === 'string' && r.zaplaceno ? r.zaplaceno : null,
+    platby: nactiPlatby(r.platby),
     poplatekVybral: r.poplatekVybral === 'ja' || r.poplatekVybral === 'nikol' ? r.poplatekVybral : null,
+    prevzatoKdy: typeof r.prevzatoKdy === 'string' && r.prevzatoKdy ? r.prevzatoKdy : null,
+    prevzatoAuto: r.prevzatoAuto === true,
     platbaUpozorneno: typeof r.platbaUpozorneno === 'string' && r.platbaUpozorneno ? r.platbaUpozorneno : null,
     vyjezdy: nactiVyjezdy(r.vyjezdy),
     souhlasPravidel: nactiSouhlas(r.souhlasPravidel),
@@ -520,7 +565,10 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     naMiste: null,
     priplatekRucni: null,
     zaplaceno: null,
+    platby: [],
     poplatekVybral: null,
+    prevzatoKdy: null,
+    prevzatoAuto: false,
     platbaUpozorneno: null,
     vyjezdy: [],
     souhlasPravidel: null,
@@ -870,6 +918,35 @@ export class UpstashProcessStore implements ProcessStore {
     return out;
   }
 
+  /**
+   * Jednorázově prodlouží EX u karet, které ještě mají být. Nic nemaže a záznam nepřepisuje.
+   * Klíč, jehož nová doba už minula, nechá být.
+   */
+  async prodluzUchovani(now = new Date()): Promise<number> {
+    const keys = await this.scanKeys('rez:*');
+    const hodnoty = await this.hodnotyKlicu(keys);
+    let n = 0;
+    for (let i = 0; i < keys.length; i += 1) {
+      const raw = hodnoty[i];
+      if (!raw) continue;
+      let odjezd = '';
+      try {
+        const data = JSON.parse(raw) as { odjezd?: unknown };
+        odjezd = typeof data.odjezd === 'string' ? data.odjezd : '';
+      } catch {
+        continue;
+      }
+      if (!odjezd) continue;
+      const limit = smazatPoOdjezdu(odjezd);
+      if (!limit || limit.getTime() <= now.getTime()) continue;
+      const sec = Math.floor((limit.getTime() - now.getTime()) / 1000);
+      if (sec < 60) continue;
+      await this.cmd('EXPIRE', keys[i], sec);
+      n += 1;
+    }
+    return n;
+  }
+
   async purgeExpired(): Promise<number> {
     return 0;
   }
@@ -932,7 +1009,7 @@ export class UpstashProcessStore implements ProcessStore {
       const den = (x: unknown) => (typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : null);
       const uklid =
         typeof beh.uklid === 'string' && /^\d{4}-\d{2}-\d{2}:(?:V[1-5](?:,V[1-5])*)?$/.test(beh.uklid) ? beh.uklid : null;
-      return { vecer: den(beh.vecer), pripominka: den(beh.pripominka), rano: den(beh.rano), uklid };
+      return { vecer: den(beh.vecer), pripominka: den(beh.pripominka), rano: den(beh.rano), uklid, pondeli: den(beh.pondeli) };
     } catch {
       return null;
     }
@@ -960,6 +1037,25 @@ export class UpstashProcessStore implements ProcessStore {
 /** null, když to není Upstash. Do logu patří jen číslo. */
 export function pocetPrikazu(store: ProcessStore): number | null {
   return store instanceof UpstashProcessStore ? store.pocetPrikazu() : null;
+}
+
+const MIGRACE_UCHOVANI = 'migrace-uchovani-24';
+
+/**
+ * Jednou po nasazení prodlouží dobu karet v Upstash. Souborové úložiště vrací null.
+ * Když to spadne dřív, než se zapíše značka, příští běh to zkusí znovu.
+ */
+export async function prodluzKartyJednou(store: ProcessStore, now = new Date()): Promise<number | null> {
+  if (!(store instanceof UpstashProcessStore)) return null;
+  if (await store.isMessageProcessed(MIGRACE_UCHOVANI)) return null;
+  const n = await store.prodluzUchovani(now);
+  await store.markMessage({
+    messageId: MIGRACE_UCHOVANI,
+    processedAt: now.toISOString(),
+    status: 'skipped_no_data',
+    reason: `prodlouzeno:${n}`,
+  });
+  return n;
 }
 
 export function createProcessStore(): ProcessStore {

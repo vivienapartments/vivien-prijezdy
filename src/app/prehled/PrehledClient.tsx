@@ -26,6 +26,9 @@ import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
 import { Dnesek } from './Dnesek';
+import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
+import type { PlatbaPolozky } from '@/lib/store';
+import { casPrevzetiText, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
 import { nactiBranu, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
@@ -100,8 +103,13 @@ export function PrehledClient({
   const [telefony, setTelefony] = useState<Record<string, string>>({});
   const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
   const [stav, setStav] = useState<'' | Stav>('');
-  const [hledat, setHledat] = useState('');
   const [den, setDen] = useState<'' | 'dnes' | 'zitra'>('');
+  const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
+  const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
+  const [videne, setVidene] = useState<Record<string, Record<string, string>> | null>(null);
+  const [vybrana, setVybrana] = useState<string | null>(null);
+  const [dotazVratitOdjezd, setDotazVratitOdjezd] = useState<string | null>(null);
+  const zalozkaNactena = useRef(false);
   const [jenNeotevreni, setJenNeotevreni] = useState(false);
   const [jenBezCheckinu, setJenBezCheckinu] = useState(false);
   const [odjeliOtevreno, setOdjeliOtevreno] = useState(false);
@@ -308,7 +316,6 @@ export function PrehledClient({
   );
 
   const viditelne = useMemo(() => {
-    const q = hledat.trim().toLowerCase();
     const denYmd = den === 'dnes' ? dnes : den === 'zitra' ? zitra : '';
     return radky.filter((row) => {
       if (row.nelzeNacist) return false;
@@ -316,14 +323,109 @@ export function PrehledClient({
       if (jenNeotevreni && (row.otevrenoPocet !== 0 || row.stav === 'bez_checkinu')) return false;
       if (jenBezCheckinu && row.stav !== 'bez_checkinu') return false;
       if (stav && row.stav !== stav) return false;
-      if (!q) return true;
-      return (
-        row.rezervace.toLowerCase().includes(q) ||
-        row.jmeno.toLowerCase().includes(q) ||
-        row.email.toLowerCase().includes(q)
-      );
+      return true;
     });
-  }, [radky, stav, hledat, den, dnes, zitra, jenNeotevreni, jenBezCheckinu]);
+  }, [radky, stav, den, dnes, zitra, jenNeotevreni, jenBezCheckinu]);
+
+  function hostOdjezdu(row: PrehledRadek) {
+    return {
+      odjezd: row.odjezd,
+      casOdjezdu: casOdjezduRadku(row),
+      prevzatoKdy: row.prevzatoKdy || null,
+      stav: row.stav,
+    };
+  }
+
+  function kcDluhu(row: PrehledRadek): number {
+    const platbyRadku = row.platby || [];
+    if (row.zaplaceno && platbyRadku.length === 0) return 0;
+    return (row.dluhPolozky || []).filter((p) => !platbyRadku.some((x) => x.druh === p.druh)).reduce((s, p) => s + p.kc, 0);
+  }
+
+  function otiskZalozky(z: Zalozka): string {
+    const ted = new Date();
+    if (z === 'dluhy') {
+      return otisk(radky.filter((r) => !r.nelzeNacist && r.stav !== 'zruseno' && kcDluhu(r) > 0).map((r) => ({ id: r.rezervace, kc: kcDluhu(r) })));
+    }
+    if (z === 'dnes') {
+      return otisk(
+        radky
+          .filter((r) => !r.nelzeNacist && (jeVDnesnichOdjezdech(hostOdjezdu(r), dnes, ted) || (r.prijezd === dnes && r.stav !== 'zruseno')))
+          .map((r) => ({ id: r.rezervace, kc: 0 })),
+      );
+    }
+    if (z === 'prijezdy') {
+      return otisk(
+        radky
+          .filter((r) => r.prijezd === dnes && r.stav !== 'zruseno' && !jeHostOdjetly(hostOdjezdu(r), dnes, ted))
+          .map((r) => ({ id: r.rezervace, kc: 0 })),
+      );
+    }
+    return '';
+  }
+
+  function otevriZalozku(z: Zalozka, ulozene = videne) {
+    setZalozka(z);
+    const dalsi = { ...(ulozene || {}), [kdoKouka]: { ...(ulozene?.[kdoKouka] || {}), [z]: otiskZalozky(z) } };
+    setVidene(dalsi);
+    try {
+      localStorage.setItem('vivien-zalozka', JSON.stringify({ den: dnes, zalozka: z }));
+      localStorage.setItem('vivien-videno', JSON.stringify(dalsi));
+    } catch {
+      /* prohlížeč paměť nemá */
+    }
+  }
+
+  useEffect(() => {
+    if (zalozkaNactena.current) return;
+    zalozkaNactena.current = true;
+    let ulozena: { den: string; zalozka: string } | null = null;
+    let nactene: Record<string, Record<string, string>> = {};
+    let kdo: 'pravoslav' | 'nikol' = 'pravoslav';
+    try {
+      const raw = localStorage.getItem('vivien-zalozka');
+      if (raw) ulozena = JSON.parse(raw) as { den: string; zalozka: string };
+      const ulozenyKdo = localStorage.getItem('vivien-kdo');
+      if (ulozenyKdo === 'nikol' || ulozenyKdo === 'pravoslav') kdo = ulozenyKdo;
+      const v = localStorage.getItem('vivien-videno');
+      if (v) nactene = JSON.parse(v) as Record<string, Record<string, string>>;
+    } catch {
+      nactene = {};
+    }
+    setKdoKouka(kdo);
+    const z = vychoziZalozka(ulozena, dnes, new URLSearchParams(window.location.search).get('zalozka'));
+    setVidene(nactene);
+    setZalozka(z);
+    const dalsi = { ...nactene, [kdo]: { ...(nactene[kdo] || {}), [z]: otiskZalozky(z) } };
+    setVidene(dalsi);
+    try {
+      localStorage.setItem('vivien-videno', JSON.stringify(dalsi));
+    } catch {
+      /* prohlížeč paměť nemá */
+    }
+    // Jednou při otevření. Otisk se pak mění sám, ať číslo zčervená až u nové položky.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dnes]);
+
+  function zapisPlatbyRadku(id: string, platbyRadku: PlatbaPolozky[], zaplaceno: string | null, dluh: string) {
+    setRadky((prev) => prev.map((r) => (r.rezervace === id ? { ...r, platby: platbyRadku, zaplaceno, dluhText: dluh } : r)));
+    setPlatby((prev) => ({ ...prev, [id]: { kdy: zaplaceno, kdo: prev[id]?.kdo ?? null } }));
+  }
+
+  function poPrevzeti(id: string, kdy: string | null) {
+    setRadky((prev) =>
+      prev.map((r) => {
+        if (r.rezervace !== id) return r;
+        const cas = casPrevzetiText(kdy);
+        return {
+          ...r,
+          prevzatoKdy: kdy,
+          fazeText: kdy ? `Odjel ${cas || ''}`.trim() : r.fazeText,
+          fazeTon: kdy ? 'seda' : r.fazeTon,
+        };
+      }),
+    );
+  }
 
   async function posliEmail(row: PrehledRadek, druh?: string) {
     const zprava = druh ?? volba[row.rezervace] ?? row.zpravy.find((z) => z.vychozi)?.id;
@@ -779,11 +881,17 @@ export function PrehledClient({
       sloty,
       new Date(),
     ).akce;
+    const odjel = jeHostOdjetly(hostOdjezdu(row), dnes, new Date());
+    const fazeText = odjel && row.stav !== 'zruseno' && !row.fazeText.startsWith('Odjel') && row.fazeText !== 'Zrušeno'
+      ? `Odjel ${casPrevzetiText(row.prevzatoKdy) || ''}`.trim()
+      : row.fazeText;
+    const fazeTon = odjel && row.stav !== 'zruseno' ? 'seda' : row.fazeTon;
     const cekajici = cekajiciUkon({
       predano: Boolean(predanoKdy),
       naMiste: Boolean(naMisteKdy),
       denPrijezdu: row.prijezd === dnes,
       parkovani: parkAkce,
+      odjel,
     });
     const casPole = (
       <PoleSUlozenim
@@ -979,7 +1087,7 @@ export function PrehledClient({
           {termin ? <div className="ph-kde">{termin}</div> : null}
         </div>
         <div className="ph-znacky">
-          <span className={`ph-faze ph-faze--${row.fazeTon}`}>Fáze · {row.fazeText}</span>
+          <span className={`ph-faze ph-faze--${fazeTon}`}>Fáze · {fazeText}</span>
         </div>
         {[
           row.zadostPrijezd?.stav === 'ceka' && !oknoHotovo[`${row.rezervace}:potvrdit-prijezd`] && !oknoHotovo[`${row.rezervace}:nelze-prijezd`]
@@ -1008,7 +1116,7 @@ export function PrehledClient({
         {dil.radek}
         {poplatekRadek}
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
-        {predanoKdy ? null : zpravaRamecek}
+        {predanoKdy || odjel ? null : zpravaRamecek}
         {cekajici === 'registrace' ? dil.registrace : null}
         {cekajici === 'odpoved' ? dil.odpoved : null}
         {cekajici === 'predani' ? (
@@ -1102,7 +1210,39 @@ export function PrehledClient({
             </div>
           ) : null}
           {cekajici === 'namiste' ? null : namisteTlacitko}
-          {predanoKdy ? zpravaRamecek : null}
+          {predanoKdy || odjel ? zpravaRamecek : null}
+          {row.prevzatoKdy ? (
+            <button type="button" className="ph-predano" onClick={() => setDotazVratitOdjezd(row.rezervace)}>
+              Vrátit odjezd
+            </button>
+          ) : null}
+          {dotazVratitOdjezd === row.rezervace ? (
+            <div className="ph-predano-dotaz">
+              <p>Vrátit hosta mezi odjezdy?</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setDotazVratitOdjezd(null);
+                  if (ukazka) {
+                    poPrevzeti(row.rezervace, null);
+                    return;
+                  }
+                  void fetch('/api/prehled/akce', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rezervace: row.rezervace, akce: 'vratit-odjezd' }),
+                  }).then((res) => {
+                    if (res.ok) poPrevzeti(row.rezervace, null);
+                  });
+                }}
+              >
+                Ano, vrátit
+              </button>
+              <button type="button" onClick={() => setDotazVratitOdjezd(null)}>
+                Zrušit
+              </button>
+            </div>
+          ) : null}
           {cekajici === 'predani' ? null : (
             <>
               {predaniTlacitko}
@@ -1307,8 +1447,7 @@ export function PrehledClient({
                 ) : null}
               </div>
             ) : null}
-            {!row.odjezd || row.odjezd >= dnes ? (
-              <>
+            <>
                 <PoleSUlozenim
                   key={`${row.rezervace}-checkin`}
                   label="Odkaz na check-in"
@@ -1328,7 +1467,6 @@ export function PrehledClient({
                   </button>
                 ) : null}
               </>
-            ) : null}
           </div>
           <div className="ph-cell" data-label="Příjezd">
             <Pole text={row.termin} />
@@ -1378,8 +1516,22 @@ export function PrehledClient({
     );
   }
 
-  const aktivni = viditelne.filter((row) => !(row.odjezd && row.odjezd < dnes));
-  const odjeli = viditelne.filter((row) => Boolean(row.odjezd && row.odjezd < dnes));
+  const ted = new Date();
+  const aktivni = viditelne.filter((row) => !jeHostOdjetly(hostOdjezdu(row), dnes, ted));
+  const odjeli = viditelne.filter((row) => jeHostOdjetly(hostOdjezdu(row), dnes, ted));
+  const pocty: Record<Zalozka, number> = {
+    prijezdy: radky.filter((r) => r.prijezd === dnes && r.stav !== 'zruseno' && !jeHostOdjetly(hostOdjezdu(r), dnes, ted)).length,
+    dnes: radky.filter((r) => jeVDnesnichOdjezdech(hostOdjezdu(r), dnes, ted) || (r.prijezd === dnes && r.stav !== 'zruseno' && !r.nelzeNacist)).length,
+    dluhy: radky.filter((r) => !r.nelzeNacist && r.stav !== 'zruseno' && kcDluhu(r) > 0).length,
+    hledat: 0,
+  };
+  const nove: Record<Zalozka, boolean> = {
+    prijezdy: jeNove(otiskZalozky('prijezdy'), videne?.[kdoKouka]?.prijezdy || null),
+    dnes: jeNove(otiskZalozky('dnes'), videne?.[kdoKouka]?.dnes || null),
+    dluhy: jeNove(otiskZalozky('dluhy'), videne?.[kdoKouka]?.dluhy || null),
+    hledat: false,
+  };
+  const vybrany = vybrana ? radky.find((r) => r.rezervace === vybrana) : undefined;
 
   return (
     <main className="ph">
@@ -1399,8 +1551,59 @@ export function PrehledClient({
         ) : null}
       </header>
 
-      <Dnesek radky={rows} dnes={dnes} ukazka={ukazka} brana={brana} vPrehledu />
+      <RadaZalozek zalozka={zalozka} pocty={pocty} nove={nove} onZmena={otevriZalozku} />
+      <p className="ph-dnesek__akce">
+        Kdo se dívá
+        <button
+          type="button"
+          className={kdoKouka === 'pravoslav' ? 'is-on' : undefined}
+          onClick={() => {
+            setKdoKouka('pravoslav');
+            try { localStorage.setItem('vivien-kdo', 'pravoslav'); } catch { /* paměť */ }
+          }}
+        >
+          Pravoslav
+        </button>
+        <button
+          type="button"
+          className={kdoKouka === 'nikol' ? 'is-on' : undefined}
+          onClick={() => {
+            setKdoKouka('nikol');
+            try { localStorage.setItem('vivien-kdo', 'nikol'); } catch { /* paměť */ }
+          }}
+        >
+          Nikol
+        </button>
+      </p>
 
+      {zalozka === 'dnes' ? <Dnesek radky={radky} dnes={dnes} ukazka={ukazka} brana={brana} vPrehledu onPrevzato={poPrevzeti} /> : null}
+      {zalozka === 'dluhy' ? (
+        <Nedoplatky
+          radky={radky}
+          dnes={dnes}
+          ukazka={ukazka}
+          onOtevri={(id) => {
+            setVybrana(id);
+            setRozbalene((prev) => ({ ...prev, [id]: true }));
+          }}
+          onPlatby={zapisPlatbyRadku}
+        />
+      ) : null}
+      {zalozka === 'hledat' ? (
+        <Hledani
+          radky={radky}
+          dnes={dnes}
+          zitra={zitra}
+          onOtevri={(id) => {
+            setVybrana(id);
+            setRozbalene((prev) => ({ ...prev, [id]: true }));
+          }}
+        />
+      ) : null}
+      {zalozka === 'dluhy' || zalozka === 'hledat' ? (vybrany ? kartaHosta(vybrany) : null) : null}
+
+      {zalozka === 'prijezdy' ? (
+      <>
       <button type="button" className="ph-rozbal" onClick={() => setPridat((v) => !v)}>
         {pridat ? 'Skrýt formulář' : 'Přidat rezervaci'}
       </button>
@@ -1489,14 +1692,6 @@ export function PrehledClient({
         >
           Bez check-inu
         </button>
-        <label>
-          Hledat
-          <input
-            value={hledat}
-            onChange={(e) => setHledat(e.target.value)}
-            placeholder="číslo, jméno nebo e-mail"
-          />
-        </label>
       </div>
 
       {hlaska ? <p className="ph-hlaska">{hlaska}</p> : null}
@@ -1512,11 +1707,10 @@ export function PrehledClient({
       </div>
 
       {aktivni.length === 0 && odjeli.length === 0 ? <p className="ph-prazdno">Nic tu není.</p> : null}
+      </>
+      ) : null}
 
-      {[
-        { den: dnes, nadpis: 'Dnešní odjezdy', kotva: 'odjezdy-dnes' },
-        { den: zitra, nadpis: 'Zítřejší odjezdy', kotva: 'odjezdy-zitra' },
-      ].map((sekce) => {
+      {(zalozka === 'dnes' ? [{ den: zitra, nadpis: 'Zítřejší odjezdy', kotva: 'odjezdy-zitra' }] : []).map((sekce) => {
         const hoste = seradOdjezdy(radky.filter((r) => r.stav !== 'zruseno' && r.odjezd === sekce.den));
         if (!hoste.length) return null;
         return (
@@ -1594,9 +1788,9 @@ export function PrehledClient({
         );
       })}
 
-      {aktivni.map((row) => kartaHosta(row))}
+      {zalozka === 'prijezdy' ? aktivni.map((row) => kartaHosta(row)) : null}
 
-      {odjeli.length ? (
+      {zalozka === 'prijezdy' && odjeli.length ? (
         <section className="ph-odjeli">
           <h2>Odjeli</h2>
           <button
@@ -1611,7 +1805,7 @@ export function PrehledClient({
         </section>
       ) : null}
 
-      <BranaTabulka
+      {zalozka === 'prijezdy' ? <BranaTabulka
         sloty={sloty}
         radky={radky}
         ukazka={ukazka}
@@ -1623,7 +1817,7 @@ export function PrehledClient({
           setRozbalene((prev) => ({ ...prev, [id]: true }));
           document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }}
-      />
+      /> : null}
 
       {ukazka ? null : <OdkazyZeSchranky />}
       <Upozorneni />

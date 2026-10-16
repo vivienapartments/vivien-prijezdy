@@ -1,4 +1,5 @@
 import { casVPraze, denPraha, hodinaPraha } from './brana';
+import { uzOdjel } from './zalozky';
 import { PREDSTIH_PRIJEZDU_MIN } from './constants';
 import type { ProcessStore, RezervaceRecord } from './store';
 import { popisHosta, upozorniMajitele } from './upozorneni';
@@ -16,13 +17,13 @@ export function klicPrijezdu(rec: Pick<RezervaceRecord, 'prijezd' | 'casPrijezdu
   return `${rec.prijezd} ${rec.casPrijezdu}`;
 }
 
-function uzJeTu(rec: RezervaceRecord): boolean {
-  return rec.stav === 'zruseno' || Boolean(rec.naMiste) || Boolean(rec.predano);
+function uzJeTu(rec: RezervaceRecord, now: Date): boolean {
+  return rec.stav === 'zruseno' || Boolean(rec.naMiste) || Boolean(rec.predano) || uzOdjel(rec, denPraha(now));
 }
 
 /** Jednou, v okně hodinu před časem příjezdu, dokud host není na místě ani předaný. */
 export function maUpozornitHodinu(rec: RezervaceRecord, now = new Date()): boolean {
-  if (uzJeTu(rec)) return false;
+  if (uzJeTu(rec, now)) return false;
   const klic = klicPrijezdu(rec);
   if (!klic || !rec.prijezd || !jeHodina(rec.casPrijezdu)) return false;
   if (rec.prijezdPushCas === klic) return false;
@@ -34,7 +35,7 @@ export function maUpozornitHodinu(rec: RezervaceRecord, now = new Date()): boole
 
 /** Jednou v den příjezdu od 9:00, když čas pořád neznáme. */
 export function maUpozornitNeznamy(rec: RezervaceRecord, now = new Date()): boolean {
-  if (uzJeTu(rec)) return false;
+  if (uzJeTu(rec, now)) return false;
   if (!rec.prijezd || rec.prijezd !== denPraha(now)) return false;
   if (jeHodina(rec.casPrijezdu) || rec.casPrijezdu === 'po20' || rec.casPrijezdu === 'po23') return false;
   if (rec.prijezdPushNeznamy === rec.prijezd) return false;

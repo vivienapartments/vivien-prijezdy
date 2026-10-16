@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { stavParkovani, type BranaSlot } from '@/lib/brana';
 import { sestavDnesek, textUklizeno, type HostDne, type KdoUklidil } from '@/lib/dnesek';
 import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
@@ -13,6 +13,7 @@ type Props = {
   brana?: BranaSlot[];
   /** Sekce nahoře v přehledu. Bez toho je to vlastní stránka. */
   vPrehledu?: boolean;
+  onPrevzato?: (id: string, kdy: string | null) => void;
 };
 
 function datum(dnes: string): string {
@@ -57,6 +58,7 @@ function hostZRadku(row: PrehledRadek, sloty: BranaSlot[]): HostDne {
     dluh: row.dluhText,
     uklizenoKdy: row.uklizenoKdy,
     uklizenoKdo: row.uklizenoKdo,
+    prevzatoKdy: row.prevzatoKdy,
   };
 }
 
@@ -65,11 +67,19 @@ function odkazHosta(id: string, ukazka: boolean, vPrehledu: boolean): string {
   return ukazka ? `/prehled?ukazka=1#${id}` : `/prehled#${id}`;
 }
 
-export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = false }: Props) {
+export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = false, onPrevzato }: Props) {
+  const [mistoPrevzeti, setMistoPrevzeti] = useState<Record<string, string | null>>({});
+  const [cerstve, setCerstve] = useState<string | null>(null);
   const chybne = radky.filter((row) => row.nelzeNacist).map((row) => row.rezervace);
   const pohled = sestavDnesek(
-    radky.filter((row) => !row.nelzeNacist).map((row) => hostZRadku(row, brana)),
+    radky
+      .filter((row) => !row.nelzeNacist)
+      .map((row) => hostZRadku(row, brana))
+      .map((h) =>
+        Object.prototype.hasOwnProperty.call(mistoPrevzeti, h.rezervace) ? { ...h, prevzatoKdy: mistoPrevzeti[h.rezervace] } : h,
+      ),
     dnes,
+    new Date(),
   );
   const chybyKaret = vPrehledu ? pohled.chyby : [...chybne, ...pohled.chyby];
   const [misto, setMisto] = useState<Record<string, { kdy: string; kdo: KdoUklidil } | null>>({});
@@ -77,6 +87,11 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
   const [chyba, setChyba] = useState('');
   const [nabidka, setNabidka] = useState<{ id: string; jmeno: string } | null>(null);
   const [nabidkaStav, setNabidkaStav] = useState('');
+  useEffect(() => {
+    if (!cerstve) return;
+    const casovac = window.setTimeout(() => setCerstve(null), 10_000);
+    return () => window.clearTimeout(casovac);
+  }, [cerstve]);
   const maNeco =
     pohled.uklid.length + pohled.odjezdy.length + pohled.prijezdy.length + pohled.nedoplatky.length + chybyKaret.length >
     0;
@@ -100,6 +115,25 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
           (!r.casPrijezdu || r.casPrijezdu > '14:00'),
       ) || null
     );
+  }
+
+  async function prevzit(id: string, vratit = false) {
+    setChyba('');
+    if (!ukazka) {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: id, akce: vratit ? 'vratit-odjezd' : 'prevzato' }),
+      });
+      if (!res.ok) {
+        setChyba('Převzetí se nepodařilo zapsat.');
+        return;
+      }
+    }
+    const kdy = vratit ? null : new Date().toISOString();
+    setMistoPrevzeti((stav) => ({ ...stav, [id]: kdy }));
+    onPrevzato?.(id, kdy);
+    setCerstve(vratit ? null : id);
   }
 
   async function zapis(id: string, akce: 'uklid' | 'vratit-uklid', kdo?: KdoUklidil) {
@@ -225,6 +259,16 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
                       <button type="button" onClick={() => setPtam(r.rezervace)}>
                         Uklizeno
                       </button>
+                      {r.uvolni.startsWith('uvolněno') ? null : (
+                        <button type="button" onClick={() => void prevzit(r.rezervace)}>
+                          Převzato
+                        </button>
+                      )}
+                      {cerstve === r.rezervace ? (
+                        <button type="button" onClick={() => void prevzit(r.rezervace, true)}>
+                          Vrátit
+                        </button>
+                      ) : null}
                     </p>
                   )}
                 </li>
@@ -238,6 +282,14 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
         <div>
           <h2>Odjezdy</h2>
           <ul>
+            {cerstve ? (
+              <p className="ph-dnesek__akce">
+                Převzato.
+                <button type="button" onClick={() => void prevzit(cerstve, true)}>
+                  Vrátit
+                </button>
+              </p>
+            ) : null}
             {pohled.odjezdy.map((r) => (
               <li key={r.rezervace} className="ph-dnesek__radek">
                 <p>
@@ -247,6 +299,11 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
                   {' · '}
                   {r.cas}
                   {r.dluh ? ` · ${r.dluh}` : ''}
+                </p>
+                <p className="ph-dnesek__akce">
+                  <button type="button" onClick={() => void prevzit(r.rezervace)}>
+                    Převzato
+                  </button>
                 </p>
               </li>
             ))}

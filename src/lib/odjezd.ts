@@ -29,6 +29,8 @@ export type VstupDluhu = {
   priplatekDrive?: number | null;
   /** Potvrzený příplatek za pozdější odjezd. */
   priplatekPozde?: number | null;
+  /** Druhy, které už mají vlastní záznam platby. Prázdné + zaplaceno = starší „vše“. */
+  zaplacene?: DruhDluhu[];
 };
 
 const PORADI_APT: Record<string, number> = { V1: 1, V2: 2, V3: 3, V4: 4, V5: 5 };
@@ -106,9 +108,9 @@ function casZIso(iso: string | null): string | null {
   return jeHodina(cas) ? cas : null;
 }
 
-/** Po Zaplaceno je dluh pryč. Jinak poplatek, pozdní příjezd a cesty. */
+/** Nezaplacené položky. Staré zaplaceno bez seznamu plateb kryje vše, co teď na kartě je. */
 export function polozkyDluhu(v: VstupDluhu): PolozkaDluhu[] {
-  if (v.zaplaceno || v.stav === 'zruseno') return [];
+  if (v.stav === 'zruseno') return [];
   const ven: PolozkaDluhu[] = [];
   if (v.poplatek === 'ano') {
     const kc = castkaPoplatku(v.noci, v.osob);
@@ -125,12 +127,16 @@ export function polozkyDluhu(v: VstupDluhu): PolozkaDluhu[] {
   if (cesta > 0) ven.push({ druh: 'cesta', kc: cesta });
   if (typeof v.priplatekDrive === 'number' && v.priplatekDrive > 0) ven.push({ druh: 'drive', kc: Math.round(v.priplatekDrive) });
   if (typeof v.priplatekPozde === 'number' && v.priplatekPozde > 0) ven.push({ druh: 'pozde', kc: Math.round(v.priplatekPozde) });
-  return ven;
+  const zaplacene = v.zaplacene || [];
+  if (v.zaplaceno && zaplacene.length === 0) return [];
+  if (!zaplacene.length) return ven;
+  const set = new Set(zaplacene);
+  return ven.filter((p) => !set.has(p.druh));
 }
 
-export function polozkyZRezervace(rec: RezervaceRecord): PolozkaDluhu[] {
-  return polozkyDluhu({
-    zaplaceno: rec.zaplaceno,
+function vstupDluhu(rec: RezervaceRecord, zaplacene: DruhDluhu[] | null): VstupDluhu {
+  return {
+    zaplaceno: zaplacene ? null : rec.zaplaceno,
     stav: rec.stav,
     poplatek: rec.poplatek,
     noci: rec.noci,
@@ -142,7 +148,22 @@ export function polozkyZRezervace(rec: RezervaceRecord): PolozkaDluhu[] {
     vyjezdy: rec.vyjezdy || [],
     priplatekDrive: rec.zadostPrijezd?.stav === 'potvrzeno' ? rec.zadostPrijezd.kc : null,
     priplatekPozde: rec.zadostOdjezd?.stav === 'potvrzeno' ? rec.zadostOdjezd.kc : null,
-  });
+    zaplacene: zaplacene || undefined,
+  };
+}
+
+export function polozkyZRezervace(rec: RezervaceRecord): PolozkaDluhu[] {
+  const zaplacene = (rec.platby || []).map((p) => p.druh);
+  return polozkyDluhu(vstupDluhu(rec, zaplacene.length ? zaplacene : null));
+}
+
+/** Všechny položky bez ohledu na to, co už je zaplacené. */
+export function polozkyVsechny(rec: RezervaceRecord): PolozkaDluhu[] {
+  return polozkyDluhu({ ...vstupDluhu(rec, []), zaplaceno: null });
+}
+
+export function nazevDluhu(druh: DruhDluhu, lang: GuideLang = 'cs'): string {
+  return NAZEV[jazyk(lang)][druh];
 }
 
 export function soucetDluhu(polozky: PolozkaDluhu[]): number {
@@ -456,7 +477,8 @@ export function klicOdjezdu(rec: Pick<RezervaceRecord, 'odjezd' | 'casOdjezdu'>)
 }
 
 export function maUpozornitPul(rec: RezervaceRecord, now = new Date()): boolean {
-  if (rec.stav === 'zruseno') return false;
+  if (rec.stav === 'zruseno' || rec.prevzatoKdy) return false;
+  if (rec.odjezd && rec.odjezd < denPraha(now)) return false;
   const klic = klicOdjezdu(rec);
   if (!klic || !rec.odjezd || !jeHodina(rec.casOdjezdu)) return false;
   if (rec.odjezdPushPul === klic) return false;
@@ -467,7 +489,7 @@ export function maUpozornitPul(rec: RezervaceRecord, now = new Date()): boolean 
 }
 
 export function prazdnyOdjezdBeh(): OdjezdBeh {
-  return { vecer: null, pripominka: null, rano: null, uklid: null };
+  return { vecer: null, pripominka: null, rano: null, uklid: null, pondeli: null };
 }
 
 export function nactiOdjezdBeh(raw: unknown): OdjezdBeh {
@@ -475,6 +497,6 @@ export function nactiOdjezdBeh(raw: unknown): OdjezdBeh {
   const den = (v: unknown) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null);
   const uklid =
     typeof b.uklid === 'string' && /^\d{4}-\d{2}-\d{2}:(?:V[1-5](?:,V[1-5])*)?$/.test(b.uklid) ? b.uklid : null;
-  return { vecer: den(b.vecer), pripominka: den(b.pripominka), rano: den(b.rano), uklid };
+  return { vecer: den(b.vecer), pripominka: den(b.pripominka), rano: den(b.rano), uklid, pondeli: den(b.pondeli) };
 }
 

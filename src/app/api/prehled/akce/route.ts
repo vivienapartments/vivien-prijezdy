@@ -12,11 +12,13 @@ import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
 import { aplikujNelze, aplikujPotvrzeni, oznacUpozorneno, poUklidu, predmetPripraveno } from '@/lib/okno-pobytu';
 import { upozorniMajitele } from '@/lib/upozorneni';
-import { polozkyZRezervace } from '@/lib/odjezd';
+import { polozkyZRezervace, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
+import { vratPlatbu, zaplatDruhy } from '@/lib/platby-hosta';
+import { oznacPrevzeti, vratPrevzeti } from '@/lib/zalozky';
 import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { prehledPrihlasen } from '@/lib/prehled-session';
-import { createProcessStore, type RezervaceRecord, type RezervaceStav } from '@/lib/store';
+import { createProcessStore, type JakPlatby, type RezervaceRecord, type RezervaceStav } from '@/lib/store';
 import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -25,6 +27,14 @@ const noStore = { 'Cache-Control': 'no-store' };
 
 function chyba(status: number, error: string): NextResponse {
   return NextResponse.json({ ok: false, error }, { status, headers: noStore });
+}
+
+function jeJak(v: unknown): JakPlatby | null {
+  return v === 'hotove' || v === 'karta' || v === 'prevod' || v === 'cena' ? v : null;
+}
+
+function jeDruh(v: unknown): DruhDluhu | 'vse' | null {
+  return v === 'vse' || v === 'poplatek' || v === 'prijezd' || v === 'cesta' || v === 'drive' || v === 'pozde' ? v : null;
 }
 
 function pridej(rec: RezervaceRecord, co: string, patch: Partial<RezervaceRecord> = {}): RezervaceRecord {
@@ -56,10 +66,31 @@ export async function POST(request: Request): Promise<NextResponse> {
     ktery?: string;
     pole?: string;
     kdo?: string;
+    jak?: string;
+    druh?: string;
+    ids?: string[];
     castka?: string;
     stav?: string;
     zprava?: string;
   } | null;
+  if (body?.akce === 'platba-hromadne') {
+    const jak = jeJak(body.jak);
+    const kdo = body.kdo === 'pravoslav' || body.kdo === 'nikol' ? body.kdo : null;
+    const ids = Array.isArray(body.ids) ? body.ids.map((x) => (typeof x === 'string' ? x.trim() : '')).filter(Boolean) : [];
+    if (!jak || !kdo || !ids.length) return chyba(400, 'Chybí platba.');
+    const store = createProcessStore();
+    let pocet = 0;
+    for (const cislo of ids) {
+      const zaznam = await store.getRezervace(cislo);
+      if (!zaznam) continue;
+      const dalsi = zaplatDruhy(zaznam, ['vse'], jak, kdo);
+      if (dalsi === zaznam) continue;
+      await store.setRezervace(cislo, dalsi);
+      pocet += 1;
+    }
+    return NextResponse.json({ ok: true, pocet }, { headers: noStore });
+  }
+
   const id = (body?.rezervace || '').trim();
   const akce = body?.akce;
   if (
@@ -92,6 +123,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'brana' &&
       akce !== 'odemknout' &&
       akce !== 'email' &&
+      akce !== 'platba' &&
+      akce !== 'vratit-platbu' &&
+      akce !== 'prevzato' &&
+      akce !== 'vratit-odjezd' &&
       akce !== 'prevzit')
   ) {
     return chyba(400, 'Neznámá akce.');
@@ -207,10 +242,38 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, poplatek: stav }, { headers: noStore });
   }
 
+  if (akce === 'platba' || akce === 'vratit-platbu') {
+    const druh = jeDruh(body?.druh);
+    if (!druh) return chyba(400, 'Chybí položka.');
+    if (akce === 'vratit-platbu') {
+      const dalsi = vratPlatbu(rec, druh);
+      await store.setRezervace(id, dalsi);
+      return NextResponse.json({ ok: true, platby: dalsi.platby, zaplaceno: dalsi.zaplaceno, dluh: textRozpisu(polozkyZRezervace(dalsi)) }, { headers: noStore });
+    }
+    const jak = jeJak(body?.jak);
+    const kdo = body?.kdo === 'pravoslav' || body?.kdo === 'nikol' ? body.kdo : null;
+    if (!jak || !kdo) return chyba(400, 'Chybí způsob platby.');
+    const dalsi = zaplatDruhy(rec, [druh], jak, kdo);
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, platby: dalsi.platby, zaplaceno: dalsi.zaplaceno, dluh: textRozpisu(polozkyZRezervace(dalsi)) }, { headers: noStore });
+  }
+
+  if (akce === 'prevzato') {
+    const dalsi = oznacPrevzeti(rec);
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, prevzatoKdy: dalsi.prevzatoKdy }, { headers: noStore });
+  }
+
+  if (akce === 'vratit-odjezd') {
+    const dalsi = vratPrevzeti(rec);
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, prevzatoKdy: null }, { headers: noStore });
+  }
+
   if (akce === 'zrusit-zaplaceni') {
     await store.setRezervace(
       id,
-      zapisMajitele(rec, ['zaplaceno', 'poplatekVybral'], { zaplaceno: null, poplatekVybral: null }, 'Vrácen poplatek městu'),
+      zapisMajitele(rec, ['zaplaceno', 'poplatekVybral'], { zaplaceno: null, poplatekVybral: null, platby: [] }, 'Vrácena platba'),
     );
     return NextResponse.json({ ok: true, zaplaceno: null, poplatekVybral: null }, { headers: noStore });
   }

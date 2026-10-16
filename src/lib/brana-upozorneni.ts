@@ -20,6 +20,7 @@ function hostZ(rec: RezervaceRecord) {
 
 /** Jednou, když host napsal telefon a je v okně 7 dní a brána ještě nemá místo. */
 export function maUpozornitRegistraci(rec: RezervaceRecord, sloty: BranaSlot[], now: Date): boolean {
+  if (rec.prevzatoKdy || (rec.odjezd && rec.odjezd < denPraha(now))) return false;
   if (rec.branaPushRegistrace) return false;
   const stav = stavParkovani(hostZ(rec), sloty, now);
   return stav.akce === 'registrovat';
@@ -27,6 +28,7 @@ export function maUpozornitRegistraci(rec: RezervaceRecord, sloty: BranaSlot[], 
 
 /** Jednou ráno v den příjezdu, když parkování ještě není zelené. */
 export function maUpozornitRano(rec: RezervaceRecord, sloty: BranaSlot[], now: Date): boolean {
+  if (rec.prevzatoKdy || (rec.odjezd && rec.odjezd < denPraha(now))) return false;
   if (rec.zpusobPrijezdu !== 'auto' || rec.stav === 'zruseno') return false;
   if (!rec.prijezd || rec.prijezd !== denPraha(now)) return false;
   if (rec.branaPushRano === rec.prijezd) return false;
