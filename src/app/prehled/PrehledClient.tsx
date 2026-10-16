@@ -22,8 +22,8 @@ import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { langFromNarodnost } from '@/lib/vivien-data';
 import { jeHodina, nazevDluhu, polozkyDluhu, seradOdjezdy, textRozpisu, ukazatCasNaKarte, zobrazCas, zpravaOdjezdu, type DruhDluhu } from '@/lib/odjezd';
 import { jeProPohodu, textPohody } from '@/lib/pohoda';
-import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
+import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
 import { Dnesek } from './Dnesek';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
@@ -707,6 +707,37 @@ export function PrehledClient({
     );
   }
 
+  async function oznacWhatsApp(row: PrehledRadek) {
+    const seznam = zpravyRadku(row);
+    const zprava = volba[row.rezervace] ?? seznam.find((z) => z.vychozi)?.id;
+    if (!zprava) return;
+    const nazev = seznam.find((z) => z.id === zprava)?.nazev || 'zpráva';
+    const ted = new Date().toISOString();
+    if (!ukazka) {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: row.rezervace, akce: 'whatsapp', zprava }),
+      });
+      if (!res.ok) {
+        setHlaska('WhatsApp se nepodařilo zapsat.');
+        return;
+      }
+    }
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              odjezdDotaz: zprava === 'odjezd' ? ted : r.odjezdDotaz,
+              pohodaDotaz: zprava === 'pohoda' ? ted : r.pohodaDotaz,
+              historie: [...r.historie, { cas: ted, co: `WhatsApp: ${nazev}` }].slice(-40),
+            }
+          : r,
+      ),
+    );
+  }
+
   function naMisteRadku(row: PrehledRadek): string | null {
     if (Object.prototype.hasOwnProperty.call(naMisteStav, row.rezervace)) return naMisteStav[row.rezervace];
     return row.naMiste;
@@ -1062,7 +1093,8 @@ export function PrehledClient({
     );
     const emailHosta = row.email.includes('@') ? row.email : '';
     const zpravyHosta = zpravyRadku(row);
-    const zpravaRamecek = zpravyHosta.length && (wa || emailHosta) ? (
+    const maMenuZprav = zpravyHosta.length > 0;
+    const zpravaRamecek = maMenuZprav ? (
       <fieldset className="ph-menu">
         <legend>Zpráva</legend>
         {zpravyHosta.map((z) => {
@@ -1082,25 +1114,23 @@ export function PrehledClient({
         })}
       </fieldset>
     ) : null;
-    const whatsapp = wa ? (
-      <a
-        className="ph-wa"
-        href={odkazWhatsAppPrehled(wa, predanoKdy ? '' : zpravaRadku(row), userAgent)}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Napsat na WhatsApp
-      </a>
-    ) : null;
     const emailTlacitko = emailHosta ? (
       <button type="button" className="ph-wa" onClick={() => setDotazEmail({ id: row.rezervace, email: emailHosta })}>
         Poslat e-mailem
       </button>
     ) : null;
-    const akceZpravy = whatsapp || emailTlacitko ? (
+    const akceZpravy = maMenuZprav ? (
       <div className="ph-zpravy-akce">
-        {whatsapp}
+        <TlacitkoWhatsApp
+          wa={wa}
+          zprava={zpravaRadku(row)}
+          userAgent={userAgent}
+          onPredOtevrenim={() => oznacWhatsApp(row)}
+        />
         {emailTlacitko}
+        <button type="button" className="ph-kopie" onClick={() => void kopirovatZpravu(row)}>
+          Zkopírovat zprávu
+        </button>
         {dotazEmail?.id === row.rezervace ? (
           <div className="ph-predano-dotaz">
             <p>
@@ -1299,7 +1329,12 @@ export function PrehledClient({
         {dil.radek}
         {poplatekRadek}
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
-        {predanoKdy || odjel ? null : zpravaRamecek}
+        {predanoKdy || odjel ? null : (
+          <>
+            {zpravaRamecek}
+            {akceZpravy}
+          </>
+        )}
         {cekajici === 'registrace' ? dil.registrace : null}
         {cekajici === 'odpoved' ? dil.odpoved : null}
         {cekajici === 'predani' ? (
@@ -1309,7 +1344,6 @@ export function PrehledClient({
           </>
         ) : null}
         {cekajici === 'namiste' ? namisteTlacitko : null}
-        {akceZpravy}
         <button
           type="button"
           className="ph-rozbal"
@@ -1393,7 +1427,12 @@ export function PrehledClient({
             </div>
           ) : null}
           {cekajici === 'namiste' ? null : namisteTlacitko}
-          {predanoKdy || odjel ? zpravaRamecek : null}
+          {predanoKdy || odjel ? (
+            <>
+              {zpravaRamecek}
+              {akceZpravy}
+            </>
+          ) : null}
           {row.prevzatoKdy ? (
             <button type="button" className="ph-predano" onClick={() => setDotazVratitOdjezd(row.rezervace)}>
               Vrátit odjezd
@@ -1474,11 +1513,6 @@ export function PrehledClient({
                 Zrušit
               </button>
             </div>
-          ) : null}
-          {wa ? (
-            <button type="button" className="ph-kopie" onClick={() => kopirovatZpravu(row)}>
-              Zkopírovat zprávu
-            </button>
           ) : null}
           {wa || row.telefonText || row.jinyTelefonText ? <UlozitKontakt row={row} /> : null}
           <a className="ph-hostuv-pruvodce" href={odkazPruvodceMajitele(row.rezervace, ukazka)}>
@@ -1575,14 +1609,12 @@ export function PrehledClient({
                   </div>
                 ) : null}
                 {row.jinyTelefonWa && row.telefonWa && row.jinyTelefonWa !== row.telefonWa ? (
-                  <a
-                    className="ph-wa ph-wa--maly"
-                    href={odkazWhatsAppPrehled(row.jinyTelefonWa, zpravaRadku(row), userAgent)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    WhatsApp
-                  </a>
+                  <TlacitkoWhatsApp
+                    className="ph-wa--maly"
+                    wa={row.jinyTelefonWa}
+                    zprava={zpravaRadku(row)}
+                    userAgent={userAgent}
+                  />
                 ) : null}
               </div>
             ) : null}
@@ -1871,24 +1903,29 @@ export function PrehledClient({
                           <span>{` · Odesláno ${odeslano}`}</span>
                         ) : (
                           <span className="ph-odjezdy__akce">
-                            {wa ? (
-                              <a
-                                className="ph-wa"
-                                href={odkazWhatsAppPrehled(wa, text, userAgent)}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  const href = odkazWhatsAppPrehled(wa, text, userAgent);
-                                  void oznacPohodu(row).then(() => window.open(href, '_blank', 'noopener,noreferrer'));
-                                }}
-                              >
-                                Napsat na WhatsApp
-                              </a>
-                            ) : null}
+                            <TlacitkoWhatsApp
+                              wa={wa}
+                              zprava={text}
+                              userAgent={userAgent}
+                              onPredOtevrenim={() => oznacPohodu(row)}
+                            />
                             {email ? (
                               <button type="button" className="ph-wa" onClick={() => setDotazPohoda(row.rezervace)}>
                                 Poslat e-mailem
                               </button>
                             ) : null}
+                            <button
+                              type="button"
+                              className="ph-kopie"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(text).then(
+                                  () => setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`),
+                                  () => setHlaska(text),
+                                );
+                              }}
+                            >
+                              Zkopírovat zprávu
+                            </button>
                             <details>
                               <summary>Text zprávy</summary>
                               <p>{text}</p>
@@ -1950,24 +1987,29 @@ export function PrehledClient({
                       <span>{` · Dotaz odeslán ${dotaz}`}</span>
                     ) : (
                       <span className="ph-odjezdy__akce">
-                        {wa ? (
-                          <a
-                            className="ph-wa"
-                            href={odkazWhatsAppPrehled(wa, text, userAgent)}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              const href = odkazWhatsAppPrehled(wa, text, userAgent);
-                              void oznacDotaz(row).then(() => window.open(href, '_blank', 'noopener,noreferrer'));
-                            }}
-                          >
-                            Napsat na WhatsApp
-                          </a>
-                        ) : null}
+                        <TlacitkoWhatsApp
+                          wa={wa}
+                          zprava={text}
+                          userAgent={userAgent}
+                          onPredOtevrenim={() => oznacDotaz(row)}
+                        />
                         {email ? (
                           <button type="button" className="ph-wa" onClick={() => setDotazOdjezd(row.rezervace)}>
                             Poslat e-mailem
                           </button>
                         ) : null}
+                        <button
+                          type="button"
+                          className="ph-kopie"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(text).then(
+                              () => setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`),
+                              () => setHlaska(text),
+                            );
+                          }}
+                        >
+                          Zkopírovat zprávu
+                        </button>
                         <details>
                           <summary>Text zprávy</summary>
                           <p>{text}</p>

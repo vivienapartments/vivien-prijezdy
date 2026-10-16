@@ -124,6 +124,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'brana' &&
       akce !== 'odemknout' &&
       akce !== 'email' &&
+      akce !== 'whatsapp' &&
       akce !== 'platba' &&
       akce !== 'vratit-platbu' &&
       akce !== 'prevzato' &&
@@ -423,7 +424,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, nejisty: tel.nejisty, hodnota: textNovy }, { headers: noStore });
   }
 
-  if (akce === 'email') {
+  if (akce === 'email' || akce === 'whatsapp') {
     const druhy: DruhZpravy[] = [
       'checkin',
       'neotevrel',
@@ -438,8 +439,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     ];
     const druh = druhy.find((id) => id === body?.zprava);
     if (!druh) return chyba(400, 'Vyberte zprávu.');
-    const komu = (rec.emailHosta || '').trim();
-    if (!komu || problemEmailu(komu)) return chyba(400, 'Host nemá e-mail.');
     const kroky = chybejiciKroky({
       cas: rec.casPrijezdu,
       zpusob: rec.zpusobPrijezdu,
@@ -476,6 +475,18 @@ export async function POST(request: Request): Promise<NextResponse> {
       pripraveno: druh === 'pripraveno',
     }).find((z) => z.id === druh);
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
+    const patch =
+      druh === 'odjezd'
+        ? { odjezdDotaz: new Date().toISOString() }
+        : druh === 'pohoda'
+          ? { pohodaDotaz: new Date().toISOString() }
+          : {};
+    if (akce === 'whatsapp') {
+      await store.setRezervace(id, pridej(rec, `WhatsApp: ${zprava.nazev}`, patch));
+      return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
+    }
+    const komu = (rec.emailHosta || '').trim();
+    if (!komu || problemEmailu(komu)) return chyba(400, 'Host nemá e-mail.');
     try {
       await posliEmailZpravy({
         to: komu,
@@ -487,12 +498,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');
     }
-    const patch =
-      druh === 'odjezd'
-        ? { odjezdDotaz: new Date().toISOString() }
-        : druh === 'pohoda'
-          ? { pohodaDotaz: new Date().toISOString() }
-          : {};
     await store.setRezervace(id, pridej(rec, `E-mailem: ${zprava.nazev}`, patch));
     return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
   }

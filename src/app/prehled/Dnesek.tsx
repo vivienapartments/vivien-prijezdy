@@ -5,6 +5,7 @@ import { stavParkovani, type BranaSlot } from '@/lib/brana';
 import { sestavDnesek, textUklizeno, type HostDne, type KdoUklidil } from '@/lib/dnesek';
 import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
 import type { PrehledRadek } from '@/lib/prehled';
+import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 
 type Props = {
   radky: PrehledRadek[];
@@ -176,23 +177,21 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
       setNabidkaStav('V ukázce se nic neposílá.');
       return;
     }
-    const row = radky.find((r) => r.rezervace === nabidka.id);
-    if (jak === 'whatsapp' && row?.telefonWa) {
-      const text = textPripraveno(row.jazyk, row.odkaz ? odkazPripraveno(row.odkaz) : '');
-      window.open(`https://wa.me/${row.telefonWa}?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    const id = nabidka.id;
+    if (jak === 'whatsapp') {
       await fetch('/api/prehled/akce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rezervace: nabidka.id, akce: 'pripraveno-whatsapp' }),
+        body: JSON.stringify({ rezervace: id, akce: 'pripraveno-whatsapp' }),
       });
+      setNabidka(null);
+      return;
     }
-    if (jak === 'email') {
-      await fetch('/api/prehled/akce', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rezervace: nabidka.id, akce: 'email', zprava: 'pripraveno' }),
-      });
-    }
+    await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: id, akce: 'email', zprava: 'pripraveno' }),
+    });
     setNabidka(null);
   }
 
@@ -356,15 +355,36 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
         <div className="ph-okno">
           <p>Dát hostovi vědět, že je apartmán připravený?</p>
           <p>{nabidka.jmeno}</p>
-          <button type="button" onClick={() => void odeslatNabidku('email')}>
-            Poslat e-mailem
-          </button>
-          <button type="button" onClick={() => void odeslatNabidku('whatsapp')}>
-            Napsat na WhatsApp
-          </button>
-          <button type="button" onClick={() => void odeslatNabidku('ne')}>
-            Ne
-          </button>
+          <div className="ph-zpravy-akce">
+            <TlacitkoWhatsApp
+              wa={radky.find((r) => r.rezervace === nabidka.id)?.telefonWa}
+              zprava={(() => {
+                const row = radky.find((r) => r.rezervace === nabidka.id);
+                return textPripraveno(row?.jazyk ?? null, row?.odkaz ? odkazPripraveno(row.odkaz) : '');
+              })()}
+              userAgent={typeof navigator !== 'undefined' ? navigator.userAgent : ''}
+              onPredOtevrenim={() => odeslatNabidku('whatsapp')}
+            />
+            {radky.find((r) => r.rezervace === nabidka.id)?.email.includes('@') ? (
+              <button type="button" className="ph-wa" onClick={() => void odeslatNabidku('email')}>
+                Poslat e-mailem
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="ph-kopie"
+              onClick={() => {
+                const row = radky.find((r) => r.rezervace === nabidka.id);
+                const text = textPripraveno(row?.jazyk ?? null, row?.odkaz ? odkazPripraveno(row.odkaz) : '');
+                void navigator.clipboard.writeText(text);
+              }}
+            >
+              Zkopírovat zprávu
+            </button>
+            <button type="button" className="ph-kopie" onClick={() => void odeslatNabidku('ne')}>
+              Ne
+            </button>
+          </div>
           {nabidkaStav ? <p>{nabidkaStav}</p> : null}
         </div>
       ) : null}

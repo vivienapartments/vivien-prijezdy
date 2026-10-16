@@ -133,5 +133,23 @@ describe('pohoda', () => {
     const polozka = menu.find((z) => z.id === 'pohoda');
     expect(polozka?.nazev).toBe('Je vše v pořádku?');
     expect(polozka?.text).toBe(ZPRAVA_POHODA.cs);
+    expect(polozka?.vychozi).toBe(true);
+  });
+
+  it('den před odjezdem předvybere Dotaz na odjezd', () => {
+    const menu = zpravyMenu({
+      stav: 'odeslano',
+      lang: 'cs',
+      pruvodce: null,
+      otevrenoPocet: 1,
+      casPrijezdu: '15:00',
+      prijezd: '2026-10-14',
+      dnes: '2026-10-16',
+      predano: '2026-10-14T14:00:00Z',
+      odjezd: '2026-10-17',
+      casOdjezdu: null,
+    });
+    expect(menu.find((z) => z.id === 'odjezd')?.vychozi).toBe(true);
+    expect(menu.find((z) => z.id === 'pohoda')?.vychozi).toBe(false);
   });
 });

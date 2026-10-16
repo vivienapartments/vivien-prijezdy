@@ -551,7 +551,6 @@ export function zpravyMenu(opts: {
     pohoda: textPohody(opts.lang),
     pripraveno: textPripraveno(opts.lang, opts.pruvodce ? odkazPripraveno(opts.pruvodce) : ''),
   };
-  const hlavni = hlavniZprava(opts);
   const videt = PORADI.filter((id) => {
     if (id === 'nedojezd') return ukazatNedojezd({ ...opts, chybi });
     if (id === 'pripraveno') return opts.pripraveno === true;
@@ -574,13 +573,30 @@ export function zpravyMenu(opts: {
     }
     return true;
   });
+  const vychozi = vychoziZprava(opts, videt);
   return videt.map((id) => ({
     id,
     nazev: NAZEV[id],
     text: texty[id],
-    vychozi: id === hlavni,
+    vychozi: id === vychozi,
     vystraha: id === 'nedojezd',
   }));
+}
+
+/** Po předání: den po příjezdu pohoda, den před odjezdem odjezd, jinak nic. Předtím podle fáze. */
+export function vychoziZprava(
+  opts: Parameters<typeof zpravyMenu>[0],
+  videt: DruhZpravy[],
+): DruhZpravy | null {
+  if (opts.predano) {
+    const denPo = Boolean(opts.prijezd && opts.dnes === posunDen(opts.prijezd, 1));
+    const denPred = Boolean(opts.odjezd && opts.dnes === posunDen(opts.odjezd, -1));
+    if (denPo && videt.includes('pohoda')) return 'pohoda';
+    if (denPred && videt.includes('odjezd')) return 'odjezd';
+    return null;
+  }
+  const hlavni = hlavniZprava(opts);
+  return videt.includes(hlavni) ? hlavni : null;
 }
 
 export function odkazWhatsApp(wa: string, zprava: string): string {

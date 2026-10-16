@@ -703,9 +703,11 @@
 }
 
 .ph a.ph-wa,
-.ph button.ph-wa {
+.ph button.ph-wa,
+.ph span.ph-wa {
   display: inline-flex;
   align-items: center;
+  gap: 0.35rem;
   min-height: 2.6rem;
   margin: 0;
   padding: 0.4rem 0.8rem;
@@ -714,6 +716,24 @@
   color: var(--color-gold);
   background: transparent;
   text-decoration: none;
+}
+
+.ph a.ph-wa--zeleny,
+.ph span.ph-wa--zeleny {
+  border-color: #25d366;
+  background: #25d366;
+  color: #fff;
+}
+
+.ph span.ph-wa--chybi {
+  border-color: #6b6b6b;
+  background: #4a4a4a;
+  color: #c8c8c8;
+  cursor: not-allowed;
+}
+
+.ph-wa__ikona {
+  flex-shrink: 0;
 }
 
 .ph-puvodni,
