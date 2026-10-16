@@ -7,6 +7,7 @@ import type { JakPlatby, PlatbaPolozky } from '@/lib/store';
 import {
   formatKc,
   hledejHosty,
+  jeVNedoplatcich,
   seradNedoplatky,
   textHromadne,
   type FiltrHledani,
@@ -106,8 +107,8 @@ export function Nedoplatky({
 
   const dluhy = seradNedoplatky(
     radky
-      .filter((r) => !r.nelzeNacist && r.stav !== 'zruseno' && kcRadku(r) > 0)
-      .map((r) => ({ row: r, odjezd: r.odjezd, kc: kcRadku(r) })),
+      .filter((r) => !r.nelzeNacist && jeVNedoplatcich({ prijezd: r.prijezd, odjezd: r.odjezd, stav: r.stav }, dnes) && kcRadku(r) > 0)
+      .map((r) => ({ row: r, odjezd: r.odjezd, prijezd: r.prijezd, kc: kcRadku(r) })),
     dnes,
   );
   const zaskrtnute = dluhy.filter((d) => vybrane[d.row.rezervace]);
@@ -355,7 +356,7 @@ export function Hledani({
       prijezd: r.prijezd,
       odjezd: r.odjezd,
       stav: r.stav,
-      dluhKc: kcRadku(r),
+      dluhKc: jeVNedoplatcich({ prijezd: r.prijezd, odjezd: r.odjezd, stav: r.stav }, dnes) ? kcRadku(r) : 0,
     }));
   const nalezene = hledejHosty(hoste, dotaz, filtr, dnes, zitra);
   return (

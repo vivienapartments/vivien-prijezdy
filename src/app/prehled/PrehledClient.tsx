@@ -27,7 +27,7 @@ import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
 import { Dnesek } from './Dnesek';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import type { JakPlatby, PlatbaPolozky } from '@/lib/store';
-import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
+import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
 import { nactiBranu, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
@@ -399,10 +399,14 @@ export function PrehledClient({
     return (row.dluhPolozky || []).filter((p) => !platbyRadku.some((x) => x.druh === p.druh)).reduce((s, p) => s + p.kc, 0);
   }
 
+  function patriDoDluhu(row: PrehledRadek): boolean {
+    return !row.nelzeNacist && jeVNedoplatcich({ prijezd: row.prijezd, odjezd: row.odjezd, stav: row.stav }, dnes) && kcDluhu(row) > 0;
+  }
+
   function otiskZalozky(z: Zalozka): string {
     const ted = new Date();
     if (z === 'dluhy') {
-      return otisk(radky.filter((r) => !r.nelzeNacist && r.stav !== 'zruseno' && kcDluhu(r) > 0).map((r) => ({ id: r.rezervace, kc: kcDluhu(r) })));
+      return otisk(radky.filter((r) => patriDoDluhu(r)).map((r) => ({ id: r.rezervace, kc: kcDluhu(r) })));
     }
     if (z === 'dnes') {
       return otisk(
@@ -1616,7 +1620,7 @@ export function PrehledClient({
   const pocty: Record<Zalozka, number> = {
     prijezdy: radky.filter((r) => r.prijezd === dnes && r.stav !== 'zruseno' && !jeHostOdjetly(hostOdjezdu(r), dnes, ted)).length,
     dnes: radky.filter((r) => jeVDnesnichOdjezdech(hostOdjezdu(r), dnes, ted) || (r.prijezd === dnes && r.stav !== 'zruseno' && !r.nelzeNacist)).length,
-    dluhy: radky.filter((r) => !r.nelzeNacist && r.stav !== 'zruseno' && kcDluhu(r) > 0).length,
+    dluhy: radky.filter((r) => patriDoDluhu(r)).length,
     hledat: 0,
   };
   const nove: Record<Zalozka, boolean> = {

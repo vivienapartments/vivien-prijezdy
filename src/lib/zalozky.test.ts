@@ -9,6 +9,7 @@ import {
   hledejHosty,
   jeHostOdjetly,
   jeNove,
+  jeVNedoplatcich,
   jeVDnesnichOdjezdech,
   otisk,
   nahledPlateb,
@@ -65,6 +66,20 @@ describe('dnešní odjezdy', () => {
       DEN,
     );
     expect(serazene.map((h) => h.id)).toEqual(['dnes', 'vcera', 'stary']);
+    const zitra = '2026-10-17';
+    expect(jeVNedoplatcich({ prijezd: zitra, odjezd: '2026-10-19', stav: 'odeslano' }, DEN)).toBe(false);
+    expect(jeVNedoplatcich({ prijezd: '2026-10-14', odjezd: '2026-10-18', stav: 'odeslano' }, DEN)).toBe(true);
+    expect(jeVNedoplatcich({ prijezd: '2026-10-10', odjezd: VCERA, stav: 'odeslano' }, DEN)).toBe(true);
+    expect(jeVNedoplatcich({ prijezd: '2026-10-10', odjezd: VCERA, stav: 'zruseno' }, DEN)).toBe(false);
+    const poradi = seradNedoplatky(
+      [
+        { id: 'odjel', prijezd: '2026-10-01', odjezd: '2026-10-04', kc: 100 },
+        { id: 'bydli', prijezd: '2026-10-15', odjezd: '2026-10-20', kc: 200 },
+        { id: 'dnesni', prijezd: '2026-10-14', odjezd: DEN, kc: 50 },
+      ],
+      DEN,
+    );
+    expect(poradi.map((h) => h.id)).toEqual(['dnesni', 'bydli', 'odjel']);
   });
 
   it('Vrátit odjezd hosta vrátí mezi odjezdy', () => {

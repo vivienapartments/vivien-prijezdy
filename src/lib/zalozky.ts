@@ -99,13 +99,26 @@ export function vratPrevzeti(rec: RezervaceRecord, now = new Date()): RezervaceR
   };
 }
 
-export type DluhHost = { odjezd: string | null; kc: number };
+export type DluhHost = { odjezd: string | null; prijezd?: string | null; kc: number };
+
+/** Nedoplatky jsou jen u hostů, kteří už přijeli nebo odjeli. Zítřejší příjezd se nesčítá. */
+export function jeVNedoplatcich(h: { prijezd: string | null; odjezd: string | null; stav: string }, dnes: string): boolean {
+  if (h.stav === 'zruseno') return false;
+  if (h.odjezd && h.odjezd < dnes) return true;
+  return Boolean(h.prijezd && h.prijezd <= dnes && (!h.odjezd || h.odjezd >= dnes));
+}
+
+function skupinaDluhu(h: DluhHost, dnes: string): number {
+  if (h.odjezd === dnes) return 0;
+  if (h.prijezd && h.prijezd <= dnes && (!h.odjezd || h.odjezd > dnes)) return 1;
+  return 2;
+}
 
 export function seradNedoplatky<T extends DluhHost>(list: T[], dnes: string): T[] {
   return [...list].sort((a, b) => {
-    const aDnes = a.odjezd === dnes ? 0 : 1;
-    const bDnes = b.odjezd === dnes ? 0 : 1;
-    if (aDnes !== bDnes) return aDnes - bDnes;
+    const skupina = skupinaDluhu(a, dnes) - skupinaDluhu(b, dnes);
+    if (skupina) return skupina;
+    if (skupinaDluhu(a, dnes) === 1) return (a.odjezd || '9999').localeCompare(b.odjezd || '9999');
     return (b.odjezd || '').localeCompare(a.odjezd || '');
   });
 }
