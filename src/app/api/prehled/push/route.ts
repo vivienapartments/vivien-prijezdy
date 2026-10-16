@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore, type PushZarizeni } from '@/lib/store';
+import { textZkuseni, upozorniMajitelePodrobne } from '@/lib/upozorneni';
 
 export const runtime = 'nodejs';
 
@@ -22,12 +23,21 @@ function vypis(list: PushZarizeni[]) {
 export async function GET(): Promise<NextResponse> {
   if (!(await prehledPrihlasen())) return chyba(401, 'Nepřihlášen.');
   const store = createProcessStore();
-  const list = await store.listPush();
+  let list: PushZarizeni[] = [];
+  let chybaUlaziste = '';
+  try {
+    list = await store.listPush();
+  } catch (err) {
+    chybaUlaziste = err instanceof Error ? err.message : 'úložiště';
+  }
   return NextResponse.json(
     {
       ok: true,
       publicKey: process.env.VAPID_PUBLIC?.trim() || '',
+      vapid: Boolean(process.env.VAPID_PUBLIC?.trim() && process.env.VAPID_PRIVATE?.trim()),
+      pocet: list.length,
       zarizeni: vypis(list),
+      chybaUlaziste: chybaUlaziste || undefined,
     },
     { headers: noStore },
   );
@@ -42,7 +52,27 @@ export async function POST(request: Request): Promise<NextResponse> {
     keys?: { p256dh?: string; auth?: string };
   } | null;
   const store = createProcessStore();
-  const list = await store.listPush();
+
+  if (body?.akce === 'zkusit') {
+    const vysledek = await upozorniMajitelePodrobne(store, 'Zkušební upozornění z přehledu VIVIEN', '/prehled');
+    return NextResponse.json(
+      {
+        ok: true,
+        jak: vysledek.jak,
+        pocet: vysledek.doruceno,
+        zarizeni: vysledek.zarizeni,
+        text: textZkuseni(vysledek),
+      },
+      { headers: noStore },
+    );
+  }
+
+  let list: PushZarizeni[] = [];
+  try {
+    list = await store.listPush();
+  } catch {
+    return chyba(503, 'Úložiště teď neodpovídá. Zkuste to za chvíli.');
+  }
 
   if (body?.akce === 'vypnout') {
     const endpoint = (body.endpoint || '').trim();

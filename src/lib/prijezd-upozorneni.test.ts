@@ -90,6 +90,25 @@ describe('upozornění hodinu před příjezdem', () => {
     expect(aktualni.historie.at(-1)?.co).toContain('V3 Novák přijede kolem 16:30 (za hodinu)');
     expect(await upozorniPrijezd(store, vOkne, posli)).toBe(0);
   });
+
+  it('hodinu před příjezdem běží i před 9:00', async () => {
+    let aktualni = host({ casPrijezdu: '08:30' });
+    const okno = new Date(casVPraze(DEN, 7, 30).getTime() + 60_000);
+    const store = {
+      async listRezervace() {
+        return [{ id: '1', record: aktualni }];
+      },
+      async getRezervace() {
+        return aktualni;
+      },
+      async setRezervace(_id: string, record: RezervaceRecord) {
+        aktualni = record;
+      },
+    } as unknown as ProcessStore;
+    expect(maUpozornitHodinu(aktualni, okno)).toBe(true);
+    expect(await upozorniPrijezd(store, okno, async () => 'push')).toBe(1);
+    expect(aktualni.prijezdPushCas).toBe('2026-10-15 08:30');
+  });
 });
 
 describe('e-mail se zprávou hostovi', () => {

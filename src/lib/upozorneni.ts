@@ -28,19 +28,33 @@ async function emailMajiteli(text: string): Promise<boolean> {
   return true;
 }
 
+export type VysledekUpozorneni = {
+  jak: 'push' | 'email' | 'nic';
+  zarizeni: number;
+  doruceno: number;
+};
+
 /** Push na zapnuté telefony. Když žádný nedorazí, stejný text e-mailem majiteli. */
-export async function upozorniMajitele(
+export async function upozorniMajitelePodrobne(
   store: ProcessStore,
   text: string,
   url: string,
-): Promise<'push' | 'email' | 'nic'> {
+): Promise<VysledekUpozorneni> {
+  let zarizeni: PushZarizeni[] = [];
   try {
-    const zarizeni = await store.listPush();
-    const publicKey = process.env.VAPID_PUBLIC?.trim();
-    const privateKey = process.env.VAPID_PRIVATE?.trim();
-    const subject = process.env.VAPID_SUBJECT?.trim() || 'mailto:info@vivienapartments.cz';
-    let doruceno = false;
-    if (publicKey && privateKey && zarizeni.length && !process.env.VITEST) {
+    zarizeni = await store.listPush();
+  } catch (err) {
+    console.error('Upozorneni: listPush selhalo', err instanceof Error ? err.message : err);
+    zarizeni = [];
+  }
+
+  let doruceno = 0;
+  const publicKey = process.env.VAPID_PUBLIC?.trim();
+  const privateKey = process.env.VAPID_PRIVATE?.trim();
+  const subject = process.env.VAPID_SUBJECT?.trim() || 'mailto:info@vivienapartments.cz';
+
+  if (publicKey && privateKey && zarizeni.length && !process.env.VITEST) {
+    try {
       const webpush = await import('web-push');
       webpush.setVapidDetails(subject, publicKey, privateKey);
       const zustane: PushZarizeni[] = [];
@@ -50,7 +64,7 @@ export async function upozorniMajitele(
             { endpoint: z.endpoint, keys: { p256dh: z.p256dh, auth: z.auth } },
             JSON.stringify({ title: 'VIVIEN', body: text, url }),
           );
-          doruceno = true;
+          doruceno += 1;
           zustane.push(z);
         } catch (err) {
           const status = (err as { statusCode?: number }).statusCode;
@@ -58,14 +72,55 @@ export async function upozorniMajitele(
           zustane.push(z);
         }
       }
-      if (zustane.length !== zarizeni.length) await store.savePush(zustane);
+      if (zustane.length !== zarizeni.length) {
+        try {
+          await store.savePush(zustane);
+        } catch (err) {
+          console.error('Upozorneni: savePush selhalo', err instanceof Error ? err.message : err);
+        }
+      }
+    } catch (err) {
+      console.error('Upozorneni: web-push selhalo', err instanceof Error ? err.message : err);
     }
-    if (doruceno) return 'push';
-    const mailed = await emailMajiteli(text);
-    return mailed ? 'email' : 'nic';
-  } catch {
-    return 'nic';
   }
+
+  if (doruceno > 0) {
+    console.log(`Upozorneni: push (${doruceno}/${zarizeni.length})`);
+    return { jak: 'push', zarizeni: zarizeni.length, doruceno };
+  }
+
+  try {
+    const mailed = await emailMajiteli(text);
+    if (mailed) {
+      console.log(`Upozorneni: email (zarizeni ${zarizeni.length})`);
+      return { jak: 'email', zarizeni: zarizeni.length, doruceno: 0 };
+    }
+  } catch (err) {
+    console.error('Upozorneni: email selhal', err instanceof Error ? err.message : err);
+  }
+
+  console.log(`Upozorneni: nic (zarizeni ${zarizeni.length})`);
+  return { jak: 'nic', zarizeni: zarizeni.length, doruceno: 0 };
+}
+
+export async function upozorniMajitele(
+  store: ProcessStore,
+  text: string,
+  url: string,
+): Promise<'push' | 'email' | 'nic'> {
+  const vysledek = await upozorniMajitelePodrobne(store, text, url);
+  return vysledek.jak;
+}
+
+/** Text pro tlačítko Zkusit upozornění. */
+export function textZkuseni(v: VysledekUpozorneni): string {
+  if (v.jak === 'push') {
+    const n = v.doruceno;
+    if (n === 1) return 'Doručeno na 1 zařízení';
+    return `Doručeno na ${n} zařízení`;
+  }
+  if (v.jak === 'email') return 'Odesláno e-mailem';
+  return 'Žádné zařízení, zapněte upozornění';
 }
 
 export async function poznamenejUpozorneni(store: ProcessStore, id: string, jak: 'push' | 'email' | 'nic'): Promise<void> {

@@ -56,7 +56,10 @@ export async function upozorniPrijezd(
   now = new Date(),
   posli: typeof upozorniMajitele = upozorniMajitele,
 ): Promise<number> {
-  if (hodinaPraha(now) < RANO) return 0;
+  /**
+   * Hodinu před příjezdem musí běžet i před 9:00.
+   * Od 9:00 ještě „čas neznámý“. Brána z 707814a na celou funkci blokovala ranní příjezdy.
+   */
   const list = await store.listRezervace();
   let pocet = 0;
   for (const { id, record } of list) {

@@ -2203,16 +2203,27 @@ function Upozorneni() {
   const [klic, setKlic] = useState('');
   const [zarizeni, setZarizeni] = useState<{ nazev: string; endpoint: string }[]>([]);
   const [hlaska, setHlaska] = useState('');
+  const [zkousim, setZkousim] = useState(false);
 
   useEffect(() => {
     let zive = true;
     fetch('/api/prehled/push')
       .then((res) => res.json())
-      .then((json: { ok?: boolean; publicKey?: string; zarizeni?: { nazev: string; endpoint: string }[] }) => {
-        if (!zive || !json?.ok) return;
-        setKlic(json.publicKey || '');
-        setZarizeni(json.zarizeni || []);
-      })
+      .then(
+        (json: {
+          ok?: boolean;
+          publicKey?: string;
+          zarizeni?: { nazev: string; endpoint: string }[];
+          pocet?: number;
+          chybaUlaziste?: string;
+        }) => {
+          if (!zive || !json?.ok) return;
+          setKlic(json.publicKey || '');
+          setZarizeni(json.zarizeni || []);
+          if (json.chybaUlaziste) setHlaska('Úložiště teď neodpovídá. Zkuste zapnout znovu za chvíli.');
+          else if ((json.pocet ?? 0) === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
+        },
+      )
       .catch(() => undefined);
     return () => {
       zive = false;
@@ -2246,9 +2257,9 @@ function Upozorneni() {
         keys: jsonSub.keys,
       }),
     });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; zarizeni?: { nazev: string; endpoint: string }[] } | null;
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; zarizeni?: { nazev: string; endpoint: string }[]; error?: string } | null;
     if (!res.ok || !json?.ok) {
-      setHlaska('Upozornění se nepodařilo zapnout.');
+      setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
       return;
     }
     setZarizeni(json.zarizeni || []);
@@ -2265,10 +2276,26 @@ function Upozorneni() {
     if (res.ok && json?.ok) setZarizeni(json.zarizeni || []);
   }
 
+  async function zkusit() {
+    setZkousim(true);
+    setHlaska('');
+    const res = await fetch('/api/prehled/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ akce: 'zkusit' }),
+    });
+    const json = (await res.json().catch(() => null)) as { ok?: boolean; text?: string; error?: string } | null;
+    setZkousim(false);
+    setHlaska(json?.text || json?.error || 'Zkouška se nepovedla.');
+  }
+
   return (
     <div className="ph-push">
       <button type="button" className="ph-ulozit" onClick={() => void zapnout()}>
         Zapnout upozornění
+      </button>
+      <button type="button" className="ph-ulozit" disabled={zkousim} onClick={() => void zkusit()}>
+        {zkousim ? 'Zkouším…' : 'Zkusit upozornění'}
       </button>
       {zarizeni.map((z) => (
         <button key={z.endpoint} type="button" className="ph-push-vyp" onClick={() => void vypnout(z.endpoint)}>
