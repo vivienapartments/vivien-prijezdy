@@ -83,7 +83,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Chcete přijet dřív nebo odjet později? Objednejte si to rovnou tady. Za každou půlhodinu účtujeme 75 Kč.',
     emailTlacitko: 'Chci přijet dřív / odjet později',
     odjezdNabidka: 'Chcete odjet později? Vyberte si čas v průvodci. Za každou půlhodinu po 10:00 účtujeme 75 Kč, nejpozději do 14:00.',
-    pripravenoUvod: 'Dobrý den, váš apartmán je už uklizený a připravený. Pokud chcete přijet dřív, vyberte si čas tady. Za každou půlhodinu před 14:00 účtujeme 75 Kč.',
+    pripravenoUvod:
+      'Dobrý den, máme pro vás dobrou zprávu. Váš apartmán je už uklizený a připravený. Pokud byste chtěli přijet dřív než ve 14:00, stačí si v průvodci změnit čas příjezdu. Dřívější časy najdete hned nahoře:',
     tlacitkoDrive: 'Chci přijet dřív',
     tesime: 'Moc se na vás těšíme.',
     podpis: 'Nikol a rodina VIVIEN',
@@ -117,7 +118,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Would you like to arrive earlier or leave later? Order it here. We charge 75 Kč for every half hour.',
     emailTlacitko: 'I want to arrive earlier / leave later',
     odjezdNabidka: 'Would you like to leave later? Choose a time in the guide. We charge 75 Kč for every half hour after 10:00, until 14:00 at the latest.',
-    pripravenoUvod: 'Hello, your apartment is already cleaned and ready. If you would like to arrive earlier, choose a time here. We charge 75 Kč for every half hour before 14:00.',
+    pripravenoUvod:
+      'Hello, we have good news for you. Your apartment is already cleaned and ready. If you would like to arrive earlier than 14:00, just change your arrival time in the guide. You will find the earlier times right at the top:',
     tlacitkoDrive: 'I want to arrive earlier',
     tesime: 'We look forward to seeing you.',
     podpis: 'Nikol and the VIVIEN family',
@@ -151,7 +153,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Möchten Sie früher anreisen oder später abreisen? Bestellen Sie es direkt hier. Für jede halbe Stunde berechnen wir 75 Kč.',
     emailTlacitko: 'Ich möchte früher anreisen / später abreisen',
     odjezdNabidka: 'Möchten Sie später abreisen? Wählen Sie eine Zeit im Guide. Für jede halbe Stunde nach 10:00 berechnen wir 75 Kč, spätestens bis 14:00.',
-    pripravenoUvod: 'Guten Tag, Ihr Apartment ist schon gereinigt und bereit. Wenn Sie früher anreisen möchten, wählen Sie hier eine Zeit. Für jede halbe Stunde vor 14:00 berechnen wir 75 Kč.',
+    pripravenoUvod:
+      'Guten Tag, wir haben eine gute Nachricht für Sie. Ihr Apartment ist schon gereinigt und bereit. Wenn Sie früher als 14:00 anreisen möchten, ändern Sie einfach die Ankunftszeit im Guide. Die früheren Zeiten finden Sie ganz oben:',
     tlacitkoDrive: 'Ich möchte früher anreisen',
     tesime: 'Wir freuen uns auf Sie.',
     podpis: 'Nikol und die Familie VIVIEN',
@@ -185,7 +188,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Chcecie przyjechać wcześniej albo wyjechać później? Zamówcie to od razu tutaj. Za każde pół godziny liczymy 75 Kč.',
     emailTlacitko: 'Chcę przyjechać wcześniej / wyjechać później',
     odjezdNabidka: 'Chcecie wyjechać później? Wybierzcie godzinę w przewodniku. Za każde pół godziny po 10:00 liczymy 75 Kč, najpóźniej do 14:00.',
-    pripravenoUvod: 'Dzień dobry, apartament jest już posprzątany i gotowy. Jeśli chcecie przyjechać wcześniej, wybierzcie godzinę tutaj. Za każde pół godziny przed 14:00 liczymy 75 Kč.',
+    pripravenoUvod:
+      'Dzień dobry, mamy dla Was dobrą wiadomość. Apartament jest już posprzątany i gotowy. Jeśli chcielibyście przyjechać wcześniej niż o 14:00, wystarczy zmienić godzinę przyjazdu w przewodniku. Wcześniejsze godziny znajdziecie zaraz na górze:',
     tlacitkoDrive: 'Chcę przyjechać wcześniej',
     tesime: 'Czekamy na Was.',
     podpis: 'Nikol i rodzina VIVIEN',
@@ -219,7 +223,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Хочете приїхати раніше або виїхати пізніше? Замовте це одразу тут. За кожні пів години беремо 75 Kč.',
     emailTlacitko: 'Хочу приїхати раніше / виїхати пізніше',
     odjezdNabidka: 'Хочете виїхати пізніше? Оберіть час у путівнику. За кожні пів години після 10:00 беремо 75 Kč, найпізніше до 14:00.',
-    pripravenoUvod: 'Добрий день, ваші апартаменти вже прибрані і готові. Якщо хочете приїхати раніше, оберіть час тут. За кожні пів години до 14:00 беремо 75 Kč.',
+    pripravenoUvod:
+      'Добрий день, маємо для вас добру новину. Ваші апартаменти вже прибрані і готові. Якщо хочете приїхати раніше ніж о 14:00, просто змініть час приїзду в путівнику. Раніші часи знайдете одразу вгорі:',
     tlacitkoDrive: 'Хочу приїхати раніше',
     tesime: 'Дуже на вас чекаємо.',
     podpis: 'Ніколь і родина VIVIEN',
@@ -253,7 +258,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: '想提早入住或延遲退房嗎？請在這裡直接預約。每半小時收費 75 Kč。',
     emailTlacitko: '我要提早入住 / 延遲退房',
     odjezdNabidka: '想延遲退房嗎？請在指南裡選時間。10:00 後每半小時收費 75 Kč，最晚到 14:00。',
-    pripravenoUvod: '您好，您的公寓已經打掃好、可以入住。若想提早來，請在這裡選時間。14:00 前每半小時收費 75 Kč。',
+    pripravenoUvod:
+      '您好，我們有好消息。您的公寓已經打掃好、可以入住。如果想比 14:00 更早抵達，只要在指南裡改抵達時間即可。較早的時間就在最上方：',
     tlacitkoDrive: '我要提早入住',
     tesime: '我們很期待見到您。',
     podpis: 'Nikol 與 VIVIEN 全家',
@@ -287,7 +293,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: '¿Quieren llegar antes o salir más tarde? Pídanlo aquí mismo. Cobramos 75 Kč por cada media hora.',
     emailTlacitko: 'Quiero llegar antes / salir más tarde',
     odjezdNabidka: '¿Quieren salir más tarde? Elijan una hora en la guía. Cobramos 75 Kč por cada media hora después de las 10:00, como muy tarde hasta las 14:00.',
-    pripravenoUvod: 'Buenos días, su apartamento ya está limpio y listo. Si quieren llegar antes, elijan una hora aquí. Cobramos 75 Kč por cada media hora antes de las 14:00.',
+    pripravenoUvod:
+      'Hola, tenemos una buena noticia. Su apartamento ya está limpio y listo. Si quieren llegar antes de las 14:00, basta con cambiar la hora de llegada en la guía. Los horarios más tempranos están arriba del todo:',
     tlacitkoDrive: 'Quiero llegar antes',
     tesime: 'Los esperamos con muchas ganas.',
     podpis: 'Nikol y la familia VIVIEN',
@@ -321,7 +328,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Vous voulez arriver plus tôt ou partir plus tard ? Commandez-le ici. Nous comptons 75 Kč pour chaque demi-heure.',
     emailTlacitko: 'Je veux arriver plus tôt / partir plus tard',
     odjezdNabidka: 'Vous voulez partir plus tard ? Choisissez une heure dans le guide. Nous comptons 75 Kč pour chaque demi-heure après 10:00, au plus tard jusqu’à 14:00.',
-    pripravenoUvod: 'Bonjour, votre appartement est déjà nettoyé et prêt. Si vous voulez arriver plus tôt, choisissez une heure ici. Nous comptons 75 Kč pour chaque demi-heure avant 14:00.',
+    pripravenoUvod:
+      'Bonjour, nous avons une bonne nouvelle. Votre appartement est déjà nettoyé et prêt. Si vous voulez arriver avant 14:00, il suffit de changer l’heure d’arrivée dans le guide. Les horaires plus tôt sont tout en haut :',
     tlacitkoDrive: 'Je veux arriver plus tôt',
     tesime: 'Nous avons hâte de vous accueillir.',
     podpis: 'Nikol et la famille VIVIEN',
@@ -355,7 +363,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Volete arrivare prima o partire più tardi? Ordinate qui. Contiamo 75 Kč per ogni mezz’ora.',
     emailTlacitko: 'Voglio arrivare prima / partire più tardi',
     odjezdNabidka: 'Volete partire più tardi? Scegliete un orario nella guida. Contiamo 75 Kč per ogni mezz’ora dopo le 10:00, al più tardi fino alle 14:00.',
-    pripravenoUvod: 'Buongiorno, l’appartamento è già pulito e pronto. Se volete arrivare prima, scegliete un orario qui. Per ogni mezz’ora prima delle 14:00 contiamo 75 Kč.',
+    pripravenoUvod:
+      'Buongiorno, abbiamo una bella notizia. L’appartamento è già pulito e pronto. Se volete arrivare prima delle 14:00, basta cambiare l’orario di arrivo nella guida. Gli orari più presto sono proprio in alto:',
     tlacitkoDrive: 'Voglio arrivare prima',
     tesime: 'Vi aspettiamo volentieri.',
     podpis: 'Nikol e la famiglia VIVIEN',
@@ -389,7 +398,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Vill ni komma tidigare eller åka senare? Beställ det här. Vi tar 75 Kč för varje halvtimme.',
     emailTlacitko: 'Jag vill komma tidigare / åka senare',
     odjezdNabidka: 'Vill ni åka senare? Välj en tid i guiden. Vi tar 75 Kč för varje halvtimme efter 10:00, senast till 14:00.',
-    pripravenoUvod: 'Hej, er lägenhet är redan städad och klar. Om ni vill komma tidigare, välj en tid här. Vi tar 75 Kč för varje halvtimme före 14:00.',
+    pripravenoUvod:
+      'Hej, vi har goda nyheter. Er lägenhet är redan städad och klar. Om ni vill komma tidigare än 14:00 räcker det att ändra ankomsttiden i guiden. De tidigare tiderna hittar ni längst upp:',
     tlacitkoDrive: 'Jag vill komma tidigare',
     tesime: 'Vi ser fram emot er.',
     podpis: 'Nikol och familjen VIVIEN',
@@ -423,7 +433,8 @@ const VETY: Record<GuideLang, Vety> = {
     emailVeta: 'Korábban szeretnének érkezni, vagy később távozni? Itt tudják megrendelni. Minden félóráért 75 Kč-t számolunk.',
     emailTlacitko: 'Korábban érkeznék / később távoznék',
     odjezdNabidka: 'Később szeretnének távozni? Válasszanak időpontot az útmutatóban. 10:00 után minden félóráért 75 Kč-t számolunk, legkésőbb 14:00-ig.',
-    pripravenoUvod: 'Jó napot, a lakás már ki van takarítva és kész. Ha korábban szeretnének érkezni, itt válasszanak időpontot. 14:00 előtt minden félóráért 75 Kč-t számolunk.',
+    pripravenoUvod:
+      'Jó napot, jó hírünk van. A lakás már ki van takarítva és kész. Ha 14:00 előtt szeretnének érkezni, elég az útmutatóban módosítani az érkezés idejét. A korábbi időpontokat rögtön felül találják:',
     tlacitkoDrive: 'Korábban érkeznék',
     tesime: 'Nagyon várjuk Önöket.',
     podpis: 'Nikol és a VIVIEN család',
@@ -991,7 +1002,7 @@ export function vetaOdjezduNavic(lang: GuideLang | null | undefined): string {
 
 export function textPripraveno(lang: GuideLang | null | undefined, odkaz: string): string {
   const t = vety(lang);
-  return `${t.pripravenoUvod}\n\n${t.tlacitkoDrive}\n${odkaz}\n\n${t.tesime}\n${t.podpis}`;
+  return `${t.pripravenoUvod}\n${odkaz}\n\n${t.tesime}\n${t.podpis}`;
 }
 
 export function predmetPripraveno(lang: GuideLang | null | undefined): string {
