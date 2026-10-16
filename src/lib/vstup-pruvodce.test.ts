@@ -92,8 +92,10 @@ describe('průvodce se otevře až po údajích', () => {
     expect(text).toContain('Na domluvený čas pak čekáme');
     expect(text).toContain('přijet znovu');
     expect(text).toContain('Rozumím pravidlům příjezdu a souhlasím s nimi.');
-    expect(text).toContain('20:30 · příplatek 100 Kč');
-    expect(text).toContain('23:00 · příplatek 600 Kč');
+    expect(text).toContain('20:30 · +100 Kč');
+    expect(text).toContain('23:00 · +600 Kč');
+    expect(text).toContain('Dřívější příjezd (potvrdíme)');
+    expect(text).toContain('Běžný příjezd');
     expect(text).toContain('platíte <span class="pv-nedel">100 Kč</span> za každou započatou půlhodinu');
     expect(text).toContain('Po <span class="pv-nedel">23:00</span> jen po domluvě.');
     expect(text).not.toContain('do 21:00');

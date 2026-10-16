@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { t } from '@/lib/i18n';
-import { casyDrive, popisekDrive, type TextStavu } from '@/lib/okno-pobytu';
+import {
+  casyDrive,
+  jeCasDrive,
+  optionDrive,
+  poznamkaDrive,
+  skupinaBezny,
+  skupinaDrive,
+  skupinaPozdni,
+  type TextStavu,
+} from '@/lib/okno-pobytu';
 import { CAS_PO_23, VYJEZD_CASTKA, priplatekProCas } from '@/lib/priplatek-prijezd';
 import * as TX from '@/lib/texts';
 import type { GuideLang } from '@/lib/types';
@@ -85,18 +94,38 @@ function renderPravidlo(raw: string, tucnaPrvni = false) {
   );
 }
 
-function moznostiCasu(slovo: string, po23: string) {
+function moznostiCasu(lang: GuideLang, drive: string[], po23: string) {
+  const bezne = CASY_VYBERU.filter((h) => !priplatekProCas(h));
+  const pozdni = CASY_VYBERU.filter((h) => priplatekProCas(h));
   return (
     <>
-      {CASY_VYBERU.map((hodina) => {
-        const kc = priplatekProCas(hodina);
-        return (
+      {drive.length ? (
+        <optgroup label={skupinaDrive(lang)}>
+          {drive.map((hodina) => (
+            <option key={hodina} value={hodina}>
+              {optionDrive(hodina)}
+            </option>
+          ))}
+        </optgroup>
+      ) : null}
+      <optgroup label={skupinaBezny(lang)}>
+        {bezne.map((hodina) => (
           <option key={hodina} value={hodina}>
-            {kc ? `${hodina} · ${slovo} ${kc} Kč` : hodina}
+            {hodina}
           </option>
-        );
-      })}
-      <option value={CAS_PO_23}>{po23}</option>
+        ))}
+      </optgroup>
+      <optgroup label={skupinaPozdni(lang)}>
+        {pozdni.map((hodina) => {
+          const kc = priplatekProCas(hodina);
+          return (
+            <option key={hodina} value={hodina}>
+              {kc ? `${hodina} · +${kc} Kč` : hodina}
+            </option>
+          );
+        })}
+        <option value={CAS_PO_23}>{po23}</option>
+      </optgroup>
     </>
   );
 }
@@ -143,7 +172,8 @@ export function VstupHosta({
 }: Props) {
   const tt = (map: Parameters<typeof t>[0]) => t(map, lang);
   const [uprava, setUprava] = useState(false);
-  const [cas, setCas] = useState(hodnoty.cas || '');
+  const driveSloty = casyDrive(nejdrive);
+  const [cas, setCas] = useState(hodnoty.cas || '14:00');
   const [zpusob, setZpusob] = useState<ZpusobPrijezdu | null>(hodnoty.zpusob);
   const [telefon, setTelefon] = useState(hodnoty.telefon || predvyplneny || '');
   const [spz, setSpz] = useState(hodnoty.spz || '');
@@ -156,7 +186,7 @@ export function VstupHosta({
   const [cekam, setCekam] = useState(false);
 
   useEffect(() => {
-    setCas(hodnoty.cas || '');
+    setCas(hodnoty.cas || '14:00');
     setZpusob(hodnoty.zpusob);
     setTelefon(hodnoty.telefon || predvyplneny || '');
     setSpz(hodnoty.spz || '');
@@ -296,24 +326,11 @@ export function VstupHosta({
           <div className="pv-vstup__pole">
             <label>
               {tt(VT.vstupCasPopisek)}
-              <span className="pv-cenik" id="cenik-prijezd">
-                {casyDrive(nejdrive).map((hodina) => (
-                  <button
-                    key={hodina}
-                    type="button"
-                    className={cas === hodina ? 'is-on' : ''}
-                    disabled={cteni}
-                    onClick={() => setCas(hodina)}
-                  >
-                    {popisekDrive(lang, hodina)}
-                  </button>
-                ))}
-              </span>
-              <select value={casyDrive(nejdrive).includes(cas) ? '' : cas} onChange={(e) => setCas(e.target.value)} disabled={cteni}>
-                <option value="">{tt(VT.vstupCekaCas)}</option>
-                {moznostiCasu(tt(VT.vstupPriplatek), tt(VT.vstupPo23))}
+              <select id="cenik-prijezd" value={cas || '14:00'} onChange={(e) => setCas(e.target.value)} disabled={cteni}>
+                {moznostiCasu(lang, driveSloty, tt(VT.vstupPo23))}
               </select>
             </label>
+            {jeCasDrive(cas) ? <p className="pv-vstup__stav">{poznamkaDrive(lang)}</p> : null}
             {stavZadosti?.kratce ? <p className="pv-vstup__stav">{stavZadosti.kratce}</p> : null}
             {stavZadosti?.veta ? <p className="pv-vstup__stav">{stavZadosti.veta}</p> : null}
             {pokus && !jeCasHosta(cas) ? <p className="pv-vstup__chyba">{tt(VT.vstupChybiCas)}</p> : null}

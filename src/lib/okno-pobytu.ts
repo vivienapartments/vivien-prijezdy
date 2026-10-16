@@ -450,6 +450,121 @@ export function vety(lang: GuideLang | null | undefined): Vety {
   return VETY[jazyk(lang)];
 }
 
+/** Popisky skupin v rozbalovacím výběru času. */
+const SKUPINA_DRIVE: Record<GuideLang, string> = {
+  cs: 'Dřívější příjezd (potvrdíme)',
+  en: 'Earlier arrival (we will confirm)',
+  de: 'Frühere Anreise (wir bestätigen)',
+  pl: 'Wcześniejszy przyjazd (potwierdzimy)',
+  uk: 'Ранніший приїзд (підтвердимо)',
+  'zh-Hant': '提早入住（我們會確認）',
+  es: 'Llegada anticipada (lo confirmaremos)',
+  fr: 'Arrivée plus tôt (nous confirmerons)',
+  it: 'Arrivo anticipato (confermeremo)',
+  sv: 'Tidigare ankomst (vi bekräftar)',
+  hu: 'Korábbi érkezés (megerősítjük)',
+};
+
+const SKUPINA_BEZNY: Record<GuideLang, string> = {
+  cs: 'Běžný příjezd',
+  en: 'Standard arrival',
+  de: 'Übliche Anreise',
+  pl: 'Zwykły przyjazd',
+  uk: 'Звичайний приїзд',
+  'zh-Hant': '一般抵達',
+  es: 'Llegada habitual',
+  fr: 'Arrivée habituelle',
+  it: 'Arrivo abituale',
+  sv: 'Vanlig ankomst',
+  hu: 'Szokásos érkezés',
+};
+
+const SKUPINA_POZDNI: Record<GuideLang, string> = {
+  cs: 'Pozdní příjezd',
+  en: 'Late arrival',
+  de: 'Späte Anreise',
+  pl: 'Późny przyjazd',
+  uk: 'Пізній приїзд',
+  'zh-Hant': '較晚抵達',
+  es: 'Llegada tardía',
+  fr: 'Arrivée tardive',
+  it: 'Arrivo tardivo',
+  sv: 'Sen ankomst',
+  hu: 'Késői érkezés',
+};
+
+const SKUPINA_ODJEZD: Record<GuideLang, string> = {
+  cs: 'Běžný odjezd',
+  en: 'Standard departure',
+  de: 'Übliche Abreise',
+  pl: 'Zwykły wyjazd',
+  uk: 'Звичайний виїзд',
+  'zh-Hant': '一般退房',
+  es: 'Salida habitual',
+  fr: 'Départ habituel',
+  it: 'Partenza abituale',
+  sv: 'Vanlig avresa',
+  hu: 'Szokásos elutazás',
+};
+
+const SKUPINA_POZDE: Record<GuideLang, string> = {
+  cs: 'Pozdější odjezd (potvrdíme)',
+  en: 'Later departure (we will confirm)',
+  de: 'Spätere Abreise (wir bestätigen)',
+  pl: 'Późniejszy wyjazd (potwierdzimy)',
+  uk: 'Пізніший виїзд (підтвердимо)',
+  'zh-Hant': '延遲退房（我們會確認）',
+  es: 'Salida más tarde (lo confirmaremos)',
+  fr: 'Départ plus tard (nous confirmerons)',
+  it: 'Partenza posticipata (confermeremo)',
+  sv: 'Senare avresa (vi bekräftar)',
+  hu: 'Későbbi távozás (megerősítjük)',
+};
+
+const POZNAMKA_DRIVE: Record<GuideLang, string> = {
+  cs: 'Dřívější příjezd vám potvrdíme, jakmile bude apartmán připravený.',
+  en: 'We will confirm the earlier arrival once the apartment is ready.',
+  de: 'Die frühere Anreise bestätigen wir, sobald das Apartment bereit ist.',
+  pl: 'Wcześniejszy przyjazd potwierdzimy, gdy apartament będzie gotowy.',
+  uk: 'Ранніший приїзд підтвердимо, щойно апартамент буде готовий.',
+  'zh-Hant': '公寓就緒後，我們會確認提早入住。',
+  es: 'Confirmaremos la llegada anticipada en cuanto el apartamento esté listo.',
+  fr: 'Nous confirmerons l’arrivée plus tôt dès que l’appartement sera prêt.',
+  it: 'Confermeremo l’arrivo anticipato non appena l’appartamento sarà pronto.',
+  sv: 'Vi bekräftar tidigare ankomst när lägenheten är klar.',
+  hu: 'A korábbi érkezést akkor erősítjük meg, amint a lakás készen áll.',
+};
+
+export function skupinaDrive(lang: GuideLang | null | undefined): string {
+  return SKUPINA_DRIVE[jazyk(lang)];
+}
+export function skupinaBezny(lang: GuideLang | null | undefined): string {
+  return SKUPINA_BEZNY[jazyk(lang)];
+}
+export function skupinaPozdni(lang: GuideLang | null | undefined): string {
+  return SKUPINA_POZDNI[jazyk(lang)];
+}
+export function skupinaOdjezd(lang: GuideLang | null | undefined): string {
+  return SKUPINA_ODJEZD[jazyk(lang)];
+}
+export function skupinaPozde(lang: GuideLang | null | undefined): string {
+  return SKUPINA_POZDE[jazyk(lang)];
+}
+export function poznamkaDrive(lang: GuideLang | null | undefined): string {
+  return POZNAMKA_DRIVE[jazyk(lang)];
+}
+
+/** Krátký řádek v seznamu: 11:00 · +450 Kč */
+export function optionDrive(cas: string): string {
+  const kc = cenaDrive(cas) || 0;
+  return `${zobrazCas(cas)} · +${kc} Kč`;
+}
+
+export function optionPozde(cas: string): string {
+  const kc = cenaPozde(cas) || 0;
+  return `${zobrazCas(cas)} · +${kc} Kč`;
+}
+
 function dopln(sablona: string, cas: string, kc: number): string {
   return sablona.replaceAll('{cas}', zobrazCas(cas)).replaceAll('{kc}', String(kc));
 }

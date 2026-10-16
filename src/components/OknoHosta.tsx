@@ -1,7 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { popisekDrive, popisekOdjezd, textStavu, vety, type OknoPohled } from '@/lib/okno-pobytu';
+import {
+  optionDrive,
+  optionPozde,
+  poznamkaDrive,
+  skupinaDrive,
+  skupinaPozde,
+  textStavu,
+  vety,
+  type OknoPohled,
+} from '@/lib/okno-pobytu';
 import type { GuideLang } from '@/lib/types';
 
 type Props = {
@@ -46,13 +55,20 @@ export function OknoHosta({ lang, token, cteni, okno }: Props) {
         <section className="pv-odjezd pv-okno--zeleny" id="pripraveno" lang={lang}>
           <h2>{t.sekce}</h2>
           <p>{t.zeleny}</p>
-          <span className="pv-cenik">
-            {okno.slotyZelene.map((cas) => (
-              <button key={cas} type="button" className={zeleny === cas ? 'is-on' : ''} onClick={() => setZeleny(cas)}>
-                {popisekDrive(lang, cas)}
-              </button>
-            ))}
-          </span>
+          {okno.slotyZelene.length ? (
+            <label>
+              <select id="pripraveno-cas" value={zeleny} onChange={(e) => setZeleny(e.target.value)}>
+                <optgroup label={skupinaDrive(lang)}>
+                  {okno.slotyZelene.map((cas) => (
+                    <option key={cas} value={cas}>
+                      {optionDrive(cas)}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </label>
+          ) : null}
+          <p className="pv-odjezd__poznamka">{poznamkaDrive(lang)}</p>
           <button type="button" disabled={cekam || !zeleny} onClick={() => void poslat({ casPrijezd: zeleny, od: 'pripraveno' })}>
             {t.pozadat}
           </button>
@@ -67,26 +83,31 @@ export function OknoHosta({ lang, token, cteni, okno }: Props) {
           {prijezd?.veta ? <p>{prijezd.veta}</p> : null}
           {odjezd?.kratce ? <p>{odjezd.kratce}</p> : null}
           {odjezd?.veta ? <p>{odjezd.veta}</p> : null}
-          {okno.sekcePrijezd && okno.zadostPrijezd?.stav !== 'potvrzeno' ? (
+          {okno.sekcePrijezd && okno.zadostPrijezd?.stav !== 'potvrzeno' && okno.slotyPrijezd.length ? (
             <label>
-              <span className="pv-cenik" id="drivejsi-cas">
-                {okno.slotyPrijezd.map((cas) => (
-                  <button key={cas} type="button" className={casPrijezd === cas ? 'is-on' : ''} onClick={() => setCasPrijezd(cas)}>
-                    {popisekDrive(lang, cas)}
-                  </button>
-                ))}
-              </span>
+              <select id="drivejsi-cas" value={casPrijezd} onChange={(e) => setCasPrijezd(e.target.value)}>
+                <optgroup label={skupinaDrive(lang)}>
+                  {okno.slotyPrijezd.map((cas) => (
+                    <option key={cas} value={cas}>
+                      {optionDrive(cas)}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+              <span className="pv-odjezd__poznamka">{poznamkaDrive(lang)}</span>
             </label>
           ) : null}
-          {okno.sekceOdjezd && okno.zadostOdjezd?.stav !== 'potvrzeno' ? (
+          {okno.sekceOdjezd && okno.zadostOdjezd?.stav !== 'potvrzeno' && okno.slotyOdjezd.length ? (
             <label>
-              <span className="pv-cenik" id="pozdejsi">
-                {okno.slotyOdjezd.map((cas) => (
-                  <button key={cas} type="button" className={casOdjezd === cas ? 'is-on' : ''} onClick={() => setCasOdjezd(cas)}>
-                    {popisekOdjezd(lang, cas)}
-                  </button>
-                ))}
-              </span>
+              <select id="pozdejsi" value={casOdjezd} onChange={(e) => setCasOdjezd(e.target.value)}>
+                <optgroup label={skupinaPozde(lang)}>
+                  {okno.slotyOdjezd.map((cas) => (
+                    <option key={cas} value={cas}>
+                      {optionPozde(cas)}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
             </label>
           ) : null}
           <button
