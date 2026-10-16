@@ -69,6 +69,7 @@ export type PrehledRadek = {
   casOdjezdu: string | null;
   casOdjezduZadalHost: boolean;
   odjezdDotaz: string | null;
+  pohodaDotaz: string | null;
   /** Text nedoplatku pro seznam odjezdů. Prázdné, když nic nedluží. */
   dluhText: string;
   dluhPolozky: { druh: DruhDluhu; kc: number; nazev: string }[];
@@ -746,6 +747,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     casOdjezdu: rec.casOdjezdu,
     casOdjezduZadalHost: rec.casOdjezduZadalHost,
     odjezdDotaz: rec.odjezdDotaz,
+    pohodaDotaz: rec.pohodaDotaz,
     dluhText: textRozpisu(polozkyZRezervace(rec)),
     dluhPolozky: polozkyVsechny(rec).map((p) => ({ druh: p.druh, kc: p.kc, nazev: nazevDluhu(p.druh) })),
     platby: rec.platby || [],

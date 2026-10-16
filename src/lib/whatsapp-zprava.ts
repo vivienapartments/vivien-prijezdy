@@ -1,6 +1,7 @@
 import { posunDen } from './brana';
 import { odkazPripraveno, textPripraveno, vetaOdjezduNavic } from './okno-pobytu';
 import { ukazatDotazOdjezdu, zpravaOdjezdu, type PolozkaDluhu } from './odjezd';
+import { textPohody, ukazatPohodu } from './pohoda';
 import type { GuideLang } from './types';
 import type { ChybejiciKrok } from './vstup-pruvodce';
 import { fazeHosta } from './faze-hosta';
@@ -340,11 +341,32 @@ const PODPIS_HOST: Record<GuideLang, string> = {
   it: 'Nikol e la famiglia VIVIEN',
 };
 
-export type DruhZpravy = 'checkin' | 'neotevrel' | 'nerozbalen' | 'denNerozbalen' | 'denCas' | 'brana' | 'nedojezd' | 'odjezd' | 'pripraveno';
+export type DruhZpravy =
+  | 'checkin'
+  | 'neotevrel'
+  | 'nerozbalen'
+  | 'denNerozbalen'
+  | 'denCas'
+  | 'brana'
+  | 'nedojezd'
+  | 'odjezd'
+  | 'pohoda'
+  | 'pripraveno';
 
 export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string; vychozi: boolean; vystraha: boolean };
 
-const PORADI: DruhZpravy[] = ['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd', 'odjezd', 'pripraveno'];
+const PORADI: DruhZpravy[] = [
+  'checkin',
+  'neotevrel',
+  'nerozbalen',
+  'denNerozbalen',
+  'denCas',
+  'brana',
+  'nedojezd',
+  'odjezd',
+  'pohoda',
+  'pripraveno',
+];
 
 const NAZEV: Record<DruhZpravy, string> = {
   checkin: 'Vyplňte check-in',
@@ -355,6 +377,7 @@ const NAZEV: Record<DruhZpravy, string> = {
   brana: 'Chybí údaje k bráně',
   nedojezd: 'Poslední výzva (nedojezd)',
   odjezd: 'Dotaz na odjezd',
+  pohoda: 'Je vše v pořádku?',
   pripraveno: 'Apartmán je připravený',
 };
 
@@ -525,12 +548,22 @@ export function zpravyMenu(opts: {
     brana: zpravaBrany(opts.lang),
     nedojezd: zpravaNedojezdu(opts.lang),
     odjezd: `${zpravaOdjezdu(opts.lang, opts.dluh || [], opts.pruvodce)}\n\n${vetaOdjezduNavic(opts.lang)}${opts.pruvodce ? `\n${opts.pruvodce.split('#')[0]}#pozdejsi` : ''}`,
+    pohoda: textPohody(opts.lang),
     pripraveno: textPripraveno(opts.lang, opts.pruvodce ? odkazPripraveno(opts.pruvodce) : ''),
   };
   const hlavni = hlavniZprava(opts);
   const videt = PORADI.filter((id) => {
     if (id === 'nedojezd') return ukazatNedojezd({ ...opts, chybi });
     if (id === 'pripraveno') return opts.pripraveno === true;
+    if (id === 'pohoda') {
+      return ukazatPohodu({
+        stav: opts.stav,
+        predano: opts.predano,
+        prijezd: opts.prijezd,
+        odjezd: opts.odjezd,
+        dnes: opts.dnes,
+      });
+    }
     if (id === 'odjezd') {
       return ukazatDotazOdjezdu({
         stav: opts.stav,

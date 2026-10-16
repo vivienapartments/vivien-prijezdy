@@ -32,13 +32,14 @@ export type BehZpracovani = {
   chyba: string;
 };
 
-/** Jednou za den. vecer = 18:00, pripominka = 20:00, rano = 7:30 přehled dne. uklid = poslední pořadí. pondeli = souhrn starších nedoplatků. */
+/** Jednou za den. vecer = 18:00, pripominka = 20:00, rano = 7:30 přehled dne. uklid = poslední pořadí. pondeli = souhrn starších nedoplatků. pohoda = 11:00 den po příjezdu. */
 export type OdjezdBeh = {
   vecer: string | null;
   pripominka: string | null;
   rano: string | null;
   uklid: string | null;
   pondeli: string | null;
+  pohoda: string | null;
 };
 
 export type JakPlatby = 'hotove' | 'karta' | 'prevod' | 'cena';
@@ -128,6 +129,8 @@ export type RezervaceRecord = {
   casOdjezduZadalHost: boolean;
   /** Kdy majitel poslal dotaz na odjezd. null = ještě ne. */
   odjezdDotaz: string | null;
+  /** Kdy majitel poslal „Je vše v pořádku?“. null = ještě ne. */
+  pohodaDotaz: string | null;
   /** Den a čas odjezdu, na který už odešlo upozornění půl hodiny předem. */
   odjezdPushPul: string | null;
   /** Kdy byl úklid tohoto odjezdu označen. null = ještě ne. */
@@ -484,6 +487,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     casOdjezdu: typeof r.casOdjezdu === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(r.casOdjezdu) ? r.casOdjezdu : null,
     casOdjezduZadalHost: r.casOdjezduZadalHost === true,
     odjezdDotaz: typeof r.odjezdDotaz === 'string' && r.odjezdDotaz ? r.odjezdDotaz : null,
+    pohodaDotaz: typeof r.pohodaDotaz === 'string' && r.pohodaDotaz ? r.pohodaDotaz : null,
     odjezdPushPul: typeof r.odjezdPushPul === 'string' && r.odjezdPushPul ? r.odjezdPushPul : null,
     uklizenoKdy: typeof r.uklizenoKdy === 'string' && r.uklizenoKdy ? r.uklizenoKdy : null,
     uklizenoKdo: r.uklizenoKdo === 'pravoslav' || r.uklizenoKdo === 'nikol' ? r.uklizenoKdo : null,
@@ -586,6 +590,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     casOdjezdu: null,
     casOdjezduZadalHost: false,
     odjezdDotaz: null,
+    pohodaDotaz: null,
     odjezdPushPul: null,
     uklizenoKdy: null,
     uklizenoKdo: null,
@@ -1010,7 +1015,14 @@ export class UpstashProcessStore implements ProcessStore {
       const den = (x: unknown) => (typeof x === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : null);
       const uklid =
         typeof beh.uklid === 'string' && /^\d{4}-\d{2}-\d{2}:(?:V[1-5](?:,V[1-5])*)?$/.test(beh.uklid) ? beh.uklid : null;
-      return { vecer: den(beh.vecer), pripominka: den(beh.pripominka), rano: den(beh.rano), uklid, pondeli: den(beh.pondeli) };
+      return {
+        vecer: den(beh.vecer),
+        pripominka: den(beh.pripominka),
+        rano: den(beh.rano),
+        uklid,
+        pondeli: den(beh.pondeli),
+        pohoda: den(beh.pohoda),
+      };
     } catch {
       return null;
     }

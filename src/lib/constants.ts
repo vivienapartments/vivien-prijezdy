@@ -9,6 +9,8 @@ export const ODJEZD_KROK_MIN = 30;
 export const HODINA_RAMCEKU_ODJEZDU = 12;
 /** Push se seznamem zítřejších odjezdů. */
 export const HODINA_DOTAZU_ODJEZDU = 18;
+/** Push den po příjezdu: dotaz, jestli je vše v pořádku. */
+export const HODINA_DOTAZU_POHODY = 11;
 /** Připomínka, když dotaz ještě neodešel. */
 export const HODINA_PRIPOMINKY_ODJEZDU = 20;
 /** Ranní přehled dne. Nedoplatky jsou jeho součástí, samostatně už nechodí. */

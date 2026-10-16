@@ -2,6 +2,7 @@ import nodemailer from 'nodemailer';
 import { PARKING_OWNER_PHONE } from './constants';
 import type { GuideLang } from './types';
 import { PREDMET_ODJEZDU } from './odjezd';
+import { PREDMET_POHODY } from './pohoda';
 import type { DruhZpravy } from './whatsapp-zprava';
 
 const TELEFON = PARKING_OWNER_PHONE;
@@ -73,6 +74,7 @@ export function datumPobytu(ymd: string | null): string {
 }
 
 export function predmetZpravy(id: DruhZpravy, lang: GuideLang | null, prijezd: string | null): string {
+  if (id === 'pohoda') return PREDMET_POHODY[jazyk(lang)];
   const tabulka =
     id === 'checkin' ? CHECKIN : id === 'neotevrel' ? PRUVODCE : id === 'brana' ? BRANA : id === 'odjezd' ? PREDMET_ODJEZDU : PRIJEZD;
   return tabulka[jazyk(lang)].replaceAll('{datum}', datumPobytu(prijezd));

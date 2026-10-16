@@ -101,6 +101,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'cas' &&
       akce !== 'cas-odjezdu' &&
       akce !== 'odjezd-dotaz' &&
+      akce !== 'pohoda-dotaz' &&
       akce !== 'checkin' &&
       akce !== 'telefon' &&
       akce !== 'predano' &&
@@ -380,6 +381,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, cas: dalsi.odjezdDotaz }, { headers: noStore });
   }
 
+  if (akce === 'pohoda-dotaz') {
+    if (rec.pohodaDotaz) return NextResponse.json({ ok: true, cas: rec.pohodaDotaz }, { headers: noStore });
+    const dalsi = pridej(rec, 'Je vše v pořádku? na WhatsApp', { pohodaDotaz: new Date().toISOString() });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, cas: dalsi.pohodaDotaz }, { headers: noStore });
+  }
+
   if (akce === 'checkin') {
     const vysledek = zkontrolujCheckinOdkaz(body?.url || '');
     if (!vysledek.ok) return chyba(400, 'Odkaz musí začínat https://.');
@@ -416,7 +424,18 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'email') {
-    const druhy: DruhZpravy[] = ['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd', 'odjezd', 'pripraveno'];
+    const druhy: DruhZpravy[] = [
+      'checkin',
+      'neotevrel',
+      'nerozbalen',
+      'denNerozbalen',
+      'denCas',
+      'brana',
+      'nedojezd',
+      'odjezd',
+      'pohoda',
+      'pripraveno',
+    ];
     const druh = druhy.find((id) => id === body?.zprava);
     if (!druh) return chyba(400, 'Vyberte zprávu.');
     const komu = (rec.emailHosta || '').trim();
@@ -463,15 +482,18 @@ export async function POST(request: Request): Promise<NextResponse> {
         subject: druh === 'pripraveno' ? predmetPripraveno(rec.jazyk) : predmetZpravy(druh, rec.jazyk, druh === 'odjezd' ? rec.odjezd : rec.prijezd),
         text: zprava.text,
         lang: rec.jazyk,
-        telefon: druh !== 'odjezd' && druh !== 'pripraveno',
+        telefon: druh !== 'odjezd' && druh !== 'pripraveno' && druh !== 'pohoda',
       });
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');
     }
-    await store.setRezervace(
-      id,
-      pridej(rec, `E-mailem: ${zprava.nazev}`, druh === 'odjezd' ? { odjezdDotaz: new Date().toISOString() } : {}),
-    );
+    const patch =
+      druh === 'odjezd'
+        ? { odjezdDotaz: new Date().toISOString() }
+        : druh === 'pohoda'
+          ? { pohodaDotaz: new Date().toISOString() }
+          : {};
+    await store.setRezervace(id, pridej(rec, `E-mailem: ${zprava.nazev}`, patch));
     return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
   }
 

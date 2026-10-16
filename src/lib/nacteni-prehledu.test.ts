@@ -152,7 +152,7 @@ describe('načtení přehledu 16. 10. 2026', () => {
     expect(tela).toEqual(['SCAN']);
   });
 
-  it('před 7:30 ranní přehled nesahá do úložiště a před 18:00 se nečte běh odjezdů', async () => {
+  it('před 7:30 ranní přehled nesahá do úložiště a před 11:00 se nečte běh odjezdů', async () => {
     const store = {
       async listRezervace() {
         throw new Error('seznam');
@@ -162,7 +162,7 @@ describe('načtení přehledu 16. 10. 2026', () => {
       },
     } as unknown as ProcessStore;
     expect(await upozorniDnes(store, casVPraze('2026-10-16', 7, 0))).toBe(0);
-    const odpoledne = {
+    const dopoledne = {
       async listRezervace() {
         return [];
       },
@@ -170,6 +170,6 @@ describe('načtení přehledu 16. 10. 2026', () => {
         throw new Error('beh');
       },
     } as unknown as ProcessStore;
-    expect(await upozorniOdjezdy(odpoledne, casVPraze('2026-10-16', 10, 0), async () => 'nic')).toBe(0);
+    expect(await upozorniOdjezdy(dopoledne, casVPraze('2026-10-16', 10, 0), async () => 'nic')).toBe(0);
   });
 });
