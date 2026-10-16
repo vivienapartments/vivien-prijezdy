@@ -81,6 +81,7 @@ describe('okno pobytu', () => {
     });
     const odjezd = zaklad('1', { apartman: 'V3', odjezd: '2026-10-16', uklizenoKdy: null });
     expect(aplikujPotvrzeni(host, 'prijezd', [host, odjezd], new Date())).toBeNull();
+    expect(aplikujPotvrzeni(host, 'prijezd', [host, odjezd], new Date(), true)?.zadostPrijezd?.stav).toBe('potvrzeno');
     const uklizeno = { ...odjezd, uklizenoKdy: '2026-10-16T06:00:00.000Z' };
     expect(aplikujPotvrzeni(host, 'prijezd', [host, uklizeno], new Date())?.zadostPrijezd?.stav).toBe('potvrzeno');
     const volna = zaklad('3', {

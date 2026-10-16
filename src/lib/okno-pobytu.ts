@@ -886,12 +886,13 @@ export function aplikujPotvrzeni(
   druh: 'prijezd' | 'odjezd',
   zaznamy: RezervaceRecord[],
   now: Date,
+  presto = false,
 ): RezervaceRecord | null {
   const zadost = druh === 'prijezd' ? rec.zadostPrijezd : rec.zadostOdjezd;
   if (!zadost || zadost.stav !== 'ceka') return null;
   if (druh === 'prijezd') {
     const odchod = odjizdiTenDen(hosteZ(zaznamy), hostZ(rec));
-    if (!smiPotvrditPrijezd(Boolean(odchod), Boolean(odchod?.uklizenoKdy))) return null;
+    if (!presto && !smiPotvrditPrijezd(Boolean(odchod), Boolean(odchod?.uklizenoKdy))) return null;
     const rucni = maRucni(rec, 'casPrijezdu');
     return poznamka(
       rec,

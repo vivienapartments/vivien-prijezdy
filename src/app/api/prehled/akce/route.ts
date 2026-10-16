@@ -72,6 +72,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     castka?: string;
     stav?: string;
     zprava?: string;
+    presto?: boolean;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -201,8 +202,16 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'potvrdit-prijezd' || akce === 'potvrdit-odjezd' || akce === 'nelze-prijezd' || akce === 'nelze-odjezd') {
     const druh = akce.endsWith('prijezd') ? 'prijezd' : 'odjezd';
     const vse = (await store.listRezervace()).map((e) => e.record);
-    const dalsi = akce.startsWith('potvrdit') ? aplikujPotvrzeni(rec, druh, vse, new Date()) : aplikujNelze(rec, druh, new Date());
-    if (!dalsi) return chyba(400, 'Teď to nejde potvrdit.');
+    const presto = body?.presto === true;
+    const dalsi = akce.startsWith('potvrdit')
+      ? aplikujPotvrzeni(rec, druh, vse, new Date(), presto)
+      : aplikujNelze(rec, druh, new Date());
+    if (!dalsi) {
+      if (akce === 'potvrdit-prijezd' && !presto) {
+        return chyba(409, 'Apartmán ještě není uklizený. Přesto potvrdit?');
+      }
+      return chyba(400, 'Teď to nejde potvrdit.');
+    }
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true }, { headers: noStore });
   }

@@ -148,6 +148,7 @@ export function PrehledClient({
   const [dotazEmail, setDotazEmail] = useState<{ id: string; email: string } | null>(null);
   const [dotazOdjezd, setDotazOdjezd] = useState<string | null>(null);
   const [dotazPohoda, setDotazPohoda] = useState<string | null>(null);
+  const [dotazPrestoPrijezd, setDotazPrestoPrijezd] = useState<string | null>(null);
   const [poplatekOtevren, setPoplatekOtevren] = useState<Record<string, boolean>>({});
 
   function jazykRadku(row: PrehledRadek): GuideLang {
@@ -591,24 +592,31 @@ export function PrehledClient({
   async function oknoAkce(
     row: PrehledRadek,
     akce: 'potvrdit-prijezd' | 'nelze-prijezd' | 'potvrdit-odjezd' | 'nelze-odjezd',
+    presto = false,
   ) {
     const klic = `${row.rezervace}:${akce}`;
     if (ukazka) {
       setOknoHotovo((stav) => ({ ...stav, [klic]: true }));
+      setDotazPrestoPrijezd(null);
       return;
     }
     setCekam(klic);
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rezervace: row.rezervace, akce }),
+      body: JSON.stringify({ rezervace: row.rezervace, akce, ...(presto ? { presto: true } : {}) }),
     });
     setCekam(null);
+    if (res.status === 409 && akce === 'potvrdit-prijezd') {
+      setDotazPrestoPrijezd(row.rezervace);
+      return;
+    }
     if (!res.ok) {
       const json = (await res.json().catch(() => null)) as { error?: string } | null;
       setHlaska(json?.error || 'Akce se nepovedla.');
       return;
     }
+    setDotazPrestoPrijezd(null);
     window.location.reload();
   }
 
@@ -1320,6 +1328,17 @@ export function PrehledClient({
               <button type="button" onClick={() => void oknoAkce(row, polozka.akce === 'prijezd' ? 'nelze-prijezd' : 'nelze-odjezd')}>
                 Nelze
               </button>
+              {polozka.akce === 'prijezd' && dotazPrestoPrijezd === row.rezervace ? (
+                <div className="ph-predano-dotaz">
+                  <p>Apartmán ještě není uklizený. Přesto potvrdit?</p>
+                  <button type="button" disabled={cekam !== null} onClick={() => void oknoAkce(row, 'potvrdit-prijezd', true)}>
+                    Ano, potvrdit
+                  </button>
+                  <button type="button" onClick={() => setDotazPrestoPrijezd(null)}>
+                    Zrušit
+                  </button>
+                </div>
+              ) : null}
             </div>
           ))}
         {ukazatPrijezd ? <div className="ph-prijezd-cas">Příjezd {casText}</div> : null}
