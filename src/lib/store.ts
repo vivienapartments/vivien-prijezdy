@@ -704,12 +704,22 @@ export class FileProcessStore implements ProcessStore {
 
 /** Upstash REST (až budou KV_* v env). Stejné klíče jako lokální store. */
 export class UpstashProcessStore implements ProcessStore {
+  private prikazu = 0;
+  /** Seznam z tohoto běhu. Druhé čtení už do Upstash nesahá. */
+  private seznam: RezervaceEntry[] | null = null;
+
   constructor(
     private readonly url: string,
     private readonly token: string,
   ) {}
 
+  /** Kolik příkazů tenhle běh poslal. Do logu jen číslo. */
+  pocetPrikazu(): number {
+    return this.prikazu;
+  }
+
   private async cmd<T>(...args: (string | number)[]): Promise<T> {
+    this.prikazu += 1;
     // Upstash REST bere jen text. Číslo (třeba COUNT 100) vrací HTTP 400 a shodí celý přehled.
     const prikaz = args.map((arg) => String(arg));
     const res = await fetch(this.url, {
@@ -757,6 +767,8 @@ export class UpstashProcessStore implements ProcessStore {
       } while (cursor !== '0');
       return keys;
     } catch (err) {
+      const text = err instanceof Error ? err.message : '';
+      if (text.includes('max requests limit')) throw err;
       const keys = await this.cmd<string[]>('KEYS', match).catch(() => {
         throw err;
       });
@@ -766,6 +778,31 @@ export class UpstashProcessStore implements ProcessStore {
 
   private chybejiciZaznam(id: string): RezervaceEntry {
     return { id, record: prazdnaRezervace(id, new Date(0).toISOString()), chybaNahrani: true };
+  }
+
+  /** Hodnoty víc klíčů najednou. Jedna dávka má nejvýš 100 klíčů. */
+  private async hodnotyKlicu(keys: string[]): Promise<(string | null)[]> {
+    const DAVKA = 100;
+    const out: (string | null)[] = [];
+    for (let i = 0; i < keys.length; i += DAVKA) {
+      const davka = keys.slice(i, i + DAVKA);
+      const result = await this.cmd<(string | null)[]>('MGET', ...davka);
+      const hodnoty = Array.isArray(result) ? result : [];
+      for (let j = 0; j < davka.length; j += 1) out.push(hodnoty[j] ?? null);
+    }
+    return out;
+  }
+
+  private zaznamZHodnoty(key: string, v: string | null): RezervaceEntry | null {
+    if (!v) return null;
+    const id = key.startsWith('rez:') ? key.slice(4) : key;
+    try {
+      const record = asRezervace(id, JSON.parse(v));
+      if (!record) return this.chybejiciZaznam(id);
+      return { id, record };
+    } catch {
+      return this.chybejiciZaznam(id);
+    }
   }
 
   async isMessageProcessed(messageId: string): Promise<boolean> {
@@ -797,36 +834,38 @@ export class UpstashProcessStore implements ProcessStore {
         ? Math.max(60, Math.ceil((limit.getTime() - Date.now()) / 1000))
         : 60;
     await this.cmd('SET', this.rezKey(id), JSON.stringify(record), 'EX', ttlSec);
+    if (!this.seznam) return;
+    const zaznam = { id, record };
+    const i = this.seznam.findIndex((e) => e.id === id);
+    if (i >= 0) this.seznam[i] = zaznam;
+    else this.seznam.push(zaznam);
   }
 
   async listRezervace(): Promise<RezervaceEntry[]> {
+    if (this.seznam) return this.seznam;
     const keys = await this.scanKeys('rez:*');
+    const hodnoty = await this.hodnotyKlicu(keys);
     const out: RezervaceEntry[] = [];
-    for (const key of keys) {
-      const id = key.startsWith('rez:') ? key.slice(4) : key;
-      try {
-        const v = await this.cmd<string | null>('GET', key);
-        if (!v) continue;
-        const record = asRezervace(id, JSON.parse(v));
-        if (!record) {
-          out.push(this.chybejiciZaznam(id));
-          continue;
-        }
-        out.push({ id, record });
-      } catch {
-        out.push(this.chybejiciZaznam(id));
-      }
+    for (let i = 0; i < keys.length; i += 1) {
+      const zaznam = this.zaznamZHodnoty(keys[i], hodnoty[i] ?? null);
+      if (zaznam) out.push(zaznam);
     }
+    this.seznam = out;
     return out;
   }
 
   async listMessages(): Promise<MessageEntry[]> {
     const keys = await this.scanKeys('msg:*');
+    const hodnoty = await this.hodnotyKlicu(keys);
     const out: MessageEntry[] = [];
-    for (const key of keys) {
-      const v = await this.cmd<string | null>('GET', key);
+    for (let i = 0; i < keys.length; i += 1) {
+      const v = hodnoty[i];
       if (!v) continue;
-      out.push({ id: key.slice(4), record: JSON.parse(v) as MessageRecord });
+      try {
+        out.push({ id: keys[i].slice(4), record: JSON.parse(v) as MessageRecord });
+      } catch {
+        continue;
+      }
     }
     return out;
   }
@@ -916,6 +955,11 @@ export class UpstashProcessStore implements ProcessStore {
   async setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void> {
     await this.cmd('SET', 'meta:objednat', JSON.stringify(nactiObjednatPokusy(pokusy)));
   }
+}
+
+/** null, když to není Upstash. Do logu patří jen číslo. */
+export function pocetPrikazu(store: ProcessStore): number | null {
+  return store instanceof UpstashProcessStore ? store.pocetPrikazu() : null;
 }
 
 export function createProcessStore(): ProcessStore {

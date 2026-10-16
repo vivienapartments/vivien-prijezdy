@@ -39,13 +39,16 @@ export async function upozorniOdjezdy(
     pocet += 1;
   }
 
+  const hodina = hodinaPraha(now);
+  if (hodina < HODINA_DOTAZU_ODJEZDU) return pocet;
+
   const dnes = denPraha(now);
   const zitra = posunDen(dnes, 1);
-  const hodina = hodinaPraha(now);
   const beh = nactiOdjezdBeh(await store.getOdjezdBeh());
+  const pred = `${beh.vecer}|${beh.pripominka}`;
   const zitrejsi = hosteNaDen(list, zitra);
 
-  if (hodina >= HODINA_DOTAZU_ODJEZDU && beh.vecer !== dnes && zitrejsi.length) {
+  if (beh.vecer !== dnes && zitrejsi.length) {
     const text = textVecer(zitrejsi.length);
     const jak = await posli(store, text, '/prehled#odjezdy-zitra');
     if (jak !== 'nic') {
@@ -64,6 +67,6 @@ export async function upozorniOdjezdy(
     }
   }
 
-  await store.setOdjezdBeh(beh);
+  if (`${beh.vecer}|${beh.pripominka}` !== pred) await store.setOdjezdBeh(beh);
   return pocet;
 }

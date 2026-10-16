@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cistaChyba } from '@/lib/cista-chyba';
 import { runInboxProcessing, vypisPotvrzeni } from '@/lib/process-inbox';
-import { createProcessStore } from '@/lib/store';
+import { createProcessStore, pocetPrikazu, type ProcessStore } from '@/lib/store';
 import { upozorniBranu } from '@/lib/brana-upozorneni';
 import { upozorniDnes } from '@/lib/dnesek-upozorneni';
 import { upozorniOdjezdy } from '@/lib/odjezd-upozorneni';
@@ -13,6 +13,11 @@ export const maxDuration = 60;
 
 function unauthorized(): NextResponse {
   return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+}
+
+function zapisSpotrebu(store: ProcessStore): void {
+  const n = pocetPrikazu(store);
+  if (n != null) console.log(`Upstash prikazu: ${n}`);
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -38,9 +43,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
   }
 
+  const store = createProcessStore();
   try {
-    const summary = await runInboxProcessing();
-    const store = createProcessStore();
+    const summary = await runInboxProcessing({ store });
     const posledni = [...summary.items].reverse().find((i) => i.reason);
     await store.setBeh({
       cas: new Date().toISOString(),
@@ -53,6 +58,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await upozorniPrijezd(store).catch(() => undefined);
     await upozorniOdjezdy(store).catch(() => undefined);
     await upozorniDnes(store).catch(() => undefined);
+    zapisSpotrebu(store);
     return NextResponse.json({
       ok: true,
       scanned: summary.scanned,
@@ -69,7 +75,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'chyba';
-    const store = createProcessStore();
+    zapisSpotrebu(store);
     await store
       .setBeh({
         cas: new Date().toISOString(),

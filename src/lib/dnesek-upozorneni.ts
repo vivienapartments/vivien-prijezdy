@@ -19,6 +19,7 @@ export async function upozorniDnes(
   now = new Date(),
   posli: typeof upozorniMajitele = upozorniMajitele,
 ): Promise<number> {
+  if (!jePoCase(now, HODINA_RANIHO_DNE, MINUTA_RANIHO_DNE)) return 0;
   const list = (await store.listRezervace()).map((e) => e.record);
   const dnes = denPraha(now);
   const pohled = sestavDnesek(list.map(hostZRezervace), dnes);

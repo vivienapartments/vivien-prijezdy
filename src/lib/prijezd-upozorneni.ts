@@ -55,6 +55,7 @@ export async function upozorniPrijezd(
   now = new Date(),
   posli: typeof upozorniMajitele = upozorniMajitele,
 ): Promise<number> {
+  if (hodinaPraha(now) < RANO) return 0;
   const list = await store.listRezervace();
   let pocet = 0;
   for (const { id, record } of list) {
