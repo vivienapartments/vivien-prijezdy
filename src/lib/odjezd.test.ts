@@ -14,9 +14,11 @@ import { createToken } from './token';
 import { ulozVstupHosta } from './vstup-ulozit';
 import { upozorniOdjezdy } from './odjezd-upozorneni';
 import {
+  castkaPozdejsihoOdjezdu,
   hosteNaDen,
   jeSlotOdjezdu,
   polozkyDluhu,
+  polozkyZRezervace,
   seradOdjezdy,
   textPulHodiny,
   textSouhrnu,
@@ -263,6 +265,14 @@ describe('odjezd', () => {
       casOdjezdu: '09:30',
     });
     expect(seCasem.some((z) => z.id === 'odjezd')).toBe(false);
+  });
+
+  it('ruční čas po 10:00 napočítá příplatek za pozdější odjezd', () => {
+    expect(castkaPozdejsihoOdjezdu({ casOdjezdu: '10:00', zadostOdjezd: null })).toBeNull();
+    expect(castkaPozdejsihoOdjezdu({ casOdjezdu: '10:30', zadostOdjezd: null })).toBe(75);
+    expect(castkaPozdejsihoOdjezdu({ casOdjezdu: '11:00', zadostOdjezd: null })).toBe(150);
+    const rec = host({ rezervace: '77', casOdjezdu: '10:30' });
+    expect(polozkyZRezervace(rec).some((p) => p.druh === 'pozde' && p.kc === 75)).toBe(true);
   });
 
   it('rámeček je nad PINy den před odjezdem od poledne a po uložení se sbalí', () => {

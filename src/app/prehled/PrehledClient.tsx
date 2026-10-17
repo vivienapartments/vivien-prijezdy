@@ -20,7 +20,18 @@ import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
 import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { langFromNarodnost } from '@/lib/vivien-data';
-import { jeHodina, nazevDluhu, polozkyDluhu, seradOdjezdy, textRozpisu, ukazatCasNaKarte, zobrazCas, zpravaOdjezdu, type DruhDluhu } from '@/lib/odjezd';
+import {
+  castkaPozdejsihoOdjezdu,
+  jeHodina,
+  nazevDluhu,
+  polozkyDluhu,
+  seradOdjezdy,
+  textRozpisu,
+  ukazatCasNaKarte,
+  zobrazCas,
+  zpravaOdjezdu,
+  type DruhDluhu,
+} from '@/lib/odjezd';
 import { jeProPohodu, textPohody } from '@/lib/pohoda';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
@@ -196,7 +207,7 @@ export function PrehledClient({
       predano: predanoRadku(row),
       vyjezdy: vyjezdyRadku(row),
       priplatekDrive: row.zadostPrijezd?.stav === 'potvrzeno' ? row.zadostPrijezd.kc : null,
-      priplatekPozde: row.zadostOdjezd?.stav === 'potvrzeno' ? row.zadostOdjezd.kc : null,
+      priplatekPozde: castkaPozdejsihoOdjezdu(row),
     });
     return polozky.map((p) => ({ ...p, nazev: nazevDluhu(p.druh) }));
   }

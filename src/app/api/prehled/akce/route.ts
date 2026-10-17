@@ -10,7 +10,14 @@ import { denPraha } from '@/lib/brana';
 import { posliEmailZpravy, predmetZpravy } from '@/lib/email-zprava';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
-import { aplikujNelze, aplikujPotvrzeni, oznacUpozorneno, poUklidu, predmetPripraveno } from '@/lib/okno-pobytu';
+import {
+  aplikujNelze,
+  aplikujPotvrzeni,
+  cenaPozde,
+  oznacUpozorneno,
+  poUklidu,
+  predmetPripraveno,
+} from '@/lib/okno-pobytu';
 import { upozorniMajitele } from '@/lib/upozorneni';
 import { polozkyZRezervace, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
 import { vratPlatbu, zaplatDruhy } from '@/lib/platby-hosta';
@@ -368,17 +375,40 @@ export async function POST(request: Request): Promise<NextResponse> {
       const dalsi = pridej(rec, bylo === 'žádný' ? '' : `Čas odjezdu ${bylo} → žádný`, {
         casOdjezdu: null,
         casOdjezduZadalHost: false,
+        zadostOdjezd: null,
         rucniZnacky: bez,
       });
       if (bylo === 'žádný') dalsi.historie = rec.historie;
       await store.setRezervace(id, dalsi);
       return NextResponse.json({ ok: true, hodnota: '' }, { headers: noStore });
     }
+    const kc = cenaPozde(cas);
+    const now = new Date().toISOString();
+    const veta =
+      bylo === nove
+        ? ''
+        : kc
+          ? `Čas odjezdu ${bylo} → ${nove} (+${kc} Kč)`
+          : `Čas odjezdu ${bylo} → ${nove}`;
     const dalsi = zapisMajitele(
       rec,
       'casOdjezdu',
-      { casOdjezdu: cas, casOdjezduZadalHost: false },
-      bylo === nove ? '' : `Čas odjezdu ${bylo} → ${nove}`,
+      {
+        casOdjezdu: cas,
+        casOdjezduZadalHost: false,
+        zadostOdjezd: kc
+          ? {
+              cas,
+              kc,
+              stav: 'potvrzeno',
+              kdy: now,
+              od: 'pruvodce',
+              hned: true,
+              upozorneno: false,
+            }
+          : null,
+      },
+      veta,
     );
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, hodnota: nove }, { headers: noStore });
