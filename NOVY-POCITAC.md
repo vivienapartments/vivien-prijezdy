@@ -49,6 +49,8 @@ npx vercel env pull .env.local
 
 Nebo zkopírujte `.env.local` / složku `vivien-prijezdy-tajne` z flashky ze starého notebooku.
 
+Tajné údaje jsou v `C:\Users\PC\vivien-prijezdy-tajne` a na Vercelu (Environment Variables).
+
 **Názvy proměnných** (jen názvy, bez hodnot):
 
 - `PRUVODCE_TOKEN_SECRET`, `PRUVODCE_BASE_URL`, `TEST_REZIM`
