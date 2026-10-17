@@ -317,21 +317,32 @@ export function ukazatCasNaKarte(odjezd: string | null, dnes: string): boolean {
   return dnes === odjezd || dnes === posunDen(odjezd, -1);
 }
 
-export function ukazatRamecekOdjezdu(odjezd: string | null, now = new Date()): boolean {
+/** Rámeček odjezdu. Po předání (ubytován) po celý pobyt. Jinak od poledne den před odjezdem. */
+export function ukazatRamecekOdjezdu(odjezd: string | null, now = new Date(), ubytovan = false): boolean {
   if (!odjezd) return false;
   const dnes = denPraha(now);
   if (dnes > odjezd) return false;
+  if (ubytovan) return true;
   if (dnes === odjezd) return true;
   return dnes === posunDen(odjezd, -1) && hodinaPraha(now) >= HODINA_RAMCEKU_ODJEZDU;
 }
 
 export const TEXT_ODJEZDU: Record<
   GuideLang,
-  { nadpisZitra: string; nadpisDnes: string; poznamka: string; ulozit: string; zmenit: string; radek: string }
+  {
+    nadpisZitra: string;
+    nadpisDnes: string;
+    nadpisJindy: string;
+    poznamka: string;
+    ulozit: string;
+    zmenit: string;
+    radek: string;
+  }
 > = {
   cs: {
     nadpisZitra: 'V kolik zítra odjíždíte?',
     nadpisDnes: 'V kolik dnes odjíždíte?',
+    nadpisJindy: 'V kolik odjíždíte?',
     poznamka: 'Pozdější čas jen po domluvě.',
     ulozit: 'Uložit',
     zmenit: 'změnit',
@@ -340,6 +351,7 @@ export const TEXT_ODJEZDU: Record<
   en: {
     nadpisZitra: 'What time are you leaving tomorrow?',
     nadpisDnes: 'What time are you leaving today?',
+    nadpisJindy: 'What time are you leaving?',
     poznamka: 'A later time only by agreement.',
     ulozit: 'Save',
     zmenit: 'change',
@@ -348,6 +360,7 @@ export const TEXT_ODJEZDU: Record<
   de: {
     nadpisZitra: 'Um wie viel Uhr reisen Sie morgen ab?',
     nadpisDnes: 'Um wie viel Uhr reisen Sie heute ab?',
+    nadpisJindy: 'Um wie viel Uhr reisen Sie ab?',
     poznamka: 'Eine spätere Zeit nur nach Absprache.',
     ulozit: 'Speichern',
     zmenit: 'ändern',
@@ -356,6 +369,7 @@ export const TEXT_ODJEZDU: Record<
   pl: {
     nadpisZitra: 'O której jutro wyjeżdżacie?',
     nadpisDnes: 'O której dziś wyjeżdżacie?',
+    nadpisJindy: 'O której wyjeżdżacie?',
     poznamka: 'Późniejsza godzina tylko po uzgodnieniu.',
     ulozit: 'Zapisz',
     zmenit: 'zmień',
@@ -364,6 +378,7 @@ export const TEXT_ODJEZDU: Record<
   uk: {
     nadpisZitra: 'О котрій завтра виїжджаєте?',
     nadpisDnes: 'О котрій сьогодні виїжджаєте?',
+    nadpisJindy: 'О котрій виїжджаєте?',
     poznamka: 'Пізніший час лише за домовленістю.',
     ulozit: 'Зберегти',
     zmenit: 'змінити',
@@ -372,6 +387,7 @@ export const TEXT_ODJEZDU: Record<
   'zh-Hant': {
     nadpisZitra: '明天幾點離開？',
     nadpisDnes: '今天幾點離開？',
+    nadpisJindy: '幾點離開？',
     poznamka: '更晚的時間需要先說好。',
     ulozit: '儲存',
     zmenit: '更改',
@@ -380,6 +396,7 @@ export const TEXT_ODJEZDU: Record<
   es: {
     nadpisZitra: '¿A qué hora se van mañana?',
     nadpisDnes: '¿A qué hora se van hoy?',
+    nadpisJindy: '¿A qué hora se van?',
     poznamka: 'Una hora más tarde solo con acuerdo.',
     ulozit: 'Guardar',
     zmenit: 'cambiar',
@@ -388,6 +405,7 @@ export const TEXT_ODJEZDU: Record<
   fr: {
     nadpisZitra: 'À quelle heure partez-vous demain ?',
     nadpisDnes: 'À quelle heure partez-vous aujourd\'hui ?',
+    nadpisJindy: 'À quelle heure partez-vous ?',
     poznamka: 'Une heure plus tardive seulement après accord.',
     ulozit: 'Enregistrer',
     zmenit: 'modifier',
@@ -396,6 +414,7 @@ export const TEXT_ODJEZDU: Record<
   it: {
     nadpisZitra: 'A che ora partite domani?',
     nadpisDnes: 'A che ora partite oggi?',
+    nadpisJindy: 'A che ora partite?',
     poznamka: 'Un orario più tardi solo su accordo.',
     ulozit: 'Salva',
     zmenit: 'cambia',
@@ -404,6 +423,7 @@ export const TEXT_ODJEZDU: Record<
   sv: {
     nadpisZitra: 'Vilken tid åker ni i morgon?',
     nadpisDnes: 'Vilken tid åker ni i dag?',
+    nadpisJindy: 'Vilken tid åker ni?',
     poznamka: 'En senare tid bara efter överenskommelse.',
     ulozit: 'Spara',
     zmenit: 'ändra',
@@ -412,6 +432,7 @@ export const TEXT_ODJEZDU: Record<
   hu: {
     nadpisZitra: 'Hánykor utaznak el holnap?',
     nadpisDnes: 'Hánykor utaznak el ma?',
+    nadpisJindy: 'Hánykor utaznak el?',
     poznamka: 'Későbbi időpont csak megbeszélés után.',
     ulozit: 'Mentés',
     zmenit: 'módosít',

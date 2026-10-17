@@ -268,6 +268,8 @@ describe('odjezd', () => {
   it('rámeček je nad PINy den před odjezdem od poledne a po uložení se sbalí', () => {
     expect(ukazatRamecekOdjezdu('2026-10-17', casVPraze('2026-10-16', 11, 59))).toBe(false);
     expect(ukazatRamecekOdjezdu('2026-10-17', casVPraze('2026-10-16', 12, 0))).toBe(true);
+    expect(ukazatRamecekOdjezdu('2026-10-17', casVPraze('2026-10-14', 15, 0))).toBe(false);
+    expect(ukazatRamecekOdjezdu('2026-10-17', casVPraze('2026-10-14', 15, 0), true)).toBe(true);
     expect(jeSlotOdjezdu('10:00')).toBe(true);
     expect(jeSlotOdjezdu('10:30')).toBe(false);
     const dnes = denPraha(new Date());

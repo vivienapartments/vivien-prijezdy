@@ -537,6 +537,7 @@ export function Guide({
           rucni={Boolean(odjezd?.rucni)}
           token={vstup?.cteni ? null : (vstup?.token ?? null)}
           cteni={Boolean(vstup?.cteni) || !vstup?.token}
+          ubytovan={ubytovan || Boolean(ziveKody)}
           nejpozdeji={okno?.nejpozdeji}
         />
         <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { denPraha } from '@/lib/brana';
-import { casyPozde, optionPozde, skupinaOdjezd, skupinaPozde } from '@/lib/okno-pobytu';
+import { casyPozde, optionPozde, posunDen, skupinaOdjezd, skupinaPozde } from '@/lib/okno-pobytu';
 import { jeHodina, slotsOdjezdu, TEXT_ODJEZDU, ukazatRamecekOdjezdu, zobrazCas } from '@/lib/odjezd';
 import type { GuideLang } from '@/lib/types';
 
@@ -13,11 +13,22 @@ type Props = {
   rucni: boolean;
   token: string | null;
   cteni: boolean;
+  /** Po předání je volba odjezdu po celý pobyt. */
+  ubytovan?: boolean;
   /** Nejpozdější nabízený čas. Výchozí je 14:00. */
   nejpozdeji?: string;
 };
 
-export function OdjezdRamecek({ lang, den, cas, rucni, token, cteni, nejpozdeji = '14:00' }: Props) {
+export function OdjezdRamecek({
+  lang,
+  den,
+  cas,
+  rucni,
+  token,
+  cteni,
+  ubytovan = false,
+  nejpozdeji = '14:00',
+}: Props) {
   const bezne = slotsOdjezdu();
   const pozde = casyPozde(nejpozdeji);
   const [ulozeny, setUlozeny] = useState(jeHodina(cas) ? cas : '');
@@ -25,9 +36,11 @@ export function OdjezdRamecek({ lang, den, cas, rucni, token, cteni, nejpozdeji 
   const [vyber, setVyber] = useState(jeHodina(cas) ? cas : bezne[bezne.length - 1] || bezne[0]);
   const [cekam, setCekam] = useState(false);
   const [chyba, setChyba] = useState('');
-  if (!ukazatRamecekOdjezdu(den)) return null;
+  if (!ukazatRamecekOdjezdu(den, new Date(), ubytovan)) return null;
   const text = TEXT_ODJEZDU[lang] || TEXT_ODJEZDU.en;
-  const nadpis = den === denPraha(new Date()) ? text.nadpisDnes : text.nadpisZitra;
+  const dnes = denPraha(new Date());
+  const nadpis =
+    den === dnes ? text.nadpisDnes : den === posunDen(dnes, 1) ? text.nadpisZitra : text.nadpisJindy;
   const zamceno = rucni && Boolean(ulozeny);
 
   async function ulozit() {
