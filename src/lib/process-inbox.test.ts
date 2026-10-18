@@ -452,18 +452,21 @@ Original-Message-ID: <x>
     );
     expect(zruseno.status).toBe('zruseno');
 
-    const item = await processOneMail(
-      mail({
-        messageId: 'checkin-zrus@test',
-        from: 'noreply@better-hotel.com',
-        authenticationResults: 'dkim=pass header.d=better-hotel.com',
-        text: BLOCK.replace('REZERVACE: 120260530', 'REZERVACE: 100000001'),
-      }),
-      store,
-    );
+    const checkin = mail({
+      messageId: 'checkin-zrus@test',
+      from: 'noreply@better-hotel.com',
+      authenticationResults: 'dkim=pass header.d=better-hotel.com',
+      text: BLOCK.replace('REZERVACE: 120260530', 'REZERVACE: 100000001'),
+    });
+    const item = await processOneMail(checkin, store);
     expect(item.status).toBe('zruseno');
     expect(sendGuestEmail).not.toHaveBeenCalled();
     expect((await store.getRezervace('100000001'))?.stav).toBe('zruseno');
+    const historiePoPrvnim = (await store.getRezervace('100000001'))?.historie.length || 0;
+
+    const znovu = await processOneMail(checkin, store);
+    expect(znovu.status).toBe('already_done');
+    expect((await store.getRezervace('100000001'))?.historie.length).toBe(historiePoPrvnim);
   });
 
   it('ruční přidání založí záznam a stejné číslo ho jen doplní', async () => {

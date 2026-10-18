@@ -365,20 +365,30 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
   const id = ins.rezervace;
   const prev = await store.getRezervace(id);
   if (prev?.stav === 'zruseno') {
-    const rec = sloucit(id, prev, {}, now, 'Přišel check-in u zrušené rezervace, průvodce se neposlal');
-    await store.setRezervace(id, rec);
-    const predmet = testRezim()
-      ? `[TEST] U zrušené rezervace #${id} přišel check-in`
-      : `U zrušené rezervace #${id} přišel check-in`;
-    await alertMajitel(predmet, 'Průvodce se neposlal.');
-    await store.markMessage({
-      messageId: mail.messageId,
-      uid: mail.uid,
-      processedAt: now,
-      rezervace: id,
-      status: 'skipped_no_data',
-      reason: 'zruseno',
-    });
+    // Nejdřív označit mail, ať cron každou minutu znovu neposílá upozornění.
+    if (mail.messageId) {
+      await store.markMessage({
+        messageId: mail.messageId,
+        uid: mail.uid,
+        processedAt: now,
+        rezervace: id,
+        status: 'skipped_no_data',
+        reason: 'zruseno',
+      });
+    }
+    const uzVime = prev.historie.some((h) => /check-in u zrušené/i.test(h.co));
+    if (!uzVime) {
+      const rec = sloucit(id, prev, {}, now, 'Přišel check-in u zrušené rezervace, průvodce se neposlal');
+      await store.setRezervace(id, rec);
+      const predmet = testRezim()
+        ? `[TEST] U zrušené rezervace #${id} přišel check-in`
+        : `U zrušené rezervace #${id} přišel check-in`;
+      try {
+        await alertMajitel(predmet, 'Průvodce se neposlal.');
+      } catch {
+        /* Upozornění nesmí znovu spustit zpracování mailu. */
+      }
+    }
     return { rezervace: id, status: 'zruseno', reason: 'zruseno' };
   }
   if (prev?.stav === 'odeslano' || prev?.stav === 'odeslano_s_vyhradou') {
