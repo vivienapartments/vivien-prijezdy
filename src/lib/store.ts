@@ -136,7 +136,7 @@ export type RezervaceRecord = {
   /** Kdy byl úklid tohoto odjezdu označen. null = ještě ne. */
   uklizenoKdy: string | null;
   /** Kdo úklid označil. */
-  uklizenoKdo: 'pravoslav' | 'nikol' | null;
+  uklizenoKdo: 'miluska' | 'nikol' | 'pravoslav' | null;
   /** Žádost o dřívější příjezd. Platí až po potvrzení majitele. */
   zadostPrijezd: ZadostOkna | null;
   /** Žádost o pozdější odjezd. Platí až po potvrzení majitele. */
@@ -172,6 +172,8 @@ export type RezervaceRecord = {
   vyjezdy: VyjezdPolozka[];
   /** Souhlas hosta s pravidly příjezdu. Verze drží znění, které viděl. */
   souhlasPravidel: { kdy: string; jazyk: string; verze: string } | null;
+  /** Závady zapsané při předání. E-mail hostovi s potvrzením. */
+  zavadyPredani: { text: string; odeslanoKdy: string; potvrzenoKdy: string | null } | null;
   /** Poslední čas příjezdu zadal host v průvodci. */
   casZadalHost: boolean;
   /** auto, nebo pěšky / vlak / autobus. */
@@ -402,6 +404,18 @@ function nactiSouhlas(raw: unknown): RezervaceRecord['souhlasPravidel'] {
   return { kdy: s.kdy, jazyk: s.jazyk, verze: s.verze };
 }
 
+function nactiZavadyPredani(raw: unknown): RezervaceRecord['zavadyPredani'] {
+  if (!raw || typeof raw !== 'object') return null;
+  const z = raw as Record<string, unknown>;
+  if (typeof z.text !== 'string' || !z.text.trim()) return null;
+  if (typeof z.odeslanoKdy !== 'string' || !z.odeslanoKdy) return null;
+  return {
+    text: z.text.trim().slice(0, 2000),
+    odeslanoKdy: z.odeslanoKdy,
+    potvrzenoKdy: typeof z.potvrzenoKdy === 'string' && z.potvrzenoKdy ? z.potvrzenoKdy : null,
+  };
+}
+
 function nactiZadost(raw: unknown): ZadostOkna | null {
   if (!raw || typeof raw !== 'object') return null;
   const z = raw as ZadostOkna;
@@ -490,7 +504,12 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     pohodaDotaz: typeof r.pohodaDotaz === 'string' && r.pohodaDotaz ? r.pohodaDotaz : null,
     odjezdPushPul: typeof r.odjezdPushPul === 'string' && r.odjezdPushPul ? r.odjezdPushPul : null,
     uklizenoKdy: typeof r.uklizenoKdy === 'string' && r.uklizenoKdy ? r.uklizenoKdy : null,
-    uklizenoKdo: r.uklizenoKdo === 'pravoslav' || r.uklizenoKdo === 'nikol' ? r.uklizenoKdo : null,
+    uklizenoKdo:
+      r.uklizenoKdo === 'nikol'
+        ? 'nikol'
+        : r.uklizenoKdo === 'miluska' || r.uklizenoKdo === 'pravoslav'
+          ? 'miluska'
+          : null,
     zadostPrijezd: nactiZadost(r.zadostPrijezd),
     zadostOdjezd: nactiZadost(r.zadostOdjezd),
     casZadalHost: r.casZadalHost === true,
@@ -527,6 +546,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     platbaUpozorneno: typeof r.platbaUpozorneno === 'string' && r.platbaUpozorneno ? r.platbaUpozorneno : null,
     vyjezdy: nactiVyjezdy(r.vyjezdy),
     souhlasPravidel: nactiSouhlas(r.souhlasPravidel),
+    zavadyPredani: nactiZavadyPredani(r.zavadyPredani),
   };
 }
 
@@ -577,6 +597,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     platbaUpozorneno: null,
     vyjezdy: [],
     souhlasPravidel: null,
+    zavadyPredani: null,
     casZadalHost: false,
     zpusobPrijezdu: null,
     telefonBrana: null,

@@ -568,6 +568,30 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Kis ház vagyunk a város közepén. Kérjük, figyeljenek a szomszédokra, főleg este és éjjel.",
     },
   },
+  {
+    title: {
+      cs: 'Předání apartmánu',
+      en: 'Apartment handover',
+      de: 'Übergabe des Apartments',
+      pl: 'Przekazanie apartamentu',
+      uk: 'Передача апартаментів',
+      'zh-Hant': '公寓交接',
+      sv: 'Överlämning av lägenheten',
+      es: 'Entrega del apartamento',
+      hu: 'Az apartman átadása',
+    },
+    text: {
+      cs: 'Při předání si společně prohlédneme apartmán. Když něco není v pořádku, napíšeme to a pošleme vám to e-mailem k potvrzení.',
+      en: 'At handover we look through the apartment together. If something is not in order, we write it down and send it to you by e-mail for confirmation.',
+      de: 'Bei der Übergabe schauen wir das Apartment gemeinsam durch. Wenn etwas nicht in Ordnung ist, schreiben wir es auf und schicken es Ihnen per E-Mail zur Bestätigung.',
+      pl: 'Przy przekazaniu wspólnie oglądamy apartament. Gdy coś nie jest w porządku, zapisujemy to i wysyłamy wam e-mailem do potwierdzenia.',
+      uk: 'Під час передачі разом оглядаємо апартаменти. Якщо щось не в порядку, записуємо це й надсилаємо вам електронною поштою для підтвердження.',
+      'zh-Hant': '交接時我們會一起查看公寓。若有不妥之處，我們會寫下並以電子郵件寄給您確認。',
+      sv: 'Vid överlämningen går vi tillsammans igenom lägenheten. Om något inte är i ordning skriver vi ner det och skickar det till er med e-post för bekräftelse.',
+      es: 'En la entrega revisamos juntos el apartamento. Si algo no está en orden, lo anotamos y se lo enviamos por correo para que lo confirmen.',
+      hu: 'Átáadáskor együtt átnézzük az apartmant. Ha valami nincs rendben, leírjuk, és e-mailben elküldjük önöknek megerősítésre.',
+    },
+  },
 ];
 
 /** Televize: převzato z náhledu / webu (obsah_z_webu), věrné překlady. */

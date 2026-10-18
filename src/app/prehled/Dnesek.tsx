@@ -246,8 +246,8 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
                   ) : ptam === r.rezervace ? (
                     <p className="ph-dnesek__akce">
                       Kdo uklidil?
-                      <button type="button" onClick={() => zapis(r.rezervace, 'uklid', 'pravoslav')}>
-                        Pravoslav
+                      <button type="button" onClick={() => zapis(r.rezervace, 'uklid', 'miluska')}>
+                        Miluška
                       </button>
                       <button type="button" onClick={() => zapis(r.rezervace, 'uklid', 'nikol')}>
                         Nikol

@@ -78,7 +78,7 @@ export type PrehledRadek = {
   platby: PlatbaPolozky[];
   prevzatoKdy: string | null;
   uklizenoKdy: string | null;
-  uklizenoKdo: 'pravoslav' | 'nikol' | null;
+  uklizenoKdo: 'miluska' | 'nikol' | 'pravoslav' | null;
   zadostPrijezd: RezervaceRecord['zadostPrijezd'];
   zadostOdjezd: RezervaceRecord['zadostOdjezd'];
   /** Rozbitý záznam z úložiště. V seznamu je jen červená věta, karta se neskládá. */
@@ -99,6 +99,8 @@ export type PrehledRadek = {
   vyjezdy: { id: string; kdy: string; castka: number }[];
   souhlas: { kdy: string; jazyk: string; verze: string } | null;
   souhlasZneni: string | null;
+  /** Závady z předání. null = neodesláno. */
+  zavadyPredani: { text: string; odeslanoKdy: string; potvrzenoKdy: string | null } | null;
   casZadalHost: boolean;
   zpusobPrijezdu: 'auto' | 'pesky' | null;
   telefonBrana: string | null;
@@ -772,6 +774,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     vyjezdy: rec.vyjezdy || [],
     souhlas: rec.souhlasPravidel,
     souhlasZneni: rec.souhlasPravidel ? zneniVerze(rec.souhlasPravidel.verze) : null,
+    zavadyPredani: rec.zavadyPredani,
     casZadalHost: rec.casZadalHost,
     zpusobPrijezdu: rec.zpusobPrijezdu,
     telefonBrana: rec.telefonBrana,

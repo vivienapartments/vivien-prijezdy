@@ -36,13 +36,15 @@ function pamet(list: RezervaceRecord[]) {
 }
 
 describe('pohoda', () => {
-  it('má text ve všech jazycích a telefon se neláme', () => {
+  it('má text ve všech jazycích a bez telefonu', () => {
     for (const lang of GUIDE_LANGS) {
-      expect(ZPRAVA_POHODA[lang]).toContain('+420');
-      expect(ZPRAVA_POHODA[lang]).toContain('\u00A0');
+      expect(ZPRAVA_POHODA[lang]).not.toContain('+420');
+      expect(ZPRAVA_POHODA[lang]).toContain('Nikol');
       expect(textPohody(lang)).toBe(ZPRAVA_POHODA[lang]);
     }
     expect(textPohody(null)).toBe(ZPRAVA_POHODA.en);
+    expect(ZPRAVA_POHODA.cs).toContain('zda je u Vás všechno v pořádku');
+    expect(ZPRAVA_POHODA.cs).toContain('neváhejte nám napsat');
   });
 
   it('do seznamu patří jen včerejší předaní, kteří dnes neodjíždějí', () => {

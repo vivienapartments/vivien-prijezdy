@@ -4,7 +4,12 @@ import type { RezervaceRecord } from './store';
 import { APT_IDS, type AptId } from './types';
 import { casPrevzetiText, casPrevzetiVyprsel, jeVDnesnichOdjezdech } from './zalozky';
 
-export type KdoUklidil = 'pravoslav' | 'nikol';
+/** Starší zápisy mají `pravoslav`. V menu a v textu je to Miluška. */
+export type KdoUklidil = 'miluska' | 'nikol' | 'pravoslav';
+
+export function jmenoUklidu(kdo: KdoUklidil): string {
+  return kdo === 'nikol' ? 'Nikol' : 'Miluška';
+}
 
 /** Jen to, co smí vidět Nikol. Bez PINu, telefonu, e-mailu a hesel. */
 export type HostDne = {
@@ -106,16 +111,17 @@ function casPrahaKratky(iso: string): string {
 
 export function textUklizeno(kdy: string, kdo: KdoUklidil): string {
   const cas = casPrahaKratky(kdy);
-  const jmeno = kdo === 'nikol' ? 'Nikol' : 'Pravoslav';
+  const jmeno = jmenoUklidu(kdo);
   return cas ? `Uklizeno ${cas} · ${jmeno}` : `Uklizeno · ${jmeno}`;
 }
 
 export function oznacUklid(rec: RezervaceRecord, kdo: KdoUklidil, now = new Date()): RezervaceRecord {
-  const co = kdo === 'nikol' ? 'Úklid označila Nikol' : 'Úklid označil Pravoslav';
+  const ulozit: KdoUklidil = kdo === 'pravoslav' ? 'miluska' : kdo;
+  const co = ulozit === 'nikol' ? 'Úklid označila Nikol' : 'Úklid označila Miluška';
   return {
     ...rec,
     uklizenoKdy: now.toISOString(),
-    uklizenoKdo: kdo,
+    uklizenoKdo: ulozit,
     historie: [...rec.historie, { cas: now.toISOString(), co }].slice(-40),
   };
 }

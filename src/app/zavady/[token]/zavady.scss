@@ -1,0 +1,48 @@
+.zv-stranka {
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: #1c1714;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.zv-stranka h1 {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  text-align: left;
+}
+
+.zv-text {
+  margin: 0 0 1.5rem;
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
+.zv-akce button {
+  display: inline-block;
+  padding: 0.7rem 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  background: #c9a84c;
+  color: #1c1714;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.zv-akce button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.zv-ok {
+  margin: 0;
+  font-weight: 700;
+}
+
+.zv-chyba {
+  margin: 0.75rem 0 0;
+  color: #a33;
+}

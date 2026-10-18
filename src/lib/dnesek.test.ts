@@ -186,7 +186,7 @@ describe('dnešek', () => {
     expect(texty).toHaveLength(2);
 
     v4.uklizenoKdy = '2026-10-16T08:00:00.000Z';
-    v4.uklizenoKdo = 'pravoslav';
+    v4.uklizenoKdo = 'miluska';
     naV4.casPrijezdu = '11:00';
     await upozorniDnes(store, casVPraze(DEN, 11, 10), posli);
     expect(texty).toHaveLength(2);

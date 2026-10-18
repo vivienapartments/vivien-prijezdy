@@ -3,24 +3,88 @@ import { seradOdjezdy } from './odjezd';
 import type { RezervaceRecord } from './store';
 import type { GuideLang } from './types';
 
-const TELEFON = '+420\u00A0604\u00A0692\u00A0573';
-
 /**
- * Jedna konstanta na jazyk. Majitel ji může nahradit vlastním zněním.
- * Podpis je součástí textu, nepřidávat znovu.
+ * Jedna konstanta na jazyk. Bez telefonu: zpráva často jde WhatsAppem.
+ * České znění schválil majitel 18. 10. 2026. Podpis je součástí textu.
  */
 export const ZPRAVA_POHODA: Record<GuideLang, string> = {
-  cs: `Dobrý den, chtěli jsme se zeptat, jestli je u nás všechno v pořádku a jestli jste se dobře vyspali. Kdybyste cokoli potřebovali, stačí napsat nebo zavolat na ${TELEFON}.\n\nPřejeme vám krásný den.\nNikol a rodina VIVIEN`,
-  en: `Hello, we wanted to ask if everything is fine and if you slept well. If you need anything, just write or call us at ${TELEFON}.\n\nHave a lovely day.\nNikol and the VIVIEN family`,
-  de: `Guten Tag, wir wollten fragen, ob bei uns alles in Ordnung ist und ob Sie gut geschlafen haben. Wenn Sie etwas brauchen, schreiben oder rufen Sie uns einfach unter ${TELEFON} an.\n\nWir wünschen Ihnen einen schönen Tag.\nNikol und Familie VIVIEN`,
-  pl: `Dzień dobry, chcieliśmy zapytać, czy u nas wszystko jest w porządku i czy dobrze się wyspaliście. Gdybyście czegoś potrzebowali, wystarczy napisać lub zadzwonić na ${TELEFON}.\n\nŻyczymy Wam miłego dnia.\nNikol i rodzina VIVIEN`,
-  uk: `Добрий день, хотіли запитати, чи у нас усе гаразд і чи ви добре виспалися. Якщо щось знадобиться, досить написати або зателефонувати на ${TELEFON}.\n\nБажаємо вам гарного дня.\nNikol і родина VIVIEN`,
-  'zh-Hant': `您好，我們想問問您在我們這裡是否一切順利，昨晚是否睡得好。如果需要什麼，請寫訊息或致電 ${TELEFON}。\n\n祝您有美好的一天。\nNikol 與 VIVIEN 家人`,
-  es: `Hola, queríamos preguntar si todo está bien con nosotros y si han dormido bien. Si necesitan algo, basta con escribir o llamar al ${TELEFON}.\n\nLes deseamos un buen día.\nNikol y la familia VIVIEN`,
-  fr: `Bonjour, nous voulions demander si tout va bien chez nous et si vous avez bien dormi. Si vous avez besoin de quoi que ce soit, il suffit d'écrire ou d'appeler le ${TELEFON}.\n\nNous vous souhaitons une belle journée.\nNikol et la famille VIVIEN`,
-  it: `Buongiorno, volevamo chiedere se da noi è tutto a posto e se avete dormito bene. Se vi serve qualcosa, basta scrivere o chiamare il ${TELEFON}.\n\nVi auguriamo una bella giornata.\nNikol e la famiglia VIVIEN`,
-  sv: `Hej, vi ville fråga om allt är bra hos oss och om ni sovit gott. Om ni behöver något, skriv eller ring till ${TELEFON}.\n\nVi önskar er en fin dag.\nNikol och familjen VIVIEN`,
-  hu: `Jó napot, meg szerettük volna kérdezni, hogy minden rendben van-e nálunk, és jól aludtak-e. Ha bármire szükségük van, írjanak vagy hívjanak a ${TELEFON} számon.\n\nSzép napot kívánunk.\nNikol és a VIVIEN család`,
+  cs: `Dobrý den,
+
+jen jsme se chtěli zeptat, zda je u Vás všechno v pořádku a jestli jste s pobytem spokojeni. Pokud byste cokoli potřebovali, neváhejte nám napsat.
+
+Přejeme Vám krásný den.
+
+Nikol a rodina VIVIEN`,
+  en: `Hello,
+
+we just wanted to ask whether everything is all right and whether you are happy with your stay. If you need anything, please write to us.
+
+We wish you a lovely day.
+
+Nikol and the VIVIEN family`,
+  de: `Guten Tag,
+
+wir wollten nur fragen, ob bei Ihnen alles in Ordnung ist und ob Sie mit dem Aufenthalt zufrieden sind. Wenn Sie etwas brauchen, schreiben Sie uns bitte.
+
+Wir wünschen Ihnen einen schönen Tag.
+
+Nikol und Familie VIVIEN`,
+  pl: `Dzień dobry,
+
+chcieliśmy tylko zapytać, czy u Was wszystko jest w porządku i czy jesteście zadowoleni z pobytu. Gdybyście czegoś potrzebowali, napiszcie do nas.
+
+Życzymy Wam miłego dnia.
+
+Nikol i rodzina VIVIEN`,
+  uk: `Добрий день,
+
+лише хотіли запитати, чи у Вас усе гаразд і чи Ви задоволені перебуванням. Якщо щось знадобиться, напишіть нам.
+
+Бажаємо Вам гарного дня.
+
+Nikol і родина VIVIEN`,
+  'zh-Hant': `您好，
+
+我們只想問問您一切是否順利，這次住宿是否滿意。如果需要什麼，請寫訊息給我們。
+
+祝您有美好的一天。
+
+Nikol 與 VIVIEN 家人`,
+  es: `Hola,
+
+solo queríamos preguntar si todo está bien y si están contentos con la estancia. Si necesitan algo, escríbannos.
+
+Les deseamos un buen día.
+
+Nikol y la familia VIVIEN`,
+  fr: `Bonjour,
+
+nous voulions juste demander si tout va bien et si vous êtes satisfaits du séjour. Si vous avez besoin de quoi que ce soit, écrivez-nous.
+
+Nous vous souhaitons une belle journée.
+
+Nikol et la famille VIVIEN`,
+  it: `Buongiorno,
+
+volevamo solo chiedere se da voi è tutto a posto e se siete soddisfatti del soggiorno. Se vi serve qualcosa, scriveteci.
+
+Vi auguriamo una bella giornata.
+
+Nikol e la famiglia VIVIEN`,
+  sv: `Hej,
+
+vi ville bara fråga om allt är bra och om ni är nöjda med vistelsen. Om ni behöver något, skriv till oss.
+
+Vi önskar er en fin dag.
+
+Nikol och familjen VIVIEN`,
+  hu: `Jó napot,
+
+csak meg szerettük volna kérdezni, hogy minden rendben van-e, és elégedettek-e a tartózkodással. Ha bármire szükségük van, írjanak nekünk.
+
+Szép napot kívánunk.
+
+Nikol és a VIVIEN család`,
 };
 
 export const PREDMET_POHODY: Record<GuideLang, string> = {
@@ -78,4 +142,3 @@ export function ukazatPohodu(opts: {
   if (opts.odjezd && opts.odjezd < opts.dnes) return false;
   return true;
 }
-

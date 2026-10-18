@@ -549,6 +549,32 @@
   margin-right: 0.4rem;
 }
 
+.ph-predano-dotaz textarea {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 8px;
+  background: #1a1512;
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+  text-align: start;
+}
+
+.ph-zavady {
+  flex: 1 1 100%;
+  margin-top: 0.35rem;
+}
+
+.ph-zavady__stav {
+  margin: 0 0 0.35rem;
+  color: #c9a84c;
+  font-weight: 700;
+  text-align: start;
+}
+
 .ph-predano-hotovo {
   color: #8dcea0;
   font-weight: 700;

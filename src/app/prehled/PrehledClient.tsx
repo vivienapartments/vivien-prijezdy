@@ -44,6 +44,7 @@ import type { JakPlatby, PlatbaPolozky } from '@/lib/store';
 import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
 import { nactiBranu, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
+import { stavZavadText } from '@/lib/zavady-predani';
 
 type Stav = PrehledRadek['stav'];
 
@@ -147,6 +148,9 @@ export function PrehledClient({
   const [naMisteStav, setNaMisteStav] = useState<Record<string, string | null>>({});
   const [priplatekStav, setPriplatekStav] = useState<Record<string, number | null>>({});
   const [dotazPredani, setDotazPredani] = useState<{ id: string; druh: 'predano' | 'vratit' } | null>(null);
+  const [dotazZavady, setDotazZavady] = useState<string | null>(null);
+  const [textZavad, setTextZavad] = useState('');
+  const [zavadyStav, setZavadyStav] = useState<Record<string, PrehledRadek['zavadyPredani']>>({});
   const [platby, setPlatby] = useState<Record<string, { kdy: string | null; kdo: 'ja' | 'nikol' | null }>>({});
   const [vyjezdy, setVyjezdy] = useState<Record<string, VyjezdPolozka[]>>({});
   const [dotazVyjezdu, setDotazVyjezdu] = useState<{ id: string; druh: 'pridat' | 'vratit' } | null>(null);
@@ -358,6 +362,50 @@ export function PrehledClient({
       return;
     }
     setPredani((prev) => ({ ...prev, [row.rezervace]: json.predano ?? null }));
+  }
+
+  function zavadyRadku(row: PrehledRadek): PrehledRadek['zavadyPredani'] {
+    return Object.prototype.hasOwnProperty.call(zavadyStav, row.rezervace)
+      ? zavadyStav[row.rezervace]
+      : row.zavadyPredani;
+  }
+
+  async function odesliZavady(row: PrehledRadek) {
+    const text = textZavad.trim();
+    if (!text) {
+      setHlaska('Napište, co není v pořádku.');
+      return;
+    }
+    if (ukazka) {
+      setZavadyStav((prev) => ({
+        ...prev,
+        [row.rezervace]: { text, odeslanoKdy: new Date().toISOString(), potvrzenoKdy: null },
+      }));
+      setDotazZavady(null);
+      setTextZavad('');
+      setHlaska('V náhledu se e-mail neposílá.');
+      return;
+    }
+    setCekam(`${row.rezervace}:zavady`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'zavady', text }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      zavadyPredani?: PrehledRadek['zavadyPredani'];
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Závady se nepodařilo odeslat.');
+      return;
+    }
+    setZavadyStav((prev) => ({ ...prev, [row.rezervace]: json.zavadyPredani ?? null }));
+    setDotazZavady(null);
+    setTextZavad('');
   }
 
   async function ulozPridani(event: FormEvent<HTMLFormElement>) {
@@ -1232,6 +1280,51 @@ export function PrehledClient({
         ) : null}
       </div>
     ) : null;
+    const zavady = zavadyRadku(row);
+    const zavadyStavText = stavZavadText(zavady);
+    const zavadyBlok = (
+      <div className="ph-zavady">
+        {zavadyStavText ? <p className="ph-zavady__stav">{zavadyStavText}</p> : null}
+        {!zavady && !predanoKdy ? (
+          <button
+            type="button"
+            className="ph-predano"
+            disabled={cekam !== null}
+            onClick={() => {
+              setDotazZavady(row.rezervace);
+              setTextZavad('');
+              setDotazPredani(null);
+            }}
+          >
+            Závady při předání
+          </button>
+        ) : null}
+        {dotazZavady === row.rezervace ? (
+          <div className="ph-predano-dotaz">
+            <p>Co není v pořádku?</p>
+            <textarea
+              value={textZavad}
+              onChange={(e) => setTextZavad(e.target.value)}
+              rows={4}
+              maxLength={2000}
+              aria-label="Závady při předání"
+            />
+            <button type="button" disabled={cekam !== null} onClick={() => void odesliZavady(row)}>
+              Odeslat hostovi
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDotazZavady(null);
+                setTextZavad('');
+              }}
+            >
+              Zrušit
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
     const predaniTlacitko = predanoKdy ? (
       <button
         type="button"
@@ -1434,7 +1527,8 @@ export function PrehledClient({
         )}
         {cekajici === 'registrace' ? dil.registrace : null}
         {cekajici === 'odpoved' ? dil.odpoved : null}
-        {cekajici === 'predani' ? (
+        {!odjel && (!predanoKdy || zavady || dotazZavady === row.rezervace) ? zavadyBlok : null}
+        {cekajici === 'predani' || predanoKdy ? (
           <>
             {predaniTlacitko}
             {predaniDotaz}

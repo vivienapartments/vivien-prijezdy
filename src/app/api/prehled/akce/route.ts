@@ -11,6 +11,13 @@ import { posliEmailZpravy, predmetZpravy } from '@/lib/email-zprava';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
 import {
+  normalizujTextZavad,
+  odkazPotvrzeniZavad,
+  predmetEmailuZavad,
+  textEmailuZavad,
+  tlacitkoPotvrditZavady,
+} from '@/lib/zavady-predani';
+import {
   aplikujNelze,
   aplikujPotvrzeni,
   cenaPozde,
@@ -80,6 +87,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     stav?: string;
     zprava?: string;
     presto?: boolean;
+    text?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -138,7 +146,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'vratit-platbu' &&
       akce !== 'prevzato' &&
       akce !== 'vratit-odjezd' &&
-      akce !== 'prevzit')
+      akce !== 'prevzit' &&
+      akce !== 'zavady')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -159,6 +168,34 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, jazyk }, { headers: noStore });
+  }
+
+  if (akce === 'zavady') {
+    const text = normalizujTextZavad(typeof body?.text === 'string' ? body.text : '');
+    if (!text) return chyba(400, 'Napište, co není v pořádku.');
+    const email = (rec.emailHosta || '').trim();
+    if (!email) return chyba(400, 'U rezervace chybí e-mail hosta.');
+    const odeslanoKdy = new Date().toISOString();
+    const lang = rec.jazyk;
+    const odkaz = odkazPotvrzeniZavad(id, odeslanoKdy);
+    try {
+      await posliEmailZpravy({
+        to: email,
+        subject: predmetEmailuZavad(lang),
+        text: textEmailuZavad(lang, text),
+        lang,
+        telefon: false,
+        tlacitko: { url: odkaz, label: tlacitkoPotvrditZavady(lang) },
+      });
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'E-mail se nepodařilo odeslat.';
+      return chyba(502, reason);
+    }
+    const dalsi = pridej(rec, 'Závady z předání odeslány hostovi', {
+      zavadyPredani: { text, odeslanoKdy, potvrzenoKdy: null },
+    });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, zavadyPredani: dalsi.zavadyPredani }, { headers: noStore });
   }
 
   if (akce === 'predano') {
@@ -199,7 +236,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'uklid') {
-    const kdo = body?.kdo === 'pravoslav' || body?.kdo === 'nikol' ? body.kdo : null;
+    const kdo =
+      body?.kdo === 'miluska' || body?.kdo === 'pravoslav' || body?.kdo === 'nikol' ? body.kdo : null;
     if (!kdo) return chyba(400, 'Chybí, kdo uklízel.');
     const dalsi = oznacUklid(rec, kdo);
     await store.setRezervace(id, dalsi);

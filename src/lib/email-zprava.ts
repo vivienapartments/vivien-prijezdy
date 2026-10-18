@@ -101,8 +101,19 @@ function uvodniHtml(text: string, doplnitTelefon: boolean): string {
     .join('');
 }
 
-export function htmlEmailuHostovi(text: string, lang: GuideLang | null = 'cs', doplnitTelefon = true): string {
-  return `<div lang="${lang || 'en'}" style="font-family:Georgia,serif;font-size:17px;line-height:1.45;color:#1c1714">${uvodniHtml(textEmailuHostovi(text, doplnitTelefon), doplnitTelefon)}</div>`;
+export function htmlEmailuHostovi(
+  text: string,
+  lang: GuideLang | null = 'cs',
+  doplnitTelefon = true,
+  tlacitko?: { url: string; label: string } | null,
+): string {
+  const tlacitkoHtml = tlacitko
+    ? `<p style="margin:1.2em 0 0;text-align:center"><a href="${tlacitko.url.replaceAll('"', '%22')}" style="display:inline-block;padding:12px 22px;background:#c9a84c;color:#1c1714;text-decoration:none;border-radius:999px;font-weight:700">${tlacitko.label
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')}</a></p>`
+    : '';
+  return `<div lang="${lang || 'en'}" style="font-family:Georgia,serif;font-size:17px;line-height:1.45;color:#1c1714">${uvodniHtml(textEmailuHostovi(text, doplnitTelefon), doplnitTelefon)}${tlacitkoHtml}</div>`;
 }
 
 export async function posliEmailZpravy(opts: {
@@ -112,6 +123,8 @@ export async function posliEmailZpravy(opts: {
   lang?: GuideLang | null;
   /** Schválený dotaz na odjezd číslo nepřidává. */
   telefon?: boolean;
+  /** Tlačítko v HTML (plain text dostane odkaz na konec). */
+  tlacitko?: { url: string; label: string } | null;
 }): Promise<void> {
   if (process.env.VITEST) throw new Error('V testu se e-mail neposílá.');
   const majitel = process.env.MAJITEL_EMAIL?.trim();
@@ -127,13 +140,16 @@ export async function posliEmailZpravy(opts: {
     auth: { user, pass },
   });
   const doplnit = opts.telefon !== false;
-  const text = textEmailuHostovi(opts.text, doplnit);
+  let text = textEmailuHostovi(opts.text, doplnit);
+  if (opts.tlacitko?.url) {
+    text = `${text}\n\n${opts.tlacitko.label}: ${opts.tlacitko.url}`;
+  }
   await transporter.sendMail({
     from: `VIVIEN Apartments <${user}>`,
     to: testMode ? majitel : opts.to,
     bcc: testMode ? undefined : majitel,
     subject: testMode ? `[TEST] ${opts.subject}` : opts.subject,
     text,
-    html: htmlEmailuHostovi(opts.text, opts.lang, doplnit),
+    html: htmlEmailuHostovi(opts.text, opts.lang, doplnit, opts.tlacitko),
   });
 }
