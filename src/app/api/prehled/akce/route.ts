@@ -133,6 +133,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'odemknout' &&
       akce !== 'email' &&
       akce !== 'whatsapp' &&
+      akce !== 'jazyk' &&
       akce !== 'platba' &&
       akce !== 'vratit-platbu' &&
       akce !== 'prevzato' &&
@@ -145,6 +146,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   const store = createProcessStore();
   const rec = await store.getRezervace(id);
   if (!rec) return chyba(404, 'Rezervace v přehledu není.');
+
+  if (akce === 'jazyk') {
+    const jazyk = body?.jazyk as GuideLang;
+    if (!GUIDE_LANGS.includes(jazyk)) return chyba(400, 'Vyberte jazyk.');
+    const stejne = rec.jazyk === jazyk;
+    const dalsi = zapisMajitele(
+      rec,
+      'jazyk',
+      { jazyk },
+      stejne ? '' : `Jazyk → ${LANG_LABELS[jazyk]}`,
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, jazyk }, { headers: noStore });
+  }
 
   if (akce === 'predano') {
     const dalsi = zapisMajitele(rec, 'predano', { predano: new Date().toISOString() }, 'Předáno');
@@ -492,9 +507,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     } catch {
       odkaz = null;
     }
+    const langBody = body?.jazyk as GuideLang | undefined;
+    const lang = langBody && GUIDE_LANGS.includes(langBody) ? langBody : rec.jazyk;
     const zprava = zpravyMenu({
       stav: rec.stav,
-      lang: rec.jazyk,
+      lang,
       zdroj: rec.zdroj,
       pruvodce: odkaz,
       checkinUrl: rec.checkinUrl,
@@ -520,8 +537,12 @@ export async function POST(request: Request): Promise<NextResponse> {
         : druh === 'pohoda'
           ? { pohodaDotaz: new Date().toISOString() }
           : {};
+    const sJazykem =
+      lang && lang !== rec.jazyk
+        ? zapisMajitele(rec, 'jazyk', { jazyk: lang }, `Jazyk → ${LANG_LABELS[lang]}`)
+        : rec;
     if (akce === 'whatsapp') {
-      await store.setRezervace(id, pridej(rec, `WhatsApp: ${zprava.nazev}`, patch));
+      await store.setRezervace(id, pridej(sJazykem, `WhatsApp: ${zprava.nazev}`, patch));
       return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
     }
     const komu = (rec.emailHosta || '').trim();
@@ -529,15 +550,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     try {
       await posliEmailZpravy({
         to: komu,
-        subject: druh === 'pripraveno' ? predmetPripraveno(rec.jazyk) : predmetZpravy(druh, rec.jazyk, druh === 'odjezd' ? rec.odjezd : rec.prijezd),
+        subject: druh === 'pripraveno' ? predmetPripraveno(lang) : predmetZpravy(druh, lang, druh === 'odjezd' ? rec.odjezd : rec.prijezd),
         text: zprava.text,
-        lang: rec.jazyk,
+        lang,
         telefon: druh !== 'odjezd' && druh !== 'pripraveno' && druh !== 'pohoda',
       });
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');
     }
-    await store.setRezervace(id, pridej(rec, `E-mailem: ${zprava.nazev}`, patch));
+    await store.setRezervace(id, pridej(sJazykem, `E-mailem: ${zprava.nazev}`, patch));
     return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
   }
 

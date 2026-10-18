@@ -64,6 +64,8 @@ export type PrehledRadek = {
   jinyTelefonKtery: 'checkin' | 'rezervace' | null;
   checkinUrl: string | null;
   zpravy: ZpravaMenu[];
+  /** Surový zdroj z BH (Booking, Airbnb…). Pro text zprávy o check-inu. */
+  zdroj: string | null;
   zdrojText: string;
   casPrijezdu: string | null;
   casOdjezdu: string | null;
@@ -742,6 +744,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     jinyTelefonNejisty: telefony.jinyNejisty,
     jinyTelefonKtery: telefony.jinyKtery,
     checkinUrl: rec.checkinUrl,
+    zdroj: rec.zdroj,
     zdrojText: chybi(zdrojText(rec.zdroj), stary),
     casPrijezdu: rec.casPrijezdu,
     casOdjezdu: rec.casOdjezdu,

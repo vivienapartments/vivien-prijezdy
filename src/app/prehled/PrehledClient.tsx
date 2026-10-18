@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import apartmanyJson from '@/data/apartmany.json';
 import {
   casPraha,
@@ -16,7 +17,8 @@ import {
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
-import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
+import { zpravyMenu } from '@/lib/whatsapp-zprava';
+import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { langFromNarodnost } from '@/lib/vivien-data';
@@ -115,6 +117,7 @@ export function PrehledClient({
   branaPotvrzena = false,
   branaPripravena = false,
 }: Props) {
+  const router = useRouter();
   const [radky, setRadky] = useState(rows);
   const [sloty, setSloty] = useState<BranaSlot[]>(() => nactiBranu(brana));
   const [branaOk, setBranaOk] = useState(branaPotvrzena);
@@ -161,6 +164,35 @@ export function PrehledClient({
   const [dotazPohoda, setDotazPohoda] = useState<string | null>(null);
   const [dotazPrestoPrijezd, setDotazPrestoPrijezd] = useState<string | null>(null);
   const [poplatekOtevren, setPoplatekOtevren] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    setRadky(rows);
+    setSloty(nactiBranu(brana));
+    setBranaOk(branaPotvrzena);
+  }, [rows, brana, branaPotvrzena]);
+
+  /** Obnova jen když je přehled otevřený. Na pozadí nic nenačítá (šetří Upstash). */
+  useEffect(() => {
+    if (ukazka) return;
+    const OBNOVA_MS = 60_000;
+    let naposled = Date.now();
+    function obnov() {
+      if (document.visibilityState !== 'visible') return;
+      const ted = Date.now();
+      if (ted - naposled < 15_000) return;
+      naposled = ted;
+      router.refresh();
+    }
+    function priNavratu() {
+      if (document.visibilityState === 'visible') obnov();
+    }
+    document.addEventListener('visibilitychange', priNavratu);
+    const id = window.setInterval(obnov, OBNOVA_MS);
+    return () => {
+      document.removeEventListener('visibilitychange', priNavratu);
+      window.clearInterval(id);
+    };
+  }, [router, ukazka]);
 
   function jazykRadku(row: PrehledRadek): GuideLang {
     return jazyky[row.rezervace] || (row.narodnost?.trim() ? langFromNarodnost(row.narodnost) : row.jazyk || 'cs');
@@ -543,7 +575,7 @@ export function PrehledClient({
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rezervace: row.rezervace, akce: 'email', zprava }),
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'email', zprava, jazyk: jazykRadku(row) }),
     });
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; nazev?: string } | null;
     setCekam(null);
@@ -736,7 +768,7 @@ export function PrehledClient({
       const res = await fetch('/api/prehled/akce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rezervace: row.rezervace, akce: 'whatsapp', zprava }),
+        body: JSON.stringify({ rezervace: row.rezervace, akce: 'whatsapp', zprava, jazyk: jazykRadku(row) }),
       });
       if (!res.ok) {
         setHlaska('WhatsApp se nepodařilo zapsat.');
@@ -814,22 +846,42 @@ export function PrehledClient({
   }
 
   function zpravyRadku(row: PrehledRadek) {
+    const lang = jazykRadku(row);
     const uklizeno = radky.some(
       (r) => r.apartman && r.apartman === row.apartman && r.odjezd === dnes && r.uklizenoKdy && r.rezervace !== row.rezervace,
     );
     const cas = row.casPrijezdu;
     const po = !cas || cas > '14:00';
-    if (!uklizeno || row.predano || row.prijezd !== dnes || !po || row.zpravy.some((z) => z.id === 'pripraveno')) return row.zpravy;
-    return [
-      ...row.zpravy,
-      {
-        id: 'pripraveno' as const,
-        nazev: 'Apartmán je připravený',
-        text: textPripraveno(row.jazyk, row.odkaz ? odkazPripraveno(row.odkaz) : ''),
-        vychozi: false,
-        vystraha: false,
-      },
-    ];
+    const pripraveno = Boolean(uklizeno && !predanoRadku(row) && row.prijezd === dnes && po);
+    const chybi = chybejiciKroky({
+      cas: row.casPrijezdu,
+      zpusob: row.zpusobPrijezdu,
+      telefonBrana: row.telefonBrana,
+      spz: row.spz,
+      spzPujcene: row.spzPujcene,
+      souhlas: Boolean(row.souhlas),
+    });
+    return zpravyMenu({
+      stav: row.stav,
+      lang,
+      zdroj: row.zdroj,
+      pruvodce: row.odkaz,
+      checkinUrl: odkazy[row.rezervace] ?? row.checkinUrl,
+      otevrenoPocet: row.otevrenoPocet,
+      casPrijezdu: row.casPrijezdu,
+      prijezd: row.prijezd,
+      dnes,
+      chybi,
+      zpusob: row.zpusobPrijezdu,
+      souhlas: Boolean(row.souhlas),
+      naMiste: Boolean(naMisteRadku(row)),
+      predano: predanoRadku(row) || '',
+      odjezd: row.odjezd,
+      casOdjezdu: casOdjezduRadku(row) || null,
+      dluh: row.dluhPolozky.map((p) => ({ druh: p.druh, kc: p.kc })),
+      branaChybi: row.zpusobPrijezdu === 'auto' && (!row.telefonBrana || (!row.spz && !row.spzPujcene)),
+      pripraveno,
+    });
   }
 
   function zpravaRadku(row: PrehledRadek): string {
@@ -837,6 +889,21 @@ export function PrehledClient({
     const id = volba[row.rezervace] ?? seznam.find((z) => z.vychozi)?.id;
     if (id === 'odjezd') return textDotazuOdjezdu(row);
     return seznam.find((z) => z.id === id)?.text || row.zprava;
+  }
+
+  async function ulozJazyk(row: PrehledRadek, jazyk: GuideLang) {
+    setJazyky((prev) => ({ ...prev, [row.rezervace]: jazyk }));
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace ? { ...r, jazyk, jazykText: LANG_LABELS[jazyk] } : r,
+      ),
+    );
+    if (ukazka) return;
+    await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'jazyk', jazyk }),
+    });
   }
 
   async function ulozOdkaz(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
@@ -1564,13 +1631,13 @@ export function PrehledClient({
               <p>{row.souhlasZneni}</p>
             </div>
           ) : null}
-          {nabidnoutOdeslani(row.stav) ? (
+          {nabidnoutOdeslani(row.stav) || row.stav === 'bez_checkinu' || maMenuZprav ? (
             <div className="ph-znovu">
               <label>
-                Jazyk průvodce
+                Jazyk
                 <select
                   value={jazykRadku(row)}
-                  onChange={(e) => setJazyky((prev) => ({ ...prev, [row.rezervace]: e.target.value as GuideLang }))}
+                  onChange={(e) => void ulozJazyk(row, e.target.value as GuideLang)}
                 >
                   {GUIDE_LANGS.map((lang) => (
                     <option key={lang} value={lang}>
@@ -1579,32 +1646,36 @@ export function PrehledClient({
                   ))}
                 </select>
               </label>
-              <button
-                type="button"
-                disabled={cekam !== null}
-                onClick={() => setDotazZnovu(row.rezervace)}
-              >
-                Odeslat průvodce znovu
-              </button>
-              {dotazZnovu === row.rezervace ? (
-                <div className="ph-predano-dotaz">
-                  <p>
-                    Poslat průvodce znovu v jazyce {LANG_LABELS[jazykRadku(row)]}? Host dostane nový e-mail.
-                  </p>
+              {nabidnoutOdeslani(row.stav) ? (
+                <>
                   <button
                     type="button"
                     disabled={cekam !== null}
-                    onClick={() => {
-                      setDotazZnovu(null);
-                      volat(row, 'znovu', { jazyk: jazykRadku(row) });
-                    }}
+                    onClick={() => setDotazZnovu(row.rezervace)}
                   >
-                    Ano, poslat
+                    Odeslat průvodce znovu
                   </button>
-                  <button type="button" onClick={() => setDotazZnovu(null)}>
-                    Zrušit
-                  </button>
-                </div>
+                  {dotazZnovu === row.rezervace ? (
+                    <div className="ph-predano-dotaz">
+                      <p>
+                        Poslat průvodce znovu v jazyce {LANG_LABELS[jazykRadku(row)]}? Host dostane nový e-mail.
+                      </p>
+                      <button
+                        type="button"
+                        disabled={cekam !== null}
+                        onClick={() => {
+                          setDotazZnovu(null);
+                          volat(row, 'znovu', { jazyk: jazykRadku(row) });
+                        }}
+                      >
+                        Ano, poslat
+                      </button>
+                      <button type="button" onClick={() => setDotazZnovu(null)}>
+                        Zrušit
+                      </button>
+                    </div>
+                  ) : null}
+                </>
               ) : null}
             </div>
           ) : null}
