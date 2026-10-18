@@ -123,6 +123,12 @@ export function nabidnoutOdeslani(stav: RezervaceStav): boolean {
   return stav !== 'zruseno' && stav !== 'bez_checkinu';
 }
 
+/** Popisek tlačítka: u neodeslaných „Poslat“, u odeslaných „znovu“. */
+export function textTlacitkaOdeslani(stav: RezervaceStav): string {
+  if (stav === 'odeslano' || stav === 'odeslano_s_vyhradou') return 'Poslat průvodce znovu';
+  return 'Poslat průvodce';
+}
+
 /** Už odeslaný průvodce se znovu posílá jen po této otázce. */
 export function dotazPredOdeslanimZnovu(stav: RezervaceStav): string | null {
   if (stav === 'odeslano' || stav === 'odeslano_s_vyhradou') {

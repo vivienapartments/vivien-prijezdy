@@ -7,6 +7,8 @@ import {
   casPraha,
   hodinaPraha,
   nabidnoutOdeslani,
+  dotazPredOdeslanimZnovu,
+  textTlacitkaOdeslani,
   souhrnDne,
   cekajiciUkon,
   rozpisPlateb,
@@ -782,6 +784,8 @@ export function PrehledClient({
 
   async function oznacPohodu(row: PrehledRadek) {
     const ted = new Date().toISOString();
+    const znovu = Boolean(row.pohodaDotaz);
+    const co = znovu ? 'Je vše v pořádku? znovu na WhatsApp' : 'Je vše v pořádku? na WhatsApp';
     if (!ukazka) {
       const res = await fetch('/api/prehled/akce', {
         method: 'POST',
@@ -799,7 +803,7 @@ export function PrehledClient({
           ? {
               ...r,
               pohodaDotaz: ted,
-              historie: [...r.historie, { cas: ted, co: 'Je vše v pořádku? na WhatsApp' }].slice(-40),
+              historie: [...r.historie, { cas: ted, co }].slice(-40),
             }
           : r,
       ),
@@ -1228,6 +1232,13 @@ export function PrehledClient({
     const emailHosta = row.email.includes('@') ? row.email : '';
     const zpravyHosta = zpravyRadku(row);
     const maMenuZprav = zpravyHosta.length > 0;
+    const muzePoslat = nabidnoutOdeslani(row.stav);
+    const jazykText = LANG_LABELS[jazykRadku(row)];
+    const uzMelPruvodce = Boolean(dotazPredOdeslanimZnovu(row.stav));
+    const dotazZnovuText = uzMelPruvodce
+      ? `${dotazPredOdeslanimZnovu(row.stav)} Jazyk: ${jazykText}.`
+      : `Poslat průvodce v jazyce ${jazykText}? Host dostane e-mail.`;
+    const ukazBlokOdeslani = muzePoslat || row.stav === 'bez_checkinu' || maMenuZprav;
     const zpravaRamecek = maMenuZprav ? (
       <fieldset className="ph-menu">
         <legend>Zpráva</legend>
@@ -1535,6 +1546,52 @@ export function PrehledClient({
           </>
         ) : null}
         {cekajici === 'namiste' ? namisteTlacitko : null}
+        {ukazBlokOdeslani ? (
+          <div className="ph-znovu">
+            <label>
+              Jazyk
+              <select
+                value={jazykRadku(row)}
+                onChange={(e) => void ulozJazyk(row, e.target.value as GuideLang)}
+              >
+                {GUIDE_LANGS.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {LANG_LABELS[lang]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {muzePoslat ? (
+              <>
+                <button
+                  type="button"
+                  disabled={cekam !== null}
+                  onClick={() => setDotazZnovu(row.rezervace)}
+                >
+                  {textTlacitkaOdeslani(row.stav)}
+                </button>
+                {dotazZnovu === row.rezervace ? (
+                  <div className="ph-predano-dotaz">
+                    <p>{dotazZnovuText}</p>
+                    <button
+                      type="button"
+                      disabled={cekam !== null}
+                      onClick={() => {
+                        setDotazZnovu(null);
+                        volat(row, 'znovu', { jazyk: jazykRadku(row) });
+                      }}
+                    >
+                      Ano, poslat
+                    </button>
+                    <button type="button" onClick={() => setDotazZnovu(null)}>
+                      Zrušit
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        ) : null}
         <button
           type="button"
           className="ph-rozbal"
@@ -1723,54 +1780,6 @@ export function PrehledClient({
             <div className="ph-souhlas-zneni">
               <p>Znění, které host odsouhlasil</p>
               <p>{row.souhlasZneni}</p>
-            </div>
-          ) : null}
-          {nabidnoutOdeslani(row.stav) || row.stav === 'bez_checkinu' || maMenuZprav ? (
-            <div className="ph-znovu">
-              <label>
-                Jazyk
-                <select
-                  value={jazykRadku(row)}
-                  onChange={(e) => void ulozJazyk(row, e.target.value as GuideLang)}
-                >
-                  {GUIDE_LANGS.map((lang) => (
-                    <option key={lang} value={lang}>
-                      {LANG_LABELS[lang]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              {nabidnoutOdeslani(row.stav) ? (
-                <>
-                  <button
-                    type="button"
-                    disabled={cekam !== null}
-                    onClick={() => setDotazZnovu(row.rezervace)}
-                  >
-                    Odeslat průvodce znovu
-                  </button>
-                  {dotazZnovu === row.rezervace ? (
-                    <div className="ph-predano-dotaz">
-                      <p>
-                        Poslat průvodce znovu v jazyce {LANG_LABELS[jazykRadku(row)]}? Host dostane nový e-mail.
-                      </p>
-                      <button
-                        type="button"
-                        disabled={cekam !== null}
-                        onClick={() => {
-                          setDotazZnovu(null);
-                          volat(row, 'znovu', { jazyk: jazykRadku(row) });
-                        }}
-                      >
-                        Ano, poslat
-                      </button>
-                      <button type="button" onClick={() => setDotazZnovu(null)}>
-                        Zrušit
-                      </button>
-                    </div>
-                  ) : null}
-                </>
-              ) : null}
             </div>
           ) : null}
           <div className="ph-cell ph-cell--host" data-label="Host">
@@ -2094,43 +2103,41 @@ export function PrehledClient({
                         <a href={`#${row.rezervace}`}>{row.jmeno || 'Host'}</a>
                         {' · '}
                         {row.apartman || 'bez apartmánu'}
-                        {odeslano ? (
-                          <span>{` · Odesláno ${odeslano}`}</span>
-                        ) : (
-                          <span className="ph-odjezdy__akce">
-                            <TlacitkoWhatsApp
-                              wa={wa}
-                              zprava={text}
-                              userAgent={userAgent}
-                              onPredOtevrenim={() => oznacPohodu(row)}
-                            />
-                            {email ? (
-                              <button type="button" className="ph-wa" onClick={() => setDotazPohoda(row.rezervace)}>
-                                Poslat e-mailem
-                              </button>
-                            ) : null}
-                            <button
-                              type="button"
-                              className="ph-kopie"
-                              onClick={() => {
-                                void navigator.clipboard.writeText(text).then(
-                                  () => setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`),
-                                  () => setHlaska(text),
-                                );
-                              }}
-                            >
-                              Zkopírovat zprávu
+                        {odeslano ? <span>{` · Odesláno ${odeslano}`}</span> : null}
+                        <span className="ph-odjezdy__akce">
+                          <TlacitkoWhatsApp
+                            wa={wa}
+                            zprava={text}
+                            userAgent={userAgent}
+                            onPredOtevrenim={() => oznacPohodu(row)}
+                          />
+                          {email ? (
+                            <button type="button" className="ph-wa" onClick={() => setDotazPohoda(row.rezervace)}>
+                              {odeslano ? 'Poslat e-mailem znovu' : 'Poslat e-mailem'}
                             </button>
-                            <details>
-                              <summary>Text zprávy</summary>
-                              <p>{text}</p>
-                            </details>
-                          </span>
-                        )}
+                          ) : null}
+                          <button
+                            type="button"
+                            className="ph-kopie"
+                            onClick={() => {
+                              void navigator.clipboard.writeText(text).then(
+                                () => setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`),
+                                () => setHlaska(text),
+                              );
+                            }}
+                          >
+                            Zkopírovat zprávu
+                          </button>
+                          <details>
+                            <summary>Text zprávy</summary>
+                            <p>{text}</p>
+                          </details>
+                        </span>
                         {dotazPohoda === row.rezervace ? (
                           <div className="ph-predano-dotaz">
                             <p>
-                              Poslat e-mail na <span className="ph-tel">{email}</span>?
+                              Poslat e-mail na <span className="ph-tel">{email}</span>
+                              {odeslano ? ' znovu' : ''}?
                             </p>
                             <button
                               type="button"

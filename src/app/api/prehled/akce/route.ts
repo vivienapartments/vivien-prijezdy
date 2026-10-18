@@ -475,8 +475,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'pohoda-dotaz') {
-    if (rec.pohodaDotaz) return NextResponse.json({ ok: true, cas: rec.pohodaDotaz }, { headers: noStore });
-    const dalsi = pridej(rec, 'Je vše v pořádku? na WhatsApp', { pohodaDotaz: new Date().toISOString() });
+    const ted = new Date().toISOString();
+    const veta = rec.pohodaDotaz ? 'Je vše v pořádku? znovu na WhatsApp' : 'Je vše v pořádku? na WhatsApp';
+    const dalsi = pridej(rec, veta, { pohodaDotaz: ted });
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, cas: dalsi.pohodaDotaz }, { headers: noStore });
   }
@@ -669,10 +670,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     await store.setRezervace(id, hotovo);
     return NextResponse.json({ ok: true }, { headers: noStore });
   } catch {
-    const pokusy = pracovni.smtpPokusy + 1;
-    const selhalo = pridej(pracovni, `Odeslání selhalo, pokus ${pokusy} ze 3`, {
+    // Ruční pokus nemá strop „ze 3“ (ten platí jen u automatu). Majitel může kliknout znovu.
+    const selhalo = pridej(pracovni, 'Ruční odeslání selhalo. Můžete to zkusit znovu.', {
       stav: 'neodeslano',
-      smtpPokusy: pokusy,
+      smtpPokusy: 0,
     });
     await store.setRezervace(id, selhalo);
     return chyba(502, 'E-mail se nepodařilo odeslat. Zkuste to znovu.');

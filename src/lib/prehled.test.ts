@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   dotazPredOdeslanimZnovu,
   nabidnoutOdeslani,
+  textTlacitkaOdeslani,
   poplatekKratky,
   cekajiciUkon,
   poplatekNahled,
@@ -83,6 +84,13 @@ describe('tlačítka v přehledu', () => {
     expect(nabidnoutOdeslani('odeslano_s_vyhradou')).toBe(true);
     expect(dotazPredOdeslanimZnovu('odeslano')).toBe(dotaz);
     expect(dotazPredOdeslanimZnovu('odeslano_s_vyhradou')).toBe(dotaz);
+  });
+
+  it('tlačítko odeslání rozlišuje první a opakované poslání', () => {
+    expect(textTlacitkaOdeslani('neodeslano')).toBe('Poslat průvodce');
+    expect(textTlacitkaOdeslani('vraceno')).toBe('Poslat průvodce');
+    expect(textTlacitkaOdeslani('odeslano')).toBe('Poslat průvodce znovu');
+    expect(textTlacitkaOdeslani('odeslano_s_vyhradou')).toBe('Poslat průvodce znovu');
   });
 
   it('česká zpráva na WhatsApp je schválené znění', () => {
