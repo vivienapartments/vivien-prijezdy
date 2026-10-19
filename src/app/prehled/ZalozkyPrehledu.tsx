@@ -339,14 +339,24 @@ export function Hledani({
   dnes,
   zitra,
   onOtevri,
+  dotaz: dotazVenku,
+  onDotaz,
+  jenVysledky = false,
 }: {
   radky: PrehledRadek[];
   dnes: string;
   zitra: string;
   onOtevri: (id: string) => void;
+  /** Když je zvenku, hledání řídí rodič (pole nahoře v přehledu). */
+  dotaz?: string;
+  onDotaz?: (text: string) => void;
+  /** Jen seznam výsledků, bez vlastního políčka. */
+  jenVysledky?: boolean;
 }) {
-  const [dotaz, setDotaz] = useState('');
+  const [dotazVnitrni, setDotazVnitrni] = useState('');
   const [filtr, setFiltr] = useState<FiltrHledani>('');
+  const dotaz = dotazVenku ?? dotazVnitrni;
+  const setDotaz = onDotaz ?? setDotazVnitrni;
   const hoste = radky
     .filter((r) => !r.nelzeNacist)
     .map((r) => ({
@@ -361,10 +371,12 @@ export function Hledani({
   const nalezene = hledejHosty(hoste, dotaz, filtr, dnes, zitra);
   return (
     <section className="ph-hledat" aria-label="Hledat">
+      {jenVysledky ? null : (
       <label>
         Hledat
         <input value={dotaz} onChange={(e) => setDotaz(e.target.value)} placeholder="jméno, číslo, apartmán nebo datum" />
       </label>
+      )}
       <div className="ph-zalozky">
         {FILTRY.map((f) => (
           <button key={f.id} type="button" className={filtr === f.id ? 'is-on' : undefined} onClick={() => setFiltr((n) => (n === f.id ? '' : f.id))}>

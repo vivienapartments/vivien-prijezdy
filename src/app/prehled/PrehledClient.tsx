@@ -127,7 +127,8 @@ export function PrehledClient({
   const [telefony, setTelefony] = useState<Record<string, string>>({});
   const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
   const [stav, setStav] = useState<'' | Stav>('');
-  const [den, setDen] = useState<'' | 'dnes' | 'zitra'>('');
+  /** Filtr seznamu na záložce Příjezdy. Bez prázdna: vždy dnes, nebo zítra. */
+  const [den, setDen] = useState<'dnes' | 'zitra'>('dnes');
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
   const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
   const [videne, setVidene] = useState<Record<string, Record<string, string>> | null>(null);
@@ -170,6 +171,7 @@ export function PrehledClient({
   const [dotazPohoda, setDotazPohoda] = useState<string | null>(null);
   const [dotazPrestoPrijezd, setDotazPrestoPrijezd] = useState<string | null>(null);
   const [poplatekOtevren, setPoplatekOtevren] = useState<Record<string, boolean>>({});
+  const [hledatDotaz, setHledatDotaz] = useState('');
 
   useEffect(() => {
     setRadky(rows);
@@ -449,7 +451,7 @@ export function PrehledClient({
         key={`${row.rezervace}-telefon`}
         label="Telefon"
         hodnota={telefonRadku(row)}
-        vstup={{ inputMode: 'tel', autoComplete: 'off' }}
+        vstup={{ type: 'tel', inputMode: 'tel', autoComplete: 'tel' }}
         onUloz={(text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
       />
     );
@@ -469,10 +471,10 @@ export function PrehledClient({
   );
 
   const viditelne = useMemo(() => {
-    const denYmd = den === 'dnes' ? dnes : den === 'zitra' ? zitra : '';
+    const denYmd = den === 'zitra' ? zitra : dnes;
     return radky.filter((row) => {
       if (row.nelzeNacist) return false;
-      if (denYmd && row.prijezd !== denYmd) return false;
+      if (row.prijezd !== denYmd) return false;
       if (jenNeotevreni && (row.otevrenoPocet !== 0 || row.stav === 'bez_checkinu')) return false;
       if (jenBezCheckinu && row.stav !== 'bez_checkinu') return false;
       if (stav && row.stav !== stav) return false;
@@ -1099,9 +1101,12 @@ export function PrehledClient({
     return (
       <button
         type="button"
-        className={den === ktery ? 'ph-den is-on' : 'ph-den'}
-        aria-pressed={den === ktery}
-        onClick={() => setDen(den === ktery ? '' : ktery)}
+        className={den === ktery && zalozka === 'prijezdy' ? 'ph-den is-on' : 'ph-den'}
+        aria-pressed={den === ktery && zalozka === 'prijezdy'}
+        onClick={() => {
+          setDen(ktery);
+          otevriZalozku('prijezdy');
+        }}
       >
         <span>
           {nadpis}: {souhrn.pocet} · průvodce otevřelo {souhrn.otevrelo} · neodesláno {souhrn.neodeslano} · bez
@@ -1546,6 +1551,13 @@ export function PrehledClient({
           </>
         ) : null}
         {cekajici === 'namiste' ? namisteTlacitko : null}
+        {telefonPole(row)}
+        {row.telefonNejisty ? (
+          <div className="ph-predvolba">
+            Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+          </div>
+        ) : null}
+        {casPole}
         {ukazBlokOdeslani ? (
           <div className="ph-znovu">
             <label>
@@ -1601,18 +1613,12 @@ export function PrehledClient({
           {rozbaleno ? 'Skrýt detail ▴' : 'Detail ▾'}
         </button>
         <div className="ph-detail">
-          {telefonPole(row)}
-          {row.telefonNejisty ? (
-            <div className="ph-predvolba">
-              Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
-            </div>
-          ) : null}
           {row.jinyTelefonKtery ? (
             <PoleSUlozenim
               key={`${row.rezervace}-druhe`}
               label="Druhé číslo"
               hodnota={row.jinyTelefonText || ''}
-              vstup={{ inputMode: 'tel', autoComplete: 'off' }}
+              vstup={{ type: 'tel', inputMode: 'tel', autoComplete: 'tel' }}
               onUloz={(text) => ulozTelefon(row, row.jinyTelefonKtery || 'rezervace', text)}
             />
           ) : null}
@@ -1631,7 +1637,6 @@ export function PrehledClient({
           {cekajici === 'registrace' ? null : dil.registrace}
           {cekajici === 'odpoved' ? null : dil.odpoved}
           {dil.detail}
-          {casPole}
           {odjezdPole}
           {!row.pruvodceOdemcen ? (
             <button
@@ -1927,6 +1932,22 @@ export function PrehledClient({
       </header>
 
       <RadaZalozek zalozka={zalozka} pocty={pocty} nove={nove} onZmena={otevriZalozku} />
+      <label className="ph-hledat-nahore">
+        Hledat hosta
+        <input
+          value={hledatDotaz}
+          onChange={(e) => {
+            const text = e.target.value;
+            setHledatDotaz(text);
+            if (text.trim()) otevriZalozku('hledat');
+          }}
+          onFocus={() => {
+            if (hledatDotaz.trim()) otevriZalozku('hledat');
+          }}
+          placeholder="jméno, číslo rezervace, apartmán…"
+          autoComplete="off"
+        />
+      </label>
       <p className="ph-dnesek__akce">
         Kdo se dívá
         <button
@@ -1969,6 +1990,9 @@ export function PrehledClient({
           radky={radky}
           dnes={dnes}
           zitra={zitra}
+          dotaz={hledatDotaz}
+          onDotaz={setHledatDotaz}
+          jenVysledky
           onOtevri={(id) => {
             setVybrana(id);
             setRozbalene((prev) => ({ ...prev, [id]: true }));

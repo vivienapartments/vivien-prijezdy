@@ -1320,6 +1320,26 @@
   margin: 0;
 }
 
+.ph-hledat-nahore {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.55rem 0 0.75rem;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.ph-hledat-nahore input {
+  width: 100%;
+  min-height: 2.6rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font: inherit;
+}
+
 .ph-zalozky {
   display: flex;
   flex-wrap: wrap;
