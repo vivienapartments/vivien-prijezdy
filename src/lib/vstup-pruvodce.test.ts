@@ -143,6 +143,15 @@ describe('průvodce se otevře až po údajích', () => {
     expect(text).not.toContain('id="pv-parkovani"');
   });
 
+  it('auto má v Bráně adresu parkoviště a navigaci', () => {
+    const text = html('auto', false);
+    expect(text).toContain('id="pv-brana-parkoviste"');
+    expect(text).toContain('Chelčického 95/15');
+    expect(text).toContain('mapy.com/fnc/v1/route');
+    expect(text).toContain('google.com/maps/dir');
+    expect(text).not.toContain('id="pv-zadost-o-parkovani"');
+  });
+
   it('ani v den příjezdu se nic neodemkne samo', () => {
     const rec = {
       ...prazdnaRezervace('1', '2026-10-14T00:00:00.000Z'),

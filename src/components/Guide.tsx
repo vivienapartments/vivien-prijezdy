@@ -79,6 +79,36 @@ function renderPhoneText(raw: string, zari = false) {
   );
 }
 
+/** Adresa parkoviště + navigace. Jen pro příjezd autem. */
+function NavParkovani({ label, hint, orGoogle }: { label: string; hint: string; orGoogle: string }) {
+  return (
+    <>
+      <a
+        className="pv-navcta"
+        href={PARKING_DRIVE_MAPY_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span className="pv-navcta__label">{label}</span>
+        <span className="pv-navcta__addr">
+          {PARKING_ADDRESS}, České Budějovice
+        </span>
+        <span className="pv-navcta__hint">{hint}</span>
+      </a>
+      <p className="pv-navcta__alt">
+        <a
+          className="pv-link"
+          href={PARKING_DRIVE_GOOGLE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {orGoogle}
+        </a>
+      </p>
+    </>
+  );
+}
+
 function Klic() {
   return (
     <svg className="pv-klic" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
@@ -614,28 +644,11 @@ export function Guide({
                             {k.zaver ? <p>{tt(k.zaver)}</p> : null}
                           </article>
                         ))}
-                        <a
-                          className="pv-navcta"
-                          href={PARKING_DRIVE_MAPY_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <span className="pv-navcta__label">{tt(TX.ui.routeParking)}</span>
-                          <span className="pv-navcta__addr">
-                            {PARKING_ADDRESS}, České Budějovice
-                          </span>
-                          <span className="pv-navcta__hint">{tt(TX.ui.openMapy)}</span>
-                        </a>
-                        <p className="pv-navcta__alt">
-                          <a
-                            className="pv-link"
-                            href={PARKING_DRIVE_GOOGLE_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {tt(TX.ui.orGoogle)}
-                          </a>
-                        </p>
+                        <NavParkovani
+                          label={tt(TX.ui.routeParking)}
+                          hint={tt(TX.ui.openMapy)}
+                          orGoogle={tt(TX.ui.orGoogle)}
+                        />
                       </>
                     ) : s.id === 'prijezd-k-domu' ? (
                       <>
@@ -713,6 +726,11 @@ export function Guide({
                             {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
+                        <NavParkovani
+                          label={tt(TX.ui.routeParking)}
+                          hint={tt(TX.ui.openMapy)}
+                          orGoogle={tt(TX.ui.orGoogle)}
+                        />
                         <div className={vikend ? 'pv-sec--weekend' : undefined}>
                           {kroky.map((k, i) => {
                             const clanek = (
