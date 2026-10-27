@@ -1471,21 +1471,11 @@ a.pv-phone.pv-phone--zari {
   display: none;
 }
 
-.pv-sbal > summary::after {
-  content: '▾';
-  flex: none;
-  font-size: 1.1rem;
-  line-height: 1.4;
-}
-
-.pv-sbal[open] > summary::after {
-  content: '▴';
-}
-
 .pv-sbal__text {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  min-width: 0;
 }
 
 .pv-sbal__nadpis {
@@ -1494,6 +1484,38 @@ a.pv-phone.pv-phone--zari {
 
 .pv-sbal__veta {
   font-weight: 450;
+}
+
+.pv-sbal__btn {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 0.05rem;
+  padding: 0.28rem 0.7rem;
+  border: 1.5px solid #c9a84c;
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.12);
+  color: #c9a84c;
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.pv-sbal__btn-close {
+  display: none;
+}
+
+.pv-sbal[open] .pv-sbal__btn-open {
+  display: none;
+}
+
+.pv-sbal[open] .pv-sbal__btn-close {
+  display: inline;
+}
+
+/* Nadpis je v summary. Uvnitř se neopakuje. */
+.pv-sbal > .pv-flow__card-head {
+  display: none;
 }
 
 .pv-piny {

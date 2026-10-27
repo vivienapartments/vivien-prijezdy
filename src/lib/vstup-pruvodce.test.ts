@@ -152,6 +152,30 @@ describe('průvodce se otevře až po údajích', () => {
     expect(text).not.toContain('id="pv-zadost-o-parkovani"');
   });
 
+  it('pěšky má navigaci k domu a Příjezd k domu je sbalený', () => {
+    const text = html('pesky', false);
+    const sekce = text.split('id="pv-prijezd-k-domu"')[1]?.split('id="pv-')[0] || '';
+    expect(text).toContain('id="pv-prijezd-k-domu"');
+    expect(sekce).toContain('Nádražní 108/43');
+    expect(sekce).toContain('class="pv-sbal"');
+    expect(sekce).toContain('Rozbalit');
+    expect(sekce).toContain('Sbalit');
+    expect(sekce).toContain('mapy.com/fnc/v1/showmap');
+    expect(text).not.toContain('id="pv-brana-parkoviste"');
+  });
+
+  it('autem je Brána rozbalená a Cesta na stání sbalená', () => {
+    const text = html('auto', false);
+    const cast = (id: string) => text.split(`id="${id}"`)[1]?.split('id="pv-')[0] || '';
+    expect(cast('pv-brana-parkoviste')).toContain('pv-flow__card-head');
+    expect(cast('pv-brana-parkoviste')).not.toMatch(/pv-flow__card"><details class="pv-sbal"/);
+    expect(cast('pv-parkovani')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
+    expect(cast('pv-pesky-parkoviste-dum')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
+    expect(cast('pv-prijezd-k-domu')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
+    expect(cast('pv-prijezd-k-domu')).not.toContain('mapy.com/fnc/v1/showmap');
+    expect(text).toContain('Rozbalit');
+  });
+
   it('ani v den příjezdu se nic neodemkne samo', () => {
     const rec = {
       ...prazdnaRezervace('1', '2026-10-14T00:00:00.000Z'),

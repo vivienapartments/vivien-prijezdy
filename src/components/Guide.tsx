@@ -40,17 +40,31 @@ import { OknoHosta } from './OknoHosta';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import './guide.scss';
 
-const SBALENE = new Set(['wifi', 'zahrada', 'posezeni-venku', 'televize', 'pravidla', 'odjezd']);
+const SBALENE = new Set([
+  'parkovani',
+  'pesky-parkoviste-dum',
+  'prijezd-k-domu',
+  'wifi',
+  'zahrada',
+  'posezeni-venku',
+  'televize',
+  'pravidla',
+  'odjezd',
+]);
 
 function SbalenaSekce({
   ano,
   nadpis,
   veta,
+  expandLabel,
+  collapseLabel,
   children,
 }: {
   ano: boolean;
   nadpis: string;
   veta: string;
+  expandLabel: string;
+  collapseLabel: string;
   children: ReactNode;
 }) {
   if (!ano) return <>{children}</>;
@@ -60,6 +74,14 @@ function SbalenaSekce({
         <span className="pv-sbal__text">
           <span className="pv-sbal__nadpis">{nadpis}</span>
           {veta ? <span className="pv-sbal__veta">{veta}</span> : null}
+        </span>
+        <span className="pv-sbal__btn" aria-hidden="true">
+          <span className="pv-sbal__btn-open">
+            {expandLabel} ▾
+          </span>
+          <span className="pv-sbal__btn-close">
+            {collapseLabel} ▴
+          </span>
         </span>
       </summary>
       {children}
@@ -616,6 +638,8 @@ export function Guide({
                     <SbalenaSekce
                       ano={SBALENE.has(s.id)}
                       nadpis={`${displayNum}. ${sectionNavLabel(s, lang)}`}
+                      expandLabel={tt(TX.ui.expandSection)}
+                      collapseLabel={tt(TX.ui.collapseSection)}
                       veta={
                         s.id === 'wifi' && popisky['nad_nadpisem']
                           ? tt(popisky['nad_nadpisem'])
@@ -657,7 +681,7 @@ export function Guide({
                             {displayNum}. {sectionNavLabel(s, lang)}
                           </h2>
                         </div>
-                        {prijezd === 'pesky' ? (
+                        {prijezdSekci === 'pesky' ? (
                           <>
                             <a
                               className="pv-navcta"
