@@ -128,6 +128,13 @@ KONEC`,
     expect(langFromNarodnost('XXX')).toBe('en');
   });
 
+  it('mapuje Francii, Itálii a Mexiko', () => {
+    expect(langFromNarodnost('FRA')).toBe('fr');
+    expect(langFromNarodnost('ITA')).toBe('it');
+    expect(langFromNarodnost('MEX')).toBe('es');
+    expect(langFromNarodnost('XXX')).toBe('en');
+  });
+
   it('mapuje Taiwan / Čínu / HK na zh-Hant i z variant BH', () => {
     expect(langFromNarodnost('TWN')).toBe('zh-Hant');
     expect(langFromNarodnost('TW')).toBe('zh-Hant');
