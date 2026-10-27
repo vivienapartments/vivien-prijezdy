@@ -16,6 +16,11 @@ export type InboxMail = {
   dkimBetterHotel?: boolean;
 };
 
+export type SchrankaMeta = {
+  uidValidity: number;
+  uidNext: number;
+};
+
 function normalizeMessageId(raw: string | undefined | null): string {
   if (!raw) return '';
   return raw.trim().replace(/^<|>$/g, '');
@@ -43,27 +48,85 @@ function extractAuthResults(headersBuf: Buffer | undefined, parsedHeader: unknow
   return null;
 }
 
-/** Načte e-maily za posledních `days` dní. Jen čtení (BODY.PEEK), nic nemění. */
-export async function fetchRecentInboxMails(opts: {
-  user: string;
-  pass: string;
-  days?: number;
-}): Promise<InboxMail[]> {
+type FetchQuery = { since: Date } | string;
+
+async function imapClient(user: string, pass: string) {
   const { ImapFlow } = await import('imapflow');
-  const { simpleParser } = await import('mailparser');
-
-  const days = opts.days ?? 14;
-  const since = new Date();
-  since.setUTCDate(since.getUTCDate() - days);
-
-  const client = new ImapFlow({
+  return new ImapFlow({
     host: 'imap.seznam.cz',
     port: 993,
     secure: true,
-    auth: { user: opts.user, pass: opts.pass },
+    auth: { user, pass },
     logger: false,
   });
+}
 
+async function mailZMsg(
+  msg: {
+    uid: number;
+    source?: Buffer;
+    headers?: Buffer;
+    envelope?: {
+      messageId?: string | null;
+      subject?: string | null;
+      date?: Date | string | null;
+      from?: { name?: string | null; address?: string | null }[] | null;
+    } | null;
+  },
+  simpleParser: (typeof import('mailparser'))['simpleParser'],
+): Promise<InboxMail | null> {
+  if (!msg.source) return null;
+  const parsed = await simpleParser(msg.source);
+  const messageId =
+    normalizeMessageId(parsed.messageId) ||
+    normalizeMessageId(msg.envelope?.messageId) ||
+    `uid-${msg.uid}`;
+
+  const authenticationResults = extractAuthResults(msg.headers, parsed.headers);
+  const subject = parsed.subject || msg.envelope?.subject || '';
+  let dkimBetterHotel = false;
+  if (subject && !authenticationResults) {
+    const { jeInterniPredmet } = await import('./bh-interni');
+    if (jeInterniPredmet(subject)) {
+      const { overDkimBetterHotel } = await import('./bh-dkim');
+      dkimBetterHotel = await overDkimBetterHotel(msg.source);
+    }
+  }
+
+  const from =
+    parsed.from?.text ||
+    (msg.envelope?.from?.[0]
+      ? `${msg.envelope.from[0].name ? `${msg.envelope.from[0].name} ` : ''}<${msg.envelope.from[0].address || ''}>`
+      : '');
+
+  const schranka = (hodnota: { text?: string } | { text?: string }[] | undefined): string => {
+    if (!hodnota) return '';
+    if (Array.isArray(hodnota)) return hodnota.map((v) => v.text || '').filter(Boolean).join(', ');
+    return hodnota.text || '';
+  };
+  const to = [schranka(parsed.to), schranka(parsed.cc)].filter(Boolean).join(', ');
+
+  return {
+    uid: msg.uid,
+    messageId,
+    from,
+    to,
+    subject,
+    date: asDate(parsed.date) || asDate(msg.envelope?.date),
+    authenticationResults,
+    text: typeof parsed.text === 'string' ? parsed.text : '',
+    html: typeof parsed.html === 'string' ? parsed.html : '',
+    dkimBetterHotel,
+  };
+}
+
+async function fetchMails(opts: {
+  user: string;
+  pass: string;
+  query: FetchQuery;
+}): Promise<InboxMail[]> {
+  const { simpleParser } = await import('mailparser');
+  const client = await imapClient(opts.user, opts.pass);
   const out: InboxMail[] = [];
 
   await client.connect();
@@ -71,7 +134,7 @@ export async function fetchRecentInboxMails(opts: {
   try {
     // imapflow při `source` používá BODY.PEEK (neoznačuje přečtené).
     for await (const msg of client.fetch(
-      { since },
+      opts.query,
       {
         uid: true,
         envelope: true,
@@ -80,49 +143,8 @@ export async function fetchRecentInboxMails(opts: {
       },
       { uid: true },
     )) {
-      if (!msg.source) continue;
-      const parsed = await simpleParser(msg.source);
-      const messageId =
-        normalizeMessageId(parsed.messageId) ||
-        normalizeMessageId(msg.envelope?.messageId) ||
-        `uid-${msg.uid}`;
-
-      const authenticationResults = extractAuthResults(msg.headers, parsed.headers);
-      const subject = parsed.subject || msg.envelope?.subject || '';
-      let dkimBetterHotel = false;
-      if (subject && !authenticationResults) {
-        const { jeInterniPredmet } = await import('./bh-interni');
-        if (jeInterniPredmet(subject)) {
-          const { overDkimBetterHotel } = await import('./bh-dkim');
-          dkimBetterHotel = await overDkimBetterHotel(msg.source);
-        }
-      }
-
-      const from =
-        parsed.from?.text ||
-        (msg.envelope?.from?.[0]
-          ? `${msg.envelope.from[0].name ? `${msg.envelope.from[0].name} ` : ''}<${msg.envelope.from[0].address || ''}>`
-          : '');
-
-      const schranka = (hodnota: { text?: string } | { text?: string }[] | undefined): string => {
-        if (!hodnota) return '';
-        if (Array.isArray(hodnota)) return hodnota.map((v) => v.text || '').filter(Boolean).join(', ');
-        return hodnota.text || '';
-      };
-      const to = [schranka(parsed.to), schranka(parsed.cc)].filter(Boolean).join(', ');
-
-      out.push({
-        uid: msg.uid,
-        messageId,
-        from,
-        to,
-        subject,
-        date: asDate(parsed.date) || asDate(msg.envelope?.date),
-        authenticationResults,
-        text: typeof parsed.text === 'string' ? parsed.text : '',
-        html: typeof parsed.html === 'string' ? parsed.html : '',
-        dkimBetterHotel,
-      });
+      const mail = await mailZMsg(msg, simpleParser);
+      if (mail) out.push(mail);
     }
   } finally {
     lock.release();
@@ -130,4 +152,47 @@ export async function fetchRecentInboxMails(opts: {
   }
 
   return out;
+}
+
+/** uidValidity a uidNext. Nic nestahuje. */
+export async function nactiMetaSchranky(opts: {
+  user: string;
+  pass: string;
+}): Promise<SchrankaMeta> {
+  const client = await imapClient(opts.user, opts.pass);
+  await client.connect();
+  try {
+    const status = await client.status('INBOX', { uidNext: true, uidValidity: true });
+    if (!status) throw new Error('IMAP status INBOX selhal');
+    const uidValidity = Number(status.uidValidity || 0);
+    const uidNext = Number(status.uidNext || 1);
+    return {
+      uidValidity: Number.isFinite(uidValidity) ? uidValidity : 0,
+      uidNext: Number.isFinite(uidNext) && uidNext > 0 ? uidNext : 1,
+    };
+  } finally {
+    await client.logout().catch(() => undefined);
+  }
+}
+
+/** Načte e-maily za posledních `days` dní. Jen čtení (BODY.PEEK), nic nemění. */
+export async function fetchRecentInboxMails(opts: {
+  user: string;
+  pass: string;
+  days?: number;
+}): Promise<InboxMail[]> {
+  const days = opts.days ?? 14;
+  const since = new Date();
+  since.setUTCDate(since.getUTCDate() - days);
+  return fetchMails({ user: opts.user, pass: opts.pass, query: { since } });
+}
+
+/** Jen UID od `odUid` včetně dál. Jen čtení (BODY.PEEK). */
+export async function fetchInboxMailsOdUid(opts: {
+  user: string;
+  pass: string;
+  odUid: number;
+}): Promise<InboxMail[]> {
+  const od = Math.max(1, Math.floor(opts.odUid));
+  return fetchMails({ user: opts.user, pass: opts.pass, query: `${od}:*` });
 }

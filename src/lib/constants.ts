@@ -45,6 +45,11 @@ export const ODJEZD_KDYZ_CAS_NEZNAMY = 11 * 60;
 export const PRIPRAVENO_PRED_MIN = 30;
 export const OBJEDNAT_POKUSU = 5;
 
+/** Plný průchod schránky (14 dní) nejvýš jednou za tuto dobu. Jinak jen nové UID. */
+export const SCHRANKA_PLNY_BEH_MIN = 60;
+/** Spamová složka nejvýš jednou za tuto dobu. */
+export const SCHRANKA_SPAM_MIN = 15;
+
 export const PARKING_ADDRESS = 'Chelčického 95/15';
 export const HOUSE_ADDRESS = 'Nádražní 108/43, 370 01 České Budějovice';
 export const NIKOL_PHONE = '+420 702 153 573';

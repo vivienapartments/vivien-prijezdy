@@ -32,6 +32,14 @@ export type BehZpracovani = {
   chyba: string;
 };
 
+/** Stav IMAP schránky. Klíč Upstash `schranka:stav`. Bez obsahu mailů. */
+export type SchrankaStav = {
+  uidValidity: number;
+  posledniUid: number;
+  plnyBehKdy: string | null;
+  spamKdy: string | null;
+};
+
 /** Jednou za den. vecer = 18:00, pripominka = 20:00, rano = 7:30 přehled dne. uklid = poslední pořadí. pondeli = souhrn starších nedoplatků. pohoda = 11:00 den po příjezdu. */
 export type OdjezdBeh = {
   vecer: string | null;
@@ -251,6 +259,7 @@ type StoreData = {
   odjezdBeh?: OdjezdBeh | null;
   brana?: unknown;
   objednatPokusy?: Record<string, ObjednatPokus>;
+  schrankaStav?: SchrankaStav | null;
 };
 
 const RUCNI_KLIC = new Set<RucniPole>([
@@ -297,6 +306,23 @@ export interface ProcessStore {
   setOdjezdBeh(beh: OdjezdBeh): Promise<void>;
   getObjednatPokusy(): Promise<Record<string, ObjednatPokus>>;
   setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void>;
+  getSchrankaStav(): Promise<SchrankaStav | null>;
+  setSchrankaStav(stav: SchrankaStav): Promise<void>;
+}
+
+export function nactiSchrankaStav(raw: unknown): SchrankaStav | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const s = raw as Record<string, unknown>;
+  const uidValidity = typeof s.uidValidity === 'number' && Number.isFinite(s.uidValidity) ? Math.floor(s.uidValidity) : null;
+  const posledniUid = typeof s.posledniUid === 'number' && Number.isFinite(s.posledniUid) ? Math.floor(s.posledniUid) : null;
+  if (uidValidity == null || uidValidity < 0 || posledniUid == null || posledniUid < 0) return null;
+  const cas = (v: unknown) => (typeof v === 'string' && v.length >= 10 ? v : null);
+  return {
+    uidValidity,
+    posledniUid,
+    plnyBehKdy: cas(s.plnyBehKdy),
+    spamKdy: cas(s.spamKdy),
+  };
 }
 
 const MESSAGE_TTL_SEC = 90 * 24 * 60 * 60;
@@ -310,7 +336,15 @@ const STAVY: RezervaceStav[] = [
 ];
 
 function emptyData(): StoreData {
-  return { messages: {}, rezervace: {}, push: [], zpracujSelhani: 0, zpracujBeh: null, brana: null };
+  return {
+    messages: {},
+    rezervace: {},
+    push: [],
+    zpracujSelhani: 0,
+    zpracujBeh: null,
+    brana: null,
+    schrankaStav: null,
+  };
 }
 
 export function nactiBeh(raw: unknown): BehZpracovani | null {
@@ -643,7 +677,10 @@ export class FileProcessStore implements ProcessStore {
         push: nactiPush(parsed.push),
         zpracujSelhani: typeof parsed.zpracujSelhani === 'number' ? parsed.zpracujSelhani : 0,
         zpracujBeh: nactiBeh(parsed.zpracujBeh),
+        odjezdBeh: parsed.odjezdBeh ?? null,
         brana: parsed.brana ?? null,
+        objednatPokusy: parsed.objednatPokusy,
+        schrankaStav: nactiSchrankaStav(parsed.schrankaStav),
       };
     } catch {
       return emptyData();
@@ -773,6 +810,18 @@ export class FileProcessStore implements ProcessStore {
   async setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void> {
     const data = this.read();
     data.objednatPokusy = nactiObjednatPokusy(pokusy);
+    this.write(data);
+  }
+
+  async getSchrankaStav(): Promise<SchrankaStav | null> {
+    return this.read().schrankaStav ?? null;
+  }
+
+  async setSchrankaStav(stav: SchrankaStav): Promise<void> {
+    const cisty = nactiSchrankaStav(stav);
+    if (!cisty) return;
+    const data = this.read();
+    data.schrankaStav = cisty;
     this.write(data);
   }
 }
@@ -1065,6 +1114,22 @@ export class UpstashProcessStore implements ProcessStore {
 
   async setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void> {
     await this.cmd('SET', 'meta:objednat', JSON.stringify(nactiObjednatPokusy(pokusy)));
+  }
+
+  async getSchrankaStav(): Promise<SchrankaStav | null> {
+    const v = await this.cmd<string | null>('GET', 'schranka:stav');
+    if (!v) return null;
+    try {
+      return nactiSchrankaStav(JSON.parse(v));
+    } catch {
+      return null;
+    }
+  }
+
+  async setSchrankaStav(stav: SchrankaStav): Promise<void> {
+    const cisty = nactiSchrankaStav(stav);
+    if (!cisty) return;
+    await this.cmd('SET', 'schranka:stav', JSON.stringify(cisty));
   }
 }
 

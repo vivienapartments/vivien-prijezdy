@@ -5,7 +5,14 @@ import { duvod, jeBlokujici, jeVyhrada, problemEmailu, type Duvod } from './chyb
 import { nightsBetween } from './dates';
 import { jazykZPredvolby, normalizujTelefon } from './telefon';
 import { hlavickaMaAdresu, jeMailMajitele, verifyEmailOrigin } from './email-origin';
-import { fetchRecentInboxMails, type InboxMail } from './inbox-mail';
+import { SCHRANKA_PLNY_BEH_MIN, SCHRANKA_SPAM_MIN } from './constants';
+import {
+  fetchInboxMailsOdUid,
+  fetchRecentInboxMails,
+  nactiMetaSchranky,
+  type InboxMail,
+  type SchrankaMeta,
+} from './inbox-mail';
 import { poplatekZData } from './poplatek';
 import {
   cisloZeSubjectu,
@@ -25,6 +32,7 @@ import {
   type ProcessStore,
   type RezervaceRecord,
   type RezervaceStav,
+  type SchrankaStav,
 } from './store';
 import { isDepartureExpired } from './token';
 import { inspectVivienMail, type MailInspection } from './vivien-data';
@@ -44,6 +52,39 @@ export type ProcessSummary = {
   errors: number;
   items: ProcessItem[];
 };
+
+/** Co udělat se schránkou. Jen pro logiku běhu, bez IMAP. */
+export type DruhBehuSchranky = 'plny' | 'rychly';
+
+export function rozhodniBehSchranky(
+  stav: SchrankaStav | null,
+  meta: SchrankaMeta,
+  now = new Date(),
+): DruhBehuSchranky {
+  if (!stav) return 'plny';
+  if (stav.uidValidity !== meta.uidValidity) return 'plny';
+  if (!stav.plnyBehKdy) return 'plny';
+  const plnyMs = Date.parse(stav.plnyBehKdy);
+  if (!Number.isFinite(plnyMs) || now.getTime() - plnyMs >= SCHRANKA_PLNY_BEH_MIN * 60 * 1000) {
+    return 'plny';
+  }
+  return 'rychly';
+}
+
+export function jeCasNaSpam(stav: SchrankaStav | null, now = new Date()): boolean {
+  if (!stav?.spamKdy) return true;
+  const t = Date.parse(stav.spamKdy);
+  if (!Number.isFinite(t)) return true;
+  return now.getTime() - t >= SCHRANKA_SPAM_MIN * 60 * 1000;
+}
+
+export function maxUidMailu(mails: InboxMail[], fallback: number): number {
+  let max = fallback;
+  for (const m of mails) {
+    if (typeof m.uid === 'number' && m.uid > max) max = m.uid;
+  }
+  return max;
+}
 
 function baseUrl(): string {
   return (process.env.PRUVODCE_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
@@ -899,23 +940,63 @@ export async function vypisPotvrzeni(store?: ProcessStore, overeni = false): Pro
   return out;
 }
 
+export type SchrankaNacitac = {
+  meta: (user: string, pass: string) => Promise<SchrankaMeta>;
+  plny: (user: string, pass: string) => Promise<InboxMail[]>;
+  odUid: (user: string, pass: string, odUid: number) => Promise<InboxMail[]>;
+};
+
+const vychoziNacitac: SchrankaNacitac = {
+  meta: (user, pass) => nactiMetaSchranky({ user, pass }),
+  plny: (user, pass) => fetchRecentInboxMails({ user, pass, days: 14 }),
+  odUid: (user, pass, odUid) => fetchInboxMailsOdUid({ user, pass, odUid }),
+};
+
 export async function runInboxProcessing(opts: {
   store?: ProcessStore;
   mails?: InboxMail[];
   /** Test: nahradí prohlídku spamu. Chyba se zapíše a zpracování běží dál. */
   spam?: () => Promise<void>;
+  /** Test / ostrý běh: čas rozhodování o plném běhu a spamu. */
+  ted?: Date;
+  /** Test: nahradí IMAP. */
+  nacti?: SchrankaNacitac;
 } = {}): Promise<ProcessSummary> {
   const store = opts.store ?? createProcessStore();
   await store.purgeExpired();
+  const start = Date.now();
+  const ted = opts.ted ?? new Date();
+  const tedIso = ted.toISOString();
 
   let mails = opts.mails;
+  let druh: DruhBehuSchranky = 'plny';
+  let hlidejStav = false;
+  let predchozi: SchrankaStav | null = null;
+  let meta: SchrankaMeta | null = null;
+  let stazeno = false;
+
   if (!mails) {
     const user = process.env.IMAP_USER?.trim();
     const pass = process.env.IMAP_HESLO?.trim();
     if (!user || !pass || pass.startsWith('SEM_NAPIS')) {
       throw new Error('IMAP_USER / IMAP_HESLO nejsou vyplněné');
     }
-    mails = await fetchRecentInboxMails({ user, pass, days: 14 });
+    const nacti = opts.nacti ?? vychoziNacitac;
+    predchozi = await store.getSchrankaStav();
+    meta = await nacti.meta(user, pass);
+    druh = rozhodniBehSchranky(predchozi, meta, ted);
+    hlidejStav = true;
+
+    if (druh === 'plny') {
+      mails = await nacti.plny(user, pass);
+      stazeno = true;
+    } else if (meta.uidNext - 1 <= (predchozi?.posledniUid ?? 0)) {
+      mails = [];
+      stazeno = false;
+    } else {
+      mails = await nacti.odUid(user, pass, (predchozi?.posledniUid ?? 0) + 1);
+      stazeno = true;
+    }
   }
 
   const summary: ProcessSummary = {
@@ -927,6 +1008,7 @@ export async function runInboxProcessing(opts: {
     errors: 0,
     items: [],
   };
+  let chybaMailu = false;
 
   for (const mail of mails) {
     let item: ProcessItem;
@@ -936,6 +1018,7 @@ export async function runInboxProcessing(opts: {
       const reason = err instanceof Error ? err.message : 'chyba';
       const id = cisloZeSubjectu(mail.subject) || undefined;
       summary.errors += 1;
+      chybaMailu = true;
       summary.items.push({ status: 'error', reason, rezervace: id });
       try {
         const now = new Date().toISOString();
@@ -978,24 +1061,54 @@ export async function runInboxProcessing(opts: {
       summary.skipped += 1;
     } else if (item.status === 'rejected') summary.rejected += 1;
     else if (item.status === 'duplicate') summary.duplicate += 1;
-    else if (item.status === 'error' || item.status === 'vraceno') summary.errors += 1;
+    else if (item.status === 'error' || item.status === 'vraceno') {
+      summary.errors += 1;
+      chybaMailu = true;
+    }
   }
 
+  let spamAno = false;
+  let chybaSpamu = false;
   if (!opts.mails || opts.spam) {
-    try {
-      if (opts.spam) await opts.spam();
-      else {
-        const { vytahniHostyZeSpamu } = await import('./spam-schranka');
-        const spam = await vytahniHostyZeSpamu(store);
-        if (spam.chyby) {
-          summary.errors += spam.chyby;
-          summary.items.push({ status: 'error', reason: 'E-mail ve spamu se nepodařilo přesunout.' });
+    const zivySpam = !opts.mails;
+    spamAno = zivySpam ? jeCasNaSpam(predchozi, ted) : Boolean(opts.spam);
+    if (spamAno) {
+      try {
+        if (opts.spam) await opts.spam();
+        else {
+          const { vytahniHostyZeSpamu } = await import('./spam-schranka');
+          const spam = await vytahniHostyZeSpamu(store);
+          if (spam.chyby) {
+            summary.errors += spam.chyby;
+            chybaSpamu = true;
+            summary.items.push({ status: 'error', reason: 'E-mail ve spamu se nepodařilo přesunout.' });
+          }
         }
+      } catch {
+        summary.errors += 1;
+        chybaSpamu = true;
+        summary.items.push({ status: 'error', reason: 'Spam se nepodařilo projít.' });
       }
-    } catch {
-      summary.errors += 1;
-      summary.items.push({ status: 'error', reason: 'Spam se nepodařilo projít.' });
     }
+  }
+
+  if (hlidejStav && meta) {
+    const posunUid = !chybaMailu && (druh === 'plny' || stazeno);
+    await store.setSchrankaStav({
+      uidValidity: meta.uidValidity,
+      posledniUid: posunUid
+        ? maxUidMailu(mails, Math.max(0, meta.uidNext - 1))
+        : (predchozi?.posledniUid ?? 0),
+      plnyBehKdy:
+        druh === 'plny' && !chybaMailu ? tedIso : (predchozi?.plnyBehKdy ?? null),
+      spamKdy: spamAno && !chybaSpamu ? tedIso : (predchozi?.spamKdy ?? null),
+    });
+  }
+
+  if (hlidejStav) {
+    console.log(
+      `Beh: ${druh}, novych mailu ${mails.length}, spam ${spamAno ? 'ano' : 'ne'}, trvani ${Date.now() - start} ms`,
+    );
   }
 
   return summary;
