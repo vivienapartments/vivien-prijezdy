@@ -50,6 +50,8 @@ export const OBJEDNAT_POKUSU = 5;
 export const SCHRANKA_PLNY_BEH_MIN = 60;
 /** Spamová složka nejvýš jednou za tuto dobu. */
 export const SCHRANKA_SPAM_MIN = 15;
+/** Když automat tak dlouho nic nezapsal, přehled ukáže červené varování. */
+export const AUTOMAT_TICHY_MIN = 15;
 
 export const PARKING_ADDRESS = 'Chelčického 95/15';
 export const HOUSE_ADDRESS = 'Nádražní 108/43, 370 01 České Budějovice';

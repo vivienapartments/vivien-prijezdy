@@ -38,5 +38,19 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   const vizitka = sestavVizitku(rec);
   if (!vizitka) return new NextResponse('Host nemá telefon.', { status: 404, headers: noStore });
+
+  if (prihlasen && !rec.kontaktUlozenKdy) {
+    const cas = new Date().toISOString();
+    try {
+      await createProcessStore().setRezervace(id, {
+        ...rec,
+        kontaktUlozenKdy: cas,
+        historie: [...rec.historie, { cas, co: 'Kontakt uložen do telefonu' }],
+      });
+    } catch {
+      // Vizitka má odejít i když zápis na kartu selže.
+    }
+  }
+
   return soubor(vizitka);
 }

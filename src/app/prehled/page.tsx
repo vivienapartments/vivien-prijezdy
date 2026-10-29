@@ -61,6 +61,7 @@ export default async function PrehledPage({ searchParams }: Props) {
     branaDoc = nactiDokument(await store.getBrana());
   }
   const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(store, now);
+  const posledniBehCas = ukazka ? now.toISOString() : (await store.getBeh())?.cas ?? null;
   const branaPripravena = branaJePripravena();
   const dnes = dnesVPraze(now);
   const userAgent = (await headers()).get('user-agent') ?? '';
@@ -70,6 +71,7 @@ export default async function PrehledPage({ searchParams }: Props) {
       dnes={dnes}
       zitra={posunDen(dnes, 1)}
       chybiWifi={chybejiciWifi()}
+      posledniBehCas={posledniBehCas}
       ukazka={ukazka}
       userAgent={userAgent}
       brana={branaDoc.sloty}

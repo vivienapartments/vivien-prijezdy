@@ -3,8 +3,9 @@ import type { PoplatekStav } from './poplatek';
 import { castkaPoplatku, poplatekZData, hraniceRezervace } from './poplatek';
 import type { PlatbaPolozky, ProcessStore, RezervaceRecord, RezervaceStav } from './store';
 import { normalizujTelefon, textTelefonu } from './telefon';
+import { AUTOMAT_TICHY_MIN } from './constants';
 import type { AptId, GuideLang } from './types';
-import { LANG_LABELS } from './types';
+import { APT_IDS, LANG_LABELS } from './types';
 import { vetaNavrhu, maRucni } from './rucni-pole';
 import type { RucniPole } from './store';
 import { chybejiciKroky, type ChybejiciKrok } from './vstup-pruvodce';
@@ -113,6 +114,8 @@ export type PrehledRadek = {
   fazeText: string;
   fazeTon: FazeTon;
   navrhy: { pole: RucniPole; veta: string; hodnota: string }[];
+  /** Kdy majitel uložil kontakt do telefonu. null = ještě ne, tlačítko je nahoře. */
+  kontaktUlozenKdy: string | null;
 };
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
@@ -793,6 +796,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     fazeText: faze.text,
     fazeTon: faze.ton,
     navrhy: (rec.navrhy || []).map((n) => ({ pole: n.pole, veta: vetaNavrhu(n), hodnota: n.hodnota })),
+    kontaktUlozenKdy: rec.kontaktUlozenKdy || null,
   };
 }
 
@@ -806,10 +810,11 @@ function textRozbaleni(kroky: ChybejiciKrok[]): string {
   return `Průvodce nerozbalen · chybí: ${kroky.map((krok) => nazev[krok]).join(', ')}`;
 }
 
-/** Nejbližší příjezd nahoře. Kdo už odjel, je až dole. */
+/** Nejbližší příjezd nahoře. V rámci dne podle času příjezdu, pak V1–V5. Kdo už odjel, je až dole. */
 export function seradRadky(rows: PrehledRadek[], now = new Date()): PrehledRadek[] {
   const today = dnesVPraze(now);
   const skupina = (r: PrehledRadek) => (r.odjezd && r.odjezd < today ? 1 : 0);
+  const poradiApt = (id: AptId | null) => (id ? APT_IDS.indexOf(id) : 99);
   return [...rows].sort((a, b) => {
     const ga = skupina(a);
     const gb = skupina(b);
@@ -818,13 +823,34 @@ export function seradRadky(rows: PrehledRadek[], now = new Date()): PrehledRadek
       const oa = a.odjezd || '';
       const ob = b.odjezd || '';
       if (oa !== ob) return oa < ob ? 1 : -1;
-    } else {
-      const da = a.prijezd || '9999-99-99';
-      const db = b.prijezd || '9999-99-99';
-      if (da !== db) return da < db ? -1 : 1;
+      return a.rezervace < b.rezervace ? -1 : 1;
     }
+    const da = a.prijezd || '9999-99-99';
+    const db = b.prijezd || '9999-99-99';
+    if (da !== db) return da < db ? -1 : 1;
+    const ca = a.casPrijezdu || '';
+    const cb = b.casPrijezdu || '';
+    if (ca !== cb) {
+      if (ca && !cb) return -1;
+      if (!ca && cb) return 1;
+      return ca < cb ? -1 : 1;
+    }
+    const pa = poradiApt(a.apartman);
+    const pb = poradiApt(b.apartman);
+    if (pa !== pb) return pa - pb;
     return a.rezervace < b.rezervace ? -1 : 1;
   });
+}
+
+/** Červený pruh v přehledu, když automat dlouho nic nezapsal. Bez push. */
+export function textAutomatNebezi(behCas: string | null | undefined, now = new Date()): string | null {
+  const cron = 'Zkontrolujte cron-job.org (úloha vivien-prijezdy musí být Enabled).';
+  if (!behCas) return `Automat neběží. ${cron}`;
+  const t = Date.parse(behCas);
+  if (!Number.isFinite(t)) return `Automat neběží. ${cron}`;
+  if (now.getTime() - t < AUTOMAT_TICHY_MIN * 60_000) return null;
+  const cas = casPraha(behCas) || behCas;
+  return `Automat neběží od ${cas}. ${cron}`;
 }
 
 export function kartaNelzeNacist(id: string): PrehledRadek {

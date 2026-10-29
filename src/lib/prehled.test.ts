@@ -11,6 +11,7 @@ import {
   souhrnDne,
   telefonyPrehledu,
   terminKratky,
+  textAutomatNebezi,
   textOtevreni,
   textPoplatku,
   rozpisPlateb,
@@ -440,6 +441,35 @@ describe('tlačítka v přehledu', () => {
       now,
     );
     expect(serazeno.map((r) => r.rezervace)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('v rámci dne řadí podle času příjezdu, pak apartmánu', () => {
+    const now = new Date('2026-10-11T08:00:00.000Z');
+    const radek = (
+      id: string,
+      apartman: 'V1' | 'V2' | 'V5',
+      cas: string | null,
+    ): PrehledRadek =>
+      radekZRezervace({
+        ...prazdnaRezervace(id, '2026-10-01T00:00:00.000Z'),
+        prijezd: '2026-10-11',
+        odjezd: '2026-10-12',
+        apartman,
+        casPrijezdu: cas,
+        otevrenoPocet: 0,
+      });
+    const serazeno = seradRadky(
+      [radek('c', 'V1', '18:00'), radek('b', 'V5', '11:00'), radek('a', 'V2', '11:00'), radek('d', 'V1', null)],
+      now,
+    );
+    expect(serazeno.map((r) => r.rezervace)).toEqual(['a', 'b', 'c', 'd']);
+  });
+
+  it('varování Automatu po 15 minutách ticha', () => {
+    const now = new Date('2026-10-11T12:00:00.000Z');
+    expect(textAutomatNebezi('2026-10-11T11:50:00.000Z', now)).toBeNull();
+    expect(textAutomatNebezi('2026-10-11T11:44:00.000Z', now)).toMatch(/^Automat neběží od /);
+    expect(textAutomatNebezi(null, now)).toMatch(/^Automat neběží/);
   });
 
   it('souhrn dne seřadí hosty podle času příjezdu', () => {

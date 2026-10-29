@@ -14,6 +14,7 @@ import {
   rozpisPlateb,
   STARY_ZAZNAM,
   terminKratky,
+  textAutomatNebezi,
   textPoplatku,
   vetaChyby,
   type PrehledRadek,
@@ -75,6 +76,8 @@ type Props = {
   dnes: string;
   zitra: string;
   chybiWifi: string[];
+  /** ISO času posledního běhu automatu. Pro varování nahoře. */
+  posledniBehCas?: string | null;
   /** Místní náhled. Číslo se zapíše jen na obrazovce, ne do ostrých rezervací. */
   ukazka?: boolean;
   /** User-Agent prohlížeče. Na Androidu z něj vznikne odkaz na WhatsApp Business. */
@@ -100,10 +103,20 @@ function Pole({ text }: { text: string }) {
   return <>{text}</>;
 }
 
-function UlozitKontakt({ row }: { row: PrehledRadek }) {
+function UlozitKontakt({
+  row,
+  onUlozeno,
+}: {
+  row: PrehledRadek;
+  onUlozeno?: () => void;
+}) {
   if (!row.telefonText && !row.jinyTelefonText) return null;
   return (
-    <a className="ph-kontakt" href={`/api/prehled/vizitka?rezervace=${encodeURIComponent(row.rezervace)}`}>
+    <a
+      className="ph-kontakt"
+      href={`/api/prehled/vizitka?rezervace=${encodeURIComponent(row.rezervace)}`}
+      onClick={() => onUlozeno?.()}
+    >
       Uložit kontakt
     </a>
   );
@@ -114,6 +127,7 @@ export function PrehledClient({
   dnes,
   zitra,
   chybiWifi,
+  posledniBehCas = null,
   ukazka = false,
   userAgent = '',
   brana = [],
@@ -172,6 +186,7 @@ export function PrehledClient({
   const [dotazPrestoPrijezd, setDotazPrestoPrijezd] = useState<string | null>(null);
   const [poplatekOtevren, setPoplatekOtevren] = useState<Record<string, boolean>>({});
   const [hledatDotaz, setHledatDotaz] = useState('');
+  const [kontaktUlozen, setKontaktUlozen] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setRadky(rows);
@@ -447,13 +462,44 @@ export function PrehledClient({
 
   function telefonPole(row: PrehledRadek) {
     return (
-      <PoleSUlozenim
-        key={`${row.rezervace}-telefon`}
-        label="Telefon"
-        hodnota={telefonRadku(row)}
-        vstup={{ type: 'tel', inputMode: 'tel', autoComplete: 'tel' }}
-        onUloz={(text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
-      />
+      <>
+        <PoleSUlozenim
+          key={`${row.rezervace}-telefon`}
+          label="Telefon"
+          hodnota={telefonRadku(row)}
+          vstup={{ type: 'tel', inputMode: 'tel', autoComplete: 'tel' }}
+          onUloz={(text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
+        />
+        {row.telefonNejisty ? (
+          <div className="ph-predvolba">
+            Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+          </div>
+        ) : null}
+      </>
+    );
+  }
+
+  function kontaktUlozenKdy(row: PrehledRadek): string | null {
+    if (Object.prototype.hasOwnProperty.call(kontaktUlozen, row.rezervace)) {
+      return kontaktUlozen[row.rezervace] || null;
+    }
+    return row.kontaktUlozenKdy || null;
+  }
+
+  function oznacKontaktUlozen(row: PrehledRadek) {
+    if (kontaktUlozenKdy(row)) return;
+    const cas = new Date().toISOString();
+    setKontaktUlozen((prev) => ({ ...prev, [row.rezervace]: cas }));
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              kontaktUlozenKdy: cas,
+              historie: [...r.historie, { cas, co: 'Kontakt uložen do telefonu' }],
+            }
+          : r,
+      ),
     );
   }
 
@@ -469,12 +515,17 @@ export function PrehledClient({
     () => souhrnDne(radky, zitra, casy),
     [radky, zitra, casy],
   );
+  const automatVarovani = useMemo(
+    () => textAutomatNebezi(posledniBehCas),
+    [posledniBehCas],
+  );
 
   const viditelne = useMemo(() => {
     const denYmd = den === 'zitra' ? zitra : dnes;
     return radky.filter((row) => {
       if (row.nelzeNacist) return false;
       if (row.prijezd !== denYmd) return false;
+      if (row.stav === 'zruseno' && stav !== 'zruseno') return false;
       if (jenNeotevreni && (row.otevrenoPocet !== 0 || row.stav === 'bez_checkinu')) return false;
       if (jenBezCheckinu && row.stav !== 'bez_checkinu') return false;
       if (stav && row.stav !== stav) return false;
@@ -1183,6 +1234,15 @@ export function PrehledClient({
       parkovani: parkAkce,
       odjel,
     });
+    const zpravyNahore = !predanoKdy && !odjel;
+    const telefonNahore = !row.telefonText;
+    const kontaktUlozenCas = kontaktUlozenKdy(row);
+    const muzeKontakt = Boolean(wa || row.telefonText || row.jinyTelefonText);
+    const kontaktNahore = muzeKontakt && !kontaktUlozenCas;
+    const predaniNahore = !odjel && !predanoKdy && Boolean(row.prijezd && row.prijezd <= dnes);
+    const tlacitkoKontakt = muzeKontakt ? (
+      <UlozitKontakt row={row} onUlozeno={() => oznacKontaktUlozen(row)} />
+    ) : null;
     const casPole = (
       <PoleSUlozenim
         key={`${row.rezervace}-cas`}
@@ -1494,6 +1554,12 @@ export function PrehledClient({
           {apartman ? <div className="ph-apt">{apartman}</div> : null}
           {termin ? <div className="ph-kde">{termin}</div> : null}
         </div>
+        {zpravyNahore ? (
+          <>
+            {zpravaRamecek}
+            {akceZpravy}
+          </>
+        ) : null}
         <div className="ph-znacky">
           <span className={`ph-faze ph-faze--${fazeTon}`}>Fáze · {fazeText}</span>
         </div>
@@ -1535,28 +1601,17 @@ export function PrehledClient({
         {dil.radek}
         {poplatekRadek}
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
-        {predanoKdy || odjel ? null : (
-          <>
-            {zpravaRamecek}
-            {akceZpravy}
-          </>
-        )}
         {cekajici === 'registrace' ? dil.registrace : null}
         {cekajici === 'odpoved' ? dil.odpoved : null}
         {!odjel && (!predanoKdy || zavady || dotazZavady === row.rezervace) ? zavadyBlok : null}
-        {cekajici === 'predani' || predanoKdy ? (
+        {predaniNahore ? (
           <>
             {predaniTlacitko}
             {predaniDotaz}
           </>
         ) : null}
-        {cekajici === 'namiste' ? namisteTlacitko : null}
-        {telefonPole(row)}
-        {row.telefonNejisty ? (
-          <div className="ph-predvolba">
-            Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
-          </div>
-        ) : null}
+        {telefonNahore ? telefonPole(row) : null}
+        {kontaktNahore ? tlacitkoKontakt : null}
         {casPole}
         {ukazBlokOdeslani ? (
           <div className="ph-znovu">
@@ -1679,13 +1734,14 @@ export function PrehledClient({
               </button>
             </div>
           ) : null}
-          {cekajici === 'namiste' ? null : namisteTlacitko}
-          {predanoKdy || odjel ? (
+          {namisteTlacitko}
+          {!telefonNahore ? telefonPole(row) : null}
+          {zpravyNahore ? null : (
             <>
               {zpravaRamecek}
               {akceZpravy}
             </>
-          ) : null}
+          )}
           {row.prevzatoKdy ? (
             <button type="button" className="ph-predano" onClick={() => setDotazVratitOdjezd(row.rezervace)}>
               Vrátit odjezd
@@ -1718,7 +1774,7 @@ export function PrehledClient({
               </button>
             </div>
           ) : null}
-          {cekajici === 'predani' ? null : (
+          {predaniNahore ? null : (
             <>
               {predaniTlacitko}
               {predaniDotaz}
@@ -1767,7 +1823,7 @@ export function PrehledClient({
               </button>
             </div>
           ) : null}
-          {wa || row.telefonText || row.jinyTelefonText ? <UlozitKontakt row={row} /> : null}
+          {kontaktNahore ? null : tlacitkoKontakt}
           <a className="ph-hostuv-pruvodce" href={odkazPruvodceMajitele(row.rezervace, ukazka)}>
             Průvodce hosta
           </a>
@@ -1930,6 +1986,7 @@ export function PrehledClient({
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
       </header>
+      {automatVarovani ? <p className="ph-automat">{automatVarovani}</p> : null}
 
       <RadaZalozek zalozka={zalozka} pocty={pocty} nove={nove} onZmena={otevriZalozku} />
       <label className="ph-hledat-nahore">

@@ -210,6 +210,8 @@ export type RezervaceRecord = {
   rucniZnacky: RucniZnacka[];
   /** Jiná hodnota od automatu nebo hosta. Majitel ji může převzít. */
   navrhy: NavrhPole[];
+  /** Kdy majitel uložil kontakt (vizitku) do telefonu. null = ještě ne. */
+  kontaktUlozenKdy: string | null;
 };
 
 export type RucniPole =
@@ -581,6 +583,8 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     vyjezdy: nactiVyjezdy(r.vyjezdy),
     souhlasPravidel: nactiSouhlas(r.souhlasPravidel),
     zavadyPredani: nactiZavadyPredani(r.zavadyPredani),
+    kontaktUlozenKdy:
+      typeof r.kontaktUlozenKdy === 'string' && r.kontaktUlozenKdy ? r.kontaktUlozenKdy : null,
   };
 }
 
@@ -655,6 +659,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     hostUlozeni: [],
     rucniZnacky: [],
     navrhy: [],
+    kontaktUlozenKdy: null,
   };
 }
 
