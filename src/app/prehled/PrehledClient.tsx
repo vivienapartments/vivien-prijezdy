@@ -2180,7 +2180,7 @@ export function PrehledClient({
               <div className="ph-nova-dlazdice">
                 <button
                   type="button"
-                  className={`ph-nova-tile${casOk ? ' ph-nova-tile--cas' : ' ph-nova-tile--chybi'}`}
+                  className={`ph-nova-tile${casOk ? ' ph-nova-tile--ok' : ' ph-nova-tile--chybi'}`}
                   disabled={casOk || odjel}
                   onClick={() => {
                     if (casOk || odjel) return;
