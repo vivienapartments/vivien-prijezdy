@@ -323,7 +323,7 @@ export function VstupHosta({
               <li key={veta.cs}>{renderPravidlo(tt(veta), i === 1 || i === 2)}</li>
             ))}
           </ol>
-          <div className="pv-vstup__pole">
+          <div className="pv-vstup__pole" id="cas-prijezdu">
             <label>
               {tt(VT.vstupCasPopisek)}
               <select id="cenik-prijezd" value={cas || '14:00'} onChange={(e) => setCas(e.target.value)} disabled={cteni}>

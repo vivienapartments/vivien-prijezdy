@@ -1,7 +1,4 @@
-import { createElement } from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { OknoHosta } from '@/components/OknoHosta';
 import { buildGuestEmail } from '@/lib/email-host';
 import { kodyProHosta } from '@/lib/kody-pruvodce';
 import {
@@ -16,13 +13,15 @@ import {
   odkazSekce,
   poUklidu,
   sediPrijmeni,
+  stavApartmanuProHosta,
   textStavu,
   vety,
   vyhodnotObjednavku,
+  zadostOdjezdu,
   zadostPrijezdu,
   zapisPokus,
 } from '@/lib/okno-pobytu';
-import { jeSlotOdjezdu, polozkyZRezervace } from '@/lib/odjezd';
+import { jeCasOdjezduPovoleny, jeSlotOdjezdu, polozkyZRezervace } from '@/lib/odjezd';
 import { priplatekProCas } from '@/lib/priplatek-prijezd';
 import { prazdnaRezervace, type RezervaceRecord } from '@/lib/store';
 import { GUIDE_LANGS } from '@/lib/types';
@@ -143,8 +142,8 @@ describe('okno pobytu', () => {
     expect(jeBlokPokus(mapa, 'abc', now + 61 * 60 * 1000)).toBe(false);
   });
 
-  it('tlačítko v e-mailu vede na sekci průvodce', () => {
-    expect(odkazSekce('https://example.test/pruvodce')).toBe('https://example.test/pruvodce#drivejsi');
+  it('tlačítko v e-mailu vede na výběr času příjezdu', () => {
+    expect(odkazSekce('https://example.test/pruvodce')).toBe('https://example.test/pruvodce#cas-prijezdu');
     const mail = buildGuestEmail({
       lang: 'cs',
       apt: 'V1',
@@ -157,9 +156,26 @@ describe('okno pobytu', () => {
       guideUrl: 'https://example.test/pruvodce',
       intendedTo: 'host@example.com',
     });
-    expect(mail.html).toContain('https://example.test/pruvodce#drivejsi');
+    expect(mail.html).toContain('https://example.test/pruvodce#cas-prijezdu');
     expect(mail.html).toContain('Chcete přijet dřív nebo odjet později?');
-    expect(mail.text).toContain('#drivejsi');
+    expect(mail.text).toContain('#cas-prijezdu');
+  });
+
+  it('stav apartmánu je zlatý před příjezdem a zelený po úklidu', () => {
+    const ted = new Date('2026-10-20T08:00:00.000Z');
+    const host = zaklad('9', { prijezd: '2026-10-21', predano: null });
+    expect(stavApartmanuProHosta(host, [], ted)?.barva).toBe('zlaty');
+    const den = zaklad('9', { prijezd: '2026-10-20', predano: null });
+    expect(stavApartmanuProHosta(den, [], ted)?.barva).toBe('zeleny');
+    expect(stavApartmanuProHosta({ ...den, predano: '2026-10-20T10:00:00.000Z' }, [], ted)).toBeNull();
+  });
+
+  it('vlastní čas odjezdu 10:40 vytvoří žádost a 9:40 je v rozsahu', () => {
+    expect(jeCasOdjezduPovoleny('09:40')).toBe(true);
+    expect(jeCasOdjezduPovoleny('15:00')).toBe(false);
+    const v = zadostOdjezdu(zaklad('10', { odjezd: '2026-10-22' }), [], '10:40', 'pruvodce', new Date());
+    expect(v?.rec.zadostOdjezd?.cas).toBe('10:40');
+    expect(v?.rec.zadostOdjezd?.kc).toBe(150);
   });
 
   it('má texty ve všech jazycích a v rámečku nejsou kódy', () => {
@@ -177,29 +193,7 @@ describe('okno pobytu', () => {
       expect(text?.veta).not.toContain('{cas}');
     }
     expect(kodyProHosta(false, 'V1', '1234', 'cs')).toBeNull();
-    const html = renderToStaticMarkup(
-      createElement(OknoHosta, {
-        lang: 'cs',
-        token: null,
-        cteni: true,
-        okno: {
-          zeleny: true,
-          sekcePrijezd: true,
-          sekceOdjezd: false,
-          slotyZelene: ['12:00', '12:30'],
-          slotyPrijezd: ['12:00'],
-          slotyOdjezd: [],
-          nejpozdeji: '14:00',
-          zadostPrijezd: null,
-          zadostOdjezd: null,
-        },
-      }),
-    );
-    expect(html).toContain('Váš apartmán je už připravený');
-    expect(html).toContain('id="pripraveno"');
-    expect(html).toContain('id="drivejsi"');
-    expect(html).toContain('+300 Kč');
-    expect(html).not.toContain('1234');
+    expect(odkazSekce('https://example.test/pruvodce')).toContain('#cas-prijezdu');
     const zadost = zadostPrijezdu(zaklad('8', { prijezd: '2026-10-20' }), [], '12:00', 'pruvodce', new Date());
     expect(zadost?.push).toContain('lze potvrdit hned');
     expect(zadost?.push).not.toContain('@');

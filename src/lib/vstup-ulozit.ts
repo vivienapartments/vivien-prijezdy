@@ -1,5 +1,5 @@
 import { jeCasDrive, jeCasPozde, zadostOdjezdu, zadostPrijezdu, zrusitZadost } from './okno-pobytu';
-import { jeSlotOdjezdu, textHostUlozil, zobrazCas } from './odjezd';
+import { jeCasOdjezduPovoleny, textHostUlozil, zobrazCas } from './odjezd';
 import { verzeAktualni } from './pravidla-verze';
 import { popisekCasu } from './priplatek-prijezd';
 import { maRucni } from './rucni-pole';
@@ -144,7 +144,7 @@ export async function ulozVstupHosta(
       await ohlas(store, id, v.push);
       return { ok: true, cas: v.rec.zadostOdjezd?.cas || cas, uroven: urovenZRezervace(zapis) };
     }
-    if (!jeSlotOdjezdu(cas)) {
+    if (!jeCasOdjezduPovoleny(cas)) {
       await spalit();
       return { ok: false, duvod: 'cas' };
     }

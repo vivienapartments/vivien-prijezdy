@@ -758,3 +758,123 @@ export const vstupViteji: LText = {
   fr: "Nous nous réjouissons de vous accueillir.",
   it: "Non vediamo l’ora di accogliervi.",
 };
+
+/** Prompt 45 · stav apartmánu A1 (zlatý řádek, schváleno majitelem 24. 10. 2026). */
+export const stavPripravujeme: LText = {
+  cs: "Váš apartmán pro vás ještě připravujeme",
+  en: "We are still preparing your apartment",
+  de: "Wir bereiten Ihr Apartment noch für Sie vor",
+  pl: "Wciąż przygotowujemy dla Was apartament",
+  uk: "Ми ще готуємо для вас апартаменти",
+  'zh-Hant': "我們仍在為您準備公寓",
+  sv: "Vi förbereder fortfarande er lägenhet",
+  es: "Todavía estamos preparando su apartamento",
+  hu: "Az apartmant még előkészítjük önöknek",
+  fr: "Nous préparons encore votre appartement",
+  it: "Stiamo ancora preparando il vostro appartamento",
+};
+
+/** Prompt 45 · A2 po rozbalení. */
+export const stavPripravujemeText: LText = {
+  cs: "Chcete přijet dřív? Jakmile bude apartmán připravený, ukáže se tady zeleně a můžete si vybrat dřívější čas příjezdu. Potvrdíme vám ho.",
+  en: "Would you like to arrive earlier? As soon as the apartment is ready, this will turn green and you can choose an earlier arrival time. We will confirm it for you.",
+  de: "Möchten Sie früher anreisen? Sobald das Apartment bereit ist, wird es hier grün angezeigt und Sie können eine frühere Ankunftszeit wählen. Wir bestätigen sie Ihnen.",
+  pl: "Chcecie przyjechać wcześniej? Gdy tylko apartament będzie gotowy, pojawi się tu na zielono i będziecie mogli wybrać wcześniejszą godzinę przyjazdu. Potwierdzimy ją.",
+  uk: "Хочете приїхати раніше? Щойно апартаменти будуть готові, тут з’явиться зелена позначка, і ви зможете вибрати раніший час приїзду. Ми його підтвердимо.",
+  'zh-Hant': "想提早抵達嗎？公寓準備好後，這裡會變成綠色，您就可以選擇較早的抵達時間。我們會為您確認。",
+  sv: "Vill ni komma tidigare? Så snart lägenheten är klar blir det grönt här och ni kan välja en tidigare ankomsttid. Vi bekräftar den åt er.",
+  es: "¿Quieren llegar antes? En cuanto el apartamento esté listo, aquí aparecerá en verde y podrán elegir una hora de llegada anterior. Se la confirmaremos.",
+  hu: "Korábban érkeznének? Amint az apartman elkészül, itt zölden jelenik meg, és választhatnak korábbi érkezési időt. Visszaigazoljuk.",
+  fr: "Vous souhaitez arriver plus tôt ? Dès que l’appartement sera prêt, cela s’affichera ici en vert et vous pourrez choisir une heure d’arrivée plus tôt. Nous vous la confirmerons.",
+  it: "Volete arrivare prima? Appena l’appartamento sarà pronto, qui comparirà in verde e potrete scegliere un orario di arrivo anticipato. Ve lo confermeremo.",
+};
+
+/** Prompt 45 · B1 (zelený řádek). */
+export const stavPripraveno: LText = {
+  cs: "Váš apartmán je připravený",
+  en: "Your apartment is ready",
+  de: "Ihr Apartment ist bereit",
+  pl: "Wasz apartament jest gotowy",
+  uk: "Ваші апартаменти готові",
+  'zh-Hant': "您的公寓已準備好",
+  sv: "Er lägenhet är klar",
+  es: "Su apartamento está listo",
+  hu: "Az apartman elkészült",
+  fr: "Votre appartement est prêt",
+  it: "Il vostro appartamento è pronto",
+};
+
+/** Prompt 45 · B2 po rozbalení, jen před 14:00 a bez potvrzeného dřívějšího příjezdu. */
+export const stavPripravenoText: LText = {
+  cs: "Můžete přijet dřív než ve 14:00. Vyberte si čas příjezdu a my vám ho potvrdíme.",
+  en: "You can arrive earlier than 14:00. Choose your arrival time and we will confirm it.",
+  de: "Sie können früher als 14:00 anreisen. Wählen Sie Ihre Ankunftszeit, wir bestätigen sie Ihnen.",
+  pl: "Możecie przyjechać wcześniej niż o 14:00. Wybierzcie godzinę przyjazdu, a my ją potwierdzimy.",
+  uk: "Ви можете приїхати раніше ніж о 14:00. Виберіть час приїзду, і ми його підтвердимо.",
+  'zh-Hant': "您可以在 14:00 之前抵達。請選擇抵達時間，我們會為您確認。",
+  sv: "Ni kan komma tidigare än 14:00. Välj ankomsttid så bekräftar vi den.",
+  es: "Pueden llegar antes de las 14:00. Elijan su hora de llegada y se la confirmaremos.",
+  hu: "14:00 előtt is érkezhetnek. Válasszák ki az érkezés idejét, és visszaigazoljuk.",
+  fr: "Vous pouvez arriver avant 14:00. Choisissez votre heure d’arrivée et nous vous la confirmerons.",
+  it: "Potete arrivare prima delle 14:00. Scegliete l’orario di arrivo e ve lo confermeremo.",
+};
+
+/** Prompt 45 · tlačítko u B2, vede na #cas-prijezdu. */
+export const stavZmenitCas: LText = {
+  cs: "Změnit čas příjezdu",
+  en: "Change arrival time",
+  de: "Ankunftszeit ändern",
+  pl: "Zmień godzinę przyjazdu",
+  uk: "Змінити час приїзду",
+  'zh-Hant': "更改抵達時間",
+  sv: "Ändra ankomsttid",
+  es: "Cambiar la hora de llegada",
+  hu: "Érkezési idő módosítása",
+  fr: "Changer l’heure d’arrivée",
+  it: "Cambia orario di arrivo",
+};
+
+/** Prompt 45 · poslední volba v seznamu odjezdu. */
+export const odjezdJinyCas: LText = {
+  cs: "Jiný čas…",
+  en: "Other time…",
+  de: "Andere Uhrzeit…",
+  pl: "Inna godzina…",
+  uk: "Інший час…",
+  'zh-Hant': "其他時間…",
+  sv: "Annan tid…",
+  es: "Otra hora…",
+  hu: "Más időpont…",
+  fr: "Autre heure…",
+  it: "Altro orario…",
+};
+
+/** Prompt 45 · popisek políčka pro vlastní čas odjezdu. */
+export const odjezdVlastniPopisek: LText = {
+  cs: "Napište svůj čas",
+  en: "Enter your time",
+  de: "Geben Sie Ihre Uhrzeit ein",
+  pl: "Wpiszcie swoją godzinę",
+  uk: "Вкажіть свій час",
+  'zh-Hant': "請輸入您的時間",
+  sv: "Skriv er tid",
+  es: "Escriban su hora",
+  hu: "Írják be az időpontot",
+  fr: "Indiquez votre heure",
+  it: "Inserite il vostro orario",
+};
+
+/** Prompt 45 · chyba při špatném vlastním čase odjezdu. */
+export const odjezdVlastniChyba: LText = {
+  cs: "Zadejte čas mezi 6:00 a 14:00, například 9:40.",
+  en: "Enter a time between 6:00 and 14:00, for example 9:40.",
+  de: "Geben Sie eine Uhrzeit zwischen 6:00 und 14:00 ein, zum Beispiel 9:40.",
+  pl: "Wpiszcie godzinę między 6:00 a 14:00, na przykład 9:40.",
+  uk: "Вкажіть час між 6:00 і 14:00, наприклад 9:40.",
+  'zh-Hant': "請輸入 6:00 至 14:00 之間的時間，例如 9:40。",
+  sv: "Ange en tid mellan 6:00 och 14:00, till exempel 9:40.",
+  es: "Indiquen una hora entre las 6:00 y las 14:00, por ejemplo 9:40.",
+  hu: "Adjanak meg egy időpontot 6:00 és 14:00 között, például 9:40.",
+  fr: "Indiquez une heure entre 6:00 et 14:00, par exemple 9:40.",
+  it: "Inserite un orario tra le 6:00 e le 14:00, ad esempio 9:40.",
+};

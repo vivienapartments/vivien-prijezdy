@@ -1301,7 +1301,7 @@
             "fr": "La porte mène à un jardin calme. Vous y trouverez de la verdure et des sièges, loin du bruit de la ville.",
             "it": "La porta conduce a un giardino tranquillo. C’è verde e ci si può sedere, lontano dal rumore della città."
           },
-          "stav": "upraveno_ke_schvaleni",
+          "stav": "hotovo",
           "poznamka": "Originál: 'soukromé zahrady / private garden / privaten Garten' – zahrada je ale sdílená."
         },
         {
@@ -1335,7 +1335,7 @@
             "sv": "",
             "hu": ""
           },
-          "stav": "upraveno_ke_schvaleni",
+          "stav": "hotovo",
           "typ": "zahrada_info",
           "poznamka": "Originál nadpisu: 'Tichý kout jen pro vás' – upraveno, protože zahradu sdílí V1, V4 a V5.",
           "boxy": [

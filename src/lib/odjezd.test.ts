@@ -301,7 +301,8 @@ describe('odjezd', () => {
     const ramecek = html.indexOf('V kolik dnes odjíždíte?');
     const piny = html.indexOf('id="vase-piny"');
     expect(ramecek).toBeGreaterThan(-1);
-    expect(piny).toBeGreaterThan(ramecek);
+    expect(piny).toBeGreaterThan(-1);
+    expect(piny).toBeLessThan(ramecek);
     const slozeny = renderToStaticMarkup(
       createElement(Guide, {
         apt: 'V1',

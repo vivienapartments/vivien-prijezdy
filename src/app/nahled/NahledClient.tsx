@@ -129,6 +129,7 @@ export function NahledClient({ secrets, searchParams }: Props) {
               nejpozdeji: '14:00',
               zadostPrijezd: null,
               zadostOdjezd: null,
+              stavApartmanu: { barva: 'zeleny', rozbalit: true },
             }
           : null
       }

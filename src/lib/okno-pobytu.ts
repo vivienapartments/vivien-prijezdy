@@ -788,6 +788,12 @@ export function textCekaniUklid(lang: GuideLang | null | undefined): string {
   return vety(lang).cekaUklid;
 }
 
+export type StavApartmanuPohled = {
+  barva: 'zlaty' | 'zeleny';
+  /** false = jen nadpis, bez rozbalení (po 14:00 nebo potvrzený dřívější příjezd). */
+  rozbalit: boolean;
+};
+
 export type OknoPohled = {
   zeleny: boolean;
   sekcePrijezd: boolean;
@@ -798,7 +804,35 @@ export type OknoPohled = {
   nejpozdeji: string;
   zadostPrijezd: ZadostOkna | null;
   zadostOdjezd: ZadostOkna | null;
+  /** Před předáním. Po předání null. */
+  stavApartmanu: StavApartmanuPohled | null;
 };
+
+/** Připravený v den příjezdu: nikdo ten den neodjíždí, nebo už je uklizeno. */
+export function apartmanPripraveny(rec: RezervaceRecord, zaznamy: RezervaceRecord[], now: Date): boolean {
+  if (rec.predano) return false;
+  const { den } = praha(now);
+  if (rec.prijezd !== den) return false;
+  const odchod = odjizdiTenDen(hosteZ(zaznamy), hostZ(rec));
+  return !odchod || Boolean(odchod.uklizenoKdy);
+}
+
+export function stavApartmanuProHosta(
+  rec: RezervaceRecord,
+  zaznamy: RezervaceRecord[],
+  now: Date,
+): StavApartmanuPohled | null {
+  if (rec.predano || !rec.prijezd) return null;
+  const { den, hodina, minuta } = praha(now);
+  if (den > rec.prijezd) return null;
+  const pripraveno = apartmanPripraveny(rec, zaznamy, now);
+  if (rec.prijezd === den && pripraveno) {
+    const po14 = hodina * 60 + minuta >= PRIJEZD_STANDARD;
+    const potvrzeno = rec.zadostPrijezd?.stav === 'potvrzeno';
+    return { barva: 'zeleny', rozbalit: !po14 && !potvrzeno };
+  }
+  return { barva: 'zlaty', rozbalit: true };
+}
 
 export function oknoProHosta(rec: RezervaceRecord, zaznamy: RezervaceRecord[], now: Date, otevreno: boolean): OknoPohled {
   const hoste = hosteZ(zaznamy);
@@ -825,6 +859,7 @@ export function oknoProHosta(rec: RezervaceRecord, zaznamy: RezervaceRecord[], n
     nejpozdeji,
     zadostPrijezd: rec.zadostPrijezd,
     zadostOdjezd: rec.zadostOdjezd,
+    stavApartmanu: stavApartmanuProHosta(rec, zaznamy, now),
   };
 }
 
@@ -867,8 +902,10 @@ export function zadostOdjezdu(
   const kc = cenaPozde(cas);
   if (!kc || rec.zadostOdjezd?.stav === 'potvrzeno') return null;
   const dalsiHost = prijizdiTenDen(hosteZ(zaznamy), hostZ(rec));
-  const povoleno = casyPozde(nejpozdejiPredPrijezdem(dalsiHost?.casPrijezdu ?? null, Boolean(dalsiHost)));
-  if (!povoleno.includes(cas)) return null;
+  const nejpozdeji = nejpozdejiPredPrijezdem(dalsiHost?.casPrijezdu ?? null, Boolean(dalsiHost));
+  const minCas = minutyCasu(cas);
+  const minMax = minutyCasu(nejpozdeji);
+  if (minCas == null || minMax == null || minCas > minMax) return null;
   const vetaHistorie = od === 'objednat' ? 'Žádost přes stránku Objednat' : `Žádost o pozdější odjezd ve ${zobrazCas(cas)}`;
   const dalsi = poznamka(rec, vetaHistorie, { zadostOdjezd: novaZadost(cas, kc, od, !dalsiHost, now) }, now);
   return { rec: dalsi, push: textPusheOdjezdu(popisHostaKratce(rec), cas, kc) };
@@ -989,12 +1026,12 @@ export function tlacitkoEmailu(lang: GuideLang | null | undefined): string {
 
 export function odkazSekce(guideUrl: string): string {
   const zaklad = guideUrl.split('#')[0];
-  return `${zaklad}#drivejsi`;
+  return `${zaklad}#cas-prijezdu`;
 }
 
 export function odkazPripraveno(guideUrl: string): string {
   const zaklad = guideUrl.split('#')[0];
-  return `${zaklad}#pripraveno`;
+  return `${zaklad}#cas-prijezdu`;
 }
 
 export function vetaOdjezduNavic(lang: GuideLang | null | undefined): string {

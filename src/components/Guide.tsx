@@ -36,7 +36,7 @@ import { pruvodceRozbalen, urovenPruvodce, type UrovenPruvodce } from '@/lib/vst
 import * as VT from '@/lib/vstup-texty';
 import { textStavu, type OknoPohled } from '@/lib/okno-pobytu';
 import { OdjezdRamecek } from './OdjezdRamecek';
-import { OknoHosta } from './OknoHosta';
+import { StavApartmanu } from './StavApartmanu';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import './guide.scss';
 
@@ -574,40 +574,55 @@ export function Guide({
       ) : null}
 
       <main className="pv">
-        {okno ? (
-          <OknoHosta
+        <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />
+        {ubytovan || ziveKody ? (
+          <OdjezdRamecek
             lang={lang}
+            den={odjezd?.den ?? null}
+            cas={odjezd?.cas ?? null}
+            rucni={Boolean(odjezd?.rucni)}
             token={vstup?.cteni ? null : (vstup?.token ?? null)}
             cteni={Boolean(vstup?.cteni) || !vstup?.token}
-            okno={okno}
+            ubytovan={ubytovan || Boolean(ziveKody)}
+            nejpozdeji={okno?.nejpozdeji}
+            zadostOdjezd={okno?.zadostOdjezd ?? null}
           />
-        ) : null}
-        <OdjezdRamecek
-          lang={lang}
-          den={odjezd?.den ?? null}
-          cas={odjezd?.cas ?? null}
-          rucni={Boolean(odjezd?.rucni)}
-          token={vstup?.cteni ? null : (vstup?.token ?? null)}
-          cteni={Boolean(vstup?.cteni) || !vstup?.token}
-          ubytovan={ubytovan || Boolean(ziveKody)}
-          nejpozdeji={okno?.nejpozdeji}
-        />
-        <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />
-        {ubytovan ? null : (
-          <VstupHosta
-            lang={lang}
-            predano={Boolean(ziveKody)}
-            token={vstup?.cteni ? null : (vstup?.token ?? null)}
-            cteni={Boolean(vstup?.cteni)}
-            hodnoty={hodnoty}
-            predvyplneny={vstup?.predvyplneny ?? ''}
-            nejdrive={okno?.slotyPrijezd[0]}
-            stavZadosti={textStavu(lang, 'prijezd', okno?.zadostPrijezd ?? null)}
-            onUlozeno={(next) => {
-              if (vstup) onVstup?.(next);
-              else setLokalne(next);
-            }}
-          />
+        ) : krokyHotove ? (
+          <>
+            <StavApartmanu lang={lang} stav={okno?.stavApartmanu} />
+            <VstupHosta
+              lang={lang}
+              predano={Boolean(ziveKody)}
+              token={vstup?.cteni ? null : (vstup?.token ?? null)}
+              cteni={Boolean(vstup?.cteni)}
+              hodnoty={hodnoty}
+              predvyplneny={vstup?.predvyplneny ?? ''}
+              nejdrive={okno?.slotyPrijezd[0]}
+              stavZadosti={textStavu(lang, 'prijezd', okno?.zadostPrijezd ?? null)}
+              onUlozeno={(next) => {
+                if (vstup) onVstup?.(next);
+                else setLokalne(next);
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <VstupHosta
+              lang={lang}
+              predano={Boolean(ziveKody)}
+              token={vstup?.cteni ? null : (vstup?.token ?? null)}
+              cteni={Boolean(vstup?.cteni)}
+              hodnoty={hodnoty}
+              predvyplneny={vstup?.predvyplneny ?? ''}
+              nejdrive={okno?.slotyPrijezd[0]}
+              stavZadosti={textStavu(lang, 'prijezd', okno?.zadostPrijezd ?? null)}
+              onUlozeno={(next) => {
+                if (vstup) onVstup?.(next);
+                else setLokalne(next);
+              }}
+            />
+            <StavApartmanu lang={lang} stav={okno?.stavApartmanu} />
+          </>
         )}
 
         {kreslene.length ? (

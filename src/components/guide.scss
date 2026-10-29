@@ -1705,6 +1705,92 @@ a.pv-phone.pv-phone--zari {
   border-color: #2f7d32;
 }
 
+.pv-stav {
+  margin: 0 0 1rem;
+  margin-left: var(--pv-axis-inset);
+  padding: 0.7rem 1rem;
+  border-radius: 14px;
+  border: 2px solid #a68445;
+  background: #f4ead7;
+  color: #1c1712;
+
+  &.pv-sbal {
+    padding: 0.55rem 0.9rem 0.75rem;
+  }
+
+  > summary {
+    align-items: center;
+  }
+}
+
+.pv-stav--zlaty {
+  border-color: #a68445;
+  background: #f4ead7;
+
+  .pv-stav__nadpis::before {
+    content: '';
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-right: 0.45rem;
+    border-radius: 50%;
+    background: #c9a84c;
+    vertical-align: 0.1rem;
+  }
+}
+
+.pv-stav--zeleny {
+  border-color: #2f7d32;
+  background: #e5f2e4;
+
+  .pv-stav__nadpis::before {
+    content: '';
+    display: inline-block;
+    width: 0.55rem;
+    height: 0.55rem;
+    margin-right: 0.45rem;
+    border-radius: 50%;
+    background: #2f7d32;
+    vertical-align: 0.1rem;
+  }
+}
+
+.pv-stav__nadpis {
+  margin: 0;
+  font-weight: 700;
+}
+
+.pv-stav__tlacitko {
+  display: inline-block;
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: #2f7d32;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.pv-odjezd__nadpis-sbal {
+  margin: 0.6rem 0 0.5rem;
+  font-size: 1.15rem;
+}
+
+.pv-odjezd__vlastni {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+
+  input[type='time'] {
+    width: 100%;
+    font: inherit;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid #c4a574;
+    background: #fffdf8;
+  }
+}
+
 .pv-cenik {
   display: grid;
   gap: 0.35rem;
