@@ -310,6 +310,8 @@ describe('dnešek', () => {
     expect(html).toContain('Uklidit první');
     expect(html).toContain('Uklizeno 8:10 · Nikol');
     expect(html).toContain('Vrátit');
+    expect(html).toContain('Rozbalit');
+    expect(html.indexOf('Příjezdy')).toBeLessThan(html.indexOf('Úklid a odjezdy'));
     expect(html).toContain('ph-dnesek__neznamy');
     expect(html.match(/Uklidit první/g)?.length).toBe(1);
     expect(html).not.toContain('0000');

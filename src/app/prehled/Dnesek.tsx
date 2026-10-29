@@ -115,6 +115,8 @@ export function Dnesek({
   const [zavadyDalsimu, setZavadyDalsimu] = useState(false);
   const [zavadyCekam, setZavadyCekam] = useState(false);
   const [dotazEmail, setDotazEmail] = useState<DotazEmail | null>(null);
+  /** Uklizené karty jsou sbalené. Tady jsou ty, které majitel rozbalil. */
+  const [rozbalUklid, setRozbalUklid] = useState<Record<string, true>>({});
   useEffect(() => {
     if (!cerstve) return;
     const casovac = window.setTimeout(() => setCerstve(null), 10_000);
@@ -181,10 +183,22 @@ export function Dnesek({
     }
     if (akce === 'vratit-uklid') {
       setMisto((stav) => ({ ...stav, [id]: null }));
+      setRozbalUklid((stav) => {
+        if (!stav[id]) return stav;
+        const dalsi = { ...stav };
+        delete dalsi[id];
+        return dalsi;
+      });
       return;
     }
     if (!kdo) return;
     setMisto((stav) => ({ ...stav, [id]: { kdy: new Date().toISOString(), kdo } }));
+    setRozbalUklid((stav) => {
+      if (!stav[id]) return stav;
+      const dalsi = { ...stav };
+      delete dalsi[id];
+      return dalsi;
+    });
     setPtam(null);
     const host = ukazka ? hostKNabidce(id) : null;
     const dalsi = zApi || (host ? { id: host.rezervace, jmeno: host.jmeno } : null);
@@ -343,17 +357,6 @@ export function Dnesek({
   }
 
   function tlacitkaUklidu(r: UklidRadek) {
-    const stav = hotovo(r.rezervace, r.uklizenoKdy, r.uklizenoKdo);
-    if (stav) {
-      return (
-        <p className="ph-dnesek__akce">
-          <span>{textUklizeno(stav.kdy, stav.kdo)}</span>
-          <button type="button" onClick={() => zapis(r.rezervace, 'vratit-uklid')}>
-            Vrátit
-          </button>
-        </p>
-      );
-    }
     if (ptam === r.rezervace) {
       return (
         <p className="ph-dnesek__akce">
@@ -415,12 +418,54 @@ export function Dnesek({
         </p>
       ))}
 
+      {pohled.prijezdy.length ? (
+        <div>
+          <h2>Příjezdy</h2>
+          <ul>
+            {pohled.prijezdy.map((r) => (
+              <li key={r.rezervace} className="ph-dnesek__radek">
+                <p>
+                  <strong>{r.apartman}</strong>
+                  {' · '}
+                  {odkazNaKartu(r.rezervace, r.jmeno)}
+                  {' · '}
+                  <span className={r.casZnamy ? undefined : 'ph-dnesek__neznamy'}>{r.cas}</span>
+                  {r.zpusob ? ` · ${r.zpusob}` : ''}
+                  {r.brana ? ` · ${r.brana}` : ''}
+                  {r.faze ? ` · Fáze · ${r.faze}` : ''}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {pohled.uklid.length ? (
         <div>
           <h2>Úklid a odjezdy</h2>
           <ul>
             {pohled.uklid.map((r) => {
               const stav = hotovo(r.rezervace, r.uklizenoKdy, r.uklizenoKdo);
+              const sbaleno = Boolean(stav) && !rozbalUklid[r.rezervace];
+              if (sbaleno && stav) {
+                return (
+                  <li key={r.rezervace} className="ph-dnesek__radek is-uklizeno is-sbaleno">
+                    <p className="ph-dnesek__akce">
+                      <strong>{r.apartman}</strong>
+                      <span>{textUklizeno(stav.kdy, stav.kdo)}</span>
+                      <button
+                        type="button"
+                        onClick={() => setRozbalUklid((s) => ({ ...s, [r.rezervace]: true }))}
+                      >
+                        Rozbalit
+                      </button>
+                      <button type="button" onClick={() => void zapis(r.rezervace, 'vratit-uklid')}>
+                        Vrátit
+                      </button>
+                    </p>
+                  </li>
+                );
+              }
               return (
                 <li key={r.rezervace} className={stav ? 'ph-dnesek__radek is-uklizeno' : 'ph-dnesek__radek'}>
                   <p>
@@ -536,32 +581,31 @@ export function Dnesek({
                       </p>
                     </div>
                   ) : null}
-                  {zavadyId === r.rezervace || dotazEmail?.odjezdId === r.rezervace ? null : tlacitkaUklidu(r)}
+                  {stav ? (
+                    <p className="ph-dnesek__akce">
+                      <span>{textUklizeno(stav.kdy, stav.kdo)}</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRozbalUklid((s) => {
+                            const dalsi = { ...s };
+                            delete dalsi[r.rezervace];
+                            return dalsi;
+                          })
+                        }
+                      >
+                        Sbalit
+                      </button>
+                      <button type="button" onClick={() => void zapis(r.rezervace, 'vratit-uklid')}>
+                        Vrátit
+                      </button>
+                    </p>
+                  ) : zavadyId === r.rezervace || dotazEmail?.odjezdId === r.rezervace ? null : (
+                    tlacitkaUklidu(r)
+                  )}
                 </li>
               );
             })}
-          </ul>
-        </div>
-      ) : null}
-
-      {pohled.prijezdy.length ? (
-        <div>
-          <h2>Příjezdy</h2>
-          <ul>
-            {pohled.prijezdy.map((r) => (
-              <li key={r.rezervace} className="ph-dnesek__radek">
-                <p>
-                  <strong>{r.apartman}</strong>
-                  {' · '}
-                  {odkazNaKartu(r.rezervace, r.jmeno)}
-                  {' · '}
-                  <span className={r.casZnamy ? undefined : 'ph-dnesek__neznamy'}>{r.cas}</span>
-                  {r.zpusob ? ` · ${r.zpusob}` : ''}
-                  {r.brana ? ` · ${r.brana}` : ''}
-                  {r.faze ? ` · Fáze · ${r.faze}` : ''}
-                </p>
-              </li>
-            ))}
           </ul>
         </div>
       ) : null}
