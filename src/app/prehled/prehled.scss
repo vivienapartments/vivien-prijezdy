@@ -2029,6 +2029,15 @@
   font-size: 0.85rem;
   line-height: 1.4;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ph-detail input[type='text'],
+.ph-detail input:not([type]),
+.ph-checkin {
+  overflow-wrap: anywhere;
+  word-break: break-all;
 }
 
 .ph-nova-potvrzeni {

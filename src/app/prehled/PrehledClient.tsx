@@ -24,7 +24,7 @@ import {
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
-import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
+import { odkazWhatsAppPrehled, zpravaCheckinu, zpravyMenu } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
@@ -2144,14 +2144,19 @@ export function PrehledClient({
             ) : null}
             {zkratkaDotaz.druh === 'checkin' ? (
               <p>
-                Připomenout check-in SMS?
+                Připomenout check-in přes SMS?
                 {pocetCheckinPripoinek(row.historie)
                   ? ` Už jste poslal ${pocetCheckinPripoinek(row.historie)}×.`
                   : ''}
               </p>
             ) : null}
             {zkratkaDotaz.druh === 'brana-wa' ? <p>Hostovi chybí údaje k bráně. Otevřít WhatsApp?</p> : null}
-            <div className="ph-nova-nahled">{zpravyRadku(row).find((z) => z.id === zkratkaDotaz.zprava)?.text || zpravaRadku(row)}</div>
+            <div className="ph-nova-nahled">
+              {zkratkaDotaz.druh === 'checkin'
+                ? zpravyRadku(row).find((z) => z.id === 'checkin')?.text ||
+                  zpravaCheckinu(jazykRadku(row), row.zdroj, odkazy[row.rezervace] ?? row.checkinUrl)
+                : zpravyRadku(row).find((z) => z.id === zkratkaDotaz.zprava)?.text || zpravaRadku(row)}
+            </div>
             <div className="ph-nova-potvrzeni__akce">
               <button type="button" onClick={() => setZkratkaDotaz(null)}>
                 Ne
@@ -2164,7 +2169,9 @@ export function PrehledClient({
                   setZkratkaDotaz(null);
                   if (!dotaz) return;
                   if (dotaz.druh === 'checkin') {
-                    const text = zpravyRadku(row).find((z) => z.id === 'checkin')?.text || '';
+                    const text =
+                      zpravyRadku(row).find((z) => z.id === 'checkin')?.text ||
+                      zpravaCheckinu(jazykRadku(row), row.zdroj, odkazy[row.rezervace] ?? row.checkinUrl);
                     const cislo = row.telefonWa || row.jinyTelefonWa;
                     if (!cislo) {
                       setHlaska('Chybí telefon pro SMS.');
@@ -2187,7 +2194,7 @@ export function PrehledClient({
                   });
                 }}
               >
-                Ano
+                {zkratkaDotaz.druh === 'checkin' ? 'Ano, SMS' : 'Ano, WhatsApp'}
               </button>
             </div>
           </div>
@@ -2254,7 +2261,6 @@ export function PrehledClient({
         {ukazatCasNaKarte(row.odjezd, dnes) && jeHodina(odjezdCas) ? (
           <div className="ph-prijezd-cas">Odjezd {zobrazCas(odjezdCas)}</div>
         ) : null}
-        {dil.radek}
         <div className="ph-nova-platba">{poplatekRadek}</div>
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
         {cekajici === 'registrace' ? dil.registrace : null}
@@ -2468,6 +2474,7 @@ export function PrehledClient({
               {row.spzPujcene ? 'SPZ později' : row.spz ? `SPZ ${row.spz.length > 4 ? `${row.spz.slice(0, -4)} ${row.spz.slice(-4)}` : row.spz}` : 'bez SPZ'}
             </div>
           ) : null}
+          {dil.radek}
           {cekajici === 'registrace' ? null : dil.registrace}
           {cekajici === 'odpoved' ? null : dil.odpoved}
           {dil.detail}
