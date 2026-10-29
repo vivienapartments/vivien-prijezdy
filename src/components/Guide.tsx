@@ -52,6 +52,9 @@ const SBALENE = new Set([
   'odjezd',
 ]);
 
+/** Po Předáno se sbalí i Brána. Předtím zůstává otevřená (večer / víkend). */
+const SBALENE_PO_PREDANI = new Set(['brana-parkoviste']);
+
 function SbalenaSekce({
   ano,
   nadpis,
@@ -651,7 +654,7 @@ export function Guide({
                   </div>
                   <div className="pv-flow__card">
                     <SbalenaSekce
-                      ano={SBALENE.has(s.id)}
+                      ano={SBALENE.has(s.id) || (ubytovan && SBALENE_PO_PREDANI.has(s.id))}
                       nadpis={`${displayNum}. ${sectionNavLabel(s, lang)}`}
                       expandLabel={tt(TX.ui.expandSection)}
                       collapseLabel={tt(TX.ui.collapseSection)}
