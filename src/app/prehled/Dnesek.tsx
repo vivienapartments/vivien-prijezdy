@@ -15,7 +15,12 @@ type Props = {
   /** Sekce nahoře v přehledu. Bez toho je to vlastní stránka. */
   vPrehledu?: boolean;
   onPrevzato?: (id: string, kdy: string | null) => void;
+  /** Otevře kartu hosta v přehledu (jako Hledat). */
+  onOtevri?: (id: string) => void;
+  onZavadyZapsany?: (odjizdejici: string, prijezdejici: string | null) => void;
 };
+
+type KdoZavad = 'miluska' | 'nikol' | 'pravoslav';
 
 function datum(dnes: string): string {
   const [y, m, d] = dnes.split('-');
@@ -68,7 +73,16 @@ function odkazHosta(id: string, ukazka: boolean, vPrehledu: boolean): string {
   return ukazka ? `/prehled?ukazka=1#${id}` : `/prehled#${id}`;
 }
 
-export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = false, onPrevzato }: Props) {
+export function Dnesek({
+  radky,
+  dnes,
+  ukazka = false,
+  brana = [],
+  vPrehledu = false,
+  onPrevzato,
+  onOtevri,
+  onZavadyZapsany,
+}: Props) {
   const [mistoPrevzeti, setMistoPrevzeti] = useState<Record<string, string | null>>({});
   const [cerstve, setCerstve] = useState<string | null>(null);
   const chybne = radky.filter((row) => row.nelzeNacist).map((row) => row.rezervace);
@@ -88,6 +102,11 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
   const [chyba, setChyba] = useState('');
   const [nabidka, setNabidka] = useState<{ id: string; jmeno: string } | null>(null);
   const [nabidkaStav, setNabidkaStav] = useState('');
+  const [zavadyId, setZavadyId] = useState<string | null>(null);
+  const [zavadyText, setZavadyText] = useState('');
+  const [zavadyKdo, setZavadyKdo] = useState<KdoZavad | null>(null);
+  const [zavadyDalsimu, setZavadyDalsimu] = useState(false);
+  const [zavadyCekam, setZavadyCekam] = useState(false);
   useEffect(() => {
     if (!cerstve) return;
     const casovac = window.setTimeout(() => setCerstve(null), 10_000);
@@ -203,6 +222,68 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
   const odkazStranky = ukazka ? '/prehled/dnes?ukazka=1' : '/prehled/dnes';
   const odkaz = (id: string) => odkazHosta(id, ukazka, vPrehledu);
 
+  function odkazNaKartu(id: string, jmeno: string) {
+    if (onOtevri) {
+      return (
+        <button type="button" className="ph-dnesek__odkaz" onClick={() => onOtevri(id)}>
+          {jmeno}
+        </button>
+      );
+    }
+    return <a href={odkaz(id)}>{jmeno}</a>;
+  }
+
+  async function ulozZavadyPoOdjezdu(rezervace: string, dalsiRezervace: string | null) {
+    const text = zavadyText.trim();
+    if (!text) {
+      setChyba('Napište, co není v pořádku.');
+      return;
+    }
+    if (!zavadyKdo) {
+      setChyba('Vyberte, kdo zapsal.');
+      return;
+    }
+    if (ukazka) {
+      setZavadyId(null);
+      setZavadyText('');
+      setZavadyKdo(null);
+      setZavadyDalsimu(false);
+      onZavadyZapsany?.(rezervace, zavadyDalsimu ? dalsiRezervace : null);
+      setChyba('');
+      return;
+    }
+    setZavadyCekam(true);
+    setChyba('');
+    try {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rezervace,
+          akce: 'zavady-po-odjezdu',
+          text,
+          kdo: zavadyKdo,
+          iDalsimu: zavadyDalsimu && Boolean(dalsiRezervace),
+          dalsiRezervace: zavadyDalsimu ? dalsiRezervace : null,
+        }),
+      });
+      const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      if (!res.ok || !json?.ok) {
+        setChyba(json?.error || 'Závady se neuložily.');
+        return;
+      }
+      setZavadyId(null);
+      setZavadyText('');
+      setZavadyKdo(null);
+      setZavadyDalsimu(false);
+      onZavadyZapsany?.(rezervace, zavadyDalsimu ? dalsiRezervace : null);
+    } catch {
+      setChyba('Závady se neuložily.');
+    } finally {
+      setZavadyCekam(false);
+    }
+  }
+
   return (
     <section className="ph-dnesek" aria-label="Dnešek">
       {vPrehledu ? (
@@ -270,6 +351,74 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
                       ) : null}
                     </p>
                   )}
+                  {zavadyId === r.rezervace ? (
+                    <div className="ph-predano-dotaz">
+                      <p>Závady po odjezdu</p>
+                      <textarea
+                        value={zavadyText}
+                        onChange={(e) => setZavadyText(e.target.value)}
+                        rows={4}
+                        maxLength={2000}
+                        aria-label="Závady po odjezdu"
+                      />
+                      <p className="ph-dnesek__akce">
+                        Kdo zapsal?
+                        <button type="button" className={zavadyKdo === 'miluska' ? 'is-on' : undefined} onClick={() => setZavadyKdo('miluska')}>
+                          Miluška
+                        </button>
+                        <button type="button" className={zavadyKdo === 'nikol' ? 'is-on' : undefined} onClick={() => setZavadyKdo('nikol')}>
+                          Nikol
+                        </button>
+                        <button type="button" className={zavadyKdo === 'pravoslav' ? 'is-on' : undefined} onClick={() => setZavadyKdo('pravoslav')}>
+                          Pravoslav
+                        </button>
+                      </p>
+                      {r.dalsiRezervace ? (
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={zavadyDalsimu}
+                            onChange={(e) => setZavadyDalsimu(e.target.checked)}
+                          />
+                          Neopraveno, zapsat i dalšímu hostovi
+                        </label>
+                      ) : null}
+                      <button type="button" disabled={zavadyCekam} onClick={() => void ulozZavadyPoOdjezdu(r.rezervace, r.dalsiRezervace)}>
+                        Uložit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setZavadyId(null);
+                          setZavadyText('');
+                          setZavadyKdo(null);
+                          setZavadyDalsimu(false);
+                        }}
+                      >
+                        Zrušit
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="ph-dnesek__akce">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setZavadyId(r.rezervace);
+                          setZavadyText('');
+                          setZavadyKdo(null);
+                          setZavadyDalsimu(false);
+                          setPtam(null);
+                        }}
+                      >
+                        Závady po odjezdu
+                      </button>
+                      {onOtevri ? (
+                        <button type="button" onClick={() => onOtevri(r.rezervace)}>
+                          Karta hosta
+                        </button>
+                      ) : null}
+                    </p>
+                  )}
                 </li>
               );
             })}
@@ -294,7 +443,7 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
                 <p>
                   <strong>{r.apartman}</strong>
                   {' · '}
-                  <a href={odkaz(r.rezervace)}>{r.jmeno}</a>
+                  {odkazNaKartu(r.rezervace, r.jmeno)}
                   {' · '}
                   {r.cas}
                   {r.dluh ? ` · ${r.dluh}` : ''}
@@ -319,7 +468,7 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
                 <p>
                   <strong>{r.apartman}</strong>
                   {' · '}
-                  <a href={odkaz(r.rezervace)}>{r.jmeno}</a>
+                  {odkazNaKartu(r.rezervace, r.jmeno)}
                   {' · '}
                   <span className={r.casZnamy ? undefined : 'ph-dnesek__neznamy'}>{r.cas}</span>
                   {r.zpusob ? ` · ${r.zpusob}` : ''}
@@ -341,7 +490,7 @@ export function Dnesek({ radky, dnes, ukazka = false, brana = [], vPrehledu = fa
                 <p>
                   <strong>{r.apartman}</strong>
                   {' · '}
-                  <a href={odkaz(r.rezervace)}>{r.jmeno}</a>
+                  {odkazNaKartu(r.rezervace, r.jmeno)}
                   {' · '}
                   {r.text}
                 </p>

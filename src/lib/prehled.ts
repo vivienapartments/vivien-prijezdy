@@ -100,8 +100,21 @@ export type PrehledRadek = {
   vyjezdy: { id: string; kdy: string; castka: number }[];
   souhlas: { kdy: string; jazyk: string; verze: string } | null;
   souhlasZneni: string | null;
-  /** Závady z předání. null = neodesláno. */
-  zavadyPredani: { text: string; odeslanoKdy: string; potvrzenoKdy: string | null } | null;
+  /** Závady z předání. null = žádný zápis. */
+  zavadyPredani: {
+    text: string;
+    kdy: string;
+    kdo: 'miluska' | 'nikol' | 'pravoslav';
+    odeslanoKdy: string | null;
+    potvrzenoKdy: string | null;
+  } | null;
+  /** Závady po odjezdu. null = žádný zápis. */
+  zavadyPoOdjezdu: {
+    text: string;
+    kdy: string;
+    kdo: 'miluska' | 'nikol' | 'pravoslav';
+    odeslanoKdy: string | null;
+  } | null;
   casZadalHost: boolean;
   zpusobPrijezdu: 'auto' | 'pesky' | null;
   telefonBrana: string | null;
@@ -784,6 +797,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     souhlas: rec.souhlasPravidel,
     souhlasZneni: rec.souhlasPravidel ? zneniVerze(rec.souhlasPravidel.verze) : null,
     zavadyPredani: rec.zavadyPredani,
+    zavadyPoOdjezdu: rec.zavadyPoOdjezdu,
     casZadalHost: rec.casZadalHost,
     zpusobPrijezdu: rec.zpusobPrijezdu,
     telefonBrana: rec.telefonBrana,

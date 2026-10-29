@@ -47,7 +47,12 @@ import type { JakPlatby, PlatbaPolozky } from '@/lib/store';
 import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
 import { nactiBranu, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
-import { stavZavadText } from '@/lib/zavady-predani';
+import {
+  jmenoKdoZavad,
+  stavZavadPoOdjezdu,
+  stavZavadText,
+  type KdoZavad,
+} from '@/lib/zavady-predani';
 
 type Stav = PrehledRadek['stav'];
 
@@ -168,6 +173,11 @@ export function PrehledClient({
   const [dotazZavady, setDotazZavady] = useState<string | null>(null);
   const [textZavad, setTextZavad] = useState('');
   const [zavadyStav, setZavadyStav] = useState<Record<string, PrehledRadek['zavadyPredani']>>({});
+  const [zavadyPoOdjezduStav, setZavadyPoOdjezduStav] = useState<
+    Record<string, PrehledRadek['zavadyPoOdjezdu']>
+  >({});
+  const [dotazOdeslatZavady, setDotazOdeslatZavady] = useState<string | null>(null);
+  const [dotazOdeslatPoOdjezdu, setDotazOdeslatPoOdjezdu] = useState<string | null>(null);
   const [platby, setPlatby] = useState<Record<string, { kdy: string | null; kdo: 'ja' | 'nikol' | null }>>({});
   const [vyjezdy, setVyjezdy] = useState<Record<string, VyjezdPolozka[]>>({});
   const [dotazVyjezdu, setDotazVyjezdu] = useState<{ id: string; druh: 'pridat' | 'vratit' } | null>(null);
@@ -193,6 +203,34 @@ export function PrehledClient({
     setSloty(nactiBranu(brana));
     setBranaOk(branaPotvrzena);
   }, [rows, brana, branaPotvrzena]);
+
+  function otevriKartu(id: string) {
+    const cislo = id.trim();
+    if (!cislo || cislo === 'pohoda' || cislo.startsWith('odjezdy')) return;
+    setVybrana(cislo);
+    setRozbalene((prev) => ({ ...prev, [cislo]: true }));
+    setZalozka('hledat');
+    try {
+      if (typeof window !== 'undefined' && window.location.hash !== `#${cislo}`) {
+        window.history.replaceState(null, '', `#${cislo}`);
+      }
+    } catch {
+      /* hash */
+    }
+  }
+
+  useEffect(() => {
+    function zHash() {
+      const raw = window.location.hash.replace(/^#/, '').trim();
+      if (!raw || raw === 'pohoda' || raw.startsWith('odjezdy')) return;
+      setVybrana(raw);
+      setRozbalene((prev) => ({ ...prev, [raw]: true }));
+      setZalozka('hledat');
+    }
+    zHash();
+    window.addEventListener('hashchange', zHash);
+    return () => window.removeEventListener('hashchange', zHash);
+  }, []);
 
   /** Obnova jen když je přehled otevřený. Na pozadí nic nenačítá (šetří Upstash). */
   useEffect(() => {
@@ -389,20 +427,27 @@ export function PrehledClient({
       : row.zavadyPredani;
   }
 
-  async function odesliZavady(row: PrehledRadek) {
+  function zavadyPoOdjezduRadku(row: PrehledRadek): PrehledRadek['zavadyPoOdjezdu'] {
+    return Object.prototype.hasOwnProperty.call(zavadyPoOdjezduStav, row.rezervace)
+      ? zavadyPoOdjezduStav[row.rezervace]
+      : row.zavadyPoOdjezdu;
+  }
+
+  async function ulozZavadyPredani(row: PrehledRadek) {
     const text = textZavad.trim();
     if (!text) {
       setHlaska('Napište, co není v pořádku.');
       return;
     }
+    const kdo: KdoZavad = kdoKouka === 'nikol' ? 'nikol' : 'pravoslav';
     if (ukazka) {
+      const kdy = new Date().toISOString();
       setZavadyStav((prev) => ({
         ...prev,
-        [row.rezervace]: { text, odeslanoKdy: new Date().toISOString(), potvrzenoKdy: null },
+        [row.rezervace]: { text, kdy, kdo, odeslanoKdy: null, potvrzenoKdy: null },
       }));
       setDotazZavady(null);
       setTextZavad('');
-      setHlaska('V náhledu se e-mail neposílá.');
       return;
     }
     setCekam(`${row.rezervace}:zavady`);
@@ -410,7 +455,7 @@ export function PrehledClient({
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rezervace: row.rezervace, akce: 'zavady', text }),
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'zavady', text, kdo }),
     });
     const json = (await res.json().catch(() => null)) as {
       ok?: boolean;
@@ -419,12 +464,78 @@ export function PrehledClient({
     } | null;
     setCekam(null);
     if (!res.ok || !json?.ok) {
-      setHlaska(json?.error || 'Závady se nepodařilo odeslat.');
+      setHlaska(json?.error || 'Závady se neuložily.');
       return;
     }
     setZavadyStav((prev) => ({ ...prev, [row.rezervace]: json.zavadyPredani ?? null }));
     setDotazZavady(null);
     setTextZavad('');
+  }
+
+  async function posliZavadyPredani(row: PrehledRadek) {
+    setDotazOdeslatZavady(null);
+    if (ukazka) {
+      const z = zavadyRadku(row);
+      if (z) {
+        setZavadyStav((prev) => ({
+          ...prev,
+          [row.rezervace]: { ...z, odeslanoKdy: new Date().toISOString() },
+        }));
+      }
+      setHlaska('V náhledu se e-mail neposílá.');
+      return;
+    }
+    setCekam(`${row.rezervace}:zavady-odeslat`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'zavady-odeslat' }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      zavadyPredani?: PrehledRadek['zavadyPredani'];
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'E-mail se nepodařilo odeslat.');
+      return;
+    }
+    setZavadyStav((prev) => ({ ...prev, [row.rezervace]: json.zavadyPredani ?? null }));
+  }
+
+  async function posliZavadyPoOdjezdu(row: PrehledRadek) {
+    setDotazOdeslatPoOdjezdu(null);
+    if (ukazka) {
+      const z = zavadyPoOdjezduRadku(row);
+      if (z) {
+        setZavadyPoOdjezduStav((prev) => ({
+          ...prev,
+          [row.rezervace]: { ...z, odeslanoKdy: new Date().toISOString() },
+        }));
+      }
+      setHlaska('V náhledu se e-mail neposílá.');
+      return;
+    }
+    setCekam(`${row.rezervace}:zavady-po-odjezdu-odeslat`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'zavady-po-odjezdu-odeslat' }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      zavadyPoOdjezdu?: PrehledRadek['zavadyPoOdjezdu'];
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'E-mail se nepodařilo odeslat.');
+      return;
+    }
+    setZavadyPoOdjezduStav((prev) => ({ ...prev, [row.rezervace]: json.zavadyPoOdjezdu ?? null }));
   }
 
   async function ulozPridani(event: FormEvent<HTMLFormElement>) {
@@ -1357,10 +1468,71 @@ export function PrehledClient({
       </div>
     ) : null;
     const zavady = zavadyRadku(row);
+    const zavadyPo = zavadyPoOdjezduRadku(row);
     const zavadyStavText = stavZavadText(zavady);
+    const zavadyPoStavText = stavZavadPoOdjezdu(zavadyPo);
     const zavadyBlok = (
       <div className="ph-zavady">
-        {zavadyStavText ? <p className="ph-zavady__stav">{zavadyStavText}</p> : null}
+        {zavady ? (
+          <div className="ph-zavady__zapis">
+            <p className="ph-zavady__stav">
+              Z předání · {casPraha(zavady.kdy) || zavady.kdy} · {jmenoKdoZavad(zavady.kdo)}
+              {zavadyStavText ? ` · ${zavadyStavText}` : ''}
+            </p>
+            <p>{zavady.text}</p>
+            {!zavady.odeslanoKdy ? (
+              <button
+                type="button"
+                className="ph-predano"
+                disabled={cekam !== null}
+                onClick={() => setDotazOdeslatZavady(row.rezervace)}
+              >
+                Poslat hostovi e-mail
+              </button>
+            ) : null}
+            {dotazOdeslatZavady === row.rezervace ? (
+              <div className="ph-predano-dotaz">
+                <p>Opravdu odeslat?</p>
+                <button type="button" disabled={cekam !== null} onClick={() => void posliZavadyPredani(row)}>
+                  Ano, odeslat
+                </button>
+                <button type="button" onClick={() => setDotazOdeslatZavady(null)}>
+                  Zrušit
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {zavadyPo ? (
+          <div className="ph-zavady__zapis">
+            <p className="ph-zavady__stav">
+              Po odjezdu · {casPraha(zavadyPo.kdy) || zavadyPo.kdy} · {jmenoKdoZavad(zavadyPo.kdo)}
+              {zavadyPoStavText ? ` · ${zavadyPoStavText}` : ''}
+            </p>
+            <p>{zavadyPo.text}</p>
+            {!zavadyPo.odeslanoKdy ? (
+              <button
+                type="button"
+                className="ph-predano"
+                disabled={cekam !== null}
+                onClick={() => setDotazOdeslatPoOdjezdu(row.rezervace)}
+              >
+                Poslat hostovi e-mail
+              </button>
+            ) : null}
+            {dotazOdeslatPoOdjezdu === row.rezervace ? (
+              <div className="ph-predano-dotaz">
+                <p>Opravdu odeslat?</p>
+                <button type="button" disabled={cekam !== null} onClick={() => void posliZavadyPoOdjezdu(row)}>
+                  Ano, odeslat
+                </button>
+                <button type="button" onClick={() => setDotazOdeslatPoOdjezdu(null)}>
+                  Zrušit
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {!zavady && !predanoKdy ? (
           <button
             type="button"
@@ -1385,8 +1557,8 @@ export function PrehledClient({
               maxLength={2000}
               aria-label="Závady při předání"
             />
-            <button type="button" disabled={cekam !== null} onClick={() => void odesliZavady(row)}>
-              Odeslat hostovi
+            <button type="button" disabled={cekam !== null} onClick={() => void ulozZavadyPredani(row)}>
+              Uložit
             </button>
             <button
               type="button"
@@ -1603,7 +1775,10 @@ export function PrehledClient({
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
         {cekajici === 'registrace' ? dil.registrace : null}
         {cekajici === 'odpoved' ? dil.odpoved : null}
-        {!odjel && (!predanoKdy || zavady || dotazZavady === row.rezervace) ? zavadyBlok : null}
+        {!odjel && (!predanoKdy || zavady || zavadyPo || dotazZavady === row.rezervace)
+          ? zavadyBlok
+          : null}
+        {odjel && (zavady || zavadyPo) ? zavadyBlok : null}
         {predaniNahore ? (
           <>
             {predaniTlacitko}
@@ -2029,7 +2204,26 @@ export function PrehledClient({
         </button>
       </p>
 
-      {zalozka === 'dnes' ? <Dnesek radky={radky} dnes={dnes} ukazka={ukazka} brana={brana} vPrehledu onPrevzato={poPrevzeti} /> : null}
+      {zalozka === 'dnes' ? (
+        <Dnesek
+          radky={radky}
+          dnes={dnes}
+          ukazka={ukazka}
+          brana={brana}
+          vPrehledu
+          onPrevzato={poPrevzeti}
+          onOtevri={otevriKartu}
+          onZavadyZapsany={(odjizdejici, prijezdejici) => {
+            setHlaska(
+              prijezdejici
+                ? 'Závady po odjezdu uloženy i dalšímu hostovi. E-mail pošlete z karty.'
+                : 'Závady po odjezdu uloženy. E-mail pošlete z karty.',
+            );
+            void otevriKartu(odjizdejici);
+            router.refresh();
+          }}
+        />
+      ) : null}
       {zalozka === 'dluhy' ? (
         <Nedoplatky
           radky={radky}
@@ -2181,7 +2375,9 @@ export function PrehledClient({
                     const email = row.email.includes('@') ? row.email : '';
                     return (
                       <li key={row.rezervace} className={odeslano ? 'is-hotovo' : undefined}>
-                        <a href={`#${row.rezervace}`}>{row.jmeno || 'Host'}</a>
+                        <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
+                          {row.jmeno || 'Host'}
+                        </button>
                         {' · '}
                         {row.apartman || 'bez apartmánu'}
                         {odeslano ? <span>{` · Odesláno ${odeslano}`}</span> : null}
@@ -2260,7 +2456,9 @@ export function PrehledClient({
                 const email = row.email.includes('@') ? row.email : '';
                 return (
                   <li key={row.rezervace} className={znamy ? 'is-hotovo' : undefined}>
-                    <a href={`#${row.rezervace}`}>{row.jmeno || 'Host'}</a>
+                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
+                      {row.jmeno || 'Host'}
+                    </button>
                     {' · '}
                     {row.apartman || 'bez apartmánu'}
                     {' · '}

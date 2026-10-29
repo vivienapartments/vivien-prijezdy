@@ -1271,8 +1271,15 @@
   font-size: clamp(1.8rem, 5vw, 2.4rem);
 }
 
-.ph-dnesek a {
+.ph-dnesek a,
+.ph-dnesek__odkaz {
   color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .ph-dnesek__den {

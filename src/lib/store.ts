@@ -180,8 +180,21 @@ export type RezervaceRecord = {
   vyjezdy: VyjezdPolozka[];
   /** Souhlas hosta s pravidly příjezdu. Verze drží znění, které viděl. */
   souhlasPravidel: { kdy: string; jazyk: string; verze: string } | null;
-  /** Závady zapsané při předání. E-mail hostovi s potvrzením. */
-  zavadyPredani: { text: string; odeslanoKdy: string; potvrzenoKdy: string | null } | null;
+  /** Závady zapsané při předání. E-mail až tlačítkem majitele. */
+  zavadyPredani: {
+    text: string;
+    kdy: string;
+    kdo: 'miluska' | 'nikol' | 'pravoslav';
+    odeslanoKdy: string | null;
+    potvrzenoKdy: string | null;
+  } | null;
+  /** Závady po odjezdu (z Úklidu). E-mail až tlačítkem, bez potvrzení hostem. */
+  zavadyPoOdjezdu: {
+    text: string;
+    kdy: string;
+    kdo: 'miluska' | 'nikol' | 'pravoslav';
+    odeslanoKdy: string | null;
+  } | null;
   /** Poslední čas příjezdu zadal host v průvodci. */
   casZadalHost: boolean;
   /** auto, nebo pěšky / vlak / autobus. */
@@ -440,15 +453,38 @@ function nactiSouhlas(raw: unknown): RezervaceRecord['souhlasPravidel'] {
   return { kdy: s.kdy, jazyk: s.jazyk, verze: s.verze };
 }
 
+function nactiKdoZavad(raw: unknown): 'miluska' | 'nikol' | 'pravoslav' {
+  return raw === 'miluska' || raw === 'nikol' || raw === 'pravoslav' ? raw : 'pravoslav';
+}
+
 function nactiZavadyPredani(raw: unknown): RezervaceRecord['zavadyPredani'] {
   if (!raw || typeof raw !== 'object') return null;
   const z = raw as Record<string, unknown>;
   if (typeof z.text !== 'string' || !z.text.trim()) return null;
-  if (typeof z.odeslanoKdy !== 'string' || !z.odeslanoKdy) return null;
+  const odeslanoKdy =
+    typeof z.odeslanoKdy === 'string' && z.odeslanoKdy ? z.odeslanoKdy : null;
+  const kdy =
+    typeof z.kdy === 'string' && z.kdy ? z.kdy : odeslanoKdy;
+  if (!kdy) return null;
   return {
     text: z.text.trim().slice(0, 2000),
-    odeslanoKdy: z.odeslanoKdy,
+    kdy,
+    kdo: nactiKdoZavad(z.kdo),
+    odeslanoKdy,
     potvrzenoKdy: typeof z.potvrzenoKdy === 'string' && z.potvrzenoKdy ? z.potvrzenoKdy : null,
+  };
+}
+
+function nactiZavadyPoOdjezdu(raw: unknown): RezervaceRecord['zavadyPoOdjezdu'] {
+  if (!raw || typeof raw !== 'object') return null;
+  const z = raw as Record<string, unknown>;
+  if (typeof z.text !== 'string' || !z.text.trim()) return null;
+  if (typeof z.kdy !== 'string' || !z.kdy) return null;
+  return {
+    text: z.text.trim().slice(0, 2000),
+    kdy: z.kdy,
+    kdo: nactiKdoZavad(z.kdo),
+    odeslanoKdy: typeof z.odeslanoKdy === 'string' && z.odeslanoKdy ? z.odeslanoKdy : null,
   };
 }
 
@@ -583,6 +619,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     vyjezdy: nactiVyjezdy(r.vyjezdy),
     souhlasPravidel: nactiSouhlas(r.souhlasPravidel),
     zavadyPredani: nactiZavadyPredani(r.zavadyPredani),
+    zavadyPoOdjezdu: nactiZavadyPoOdjezdu(r.zavadyPoOdjezdu),
     kontaktUlozenKdy:
       typeof r.kontaktUlozenKdy === 'string' && r.kontaktUlozenKdy ? r.kontaktUlozenKdy : null,
   };
@@ -636,6 +673,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     vyjezdy: [],
     souhlasPravidel: null,
     zavadyPredani: null,
+    zavadyPoOdjezdu: null,
     casZadalHost: false,
     zpusobPrijezdu: null,
     telefonBrana: null,
@@ -956,13 +994,19 @@ export class UpstashProcessStore implements ProcessStore {
   }
 
   async setRezervace(id: string, record: RezervaceRecord): Promise<void> {
-    const limit = record.odjezd ? smazatPoOdjezdu(record.odjezd) : null;
-    const ttlSec = !record.odjezd
-      ? MESSAGE_TTL_SEC
-      : limit && limit.getTime() > Date.now()
-        ? Math.max(60, Math.ceil((limit.getTime() - Date.now()) / 1000))
-        : 60;
-    await this.cmd('SET', this.rezKey(id), JSON.stringify(record), 'EX', ttlSec);
+    const telo = JSON.stringify(record);
+    const klic = this.rezKey(id);
+    if (record.zavadyPredani || record.zavadyPoOdjezdu) {
+      await this.cmd('SET', klic, telo);
+    } else {
+      const limit = record.odjezd ? smazatPoOdjezdu(record.odjezd) : null;
+      const ttlSec = !record.odjezd
+        ? MESSAGE_TTL_SEC
+        : limit && limit.getTime() > Date.now()
+          ? Math.max(60, Math.ceil((limit.getTime() - Date.now()) / 1000))
+          : 60;
+      await this.cmd('SET', klic, telo, 'EX', ttlSec);
+    }
     if (!this.seznam) return;
     const zaznam = { id, record };
     const i = this.seznam.findIndex((e) => e.id === id);
@@ -1011,10 +1055,21 @@ export class UpstashProcessStore implements ProcessStore {
       const raw = hodnoty[i];
       if (!raw) continue;
       let odjezd = '';
+      let maZavady = false;
       try {
-        const data = JSON.parse(raw) as { odjezd?: unknown };
+        const data = JSON.parse(raw) as {
+          odjezd?: unknown;
+          zavadyPredani?: unknown;
+          zavadyPoOdjezdu?: unknown;
+        };
         odjezd = typeof data.odjezd === 'string' ? data.odjezd : '';
+        maZavady = Boolean(data.zavadyPredani || data.zavadyPoOdjezdu);
       } catch {
+        continue;
+      }
+      if (maZavady) {
+        await this.cmd('PERSIST', keys[i]);
+        n += 1;
         continue;
       }
       if (!odjezd) continue;

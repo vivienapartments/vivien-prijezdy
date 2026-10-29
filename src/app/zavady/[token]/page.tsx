@@ -1,5 +1,11 @@
 import { createProcessStore } from '@/lib/store';
-import { overTokenZavad } from '@/lib/zavady-predani';
+import {
+  jazykZavad,
+  overTokenZavad,
+  SKRYTA_ZAVADA,
+  STRANKA_ZAVAD,
+  tlacitkoPotvrditZavady,
+} from '@/lib/zavady-predani';
 import { ZavadyPotvrzeni } from './ZavadyPotvrzeni';
 import './zavady.scss';
 
@@ -20,27 +26,37 @@ export default async function ZavadyPage({ params }: Props) {
   if (!overeno.ok) {
     return (
       <main className="zv-stranka">
-        <p>Tento odkaz neplatí.</p>
+        <p>{STRANKA_ZAVAD.cs.neplatny}</p>
       </main>
     );
   }
 
   const store = createProcessStore();
   const rec = await store.getRezervace(overeno.rezervace);
+  const lang = jazykZavad(rec?.jazyk);
+  const t = STRANKA_ZAVAD[lang];
   const z = rec?.zavadyPredani;
-  if (!z || z.odeslanoKdy !== overeno.odeslanoKdy) {
+  if (!z || !z.odeslanoKdy || z.odeslanoKdy !== overeno.odeslanoKdy) {
     return (
-      <main className="zv-stranka">
-        <p>Zápis z předání tu už není.</p>
+      <main className="zv-stranka" lang={lang}>
+        <p>{t.zmizel}</p>
       </main>
     );
   }
 
   return (
-    <main className="zv-stranka">
-      <h1>Zápis z předání</h1>
+    <main className="zv-stranka" lang={lang}>
+      <h1>{t.nadpis}</h1>
       <p className="zv-text">{z.text}</p>
-      <ZavadyPotvrzeni token={token} uzPotvrzeno={Boolean(z.potvrzenoKdy)} />
+      <p className="zv-text">{SKRYTA_ZAVADA[lang]}</p>
+      <ZavadyPotvrzeni
+        token={token}
+        uzPotvrzeno={Boolean(z.potvrzenoKdy)}
+        tlacitko={tlacitkoPotvrditZavady(lang)}
+        potvrzeno={t.potvrzeno}
+        odesilam={t.odesilam}
+        chybaText={t.chyba}
+      />
     </main>
   );
 }

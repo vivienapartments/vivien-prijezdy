@@ -11,9 +11,12 @@ import { posliEmailZpravy, predmetZpravy } from '@/lib/email-zprava';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
 import {
+  jeKdoZavad,
   normalizujTextZavad,
   odkazPotvrzeniZavad,
+  predmetEmailuPoOdjezdu,
   predmetEmailuZavad,
+  textEmailuPoOdjezdu,
   textEmailuZavad,
   tlacitkoPotvrditZavady,
 } from '@/lib/zavady-predani';
@@ -88,6 +91,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     zprava?: string;
     presto?: boolean;
     text?: string;
+    dalsiRezervace?: string;
+    iDalsimu?: boolean;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -147,7 +152,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prevzato' &&
       akce !== 'vratit-odjezd' &&
       akce !== 'prevzit' &&
-      akce !== 'zavady')
+      akce !== 'zavady' &&
+      akce !== 'zavady-odeslat' &&
+      akce !== 'zavady-po-odjezdu' &&
+      akce !== 'zavady-po-odjezdu-odeslat')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -173,6 +181,19 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'zavady') {
     const text = normalizujTextZavad(typeof body?.text === 'string' ? body.text : '');
     if (!text) return chyba(400, 'Napište, co není v pořádku.');
+    const kdo = jeKdoZavad(body?.kdo) || 'pravoslav';
+    const kdy = new Date().toISOString();
+    const dalsi = pridej(rec, 'Závady z předání zapsány', {
+      zavadyPredani: { text, kdy, kdo, odeslanoKdy: null, potvrzenoKdy: null },
+    });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, zavadyPredani: dalsi.zavadyPredani }, { headers: noStore });
+  }
+
+  if (akce === 'zavady-odeslat') {
+    const z = rec.zavadyPredani;
+    if (!z || !z.text) return chyba(400, 'Nejdřív zapište závady.');
+    if (z.odeslanoKdy) return chyba(400, 'E-mail už odešel.');
     const email = (rec.emailHosta || '').trim();
     if (!email) return chyba(400, 'U rezervace chybí e-mail hosta.');
     const odeslanoKdy = new Date().toISOString();
@@ -182,7 +203,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       await posliEmailZpravy({
         to: email,
         subject: predmetEmailuZavad(lang),
-        text: textEmailuZavad(lang, text),
+        text: textEmailuZavad(lang, z.text),
         lang,
         telefon: false,
         tlacitko: { url: odkaz, label: tlacitkoPotvrditZavady(lang) },
@@ -192,10 +213,72 @@ export async function POST(request: Request): Promise<NextResponse> {
       return chyba(502, reason);
     }
     const dalsi = pridej(rec, 'Závady z předání odeslány hostovi', {
-      zavadyPredani: { text, odeslanoKdy, potvrzenoKdy: null },
+      zavadyPredani: { ...z, odeslanoKdy, potvrzenoKdy: null },
     });
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, zavadyPredani: dalsi.zavadyPredani }, { headers: noStore });
+  }
+
+  if (akce === 'zavady-po-odjezdu') {
+    const text = normalizujTextZavad(typeof body?.text === 'string' ? body.text : '');
+    if (!text) return chyba(400, 'Napište, co není v pořádku.');
+    const kdo = jeKdoZavad(body?.kdo);
+    if (!kdo) return chyba(400, 'Vyberte, kdo zapsal.');
+    const kdy = new Date().toISOString();
+    const dalsi = pridej(rec, 'Závady po odjezdu zapsány', {
+      zavadyPoOdjezdu: { text, kdy, kdo, odeslanoKdy: null },
+    });
+    await store.setRezervace(id, dalsi);
+
+    const dalsiId = typeof body?.dalsiRezervace === 'string' ? body.dalsiRezervace.trim() : '';
+    let zavadyPredaniDalsi: RezervaceRecord['zavadyPredani'] = null;
+    if (dalsiId && body?.iDalsimu === true) {
+      const dalsiHost = await store.getRezervace(dalsiId);
+      if (dalsiHost && !dalsiHost.zavadyPredani) {
+        const zapis = pridej(dalsiHost, 'Závady z předání zapsány', {
+          zavadyPredani: { text, kdy, kdo, odeslanoKdy: null, potvrzenoKdy: null },
+        });
+        await store.setRezervace(dalsiId, zapis);
+        zavadyPredaniDalsi = zapis.zavadyPredani;
+      }
+    }
+
+    return NextResponse.json(
+      {
+        ok: true,
+        zavadyPoOdjezdu: dalsi.zavadyPoOdjezdu,
+        dalsiRezervace: dalsiId || null,
+        zavadyPredaniDalsi,
+      },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'zavady-po-odjezdu-odeslat') {
+    const z = rec.zavadyPoOdjezdu;
+    if (!z || !z.text) return chyba(400, 'Nejdřív zapište závady po odjezdu.');
+    if (z.odeslanoKdy) return chyba(400, 'E-mail už odešel.');
+    const email = (rec.emailHosta || '').trim();
+    if (!email) return chyba(400, 'U rezervace chybí e-mail hosta.');
+    const odeslanoKdy = new Date().toISOString();
+    const lang = rec.jazyk;
+    try {
+      await posliEmailZpravy({
+        to: email,
+        subject: predmetEmailuPoOdjezdu(lang),
+        text: textEmailuPoOdjezdu(lang, z.text),
+        lang,
+        telefon: false,
+      });
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : 'E-mail se nepodařilo odeslat.';
+      return chyba(502, reason);
+    }
+    const dalsi = pridej(rec, 'Závady po odjezdu odeslány hostovi', {
+      zavadyPoOdjezdu: { ...z, odeslanoKdy },
+    });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, zavadyPoOdjezdu: dalsi.zavadyPoOdjezdu }, { headers: noStore });
   }
 
   if (akce === 'predano') {

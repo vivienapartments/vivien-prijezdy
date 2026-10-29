@@ -2,7 +2,21 @@
 
 import { useState } from 'react';
 
-export function ZavadyPotvrzeni({ token, uzPotvrzeno }: { token: string; uzPotvrzeno: boolean }) {
+export function ZavadyPotvrzeni({
+  token,
+  uzPotvrzeno,
+  tlacitko,
+  potvrzeno,
+  odesilam,
+  chybaText,
+}: {
+  token: string;
+  uzPotvrzeno: boolean;
+  tlacitko: string;
+  potvrzeno: string;
+  odesilam: string;
+  chybaText: string;
+}) {
   const [stav, setStav] = useState<'idle' | 'cekam' | 'ok' | 'chyba'>(uzPotvrzeno ? 'ok' : 'idle');
   const [chyba, setChyba] = useState('');
 
@@ -18,24 +32,24 @@ export function ZavadyPotvrzeni({ token, uzPotvrzeno }: { token: string; uzPotvr
       const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
       if (!res.ok || !json?.ok) {
         setStav('chyba');
-        setChyba(json?.error || 'Potvrzení se nepodařilo.');
+        setChyba(json?.error || chybaText);
         return;
       }
       setStav('ok');
     } catch {
       setStav('chyba');
-      setChyba('Potvrzení se nepodařilo.');
+      setChyba(chybaText);
     }
   }
 
   if (stav === 'ok') {
-    return <p className="zv-ok">Děkujeme. Zápis je potvrzený.</p>;
+    return <p className="zv-ok">{potvrzeno}</p>;
   }
 
   return (
     <div className="zv-akce">
       <button type="button" disabled={stav === 'cekam'} onClick={() => void potvrd()}>
-        {stav === 'cekam' ? 'Odesílám…' : 'Potvrdit'}
+        {stav === 'cekam' ? odesilam : tlacitko}
       </button>
       {chyba ? <p className="zv-chyba">{chyba}</p> : null}
     </div>

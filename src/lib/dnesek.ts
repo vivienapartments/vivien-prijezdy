@@ -35,6 +35,8 @@ export type UklidRadek = {
   apartman: string;
   uvolni: string;
   dalsi: string;
+  /** Host, který do apartmánu přijíždí dál. Pro zápis stejných závad. */
+  dalsiRezervace: string | null;
   prijezdCas: string | null;
   maPrijezd: boolean;
   prvni: boolean;
@@ -260,6 +262,7 @@ export function sestavDnesek(hoste: HostDne[], dnes: string, now?: Date): Dnesek
         : prijezdCas
           ? `další host v ${zobrazCas(prijezdCas)}`
           : 'další host dnes, čas neznámý',
+      dalsiRezervace: dalsi?.rezervace || null,
       prijezdCas,
       maPrijezd: Boolean(dalsi),
       prvni: false,

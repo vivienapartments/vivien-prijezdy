@@ -26,17 +26,25 @@ describe('zavady-predani', () => {
     expect(overTokenZavad(token.slice(0, -2) + 'aa')).toEqual({ ok: false });
   });
 
-  it('e-mail má schválené znění A', () => {
-    expect(textEmailuZavad('cs', 'Škrábanec na stole')).toBe(
-      'Dobrý den, při předání apartmánu jsme zapsali:\n\nŠkrábanec na stole\n\nPotvrďte prosím tlačítkem níže.',
-    );
+  it('e-mail má schválené znění A včetně skryté závady', () => {
+    const text = textEmailuZavad('cs', 'Škrábanec na stole');
+    expect(text).toContain('Dobrý den, při předání apartmánu jsme zapsali:');
+    expect(text).toContain('Škrábanec na stole');
+    expect(text).toContain('skrytá závada');
+    expect(text).toContain('Potvrďte prosím tlačítkem níže.');
   });
 
   it('potvrzení zapíše čas jen jednou', () => {
     const odeslano = '2026-10-18T12:00:00.000Z';
     const zaklad = {
       ...prazdnaRezervace('1', odeslano),
-      zavadyPredani: { text: 'Skvrna', odeslanoKdy: odeslano, potvrzenoKdy: null },
+      zavadyPredani: {
+        text: 'Skvrna',
+        kdy: odeslano,
+        kdo: 'pravoslav' as const,
+        odeslanoKdy: odeslano,
+        potvrzenoKdy: null,
+      },
     };
     const ted = new Date('2026-10-18T12:05:00.000Z');
     const po = potvrdZavady(zaklad, odeslano, ted);
@@ -46,8 +54,23 @@ describe('zavady-predani', () => {
 
     const znovu = potvrdZavady(po!, odeslano, new Date('2026-10-18T13:00:00.000Z'));
     expect(znovu?.zavadyPredani?.potvrzenoKdy).toBe(ted.toISOString());
-    expect(stavZavadText({ text: 'x', odeslanoKdy: odeslano, potvrzenoKdy: null })).toBe(
-      'Závady · čeká na potvrzení',
-    );
+    expect(
+      stavZavadText({
+        text: 'x',
+        kdy: odeslano,
+        kdo: 'pravoslav',
+        odeslanoKdy: odeslano,
+        potvrzenoKdy: null,
+      }),
+    ).toBe('Závady · čeká na potvrzení');
+    expect(
+      stavZavadText({
+        text: 'x',
+        kdy: odeslano,
+        kdo: 'pravoslav',
+        odeslanoKdy: null,
+        potvrzenoKdy: null,
+      }),
+    ).toBe('Závady · neodesláno');
   });
 });
