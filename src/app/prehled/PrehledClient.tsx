@@ -1608,7 +1608,6 @@ export function PrehledClient({
     const fazeText = odjel && row.stav !== 'zruseno' && !row.fazeText.startsWith('Odjel') && row.fazeText !== 'Zrušeno'
       ? `Odjel ${casPrevzetiText(row.prevzatoKdy) || ''}`.trim()
       : row.fazeText;
-    const fazeTon = odjel && row.stav !== 'zruseno' ? 'seda' : row.fazeTon;
     const cekajici = cekajiciUkon({
       predano: Boolean(predanoKdy),
       naMiste: Boolean(naMisteKdy),
@@ -1633,7 +1632,8 @@ export function PrehledClient({
     const kontaktUlozenCas = kontaktUlozenKdy(row) || staly?.kontaktZMinula || null;
     const muzeKontakt = Boolean(wa || row.telefonText || row.jinyTelefonText);
     const kontaktNahore = !kontaktUlozenCas && !staly?.kontaktZMinula && !odjel;
-    const predaniNahore = !odjel && !predanoKdy && Boolean(row.prijezd && row.prijezd <= dnes);
+    /** Na kartě, dokud není předáno. Po předání je Vrátit jen v Detailu. */
+    const predaniNahore = !odjel && !predanoKdy;
     const tlacitkoKontakt = muzeKontakt ? (
       <UlozitKontakt row={row} onUlozeno={() => oznacKontaktUlozen(row)} />
     ) : null;
@@ -2128,11 +2128,32 @@ export function PrehledClient({
               ? 'klik → WhatsApp'
               : 'klik → SMS do brány';
           const casZpravaId = dalsiCasovaZprava(pocetCasovychPripoinek(row.historie));
-          const pillTon = fazeTon === 'zelena' ? 'ok' : fazeTon === 'cervena' ? 'wait' : 'seda';
-          const pillText =
-            predaniNahore && !predanoKdy
-              ? 'Připraven'
-              : fazeText.replace(/^Fáze\s*·\s*/i, '') || fazeText;
+          /** Jen krátký štítek. Dlouhý text fáze (čas, brána, průvodce) je v dlaždicích. */
+          const pillText = (() => {
+            if (row.stav === 'zruseno') return 'Zrušeno';
+            if (odjel || fazeText.startsWith('Odjel')) {
+              const casOdjel = casPrevzetiText(row.prevzatoKdy);
+              return casOdjel ? `Odjel ${casOdjel}` : 'Odjel';
+            }
+            if (predanoKdy) {
+              const casPred = hodinaPraha(predanoKdy);
+              return casPred ? `Předáno ${casPred}` : 'Předáno';
+            }
+            if (!checkinOk) return 'Čeká check-in';
+            if ((row.otevrenoPocet ?? 0) === 0) return 'Čeká průvodce';
+            if (!casOk) return 'Čeká čas';
+            if (!row.souhlas) return 'Čeká průvodce';
+            if (branaChybiUdaje) return 'Čeká údaje';
+            if (row.zpusobPrijezdu === 'auto' && !branaOk) return 'Čeká brána';
+            if (!pruvodceOk) return 'Čeká průvodce';
+            return 'Připraven';
+          })();
+          const pillTon =
+            pillText === 'Připraven' || pillText.startsWith('Předáno')
+              ? 'ok'
+              : pillText === 'Odjel' || pillText.startsWith('Odjel') || pillText === 'Zrušeno'
+                ? 'seda'
+                : 'wait';
           const osobText =
             row.osob == null ? null : row.osob === 1 ? '1 dospělý' : `${row.osob} dospělí`;
           return (
@@ -2378,7 +2399,9 @@ export function PrehledClient({
                   zprava={zpravaRadku(row)}
                   userAgent={userAgent}
                   onPredOtevrenim={() => oznacWhatsApp(row)}
-                />
+                >
+                  OK
+                </TlacitkoWhatsApp>
               ) : null}
               {kanalZpravy[row.rezervace] === 'sms' ? (
                 <button
@@ -2394,12 +2417,20 @@ export function PrehledClient({
                     });
                   }}
                 >
-                  Otevřít SMS
+                  OK
                 </button>
               ) : null}
-              {kanalZpravy[row.rezervace] === 'email' ? emailTlacitko : null}
+              {kanalZpravy[row.rezervace] === 'email' && emailHosta ? (
+                <button
+                  type="button"
+                  className="ph-wa"
+                  onClick={() => setDotazEmail({ id: row.rezervace, email: emailHosta })}
+                >
+                  OK
+                </button>
+              ) : null}
               <button type="button" className="ph-kopie" onClick={() => void kopirovatZpravu(row)}>
-                Zkopírovat zprávu
+                Zkopírovat
               </button>
             </div>
           </div>

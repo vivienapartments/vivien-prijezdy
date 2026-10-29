@@ -23,6 +23,7 @@
   padding-bottom: 0.15rem;
 }
 
+.ph button.ph-dny__den,
 .ph-dny__den {
   flex: 0 0 auto;
   min-width: 3.6rem;
@@ -212,7 +213,7 @@
   min-height: 2.6rem;
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--color-gold);
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: var(--color-gold);
   cursor: pointer;
@@ -634,7 +635,7 @@
   align-items: center;
   min-height: 2.4rem;
   padding: 0.35rem 0.85rem;
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--color-gold);
   color: #1c1712;
   font-size: 0.92rem;
@@ -722,7 +723,7 @@
 .ph-faze {
   display: inline-block;
   padding: 0.45rem 0.85rem;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 1.12rem;
   font-weight: 750;
   line-height: 1.3;
@@ -771,7 +772,7 @@
 .ph-znacka {
   display: inline-block;
   padding: 0.4rem 0.75rem;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 1.05rem;
   font-weight: 750;
   line-height: 1.2;
@@ -869,7 +870,7 @@
   margin: 0;
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--color-gold);
-  border-radius: 999px;
+  border-radius: 6px;
   color: var(--color-gold);
   background: transparent;
   text-decoration: none;
@@ -976,7 +977,7 @@
   min-height: 2.6rem;
   padding: 0.4rem 0.8rem;
   border: 1px solid var(--color-gold);
-  border-radius: 999px;
+  border-radius: 6px;
   color: var(--color-gold);
 }
 
@@ -1128,7 +1129,7 @@
 .ph-ulozit,
 .ph-push-vyp {
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #c4a46a;
   color: #1c1712;
   font: inherit;
@@ -1470,7 +1471,7 @@
   min-height: 2.6rem;
   padding: 0.35rem 0.85rem;
   border: 1px solid var(--color-gold);
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: var(--color-gold);
 }
@@ -1617,7 +1618,7 @@
   min-height: 2.6rem;
   padding: 0.35rem 0.85rem;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 999px;
+  border-radius: 6px;
   background: transparent;
   color: rgba(255, 255, 255, 0.72);
 }

@@ -470,7 +470,6 @@ export function Dnesek({
                     <span className={r.casZnamy ? undefined : 'ph-dnesek__neznamy'}>{r.cas}</span>
                     {r.zpusob ? ` · ${r.zpusob}` : ''}
                     {r.brana ? ` · ${r.brana}` : ''}
-                    {r.faze ? ` · Fáze · ${r.faze}` : ''}
                     {casPredani ? ` · předáno ${casPredani}` : ''}
                   </p>
                 </li>
