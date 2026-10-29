@@ -40,6 +40,8 @@ export const PRIJEZD_NEJDRIV = 11 * 60;
 export const ODJEZD_STANDARD = 10 * 60;
 export const ODJEZD_NEJPOZDEJI = 14 * 60;
 export const UKLID_MIN = 60;
+/** Úklid může začít až tolik minut před uvolněním dalšího apartmánu (čekání v okně). */
+export const UKLID_CEKAT_MIN = 15;
 export const MEZERA_PO_ODJEZDU_MIN = 30;
 export const MEZERA_PRED_PRIJEZDEM_MIN = 180;
 export const ODJEZD_KDYZ_CAS_NEZNAMY = 11 * 60;

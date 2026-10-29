@@ -54,7 +54,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   const store = createProcessStore();
 
   if (body?.akce === 'zkusit') {
-    const vysledek = await upozorniMajitelePodrobne(store, 'Zkušební upozornění z přehledu VIVIEN', '/prehled');
+    const vysledek = await upozorniMajitelePodrobne(store, 'Zkušební upozornění z přehledu VIVIEN', '/prehled', {
+      zkuseni: true,
+    });
     return NextResponse.json(
       {
         ok: true,

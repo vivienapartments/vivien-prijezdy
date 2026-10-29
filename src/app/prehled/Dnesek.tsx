@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { stavParkovani, type BranaSlot } from '@/lib/brana';
-import { sestavDnesek, textUklizeno, type HostDne, type KdoUklidil } from '@/lib/dnesek';
+import { sestavDnesek, textUklizeno, type HostDne, type KdoUklidil, type UklidRadek } from '@/lib/dnesek';
 import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
 import type { PrehledRadek } from '@/lib/prehled';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
@@ -21,6 +21,13 @@ type Props = {
 };
 
 type KdoZavad = 'miluska' | 'nikol' | 'pravoslav';
+
+type DotazEmail = {
+  odjezdId: string;
+  dalsiId: string | null;
+  iDalsimu: boolean;
+  krok: 'odjezd' | 'dalsi';
+};
 
 function datum(dnes: string): string {
   const [y, m, d] = dnes.split('-');
@@ -107,14 +114,14 @@ export function Dnesek({
   const [zavadyKdo, setZavadyKdo] = useState<KdoZavad | null>(null);
   const [zavadyDalsimu, setZavadyDalsimu] = useState(false);
   const [zavadyCekam, setZavadyCekam] = useState(false);
+  const [dotazEmail, setDotazEmail] = useState<DotazEmail | null>(null);
   useEffect(() => {
     if (!cerstve) return;
     const casovac = window.setTimeout(() => setCerstve(null), 10_000);
     return () => window.clearTimeout(casovac);
   }, [cerstve]);
   const maNeco =
-    pohled.uklid.length + pohled.odjezdy.length + pohled.prijezdy.length + pohled.nedoplatky.length + chybyKaret.length >
-    0;
+    pohled.uklid.length + pohled.prijezdy.length + pohled.nedoplatky.length + chybyKaret.length > 0;
 
   function hotovo(rezervace: string, kdy: string | null, kdo: KdoUklidil | null) {
     if (Object.prototype.hasOwnProperty.call(misto, rezervace)) return misto[rezervace];
@@ -233,7 +240,14 @@ export function Dnesek({
     return <a href={odkaz(id)}>{jmeno}</a>;
   }
 
-  async function ulozZavadyPoOdjezdu(rezervace: string, dalsiRezervace: string | null) {
+  function resetZavad() {
+    setZavadyId(null);
+    setZavadyText('');
+    setZavadyKdo(null);
+    setZavadyDalsimu(false);
+  }
+
+  async function ulozZavadyPoOdjezdu(r: UklidRadek) {
     const text = zavadyText.trim();
     if (!text) {
       setChyba('Napište, co není v pořádku.');
@@ -243,12 +257,11 @@ export function Dnesek({
       setChyba('Vyberte, kdo zapsal.');
       return;
     }
+    const iDalsimu = zavadyDalsimu && Boolean(r.dalsiRezervace);
+    const dalsiId = iDalsimu ? r.dalsiRezervace : null;
     if (ukazka) {
-      setZavadyId(null);
-      setZavadyText('');
-      setZavadyKdo(null);
-      setZavadyDalsimu(false);
-      onZavadyZapsany?.(rezervace, zavadyDalsimu ? dalsiRezervace : null);
+      resetZavad();
+      setDotazEmail({ odjezdId: r.rezervace, dalsiId, iDalsimu, krok: 'odjezd' });
       setChyba('');
       return;
     }
@@ -259,12 +272,12 @@ export function Dnesek({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          rezervace,
+          rezervace: r.rezervace,
           akce: 'zavady-po-odjezdu',
           text,
           kdo: zavadyKdo,
-          iDalsimu: zavadyDalsimu && Boolean(dalsiRezervace),
-          dalsiRezervace: zavadyDalsimu ? dalsiRezervace : null,
+          iDalsimu,
+          dalsiRezervace: dalsiId,
         }),
       });
       const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
@@ -272,16 +285,118 @@ export function Dnesek({
         setChyba(json?.error || 'Závady se neuložily.');
         return;
       }
-      setZavadyId(null);
-      setZavadyText('');
-      setZavadyKdo(null);
-      setZavadyDalsimu(false);
-      onZavadyZapsany?.(rezervace, zavadyDalsimu ? dalsiRezervace : null);
+      resetZavad();
+      setDotazEmail({ odjezdId: r.rezervace, dalsiId, iDalsimu, krok: 'odjezd' });
+      onZavadyZapsany?.(r.rezervace, dalsiId);
     } catch {
       setChyba('Závady se neuložily.');
     } finally {
       setZavadyCekam(false);
     }
+  }
+
+  async function odpovedEmail(ano: boolean) {
+    if (!dotazEmail) return;
+    const { odjezdId, dalsiId, iDalsimu, krok } = dotazEmail;
+    if (!ano) {
+      if (krok === 'odjezd' && iDalsimu && dalsiId) {
+        setDotazEmail({ odjezdId, dalsiId, iDalsimu, krok: 'dalsi' });
+        return;
+      }
+      setDotazEmail(null);
+      return;
+    }
+    if (ukazka) {
+      if (krok === 'odjezd' && iDalsimu && dalsiId) {
+        setDotazEmail({ odjezdId, dalsiId, iDalsimu, krok: 'dalsi' });
+        return;
+      }
+      setDotazEmail(null);
+      return;
+    }
+    setZavadyCekam(true);
+    try {
+      if (krok === 'odjezd') {
+        await fetch('/api/prehled/akce', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rezervace: odjezdId, akce: 'zavady-po-odjezdu-odeslat' }),
+        });
+        if (iDalsimu && dalsiId) {
+          setDotazEmail({ odjezdId, dalsiId, iDalsimu, krok: 'dalsi' });
+          return;
+        }
+        setDotazEmail(null);
+        return;
+      }
+      if (dalsiId) {
+        await fetch('/api/prehled/akce', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rezervace: dalsiId, akce: 'zavady-odeslat' }),
+        });
+      }
+      setDotazEmail(null);
+    } finally {
+      setZavadyCekam(false);
+    }
+  }
+
+  function tlacitkaUklidu(r: UklidRadek) {
+    const stav = hotovo(r.rezervace, r.uklizenoKdy, r.uklizenoKdo);
+    if (stav) {
+      return (
+        <p className="ph-dnesek__akce">
+          <span>{textUklizeno(stav.kdy, stav.kdo)}</span>
+          <button type="button" onClick={() => zapis(r.rezervace, 'vratit-uklid')}>
+            Vrátit
+          </button>
+        </p>
+      );
+    }
+    if (ptam === r.rezervace) {
+      return (
+        <p className="ph-dnesek__akce">
+          Kdo uklidil?
+          <button type="button" onClick={() => zapis(r.rezervace, 'uklid', 'miluska')}>
+            Miluška
+          </button>
+          <button type="button" onClick={() => zapis(r.rezervace, 'uklid', 'nikol')}>
+            Nikol
+          </button>
+        </p>
+      );
+    }
+    return (
+      <p className="ph-dnesek__akce">
+        <button
+          type="button"
+          onClick={() => {
+            setZavadyId(r.rezervace);
+            setZavadyText('');
+            setZavadyKdo(null);
+            setZavadyDalsimu(false);
+            setPtam(null);
+            setDotazEmail(null);
+          }}
+        >
+          Závady po odjezdu
+        </button>
+        {r.prevzato || r.uvolni.startsWith('uvolněno') ? null : (
+          <button type="button" onClick={() => void prevzit(r.rezervace)}>
+            Převzato
+          </button>
+        )}
+        {cerstve === r.rezervace ? (
+          <button type="button" onClick={() => void prevzit(r.rezervace, true)}>
+            Vrátit
+          </button>
+        ) : null}
+        <button type="button" onClick={() => setPtam(r.rezervace)}>
+          Uklizeno
+        </button>
+      </p>
+    );
   }
 
   return (
@@ -302,57 +417,56 @@ export function Dnesek({
 
       {pohled.uklid.length ? (
         <div>
-          <h2>Úklid</h2>
+          <h2>Úklid a odjezdy</h2>
           <ul>
             {pohled.uklid.map((r) => {
               const stav = hotovo(r.rezervace, r.uklizenoKdy, r.uklizenoKdo);
               return (
                 <li key={r.rezervace} className={stav ? 'ph-dnesek__radek is-uklizeno' : 'ph-dnesek__radek'}>
                   <p>
-                    {r.prvni ? <span className="ph-dnesek__prvni">Uklidit první</span> : null}
-                    {r.prvni ? ' · ' : null}
                     <strong>{r.apartman}</strong>
-                    {' · '}
-                    {r.uvolni}
-                    {' · '}
-                    {r.dalsi}
+                    {r.prvni ? (
+                      <>
+                        {' · '}
+                        <span className="ph-dnesek__prvni">Uklidit první</span>
+                      </>
+                    ) : null}
+                    {r.nestihneSeDo ? (
+                      <>
+                        {' · '}
+                        <span className="ph-dnesek__nestihne">nestihne se do {r.nestihneSeDo}</span>
+                      </>
+                    ) : null}
                   </p>
-                  {stav ? (
-                    <p className="ph-dnesek__akce">
-                      <span>{textUklizeno(stav.kdy, stav.kdo)}</span>
-                      <button type="button" onClick={() => zapis(r.rezervace, 'vratit-uklid')}>
-                        Vrátit
-                      </button>
-                    </p>
-                  ) : ptam === r.rezervace ? (
-                    <p className="ph-dnesek__akce">
-                      Kdo uklidil?
-                      <button type="button" onClick={() => zapis(r.rezervace, 'uklid', 'miluska')}>
-                        Miluška
-                      </button>
-                      <button type="button" onClick={() => zapis(r.rezervace, 'uklid', 'nikol')}>
-                        Nikol
-                      </button>
-                    </p>
-                  ) : (
-                    <p className="ph-dnesek__akce">
-                      <button type="button" onClick={() => setPtam(r.rezervace)}>
-                        Uklizeno
-                      </button>
-                      {r.uvolni.startsWith('uvolněno') ? null : (
-                        <button type="button" onClick={() => void prevzit(r.rezervace)}>
-                          Převzato
-                        </button>
-                      )}
-                      {cerstve === r.rezervace ? (
-                        <button type="button" onClick={() => void prevzit(r.rezervace, true)}>
-                          Vrátit
-                        </button>
-                      ) : null}
-                    </p>
-                  )}
+                  <p>
+                    Odjíždí: {odkazNaKartu(r.rezervace, r.jmeno)}
+                    {' · '}
+                    {r.casOdjezduText}
+                    {r.nedoplatek ? (
+                      <>
+                        {' · '}
+                        <span className="ph-dnesek__nestihne">{r.nedoplatek}</span>
+                      </>
+                    ) : null}
+                  </p>
+                  <p>
+                    Přijíždí:{' '}
+                    {r.dalsiRezervace && r.dalsiJmeno
+                      ? odkazNaKartu(r.dalsiRezervace, r.dalsiJmeno)
+                      : null}
+                    {r.dalsiRezervace && r.dalsiJmeno ? ' · ' : null}
+                    {r.maPrijezd
+                      ? r.prijezdCas
+                        ? r.prijezdCas.replace(/^0(\d:)/, '$1')
+                        : 'čas neznámý'
+                      : 'dnes nikdo nepřijede'}
+                  </p>
                   {zavadyId === r.rezervace ? (
                     <div className="ph-predano-dotaz">
+                      <p>
+                        Odjíždí: {r.jmeno}
+                        {r.dalsiJmeno ? ` · Přijíždí: ${r.dalsiJmeno}` : ''}
+                      </p>
                       <p>Závady po odjezdu</p>
                       <textarea
                         value={zavadyText}
@@ -363,18 +477,30 @@ export function Dnesek({
                       />
                       <p className="ph-dnesek__akce">
                         Kdo zapsal?
-                        <button type="button" className={zavadyKdo === 'miluska' ? 'is-on' : undefined} onClick={() => setZavadyKdo('miluska')}>
+                        <button
+                          type="button"
+                          className={zavadyKdo === 'miluska' ? 'is-on' : undefined}
+                          onClick={() => setZavadyKdo('miluska')}
+                        >
                           Miluška
                         </button>
-                        <button type="button" className={zavadyKdo === 'nikol' ? 'is-on' : undefined} onClick={() => setZavadyKdo('nikol')}>
+                        <button
+                          type="button"
+                          className={zavadyKdo === 'nikol' ? 'is-on' : undefined}
+                          onClick={() => setZavadyKdo('nikol')}
+                        >
                           Nikol
                         </button>
-                        <button type="button" className={zavadyKdo === 'pravoslav' ? 'is-on' : undefined} onClick={() => setZavadyKdo('pravoslav')}>
+                        <button
+                          type="button"
+                          className={zavadyKdo === 'pravoslav' ? 'is-on' : undefined}
+                          onClick={() => setZavadyKdo('pravoslav')}
+                        >
                           Pravoslav
                         </button>
                       </p>
                       {r.dalsiRezervace ? (
-                        <label>
+                        <label className="ph-dnesek__check">
                           <input
                             type="checkbox"
                             checked={zavadyDalsimu}
@@ -383,78 +509,37 @@ export function Dnesek({
                           Neopraveno, zapsat i dalšímu hostovi
                         </label>
                       ) : null}
-                      <button type="button" disabled={zavadyCekam} onClick={() => void ulozZavadyPoOdjezdu(r.rezervace, r.dalsiRezervace)}>
-                        Uložit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setZavadyId(null);
-                          setZavadyText('');
-                          setZavadyKdo(null);
-                          setZavadyDalsimu(false);
-                        }}
-                      >
-                        Zrušit
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="ph-dnesek__akce">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setZavadyId(r.rezervace);
-                          setZavadyText('');
-                          setZavadyKdo(null);
-                          setZavadyDalsimu(false);
-                          setPtam(null);
-                        }}
-                      >
-                        Závady po odjezdu
-                      </button>
-                      {onOtevri ? (
-                        <button type="button" onClick={() => onOtevri(r.rezervace)}>
-                          Karta hosta
+                      <p className="ph-dnesek__akce">
+                        <button type="button" disabled={zavadyCekam} onClick={() => void ulozZavadyPoOdjezdu(r)}>
+                          Uložit
                         </button>
-                      ) : null}
-                    </p>
-                  )}
+                        <button type="button" onClick={resetZavad}>
+                          Zrušit
+                        </button>
+                      </p>
+                    </div>
+                  ) : null}
+                  {dotazEmail?.odjezdId === r.rezervace ? (
+                    <div className="ph-predano-dotaz">
+                      <p>
+                        {dotazEmail.krok === 'odjezd'
+                          ? 'Poslat hostovi e-mail teď?'
+                          : 'Poslat i dalšímu hostovi zápis z předání?'}
+                      </p>
+                      <p className="ph-dnesek__akce">
+                        <button type="button" disabled={zavadyCekam} onClick={() => void odpovedEmail(true)}>
+                          Ano
+                        </button>
+                        <button type="button" disabled={zavadyCekam} onClick={() => void odpovedEmail(false)}>
+                          Ne
+                        </button>
+                      </p>
+                    </div>
+                  ) : null}
+                  {zavadyId === r.rezervace || dotazEmail?.odjezdId === r.rezervace ? null : tlacitkaUklidu(r)}
                 </li>
               );
             })}
-          </ul>
-        </div>
-      ) : null}
-
-      {pohled.odjezdy.length ? (
-        <div>
-          <h2>Odjezdy</h2>
-          <ul>
-            {cerstve ? (
-              <p className="ph-dnesek__akce">
-                Převzato.
-                <button type="button" onClick={() => void prevzit(cerstve, true)}>
-                  Vrátit
-                </button>
-              </p>
-            ) : null}
-            {pohled.odjezdy.map((r) => (
-              <li key={r.rezervace} className="ph-dnesek__radek">
-                <p>
-                  <strong>{r.apartman}</strong>
-                  {' · '}
-                  {odkazNaKartu(r.rezervace, r.jmeno)}
-                  {' · '}
-                  {r.cas}
-                  {r.dluh ? ` · ${r.dluh}` : ''}
-                </p>
-                <p className="ph-dnesek__akce">
-                  <button type="button" onClick={() => void prevzit(r.rezervace)}>
-                    Převzato
-                  </button>
-                </p>
-              </li>
-            ))}
           </ul>
         </div>
       ) : null}

@@ -262,6 +262,13 @@ export type PushZarizeni = {
   cas: string;
 };
 
+/** Jedna položka v seznamu upozornění pro přehled (posledních 100). */
+export type UpozorneniZaznam = {
+  cas: string;
+  text: string;
+  url: string;
+};
+
 export type RezervaceEntry = { id: string; record: RezervaceRecord; chybaNahrani?: boolean };
 export type MessageEntry = { id: string; record: MessageRecord };
 
@@ -269,6 +276,7 @@ type StoreData = {
   messages: Record<string, MessageRecord>;
   rezervace: Record<string, RezervaceRecord>;
   push?: PushZarizeni[];
+  upozorneni?: UpozorneniZaznam[];
   zpracujSelhani?: number;
   zpracujBeh?: BehZpracovani | null;
   odjezdBeh?: OdjezdBeh | null;
@@ -311,6 +319,8 @@ export interface ProcessStore {
   purgeExpired(now?: Date): Promise<number>;
   listPush(): Promise<PushZarizeni[]>;
   savePush(list: PushZarizeni[]): Promise<void>;
+  listUpozorneni(): Promise<UpozorneniZaznam[]>;
+  pridejUpozorneni(zaznam: UpozorneniZaznam): Promise<void>;
   getSelhani(): Promise<number>;
   setSelhani(pocet: number): Promise<void>;
   getBeh(): Promise<BehZpracovani | null>;
@@ -323,6 +333,22 @@ export interface ProcessStore {
   setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void>;
   getSchrankaStav(): Promise<SchrankaStav | null>;
   setSchrankaStav(stav: SchrankaStav): Promise<void>;
+}
+
+export function nactiUpozorneniSeznam(raw: unknown): UpozorneniZaznam[] {
+  if (!Array.isArray(raw)) return [];
+  const out: UpozorneniZaznam[] = [];
+  for (const row of raw) {
+    if (!row || typeof row !== 'object') continue;
+    const r = row as Record<string, unknown>;
+    const cas = typeof r.cas === 'string' ? r.cas : '';
+    const text = typeof r.text === 'string' ? r.text.trim() : '';
+    const url = typeof r.url === 'string' ? r.url.trim() : '';
+    if (!cas || !text) continue;
+    out.push({ cas, text, url: url || '/prehled' });
+    if (out.length >= 100) break;
+  }
+  return out;
 }
 
 export function nactiSchrankaStav(raw: unknown): SchrankaStav | null {
@@ -355,6 +381,7 @@ function emptyData(): StoreData {
     messages: {},
     rezervace: {},
     push: [],
+    upozorneni: [],
     zpracujSelhani: 0,
     zpracujBeh: null,
     brana: null,
@@ -718,6 +745,7 @@ export class FileProcessStore implements ProcessStore {
         messages: parsed.messages || {},
         rezervace: parsed.rezervace || {},
         push: nactiPush(parsed.push),
+        upozorneni: nactiUpozorneniSeznam(parsed.upozorneni),
         zpracujSelhani: typeof parsed.zpracujSelhani === 'number' ? parsed.zpracujSelhani : 0,
         zpracujBeh: nactiBeh(parsed.zpracujBeh),
         odjezdBeh: parsed.odjezdBeh ?? null,
@@ -803,6 +831,16 @@ export class FileProcessStore implements ProcessStore {
   async savePush(list: PushZarizeni[]): Promise<void> {
     const data = this.read();
     data.push = list;
+    this.write(data);
+  }
+
+  async listUpozorneni(): Promise<UpozorneniZaznam[]> {
+    return this.read().upozorneni || [];
+  }
+
+  async pridejUpozorneni(zaznam: UpozorneniZaznam): Promise<void> {
+    const data = this.read();
+    data.upozorneni = nactiUpozorneniSeznam([zaznam, ...(data.upozorneni || [])]);
     this.write(data);
   }
 
@@ -1095,6 +1133,21 @@ export class UpstashProcessStore implements ProcessStore {
 
   async savePush(list: PushZarizeni[]): Promise<void> {
     await this.cmd('SET', 'push:zarizeni', JSON.stringify(list));
+  }
+
+  async listUpozorneni(): Promise<UpozorneniZaznam[]> {
+    const v = await this.cmd<string | null>('GET', 'upozorneni:seznam');
+    if (!v) return [];
+    try {
+      return nactiUpozorneniSeznam(JSON.parse(v));
+    } catch {
+      return [];
+    }
+  }
+
+  async pridejUpozorneni(zaznam: UpozorneniZaznam): Promise<void> {
+    const list = await this.listUpozorneni();
+    await this.cmd('SET', 'upozorneni:seznam', JSON.stringify(nactiUpozorneniSeznam([zaznam, ...list])));
   }
 
   async getSelhani(): Promise<number> {

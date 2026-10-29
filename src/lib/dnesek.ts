@@ -1,4 +1,12 @@
-import { CHECKOUT, PREVZETI_NEZNAMY_HODINA, PREVZETI_PO_HODINACH } from './constants';
+import {
+  CHECKOUT,
+  ODJEZD_STANDARD,
+  PRIJEZD_STANDARD,
+  PREVZETI_NEZNAMY_HODINA,
+  PREVZETI_PO_HODINACH,
+  UKLID_CEKAT_MIN,
+  UKLID_MIN,
+} from './constants';
 import { jeHodina, polozkyZRezervace, textRozpisu, zobrazCas } from './odjezd';
 import type { RezervaceRecord } from './store';
 import { APT_IDS, type AptId } from './types';
@@ -33,15 +41,33 @@ export type HostDne = {
 export type UklidRadek = {
   rezervace: string;
   apartman: string;
+  jmeno: string;
+  /** Čas odjezdu, „čas neznámý“ nebo „převzato 9:20“. */
+  casOdjezduText: string;
+  /** „Nedoplatek 400 Kč (…)“ nebo null. */
+  nedoplatek: string | null;
   uvolni: string;
   dalsi: string;
+  dalsiJmeno: string | null;
   /** Host, který do apartmánu přijíždí dál. Pro zápis stejných závad. */
   dalsiRezervace: string | null;
   prijezdCas: string | null;
   maPrijezd: boolean;
   prvni: boolean;
+  /** Když se nestihne předání, čas ve tvaru H:MM. */
+  nestihneSeDo: string | null;
   uklizenoKdy: string | null;
   uklizenoKdo: KdoUklidil | null;
+  prevzato: boolean;
+};
+
+/** Vstup pro výpočet pořadí úklidu (minuty od půlnoci). */
+export type UklidSlot = {
+  id: string;
+  uvolneni: number;
+  /** null = dnes nikdo nepřijede, na konec. */
+  predani: number | null;
+  uklizeno: boolean;
 };
 
 export type OdjezdRadek = {
@@ -197,6 +223,124 @@ function seradPodleCasu<T>(list: T[], cas: (t: T) => string | null, apt: (t: T) 
   });
 }
 
+function minutyZIsoPraha(iso: string): number | null {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return null;
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Prague',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(t));
+  const hod = Number(parts.find((p) => p.type === 'hour')?.value);
+  const min = Number(parts.find((p) => p.type === 'minute')?.value);
+  if (!Number.isFinite(hod) || !Number.isFinite(min)) return null;
+  return hod * 60 + min;
+}
+
+function casZMinut(m: number): string {
+  const hh = String(Math.floor(m / 60) % 24).padStart(2, '0');
+  const mm = String(m % 60).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+/** Uvolnění: převzetí, jinak čas odjezdu, jinak 10:00. */
+export function uvolneniMinut(h: HostDne): number {
+  if (h.prevzatoKdy) {
+    const m = minutyZIsoPraha(h.prevzatoKdy);
+    if (m != null) return m;
+  }
+  if (jeHodina(h.casOdjezdu)) return minuty(h.casOdjezdu);
+  return ODJEZD_STANDARD;
+}
+
+/** Předání: čas dalšího hosta, jinak 14:00; bez dalšího hosta = null. */
+export function predaniMinut(dalsi: HostDne | null): number | null {
+  if (!dalsi) return null;
+  if (jeHodina(dalsi.casPrijezdu)) return minuty(dalsi.casPrijezdu);
+  return PRIJEZD_STANDARD;
+}
+
+function greedyUklid(leftIn: UklidSlot[]): string[] {
+  const left = [...leftIn];
+  const order: string[] = [];
+  if (!left.length) return order;
+  let t = Math.min(...left.map((s) => s.uvolneni));
+  while (left.length) {
+    let candidates = left.filter((s) => s.uvolneni <= t + UKLID_CEKAT_MIN);
+    if (!candidates.length) {
+      t = Math.min(...left.map((s) => s.uvolneni));
+      continue;
+    }
+    candidates = [...candidates].sort((a, b) => {
+      const pa = a.predani ?? 99_999;
+      const pb = b.predani ?? 99_999;
+      if (pa !== pb) return pa - pb;
+      return poradiApt(a.id) - poradiApt(b.id);
+    });
+    const pick = candidates[0];
+    const start = Math.max(t, pick.uvolneni);
+    t = start + UKLID_MIN;
+    order.push(pick.id);
+    const ix = left.findIndex((s) => s.id === pick.id);
+    if (ix >= 0) left.splice(ix, 1);
+  }
+  return order;
+}
+
+function nestihneVPoradi(order: string[], byId: Map<string, UklidSlot>): Map<string, number> {
+  const nestihne = new Map<string, number>();
+  let t = Number.NEGATIVE_INFINITY;
+  for (const id of order) {
+    const s = byId.get(id);
+    if (!s) continue;
+    const start = t === Number.NEGATIVE_INFINITY ? s.uvolneni : Math.max(t, s.uvolneni);
+    const finish = start + UKLID_MIN;
+    if (s.predani != null && finish > s.predani) nestihne.set(id, s.predani);
+    t = finish;
+  }
+  return nestihne;
+}
+
+function permutace<T>(arr: T[]): T[][] {
+  if (arr.length <= 1) return [arr];
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += 1) {
+    const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
+    for (const p of permutace(rest)) out.push([arr[i], ...p]);
+  }
+  return out;
+}
+
+/**
+ * Pořadí úklidu: nejdřív uvolnění, v okně 15 min vyber nejdřívější předání.
+ * Když se nestihne, zkus všechna pořadí (max 5). Už uklizené na konci.
+ */
+export function seradUklidPoradi(sloty: UklidSlot[]): { id: string; nestihneSeDo: number | null }[] {
+  const hotove = sloty.filter((s) => s.uklizeno).sort((a, b) => poradiApt(a.id) - poradiApt(b.id));
+  const cekaji = sloty.filter((s) => !s.uklizeno);
+  if (!cekaji.length) {
+    return hotove.map((s) => ({ id: s.id, nestihneSeDo: null }));
+  }
+  const byId = new Map(cekaji.map((s) => [s.id, s]));
+  let order = greedyUklid(cekaji);
+  let nestihne = nestihneVPoradi(order, byId);
+  if (nestihne.size && cekaji.length <= 5) {
+    for (const perm of permutace(cekaji.map((s) => s.id))) {
+      const n = nestihneVPoradi(perm, byId);
+      if (!n.size) {
+        order = perm;
+        nestihne = n;
+        break;
+      }
+    }
+  }
+  return [
+    ...order.map((id) => ({ id, nestihneSeDo: nestihne.get(id) ?? null })),
+    ...hotove.map((s) => ({ id: s.id, nestihneSeDo: null })),
+  ];
+}
+
 export function sestavDnesek(hoste: HostDne[], dnes: string, now?: Date): DnesekPohled {
   const chyby: string[] = [];
   const zivi: HostDne[] = [];
@@ -231,13 +375,14 @@ export function sestavDnesek(hoste: HostDne[], dnes: string, now?: Date): Dnesek
 
   const podleApt = new Map<string, HostDne[]>();
   for (const host of vsichniOdjezdy) {
-    if (!host.apartman) continue;
-    const list = podleApt.get(host.apartman) || [];
+    const apt = host.apartman || `?${host.rezervace}`;
+    const list = podleApt.get(apt) || [];
     list.push(host);
-    podleApt.set(host.apartman, list);
+    podleApt.set(apt, list);
   }
 
-  const uklid: UklidRadek[] = [];
+  const surove: UklidRadek[] = [];
+  const sloty: UklidSlot[] = [];
   for (const [apt, odchazeji] of podleApt) {
     const odchod = [...odchazeji].sort((a, b) => {
       const ac = jeHodina(a.casOdjezdu) ? minuty(a.casOdjezdu) : 24 * 60;
@@ -245,7 +390,10 @@ export function sestavDnesek(hoste: HostDne[], dnes: string, now?: Date): Dnesek
       if (ac !== bc) return ac - bc;
       return a.rezervace.localeCompare(b.rezervace);
     })[0];
-    const kandidati = prijezdyHoste.filter((h) => h.apartman === apt && h.rezervace !== odchod.rezervace);
+    const aptId = odchod.apartman || apt;
+    const kandidati = prijezdyHoste.filter(
+      (h) => (h.apartman || '') === (odchod.apartman || '') && h.rezervace !== odchod.rezervace,
+    );
     const zname = seradPodleCasu(
       kandidati.filter((h) => jeHodina(h.casPrijezdu)),
       (h) => h.casPrijezdu,
@@ -253,36 +401,56 @@ export function sestavDnesek(hoste: HostDne[], dnes: string, now?: Date): Dnesek
     );
     const dalsi = zname[0] || kandidati[0] || null;
     const prijezdCas = dalsi && jeHodina(dalsi.casPrijezdu) ? dalsi.casPrijezdu : null;
-    uklid.push({
+    const prevzato = Boolean(odchod.prevzatoKdy);
+    let casOdjezduText = 'čas neznámý';
+    if (prevzato && odchod.prevzatoKdy) {
+      const cas = casPrevzetiText(odchod.prevzatoKdy);
+      casOdjezduText = cas ? `převzato ${zobrazCas(cas)}` : 'převzato';
+    } else if (jeHodina(odchod.casOdjezdu)) {
+      casOdjezduText = zobrazCas(odchod.casOdjezdu);
+    }
+    surove.push({
       rezervace: odchod.rezervace,
-      apartman: apt,
+      apartman: aptId,
+      jmeno: odchod.jmeno,
+      casOdjezduText,
+      nedoplatek: odchod.dluh ? `Nedoplatek ${odchod.dluh}` : null,
       uvolni: textUvolneni(odchod, dnes, now),
       dalsi: !dalsi
         ? 'dnes nikdo nepřijede'
         : prijezdCas
           ? `další host v ${zobrazCas(prijezdCas)}`
           : 'další host dnes, čas neznámý',
+      dalsiJmeno: dalsi?.jmeno || null,
       dalsiRezervace: dalsi?.rezervace || null,
       prijezdCas,
       maPrijezd: Boolean(dalsi),
       prvni: false,
+      nestihneSeDo: null,
       uklizenoKdy: odchod.uklizenoKdy,
       uklizenoKdo: odchod.uklizenoKdo,
+      prevzato,
+    });
+    sloty.push({
+      id: aptId,
+      uvolneni: uvolneniMinut(odchod),
+      predani: predaniMinut(dalsi),
+      uklizeno: Boolean(odchod.uklizenoKdy),
     });
   }
 
-  uklid.sort((a, b) => {
-    const skupina = (r: UklidRadek) => (!r.maPrijezd ? 2 : r.prijezdCas ? 0 : 1);
-    const sa = skupina(a);
-    const sb = skupina(b);
-    if (sa !== sb) return sa - sb;
-    if (sa === 0 && a.prijezdCas && b.prijezdCas) {
-      const d = minuty(a.prijezdCas) - minuty(b.prijezdCas);
-      if (d) return d;
-    }
-    return poradiApt(a.apartman) - poradiApt(b.apartman);
-  });
-  const prvni = uklid.find((r) => r.maPrijezd);
+  const poradi = seradUklidPoradi(sloty);
+  const podleKlic = new Map(surove.map((r) => [r.apartman, r]));
+  const uklid: UklidRadek[] = [];
+  for (const p of poradi) {
+    const r = podleKlic.get(p.id);
+    if (!r) continue;
+    uklid.push({
+      ...r,
+      nestihneSeDo: p.nestihneSeDo != null ? zobrazCas(casZMinut(p.nestihneSeDo)) : null,
+    });
+  }
+  const prvni = uklid.find((r) => !r.uklizenoKdy);
   if (prvni) prvni.prvni = true;
 
   const odjezdy = seradPodleCasu(odjezdyHoste, (h) => h.casOdjezdu, (h) => h.apartman || '').map(
@@ -344,5 +512,5 @@ export function textZmenyPoradi(p: DnesekPohled): string | null {
 }
 
 export function klicUklidu(den: string, p: DnesekPohled): string {
-  return `${den}:${p.uklid.map((r) => r.apartman).join(',')}`;
+  return `${den}:${p.uklid.filter((r) => !r.uklizenoKdy).map((r) => r.apartman).join(',')}`;
 }

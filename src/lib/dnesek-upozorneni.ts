@@ -13,6 +13,20 @@ function poradiDnes(klic: string | null, den: string): string | null {
   return klic.slice(predpona.length);
 }
 
+/** Jen se uklidily některé apartmány, pořadí zbylých zůstalo. */
+function jenUklizeno(stare: string | null, nove: string | null): boolean {
+  if (stare == null || nove == null) return false;
+  const a = stare.split(',').filter(Boolean);
+  const b = nove.split(',').filter(Boolean);
+  if (!b.length) return true;
+  let i = 0;
+  for (const x of a) {
+    if (x === b[i]) i += 1;
+    if (i === b.length) return true;
+  }
+  return false;
+}
+
 /** Jednou ráno majiteli a Nikol. Hostovi odtud nic neodchází. */
 export async function upozorniDnes(
   store: ProcessStore,
@@ -37,18 +51,25 @@ export async function upozorniDnes(
       zmena = true;
       pocet += 1;
     }
-  } else if (beh.rano === dnes && poradiDnes(beh.uklid, dnes) !== pohled.uklid.map((r) => r.apartman).join(',')) {
-    const veta = poradiDnes(beh.uklid, dnes) === null ? null : textZmenyPoradi(pohled);
-    if (veta) {
-      const jak = await posli(store, veta, STRANKA);
-      if (jak !== 'nic') {
-        beh.uklid = klic;
-        zmena = true;
-        pocet += 1;
-      }
-    } else {
+  } else if (beh.rano === dnes && poradiDnes(beh.uklid, dnes) !== poradiDnes(klic, dnes)) {
+    const stare = poradiDnes(beh.uklid, dnes);
+    const nove = poradiDnes(klic, dnes);
+    if (jenUklizeno(stare, nove)) {
       beh.uklid = klic;
       zmena = true;
+    } else {
+      const veta = stare === null ? null : textZmenyPoradi(pohled);
+      if (veta) {
+        const jak = await posli(store, veta, STRANKA);
+        if (jak !== 'nic') {
+          beh.uklid = klic;
+          zmena = true;
+          pocet += 1;
+        }
+      } else {
+        beh.uklid = klic;
+        zmena = true;
+      }
     }
   }
 

@@ -8,12 +8,14 @@ import {
   hostZRezervace,
   klicUklidu,
   oznacUklid,
+  seradUklidPoradi,
   sestavDnesek,
   textRano,
   textUklizeno,
   textZmenyPoradi,
   vratUklid,
   type HostDne,
+  type UklidSlot,
 } from './dnesek';
 import { upozorniDnes } from './dnesek-upozorneni';
 import { ukazkoveRadky } from './prehled-ukazka';
@@ -67,6 +69,64 @@ function pamet(zaznamy: RezervaceRecord[]) {
   } as unknown as ProcessStore;
   return { store, beh: () => beh };
 }
+
+function slot(id: string, uvolneni: number, predani: number | null, uklizeno = false): UklidSlot {
+  return { id, uvolneni, predani, uklizeno };
+}
+
+describe('pořadí úklidu', () => {
+  it('1: V1 8:00/15:00, V2 10:00/12:00 → V1, V2', () => {
+    expect(seradUklidPoradi([slot('V1', 8 * 60, 15 * 60), slot('V2', 10 * 60, 12 * 60)]).map((r) => r.id)).toEqual([
+      'V1',
+      'V2',
+    ]);
+  });
+
+  it('2: V1 10:00/15:00, V2 10:10/12:00 → V2, V1', () => {
+    expect(seradUklidPoradi([slot('V1', 10 * 60, 15 * 60), slot('V2', 10 * 60 + 10, 12 * 60)]).map((r) => r.id)).toEqual([
+      'V2',
+      'V1',
+    ]);
+  });
+
+  it('3: V1 10:00/15:00, V2 10:30/12:00 → V1, V2', () => {
+    expect(seradUklidPoradi([slot('V1', 10 * 60, 15 * 60), slot('V2', 10 * 60 + 30, 12 * 60)]).map((r) => r.id)).toEqual([
+      'V1',
+      'V2',
+    ]);
+  });
+
+  it('4: pojistka V2 10:30/11:30 → V2, V1', () => {
+    expect(seradUklidPoradi([slot('V1', 10 * 60, 15 * 60), slot('V2', 10 * 60 + 30, 11 * 60 + 30)]).map((r) => r.id)).toEqual([
+      'V2',
+      'V1',
+    ]);
+  });
+
+  it('5: oba 10:00, předání 16:00 a 14:00 → V2, V1', () => {
+    expect(seradUklidPoradi([slot('V1', 10 * 60, 16 * 60), slot('V2', 10 * 60, 14 * 60)]).map((r) => r.id)).toEqual([
+      'V2',
+      'V1',
+    ]);
+  });
+
+  it('6: oba 10:00/11:30 → V1, V2 a V2 nestihne', () => {
+    const r = seradUklidPoradi([slot('V1', 10 * 60, 11 * 60 + 30), slot('V2', 10 * 60, 11 * 60 + 30)]);
+    expect(r.map((x) => x.id)).toEqual(['V1', 'V2']);
+    expect(r[0].nestihneSeDo).toBeNull();
+    expect(r[1].nestihneSeDo).toBe(11 * 60 + 30);
+  });
+
+  it('7: V4 8:51/16:00, V3 10:00/13:00, V5 10:00/14:30 → V4, V3, V5', () => {
+    expect(
+      seradUklidPoradi([
+        slot('V4', 8 * 60 + 51, 16 * 60),
+        slot('V3', 10 * 60, 13 * 60),
+        slot('V5', 10 * 60, 14 * 60 + 30),
+      ]).map((r) => r.id),
+    ).toEqual(['V4', 'V3', 'V5']);
+  });
+});
 
 describe('dnešek', () => {
   it('seřadí úklid a označí první apartmán s dnešním příjezdem', () => {
@@ -163,10 +223,10 @@ describe('dnešek', () => {
   });
 
   it('změnu pořadí pošle jednou a jen když první apartmán není uklizený', async () => {
-    const v4 = rec({ rezervace: '4', apartman: 'V4', odjezd: DEN, casOdjezdu: '09:30', jmeno: 'Klára' });
-    const v2 = rec({ rezervace: '2', apartman: 'V2', odjezd: DEN, jmeno: 'Tomáš' });
-    const naV4 = rec({ rezervace: '5', apartman: 'V4', prijezd: DEN, casPrijezdu: '13:00', jmeno: 'Petr' });
-    const naV2 = rec({ rezervace: '6', apartman: 'V2', prijezd: DEN, casPrijezdu: '16:00', jmeno: 'Eva' });
+    const v4 = rec({ rezervace: '4', apartman: 'V4', odjezd: DEN, casOdjezdu: '10:00', jmeno: 'Klára' });
+    const v2 = rec({ rezervace: '2', apartman: 'V2', odjezd: DEN, casOdjezdu: '10:00', jmeno: 'Tomáš' });
+    const naV4 = rec({ rezervace: '5', apartman: 'V4', prijezd: DEN, casPrijezdu: '16:00', jmeno: 'Petr' });
+    const naV2 = rec({ rezervace: '6', apartman: 'V2', prijezd: DEN, casPrijezdu: '15:00', jmeno: 'Eva' });
     const { store, beh } = pamet([v4, v2, naV4, naV2]);
     const texty: string[] = [];
     const posli = async (_s: ProcessStore, text: string) => {
@@ -176,12 +236,13 @@ describe('dnešek', () => {
     const rano = casVPraze(DEN, 7, 30);
     await upozorniDnes(store, rano, posli);
     expect(texty).toHaveLength(1);
+    expect(texty[0]).toContain('Uklidit první V2');
     await upozorniDnes(store, rano, posli);
     expect(texty).toHaveLength(1);
 
-    naV2.casPrijezdu = '12:30';
+    naV4.casPrijezdu = '12:00';
     await upozorniDnes(store, casVPraze(DEN, 11, 0), posli);
-    expect(texty[1]).toBe('Pořadí úklidu se změnilo: V2 první (host v 12:30).');
+    expect(texty[1]).toBe('Pořadí úklidu se změnilo: V4 první (host v 12:00).');
     await upozorniDnes(store, casVPraze(DEN, 11, 2), posli);
     expect(texty).toHaveLength(2);
 

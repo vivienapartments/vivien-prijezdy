@@ -49,7 +49,16 @@ export async function upozorniMajitelePodrobne(
   store: ProcessStore,
   text: string,
   url: string,
+  opts?: { zkuseni?: boolean },
 ): Promise<VysledekUpozorneni> {
+  if (!opts?.zkuseni && !process.env.VITEST) {
+    try {
+      await store.pridejUpozorneni({ cas: new Date().toISOString(), text, url });
+    } catch (err) {
+      console.error('Upozorneni: seznam selhalo', err instanceof Error ? err.message : err);
+    }
+  }
+
   let zarizeni: PushZarizeni[] = [];
   try {
     zarizeni = await store.listPush();

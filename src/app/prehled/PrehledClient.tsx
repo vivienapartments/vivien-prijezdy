@@ -43,7 +43,7 @@ import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
 import { Dnesek } from './Dnesek';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
-import type { JakPlatby, PlatbaPolozky } from '@/lib/store';
+import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
 import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
 import { nactiBranu, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
@@ -76,6 +76,10 @@ const STAVY: { id: '' | Stav; text: string }[] = [
   { id: 'zruseno', text: 'Zrušeno' },
 ];
 
+const KLIC_UPOZORNENI_PRECTENO = 'vivien-upozorneni-precteno';
+
+type ZpetKam = { zalozka: Zalozka; y: number };
+
 type Props = {
   rows: PrehledRadek[];
   dnes: string;
@@ -83,6 +87,8 @@ type Props = {
   chybiWifi: string[];
   /** ISO času posledního běhu automatu. Pro varování nahoře. */
   posledniBehCas?: string | null;
+  /** Soupis upozornění z Upstash (jednou při otevření). */
+  upozorneniSeznam?: UpozorneniZaznam[];
   /** Místní náhled. Číslo se zapíše jen na obrazovce, ne do ostrých rezervací. */
   ukazka?: boolean;
   /** User-Agent prohlížeče. Na Androidu z něj vznikne odkaz na WhatsApp Business. */
@@ -133,6 +139,7 @@ export function PrehledClient({
   zitra,
   chybiWifi,
   posledniBehCas = null,
+  upozorneniSeznam = [],
   ukazka = false,
   userAgent = '',
   brana = [],
@@ -146,6 +153,8 @@ export function PrehledClient({
   const [telefony, setTelefony] = useState<Record<string, string>>({});
   const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
   const [stav, setStav] = useState<'' | Stav>('');
+  const [zpetKam, setZpetKam] = useState<ZpetKam | null>(null);
+  const [prectenoUpozorneni, setPrectenoUpozorneni] = useState<string | null>(null);
   /** Filtr seznamu na záložce Příjezdy. Bez prázdna: vždy dnes, nebo zítra. */
   const [den, setDen] = useState<'dnes' | 'zitra'>('dnes');
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
@@ -204,9 +213,25 @@ export function PrehledClient({
     setBranaOk(branaPotvrzena);
   }, [rows, brana, branaPotvrzena]);
 
+  useEffect(() => {
+    try {
+      setPrectenoUpozorneni(localStorage.getItem(KLIC_UPOZORNENI_PRECTENO));
+    } catch {
+      setPrectenoUpozorneni(null);
+    }
+  }, []);
+
   function otevriKartu(id: string) {
     const cislo = id.trim();
     if (!cislo || cislo === 'pohoda' || cislo.startsWith('odjezdy')) return;
+    setZpetKam((prev) => {
+      if (zalozka === 'hledat' && vybrana === cislo) return prev;
+      try {
+        return { zalozka, y: typeof window !== 'undefined' ? window.scrollY : 0 };
+      } catch {
+        return { zalozka, y: 0 };
+      }
+    });
     setVybrana(cislo);
     setRozbalene((prev) => ({ ...prev, [cislo]: true }));
     setZalozka('hledat');
@@ -219,10 +244,41 @@ export function PrehledClient({
     }
   }
 
+  function zpetZKarty() {
+    const kam = zpetKam;
+    setZpetKam(null);
+    setVybrana(null);
+    try {
+      if (typeof window !== 'undefined' && window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    } catch {
+      /* hash */
+    }
+    if (kam) {
+      setZalozka(kam.zalozka);
+      requestAnimationFrame(() => {
+        try {
+          window.scrollTo(0, kam.y);
+        } catch {
+          /* scroll */
+        }
+      });
+    }
+  }
+
   useEffect(() => {
     function zHash() {
       const raw = window.location.hash.replace(/^#/, '').trim();
       if (!raw || raw === 'pohoda' || raw.startsWith('odjezdy')) return;
+      setZpetKam((prev) => {
+        if (prev) return prev;
+        try {
+          return { zalozka, y: window.scrollY };
+        } catch {
+          return { zalozka, y: 0 };
+        }
+      });
       setVybrana(raw);
       setRozbalene((prev) => ({ ...prev, [raw]: true }));
       setZalozka('hledat');
@@ -230,6 +286,8 @@ export function PrehledClient({
     zHash();
     window.addEventListener('hashchange', zHash);
     return () => window.removeEventListener('hashchange', zHash);
+    // jen při mountu; zalozka v closure je výchozí
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /** Obnova jen když je přehled otevřený. Na pozadí nic nenačítá (šetří Upstash). */
@@ -2162,6 +2220,51 @@ export function PrehledClient({
         ) : null}
       </header>
       {automatVarovani ? <p className="ph-automat">{automatVarovani}</p> : null}
+      {(() => {
+        const nova = upozorneniSeznam.filter((u) => !prectenoUpozorneni || u.cas > prectenoUpozorneni);
+        if (!nova.length) return null;
+        return (
+          <div className="ph-upozorneni-seznam">
+            <div className="ph-upozorneni-seznam__hlava">
+              <h2>Nová upozornění ({nova.length})</h2>
+              <button
+                type="button"
+                className="ph-ulozit"
+                onClick={() => {
+                  const ted = new Date().toISOString();
+                  try {
+                    localStorage.setItem(KLIC_UPOZORNENI_PRECTENO, ted);
+                  } catch {
+                    /* paměť */
+                  }
+                  setPrectenoUpozorneni(ted);
+                }}
+              >
+                Přečetl jsem
+              </button>
+            </div>
+            <ul>
+              {nova.map((u) => {
+                const id = (u.url.match(/#([\w-]+)/) || [])[1] || '';
+                return (
+                  <li key={`${u.cas}:${u.text}`}>
+                    <button
+                      type="button"
+                      className="ph-upozorneni-seznam__radek"
+                      onClick={() => {
+                        if (id && id !== 'pohoda' && !id.startsWith('odjezdy')) otevriKartu(id);
+                      }}
+                    >
+                      <span className="ph-upozorneni-seznam__cas">{casPraha(u.cas) || u.cas}</span>
+                      <span>{u.text}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })()}
 
       <RadaZalozek zalozka={zalozka} pocty={pocty} nove={nove} onZmena={otevriZalozku} />
       <label className="ph-hledat-nahore">
@@ -2213,13 +2316,8 @@ export function PrehledClient({
           vPrehledu
           onPrevzato={poPrevzeti}
           onOtevri={otevriKartu}
-          onZavadyZapsany={(odjizdejici, prijezdejici) => {
-            setHlaska(
-              prijezdejici
-                ? 'Závady po odjezdu uloženy i dalšímu hostovi. E-mail pošlete z karty.'
-                : 'Závady po odjezdu uloženy. E-mail pošlete z karty.',
-            );
-            void otevriKartu(odjizdejici);
+          onZavadyZapsany={() => {
+            setHlaska('Závady po odjezdu uloženy.');
             router.refresh();
           }}
         />
@@ -2229,10 +2327,7 @@ export function PrehledClient({
           radky={radky}
           dnes={dnes}
           ukazka={ukazka}
-          onOtevri={(id) => {
-            setVybrana(id);
-            setRozbalene((prev) => ({ ...prev, [id]: true }));
-          }}
+          onOtevri={otevriKartu}
           onPlatby={zapisPlatbyRadku}
         />
       ) : null}
@@ -2244,13 +2339,25 @@ export function PrehledClient({
           dotaz={hledatDotaz}
           onDotaz={setHledatDotaz}
           jenVysledky
-          onOtevri={(id) => {
-            setVybrana(id);
-            setRozbalene((prev) => ({ ...prev, [id]: true }));
-          }}
+          onOtevri={otevriKartu}
         />
       ) : null}
-      {zalozka === 'dluhy' || zalozka === 'hledat' ? (vybrany ? kartaHosta(vybrany) : null) : null}
+      {zalozka === 'dluhy' || zalozka === 'hledat'
+        ? vybrany
+          ? (
+              <>
+                {zpetKam ? (
+                  <p className="ph-dnesek__akce">
+                    <button type="button" className="ph-dnesek__odkaz" onClick={zpetZKarty}>
+                      ← Zpět
+                    </button>
+                  </p>
+                ) : null}
+                {kartaHosta(vybrany)}
+              </>
+            )
+          : null
+        : null}
 
       {zalozka === 'prijezdy' ? (
       <>

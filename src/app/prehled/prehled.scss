@@ -1346,8 +1346,86 @@
   color: var(--color-gold);
 }
 
+.ph-dnesek button.is-on {
+  background: var(--color-gold);
+  color: #1c1712;
+}
+
+.ph-dnesek__nestihne {
+  color: #e07070;
+}
+
+.ph-dnesek__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0.55rem 0;
+  cursor: pointer;
+  line-height: 1.35;
+}
+
+.ph-dnesek__check input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0.15rem 0 0;
+  flex: 0 0 auto;
+}
+
 .ph-dnesek__prazdno {
   margin: 0;
+}
+
+.ph-upozorneni-seznam {
+  margin: 0.75rem 0 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.ph-upozorneni-seznam__hlava {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+.ph-upozorneni-seznam__hlava h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-gold);
+}
+
+.ph-upozorneni-seznam ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ph-upozorneni-seznam__radek {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  padding: 0.45rem 0.55rem;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ph-upozorneni-seznam__cas {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .ph-hledat-nahore {

@@ -62,6 +62,7 @@ export default async function PrehledPage({ searchParams }: Props) {
   }
   const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(store, now);
   const posledniBehCas = ukazka ? now.toISOString() : (await store.getBeh())?.cas ?? null;
+  const upozorneniSeznam = ukazka ? [] : await store.listUpozorneni();
   const branaPripravena = branaJePripravena();
   const dnes = dnesVPraze(now);
   const userAgent = (await headers()).get('user-agent') ?? '';
@@ -72,6 +73,7 @@ export default async function PrehledPage({ searchParams }: Props) {
       zitra={posunDen(dnes, 1)}
       chybiWifi={chybejiciWifi()}
       posledniBehCas={posledniBehCas}
+      upozorneniSeznam={upozorneniSeznam}
       ukazka={ukazka}
       userAgent={userAgent}
       brana={branaDoc.sloty}
