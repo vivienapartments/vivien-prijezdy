@@ -2722,29 +2722,107 @@ function OdkazyZeSchranky() {
   );
 }
 
+const PUSH_NAZEV_KLIC = 'vivien-push-nazev';
+
+function nactiNazevPush(): string {
+  try {
+    return (localStorage.getItem(PUSH_NAZEV_KLIC) || '').trim().slice(0, 40);
+  } catch {
+    return '';
+  }
+}
+
+function ulozNazevPush(nazev: string) {
+  try {
+    localStorage.setItem(PUSH_NAZEV_KLIC, nazev.trim().slice(0, 40));
+  } catch {
+    /* paměť */
+  }
+}
+
+function datumPrihlaseniPush(iso: string | undefined): string {
+  if (!iso) return '';
+  const t = casPraha(iso);
+  const m = t.match(/^(\d+\.\s*\d+\.)/);
+  return m ? m[1].replace(/\s+/g, ' ').trim() : t;
+}
+
 function Upozorneni() {
   const [klic, setKlic] = useState('');
-  const [zarizeni, setZarizeni] = useState<{ nazev: string; endpoint: string }[]>([]);
+  const [zarizeni, setZarizeni] = useState<{ nazev: string; endpoint: string; cas?: string }[]>([]);
   const [hlaska, setHlaska] = useState('');
   const [zkousim, setZkousim] = useState(false);
+  const [ptamJmeno, setPtamJmeno] = useState(false);
+  const [jmenoDraft, setJmenoDraft] = useState('');
+
+  async function posliSubscription(publicKey: string, nazev: string, tise: boolean) {
+    if (!publicKey || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      if (!tise) setHlaska('Upozornění ještě nejsou nastavená.');
+      return false;
+    }
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+      if (!tise) setHlaska('Upozornění jsou v telefonu vypnutá.');
+      return false;
+    }
+    const reg = await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: klicNaBajty(publicKey),
+      });
+    }
+    const jsonSub = sub.toJSON();
+    const res = await fetch('/api/prehled/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        akce: 'zapnout',
+        nazev,
+        endpoint: jsonSub.endpoint,
+        keys: jsonSub.keys,
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
+      error?: string;
+    } | null;
+    if (!res.ok || !json?.ok) {
+      if (!tise) setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
+      return false;
+    }
+    setZarizeni(json.zarizeni || []);
+    return true;
+  }
 
   useEffect(() => {
     let zive = true;
     fetch('/api/prehled/push')
       .then((res) => res.json())
       .then(
-        (json: {
+        async (json: {
           ok?: boolean;
           publicKey?: string;
-          zarizeni?: { nazev: string; endpoint: string }[];
+          zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
           pocet?: number;
           chybaUlaziste?: string;
         }) => {
           if (!zive || !json?.ok) return;
-          setKlic(json.publicKey || '');
+          const publicKey = json.publicKey || '';
+          setKlic(publicKey);
           setZarizeni(json.zarizeni || []);
           if (json.chybaUlaziste) setHlaska('Úložiště teď neodpovídá. Zkuste zapnout znovu za chvíli.');
           else if ((json.pocet ?? 0) === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
+          const nazev = nactiNazevPush();
+          if (
+            nazev &&
+            publicKey &&
+            typeof Notification !== 'undefined' &&
+            Notification.permission === 'granted'
+          ) {
+            await posliSubscription(publicKey, nazev, true);
+          }
         },
       )
       .catch(() => undefined);
@@ -2755,7 +2833,13 @@ function Upozorneni() {
 
   async function zapnout() {
     setHlaska('');
-    if (!klic || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    const ulozene = nactiNazevPush();
+    if (!ulozene) {
+      setPtamJmeno(true);
+      setJmenoDraft('');
+      return;
+    }
+    if (!klic) {
       setHlaska('Upozornění ještě nejsou nastavená.');
       return;
     }
@@ -2764,39 +2848,29 @@ function Upozorneni() {
       setHlaska('Upozornění jsou v telefonu vypnutá.');
       return;
     }
-    const reg = await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: klicNaBajty(klic),
-    });
-    const jsonSub = sub.toJSON();
-    const res = await fetch('/api/prehled/push', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        akce: 'zapnout',
-        nazev: navigator.userAgent.includes('Android') ? 'Android' : 'Telefon',
-        endpoint: jsonSub.endpoint,
-        keys: jsonSub.keys,
-      }),
-    });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; zarizeni?: { nazev: string; endpoint: string }[]; error?: string } | null;
-    if (!res.ok || !json?.ok) {
-      setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
-      return;
-    }
-    setZarizeni(json.zarizeni || []);
-    setHlaska('Upozornění jsou zapnutá.');
+    const ok = await posliSubscription(klic, ulozene, false);
+    if (ok) setHlaska('Upozornění jsou zapnutá.');
   }
 
-  async function vypnout(endpoint: string) {
-    const res = await fetch('/api/prehled/push', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ akce: 'vypnout', endpoint }),
-    });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; zarizeni?: { nazev: string; endpoint: string }[] } | null;
-    if (res.ok && json?.ok) setZarizeni(json.zarizeni || []);
+  async function potvrdJmeno() {
+    const nazev = jmenoDraft.trim().slice(0, 40);
+    if (!nazev) {
+      setHlaska('Napište, čí je to telefon.');
+      return;
+    }
+    ulozNazevPush(nazev);
+    setPtamJmeno(false);
+    if (!klic) {
+      setHlaska('Upozornění ještě nejsou nastavená.');
+      return;
+    }
+    const povoleni = await Notification.requestPermission();
+    if (povoleni !== 'granted') {
+      setHlaska('Upozornění jsou v telefonu vypnutá.');
+      return;
+    }
+    const ok = await posliSubscription(klic, nazev, false);
+    if (ok) setHlaska('Upozornění jsou zapnutá.');
   }
 
   async function zkusit() {
@@ -2820,11 +2894,34 @@ function Upozorneni() {
       <button type="button" className="ph-ulozit" disabled={zkousim} onClick={() => void zkusit()}>
         {zkousim ? 'Zkouším…' : 'Zkusit upozornění'}
       </button>
-      {zarizeni.map((z) => (
-        <button key={z.endpoint} type="button" className="ph-push-vyp" onClick={() => void vypnout(z.endpoint)}>
-          Vypnout {z.nazev}
-        </button>
-      ))}
+      {ptamJmeno ? (
+        <div className="ph-predano-dotaz">
+          <p>Čí je to telefon?</p>
+          <input
+            value={jmenoDraft}
+            onChange={(e) => setJmenoDraft(e.target.value)}
+            maxLength={40}
+            autoComplete="name"
+            aria-label="Čí je to telefon"
+          />
+          <button type="button" onClick={() => void potvrdJmeno()}>
+            Uložit
+          </button>
+          <button type="button" onClick={() => setPtamJmeno(false)}>
+            Zrušit
+          </button>
+        </div>
+      ) : null}
+      {zarizeni.length ? (
+        <ul className="ph-push-seznam">
+          {zarizeni.map((z) => (
+            <li key={z.endpoint}>
+              {z.nazev}
+              {z.cas ? ` · přihlášeno ${datumPrihlaseniPush(z.cas)}` : ''}
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {hlaska ? <span className="ph-push-stav">{hlaska}</span> : null}
     </div>
   );

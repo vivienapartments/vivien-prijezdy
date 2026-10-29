@@ -198,4 +198,29 @@ describe('okno pobytu', () => {
     expect(zadost?.push).toContain('lze potvrdit hned');
     expect(zadost?.push).not.toContain('@');
   });
+
+  it('stejná čekající žádost se nezapisuje znovu', () => {
+    const ted = new Date('2026-10-20T08:00:00.000Z');
+    const host = zaklad('9', {
+      prijezd: '2026-10-20',
+      zadostPrijezd: {
+        cas: '12:00',
+        kc: 300,
+        stav: 'ceka',
+        kdy: ted.toISOString(),
+        od: 'pruvodce',
+        hned: true,
+        upozorneno: true,
+      },
+    });
+    const znovu = zadostPrijezdu(host, [], '12:00', 'pruvodce', ted);
+    expect(znovu?.bezeZmeny).toBe(true);
+    expect(znovu?.push).toBe('');
+    expect(znovu?.rec.historie.length).toBe(host.historie.length);
+
+    const jiny = zadostPrijezdu(host, [], '11:00', 'pruvodce', ted);
+    expect(jiny?.bezeZmeny).toBeFalsy();
+    expect(jiny?.rec.zadostPrijezd?.cas).toBe('11:00');
+    expect(jiny?.push).toBeTruthy();
+  });
 });

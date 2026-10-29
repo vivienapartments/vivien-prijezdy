@@ -1050,6 +1050,19 @@
   margin-top: 2.5rem;
 }
 
+.ph-push-seznam {
+  width: 100%;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--pv-muted, #b7aa9a);
+  font-size: 0.9rem;
+}
+
+.ph-push-seznam li {
+  margin: 0.15rem 0;
+}
+
 .ph-odkazy-schranka {
   margin-top: 1.6rem;
 }

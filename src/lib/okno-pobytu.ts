@@ -869,7 +869,10 @@ export function zadostPrijezdu(
   cas: string,
   od: ZadostOkna['od'],
   now: Date,
-): { rec: RezervaceRecord; push: string } | null {
+): { rec: RezervaceRecord; push: string; bezeZmeny?: boolean } | null {
+  if (rec.zadostPrijezd?.stav === 'ceka' && rec.zadostPrijezd.cas === cas) {
+    return { rec, push: '', bezeZmeny: true };
+  }
   const kc = cenaDrive(cas);
   if (!kc || rec.zadostPrijezd?.stav === 'potvrzeno') return null;
   const odchod = odjizdiTenDen(hosteZ(zaznamy), hostZ(rec));
@@ -898,7 +901,10 @@ export function zadostOdjezdu(
   cas: string,
   od: ZadostOkna['od'],
   now: Date,
-): { rec: RezervaceRecord; push: string } | null {
+): { rec: RezervaceRecord; push: string; bezeZmeny?: boolean } | null {
+  if (rec.zadostOdjezd?.stav === 'ceka' && rec.zadostOdjezd.cas === cas) {
+    return { rec, push: '', bezeZmeny: true };
+  }
   const kc = cenaPozde(cas);
   if (!kc || rec.zadostOdjezd?.stav === 'potvrzeno') return null;
   const dalsiHost = prijizdiTenDen(hosteZ(zaznamy), hostZ(rec));

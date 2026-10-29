@@ -111,8 +111,10 @@ export async function ulozVstupHosta(
         await spalit();
         return { ok: false, duvod: 'cas' };
       }
-      pracovni = v.rec;
-      pushe.push(v.push);
+      if (!v.bezeZmeny) {
+        pracovni = v.rec;
+        if (v.push) pushe.push(v.push);
+      }
     }
     if (telo.casOdjezd) {
       const v = zadostOdjezdu(pracovni, vse, telo.casOdjezd, 'pruvodce', now);
@@ -120,8 +122,13 @@ export async function ulozVstupHosta(
         await spalit();
         return { ok: false, duvod: 'cas' };
       }
-      pracovni = v.rec;
-      pushe.push(v.push);
+      if (!v.bezeZmeny) {
+        pracovni = v.rec;
+        if (v.push) pushe.push(v.push);
+      }
+    }
+    if (pracovni === rec && !pushe.length) {
+      return { ok: true, uroven: urovenZRezervace(rec) };
     }
     const casUlozeni = now.toISOString();
     const zapis = { ...pracovni, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
@@ -138,10 +145,13 @@ export async function ulozVstupHosta(
         await spalit();
         return { ok: false, duvod: 'cas' };
       }
+      if (v.bezeZmeny) {
+        return { ok: true, cas: rec.zadostOdjezd?.cas || cas, uroven: urovenZRezervace(rec) };
+      }
       const casUlozeni = new Date().toISOString();
       const zapis = { ...v.rec, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
       await store.setRezervace(id, zapis);
-      await ohlas(store, id, v.push);
+      if (v.push) await ohlas(store, id, v.push);
       return { ok: true, cas: v.rec.zadostOdjezd?.cas || cas, uroven: urovenZRezervace(zapis) };
     }
     if (!jeCasOdjezduPovoleny(cas)) {
@@ -219,7 +229,7 @@ export async function ulozVstupHosta(
         historie: souhlas.veta ? [...v.rec.historie, { cas: casUlozeni, co: souhlas.veta }].slice(-40) : v.rec.historie,
       };
       await store.setRezervace(id, zapis);
-      await ohlas(store, id, v.push);
+      if (v.push) await ohlas(store, id, v.push);
       return { ok: true, cas: zapis.casPrijezdu || undefined, uroven: urovenZRezervace(zapis) };
     }
     const novy = popisekCasu(cas);
