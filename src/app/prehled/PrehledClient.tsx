@@ -232,6 +232,8 @@ export function PrehledClient({
   const [prectenoUpozorneni, setPrectenoUpozorneni] = useState<string | null>(null);
   /** Vybraný den nahoře (YYYY-MM-DD). Jen v paměti stránky, výchozí dnes. */
   const [vybranyDen, setVybranyDen] = useState(dnes);
+  /** Domů = provoz (upozornění, záložky, hledat). Den = jen karty vybraného dne. */
+  const [pohledDomu, setPohledDomu] = useState(true);
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
   const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
   const [videne, setVidene] = useState<Record<string, Record<string, string>> | null>(null);
@@ -2906,10 +2908,24 @@ export function PrehledClient({
           </p>
         ))}
       <header className="ph-top">
-        <h1>Přehled rezervací</h1>
+        <div className="ph-top__hlava">
+          <button
+            type="button"
+            className={pohledDomu ? 'ph-domu is-on' : 'ph-domu'}
+            aria-pressed={pohledDomu}
+            onClick={() => {
+              setPohledDomu(true);
+              setVybranyDen(dnes);
+              otevriZalozku('prijezdy');
+            }}
+          >
+            Domů
+          </button>
+          <h1>Přehled rezervací</h1>
+        </div>
         <div className="ph-dny" role="tablist" aria-label="Výběr dne">
           {dnyNahled.map((d) => {
-            const on = d.den === vybranyDen;
+            const on = !pohledDomu && d.den === vybranyDen;
             return (
               <button
                 key={d.den}
@@ -2918,128 +2934,147 @@ export function PrehledClient({
                 aria-selected={on}
                 className={on ? 'ph-dny__den is-on' : 'ph-dny__den'}
                 onClick={() => {
+                  setPohledDomu(false);
                   setVybranyDen(d.den);
                   otevriZalozku('prijezdy');
                 }}
               >
                 <span className="ph-dny__stitek">
                   {d.stitek}
-                  {d.problem ? <span className="ph-dny__tecka" aria-label="Chybí údaje" /> : null}
+                  {d.problemy.map((p) => (
+                    <span
+                      key={p}
+                      className={`ph-dny__tecka ph-dny__tecka--${p}`}
+                      aria-label={
+                        p === 'checkin' ? 'Bez check-inu' : p === 'cas' ? 'Chybí čas' : 'Chybí brána'
+                      }
+                    />
+                  ))}
                 </span>
-                <span className="ph-dny__pocty">
-                  ↓{d.prijezdy} ↑{d.odjezdy}
+                <span className="ph-dny__tri">
+                  ↓{d.prijezdy} ↑{d.odjezdy}{' '}
+                  <span className="ph-dny__vol">
+                    <span className="ph-dny__nula">0</span>
+                    {d.volne}
+                  </span>
                 </span>
               </button>
             );
           })}
         </div>
-        <div className={zalozka === 'prijezdy' ? 'ph-den is-on' : 'ph-den'}>
-          <p className="ph-den__nadpis">
-            {nadpisSouhrnuDne(vybranyDen, dnes)}: {vybranySouhrn.pocet} · průvodce otevřelo {vybranySouhrn.otevrelo} ·
-            neodesláno {vybranySouhrn.neodeslano} · bez check-inu: {vybranySouhrn.bezCheckinu}
-          </p>
-          {vybranySouhrn.plan.length ? (
-            <p className="ph-plan">
-              {vybranySouhrn.plan.map((h, i) => (
-                <span key={h.rezervace}>
-                  {i > 0 ? ' · ' : null}
-                  <button
-                    type="button"
-                    className={h.cas ? 'ph-plan__host' : 'ph-plan__host is-chybi'}
-                    onClick={() => otevriKartu(h.rezervace)}
-                  >
-                    {h.cas ? `${h.cas} ${h.jmeno}` : `bez času ${h.jmeno}`}
-                    <span className="ph-plan__hint" aria-hidden="true">
-                      {' '}
-                      ▸
-                    </span>
-                  </button>
-                </span>
-              ))}
+        {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu ? (
+          <div className={zalozka === 'prijezdy' || !pohledDomu ? 'ph-den is-on' : 'ph-den'}>
+            <p className="ph-den__nadpis">
+              {nadpisSouhrnuDne(vybranyDen, dnes)}: {vybranySouhrn.pocet} · průvodce otevřelo {vybranySouhrn.otevrelo} ·
+              neodesláno {vybranySouhrn.neodeslano} · bez check-inu: {vybranySouhrn.bezCheckinu}
             </p>
-          ) : null}
-        </div>
+            {vybranySouhrn.plan.length ? (
+              <p className="ph-plan">
+                {vybranySouhrn.plan.map((h, i) => (
+                  <span key={h.rezervace}>
+                    {i > 0 ? ' · ' : null}
+                    <button
+                      type="button"
+                      className={h.cas ? 'ph-plan__host' : 'ph-plan__host is-chybi'}
+                      onClick={() => otevriKartu(h.rezervace)}
+                    >
+                      {h.cas ? `${h.cas} ${h.jmeno}` : `bez času ${h.jmeno}`}
+                      <span className="ph-plan__hint" aria-hidden="true">
+                        {' '}
+                        ▸
+                      </span>
+                    </button>
+                  </span>
+                ))}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
         {chybiWifi.length ? (
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
       </header>
       {automatVarovani ? <p className="ph-automat">{automatVarovani}</p> : null}
-      {(() => {
-        const nova = upozorneniSeznam.filter((u) => !prectenoUpozorneni || u.cas > prectenoUpozorneni);
-        if (!nova.length) return null;
-        return (
-          <div className="ph-upozorneni-seznam">
-            <div className="ph-upozorneni-seznam__hlava">
-              <h2>Nová upozornění ({nova.length})</h2>
-              <button
-                type="button"
-                className="ph-ulozit"
-                onClick={() => {
-                  const ted = new Date().toISOString();
-                  try {
-                    localStorage.setItem(KLIC_UPOZORNENI_PRECTENO, ted);
-                  } catch {
-                    /* paměť */
-                  }
-                  setPrectenoUpozorneni(ted);
-                }}
-              >
-                Přečetl jsem
-              </button>
-            </div>
-            <ul>
-              {nova.map((u) => {
-                const id = idZUpozorneniUrl(u.url);
-                const kotva = kotvaZUpozorneniUrl(u.url);
-                const maCil = Boolean(id || kotva || zalozkaZUpozorneniUrl(u.url));
-                return (
-                  <li key={`${u.cas}:${u.text}`}>
-                    <button
-                      type="button"
-                      className={maCil ? 'ph-upozorneni-seznam__radek' : 'ph-upozorneni-seznam__radek is-bez-odkazu'}
-                      onClick={() => otevriZUpozorneni(u.url, u.text)}
-                    >
-                      <span className="ph-upozorneni-seznam__cas">{casPraha(u.cas) || u.cas}</span>
-                      <span>{u.text}</span>
-                      {id ? (
-                        <span className="ph-upozorneni-seznam__hint">Otevřít kartu ▸</span>
-                      ) : kotva === 'odjezdy-zitra' || /odjíždí|dotaz na odjezd/i.test(u.text) ? (
-                        <span className="ph-upozorneni-seznam__hint">Zítřejší odjezdy ▸</span>
-                      ) : maCil ? (
-                        <span className="ph-upozorneni-seznam__hint">Otevřít ▸</span>
-                      ) : null}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        );
-      })()}
+      {pohledDomu
+        ? (() => {
+            const nova = upozorneniSeznam.filter((u) => !prectenoUpozorneni || u.cas > prectenoUpozorneni);
+            if (!nova.length) return null;
+            return (
+              <div className="ph-upozorneni-seznam">
+                <div className="ph-upozorneni-seznam__hlava">
+                  <h2>Nová upozornění ({nova.length})</h2>
+                  <button
+                    type="button"
+                    className="ph-ulozit"
+                    onClick={() => {
+                      const ted = new Date().toISOString();
+                      try {
+                        localStorage.setItem(KLIC_UPOZORNENI_PRECTENO, ted);
+                      } catch {
+                        /* paměť */
+                      }
+                      setPrectenoUpozorneni(ted);
+                    }}
+                  >
+                    Přečetl jsem
+                  </button>
+                </div>
+                <ul>
+                  {nova.map((u) => {
+                    const id = idZUpozorneniUrl(u.url);
+                    const kotva = kotvaZUpozorneniUrl(u.url);
+                    const maCil = Boolean(id || kotva || zalozkaZUpozorneniUrl(u.url));
+                    return (
+                      <li key={`${u.cas}:${u.text}`}>
+                        <button
+                          type="button"
+                          className={maCil ? 'ph-upozorneni-seznam__radek' : 'ph-upozorneni-seznam__radek is-bez-odkazu'}
+                          onClick={() => otevriZUpozorneni(u.url, u.text)}
+                        >
+                          <span className="ph-upozorneni-seznam__cas">{casPraha(u.cas) || u.cas}</span>
+                          <span>{u.text}</span>
+                          {id ? (
+                            <span className="ph-upozorneni-seznam__hint">Otevřít kartu ▸</span>
+                          ) : kotva === 'odjezdy-zitra' || /odjíždí|dotaz na odjezd/i.test(u.text) ? (
+                            <span className="ph-upozorneni-seznam__hint">Zítřejší odjezdy ▸</span>
+                          ) : maCil ? (
+                            <span className="ph-upozorneni-seznam__hint">Otevřít ▸</span>
+                          ) : null}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })()
+        : null}
 
-      <RadaZalozek zalozka={zalozka} pocty={pocty} nove={nove} onZmena={otevriZalozku} />
-      <label className="ph-hledat-nahore">
-        Hledat hosta
-        <input
-          value={hledatDotaz}
-          onChange={(e) => {
-            const text = e.target.value;
-            setHledatDotaz(text);
-            if (text.trim()) otevriZalozku('hledat');
-          }}
-          onFocus={() => {
-            if (hledatDotaz.trim()) otevriZalozku('hledat');
-          }}
-          placeholder="jméno, číslo rezervace, apartmán…"
-          autoComplete="off"
-        />
-      </label>
+      {pohledDomu ? <RadaZalozek zalozka={zalozka} pocty={pocty} nove={nove} onZmena={otevriZalozku} /> : null}
+      {pohledDomu ? (
+        <label className="ph-hledat-nahore">
+          Hledat hosta
+          <input
+            value={hledatDotaz}
+            onChange={(e) => {
+              const text = e.target.value;
+              setHledatDotaz(text);
+              if (text.trim()) otevriZalozku('hledat');
+            }}
+            onFocus={() => {
+              if (hledatDotaz.trim()) otevriZalozku('hledat');
+            }}
+            placeholder="jméno, číslo rezervace, apartmán…"
+            autoComplete="off"
+          />
+        </label>
+      ) : null}
 
-      {zalozka === 'dnes' ? (
+      {pohledDomu && zalozka === 'dnes' ? (
         <Dnesek
           radky={radky}
-          dnes={vybranyDen}
-          operacePovolene={vybranyDen === dnes}
+          dnes={dnes}
+          operacePovolene
           ukazka={ukazka}
           brana={brana}
           vPrehledu
@@ -3051,7 +3086,7 @@ export function PrehledClient({
           }}
         />
       ) : null}
-      {zalozka === 'dluhy' ? (
+      {pohledDomu && zalozka === 'dluhy' ? (
         <Nedoplatky
           radky={radky}
           dnes={dnes}
@@ -3060,7 +3095,7 @@ export function PrehledClient({
           onPlatby={zapisPlatbyRadku}
         />
       ) : null}
-      {zalozka === 'hledat' ? (
+      {pohledDomu && zalozka === 'hledat' ? (
         <>
           <Hledani
             radky={radky}
@@ -3150,42 +3185,46 @@ export function PrehledClient({
         </>
       ) : null}
 
-      {zalozka === 'prijezdy' ? (
+      {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu ? (
       <>
-      <p className="ph-dnesek__akce">
-        <button type="button" onClick={() => otevriNovouRezervaci(null)}>
-          Nová rezervace – nový host
-        </button>
-      </p>
+      {pohledDomu ? (
+        <p className="ph-dnesek__akce">
+          <button type="button" onClick={() => otevriNovouRezervaci(null)}>
+            Nová rezervace – nový host
+          </button>
+        </p>
+      ) : null}
 
-      <div className="ph-filtry">
-        <label>
-          Stav
-          <select value={stav} onChange={(e) => setStav(e.target.value as '' | Stav)}>
-            {STAVY.map((s) => (
-              <option key={s.id || 'all'} value={s.id}>
-                {s.text}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          className={jenNeotevreni ? 'is-on' : ''}
-          aria-pressed={jenNeotevreni}
-          onClick={() => setJenNeotevreni((v) => !v)}
-        >
-          Neotevřeli průvodce
-        </button>
-        <button
-          type="button"
-          className={jenBezCheckinu ? 'is-on' : ''}
-          aria-pressed={jenBezCheckinu}
-          onClick={() => setJenBezCheckinu((v) => !v)}
-        >
-          Bez check-inu
-        </button>
-      </div>
+      {pohledDomu ? (
+        <div className="ph-filtry">
+          <label>
+            Stav
+            <select value={stav} onChange={(e) => setStav(e.target.value as '' | Stav)}>
+              {STAVY.map((s) => (
+                <option key={s.id || 'all'} value={s.id}>
+                  {s.text}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className={jenNeotevreni ? 'is-on' : ''}
+            aria-pressed={jenNeotevreni}
+            onClick={() => setJenNeotevreni((v) => !v)}
+          >
+            Neotevřeli průvodce
+          </button>
+          <button
+            type="button"
+            className={jenBezCheckinu ? 'is-on' : ''}
+            aria-pressed={jenBezCheckinu}
+            onClick={() => setJenBezCheckinu((v) => !v)}
+          >
+            Bez check-inu
+          </button>
+        </div>
+      ) : null}
 
       {hlaska ? <p className="ph-hlaska">{hlaska}</p> : null}
 
@@ -3203,7 +3242,7 @@ export function PrehledClient({
       </>
       ) : null}
 
-      {zalozka === 'dnes'
+      {pohledDomu && zalozka === 'dnes'
         ? (() => {
             const hoste = seradOdjezdy(radky.filter((r) => jeProPohodu(r, dnes)));
             if (!hoste.length) return null;
@@ -3282,7 +3321,7 @@ export function PrehledClient({
           })()
         : null}
 
-      {(zalozka === 'dnes' ? [{ den: zitra, nadpis: 'Zítřejší odjezdy', kotva: 'odjezdy-zitra' }] : []).map((sekce) => {
+      {(pohledDomu && zalozka === 'dnes' ? [{ den: zitra, nadpis: 'Zítřejší odjezdy', kotva: 'odjezdy-zitra' }] : []).map((sekce) => {
         const hoste = seradOdjezdy(radky.filter((r) => r.stav !== 'zruseno' && r.odjezd === sekce.den));
         if (!hoste.length) return null;
         return (
@@ -3367,7 +3406,7 @@ export function PrehledClient({
         );
       })}
 
-      {zalozka === 'prijezdy'
+      {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu
         ? aktivni.map((row) => {
             const pred = predanoRadku(row);
             if (pred && !rozbalPredano[row.rezervace]) {
@@ -3393,11 +3432,11 @@ export function PrehledClient({
           })
         : null}
 
-      {zalozka === 'prijezdy' ? (
+      {pohledDomu && zalozka === 'prijezdy' ? (
         <Dnesek
           radky={radky}
-          dnes={vybranyDen}
-          operacePovolene={vybranyDen === dnes}
+          dnes={dnes}
+          operacePovolene
           jenUklid
           ukazka={ukazka}
           brana={brana}
@@ -3411,7 +3450,7 @@ export function PrehledClient({
         />
       ) : null}
 
-      {zalozka === 'prijezdy' && odjeli.length ? (
+      {((pohledDomu && zalozka === 'prijezdy') || !pohledDomu) && odjeli.length ? (
         <section className="ph-odjeli">
           <h2>Odjeli</h2>
           <button
@@ -3426,19 +3465,21 @@ export function PrehledClient({
         </section>
       ) : null}
 
-      {zalozka === 'prijezdy' ? <BranaTabulka
-        sloty={sloty}
-        radky={radky}
-        ukazka={ukazka}
-        potvrzena={branaOk}
-        onPotvrzeno={() => setBranaOk(true)}
-        onSloty={setSloty}
-        onHlaska={setHlaska}
-        onHost={(id) => {
-          setRozbalene((prev) => ({ ...prev, [id]: true }));
-          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }}
-      /> : null}
+      {pohledDomu && zalozka === 'prijezdy' ? (
+        <BranaTabulka
+          sloty={sloty}
+          radky={radky}
+          ukazka={ukazka}
+          potvrzena={branaOk}
+          onPotvrzeno={() => setBranaOk(true)}
+          onSloty={setSloty}
+          onHlaska={setHlaska}
+          onHost={(id) => {
+            setRozbalene((prev) => ({ ...prev, [id]: true }));
+            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+        />
+      ) : null}
 
       {ukazka ? null : <OdkazyZeSchranky />}
       <Upozorneni />

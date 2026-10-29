@@ -997,6 +997,9 @@ export function nadpisSouhrnuDne(ymd: string, dnes: string): string {
   return `${VE_DNI[denVTydnuUtc(ymd)]} přijíždí`;
 }
 
+/** Typ chyby u příjezdu dne (tečka u dlaždice). */
+export type ProblemDne = 'checkin' | 'cas' | 'brana';
+
 export type DenNahled = {
   den: string;
   stitek: string;
@@ -1004,23 +1007,36 @@ export type DenNahled = {
   odjezdy: number;
   /** Chybí čas, check-in, nebo u auta SPZ / telefon k bráně. */
   problem: boolean;
+  /** Pořadí: check-in, čas, brána. Bez duplicit. */
+  problemy: ProblemDne[];
+  /** Volná apartmány na noc (5 − obsazené, příjezd ≤ den < odjezd). */
+  volne: number;
 };
 
-function hostMaProblemDne(
-  r: PrehledRadek,
-  casy: Record<string, string | null>,
-): boolean {
-  if (r.stav === 'zruseno' || r.nelzeNacist) return false;
-  if (r.stav === 'bez_checkinu') return true;
+function problemyHostaDne(r: PrehledRadek, casy: Record<string, string | null>): ProblemDne[] {
+  if (r.stav === 'zruseno' || r.nelzeNacist) return [];
+  if (r.stav === 'bez_checkinu') return ['checkin'];
+  const out: ProblemDne[] = [];
   const cas = casy[r.rezervace] ?? r.casPrijezdu;
-  if (!cas) return true;
+  if (!cas) out.push('cas');
   if (r.zpusobPrijezdu === 'auto' && (!r.telefonBrana || (!r.spz && !r.spzPujcene))) {
-    return true;
+    out.push('brana');
   }
-  return false;
+  return out;
 }
 
-/** Počty ↓↑ a červená tečka pro tlačítko dne. Jen z už načtených karet. */
+/** Host přespí noc dne, když příjezd ≤ den a odjezd je až potom. */
+export function volneApartmanyNoc(rows: PrehledRadek[], den: string): number {
+  const obsazene = new Set<string>();
+  for (const r of rows) {
+    if (r.stav === 'zruseno' || r.nelzeNacist || !r.apartman) continue;
+    if (!r.prijezd || !r.odjezd) continue;
+    if (r.prijezd <= den && den < r.odjezd) obsazene.add(r.apartman);
+  }
+  return Math.max(0, APT_IDS.length - obsazene.size);
+}
+
+/** Počty ↓↑⌀ a barevné tečky pro dlaždici dne. Jen z už načtených karet. */
 export function nahledDne(
   rows: PrehledRadek[],
   den: string,
@@ -1029,11 +1045,18 @@ export function nahledDne(
 ): DenNahled {
   const prijezdy = rows.filter((r) => r.prijezd === den && r.stav !== 'zruseno' && !r.nelzeNacist);
   const odjezdy = rows.filter((r) => r.odjezd === den && r.stav !== 'zruseno' && !r.nelzeNacist);
+  const set = new Set<ProblemDne>();
+  for (const r of prijezdy) {
+    for (const p of problemyHostaDne(r, casy)) set.add(p);
+  }
+  const problemy = (['checkin', 'cas', 'brana'] as const).filter((p) => set.has(p));
   return {
     den,
     stitek: stitekDne(den, dnes),
     prijezdy: prijezdy.length,
     odjezdy: odjezdy.length,
-    problem: prijezdy.some((r) => hostMaProblemDne(r, casy)),
+    problem: problemy.length > 0,
+    problemy,
+    volne: volneApartmanyNoc(rows, den),
   };
 }

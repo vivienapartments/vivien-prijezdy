@@ -515,7 +515,7 @@ describe('tlačítka v přehledu', () => {
     expect(s.plan.map((h) => h.jmeno)).toEqual(['Dřív', 'Pozdě']);
   });
 
-  it('výběr dnů: stítky, ↓↑ a červená tečka', () => {
+  it('výběr dnů: stítky, ↓↑⌀ a barevné tečky', () => {
     expect(dnyVyberu('2026-10-29')).toEqual([
       '2026-10-29',
       '2026-10-30',
@@ -536,6 +536,7 @@ describe('tlačítka v přehledu', () => {
       ...prazdnaRezervace('ok', '2026-10-01T00:00:00.000Z'),
       prijezd: '2026-10-30',
       odjezd: '2026-10-31',
+      apartman: 'V1',
       jmeno: 'Hotový',
       casPrijezdu: '15:00',
       zpusobPrijezdu: 'pesky',
@@ -546,6 +547,7 @@ describe('tlačítka v přehledu', () => {
       ...prazdnaRezervace('prob', '2026-10-01T00:00:00.000Z'),
       prijezd: '2026-10-30',
       odjezd: '2026-11-01',
+      apartman: 'V2',
       jmeno: 'Bez času',
       casPrijezdu: null,
       stav: 'odeslano',
@@ -554,6 +556,7 @@ describe('tlačítka v přehledu', () => {
       ...prazdnaRezervace('odj', '2026-10-01T00:00:00.000Z'),
       prijezd: '2026-10-28',
       odjezd: '2026-10-30',
+      apartman: 'V3',
       jmeno: 'Odjezd',
       stav: 'odeslano',
     });
@@ -561,7 +564,11 @@ describe('tlačítka v přehledu', () => {
     expect(n.prijezdy).toBe(2);
     expect(n.odjezdy).toBe(1);
     expect(n.problem).toBe(true);
+    expect(n.problemy).toEqual(['cas']);
+    // V1 a V2 přespí 30. 10. (odjezd až potom). V3 už odjel. Volné 3 z 5.
+    expect(n.volne).toBe(3);
     expect(nahledDne([ok], '2026-10-30', '2026-10-29').problem).toBe(false);
+    expect(nahledDne([ok], '2026-10-30', '2026-10-29').volne).toBe(4);
   });
 
   it('u neodeslané rezervace se neptá a odeslání nabídne', () => {
