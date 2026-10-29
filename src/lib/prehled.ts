@@ -1025,6 +1025,21 @@ function problemyHostaDne(r: PrehledRadek, casy: Record<string, string | null>):
   return out;
 }
 
+/**
+ * Pořadí karty v dni: menší = výš.
+ * 0 check-in, 1 čas, 2 brána, 3 hotovo.
+ */
+export function zavaznostProblemuPrijezdu(
+  r: PrehledRadek,
+  casy: Record<string, string | null> = {},
+): number {
+  const p = problemyHostaDne(r, casy);
+  if (p.includes('checkin')) return 0;
+  if (p.includes('cas')) return 1;
+  if (p.includes('brana')) return 2;
+  return 3;
+}
+
 /** Host přespí noc dne, když příjezd ≤ den a odjezd je až potom. */
 export function volneApartmanyNoc(rows: PrehledRadek[], den: string): number {
   const obsazene = new Set<string>();

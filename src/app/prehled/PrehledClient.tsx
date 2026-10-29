@@ -21,6 +21,7 @@ import {
   textAutomatNebezi,
   textPoplatku,
   vetaChyby,
+  zavaznostProblemuPrijezdu,
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
@@ -2856,8 +2857,11 @@ export function PrehledClient({
     const predA = predanoRadku(a) ? 1 : 0;
     const predB = predanoRadku(b) ? 1 : 0;
     if (predA !== predB) return predA - predB;
-    const ca = a.casPrijezdu || '';
-    const cb = b.casPrijezdu || '';
+    const za = zavaznostProblemuPrijezdu(a, casy);
+    const zb = zavaznostProblemuPrijezdu(b, casy);
+    if (za !== zb) return za - zb;
+    const ca = (Object.prototype.hasOwnProperty.call(casy, a.rezervace) ? casy[a.rezervace] : a.casPrijezdu) || '';
+    const cb = (Object.prototype.hasOwnProperty.call(casy, b.rezervace) ? casy[b.rezervace] : b.casPrijezdu) || '';
     if (ca !== cb) {
       if (ca && !cb) return -1;
       if (!ca && cb) return 1;

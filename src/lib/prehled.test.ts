@@ -14,6 +14,7 @@ import {
   nadpisSouhrnuDne,
   stitekDne,
   posunDen,
+  zavaznostProblemuPrijezdu,
   telefonyPrehledu,
   terminKratky,
   textAutomatNebezi,
@@ -569,6 +570,45 @@ describe('tlačítka v přehledu', () => {
     expect(n.volne).toBe(3);
     expect(nahledDne([ok], '2026-10-30', '2026-10-29').problem).toBe(false);
     expect(nahledDne([ok], '2026-10-30', '2026-10-29').volne).toBe(4);
+  });
+
+  it('závažnost problému: check-in před časem před branou před hotovým', () => {
+    const checkin = radekZRezervace({
+      ...prazdnaRezervace('c', '2026-10-01T00:00:00.000Z'),
+      stav: 'bez_checkinu',
+      prijezd: '2026-10-30',
+      odjezd: '2026-10-31',
+    });
+    const cas = radekZRezervace({
+      ...prazdnaRezervace('t', '2026-10-01T00:00:00.000Z'),
+      stav: 'odeslano',
+      prijezd: '2026-10-30',
+      odjezd: '2026-10-31',
+      casPrijezdu: null,
+    });
+    const brana = radekZRezervace({
+      ...prazdnaRezervace('b', '2026-10-01T00:00:00.000Z'),
+      stav: 'odeslano',
+      prijezd: '2026-10-30',
+      odjezd: '2026-10-31',
+      casPrijezdu: '15:00',
+      zpusobPrijezdu: 'auto',
+      telefonBrana: null,
+      spz: null,
+      spzPujcene: false,
+    });
+    const ok = radekZRezervace({
+      ...prazdnaRezervace('o', '2026-10-01T00:00:00.000Z'),
+      stav: 'odeslano',
+      prijezd: '2026-10-30',
+      odjezd: '2026-10-31',
+      casPrijezdu: '16:00',
+      zpusobPrijezdu: 'pesky',
+    });
+    expect(zavaznostProblemuPrijezdu(checkin)).toBe(0);
+    expect(zavaznostProblemuPrijezdu(cas)).toBe(1);
+    expect(zavaznostProblemuPrijezdu(brana)).toBe(2);
+    expect(zavaznostProblemuPrijezdu(ok)).toBe(3);
   });
 
   it('u neodeslané rezervace se neptá a odeslání nabídne', () => {
