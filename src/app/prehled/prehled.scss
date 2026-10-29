@@ -89,6 +89,29 @@
   color: var(--color-gold);
 }
 
+.ph-plan__host {
+  display: inline;
+  margin: 0;
+  padding: 0.1rem 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  cursor: pointer;
+}
+
+.ph-plan__host.is-chybi {
+  color: #f2b4b4;
+  font-weight: 600;
+}
+
+.ph-plan__hint {
+  text-decoration: none;
+  opacity: 0.85;
+}
+
 .ph .ph-den__nadpis {
   display: block;
   width: 100%;

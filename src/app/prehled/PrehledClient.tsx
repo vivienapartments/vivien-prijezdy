@@ -2429,8 +2429,16 @@ export function PrehledClient({
               {vybranySouhrn.plan.map((h, i) => (
                 <span key={h.rezervace}>
                   {i > 0 ? ' · ' : null}
-                  <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(h.rezervace)}>
+                  <button
+                    type="button"
+                    className={h.cas ? 'ph-plan__host' : 'ph-plan__host is-chybi'}
+                    onClick={() => otevriKartu(h.rezervace)}
+                  >
                     {h.cas ? `${h.cas} ${h.jmeno}` : `bez času ${h.jmeno}`}
+                    <span className="ph-plan__hint" aria-hidden="true">
+                      {' '}
+                      ▸
+                    </span>
                   </button>
                 </span>
               ))}
