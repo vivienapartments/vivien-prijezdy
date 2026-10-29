@@ -3694,6 +3694,17 @@ function Upozorneni() {
   const [zkousim, setZkousim] = useState(false);
   const [ptamJmeno, setPtamJmeno] = useState(false);
   const [jmenoDraft, setJmenoDraft] = useState('');
+  const [endpointTeto, setEndpointTeto] = useState('');
+
+  async function registraceSw() {
+    const reg = await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
+    try {
+      await reg.update();
+    } catch {
+      /* starý prohlížeč */
+    }
+    return navigator.serviceWorker.ready;
+  }
 
   async function posliSubscription(publicKey: string, nazev: string, tise: boolean) {
     if (!publicKey || !('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -3704,68 +3715,86 @@ function Upozorneni() {
       if (!tise) setHlaska('Upozornění jsou v telefonu vypnutá.');
       return false;
     }
-    const reg = await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
-    let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: klicNaBajty(publicKey),
+    try {
+      const ready = await registraceSw();
+      let sub = await ready.pushManager.getSubscription();
+      if (!sub) {
+        sub = await ready.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: klicNaBajty(publicKey),
+        });
+      }
+      const jsonSub = sub.toJSON();
+      if (!jsonSub.endpoint || !jsonSub.keys) {
+        if (!tise) setHlaska('Prohlížeč upozornění nepředal.');
+        return false;
+      }
+      setEndpointTeto(jsonSub.endpoint);
+      const res = await fetch('/api/prehled/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          akce: 'zapnout',
+          nazev,
+          endpoint: jsonSub.endpoint,
+          keys: jsonSub.keys,
+        }),
       });
-    }
-    const jsonSub = sub.toJSON();
-    const res = await fetch('/api/prehled/push', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        akce: 'zapnout',
-        nazev,
-        endpoint: jsonSub.endpoint,
-        keys: jsonSub.keys,
-      }),
-    });
-    const json = (await res.json().catch(() => null)) as {
-      ok?: boolean;
-      zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
-      error?: string;
-    } | null;
-    if (!res.ok || !json?.ok) {
-      if (!tise) setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
+        error?: string;
+      } | null;
+      if (!res.ok || !json?.ok) {
+        if (!tise) setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
+        return false;
+      }
+      setZarizeni(json.zarizeni || []);
+      return true;
+    } catch {
+      if (!tise) setHlaska('Upozornění se nepodařilo zapnout. Zkuste znovu.');
       return false;
     }
-    setZarizeni(json.zarizeni || []);
-    return true;
   }
 
   useEffect(() => {
     let zive = true;
-    fetch('/api/prehled/push')
-      .then((res) => res.json())
-      .then(
-        async (json: {
+    (async () => {
+      try {
+        const res = await fetch('/api/prehled/push');
+        const json = (await res.json().catch(() => null)) as {
           ok?: boolean;
           publicKey?: string;
           zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
           pocet?: number;
           chybaUlaziste?: string;
-        }) => {
-          if (!zive || !json?.ok) return;
-          const publicKey = json.publicKey || '';
-          setKlic(publicKey);
-          setZarizeni(json.zarizeni || []);
-          if (json.chybaUlaziste) setHlaska('Úložiště teď neodpovídá. Zkuste zapnout znovu za chvíli.');
-          else if ((json.pocet ?? 0) === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
-          const nazev = nactiNazevPush();
-          if (
-            nazev &&
-            publicKey &&
-            typeof Notification !== 'undefined' &&
-            Notification.permission === 'granted'
-          ) {
-            await posliSubscription(publicKey, nazev, true);
-          }
-        },
-      )
-      .catch(() => undefined);
+        } | null;
+        if (!zive || !json?.ok) return;
+        const publicKey = json.publicKey || '';
+        setKlic(publicKey);
+        setZarizeni(json.zarizeni || []);
+        if (json.chybaUlaziste) {
+          setHlaska('Úložiště teď neodpovídá. Zkuste zapnout znovu za chvíli.');
+          return;
+        }
+        const nazev = nactiNazevPush();
+        if (
+          nazev &&
+          publicKey &&
+          typeof Notification !== 'undefined' &&
+          Notification.permission === 'granted'
+        ) {
+          const ok = await posliSubscription(publicKey, nazev, true);
+          if (!zive) return;
+          if (ok) setHlaska('Upozornění jsou zapnutá.');
+          else setHlaska('Po nasazení je potřeba znovu klepnout na Zapnout upozornění.');
+          return;
+        }
+        if ((json.pocet ?? 0) === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
+      } catch {
+        /* síť */
+      }
+    })();
     return () => {
       zive = false;
     };
@@ -3827,6 +3856,7 @@ function Upozorneni() {
   }
 
   const nazevTelefonu = nactiNazevPush();
+  const totoZapnute = Boolean(endpointTeto && zarizeni.some((z) => z.endpoint === endpointTeto));
 
   return (
     <div className="ph-push">
@@ -3843,7 +3873,7 @@ function Upozorneni() {
         </button>
       </p>
       <button type="button" className="ph-ulozit" onClick={() => void zapnout()}>
-        Zapnout upozornění
+        {totoZapnute ? 'Obnovit upozornění' : 'Zapnout upozornění'}
       </button>
       <button type="button" className="ph-ulozit" disabled={zkousim} onClick={() => void zkusit()}>
         {zkousim ? 'Zkouším…' : 'Zkusit upozornění'}
@@ -3872,6 +3902,7 @@ function Upozorneni() {
           {zarizeni.map((z) => (
             <li key={z.endpoint}>
               {z.nazev}
+              {z.endpoint === endpointTeto ? ' · tento telefon' : ''}
               {z.cas ? ` · přihlášeno ${datumPrihlaseniPush(z.cas)}` : ''}
             </li>
           ))}

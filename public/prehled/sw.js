@@ -1,3 +1,12 @@
+/* vivien-prehled-sw 2026-10-30 */
+self.addEventListener('install', function (event) {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', function (event) {
+  event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener('push', function (event) {
   var data = {};
   try {
