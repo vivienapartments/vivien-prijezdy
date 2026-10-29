@@ -522,8 +522,12 @@ export function hosteNaDen(list: RezervaceRecord[], den: string): RezervaceRecor
   return seradOdjezdy(list.filter((r) => odjizdi(r, den)));
 }
 
+/**
+ * Ještě nemá odeslaný dotaz na odjezd.
+ * Čas zadaný majitelem nestačí. Až po WhatsApp / e-mailu (odjezdDotaz).
+ */
 export function chybiDotaz(rec: RezervaceRecord): boolean {
-  return !jeHodina(rec.casOdjezdu) && !rec.odjezdDotaz;
+  return !rec.odjezdDotaz;
 }
 
 export function klicOdjezdu(rec: Pick<RezervaceRecord, 'odjezd' | 'casOdjezdu'>): string | null {

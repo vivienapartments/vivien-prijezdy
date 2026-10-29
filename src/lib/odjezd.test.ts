@@ -95,6 +95,36 @@ describe('odjezd', () => {
     expect(texty[0]).toMatch(/V1|V3/);
   });
 
+  it('večer neupozorní, když už je dotaz na odjezd odeslaný (čas od majitele nestačí)', async () => {
+    const now = casVPraze('2026-10-16', 18, 5);
+    const { store } = pamet([
+      host({
+        rezervace: '1',
+        apartman: 'V1',
+        odjezd: '2026-10-17',
+        casOdjezdu: '10:00',
+        odjezdDotaz: '2026-10-16T10:00:00.000Z',
+      }),
+    ]);
+    const texty: string[] = [];
+    await upozorniOdjezdy(store, now, async (_s, text) => {
+      texty.push(text);
+      return 'push';
+    });
+    expect(texty).toEqual([]);
+  });
+
+  it('jeden zítřejší host bez dotazu dostane odkaz rovnou na kartu', async () => {
+    const now = casVPraze('2026-10-16', 18, 5);
+    const { store } = pamet([host({ rezervace: '9', apartman: 'V2', jmeno: 'Jan Test', odjezd: '2026-10-17' })]);
+    const urlky: string[] = [];
+    await upozorniOdjezdy(store, now, async (_s, _text, url) => {
+      urlky.push(url);
+      return 'push';
+    });
+    expect(urlky).toEqual(['/prehled#9']);
+  });
+
   it('když push ani e-mail neberou, zkusí to příště', async () => {
     const now = casVPraze('2026-10-16', 18, 5);
     const { store } = pamet([host({ rezervace: '1', odjezd: '2026-10-17' })]);

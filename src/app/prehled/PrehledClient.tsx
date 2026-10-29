@@ -325,6 +325,18 @@ export function PrehledClient({
     /** Stará upozornění „Zítra odjíždí…“ měla jen záložku Dnešek bez kotvy. */
     if (!kotva && /odjíždí|dotaz na odjezd/i.test(text)) kotva = 'odjezdy-zitra';
     if (!kotva && /v pořádku/i.test(text)) kotva = 'pohoda';
+
+    if (kotva === 'odjezdy-zitra') {
+      const zitraYmd = posunDen(dnes, 1);
+      const zitrejsi = radky.filter(
+        (r) => !r.nelzeNacist && r.stav !== 'zruseno' && r.odjezd === zitraYmd,
+      );
+      if (zitrejsi.length === 1) {
+        otevriKartu(zitrejsi[0].rezervace);
+        return;
+      }
+    }
+
     const z = zalozkaZUpozorneniUrl(url) || (kotva ? 'dnes' : null);
     if (z) {
       otevriZalozku(z);

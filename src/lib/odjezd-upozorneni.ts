@@ -83,23 +83,40 @@ export async function upozorniOdjezdy(
   const dnes = denPraha(now);
   const zitra = posunDen(dnes, 1);
   const zitrejsi = hosteNaDen(list, zitra);
+  /** Jen kdo ještě nedostal dotaz. Čas od majitele nestačí. */
+  const bezDotazu = zitrejsi.filter(chybiDotaz);
 
-  if (beh.vecer !== dnes && zitrejsi.length) {
-    const text = textVecer(zitrejsi);
-    const jak = await posli(store, text, '/prehled?zalozka=dnes#odjezdy-zitra');
-    if (jak !== 'nic') {
+  if (beh.vecer !== dnes) {
+    if (!bezDotazu.length) {
       beh.vecer = dnes;
-      pocet += 1;
+    } else {
+      const text = textVecer(bezDotazu);
+      const url =
+        bezDotazu.length === 1
+          ? `/prehled#${bezDotazu[0].rezervace}`
+          : '/prehled?zalozka=dnes#odjezdy-zitra';
+      const jak = await posli(store, text, url);
+      if (jak !== 'nic') {
+        beh.vecer = dnes;
+        pocet += 1;
+      }
     }
   }
 
-  const bezDotazu = zitrejsi.filter(chybiDotaz);
-  if (hodina >= HODINA_PRIPOMINKY_ODJEZDU && beh.pripominka !== dnes && bezDotazu.length) {
-    const text = textPripominky(bezDotazu);
-    const jak = await posli(store, text, '/prehled?zalozka=dnes#odjezdy-zitra');
-    if (jak !== 'nic') {
+  if (hodina >= HODINA_PRIPOMINKY_ODJEZDU && beh.pripominka !== dnes) {
+    if (!bezDotazu.length) {
       beh.pripominka = dnes;
-      pocet += 1;
+    } else {
+      const text = textPripominky(bezDotazu);
+      const url =
+        bezDotazu.length === 1
+          ? `/prehled#${bezDotazu[0].rezervace}`
+          : '/prehled?zalozka=dnes#odjezdy-zitra';
+      const jak = await posli(store, text, url);
+      if (jak !== 'nic') {
+        beh.pripominka = dnes;
+        pocet += 1;
+      }
     }
   }
 
