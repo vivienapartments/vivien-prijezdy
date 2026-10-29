@@ -83,6 +83,21 @@ const STAVY: { id: '' | Stav; text: string }[] = [
 
 const KLIC_UPOZORNENI_PRECTENO = 'vivien-upozorneni-precteno';
 
+/** Číslo rezervace z odkazu upozornění (`/prehled#12026…`). */
+function idZUpozorneniUrl(url: string): string | null {
+  const raw = (url || '').trim();
+  if (!raw) return null;
+  const hash = (raw.split('#')[1] || '').split(/[?&]/)[0].trim();
+  if (!hash || hash === 'pohoda' || hash.startsWith('odjezdy')) return null;
+  return hash;
+}
+
+function zalozkaZUpozorneniUrl(url: string): Zalozka | null {
+  const m = (url || '').match(/[?&]zalozka=(prijezdy|dnes|dluhy|hledat)\b/);
+  if (!m) return null;
+  return m[1] as Zalozka;
+}
+
 type ZpetKam = { zalozka: Zalozka; y: number };
 
 type Props = {
@@ -255,6 +270,15 @@ export function PrehledClient({
     } catch {
       /* hash */
     }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          document.getElementById(cislo)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch {
+          /* scroll */
+        }
+      });
+    });
   }
 
   function zpetZKarty() {
@@ -278,6 +302,33 @@ export function PrehledClient({
         }
       });
     }
+  }
+
+  function otevriZUpozorneni(url: string) {
+    const id = idZUpozorneniUrl(url);
+    if (id) {
+      if (!radky.some((r) => r.rezervace === id && !r.nelzeNacist)) {
+        setHlaska(`Kartu ${id} teď v přehledu nevidím. Zkuste Hledat.`);
+        otevriZalozku('hledat');
+        setHledatDotaz(id);
+        return;
+      }
+      otevriKartu(id);
+      return;
+    }
+    const z = zalozkaZUpozorneniUrl(url);
+    if (z) {
+      otevriZalozku(z);
+      requestAnimationFrame(() => {
+        try {
+          window.scrollTo(0, 0);
+        } catch {
+          /* scroll */
+        }
+      });
+      return;
+    }
+    setHlaska('U toho upozornění není odkaz na hosta.');
   }
 
   useEffect(() => {
@@ -2416,18 +2467,18 @@ export function PrehledClient({
             </div>
             <ul>
               {nova.map((u) => {
-                const id = (u.url.match(/#([\w-]+)/) || [])[1] || '';
+                const id = idZUpozorneniUrl(u.url);
+                const maCil = Boolean(id || zalozkaZUpozorneniUrl(u.url));
                 return (
                   <li key={`${u.cas}:${u.text}`}>
                     <button
                       type="button"
-                      className="ph-upozorneni-seznam__radek"
-                      onClick={() => {
-                        if (id && id !== 'pohoda' && !id.startsWith('odjezdy')) otevriKartu(id);
-                      }}
+                      className={maCil ? 'ph-upozorneni-seznam__radek' : 'ph-upozorneni-seznam__radek is-bez-odkazu'}
+                      onClick={() => otevriZUpozorneni(u.url)}
                     >
                       <span className="ph-upozorneni-seznam__cas">{casPraha(u.cas) || u.cas}</span>
                       <span>{u.text}</span>
+                      {id ? <span className="ph-upozorneni-seznam__hint">Otevřít kartu ▸</span> : null}
                     </button>
                   </li>
                 );
@@ -2471,7 +2522,7 @@ export function PrehledClient({
           }}
         />
       ) : null}
-      {zalozka === 'dluhy' ? (
+      {zalozka === 'dluhy' && !vybrany ? (
         <Nedoplatky
           radky={radky}
           dnes={dnes}
@@ -2480,7 +2531,17 @@ export function PrehledClient({
           onPlatby={zapisPlatbyRadku}
         />
       ) : null}
-      {zalozka === 'hledat' ? (
+      {zalozka === 'hledat' && vybrany ? (
+        <>
+          <p className="ph-dnesek__akce">
+            <button type="button" className="ph-dnesek__odkaz" onClick={zpetZKarty}>
+              ← Zpět
+            </button>
+          </p>
+          {kartaHosta(vybrany)}
+        </>
+      ) : null}
+      {zalozka === 'hledat' && !vybrany ? (
         <>
           <Hledani
             radky={radky}
@@ -2569,22 +2630,16 @@ export function PrehledClient({
           ) : null}
         </>
       ) : null}
-      {zalozka === 'dluhy' || zalozka === 'hledat'
-        ? vybrany
-          ? (
-              <>
-                {zpetKam ? (
-                  <p className="ph-dnesek__akce">
-                    <button type="button" className="ph-dnesek__odkaz" onClick={zpetZKarty}>
-                      ← Zpět
-                    </button>
-                  </p>
-                ) : null}
-                {kartaHosta(vybrany)}
-              </>
-            )
-          : null
-        : null}
+      {zalozka === 'dluhy' && vybrany ? (
+        <>
+          <p className="ph-dnesek__akce">
+            <button type="button" className="ph-dnesek__odkaz" onClick={zpetZKarty}>
+              ← Zpět
+            </button>
+          </p>
+          {kartaHosta(vybrany)}
+        </>
+      ) : null}
 
       {zalozka === 'prijezdy' ? (
       <>
