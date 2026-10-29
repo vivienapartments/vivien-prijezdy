@@ -96,14 +96,19 @@ export function nactiDokument(raw: unknown): BranaDokument {
 export function ukazkovaBrana(now = new Date()): BranaSlot[] {
   const sloty = prazdnaBrana();
   const konec = konecZOdjezdu(posunDen(denPraha(now), 2));
-  sloty[0] = {
-    ...sloty[0],
-    telefon: '+420777111222',
-    konec,
-    stav: 'plati',
-    rezervace: '9001',
-    ktery: 'hlavni',
-  };
+  // Petr (9045, V5) už má stání. Anna (9001, V1) je volná → dlaždice „Nezapsáno“.
+  const petr = sloty.find((s) => s.pozice === 166) || sloty[16];
+  if (petr) {
+    const i = sloty.findIndex((s) => s.pozice === petr.pozice);
+    sloty[i] = {
+      ...petr,
+      telefon: '+420777000145',
+      konec,
+      stav: 'plati',
+      rezervace: '9045',
+      ktery: 'hlavni',
+    };
+  }
   sloty[8] = {
     ...sloty[8],
     telefon: '+420700111222',

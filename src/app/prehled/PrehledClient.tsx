@@ -24,7 +24,7 @@ import {
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
-import { odkazWhatsAppPrehled, zpravaCheckinu, zpravyMenu } from '@/lib/whatsapp-zprava';
+import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
@@ -64,8 +64,6 @@ import {
   pocetCheckinPripoinek,
   popisekStupneCasu,
 } from '@/lib/pripominky-stupne';
-import type { DruhZpravy } from '@/lib/whatsapp-zprava';
-
 function stitekDneKarty(prijezd: string | null, dnesDen: string): string {
   if (!prijezd) return 'Bez data';
   if (prijezd === dnesDen) return 'Dnes';
@@ -175,6 +173,41 @@ function UlozitKontakt({
   );
 }
 
+function TelefonNahore({
+  hodnota,
+  onUloz,
+}: {
+  hodnota: string;
+  onUloz: (text: string) => Promise<{ ok: boolean; hodnota?: string }>;
+}) {
+  const [text, setText] = useState(hodnota);
+  const [cekam, setCekam] = useState(false);
+  return (
+    <div className="ph-nova-kontakt ph-nova-kontakt--zadat">
+      <input
+        type="tel"
+        inputMode="tel"
+        autoComplete="tel"
+        placeholder="+420 …"
+        aria-label="Telefon hosta"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+      <button
+        type="button"
+        className="ph-nova-kontakt__ulozit"
+        disabled={cekam}
+        onClick={() => {
+          setCekam(true);
+          void onUloz(text).finally(() => setCekam(false));
+        }}
+      >
+        Uložit
+      </button>
+    </div>
+  );
+}
+
 export function PrehledClient({
   rows,
   dnes,
@@ -217,11 +250,9 @@ export function PrehledClient({
   const [volba, setVolba] = useState<Record<string, string>>({});
   const [panelZpravy, setPanelZpravy] = useState<Record<string, boolean>>({});
   const [kanalZpravy, setKanalZpravy] = useState<Record<string, 'whatsapp' | 'sms' | 'email'>>({});
-  const [zkratkaDotaz, setZkratkaDotaz] = useState<{
-    id: string;
-    druh: 'checkin' | 'cas' | 'brana-wa';
-    zprava: DruhZpravy;
-  } | null>(null);
+  /** Klik na dlaždici Autem, když údaje jsou: otevři SMS registraci brány. */
+  const [branaVyzva, setBranaVyzva] = useState<Record<string, number>>({});
+  const [branaZTile, setBranaZTile] = useState<Record<string, boolean>>({});
   const [odkazy, setOdkazy] = useState<Record<string, string>>({});
   const [novaRezervace, setNovaRezervace] = useState<{
     jmeno: string;
@@ -425,6 +456,13 @@ export function PrehledClient({
       window.clearInterval(id);
     };
   }, [router, ukazka]);
+
+  function maJazykRadku(row: PrehledRadek): boolean {
+    if (jazyky[row.rezervace]) return true;
+    if (row.jazyk) return true;
+    if (row.narodnost?.trim()) return true;
+    return false;
+  }
 
   function jazykRadku(row: PrehledRadek): GuideLang {
     return jazyky[row.rezervace] || (row.narodnost?.trim() ? langFromNarodnost(row.narodnost) : row.jazyk || 'cs');
@@ -1545,6 +1583,10 @@ export function PrehledClient({
     });
     const poplatekRozbalen = Boolean(poplatekOtevren[row.rezervace]);
     const nezaplacene = nahled.radky.filter((r) => !r.zaplacena);
+    const zaplacene = nahled.radky.filter((r) => r.zaplacena);
+    const sumaNezap = nezaplacene.reduce((s, r) => s + r.kc, 0);
+    const sumaZap = zaplacene.reduce((s, r) => s + r.kc, 0);
+    const platbaHotovo = nahled.radky.length > 0 && nezaplacene.length === 0;
     const otevirat = nahled.radky.length > 0 || Boolean(nahled.poznamka);
     const casText = casRadku(row);
     const ukazatPrijezd = !predanoKdy && !naMisteKdy && Boolean(casText);
@@ -1585,13 +1627,32 @@ export function PrehledClient({
         !casAktualni ||
         (row.zpusobPrijezdu === 'auto' && (!row.telefonBrana || (!row.spz && !row.spzPujcene))));
     const telefonNahore = !row.telefonText;
+    const jazykZnamy = maJazykRadku(row);
+    const jazykNahore = !jazykZnamy;
     const staly = row.stalyHost || null;
     const kontaktUlozenCas = kontaktUlozenKdy(row) || staly?.kontaktZMinula || null;
     const muzeKontakt = Boolean(wa || row.telefonText || row.jinyTelefonText);
-    const kontaktNahore = muzeKontakt && !kontaktUlozenCas && !staly?.kontaktZMinula;
+    const kontaktNahore = !kontaktUlozenCas && !staly?.kontaktZMinula && !odjel;
     const predaniNahore = !odjel && !predanoKdy && Boolean(row.prijezd && row.prijezd <= dnes);
     const tlacitkoKontakt = muzeKontakt ? (
       <UlozitKontakt row={row} onUlozeno={() => oznacKontaktUlozen(row)} />
+    ) : null;
+    const kontaktNahoreBlok = kontaktNahore ? (
+      telefonNahore ? (
+        <TelefonNahore
+          key={`${row.rezervace}-telefon-nahore`}
+          hodnota={telefonRadku(row)}
+          onUloz={(text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
+        />
+      ) : (
+        <a
+          className="ph-nova-kontakt"
+          href={`/api/prehled/vizitka?rezervace=${encodeURIComponent(row.rezervace)}`}
+          onClick={() => oznacKontaktUlozen(row)}
+        >
+          Uložit kontakt
+        </a>
+      )
     ) : null;
     const casPole = (
       <PoleSUlozenim
@@ -1654,6 +1715,60 @@ export function PrehledClient({
       ? `${dotazPredOdeslanimZnovu(row.stav)} Jazyk: ${jazykText}.`
       : `Poslat průvodce v jazyce ${jazykText}? Host dostane e-mail.`;
     const ukazBlokOdeslani = muzePoslat || row.stav === 'bez_checkinu' || maMenuZprav;
+    const jazykSelect = (
+      <label>
+        Jazyk
+        <select
+          value={jazykZnamy ? jazykRadku(row) : ''}
+          onChange={(e) => {
+            const v = e.target.value as GuideLang;
+            if (!GUIDE_LANGS.includes(v)) return;
+            void ulozJazyk(row, v);
+          }}
+        >
+          {jazykZnamy ? null : <option value="">Zvolte jazyk</option>}
+          {GUIDE_LANGS.map((lang) => (
+            <option key={lang} value={lang}>
+              {LANG_LABELS[lang]}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+    const blokOdeslani = ukazBlokOdeslani ? (
+      <div className="ph-znovu">
+        {jazykSelect}
+        {muzePoslat && jazykZnamy ? (
+          <>
+            <button
+              type="button"
+              disabled={cekam !== null}
+              onClick={() => setDotazZnovu(row.rezervace)}
+            >
+              {textTlacitkaOdeslani(row.stav)}
+            </button>
+            {dotazZnovu === row.rezervace ? (
+              <div className="ph-predano-dotaz">
+                <p>{dotazZnovuText}</p>
+                <button
+                  type="button"
+                  disabled={cekam !== null}
+                  onClick={() => {
+                    setDotazZnovu(null);
+                    volat(row, 'znovu', { jazyk: jazykRadku(row) });
+                  }}
+                >
+                  Ano, poslat
+                </button>
+                <button type="button" onClick={() => setDotazZnovu(null)}>
+                  Zrušit
+                </button>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+    ) : null;
     const zpravaRamecek = maMenuZprav ? (
       <fieldset className="ph-menu">
         <legend>Zpráva</legend>
@@ -1708,6 +1823,9 @@ export function PrehledClient({
     ) : null;
     const zavady = zavadyRadku(row);
     const zavadyPo = zavadyPoOdjezduRadku(row);
+    const ukazZavady =
+      (!odjel && (!predanoKdy || zavady || zavadyPo || dotazZavady === row.rezervace)) ||
+      (odjel && Boolean(zavady || zavadyPo));
     const zavadyStavText = stavZavadText(zavady);
     const zavadyPoStavText = stavZavadPoOdjezdu(zavadyPo);
     const zavadyBlok = (
@@ -1859,20 +1977,91 @@ export function PrehledClient({
         Host je na místě
       </button>
     );
+    const platbaCastkaText =
+      sumaNezap > 0
+        ? formatKc(sumaNezap)
+        : sumaZap > 0
+          ? formatKc(sumaZap)
+          : null;
+    const platbaHint = platbaHotovo
+      ? `Uhrazeno · klik pro rozpis ${poplatekRozbalen ? '▴' : '▾'}`
+      : sumaNezap > 0
+        ? `K vybrání · klik pro rozpis ${poplatekRozbalen ? '▴' : '▾'}`
+        : nahled.poznamka || nahled.text;
+    const platbaPotvrzeni =
+      volbaPlatby?.id === row.rezervace ? (
+        <div className="ph-predano-dotaz">
+          {volbaPlatby.krok === 'kdo' ? (
+            <>
+              <p>Kdo zapsal platbu?</p>
+              <button type="button" onClick={() => setVolbaPlatby({ ...volbaPlatby, krok: 'jak', kdo: 'pravoslav' })}>
+                Pravoslav
+              </button>
+              <button type="button" onClick={() => setVolbaPlatby({ ...volbaPlatby, krok: 'jak', kdo: 'nikol' })}>
+                Nikol
+              </button>
+            </>
+          ) : (
+            <>
+              <p>Jak host zaplatil?</p>
+              {JAKY.map((j) => (
+                <button
+                  key={j.id}
+                  type="button"
+                  disabled={cekam !== null}
+                  onClick={() => void ulozPlatbu(row, volbaPlatby.druh, j.id, volbaPlatby.kdo || 'pravoslav')}
+                >
+                  {j.text}
+                </button>
+              ))}
+            </>
+          )}
+          <button type="button" onClick={() => setVolbaPlatby(null)}>
+            Zrušit
+          </button>
+        </div>
+      ) : null;
     const poplatekRadek = (
-      <div className={`ph-poplatek-kratky${nahled.ton === 'seda' ? ' ph-platby--seda' : ''}${nahled.ton === 'zelena' ? ' ph-platby--zelena' : ''}`}>
+      <div
+        className={`ph-nova-platba-vnitr${platbaHotovo ? ' is-hotovo' : ''}${nahled.ton === 'seda' ? ' is-seda' : ''}${poplatekRozbalen ? ' is-open' : ''}`}
+      >
         {otevirat ? (
           <button
             type="button"
-            className="ph-poplatek-tlacitko"
+            className="ph-nova-platba-castka"
             aria-expanded={poplatekRozbalen}
             onClick={() => setPoplatekOtevren((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))}
           >
-            {nahled.text} {poplatekRozbalen ? '▴' : '▾'}
+            <span className="ph-nova-platba-kc">
+              {platbaCastkaText ? `Platby ${platbaCastkaText}` : nahled.text}
+            </span>
+            <span className="ph-nova-platba-hint">{platbaHint}</span>
           </button>
         ) : (
-          <span>{nahled.text}</span>
+          <span className="ph-nova-platba-castka">
+            <span className="ph-nova-platba-kc">{nahled.text}</span>
+          </span>
         )}
+        {sumaNezap > 0 ? (
+          <button
+            type="button"
+            className="ph-nova-platba-btn ph-nova-platba-btn--zaplatit"
+            disabled={cekam !== null}
+            onClick={() =>
+              setVolbaPlatby({
+                id: row.rezervace,
+                druh: nezaplacene.length === 1 ? nezaplacene[0].druh : 'vse',
+                krok: 'kdo',
+                kdo: null,
+              })
+            }
+          >
+            Zaplatit
+          </button>
+        ) : platbaHotovo ? (
+          <span className="ph-nova-platba-btn ph-nova-platba-btn--uhrazeno">Uhrazeno</span>
+        ) : null}
+        {platbaPotvrzeni}
         {poplatekRozbalen && otevirat ? (
           <div className="ph-poplatek-rozpis">
             {nahled.poznamka ? <p>{nahled.poznamka}</p> : null}
@@ -1894,55 +2083,11 @@ export function PrehledClient({
                     disabled={cekam !== null}
                     onClick={() => setVolbaPlatby({ id: row.rezervace, druh: polozka.druh, krok: 'kdo', kdo: null })}
                   >
-                    Zaplaceno
+                    Zaplatit
                   </button>
                 )}
               </p>
             ))}
-            {nezaplacene.length > 0 ? (
-              <p>
-                <button
-                  type="button"
-                  className="ph-zaplatit"
-                  disabled={cekam !== null}
-                  onClick={() => setVolbaPlatby({ id: row.rezervace, druh: 'vse', krok: 'kdo', kdo: null })}
-                >
-                  Zaplaceno
-                </button>
-              </p>
-            ) : null}
-            {volbaPlatby?.id === row.rezervace ? (
-              <div className="ph-predano-dotaz">
-                {volbaPlatby.krok === 'kdo' ? (
-                  <>
-                    <p>Kdo zapsal platbu?</p>
-                    <button type="button" onClick={() => setVolbaPlatby({ ...volbaPlatby, krok: 'jak', kdo: 'pravoslav' })}>
-                      Pravoslav
-                    </button>
-                    <button type="button" onClick={() => setVolbaPlatby({ ...volbaPlatby, krok: 'jak', kdo: 'nikol' })}>
-                      Nikol
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <p>Jak host zaplatil?</p>
-                    {JAKY.map((j) => (
-                      <button
-                        key={j.id}
-                        type="button"
-                        disabled={cekam !== null}
-                        onClick={() => void ulozPlatbu(row, volbaPlatby.druh, j.id, volbaPlatby.kdo || 'pravoslav')}
-                      >
-                        {j.text}
-                      </button>
-                    ))}
-                  </>
-                )}
-                <button type="button" onClick={() => setVolbaPlatby(null)}>
-                  Zrušit
-                </button>
-              </div>
-            ) : null}
           </div>
         ) : null}
       </div>
@@ -1956,8 +2101,17 @@ export function PrehledClient({
         potvrzena={branaOk}
         ukazka={ukazka}
         cekam={cekam !== null}
+        vyzvaRegistrace={branaVyzva[row.rezervace] || 0}
         onSloty={setSloty}
         onHlaska={setHlaska}
+        onBranaHotovo={() => {
+          setRadky((prev) =>
+            prev.map((r) =>
+              r.rezervace === row.rezervace ? { ...r, branaRegistrovano: new Date().toISOString() } : r,
+            ),
+          );
+          setBranaZTile((prev) => ({ ...prev, [row.rezervace]: false }));
+        }}
         deti={(dil) => (
       <article key={row.rezervace} className={rozbaleno ? 'ph-row' : 'ph-row is-shut'} id={row.rezervace}>
         {(() => {
@@ -1967,6 +2121,12 @@ export function PrehledClient({
           const branaChybiUdaje =
             row.zpusobPrijezdu === 'auto' && (!row.telefonBrana || (!row.spz && !row.spzPujcene));
           const branaOk = row.zpusobPrijezdu === 'auto' && Boolean(row.branaRegistrovano);
+          const branaHlavni = branaOk ? 'Brána OK' : branaChybiUdaje ? 'Údaje chybí' : 'Nezapsáno';
+          const branaDrobek = branaOk
+            ? 'stání ano'
+            : branaChybiUdaje
+              ? 'klik → WhatsApp'
+              : 'klik → SMS do brány';
           const casZpravaId = dalsiCasovaZprava(pocetCasovychPripoinek(row.historie));
           const pillTon = fazeTon === 'zelena' ? 'ok' : fazeTon === 'cervena' ? 'wait' : 'seda';
           const pillText =
@@ -1992,6 +2152,7 @@ export function PrehledClient({
               {staly ? (
                 <p className={staly.shoda === 'slaba' ? 'ph-staly is-slaba' : 'ph-staly'}>{textStalehoHosta(staly)}</p>
               ) : null}
+              {kontaktNahoreBlok}
               <div className="ph-nova-dlazdice">
                 <button
                   type="button"
@@ -1999,8 +2160,9 @@ export function PrehledClient({
                   disabled={casOk || odjel}
                   onClick={() => {
                     if (casOk || odjel) return;
-                    setZkratkaDotaz({ id: row.rezervace, druh: 'cas', zprava: casZpravaId });
                     setVolba((prev) => ({ ...prev, [row.rezervace]: casZpravaId }));
+                    setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: prev[row.rezervace] || 'whatsapp' }));
+                    setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: true }));
                   }}
                 >
                   <span className="ph-nova-tile__radek">
@@ -2015,7 +2177,7 @@ export function PrehledClient({
                           ? row.casZadalHost
                             ? 'Čas zadal host'
                             : 'Čas máme'
-                          : `${popisekStupneCasu(casZpravaId)} · WhatsApp`}
+                          : `${popisekStupneCasu(casZpravaId)} · napsat`}
                       </span>
                     </span>
                   </span>
@@ -2041,12 +2203,28 @@ export function PrehledClient({
                     onClick={() => {
                       if (branaOk || odjel) return;
                       if (branaChybiUdaje) {
-                        setZkratkaDotaz({ id: row.rezervace, druh: 'brana-wa', zprava: 'brana' });
                         setVolba((prev) => ({ ...prev, [row.rezervace]: 'brana' }));
+                        setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: prev[row.rezervace] || 'whatsapp' }));
+                        setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: true }));
+                        requestAnimationFrame(() => {
+                          document.getElementById(`zprava-${row.rezervace}`)?.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest',
+                          });
+                        });
                         return;
                       }
-                      setRozbalene((prev) => ({ ...prev, [row.rezervace]: true }));
-                      setHlaska('Dole na kartě je registrace brány (SMS).');
+                      setBranaZTile((prev) => ({ ...prev, [row.rezervace]: true }));
+                      setBranaVyzva((prev) => ({
+                        ...prev,
+                        [row.rezervace]: (prev[row.rezervace] || 0) + 1,
+                      }));
+                      requestAnimationFrame(() => {
+                        document.getElementById(`brana-${row.rezervace}`)?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'nearest',
+                        });
+                      });
                     }}
                   >
                     <span className="ph-nova-tile__radek">
@@ -2055,14 +2233,14 @@ export function PrehledClient({
                       </span>
                       <span className="ph-nova-tile__telo">
                         <span className="ph-nova-tile__nadpis">Autem</span>
-                        <span className="ph-nova-tile__hlavni">{branaOk ? 'Brána OK' : 'Brána ne'}</span>
-                        <span className="ph-nova-tile__drobek">
-                          {branaOk ? 'stání ano' : branaChybiUdaje ? 'klik → WhatsApp' : 'klik → SMS'}
+                        <span className="ph-nova-tile__hlavni">{branaHlavni}</span>
+                        <span className="ph-nova-tile__drobek">{branaDrobek}</span>
+                      </span>
+                      {branaOk ? (
+                        <span className="ph-nova-tile__znacka" aria-hidden="true">
+                          ✓
                         </span>
-                      </span>
-                      <span className="ph-nova-tile__znacka" aria-hidden="true">
-                        {branaOk ? '✓' : '✕'}
-                      </span>
+                      ) : null}
                     </span>
                   </button>
                 ) : (
@@ -2087,8 +2265,9 @@ export function PrehledClient({
                   disabled={checkinOk || odjel}
                   onClick={() => {
                     if (checkinOk || odjel) return;
-                    setZkratkaDotaz({ id: row.rezervace, druh: 'checkin', zprava: 'checkin' });
                     setVolba((prev) => ({ ...prev, [row.rezervace]: 'checkin' }));
+                    setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: prev[row.rezervace] || 'whatsapp' }));
+                    setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: true }));
                   }}
                 >
                   <span className="ph-nova-stav__znacka" aria-hidden="true">
@@ -2098,7 +2277,7 @@ export function PrehledClient({
                   <span className="ph-nova-stav__popis">
                     {checkinOk
                       ? 'Hotovo'
-                      : `chybí · SMS${pocetCheckinPripoinek(row.historie) ? ` · už ${pocetCheckinPripoinek(row.historie)}×` : ''}`}
+                      : `chybí${pocetCheckinPripoinek(row.historie) ? ` · už ${pocetCheckinPripoinek(row.historie)}×` : ''}`}
                   </span>
                 </button>
                 <button
@@ -2108,8 +2287,9 @@ export function PrehledClient({
                   onClick={() => {
                     if (pruvodceOk || odjel || !checkinOk) return;
                     if (!casOk) {
-                      setZkratkaDotaz({ id: row.rezervace, druh: 'cas', zprava: casZpravaId });
                       setVolba((prev) => ({ ...prev, [row.rezervace]: casZpravaId }));
+                      setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: prev[row.rezervace] || 'whatsapp' }));
+                      setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: true }));
                     }
                   }}
                 >
@@ -2131,74 +2311,102 @@ export function PrehledClient({
             </>
           );
         })()}
-        {zkratkaDotaz?.id === row.rezervace ? (
-          <div className="ph-nova-potvrzeni">
-            {zkratkaDotaz.druh === 'cas' ? (
-              <p>
-                {popisekStupneCasu(zkratkaDotaz.zprava as 'nerozbalen' | 'denNerozbalen' | 'nedojezd')}.
-                {pocetCasovychPripoinek(row.historie)
-                  ? ` Už jste poslal ${pocetCasovychPripoinek(row.historie)}×.`
-                  : ' Ještě jste neposlal.'}{' '}
-                Otevřít WhatsApp?
-              </p>
-            ) : null}
-            {zkratkaDotaz.druh === 'checkin' ? (
-              <p>
-                Připomenout check-in přes SMS?
-                {pocetCheckinPripoinek(row.historie)
-                  ? ` Už jste poslal ${pocetCheckinPripoinek(row.historie)}×.`
-                  : ''}
-              </p>
-            ) : null}
-            {zkratkaDotaz.druh === 'brana-wa' ? <p>Hostovi chybí údaje k bráně. Otevřít WhatsApp?</p> : null}
-            <div className="ph-nova-nahled">
-              {zkratkaDotaz.druh === 'checkin'
-                ? zpravyRadku(row).find((z) => z.id === 'checkin')?.text ||
-                  zpravaCheckinu(jazykRadku(row), row.zdroj, odkazy[row.rezervace] ?? row.checkinUrl)
-                : zpravyRadku(row).find((z) => z.id === zkratkaDotaz.zprava)?.text || zpravaRadku(row)}
-            </div>
-            <div className="ph-nova-potvrzeni__akce">
-              <button type="button" onClick={() => setZkratkaDotaz(null)}>
-                Ne
+        {panelZpravy[row.rezervace] ? (
+          <div className="ph-nova-panel" id={`zprava-${row.rezervace}`}>
+            <h3>Napsat zprávu</h3>
+            <div className="ph-nova-kanaly">
+              <button
+                type="button"
+                className={`ph-nova-kanal${(kanalZpravy[row.rezervace] || 'whatsapp') === 'whatsapp' ? ' is-on' : ''}`}
+                disabled={!wa}
+                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'whatsapp' }))}
+              >
+                WhatsApp
               </button>
               <button
                 type="button"
-                disabled={cekam !== null}
-                onClick={() => {
-                  const dotaz = zkratkaDotaz;
-                  setZkratkaDotaz(null);
-                  if (!dotaz) return;
-                  if (dotaz.druh === 'checkin') {
-                    const text =
-                      zpravyRadku(row).find((z) => z.id === 'checkin')?.text ||
-                      zpravaCheckinu(jazykRadku(row), row.zdroj, odkazy[row.rezervace] ?? row.checkinUrl);
-                    const cislo = row.telefonWa || row.jinyTelefonWa;
-                    if (!cislo) {
-                      setHlaska('Chybí telefon pro SMS.');
-                      return;
-                    }
-                    void oznacKanal(row, 'sms', 'checkin').then((ok) => {
-                      if (ok == null && !ukazka) return;
-                      window.location.href = smsOdkaz(`+${cislo}`, text, jeIos(userAgent));
-                    });
-                    return;
-                  }
-                  const cislo = row.telefonWa || row.jinyTelefonWa;
-                  if (!cislo) {
-                    setHlaska('Chybí telefon pro WhatsApp.');
-                    return;
-                  }
-                  void oznacWhatsApp(row, dotaz.zprava).then(() => {
-                    const text = zpravyRadku(row).find((z) => z.id === dotaz.zprava)?.text || zpravaRadku(row);
-                    window.open(odkazWhatsAppPrehled(cislo, text, userAgent), '_blank', 'noopener,noreferrer');
-                  });
-                }}
+                className={`ph-nova-kanal${kanalZpravy[row.rezervace] === 'sms' ? ' is-on' : ''}`}
+                disabled={!wa}
+                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'sms' }))}
               >
-                {zkratkaDotaz.druh === 'checkin' ? 'Ano, SMS' : 'Ano, WhatsApp'}
+                SMS
+              </button>
+              <button
+                type="button"
+                className={`ph-nova-kanal${kanalZpravy[row.rezervace] === 'email' ? ' is-on' : ''}`}
+                disabled={!emailHosta}
+                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'email' }))}
+              >
+                E-mail
+              </button>
+            </div>
+            {maMenuZprav ? (
+              <select
+                value={volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id ?? ''}
+                onChange={(e) => setVolba((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
+                aria-label="Šablona zprávy"
+              >
+                {zpravyHosta.map((z) => (
+                  <option key={z.id} value={z.id}>
+                    {z.nazev}
+                    {z.vychozi ? ' · podle fáze' : ''}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="ph-hlaska">Teď není co poslat.</p>
+            )}
+            {(() => {
+              const idZpravy = volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id;
+              if (idZpravy !== 'nerozbalen' && idZpravy !== 'denNerozbalen' && idZpravy !== 'nedojezd') return null;
+              const uz = pocetCasovychPripoinek(row.historie);
+              return (
+                <p className="ph-nova-panel__stupen">
+                  {popisekStupneCasu(idZpravy)}
+                  {uz ? ` · už odesláno ${uz}×` : ' · ještě neodesláno'}
+                </p>
+              );
+            })()}
+            <div className="ph-nova-nahled">{zpravaRadku(row)}</div>
+            <div className="ph-nova-rada">
+              <button type="button" onClick={() => setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: false }))}>
+                Zavřít
+              </button>
+              {(kanalZpravy[row.rezervace] || 'whatsapp') === 'whatsapp' ? (
+                <TlacitkoWhatsApp
+                  wa={wa}
+                  zprava={zpravaRadku(row)}
+                  userAgent={userAgent}
+                  onPredOtevrenim={() => oznacWhatsApp(row)}
+                />
+              ) : null}
+              {kanalZpravy[row.rezervace] === 'sms' ? (
+                <button
+                  type="button"
+                  disabled={!wa || cekam !== null}
+                  onClick={() => {
+                    const text = zpravaRadku(row);
+                    const druh = volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id;
+                    if (!wa || !druh) return;
+                    void oznacKanal(row, 'sms', druh).then((ok) => {
+                      if (ok == null && !ukazka) return;
+                      window.location.href = smsOdkaz(`+${wa}`, text, jeIos(userAgent));
+                    });
+                  }}
+                >
+                  Otevřít SMS
+                </button>
+              ) : null}
+              {kanalZpravy[row.rezervace] === 'email' ? emailTlacitko : null}
+              <button type="button" className="ph-kopie" onClick={() => void kopirovatZpravu(row)}>
+                Zkopírovat zprávu
               </button>
             </div>
           </div>
         ) : null}
+        {branaZTile[row.rezervace] || cekajici === 'registrace' || cekajici === 'odpoved'
+          ? dil.panelBrany
+          : null}
         {staly?.telefonZMinula ? (
           <p className="ph-dnesek__akce">
             <button type="button" disabled={cekam !== null} onClick={() => void ulozTelefon(row, 'rezervace', staly.telefonZMinula!)}>
@@ -2263,102 +2471,13 @@ export function PrehledClient({
         ) : null}
         <div className="ph-nova-platba">{poplatekRadek}</div>
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
-        {cekajici === 'registrace' ? dil.registrace : null}
-        {cekajici === 'odpoved' ? dil.odpoved : null}
-        {!odjel && (!predanoKdy || zavady || zavadyPo || dotazZavady === row.rezervace)
-          ? zavadyBlok
-          : null}
-        {odjel && (zavady || zavadyPo) ? zavadyBlok : null}
         {predaniNahore ? (
           <>
             {predaniTlacitko}
             {predaniDotaz}
           </>
         ) : null}
-        {telefonNahore ? telefonPole(row) : null}
-        {kontaktNahore ? tlacitkoKontakt : null}
-        {panelZpravy[row.rezervace] ? (
-          <div className="ph-nova-panel">
-            <h3>Napsat zprávu</h3>
-            <div className="ph-nova-kanaly">
-              <button
-                type="button"
-                className={`ph-nova-kanal${(kanalZpravy[row.rezervace] || 'whatsapp') === 'whatsapp' ? ' is-on' : ''}`}
-                disabled={!wa}
-                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'whatsapp' }))}
-              >
-                WhatsApp
-              </button>
-              <button
-                type="button"
-                className={`ph-nova-kanal${kanalZpravy[row.rezervace] === 'sms' ? ' is-on' : ''}`}
-                disabled={!wa}
-                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'sms' }))}
-              >
-                SMS
-              </button>
-              <button
-                type="button"
-                className={`ph-nova-kanal${kanalZpravy[row.rezervace] === 'email' ? ' is-on' : ''}`}
-                disabled={!emailHosta}
-                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'email' }))}
-              >
-                E-mail
-              </button>
-            </div>
-            {maMenuZprav ? (
-              <select
-                value={volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id ?? ''}
-                onChange={(e) => setVolba((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
-                aria-label="Šablona zprávy"
-              >
-                {zpravyHosta.map((z) => (
-                  <option key={z.id} value={z.id}>
-                    {z.nazev}
-                    {z.vychozi ? ' · podle fáze' : ''}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <p className="ph-hlaska">Teď není co poslat.</p>
-            )}
-            <div className="ph-nova-nahled">{zpravaRadku(row)}</div>
-            <div className="ph-nova-rada">
-              <button type="button" onClick={() => setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: false }))}>
-                Zavřít
-              </button>
-              {(kanalZpravy[row.rezervace] || 'whatsapp') === 'whatsapp' ? (
-                <TlacitkoWhatsApp
-                  wa={wa}
-                  zprava={zpravaRadku(row)}
-                  userAgent={userAgent}
-                  onPredOtevrenim={() => oznacWhatsApp(row)}
-                />
-              ) : null}
-              {kanalZpravy[row.rezervace] === 'sms' ? (
-                <button
-                  type="button"
-                  disabled={!wa || cekam !== null}
-                  onClick={() => {
-                    const text = zpravaRadku(row);
-                    const druh = volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id;
-                    if (!wa || !druh) return;
-                    void oznacKanal(row, 'sms', druh).then((ok) => {
-                      if (ok == null && !ukazka) return;
-                      window.location.href = smsOdkaz(`+${wa}`, text, jeIos(userAgent));
-                    });
-                  }}
-                >
-                  Otevřít SMS
-                </button>
-              ) : null}
-              {kanalZpravy[row.rezervace] === 'email' ? emailTlacitko : null}
-              <button type="button" className="ph-kopie" onClick={() => void kopirovatZpravu(row)}>
-                Zkopírovat zprávu
-              </button>
-            </div>
-          </div>
-        ) : null}
+        {jazykNahore ? <div className="ph-znovu">{jazykSelect}</div> : null}
         <div className="ph-nova-rada">
           {row.telefonText || row.jinyTelefonText ? (
             <a
@@ -2380,52 +2499,6 @@ export function PrehledClient({
             Napsat zprávu
           </button>
         </div>
-        {ukazBlokOdeslani ? (
-          <div className="ph-znovu">
-            <label>
-              Jazyk
-              <select
-                value={jazykRadku(row)}
-                onChange={(e) => void ulozJazyk(row, e.target.value as GuideLang)}
-              >
-                {GUIDE_LANGS.map((lang) => (
-                  <option key={lang} value={lang}>
-                    {LANG_LABELS[lang]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {muzePoslat ? (
-              <>
-                <button
-                  type="button"
-                  disabled={cekam !== null}
-                  onClick={() => setDotazZnovu(row.rezervace)}
-                >
-                  {textTlacitkaOdeslani(row.stav)}
-                </button>
-                {dotazZnovu === row.rezervace ? (
-                  <div className="ph-predano-dotaz">
-                    <p>{dotazZnovuText}</p>
-                    <button
-                      type="button"
-                      disabled={cekam !== null}
-                      onClick={() => {
-                        setDotazZnovu(null);
-                        volat(row, 'znovu', { jazyk: jazykRadku(row) });
-                      }}
-                    >
-                      Ano, poslat
-                    </button>
-                    <button type="button" onClick={() => setDotazZnovu(null)}>
-                      Zrušit
-                    </button>
-                  </div>
-                ) : null}
-              </>
-            ) : null}
-          </div>
-        ) : null}
         <button
           type="button"
           className="ph-nova-more"
@@ -2436,6 +2509,8 @@ export function PrehledClient({
           <span aria-hidden="true">{rozbaleno ? '▴' : '▾'}</span>
         </button>
         <div className="ph-detail">
+          {ukazZavady ? zavadyBlok : null}
+          {!jazykNahore ? blokOdeslani : null}
           {staly?.predchozi?.length ? (
             <div className="ph-staly-predchozi">
               <p>Předchozí pobyty</p>
@@ -2475,8 +2550,12 @@ export function PrehledClient({
             </div>
           ) : null}
           {dil.radek}
-          {cekajici === 'registrace' ? null : dil.registrace}
-          {cekajici === 'odpoved' ? null : dil.odpoved}
+          {branaZTile[row.rezervace] || cekajici === 'registrace' || cekajici === 'odpoved'
+            ? null
+            : dil.registrace}
+          {branaZTile[row.rezervace] || cekajici === 'registrace' || cekajici === 'odpoved'
+            ? null
+            : dil.odpoved}
           {dil.detail}
           {!row.pruvodceOdemcen ? (
             <button

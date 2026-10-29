@@ -1659,7 +1659,25 @@
   margin: 0 0 0.9rem;
 }
 
-/* Nová karta: blíže náhledu (dlaždice, stavy, panel) */
+/* Nová karta: blíže náhledu (dlaždice, stavy, panel). Bez velkých pilulek.
+   Globální `.ph button` má 999px, proto musí být silnější selektor. */
+.ph button.ph-nova-tile,
+.ph button.ph-nova-stav,
+.ph button.ph-nova-predani,
+.ph button.ph-nova-platba-btn,
+.ph button.ph-nova-zprava,
+.ph button.ph-nova-more,
+.ph button.ph-nova-kanal,
+.ph button.ph-nova-kontakt__ulozit,
+.ph-nova-rada > a.ph-wa,
+.ph a.ph-nova-kontakt,
+.ph-nova-kontakt,
+.ph-nova-platba-vnitr,
+.ph-nova-panel,
+.ph-nova-pill {
+  border-radius: 6px;
+}
+
 .ph-nova-top {
   display: flex;
   justify-content: space-between;
@@ -1674,8 +1692,8 @@
 
 .ph-nova-pill {
   flex: 0 0 auto;
-  border-radius: 999px;
-  padding: 0.22rem 0.6rem;
+  border-radius: 6px;
+  padding: 0.22rem 0.55rem;
   font-weight: 650;
   font-size: 0.78rem;
   letter-spacing: 0;
@@ -1723,6 +1741,7 @@
   margin: 0 0 0.7rem;
 }
 
+.ph button.ph-nova-tile,
 .ph-nova-tile {
   display: block;
   width: 100%;
@@ -1730,7 +1749,7 @@
   margin: 0;
   padding: 0.65rem 0.7rem;
   border: 1px solid var(--pv-line);
-  border-radius: 14px;
+  border-radius: 6px;
   background: var(--pv-surface-2);
   color: inherit;
   text-align: left;
@@ -1738,9 +1757,11 @@
   cursor: pointer;
 }
 
+.ph button.ph-nova-tile:disabled,
 .ph-nova-tile:disabled {
   cursor: default;
   opacity: 1;
+  color: inherit;
 }
 
 .ph-nova-tile__radek {
@@ -1766,7 +1787,7 @@
   width: 1.35rem;
   height: 1.35rem;
   margin-top: 0.15rem;
-  border-radius: 50%;
+  border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1841,13 +1862,14 @@
   margin: 0 0 0.7rem;
 }
 
+.ph button.ph-nova-stav,
 .ph-nova-stav {
   display: block;
   width: 100%;
   margin: 0;
   padding: 0.55rem 0.5rem 0.5rem;
   border: 1px solid var(--pv-line);
-  border-radius: 14px;
+  border-radius: 6px;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -1855,8 +1877,11 @@
   cursor: pointer;
 }
 
+.ph button.ph-nova-stav:disabled,
 .ph-nova-stav:disabled {
   cursor: default;
+  opacity: 1;
+  color: inherit;
 }
 
 .ph-nova-stav__znacka {
@@ -1902,14 +1927,159 @@
 
 .ph-nova-platba {
   margin: 0 0 0.7rem;
+}
+
+.ph-nova-platba-vnitr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
   padding: 0.65rem 0.75rem;
-  border-radius: 14px;
+  border-radius: 6px;
   border: 1px solid color-mix(in srgb, var(--color-gold) 35%, transparent);
   background: color-mix(in srgb, var(--color-gold) 10%, var(--pv-surface));
 }
 
-.ph-nova-platba .ph-poplatek-kratky {
-  margin-top: 0;
+.ph-nova-platba-vnitr.is-hotovo {
+  border-color: color-mix(in srgb, #8dcea0 35%, transparent);
+  background: color-mix(in srgb, #8dcea0 10%, var(--pv-surface));
+}
+
+.ph-nova-platba-vnitr.is-seda {
+  opacity: 0.72;
+}
+
+.ph-nova-platba-castka {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ph-nova-platba-kc {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--color-gold);
+  white-space: nowrap;
+}
+
+.ph-nova-platba-vnitr.is-hotovo .ph-nova-platba-kc {
+  color: #8dcea0;
+}
+
+.ph-nova-platba-hint {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--pv-muted);
+}
+
+.ph-nova-platba-btn,
+.ph button.ph-nova-platba-btn {
+  flex: 0 0 auto;
+  min-height: 2.35rem;
+  margin: 0;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-gold);
+  background: transparent;
+  color: var(--color-gold);
+  font-size: 0.95rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.ph button.ph-nova-platba-btn--zaplatit {
+  border-color: #9f1239;
+  background: #9f1239;
+  color: #fff8f6;
+}
+
+.ph-nova-platba-btn--uhrazeno,
+.ph span.ph-nova-platba-btn--uhrazeno {
+  display: inline-flex;
+  align-items: center;
+  border-color: color-mix(in srgb, #8dcea0 55%, transparent);
+  background: color-mix(in srgb, #8dcea0 18%, transparent);
+  color: #8dcea0;
+}
+
+.ph-nova-platba-vnitr .ph-predano-dotaz,
+.ph-nova-platba-vnitr .ph-poplatek-rozpis {
+  flex: 1 1 100%;
+}
+
+.ph a.ph-nova-kontakt,
+.ph-nova-kontakt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 2.85rem;
+  margin: 0 0 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #5a9fd4;
+  background: #2a4a66;
+  color: #e8f4ff;
+  font-size: 1.08rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  text-align: center;
+  text-decoration: none;
+}
+
+.ph a.ph-nova-kontakt:hover,
+.ph a.ph-nova-kontakt:focus-visible {
+  color: #fff;
+  border-color: #7eb8e8;
+  background: #355a7a;
+}
+
+.ph-nova-kontakt--zadat {
+  display: flex;
+  gap: 0.45rem;
+  align-items: stretch;
+  justify-content: stretch;
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-text);
+  background: #2a4a66;
+  border-color: #5a9fd4;
+}
+
+.ph-nova-kontakt--zadat input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--pv-line);
+  border-radius: 6px;
+  background: var(--pv-surface);
+  color: var(--color-text);
+}
+
+.ph button.ph-nova-kontakt__ulozit {
+  flex: 0 0 auto;
+  min-height: 2.4rem;
+  margin: 0;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  border-color: var(--color-gold);
+  background: transparent;
+  color: var(--color-gold);
+  font-weight: 650;
+  white-space: nowrap;
 }
 
 .ph button.ph-nova-predani {
@@ -1919,7 +2089,7 @@
   margin: 0 0 0.55rem;
   padding: 0.7rem 1rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--color-gold);
   color: #1c1712;
   font-size: 1.05rem;
@@ -1942,11 +2112,15 @@
   min-height: 2.5rem;
 }
 
+.ph-nova-rada > a.ph-wa,
+.ph-nova-rada button {
+  border-radius: 6px;
+}
+
 .ph-nova-rada > a.ph-wa {
   display: inline-flex;
   align-items: center;
   border: 1px solid var(--pv-line);
-  border-radius: 999px;
   background: transparent;
   color: var(--pv-muted);
   text-decoration: none;
@@ -1954,6 +2128,7 @@
 }
 
 .ph button.ph-nova-zprava {
+  border-radius: 6px;
   border-color: var(--color-gold);
   color: var(--color-gold);
   background: transparent;
@@ -1968,7 +2143,7 @@
   margin: 0.15rem 0 0;
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--pv-line);
-  border-radius: 14px;
+  border-radius: 6px;
   background: color-mix(in srgb, var(--color-gold) 9%, var(--pv-surface));
   color: var(--color-gold);
   font-size: 0.92rem;
@@ -1980,8 +2155,34 @@
   margin: 0 0 0.55rem;
   padding: 0.7rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--color-gold) 40%, transparent);
-  border-radius: 12px;
+  border-radius: 6px;
   background: color-mix(in srgb, var(--color-gold) 8%, var(--pv-surface));
+}
+
+.ph-nova-panel--brana {
+  border-color: color-mix(in srgb, #f0b45a 45%, transparent);
+  background: color-mix(in srgb, #f0b45a 8%, var(--pv-surface));
+}
+
+.ph-nova-panel--brana .ph-parkovani__dotaz {
+  margin-top: 0.35rem;
+}
+
+.ph-nova-panel--brana .ph-parkovani__druhe {
+  display: block;
+  margin: 0.45rem 0;
+}
+
+.ph-nova-panel--brana .ph-parkovani__druhe span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.ph-nova-panel--brana .ph-parkovani__druhe input {
+  flex: 1;
+  min-width: 10rem;
 }
 
 .ph-nova-panel h3 {
@@ -1989,6 +2190,12 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-gold);
+}
+
+.ph-nova-panel__stupen {
+  margin: 0 0 0.45rem;
+  font-size: 0.8rem;
+  color: var(--pv-muted);
 }
 
 .ph-nova-kanaly {
@@ -2003,7 +2210,7 @@
   margin: 0;
   padding: 0.35rem;
   font-size: 0.8rem;
-  border-radius: 999px;
+  border-radius: 6px;
   border-color: var(--pv-line);
   color: var(--pv-muted);
   background: transparent;
@@ -2024,7 +2231,7 @@
   margin: 0 0 0.5rem;
   padding: 0.55rem 0.6rem;
   border: 1px solid var(--pv-line);
-  border-radius: 10px;
+  border-radius: 6px;
   background: #1a1512;
   font-size: 0.85rem;
   line-height: 1.4;
@@ -2044,7 +2251,7 @@
   margin: 0 0 0.55rem;
   padding: 0.55rem 0.65rem;
   border: 1px solid #e07a7a;
-  border-radius: 10px;
+  border-radius: 6px;
   background: #3a1c1c;
   color: #f0c0c0;
   font-size: 0.88rem;

@@ -1,7 +1,18 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
-import { apartmanPozice, denKonce, jeVolna, jmenoNaPozici, prazdnaBrana, stavParkovani, textKonce, type BranaSlot, type NahledBrany } from '@/lib/brana';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  apartmanPozice,
+  denKonce,
+  jeVolna,
+  jmenoNaPozici,
+  konecZOdjezdu,
+  prazdnaBrana,
+  stavParkovani,
+  textKonce,
+  type BranaSlot,
+  type NahledBrany,
+} from '@/lib/brana';
 import type { PrehledRadek } from '@/lib/prehled';
 import { textTelefonu } from '@/lib/telefon';
 
@@ -12,8 +23,12 @@ type RadkaProps = {
   potvrzena: boolean;
   ukazka: boolean;
   cekam: boolean;
+  /** Zvýšení z dlaždice Autem spustí náhled SMS do brány. */
+  vyzvaRegistrace?: number;
   onSloty: (sloty: BranaSlot[]) => void;
   onHlaska: (text: string) => void;
+  /** Po potvrzení brány (i v ukázce) ať dlaždice přepne na Brána OK. */
+  onBranaHotovo?: () => void;
   deti: (dil: ParkovaniDil) => ReactNode;
 };
 
@@ -21,6 +36,8 @@ export type ParkovaniDil = {
   radek: ReactNode;
   registrace: ReactNode | null;
   odpoved: ReactNode | null;
+  /** Panel hned pod dlaždicí Autem: potvrzení zápisu + SMS + odpověď brány. */
+  panelBrany: ReactNode | null;
   detail: ReactNode;
 };
 
@@ -37,7 +54,19 @@ function hostZ(row: PrehledRadek) {
   };
 }
 
-export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, cekam, onSloty, onHlaska, deti }: RadkaProps) {
+export function ParkovaniRadek({
+  row,
+  sloty,
+  pripravena,
+  potvrzena,
+  ukazka,
+  cekam,
+  vyzvaRegistrace = 0,
+  onSloty,
+  onHlaska,
+  onBranaHotovo,
+  deti,
+}: RadkaProps) {
   const [sms, setSms] = useState('');
   const [druhe, setDruhe] = useState('');
   const [dotaz, setDotaz] = useState(false);
@@ -45,11 +74,14 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
   const [nahledDruhe, setNahledDruhe] = useState<string | undefined>(undefined);
   const [odpoved, setOdpoved] = useState('');
   const [chybaOdpovedi, setChybaOdpovedi] = useState('');
+  const [ukazkaCeka, setUkazkaCeka] = useState(false);
+  const [ukazkaHotovo, setUkazkaHotovo] = useState(false);
   const stav = stavParkovani(hostZ(row), sloty, new Date());
+  const minulaVyzva = useRef(0);
 
   async function zavolej(akce: string, extra?: { druhe?: string; odpoved?: string }) {
     if (ukazka) {
-      onHlaska('V náhledu se SMS neotevře.');
+      onHlaska('V ukázce se SMS do brány neotevře.');
       return null;
     }
     onHlaska('');
@@ -84,8 +116,17 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
 
   async function ukazNahled(druh: 'zapis' | 'zneplatnit', extra?: { druhe?: string }) {
     setChybaOdpovedi('');
+    setUkazkaCeka(false);
     if (ukazka) {
-      onHlaska('V náhledu se SMS neotevře.');
+      const pozice = stav.pozice ?? (row.apartman === 'V1' ? 150 : row.apartman === 'V2' ? 154 : row.apartman === 'V3' ? 158 : row.apartman === 'V4' ? 162 : 166);
+      setNahled({
+        druh: druh === 'zneplatnit' ? 'zneplatnit' : 'zapis',
+        pozice,
+        telefon: textTelefonu(row.telefonBrana || '') || 'telefon hosta',
+        konec: textKonce(konecZOdjezdu(row.odjezd)),
+        staryTelefon: null,
+        staryKonec: null,
+      });
       return;
     }
     const json = await zavolej(druh === 'zneplatnit' ? 'nahled-zneplatnit' : 'nahled', extra);
@@ -95,7 +136,27 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
     }
   }
 
+  useEffect(() => {
+    if (!vyzvaRegistrace || vyzvaRegistrace === minulaVyzva.current) return;
+    minulaVyzva.current = vyzvaRegistrace;
+    if (ukazka || stav.akce === 'registrovat' || stav.akce === 'upravit' || stav.akce === 'brzy') {
+      void ukazNahled('zapis');
+    } else if (stav.akce === 'potvrdit') {
+      onHlaska('SMS už šla. Vložte odpověď brány dole na kartě.');
+    } else {
+      onHlaska('Teď bránu zapsat nejde. Zkontrolujte telefon, SPZ a volné stání.');
+    }
+    // Jen při nové výzvě z dlaždice.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vyzvaRegistrace]);
+
   async function otevriSms(extra?: { druhe?: string }) {
+    if (ukazka) {
+      setNahled(null);
+      setUkazkaCeka(true);
+      onHlaska('V ukázce se SMS neotevře. Po odeslání sem vložte odpověď brány.');
+      return;
+    }
     const json = await zavolej(nahled?.druh === 'zneplatnit' ? 'zneplatnit' : 'sms', extra);
     if (json?.odkaz) {
       setSms(json.text || '');
@@ -137,17 +198,24 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
             ) : null}
           </p>
         )}
-        <button type="button" disabled={cekam} onClick={() => void otevriSms(nahledDruhe ? { druhe: nahledDruhe } : undefined)}>
-          Otevřít SMS
-        </button>
-        <button type="button" onClick={() => setNahled(null)}>
-          Nechat
-        </button>
+        <div className="ph-nova-rada">
+          <button type="button" onClick={() => setNahled(null)}>
+            Zrušit
+          </button>
+          <button
+            type="button"
+            className="ph-nova-zprava"
+            disabled={cekam}
+            onClick={() => void otevriSms(nahledDruhe ? { druhe: nahledDruhe } : undefined)}
+          >
+            Otevřít SMS do brány
+          </button>
+        </div>
       </div>
     );
   }
 
-  const registrace = stav.tlacitko && stav.akce !== 'potvrdit' ? (
+  const registrace = stav.tlacitko && stav.akce !== 'potvrdit' && !ukazkaHotovo ? (
     <div className="ph-parkovani-akce">
       <button
         type="button"
@@ -166,25 +234,99 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
     </div>
   ) : null;
 
-  const odpovedPole = stav.akce === 'potvrdit' ? (
-    <label className="ph-parkovani__druhe">
-      Vložit odpověď brány
-      <span>
-        <input value={odpoved} onChange={(e) => setOdpoved(e.target.value)} autoComplete="off" />
-        <button
-          type="button"
-          disabled={cekam || !odpoved.trim()}
-          onClick={() => {
-            void zavolej('odpoved', { odpoved }).then((json) => {
-              if (json) setOdpoved('');
-            });
-          }}
-        >
-          Porovnat
-        </button>
-      </span>
-      {chybaOdpovedi ? <span className="ph-parkovani__chyba">{chybaOdpovedi}</span> : null}
-    </label>
+  const cekaOdpoved = stav.akce === 'potvrdit' || ukazkaCeka;
+  const odpovedPole = cekaOdpoved && !ukazkaHotovo ? (
+    <div className="ph-parkovani__dotaz">
+      <p>Po odeslání SMS vložte odpověď z brány. Když sedí, stání zezelená.</p>
+      <label className="ph-parkovani__druhe">
+        Odpověď brány
+        <span>
+          <input
+            value={odpoved}
+            onChange={(e) => setOdpoved(e.target.value)}
+            autoComplete="off"
+            placeholder="vložit kopii odpovědi"
+          />
+          <button
+            type="button"
+            disabled={cekam || !odpoved.trim()}
+            onClick={() => {
+              if (ukazka) {
+                setUkazkaCeka(false);
+                setUkazkaHotovo(true);
+                setOdpoved('');
+                onHlaska('V ukázce je brána potvrzená.');
+                onBranaHotovo?.();
+                return;
+              }
+              void zavolej('odpoved', { odpoved }).then((json) => {
+                if (json) {
+                  setOdpoved('');
+                  onBranaHotovo?.();
+                }
+              });
+            }}
+          >
+            Porovnat
+          </button>
+        </span>
+        {chybaOdpovedi ? <span className="ph-parkovani__chyba">{chybaOdpovedi}</span> : null}
+      </label>
+      <button
+        type="button"
+        className="ph-predano"
+        disabled={cekam}
+        onClick={() => {
+          if (ukazka) {
+            setUkazkaCeka(false);
+            setUkazkaHotovo(true);
+            onHlaska('V ukázce je brána potvrzená.');
+            onBranaHotovo?.();
+            return;
+          }
+          void zavolej('potvrdit').then((json) => {
+            if (json) onBranaHotovo?.();
+          });
+        }}
+      >
+        Brána potvrdila (bez kontroly)
+      </button>
+    </div>
+  ) : null;
+
+  const panelBrany = ukazkaHotovo ? (
+    <div className="ph-nova-panel ph-nova-panel--brana">
+      <h3>Brána</h3>
+      <p className="ph-nova-panel__stupen">Zapsáno · stání je připravené</p>
+    </div>
+  ) : nahledZapis || cekaOdpoved || (stav.tlacitko && stav.akce !== 'potvrdit') ? (
+    <div className="ph-nova-panel ph-nova-panel--brana" id={`brana-${row.rezervace}`}>
+      <h3>Registrace do brány</h3>
+      {nahledZapis ? (
+        <>
+          <p className="ph-nova-panel__stupen">Nejdřív zkontrolujte pozici a číslo, pak otevřete SMS.</p>
+          {nahledBox(nahledZapis)}
+        </>
+      ) : null}
+      {odpovedPole}
+      {!nahledZapis && !cekaOdpoved && stav.tlacitko ? (
+        <>
+          <button
+            type="button"
+            disabled={cekam || stav.neaktivni || (smsAkce && !ukazka && (!potvrzena || !pripravena))}
+            onClick={() => void ukazNahled('zapis')}
+          >
+            {stav.tlacitko}
+          </button>
+          {smsAkce && !potvrzena && !ukazka ? (
+            <p className="ph-parkovani__poznamka">Nejdřív dole potvrďte, že stav brány souhlasí.</p>
+          ) : null}
+          {smsAkce && potvrzena && !pripravena && !ukazka ? (
+            <p className="ph-parkovani__poznamka">Chybí heslo nebo číslo brány.</p>
+          ) : null}
+        </>
+      ) : null}
+    </div>
   ) : null;
 
   const detail = (
@@ -244,6 +386,7 @@ export function ParkovaniRadek({ row, sloty, pripravena, potvrzena, ukazka, ceka
     ),
     registrace,
     odpoved: odpovedPole,
+    panelBrany,
     detail,
   });
 }

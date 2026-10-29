@@ -37,8 +37,10 @@ type Props = { searchParams: Promise<{ ukazka?: string }> };
 
 export default async function PrehledPage({ searchParams }: Props) {
   const sp = await searchParams;
-  const ukazka = process.env.NODE_ENV !== 'production' && sp.ukazka === '1';
-  if (!(await prehledPrihlasen()) && !ukazka) {
+  const lokalne = process.env.NODE_ENV !== 'production';
+  // Lokálně bez hesla: výchozí je ukázka. Ostrý web beze změny (heslo zůstává).
+  const ukazka = lokalne && sp.ukazka !== '0';
+  if (!(await prehledPrihlasen()) && !ukazka && !lokalne) {
     return <LoginForm />;
   }
   const now = new Date();
