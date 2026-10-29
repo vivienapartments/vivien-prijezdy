@@ -85,8 +85,8 @@ export async function upozorniOdjezdy(
   const zitrejsi = hosteNaDen(list, zitra);
 
   if (beh.vecer !== dnes && zitrejsi.length) {
-    const text = textVecer(zitrejsi.length);
-    const jak = await posli(store, text, '/prehled?zalozka=dnes');
+    const text = textVecer(zitrejsi);
+    const jak = await posli(store, text, '/prehled?zalozka=dnes#odjezdy-zitra');
     if (jak !== 'nic') {
       beh.vecer = dnes;
       pocet += 1;
@@ -95,8 +95,8 @@ export async function upozorniOdjezdy(
 
   const bezDotazu = zitrejsi.filter(chybiDotaz);
   if (hodina >= HODINA_PRIPOMINKY_ODJEZDU && beh.pripominka !== dnes && bezDotazu.length) {
-    const text = textPripominky(bezDotazu.length);
-    const jak = await posli(store, text, '/prehled?zalozka=dnes');
+    const text = textPripominky(bezDotazu);
+    const jak = await posli(store, text, '/prehled?zalozka=dnes#odjezdy-zitra');
     if (jak !== 'nic') {
       beh.pripominka = dnes;
       pocet += 1;

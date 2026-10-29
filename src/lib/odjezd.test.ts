@@ -89,8 +89,10 @@ describe('odjezd', () => {
     };
     await upozorniOdjezdy(store, now, posli);
     await upozorniOdjezdy(store, now, posli);
-    expect(texty).toEqual([textVecer(2)]);
-    expect(texty[0]).toBe('Zítra odjíždí 2 hosté. Pošlete dotaz na odjezd.');
+    expect(texty).toHaveLength(1);
+    expect(texty[0]).toContain('Zítra odjíždí 2 hosté:');
+    expect(texty[0]).toContain('Pošlete dotaz na odjezd.');
+    expect(texty[0]).toMatch(/V1|V3/);
   });
 
   it('když push ani e-mail neberou, zkusí to příště', async () => {

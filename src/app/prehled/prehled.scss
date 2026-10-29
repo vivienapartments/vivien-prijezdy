@@ -1573,6 +1573,19 @@
   color: var(--color-gold);
 }
 
+.ph-karta-nahled {
+  padding-top: 0.75rem;
+}
+
+.ph-karta-nahled__zpet {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0;
+  background: linear-gradient(to bottom, var(--color-bg, #1a1612) 70%, transparent);
+}
+
 .ph-hledat-nahore {
   display: flex;
   flex-direction: column;

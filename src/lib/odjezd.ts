@@ -462,13 +462,31 @@ function sklon(n: number, jeden: string, dva: string, pet: string): string {
   return `${n} ${pet}`;
 }
 
-export function textVecer(pocet: number): string {
-  return `Zítra odjíždí ${sklon(pocet, 'host', 'hosté', 'hostů')}. Pošlete dotaz na odjezd.`;
+/** Jména do push (max 4), ať majitel ví, ke komu to patří. */
+function seznamHostu(
+  hoste: Pick<RezervaceRecord, 'apartman' | 'jmeno' | 'rezervace' | 'casOdjezdu'>[],
+): string {
+  const kusy = hoste.slice(0, 4).map((h) => {
+    const kdo = popis(h);
+    return jeHodina(h.casOdjezdu) ? `${kdo} ${zobrazCas(h.casOdjezdu)}` : `${kdo} (bez času)`;
+  });
+  if (hoste.length > 4) kusy.push('a další');
+  return kusy.join(', ');
 }
 
-export function textPripominky(pocet: number): string {
-  const komu = pocet === 1 ? '1 hostu' : `${pocet} hostům`;
-  return `${komu} jste ještě neposlali dotaz na odjezd.`;
+export function textVecer(
+  hoste: Pick<RezervaceRecord, 'apartman' | 'jmeno' | 'rezervace' | 'casOdjezdu'>[],
+): string {
+  const n = hoste.length;
+  return `Zítra odjíždí ${sklon(n, 'host', 'hosté', 'hostů')}: ${seznamHostu(hoste)}. Pošlete dotaz na odjezd.`;
+}
+
+export function textPripominky(
+  hoste: Pick<RezervaceRecord, 'apartman' | 'jmeno' | 'rezervace' | 'casOdjezdu'>[],
+): string {
+  const n = hoste.length;
+  const komu = n === 1 ? '1 hostu' : `${n} hostům`;
+  return `${komu} jste ještě neposlali dotaz na odjezd: ${seznamHostu(hoste)}.`;
 }
 
 export function textPulHodiny(rec: Pick<RezervaceRecord, 'apartman' | 'jmeno' | 'rezervace' | 'casOdjezdu'>, polozky: PolozkaDluhu[]): string {

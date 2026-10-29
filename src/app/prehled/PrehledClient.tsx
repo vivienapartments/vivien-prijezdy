@@ -98,6 +98,13 @@ function zalozkaZUpozorneniUrl(url: string): Zalozka | null {
   return m[1] as Zalozka;
 }
 
+/** Kotva sekce (pohoda, odjezdy-zitra), ne číslo rezervace. */
+function kotvaZUpozorneniUrl(url: string): string | null {
+  const hash = (url || '').split('#')[1]?.split(/[?&]/)[0]?.trim() || '';
+  if (hash === 'pohoda' || hash.startsWith('odjezdy')) return hash;
+  return null;
+}
+
 type ZpetKam = { zalozka: Zalozka; y: number };
 
 type Props = {
@@ -271,13 +278,11 @@ export function PrehledClient({
       /* hash */
     }
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        try {
-          document.getElementById(cislo)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        } catch {
-          /* scroll */
-        }
-      });
+      try {
+        window.scrollTo(0, 0);
+      } catch {
+        /* scroll */
+      }
     });
   }
 
@@ -304,7 +309,7 @@ export function PrehledClient({
     }
   }
 
-  function otevriZUpozorneni(url: string) {
+  function otevriZUpozorneni(url: string, text = '') {
     const id = idZUpozorneniUrl(url);
     if (id) {
       if (!radky.some((r) => r.rezervace === id && !r.nelzeNacist)) {
@@ -316,15 +321,25 @@ export function PrehledClient({
       otevriKartu(id);
       return;
     }
-    const z = zalozkaZUpozorneniUrl(url);
+    let kotva = kotvaZUpozorneniUrl(url);
+    /** Stará upozornění „Zítra odjíždí…“ měla jen záložku Dnešek bez kotvy. */
+    if (!kotva && /odjíždí|dotaz na odjezd/i.test(text)) kotva = 'odjezdy-zitra';
+    if (!kotva && /v pořádku/i.test(text)) kotva = 'pohoda';
+    const z = zalozkaZUpozorneniUrl(url) || (kotva ? 'dnes' : null);
     if (z) {
       otevriZalozku(z);
       requestAnimationFrame(() => {
-        try {
-          window.scrollTo(0, 0);
-        } catch {
-          /* scroll */
-        }
+        requestAnimationFrame(() => {
+          try {
+            if (kotva) {
+              document.getElementById(kotva)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+              window.scrollTo(0, 0);
+            }
+          } catch {
+            /* scroll */
+          }
+        });
       });
       return;
     }
@@ -2382,6 +2397,21 @@ export function PrehledClient({
   };
   const vybrany = vybrana ? radky.find((r) => r.rezervace === vybrana) : undefined;
 
+  /** Samostatný náhled karty: nic jiného, jen ← Zpět a karta. */
+  if (vybrany) {
+    return (
+      <main className="ph ph-karta-nahled">
+        {hlaska ? <p className="ph-ok">{hlaska}</p> : null}
+        <p className="ph-dnesek__akce ph-karta-nahled__zpet">
+          <button type="button" className="ph-dnesek__odkaz" onClick={zpetZKarty}>
+            ← Zpět na přehled
+          </button>
+        </p>
+        {kartaHosta(vybrany)}
+      </main>
+    );
+  }
+
   return (
     <main className="ph">
       {radky
@@ -2476,17 +2506,24 @@ export function PrehledClient({
             <ul>
               {nova.map((u) => {
                 const id = idZUpozorneniUrl(u.url);
-                const maCil = Boolean(id || zalozkaZUpozorneniUrl(u.url));
+                const kotva = kotvaZUpozorneniUrl(u.url);
+                const maCil = Boolean(id || kotva || zalozkaZUpozorneniUrl(u.url));
                 return (
                   <li key={`${u.cas}:${u.text}`}>
                     <button
                       type="button"
                       className={maCil ? 'ph-upozorneni-seznam__radek' : 'ph-upozorneni-seznam__radek is-bez-odkazu'}
-                      onClick={() => otevriZUpozorneni(u.url)}
+                      onClick={() => otevriZUpozorneni(u.url, u.text)}
                     >
                       <span className="ph-upozorneni-seznam__cas">{casPraha(u.cas) || u.cas}</span>
                       <span>{u.text}</span>
-                      {id ? <span className="ph-upozorneni-seznam__hint">Otevřít kartu ▸</span> : null}
+                      {id ? (
+                        <span className="ph-upozorneni-seznam__hint">Otevřít kartu ▸</span>
+                      ) : kotva === 'odjezdy-zitra' || /odjíždí|dotaz na odjezd/i.test(u.text) ? (
+                        <span className="ph-upozorneni-seznam__hint">Zítřejší odjezdy ▸</span>
+                      ) : maCil ? (
+                        <span className="ph-upozorneni-seznam__hint">Otevřít ▸</span>
+                      ) : null}
                     </button>
                   </li>
                 );
@@ -2530,7 +2567,7 @@ export function PrehledClient({
           }}
         />
       ) : null}
-      {zalozka === 'dluhy' && !vybrany ? (
+      {zalozka === 'dluhy' ? (
         <Nedoplatky
           radky={radky}
           dnes={dnes}
@@ -2539,17 +2576,7 @@ export function PrehledClient({
           onPlatby={zapisPlatbyRadku}
         />
       ) : null}
-      {zalozka === 'hledat' && vybrany ? (
-        <>
-          <p className="ph-dnesek__akce">
-            <button type="button" className="ph-dnesek__odkaz" onClick={zpetZKarty}>
-              ← Zpět
-            </button>
-          </p>
-          {kartaHosta(vybrany)}
-        </>
-      ) : null}
-      {zalozka === 'hledat' && !vybrany ? (
+      {zalozka === 'hledat' ? (
         <>
           <Hledani
             radky={radky}
@@ -2636,16 +2663,6 @@ export function PrehledClient({
               </div>
             </form>
           ) : null}
-        </>
-      ) : null}
-      {zalozka === 'dluhy' && vybrany ? (
-        <>
-          <p className="ph-dnesek__akce">
-            <button type="button" className="ph-dnesek__odkaz" onClick={zpetZKarty}>
-              ← Zpět
-            </button>
-          </p>
-          {kartaHosta(vybrany)}
         </>
       ) : null}
 
