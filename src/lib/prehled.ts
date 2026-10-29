@@ -15,6 +15,7 @@ import { zneniVerze } from './pravidla-verze';
 import { popisekCasu, priplatekCasu, soucetVyjezdu } from './priplatek-prijezd';
 import { nazevDluhu, polozkyVsechny, polozkyZRezervace, textRozpisu, type DruhDluhu } from './odjezd';
 import { casPrevzetiText } from './zalozky';
+import { doplnStaleHosty, type StalyHostInfo } from './staly-host';
 
 export const STARY_ZAZNAM = 'starý záznam';
 
@@ -129,6 +130,8 @@ export type PrehledRadek = {
   navrhy: { pole: RucniPole; veta: string; hodnota: string }[];
   /** Kdy majitel uložil kontakt do telefonu. null = ještě ne, tlačítko je nahoře. */
   kontaktUlozenKdy: string | null;
+  /** Stejný host z minulých karet (počítá se v paměti). */
+  stalyHost?: StalyHostInfo | null;
 };
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
@@ -902,7 +905,7 @@ export function radkyBezPadu(
       chyby.push(kartaNelzeNacist(id));
     }
   }
-  return [...chyby, ...seradRadky(ok, now)];
+  return [...chyby, ...doplnStaleHosty(seradRadky(ok, now))];
 }
 
 export async function buildPrehled(store: ProcessStore, now = new Date()): Promise<PrehledRadek[]> {

@@ -36,6 +36,7 @@ export type HostDne = {
   uklizenoKdy: string | null;
   uklizenoKdo: KdoUklidil | null;
   prevzatoKdy?: string | null;
+  predanoKdy?: string | null;
 };
 
 export type UklidRadek = {
@@ -88,6 +89,7 @@ export type PrijezdRadek = {
   zpusob: string;
   brana: string;
   faze: string;
+  predanoKdy: string | null;
 };
 
 export type DluhRadek = {
@@ -181,6 +183,7 @@ export function hostZRezervace(rec: RezervaceRecord): HostDne {
     uklizenoKdy: rec.uklizenoKdy,
     uklizenoKdo: rec.uklizenoKdo,
     prevzatoKdy: rec.prevzatoKdy,
+    predanoKdy: rec.predano,
   };
 }
 
@@ -464,7 +467,7 @@ export function sestavDnesek(hoste: HostDne[], dnes: string, now?: Date): Dnesek
     }),
   );
 
-  const prijezdy = seradPodleCasu(prijezdyHoste, (h) => h.casPrijezdu, (h) => h.apartman || '').map(
+  const prijezdyMap = seradPodleCasu(prijezdyHoste, (h) => h.casPrijezdu, (h) => h.apartman || '').map(
     (h): PrijezdRadek => ({
       rezervace: h.rezervace,
       apartman: h.apartman || 'Apartmán',
@@ -474,8 +477,13 @@ export function sestavDnesek(hoste: HostDne[], dnes: string, now?: Date): Dnesek
       zpusob: textZpusobu(h.zpusob),
       brana: textBrany(h.brana),
       faze: h.faze,
+      predanoKdy: h.predanoKdy || null,
     }),
   );
+  const prijezdy = [
+    ...prijezdyMap.filter((r) => !r.predanoKdy),
+    ...prijezdyMap.filter((r) => r.predanoKdy),
+  ];
 
   return {
     uklid,

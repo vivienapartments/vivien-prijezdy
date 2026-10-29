@@ -2,6 +2,7 @@ import { sOdkazem } from './prehled-odkazy';
 import { dnesVPraze, posunDen, radekZRezervace, seradRadky, type PrehledRadek } from './prehled';
 import { verzeAktualni } from './pravidla-verze';
 import { prazdnaRezervace, type RezervaceRecord } from './store';
+import { doplnStaleHosty } from './staly-host';
 
 /** Jen místní náhled přehledu. Na ostrém webu se tahle data neukážou. */
 export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
@@ -450,9 +451,11 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
 }
 
 export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
-  return seradRadky(
-    ukazkoveZaznamy(now).map((rec) => sOdkazem(radekZRezervace(rec), rec, now)),
-    now,
+  return doplnStaleHosty(
+    seradRadky(
+      ukazkoveZaznamy(now).map((rec) => sOdkazem(radekZRezervace(rec), rec, now)),
+      now,
+    ),
   );
 }
 

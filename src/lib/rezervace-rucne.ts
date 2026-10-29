@@ -9,8 +9,8 @@ import {
   type RezervaceRecord,
   type RezervaceStav,
 } from './store';
-import type { AptId } from './types';
-import { APT_IDS } from './types';
+import type { AptId, GuideLang } from './types';
+import { APT_IDS, GUIDE_LANGS } from './types';
 
 export type StitekRezervace = 'rucne' | 'info';
 
@@ -26,6 +26,19 @@ export type DoplnekRezervace = {
   noci?: number | null;
   zdroj?: string | null;
   checkinUrl?: string | null;
+};
+
+export type NovaRucniRezervace = {
+  jmeno?: string | null;
+  telefon?: string | null;
+  email?: string | null;
+  apartman: AptId;
+  prijezd: string;
+  odjezd: string;
+  osob: number;
+  pin: string;
+  narodnost?: string | null;
+  jazyk?: GuideLang | null;
 };
 
 const ZDROJE = new Set(['Booking', 'Airbnb', 'přímá']);
@@ -152,4 +165,128 @@ export async function doplnRezervaci(
   }
   await store.setRezervace(id, rec);
   return { ok: true, nova };
+}
+
+function prekryvTerminu(
+  aPrijezd: string,
+  aOdjezd: string,
+  bPrijezd: string | null,
+  bOdjezd: string | null,
+): boolean {
+  if (!bPrijezd || !bOdjezd) return false;
+  return aPrijezd < bOdjezd && aOdjezd > bPrijezd;
+}
+
+/** Unikátní číslo jen z číslic: 9 + YYYYMMDD + pořadí. */
+export async function noveCisloRucni(store: ProcessStore, ted = new Date()): Promise<string> {
+  const y = ted.getUTCFullYear();
+  const m = String(ted.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(ted.getUTCDate()).padStart(2, '0');
+  const prefix = `9${y}${m}${d}`;
+  const list = await store.listRezervace();
+  let max = 0;
+  for (const e of list) {
+    const id = e.id || e.record?.rezervace || '';
+    if (!id.startsWith(prefix)) continue;
+    const n = Number(id.slice(prefix.length));
+    if (Number.isFinite(n) && n > max) max = n;
+  }
+  return `${prefix}${String(max + 1).padStart(2, '0')}`;
+}
+
+export function najdiPrekryv(
+  list: { record: RezervaceRecord }[],
+  apartman: AptId,
+  prijezd: string,
+  odjezd: string,
+  kromeId?: string,
+): RezervaceRecord | null {
+  for (const e of list) {
+    const r = e.record;
+    if (!r || r.stav === 'zruseno') continue;
+    if (kromeId && r.rezervace === kromeId) continue;
+    if (r.apartman !== apartman) continue;
+    if (prekryvTerminu(prijezd, odjezd, r.prijezd, r.odjezd)) return r;
+  }
+  return null;
+}
+
+/**
+ * Nová ruční rezervace s PINem. Hostovi se nic neposílá.
+ * Při překryvu bez potvrzení vrátí varování.
+ */
+export async function vytvorRucniRezervaci(
+  store: ProcessStore,
+  vstup: NovaRucniRezervace,
+  opts: { potvrdPrekryv?: boolean } = {},
+): Promise<
+  | { ok: true; rezervace: string }
+  | { ok: false; error: string; prekryv?: { apartman: string; jmeno: string } }
+> {
+  if (!APT_IDS.includes(vstup.apartman)) return { ok: false, error: 'Vyberte apartmán.' };
+  const prijezd = datum(vstup.prijezd);
+  const odjezd = datum(vstup.odjezd);
+  if (!prijezd || !odjezd) return { ok: false, error: 'Datum je ve špatném tvaru.' };
+  const noci = nightsBetween(prijezd, odjezd);
+  if (!noci) return { ok: false, error: 'Odjezd musí být po příjezdu.' };
+  const osob = Number.isFinite(vstup.osob) && vstup.osob > 0 ? Math.floor(vstup.osob) : 0;
+  if (!osob) return { ok: false, error: 'Doplňte počet osob.' };
+  const pin = (vstup.pin || '').trim();
+  if (!/^\d{3,12}$/.test(pin)) return { ok: false, error: 'PIN napište číslicemi.' };
+  const email = (vstup.email || '').trim();
+  if (email && problemEmailu(email)) return { ok: false, error: 'E-mail má špatný tvar.' };
+  const jmeno = (vstup.jmeno || '').replace(/\s+/g, ' ').trim();
+  const jazyk =
+    vstup.jazyk && GUIDE_LANGS.includes(vstup.jazyk)
+      ? vstup.jazyk
+      : vstup.telefon
+        ? jazykZPredvolby(normalizujTelefon(vstup.telefon)?.ulozeny || null)
+        : null;
+
+  const list = await store.listRezervace();
+  const prekryv = najdiPrekryv(list, vstup.apartman, prijezd, odjezd);
+  if (prekryv && !opts.potvrdPrekryv) {
+    return {
+      ok: false,
+      error: `${vstup.apartman} je v tomto termínu obsazený (${(prekryv.jmeno || 'host').split(/\s+/).pop()})`,
+      prekryv: { apartman: vstup.apartman, jmeno: prekryv.jmeno || 'host' },
+    };
+  }
+
+  const id = await noveCisloRucni(store);
+  const now = new Date().toISOString();
+  const tel = vstup.telefon ? normalizujTelefon(vstup.telefon, vstup.narodnost) : null;
+  const jazykHotovo = jazyk || (tel ? jazykZPredvolby(tel.ulozeny) : null);
+  const pole: RucniPole[] = ['apartman', 'prijezd', 'odjezd', 'noci', 'osob', 'accessPin'];
+  if (jmeno) pole.push('jmeno');
+  if (email) pole.push('emailHosta');
+  if (jazykHotovo) pole.push('jazyk');
+  if (tel) pole.push('telefonRezervace');
+
+  const rec: RezervaceRecord = {
+    ...prazdnaRezervace(id, now),
+    jmeno: jmeno || null,
+    krestni: jmeno ? jmeno.split(' ')[0] : null,
+    emailHosta: email || null,
+    apartman: vstup.apartman,
+    prijezd,
+    odjezd,
+    noci,
+    osob,
+    accessPin: pin,
+    zdroj: 'přímá',
+    stitek: 'rucne',
+    stav: 'bez_checkinu',
+    narodnost: (vstup.narodnost || '').trim().toUpperCase() || null,
+    jazyk: jazykHotovo,
+    poplatek: 'ano',
+    telefonRezervace: tel?.ulozeny || null,
+    telefonRezervaceWa: tel?.wa || null,
+    telefonRezervacePuvodni: tel?.puvodni || null,
+    rucniZnacky: pole.map((p) => ({ pole: p, cas: now })),
+    historie: [{ cas: now, co: 'Přidáno ručně' }],
+    posledniPokus: now,
+  };
+  await store.setRezervace(id, rec);
+  return { ok: true, rezervace: id };
 }

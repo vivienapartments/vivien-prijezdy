@@ -58,7 +58,6 @@ export function RadaZalozek({
   onZmena: (z: Zalozka) => void;
 }) {
   const polozky: { id: Zalozka; text: string }[] = [
-    { id: 'prijezdy', text: 'Příjezdy' },
     { id: 'dnes', text: 'Dnešek' },
     { id: 'dluhy', text: 'Nedoplatky' },
     { id: 'hledat', text: 'Hledat' },
@@ -339,6 +338,7 @@ export function Hledani({
   dnes,
   zitra,
   onOtevri,
+  onNovaRezervace,
   dotaz: dotazVenku,
   onDotaz,
   jenVysledky = false,
@@ -347,6 +347,8 @@ export function Hledani({
   dnes: string;
   zitra: string;
   onOtevri: (id: string) => void;
+  /** Otevře formulář nové rezervace, volitelně předvyplněný z hosta. */
+  onNovaRezervace?: (zHosta?: PrehledRadek | null) => void;
   /** Když je zvenku, hledání řídí rodič (pole nahoře v přehledu). */
   dotaz?: string;
   onDotaz?: (text: string) => void;
@@ -384,17 +386,32 @@ export function Hledani({
           </button>
         ))}
       </div>
+      {onNovaRezervace ? (
+        <p className="ph-dnesek__akce">
+          <button type="button" onClick={() => onNovaRezervace(null)}>
+            Nová rezervace – nový host
+          </button>
+        </p>
+      ) : null}
       {dotaz || filtr ? (
         nalezene.length ? (
           <ul>
-            {nalezene.map((h) => (
-              <li key={h.rezervace} className={h.stav === 'zruseno' ? 'is-zruseno' : undefined}>
-                <button type="button" className="ph-jmeno" onClick={() => onOtevri(h.rezervace)}>
-                  {h.apartman || 'bez apartmánu'} · {h.jmeno || 'Host'} · {denKratce(h.prijezd)}–{denKratce(h.odjezd)}
-                  {h.stav === 'zruseno' ? ' · zrušeno' : ''}
-                </button>
-              </li>
-            ))}
+            {nalezene.map((h) => {
+              const row = radky.find((r) => r.rezervace === h.rezervace);
+              return (
+                <li key={h.rezervace} className={h.stav === 'zruseno' ? 'is-zruseno' : undefined}>
+                  <button type="button" className="ph-jmeno" onClick={() => onOtevri(h.rezervace)}>
+                    {h.apartman || 'bez apartmánu'} · {h.jmeno || 'Host'} · {denKratce(h.prijezd)}–{denKratce(h.odjezd)}
+                    {h.stav === 'zruseno' ? ' · zrušeno' : ''}
+                  </button>
+                  {onNovaRezervace && row && h.stav !== 'zruseno' ? (
+                    <button type="button" onClick={() => onNovaRezervace(row)}>
+                      Nová rezervace pro tohoto hosta
+                    </button>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <p className="ph-prazdno">Nic tu není.</p>

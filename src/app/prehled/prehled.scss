@@ -30,8 +30,52 @@
   color: var(--color-gold);
 }
 
-.ph button.ph-den.is-on {
+.ph button.ph-den.is-on,
+.ph .ph-den.is-on {
   background: rgba(201, 168, 76, 0.32);
+}
+
+.ph .ph-den {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+.ph .ph-den__nadpis {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ph-staly {
+  margin: 0.35rem 0 0;
+  color: var(--color-gold);
+  font-size: 0.92rem;
+}
+
+.ph-staly.is-slaba {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.ph-stitek {
+  margin-top: 0.25rem;
+  color: var(--color-gold);
+  font-size: 0.85rem;
+}
+
+.ph-predano-sbal {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
 }
 
 .ph-filtry button.is-on {

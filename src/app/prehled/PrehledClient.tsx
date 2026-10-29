@@ -53,6 +53,7 @@ import {
   stavZavadText,
   type KdoZavad,
 } from '@/lib/zavady-predani';
+import { textStalehoHosta } from '@/lib/staly-host';
 
 type Stav = PrehledRadek['stav'];
 
@@ -174,7 +175,15 @@ export function PrehledClient({
   const [casyOdjezdu, setCasyOdjezdu] = useState<Record<string, string>>({});
   const [volba, setVolba] = useState<Record<string, string>>({});
   const [odkazy, setOdkazy] = useState<Record<string, string>>({});
-  const [pridat, setPridat] = useState(false);
+  const [novaRezervace, setNovaRezervace] = useState<{
+    jmeno: string;
+    telefon: string;
+    email: string;
+    narodnost: string;
+    jazyk: GuideLang;
+  } | null>(null);
+  const [potvrdPrekryv, setPotvrdPrekryv] = useState(false);
+  const [rozbalPredano, setRozbalPredano] = useState<Record<string, true>>({});
   const [predani, setPredani] = useState<Record<string, string | null>>({});
   const [naMisteStav, setNaMisteStav] = useState<Record<string, string | null>>({});
   const [priplatekStav, setPriplatekStav] = useState<Record<string, number | null>>({});
@@ -497,7 +506,7 @@ export function PrehledClient({
       setHlaska('Napište, co není v pořádku.');
       return;
     }
-    const kdo: KdoZavad = kdoKouka === 'nikol' ? 'nikol' : 'pravoslav';
+    const kdo: KdoZavad = kdoZNazvuTelefonu(nactiNazevPush() || kdoKouka);
     if (ukazka) {
       const kdy = new Date().toISOString();
       setZavadyStav((prev) => ({
@@ -596,7 +605,19 @@ export function PrehledClient({
     setZavadyPoOdjezduStav((prev) => ({ ...prev, [row.rezervace]: json.zavadyPoOdjezdu ?? null }));
   }
 
-  async function ulozPridani(event: FormEvent<HTMLFormElement>) {
+  function otevriNovouRezervaci(zHosta?: PrehledRadek | null) {
+    setPotvrdPrekryv(false);
+    setNovaRezervace({
+      jmeno: zHosta?.jmeno && zHosta.jmeno !== STARY_ZAZNAM ? zHosta.jmeno : '',
+      telefon: zHosta?.telefonText || '',
+      email: zHosta?.email?.includes('@') ? zHosta.email : '',
+      narodnost: zHosta?.narodnost || '',
+      jazyk: (zHosta?.jazyk as GuideLang) || 'cs',
+    });
+    otevriZalozku('hledat');
+  }
+
+  async function ulozNovouRezervaci(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (ukazka) {
       setHlaska('V náhledu se rezervace neukládá.');
@@ -609,7 +630,6 @@ export function PrehledClient({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        rezervace: String(data.get('rezervace') || ''),
         jmeno: String(data.get('jmeno') || ''),
         telefon: String(data.get('telefon') || ''),
         email: String(data.get('email') || ''),
@@ -617,13 +637,33 @@ export function PrehledClient({
         prijezd: String(data.get('prijezd') || ''),
         odjezd: String(data.get('odjezd') || ''),
         osob: String(data.get('osob') || ''),
-        zdroj: String(data.get('zdroj') || ''),
+        pin: String(data.get('pin') || ''),
+        narodnost: String(data.get('narodnost') || ''),
+        jazyk: String(data.get('jazyk') || ''),
+        potvrdPrekryv,
       }),
     });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      rezervace?: string;
+      prekryv?: { apartman: string; jmeno: string } | null;
+    } | null;
     setCekam(null);
     if (!res.ok || !json?.ok) {
+      if (json?.prekryv && !potvrdPrekryv) {
+        setPotvrdPrekryv(true);
+        setHlaska(json.error || 'Apartmán je v tomto termínu obsazený.');
+        return;
+      }
       setHlaska(json?.error || 'Rezervace se nepřidala.');
+      return;
+    }
+    setNovaRezervace(null);
+    setPotvrdPrekryv(false);
+    if (json.rezervace) {
+      window.location.href = `/prehled#${json.rezervace}`;
+      window.location.reload();
       return;
     }
     window.location.reload();
@@ -764,8 +804,12 @@ export function PrehledClient({
     try {
       const raw = localStorage.getItem('vivien-zalozka');
       if (raw) ulozena = JSON.parse(raw) as { den: string; zalozka: string };
-      const ulozenyKdo = localStorage.getItem('vivien-kdo');
-      if (ulozenyKdo === 'nikol' || ulozenyKdo === 'pravoslav') kdo = ulozenyKdo;
+      const pushNazev = nactiNazevPush();
+      if (pushNazev) kdo = pushNazev.toLowerCase().includes('nikol') ? 'nikol' : 'pravoslav';
+      else {
+        const ulozenyKdo = localStorage.getItem('vivien-kdo');
+        if (ulozenyKdo === 'nikol' || ulozenyKdo === 'pravoslav') kdo = ulozenyKdo;
+      }
       const v = localStorage.getItem('vivien-videno');
       if (v) nactene = JSON.parse(v) as Record<string, Record<string, string>>;
     } catch {
@@ -1198,6 +1242,32 @@ export function PrehledClient({
     return { ok: true, hodnota: hotovo };
   }
 
+  async function pouzijEmailZMinula(row: PrehledRadek, email: string) {
+    const hodnota = email.trim();
+    if (!hodnota.includes('@')) return;
+    setCekam(`${row.rezervace}:email-minula`);
+    if (!ukazka) {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: row.rezervace, akce: 'email-hosta', email: hodnota }),
+      });
+      if (!res.ok) {
+        setCekam(null);
+        setHlaska('E-mail se neuložil.');
+        return;
+      }
+    }
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? { ...r, email: hodnota, stalyHost: r.stalyHost ? { ...r.stalyHost, emailZMinula: null } : null }
+          : r,
+      ),
+    );
+    setCekam(null);
+  }
+
   async function ulozTelefon(
     row: PrehledRadek,
     ktery: 'checkin' | 'rezervace',
@@ -1315,25 +1385,33 @@ export function PrehledClient({
   }
 
   function radekDne(ktery: 'dnes' | 'zitra', nadpis: string, souhrn: ReturnType<typeof souhrnDne>) {
-    const plan = souhrn.plan
-      .map((h) => (h.cas ? `${h.cas} ${h.jmeno}` : `bez času ${h.jmeno}`))
-      .join(' · ');
     return (
-      <button
-        type="button"
-        className={den === ktery && zalozka === 'prijezdy' ? 'ph-den is-on' : 'ph-den'}
-        aria-pressed={den === ktery && zalozka === 'prijezdy'}
-        onClick={() => {
-          setDen(ktery);
-          otevriZalozku('prijezdy');
-        }}
-      >
-        <span>
+      <div className={den === ktery && zalozka === 'prijezdy' ? 'ph-den is-on' : 'ph-den'}>
+        <button
+          type="button"
+          className="ph-den__nadpis"
+          aria-pressed={den === ktery && zalozka === 'prijezdy'}
+          onClick={() => {
+            setDen(ktery);
+            otevriZalozku('prijezdy');
+          }}
+        >
           {nadpis}: {souhrn.pocet} · průvodce otevřelo {souhrn.otevrelo} · neodesláno {souhrn.neodeslano} · bez
           check-inu: {souhrn.bezCheckinu}
-        </span>
-        {plan ? <span className="ph-plan">{plan}</span> : null}
-      </button>
+        </button>
+        {souhrn.plan.length ? (
+          <p className="ph-plan">
+            {souhrn.plan.map((h, i) => (
+              <span key={h.rezervace}>
+                {i > 0 ? ' · ' : null}
+                <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(h.rezervace)}>
+                  {h.cas ? `${h.cas} ${h.jmeno}` : `bez času ${h.jmeno}`}
+                </button>
+              </span>
+            ))}
+          </p>
+        ) : null}
+      </div>
     );
   }
 
@@ -1403,11 +1481,21 @@ export function PrehledClient({
       parkovani: parkAkce,
       odjel,
     });
-    const zpravyNahore = !predanoKdy && !odjel;
+    const casAktualni = Object.prototype.hasOwnProperty.call(casy, row.rezervace)
+      ? casy[row.rezervace].trim() || null
+      : row.casPrijezdu;
+    const zpravyNahore =
+      !odjel &&
+      (row.stav === 'bez_checkinu' ||
+        (row.otevrenoPocet ?? 0) === 0 ||
+        !row.rozbalen ||
+        !casAktualni ||
+        (row.zpusobPrijezdu === 'auto' && (!row.telefonBrana || (!row.spz && !row.spzPujcene))));
     const telefonNahore = !row.telefonText;
-    const kontaktUlozenCas = kontaktUlozenKdy(row);
+    const staly = row.stalyHost || null;
+    const kontaktUlozenCas = kontaktUlozenKdy(row) || staly?.kontaktZMinula || null;
     const muzeKontakt = Boolean(wa || row.telefonText || row.jinyTelefonText);
-    const kontaktNahore = muzeKontakt && !kontaktUlozenCas;
+    const kontaktNahore = muzeKontakt && !kontaktUlozenCas && !staly?.kontaktZMinula;
     const predaniNahore = !odjel && !predanoKdy && Boolean(row.prijezd && row.prijezd <= dnes);
     const tlacitkoKontakt = muzeKontakt ? (
       <UlozitKontakt row={row} onUlozeno={() => oznacKontaktUlozen(row)} />
@@ -1783,7 +1871,11 @@ export function PrehledClient({
           <div className="ph-jmeno">{kdo}</div>
           {apartman ? <div className="ph-apt">{apartman}</div> : null}
           {termin ? <div className="ph-kde">{termin}</div> : null}
+          {row.stitek === 'rucne' ? <div className="ph-stitek">Ruční</div> : null}
         </div>
+        {staly ? (
+          <p className={staly.shoda === 'slaba' ? 'ph-staly is-slaba' : 'ph-staly'}>{textStalehoHosta(staly)}</p>
+        ) : null}
         {zpravyNahore ? (
           <>
             {zpravaRamecek}
@@ -1793,6 +1885,34 @@ export function PrehledClient({
         <div className="ph-znacky">
           <span className={`ph-faze ph-faze--${fazeTon}`}>Fáze · {fazeText}</span>
         </div>
+        {staly?.telefonZMinula ? (
+          <p className="ph-dnesek__akce">
+            <button type="button" disabled={cekam !== null} onClick={() => void ulozTelefon(row, 'rezervace', staly.telefonZMinula!)}>
+              Použít telefon z minula: {staly.telefonZMinula}
+            </button>
+          </p>
+        ) : null}
+        {staly?.emailZMinula ? (
+          <p className="ph-dnesek__akce">
+            <button
+              type="button"
+              disabled={cekam !== null}
+              onClick={() => void pouzijEmailZMinula(row, staly.emailZMinula!)}
+            >
+              Použít e-mail z minula: {staly.emailZMinula}
+            </button>
+          </p>
+        ) : null}
+        {staly?.kontaktZMinula ? (
+          <p className="ph-staly">
+            kontakt už máte z{' '}
+            {(() => {
+              const t = casPraha(staly.kontaktZMinula);
+              const m = t.match(/(\d+)\.\s*(\d+)\.\s*(\d{4})/);
+              return m ? `${m[2]}/${m[3]}` : t;
+            })()}
+          </p>
+        ) : null}
         {[
           row.zadostPrijezd?.stav === 'ceka' && !oknoHotovo[`${row.rezervace}:potvrdit-prijezd`] && !oknoHotovo[`${row.rezervace}:nelze-prijezd`]
             ? { akce: 'prijezd' as const, text: vetaZadosti(row, 'prijezd') }
@@ -1901,6 +2021,23 @@ export function PrehledClient({
           {rozbaleno ? 'Skrýt detail ▴' : 'Detail ▾'}
         </button>
         <div className="ph-detail">
+          {staly?.predchozi?.length ? (
+            <div className="ph-staly-predchozi">
+              <p>Předchozí pobyty</p>
+              <ul>
+                {staly.predchozi.map((p) => (
+                  <li key={p.rezervace}>
+                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(p.rezervace)}>
+                      {(p.apartman || 'Apartmán') +
+                        ' · ' +
+                        (p.prijezd || '?') +
+                        (p.odjezd ? `–${p.odjezd}` : '')}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {row.jinyTelefonKtery ? (
             <PoleSUlozenim
               key={`${row.rezervace}-druhe`}
@@ -2298,29 +2435,6 @@ export function PrehledClient({
           autoComplete="off"
         />
       </label>
-      <p className="ph-dnesek__akce">
-        Kdo se dívá
-        <button
-          type="button"
-          className={kdoKouka === 'pravoslav' ? 'is-on' : undefined}
-          onClick={() => {
-            setKdoKouka('pravoslav');
-            try { localStorage.setItem('vivien-kdo', 'pravoslav'); } catch { /* paměť */ }
-          }}
-        >
-          Pravoslav
-        </button>
-        <button
-          type="button"
-          className={kdoKouka === 'nikol' ? 'is-on' : undefined}
-          onClick={() => {
-            setKdoKouka('nikol');
-            try { localStorage.setItem('vivien-kdo', 'nikol'); } catch { /* paměť */ }
-          }}
-        >
-          Nikol
-        </button>
-      </p>
 
       {zalozka === 'dnes' ? (
         <Dnesek
@@ -2347,15 +2461,93 @@ export function PrehledClient({
         />
       ) : null}
       {zalozka === 'hledat' ? (
-        <Hledani
-          radky={radky}
-          dnes={dnes}
-          zitra={zitra}
-          dotaz={hledatDotaz}
-          onDotaz={setHledatDotaz}
-          jenVysledky
-          onOtevri={otevriKartu}
-        />
+        <>
+          <Hledani
+            radky={radky}
+            dnes={dnes}
+            zitra={zitra}
+            dotaz={hledatDotaz}
+            onDotaz={setHledatDotaz}
+            jenVysledky
+            onOtevri={otevriKartu}
+            onNovaRezervace={otevriNovouRezervaci}
+          />
+          {novaRezervace ? (
+            <form className="ph-pridani" onSubmit={(e) => void ulozNovouRezervaci(e)}>
+              <h2>{novaRezervace.jmeno ? 'Nová rezervace pro hosta' : 'Nová rezervace – nový host'}</h2>
+              <label>
+                Jméno a příjmení
+                <input name="jmeno" defaultValue={novaRezervace.jmeno} autoComplete="name" />
+              </label>
+              <label>
+                Telefon
+                <input name="telefon" type="tel" defaultValue={novaRezervace.telefon} autoComplete="tel" />
+              </label>
+              <label className="ph-siroke">
+                E-mail
+                <input name="email" type="email" defaultValue={novaRezervace.email} autoComplete="email" />
+              </label>
+              <label>
+                Apartmán
+                <select name="apartman" defaultValue="" required>
+                  <option value="">vyberte</option>
+                  {apartmany.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.id} {a.nazev.cs}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Příjezd
+                <input name="prijezd" type="date" required />
+              </label>
+              <label>
+                Odjezd
+                <input name="odjezd" type="date" required />
+              </label>
+              <label>
+                Počet osob
+                <input name="osob" type="number" min={1} defaultValue={2} required />
+              </label>
+              <label>
+                PIN do apartmánu
+                <input name="pin" inputMode="numeric" pattern="[0-9]*" autoComplete="off" required />
+              </label>
+              <label>
+                Národnost
+                <input name="narodnost" defaultValue={novaRezervace.narodnost} autoComplete="off" />
+              </label>
+              <label>
+                Jazyk průvodce
+                <select name="jazyk" defaultValue={novaRezervace.jazyk}>
+                  {GUIDE_LANGS.map((lang) => (
+                    <option key={lang} value={lang}>
+                      {LANG_LABELS[lang]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {potvrdPrekryv ? (
+                <p className="ph-chyba">Apartmán je v termínu obsazený. Uložením potvrdíte překryv.</p>
+              ) : null}
+              <div className="ph-akce-spodek">
+                <button type="submit" disabled={cekam !== null}>
+                  {potvrdPrekryv ? 'Přesto uložit' : 'Uložit'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNovaRezervace(null);
+                    setPotvrdPrekryv(false);
+                  }}
+                >
+                  Zrušit
+                </button>
+              </div>
+            </form>
+          ) : null}
+        </>
       ) : null}
       {zalozka === 'dluhy' || zalozka === 'hledat'
         ? vybrany
@@ -2376,66 +2568,11 @@ export function PrehledClient({
 
       {zalozka === 'prijezdy' ? (
       <>
-      <button type="button" className="ph-rozbal" onClick={() => setPridat((v) => !v)}>
-        {pridat ? 'Skrýt formulář' : 'Přidat rezervaci'}
-      </button>
-      {pridat ? (
-        <form className="ph-pridani" onSubmit={ulozPridani}>
-          <label>
-            Číslo rezervace
-            <input name="rezervace" inputMode="numeric" required autoComplete="off" />
-          </label>
-          <label>
-            Jméno a příjmení
-            <input name="jmeno" autoComplete="name" />
-          </label>
-          <label>
-            Telefon
-            <input name="telefon" type="tel" inputMode="tel" autoComplete="tel" />
-          </label>
-          <label className="ph-siroke">
-            E-mail
-            <input name="email" type="email" autoComplete="email" />
-          </label>
-          <label>
-            Apartmán
-            <select name="apartman" defaultValue="">
-              <option value="">nevybráno</option>
-              {apartmany.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.id} {a.nazev.cs}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Příjezd
-            <input name="prijezd" type="date" />
-          </label>
-          <label>
-            Odjezd
-            <input name="odjezd" type="date" />
-          </label>
-          <label>
-            Počet osob
-            <input name="osob" inputMode="numeric" />
-          </label>
-          <label>
-            Zdroj
-            <select name="zdroj" defaultValue="">
-              <option value="">nevybráno</option>
-              <option value="Booking">Booking</option>
-              <option value="Airbnb">Airbnb</option>
-              <option value="přímá">přímá</option>
-            </select>
-          </label>
-          <div className="ph-akce-spodek">
-            <button type="submit" disabled={cekam !== null}>
-              Uložit
-            </button>
-          </div>
-        </form>
-      ) : null}
+      <p className="ph-dnesek__akce">
+        <button type="button" onClick={() => otevriNovouRezervaci(null)}>
+          Nová rezervace – nový host
+        </button>
+      </p>
 
       <div className="ph-filtry">
         <label>
@@ -2646,7 +2783,31 @@ export function PrehledClient({
         );
       })}
 
-      {zalozka === 'prijezdy' ? aktivni.map((row) => kartaHosta(row)) : null}
+      {zalozka === 'prijezdy'
+        ? aktivni.map((row) => {
+            const pred = predanoRadku(row);
+            if (pred && !rozbalPredano[row.rezervace]) {
+              const cas = casPrevzetiText(pred);
+              return (
+                <button
+                  key={row.rezervace}
+                  type="button"
+                  className="ph-dnesek__radek is-uklizeno is-sbaleno ph-predano-sbal"
+                  onClick={() => {
+                    setRozbalPredano((s) => ({ ...s, [row.rezervace]: true }));
+                    setRozbalene((prev) => ({ ...prev, [row.rezervace]: true }));
+                  }}
+                >
+                  <strong>{row.apartman || 'Apartmán'}</strong>
+                  {' · '}
+                  {row.jmeno || row.rezervace}
+                  {cas ? ` · předáno ${cas}` : ' · předáno'}
+                </button>
+              );
+            }
+            return kartaHosta(row);
+          })
+        : null}
 
       {zalozka === 'prijezdy' && odjeli.length ? (
         <section className="ph-odjeli">
@@ -2855,11 +3016,21 @@ function nactiNazevPush(): string {
 }
 
 function ulozNazevPush(nazev: string) {
+  const cisty = nazev.trim().slice(0, 40);
   try {
-    localStorage.setItem(PUSH_NAZEV_KLIC, nazev.trim().slice(0, 40));
+    localStorage.setItem(PUSH_NAZEV_KLIC, cisty);
+    const kdo = cisty.toLowerCase().includes('nikol') ? 'nikol' : 'pravoslav';
+    localStorage.setItem('vivien-kdo', kdo);
   } catch {
     /* paměť */
   }
+}
+
+function kdoZNazvuTelefonu(nazev: string): KdoZavad {
+  const n = nazev.trim().toLowerCase();
+  if (n.includes('nikol')) return 'nikol';
+  if (n.includes('miluš') || n.includes('milus')) return 'miluska';
+  return 'pravoslav';
 }
 
 function datumPrihlaseniPush(iso: string | undefined): string {
@@ -3008,8 +3179,22 @@ function Upozorneni() {
     setHlaska(json?.text || json?.error || 'Zkouška se nepovedla.');
   }
 
+  const nazevTelefonu = nactiNazevPush();
+
   return (
     <div className="ph-push">
+      <p className="ph-dnesek__akce">
+        Tento telefon: {nazevTelefonu || 'neuvedeno'}
+        <button
+          type="button"
+          onClick={() => {
+            setPtamJmeno(true);
+            setJmenoDraft(nazevTelefonu || '');
+          }}
+        >
+          změnit
+        </button>
+      </p>
       <button type="button" className="ph-ulozit" onClick={() => void zapnout()}>
         Zapnout upozornění
       </button>
@@ -3018,13 +3203,14 @@ function Upozorneni() {
       </button>
       {ptamJmeno ? (
         <div className="ph-predano-dotaz">
-          <p>Čí je to telefon?</p>
+          <p>Tento telefon</p>
           <input
             value={jmenoDraft}
             onChange={(e) => setJmenoDraft(e.target.value)}
             maxLength={40}
             autoComplete="name"
-            aria-label="Čí je to telefon"
+            placeholder="Pravoslav, Nikol…"
+            aria-label="Tento telefon"
           />
           <button type="button" onClick={() => void potvrdJmeno()}>
             Uložit

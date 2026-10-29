@@ -5,6 +5,7 @@ import { stavParkovani, type BranaSlot } from '@/lib/brana';
 import { sestavDnesek, textUklizeno, type HostDne, type KdoUklidil, type UklidRadek } from '@/lib/dnesek';
 import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
 import type { PrehledRadek } from '@/lib/prehled';
+import { casPrevzetiText } from '@/lib/zalozky';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 
 type Props = {
@@ -72,6 +73,7 @@ function hostZRadku(row: PrehledRadek, sloty: BranaSlot[]): HostDne {
     uklizenoKdy: row.uklizenoKdy,
     uklizenoKdo: row.uklizenoKdo,
     prevzatoKdy: row.prevzatoKdy,
+    predanoKdy: row.predano,
   };
 }
 
@@ -117,6 +119,7 @@ export function Dnesek({
   const [dotazEmail, setDotazEmail] = useState<DotazEmail | null>(null);
   /** Uklizené karty jsou sbalené. Tady jsou ty, které majitel rozbalil. */
   const [rozbalUklid, setRozbalUklid] = useState<Record<string, true>>({});
+  const [rozbalPrijezd, setRozbalPrijezd] = useState<Record<string, true>>({});
   useEffect(() => {
     if (!cerstve) return;
     const casovac = window.setTimeout(() => setCerstve(null), 10_000);
@@ -422,20 +425,44 @@ export function Dnesek({
         <div>
           <h2>Příjezdy</h2>
           <ul>
-            {pohled.prijezdy.map((r) => (
-              <li key={r.rezervace} className="ph-dnesek__radek">
-                <p>
-                  <strong>{r.apartman}</strong>
-                  {' · '}
-                  {odkazNaKartu(r.rezervace, r.jmeno)}
-                  {' · '}
-                  <span className={r.casZnamy ? undefined : 'ph-dnesek__neznamy'}>{r.cas}</span>
-                  {r.zpusob ? ` · ${r.zpusob}` : ''}
-                  {r.brana ? ` · ${r.brana}` : ''}
-                  {r.faze ? ` · Fáze · ${r.faze}` : ''}
-                </p>
-              </li>
-            ))}
+            {pohled.prijezdy.map((r) => {
+              const casPredani = r.predanoKdy ? casPrevzetiText(r.predanoKdy) : '';
+              const sbaleno = Boolean(r.predanoKdy) && !rozbalPrijezd[r.rezervace];
+              if (sbaleno) {
+                return (
+                  <li key={r.rezervace} className="ph-dnesek__radek is-uklizeno is-sbaleno">
+                    <button
+                      type="button"
+                      className="ph-dnesek__odkaz"
+                      onClick={() => {
+                        if (onOtevri) onOtevri(r.rezervace);
+                        else setRozbalPrijezd((s) => ({ ...s, [r.rezervace]: true }));
+                      }}
+                    >
+                      <strong>{r.apartman}</strong>
+                      {' · '}
+                      {r.jmeno}
+                      {casPredani ? ` · předáno ${casPredani}` : ' · předáno'}
+                    </button>
+                  </li>
+                );
+              }
+              return (
+                <li key={r.rezervace} className={r.predanoKdy ? 'ph-dnesek__radek is-uklizeno' : 'ph-dnesek__radek'}>
+                  <p>
+                    <strong>{r.apartman}</strong>
+                    {' · '}
+                    {odkazNaKartu(r.rezervace, r.jmeno)}
+                    {' · '}
+                    <span className={r.casZnamy ? undefined : 'ph-dnesek__neznamy'}>{r.cas}</span>
+                    {r.zpusob ? ` · ${r.zpusob}` : ''}
+                    {r.brana ? ` · ${r.brana}` : ''}
+                    {r.faze ? ` · Fáze · ${r.faze}` : ''}
+                    {casPredani ? ` · předáno ${casPredani}` : ''}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
         </div>
       ) : null}

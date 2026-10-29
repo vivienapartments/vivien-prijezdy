@@ -155,7 +155,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'zavady' &&
       akce !== 'zavady-odeslat' &&
       akce !== 'zavady-po-odjezdu' &&
-      akce !== 'zavady-po-odjezdu-odeslat')
+      akce !== 'zavady-po-odjezdu-odeslat' &&
+      akce !== 'email-hosta')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -574,6 +575,16 @@ export async function POST(request: Request): Promise<NextResponse> {
       zapisMajitele(rec, 'checkinUrl', { checkinUrl: vysledek.url }, stejne ? '' : 'Odkaz na check-in uložen'),
     );
     return NextResponse.json({ ok: true, hodnota: vysledek.url || '' }, { headers: noStore });
+  }
+
+  if (akce === 'email-hosta') {
+    const email = (body?.email || '').trim();
+    if (problemEmailu(email)) return chyba(400, 'E-mail má špatný tvar.');
+    await store.setRezervace(
+      id,
+      zapisMajitele(rec, 'emailHosta', { emailHosta: email }, 'E-mail z minula'),
+    );
+    return NextResponse.json({ ok: true, hodnota: email }, { headers: noStore });
   }
 
   if (akce === 'telefon') {
