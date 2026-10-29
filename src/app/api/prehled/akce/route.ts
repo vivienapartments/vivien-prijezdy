@@ -146,6 +146,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'odemknout' &&
       akce !== 'email' &&
       akce !== 'whatsapp' &&
+      akce !== 'sms' &&
       akce !== 'jazyk' &&
       akce !== 'platba' &&
       akce !== 'vratit-platbu' &&
@@ -611,7 +612,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, nejisty: tel.nejisty, hodnota: textNovy }, { headers: noStore });
   }
 
-  if (akce === 'email' || akce === 'whatsapp') {
+  if (akce === 'email' || akce === 'whatsapp' || akce === 'sms') {
     const druhy: DruhZpravy[] = [
       'checkin',
       'neotevrel',
@@ -674,8 +675,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       lang && lang !== rec.jazyk
         ? zapisMajitele(rec, 'jazyk', { jazyk: lang }, `Jazyk → ${LANG_LABELS[lang]}`)
         : rec;
-    if (akce === 'whatsapp') {
-      await store.setRezervace(id, pridej(sJazykem, `WhatsApp: ${zprava.nazev}`, patch));
+    if (akce === 'whatsapp' || akce === 'sms') {
+      const prefix = akce === 'sms' ? 'SMS' : 'WhatsApp';
+      await store.setRezervace(id, pridej(sJazykem, `${prefix}: ${zprava.nazev}`, patch));
       return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
     }
     const komu = (rec.emailHosta || '').trim();

@@ -1658,3 +1658,279 @@
 .ph-hledat li {
   margin: 0 0 0.9rem;
 }
+
+/* Nová karta: dlaždice, stavy, panel zpráv */
+.ph-nova-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+}
+
+.ph-nova-top__left {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ph-nova-pill {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-weight: 650;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: none;
+  border: 1px solid transparent;
+}
+
+.ph-nova-pill--ok {
+  color: #8dcea0;
+  border-color: color-mix(in srgb, #8dcea0 45%, transparent);
+  background: color-mix(in srgb, #8dcea0 12%, transparent);
+}
+
+.ph-nova-pill--wait {
+  color: #e07a7a;
+  border-color: color-mix(in srgb, #e07a7a 45%, transparent);
+  background: color-mix(in srgb, #e07a7a 12%, transparent);
+}
+
+.ph-nova-pill--seda {
+  color: var(--pv-muted);
+  border-color: var(--pv-line);
+}
+
+.ph-nova-dlazdice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.55rem 0 0.65rem;
+}
+
+.ph-nova-tile {
+  display: block;
+  width: 100%;
+  min-height: 4.4rem;
+  margin: 0;
+  padding: 0.6rem 0.65rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 12px;
+  background: var(--pv-surface-2);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ph-nova-tile:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.ph-nova-tile__nadpis {
+  display: block;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pv-muted);
+  margin-bottom: 0.15rem;
+}
+
+.ph-nova-tile__hlavni {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 750;
+  color: var(--color-gold);
+  line-height: 1.15;
+}
+
+.ph-nova-tile__drobek {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: var(--pv-muted);
+}
+
+.ph-nova-tile--ok {
+  border-color: color-mix(in srgb, #8dcea0 40%, transparent);
+  background: color-mix(in srgb, #8dcea0 8%, var(--pv-surface-2));
+}
+
+.ph-nova-tile--ok .ph-nova-tile__hlavni {
+  color: #8dcea0;
+}
+
+.ph-nova-tile--ne,
+.ph-nova-tile--chybi {
+  border-color: color-mix(in srgb, #e07a7a 45%, transparent);
+  background: color-mix(in srgb, #e07a7a 10%, var(--pv-surface-2));
+}
+
+.ph-nova-tile--ne .ph-nova-tile__hlavni,
+.ph-nova-tile--ne .ph-nova-tile__drobek,
+.ph-nova-tile--chybi .ph-nova-tile__hlavni,
+.ph-nova-tile--chybi .ph-nova-tile__drobek {
+  color: #e07a7a;
+}
+
+.ph-nova-tile--chybi .ph-nova-tile__hlavni {
+  font-size: 1rem;
+}
+
+.ph-nova-stavy {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  margin: 0 0 0.65rem;
+}
+
+.ph-nova-stav {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.45rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 12px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+
+.ph-nova-stav:disabled {
+  cursor: default;
+}
+
+.ph-nova-stav__titulek {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.ph-nova-stav__popis {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.72rem;
+  color: var(--pv-muted);
+}
+
+.ph-nova-stav--ok {
+  border-color: color-mix(in srgb, #8dcea0 40%, transparent);
+  color: #8dcea0;
+}
+
+.ph-nova-stav--ok .ph-nova-stav__popis {
+  color: #8dcea0;
+}
+
+.ph-nova-stav--ne {
+  border-color: color-mix(in srgb, #e07a7a 45%, transparent);
+  background: color-mix(in srgb, #e07a7a 8%, transparent);
+  color: #e07a7a;
+}
+
+.ph-nova-stav--ne .ph-nova-stav__popis {
+  color: #e07a7a;
+}
+
+.ph-nova-rada {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  margin: 0.45rem 0 0.55rem;
+}
+
+.ph-nova-rada .ph-wa,
+.ph-nova-rada a,
+.ph-nova-rada button {
+  margin: 0;
+  width: 100%;
+  justify-content: center;
+}
+
+.ph button.ph-nova-zprava {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+  background: transparent;
+}
+
+.ph-nova-panel {
+  margin: 0 0 0.55rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 40%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-gold) 8%, var(--pv-surface));
+}
+
+.ph-nova-panel h3 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-gold);
+}
+
+.ph-nova-kanaly {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+}
+
+.ph button.ph-nova-kanal {
+  min-height: 2.2rem;
+  margin: 0;
+  padding: 0.35rem;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  border-color: var(--pv-line);
+  color: var(--pv-muted);
+  background: transparent;
+}
+
+.ph button.ph-nova-kanal.is-on {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+  background: color-mix(in srgb, var(--color-gold) 12%, transparent);
+}
+
+.ph-nova-panel select {
+  width: 100%;
+  margin: 0 0 0.5rem;
+}
+
+.ph-nova-nahled {
+  margin: 0 0 0.5rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 10px;
+  background: #1a1512;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.ph-nova-potvrzeni {
+  margin: 0 0 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #e07a7a;
+  border-radius: 10px;
+  background: #3a1c1c;
+  color: #f0c0c0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.ph-nova-potvrzeni__akce {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.45rem;
+}

@@ -24,7 +24,7 @@ import {
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
-import { zpravyMenu } from '@/lib/whatsapp-zprava';
+import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
@@ -49,7 +49,7 @@ import { Dnesek } from './Dnesek';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
 import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
-import { nactiBranu, stavParkovani, type BranaSlot } from '@/lib/brana';
+import { jeIos, nactiBranu, smsOdkaz, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 import {
   jmenoKdoZavad,
@@ -58,6 +58,21 @@ import {
   type KdoZavad,
 } from '@/lib/zavady-predani';
 import { textStalehoHosta } from '@/lib/staly-host';
+import {
+  dalsiCasovaZprava,
+  pocetCasovychPripoinek,
+  pocetCheckinPripoinek,
+  popisekStupneCasu,
+} from '@/lib/pripominky-stupne';
+import type { DruhZpravy } from '@/lib/whatsapp-zprava';
+
+function stitekDneKarty(prijezd: string | null, dnesDen: string): string {
+  if (!prijezd) return 'Bez data';
+  if (prijezd === dnesDen) return 'Dnes';
+  const casti = prijezd.split('-');
+  if (casti.length !== 3) return prijezd;
+  return `${Number(casti[2])}.\u00A0${Number(casti[1])}.`;
+}
 
 type Stav = PrehledRadek['stav'];
 
@@ -200,6 +215,13 @@ export function PrehledClient({
   const [casy, setCasy] = useState<Record<string, string>>({});
   const [casyOdjezdu, setCasyOdjezdu] = useState<Record<string, string>>({});
   const [volba, setVolba] = useState<Record<string, string>>({});
+  const [panelZpravy, setPanelZpravy] = useState<Record<string, boolean>>({});
+  const [kanalZpravy, setKanalZpravy] = useState<Record<string, 'whatsapp' | 'sms' | 'email'>>({});
+  const [zkratkaDotaz, setZkratkaDotaz] = useState<{
+    id: string;
+    druh: 'checkin' | 'cas' | 'brana-wa';
+    zprava: DruhZpravy;
+  } | null>(null);
   const [odkazy, setOdkazy] = useState<Record<string, string>>({});
   const [novaRezervace, setNovaRezervace] = useState<{
     jmeno: string;
@@ -1162,23 +1184,34 @@ export function PrehledClient({
     );
   }
 
-  async function oznacWhatsApp(row: PrehledRadek) {
+  async function oznacKanal(
+    row: PrehledRadek,
+    kanal: 'whatsapp' | 'sms',
+    druhZpravy?: string,
+  ): Promise<string | null> {
     const seznam = zpravyRadku(row);
-    const zprava = volba[row.rezervace] ?? seznam.find((z) => z.vychozi)?.id;
-    if (!zprava) return;
+    const zprava = druhZpravy ?? volba[row.rezervace] ?? seznam.find((z) => z.vychozi)?.id;
+    if (!zprava) return null;
     const nazev = seznam.find((z) => z.id === zprava)?.nazev || 'zpráva';
     const ted = new Date().toISOString();
+    const prefix = kanal === 'sms' ? 'SMS' : 'WhatsApp';
     if (!ukazka) {
       const res = await fetch('/api/prehled/akce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rezervace: row.rezervace, akce: 'whatsapp', zprava, jazyk: jazykRadku(row) }),
+        body: JSON.stringify({
+          rezervace: row.rezervace,
+          akce: kanal,
+          zprava,
+          jazyk: jazykRadku(row),
+        }),
       });
       if (!res.ok) {
-        setHlaska('WhatsApp se nepodařilo zapsat.');
-        return;
+        setHlaska(`${prefix} se nepodařilo zapsat.`);
+        return null;
       }
     }
+    setVolba((prev) => ({ ...prev, [row.rezervace]: zprava }));
     setRadky((prev) =>
       prev.map((r) =>
         r.rezervace === row.rezervace
@@ -1186,11 +1219,16 @@ export function PrehledClient({
               ...r,
               odjezdDotaz: zprava === 'odjezd' ? ted : r.odjezdDotaz,
               pohodaDotaz: zprava === 'pohoda' ? ted : r.pohodaDotaz,
-              historie: [...r.historie, { cas: ted, co: `WhatsApp: ${nazev}` }].slice(-40),
+              historie: [...r.historie, { cas: ted, co: `${prefix}: ${nazev}` }].slice(-40),
             }
           : r,
       ),
     );
+    return seznam.find((z) => z.id === zprava)?.text || row.zprava;
+  }
+
+  async function oznacWhatsApp(row: PrehledRadek, druhZpravy?: string) {
+    await oznacKanal(row, 'whatsapp', druhZpravy);
   }
 
   function naMisteRadku(row: PrehledRadek): string | null {
@@ -1922,24 +1960,195 @@ export function PrehledClient({
         onHlaska={setHlaska}
         deti={(dil) => (
       <article key={row.rezervace} className={rozbaleno ? 'ph-row' : 'ph-row is-shut'} id={row.rezervace}>
-        <div className="ph-karta-hlavicka">
-          <div className="ph-jmeno">{kdo}</div>
-          {apartman ? <div className="ph-apt">{apartman}</div> : null}
-          {termin ? <div className="ph-kde">{termin}</div> : null}
-          {row.stitek === 'rucne' ? <div className="ph-stitek">Ruční</div> : null}
-        </div>
-        {staly ? (
-          <p className={staly.shoda === 'slaba' ? 'ph-staly is-slaba' : 'ph-staly'}>{textStalehoHosta(staly)}</p>
+        {(() => {
+          const checkinOk = row.stav !== 'bez_checkinu';
+          const casOk = Boolean(casAktualni);
+          const pruvodceOk = checkinOk && (row.otevrenoPocet ?? 0) > 0 && casOk && Boolean(row.souhlas);
+          const branaChybiUdaje =
+            row.zpusobPrijezdu === 'auto' && (!row.telefonBrana || (!row.spz && !row.spzPujcene));
+          const branaOk = row.zpusobPrijezdu === 'auto' && Boolean(row.branaRegistrovano);
+          const casZpravaId = dalsiCasovaZprava(pocetCasovychPripoinek(row.historie));
+          const pillTon = fazeTon === 'zelena' ? 'ok' : fazeTon === 'cervena' ? 'wait' : 'seda';
+          const pillText =
+            predaniNahore && !predanoKdy
+              ? 'Připraven'
+              : fazeText.replace(/^Fáze\s*·\s*/i, '') || fazeText;
+          return (
+            <>
+              <div className="ph-nova-top">
+                <div className="ph-nova-top__left">
+                  <span>
+                    {stitekDneKarty(row.prijezd, dnes)}
+                    {row.apartman ? ` · ${row.apartman}` : ''}
+                  </span>
+                  <span className={`ph-nova-pill ph-nova-pill--${pillTon}`}>{pillText}</span>
+                  {row.stitek === 'rucne' ? <span className="ph-stitek">Ruční</span> : null}
+                </div>
+              </div>
+              <div className="ph-karta-hlavicka">
+                <div className="ph-jmeno">{kdo}</div>
+                <div className="ph-kde">
+                  {[apartman, row.osob != null ? `${row.osob} dospělí` : null, termin].filter(Boolean).join(' · ')}
+                </div>
+              </div>
+              {staly ? (
+                <p className={staly.shoda === 'slaba' ? 'ph-staly is-slaba' : 'ph-staly'}>{textStalehoHosta(staly)}</p>
+              ) : null}
+              <div className="ph-nova-dlazdice">
+                <button
+                  type="button"
+                  className={`ph-nova-tile${casOk ? '' : ' ph-nova-tile--chybi'}`}
+                  disabled={casOk || odjel}
+                  onClick={() => {
+                    if (casOk || odjel) return;
+                    setZkratkaDotaz({ id: row.rezervace, druh: 'cas', zprava: casZpravaId });
+                    setVolba((prev) => ({ ...prev, [row.rezervace]: casZpravaId }));
+                  }}
+                >
+                  <span className="ph-nova-tile__nadpis">Příjezd</span>
+                  <span className="ph-nova-tile__hlavni">{casOk ? casText : 'Čas chybí'}</span>
+                  <span className="ph-nova-tile__drobek">
+                    {casOk
+                      ? row.casZadalHost
+                        ? 'Čas zadal host'
+                        : 'Čas máme'
+                      : `${popisekStupneCasu(casZpravaId)} · WhatsApp`}
+                  </span>
+                </button>
+                {row.zpusobPrijezdu === 'pesky' ? (
+                  <button type="button" className="ph-nova-tile ph-nova-tile--ok" disabled>
+                    <span className="ph-nova-tile__nadpis">Způsob</span>
+                    <span className="ph-nova-tile__hlavni">Pěšky</span>
+                    <span className="ph-nova-tile__drobek">bez brány</span>
+                  </button>
+                ) : row.zpusobPrijezdu === 'auto' ? (
+                  <button
+                    type="button"
+                    className={`ph-nova-tile${branaOk ? ' ph-nova-tile--ok' : ' ph-nova-tile--ne'}`}
+                    disabled={branaOk || odjel}
+                    onClick={() => {
+                      if (branaOk || odjel) return;
+                      if (branaChybiUdaje) {
+                        setZkratkaDotaz({ id: row.rezervace, druh: 'brana-wa', zprava: 'brana' });
+                        setVolba((prev) => ({ ...prev, [row.rezervace]: 'brana' }));
+                        return;
+                      }
+                      setRozbalene((prev) => ({ ...prev, [row.rezervace]: true }));
+                      setHlaska('Dole na kartě je registrace brány (SMS).');
+                    }}
+                  >
+                    <span className="ph-nova-tile__nadpis">Autem</span>
+                    <span className="ph-nova-tile__hlavni">{branaOk ? 'Brána OK' : 'Brána ne'}</span>
+                    <span className="ph-nova-tile__drobek">
+                      {branaOk ? 'stání ano' : branaChybiUdaje ? 'klik → WhatsApp' : 'klik → registrace SMS'}
+                    </span>
+                  </button>
+                ) : (
+                  <button type="button" className="ph-nova-tile ph-nova-tile--chybi" disabled>
+                    <span className="ph-nova-tile__nadpis">Způsob</span>
+                    <span className="ph-nova-tile__hlavni">Neznámý</span>
+                    <span className="ph-nova-tile__drobek">host ještě nevybral</span>
+                  </button>
+                )}
+              </div>
+              <div className="ph-nova-stavy">
+                <button
+                  type="button"
+                  className={`ph-nova-stav${checkinOk ? ' ph-nova-stav--ok' : ' ph-nova-stav--ne'}`}
+                  disabled={checkinOk || odjel}
+                  onClick={() => {
+                    if (checkinOk || odjel) return;
+                    setZkratkaDotaz({ id: row.rezervace, druh: 'checkin', zprava: 'checkin' });
+                    setVolba((prev) => ({ ...prev, [row.rezervace]: 'checkin' }));
+                  }}
+                >
+                  <span className="ph-nova-stav__titulek">Check-in</span>
+                  <span className="ph-nova-stav__popis">
+                    {checkinOk ? 'Hotovo' : `chybí · SMS${pocetCheckinPripoinek(row.historie) ? ` · už ${pocetCheckinPripoinek(row.historie)}×` : ''}`}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className={`ph-nova-stav${pruvodceOk ? ' ph-nova-stav--ok' : ' ph-nova-stav--ne'}`}
+                  disabled={pruvodceOk || odjel || !checkinOk}
+                  onClick={() => {
+                    if (pruvodceOk || odjel || !checkinOk) return;
+                    if (!casOk) {
+                      setZkratkaDotaz({ id: row.rezervace, druh: 'cas', zprava: casZpravaId });
+                      setVolba((prev) => ({ ...prev, [row.rezervace]: casZpravaId }));
+                    }
+                  }}
+                >
+                  <span className="ph-nova-stav__titulek">Průvodce</span>
+                  <span className="ph-nova-stav__popis">
+                    {pruvodceOk ? 'Hotovo' : !casOk ? 'čeká na čas' : (row.otevrenoPocet ?? 0) === 0 ? 'neotevřen' : 'dokončit'}
+                  </span>
+                </button>
+              </div>
+            </>
+          );
+        })()}
+        {zkratkaDotaz?.id === row.rezervace ? (
+          <div className="ph-nova-potvrzeni">
+            {zkratkaDotaz.druh === 'cas' ? (
+              <p>
+                {popisekStupneCasu(zkratkaDotaz.zprava as 'nerozbalen' | 'denNerozbalen' | 'nedojezd')}.
+                {pocetCasovychPripoinek(row.historie)
+                  ? ` Už jste poslal ${pocetCasovychPripoinek(row.historie)}×.`
+                  : ' Ještě jste neposlal.'}{' '}
+                Otevřít WhatsApp?
+              </p>
+            ) : null}
+            {zkratkaDotaz.druh === 'checkin' ? (
+              <p>
+                Připomenout check-in SMS?
+                {pocetCheckinPripoinek(row.historie)
+                  ? ` Už jste poslal ${pocetCheckinPripoinek(row.historie)}×.`
+                  : ''}
+              </p>
+            ) : null}
+            {zkratkaDotaz.druh === 'brana-wa' ? <p>Hostovi chybí údaje k bráně. Otevřít WhatsApp?</p> : null}
+            <div className="ph-nova-nahled">{zpravyRadku(row).find((z) => z.id === zkratkaDotaz.zprava)?.text || zpravaRadku(row)}</div>
+            <div className="ph-nova-potvrzeni__akce">
+              <button type="button" onClick={() => setZkratkaDotaz(null)}>
+                Ne
+              </button>
+              <button
+                type="button"
+                disabled={cekam !== null}
+                onClick={() => {
+                  const dotaz = zkratkaDotaz;
+                  setZkratkaDotaz(null);
+                  if (!dotaz) return;
+                  if (dotaz.druh === 'checkin') {
+                    const text = zpravyRadku(row).find((z) => z.id === 'checkin')?.text || '';
+                    const cislo = row.telefonWa || row.jinyTelefonWa;
+                    if (!cislo) {
+                      setHlaska('Chybí telefon pro SMS.');
+                      return;
+                    }
+                    void oznacKanal(row, 'sms', 'checkin').then((ok) => {
+                      if (ok == null && !ukazka) return;
+                      window.location.href = smsOdkaz(`+${cislo}`, text, jeIos(userAgent));
+                    });
+                    return;
+                  }
+                  const cislo = row.telefonWa || row.jinyTelefonWa;
+                  if (!cislo) {
+                    setHlaska('Chybí telefon pro WhatsApp.');
+                    return;
+                  }
+                  void oznacWhatsApp(row, dotaz.zprava).then(() => {
+                    const text = zpravyRadku(row).find((z) => z.id === dotaz.zprava)?.text || zpravaRadku(row);
+                    window.open(odkazWhatsAppPrehled(cislo, text, userAgent), '_blank', 'noopener,noreferrer');
+                  });
+                }}
+              >
+                Ano
+              </button>
+            </div>
+          </div>
         ) : null}
-        {zpravyNahore ? (
-          <>
-            {zpravaRamecek}
-            {akceZpravy}
-          </>
-        ) : null}
-        <div className="ph-znacky">
-          <span className={`ph-faze ph-faze--${fazeTon}`}>Fáze · {fazeText}</span>
-        </div>
         {staly?.telefonZMinula ? (
           <p className="ph-dnesek__akce">
             <button type="button" disabled={cekam !== null} onClick={() => void ulozTelefon(row, 'rezervace', staly.telefonZMinula!)}>
@@ -1999,7 +2208,6 @@ export function PrehledClient({
               ) : null}
             </div>
           ))}
-        {ukazatPrijezd ? <div className="ph-prijezd-cas">Příjezd {casText}</div> : null}
         {ukazatCasNaKarte(row.odjezd, dnes) && jeHodina(odjezdCas) ? (
           <div className="ph-prijezd-cas">Odjezd {zobrazCas(odjezdCas)}</div>
         ) : null}
@@ -2021,6 +2229,109 @@ export function PrehledClient({
         {telefonNahore ? telefonPole(row) : null}
         {kontaktNahore ? tlacitkoKontakt : null}
         {casPole}
+        {panelZpravy[row.rezervace] ? (
+          <div className="ph-nova-panel">
+            <h3>Napsat zprávu</h3>
+            <div className="ph-nova-kanaly">
+              <button
+                type="button"
+                className={`ph-nova-kanal${(kanalZpravy[row.rezervace] || 'whatsapp') === 'whatsapp' ? ' is-on' : ''}`}
+                disabled={!wa}
+                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'whatsapp' }))}
+              >
+                WhatsApp
+              </button>
+              <button
+                type="button"
+                className={`ph-nova-kanal${kanalZpravy[row.rezervace] === 'sms' ? ' is-on' : ''}`}
+                disabled={!wa}
+                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'sms' }))}
+              >
+                SMS
+              </button>
+              <button
+                type="button"
+                className={`ph-nova-kanal${kanalZpravy[row.rezervace] === 'email' ? ' is-on' : ''}`}
+                disabled={!emailHosta}
+                onClick={() => setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'email' }))}
+              >
+                E-mail
+              </button>
+            </div>
+            {maMenuZprav ? (
+              <select
+                value={volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id ?? ''}
+                onChange={(e) => setVolba((prev) => ({ ...prev, [row.rezervace]: e.target.value }))}
+                aria-label="Šablona zprávy"
+              >
+                {zpravyHosta.map((z) => (
+                  <option key={z.id} value={z.id}>
+                    {z.nazev}
+                    {z.vychozi ? ' · podle fáze' : ''}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <p className="ph-hlaska">Teď není co poslat.</p>
+            )}
+            <div className="ph-nova-nahled">{zpravaRadku(row)}</div>
+            <div className="ph-nova-rada">
+              <button type="button" onClick={() => setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: false }))}>
+                Zavřít
+              </button>
+              {(kanalZpravy[row.rezervace] || 'whatsapp') === 'whatsapp' ? (
+                <TlacitkoWhatsApp
+                  wa={wa}
+                  zprava={zpravaRadku(row)}
+                  userAgent={userAgent}
+                  onPredOtevrenim={() => oznacWhatsApp(row)}
+                />
+              ) : null}
+              {kanalZpravy[row.rezervace] === 'sms' ? (
+                <button
+                  type="button"
+                  disabled={!wa || cekam !== null}
+                  onClick={() => {
+                    const text = zpravaRadku(row);
+                    const druh = volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id;
+                    if (!wa || !druh) return;
+                    void oznacKanal(row, 'sms', druh).then((ok) => {
+                      if (ok == null && !ukazka) return;
+                      window.location.href = smsOdkaz(`+${wa}`, text, jeIos(userAgent));
+                    });
+                  }}
+                >
+                  Otevřít SMS
+                </button>
+              ) : null}
+              {kanalZpravy[row.rezervace] === 'email' ? emailTlacitko : null}
+              <button type="button" className="ph-kopie" onClick={() => void kopirovatZpravu(row)}>
+                Zkopírovat zprávu
+              </button>
+            </div>
+          </div>
+        ) : null}
+        <div className="ph-nova-rada">
+          {row.telefonText || row.jinyTelefonText ? (
+            <a
+              className="ph-wa"
+              href={`tel:${String(row.telefonText || row.jinyTelefonText).replace(/\s+/g, '')}`}
+            >
+              Zavolat
+            </a>
+          ) : (
+            <button type="button" className="ph-predano" disabled>
+              Zavolat
+            </button>
+          )}
+          <button
+            type="button"
+            className="ph-nova-zprava"
+            onClick={() => setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))}
+          >
+            Napsat zprávu
+          </button>
+        </div>
         {ukazBlokOdeslani ? (
           <div className="ph-znovu">
             <label>
@@ -2117,7 +2428,6 @@ export function PrehledClient({
           {cekajici === 'registrace' ? null : dil.registrace}
           {cekajici === 'odpoved' ? null : dil.odpoved}
           {dil.detail}
-          {odjezdPole}
           {!row.pruvodceOdemcen ? (
             <button
               type="button"
@@ -2161,6 +2471,7 @@ export function PrehledClient({
           ) : null}
           {namisteTlacitko}
           {!telefonNahore ? telefonPole(row) : null}
+          {odjezdPole}
           {zpravyNahore ? null : (
             <>
               {zpravaRamecek}
