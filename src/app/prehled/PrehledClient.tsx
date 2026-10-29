@@ -1824,11 +1824,11 @@ export function PrehledClient({
     ) : (
       <button
         type="button"
-        className="ph-predano ph-predano-vyrazne"
+        className="ph-nova-predani"
         disabled={cekam !== null}
         onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
       >
-        Předat
+        Předat apartmán
       </button>
     );
     const predaniDotaz = dotazPredani?.id === row.rezervace ? (
@@ -1973,31 +1973,29 @@ export function PrehledClient({
             predaniNahore && !predanoKdy
               ? 'Připraven'
               : fazeText.replace(/^Fáze\s*·\s*/i, '') || fazeText;
+          const osobText =
+            row.osob == null ? null : row.osob === 1 ? '1 dospělý' : `${row.osob} dospělí`;
           return (
             <>
               <div className="ph-nova-top">
-                <div className="ph-nova-top__left">
-                  <span>
-                    {stitekDneKarty(row.prijezd, dnes)}
-                    {row.apartman ? ` · ${row.apartman}` : ''}
-                  </span>
-                  <span className={`ph-nova-pill ph-nova-pill--${pillTon}`}>{pillText}</span>
-                  {row.stitek === 'rucne' ? <span className="ph-stitek">Ruční</span> : null}
-                </div>
+                <span>
+                  {stitekDneKarty(row.prijezd, dnes)}
+                  {row.apartman ? ` · ${row.apartman}` : ''}
+                  {row.stitek === 'rucne' ? ' · Ruční' : ''}
+                </span>
+                <span className={`ph-nova-pill ph-nova-pill--${pillTon}`}>{pillText}</span>
               </div>
-              <div className="ph-karta-hlavicka">
-                <div className="ph-jmeno">{kdo}</div>
-                <div className="ph-kde">
-                  {[apartman, row.osob != null ? `${row.osob} dospělí` : null, termin].filter(Boolean).join(' · ')}
-                </div>
-              </div>
+              <div className="ph-nova-jmeno">{kdo}</div>
+              <p className="ph-nova-sub">
+                {[apartman, osobText, termin].filter(Boolean).join(' · ')}
+              </p>
               {staly ? (
                 <p className={staly.shoda === 'slaba' ? 'ph-staly is-slaba' : 'ph-staly'}>{textStalehoHosta(staly)}</p>
               ) : null}
               <div className="ph-nova-dlazdice">
                 <button
                   type="button"
-                  className={`ph-nova-tile${casOk ? '' : ' ph-nova-tile--chybi'}`}
+                  className={`ph-nova-tile${casOk ? ' ph-nova-tile--cas' : ' ph-nova-tile--chybi'}`}
                   disabled={casOk || odjel}
                   onClick={() => {
                     if (casOk || odjel) return;
@@ -2005,21 +2003,35 @@ export function PrehledClient({
                     setVolba((prev) => ({ ...prev, [row.rezervace]: casZpravaId }));
                   }}
                 >
-                  <span className="ph-nova-tile__nadpis">Příjezd</span>
-                  <span className="ph-nova-tile__hlavni">{casOk ? casText : 'Čas chybí'}</span>
-                  <span className="ph-nova-tile__drobek">
-                    {casOk
-                      ? row.casZadalHost
-                        ? 'Čas zadal host'
-                        : 'Čas máme'
-                      : `${popisekStupneCasu(casZpravaId)} · WhatsApp`}
+                  <span className="ph-nova-tile__radek">
+                    <span className="ph-nova-tile__ico" aria-hidden="true">
+                      ⏱
+                    </span>
+                    <span className="ph-nova-tile__telo">
+                      <span className="ph-nova-tile__nadpis">Příjezd</span>
+                      <span className="ph-nova-tile__hlavni">{casOk ? casText : 'Čas chybí'}</span>
+                      <span className="ph-nova-tile__drobek">
+                        {casOk
+                          ? row.casZadalHost
+                            ? 'Čas zadal host'
+                            : 'Čas máme'
+                          : `${popisekStupneCasu(casZpravaId)} · WhatsApp`}
+                      </span>
+                    </span>
                   </span>
                 </button>
                 {row.zpusobPrijezdu === 'pesky' ? (
                   <button type="button" className="ph-nova-tile ph-nova-tile--ok" disabled>
-                    <span className="ph-nova-tile__nadpis">Způsob</span>
-                    <span className="ph-nova-tile__hlavni">Pěšky</span>
-                    <span className="ph-nova-tile__drobek">bez brány</span>
+                    <span className="ph-nova-tile__radek">
+                      <span className="ph-nova-tile__ico" aria-hidden="true">
+                        🚶
+                      </span>
+                      <span className="ph-nova-tile__telo">
+                        <span className="ph-nova-tile__nadpis">Způsob</span>
+                        <span className="ph-nova-tile__hlavni">Pěšky</span>
+                        <span className="ph-nova-tile__drobek">bez brány</span>
+                      </span>
+                    </span>
                   </button>
                 ) : row.zpusobPrijezdu === 'auto' ? (
                   <button
@@ -2037,17 +2049,34 @@ export function PrehledClient({
                       setHlaska('Dole na kartě je registrace brány (SMS).');
                     }}
                   >
-                    <span className="ph-nova-tile__nadpis">Autem</span>
-                    <span className="ph-nova-tile__hlavni">{branaOk ? 'Brána OK' : 'Brána ne'}</span>
-                    <span className="ph-nova-tile__drobek">
-                      {branaOk ? 'stání ano' : branaChybiUdaje ? 'klik → WhatsApp' : 'klik → registrace SMS'}
+                    <span className="ph-nova-tile__radek">
+                      <span className="ph-nova-tile__ico" aria-hidden="true">
+                        🚗
+                      </span>
+                      <span className="ph-nova-tile__telo">
+                        <span className="ph-nova-tile__nadpis">Autem</span>
+                        <span className="ph-nova-tile__hlavni">{branaOk ? 'Brána OK' : 'Brána ne'}</span>
+                        <span className="ph-nova-tile__drobek">
+                          {branaOk ? 'stání ano' : branaChybiUdaje ? 'klik → WhatsApp' : 'klik → SMS'}
+                        </span>
+                      </span>
+                      <span className="ph-nova-tile__znacka" aria-hidden="true">
+                        {branaOk ? '✓' : '✕'}
+                      </span>
                     </span>
                   </button>
                 ) : (
                   <button type="button" className="ph-nova-tile ph-nova-tile--chybi" disabled>
-                    <span className="ph-nova-tile__nadpis">Způsob</span>
-                    <span className="ph-nova-tile__hlavni">Neznámý</span>
-                    <span className="ph-nova-tile__drobek">host ještě nevybral</span>
+                    <span className="ph-nova-tile__radek">
+                      <span className="ph-nova-tile__ico" aria-hidden="true">
+                        ?
+                      </span>
+                      <span className="ph-nova-tile__telo">
+                        <span className="ph-nova-tile__nadpis">Způsob</span>
+                        <span className="ph-nova-tile__hlavni">Neznámý</span>
+                        <span className="ph-nova-tile__drobek">host ještě nevybral</span>
+                      </span>
+                    </span>
                   </button>
                 )}
               </div>
@@ -2062,9 +2091,14 @@ export function PrehledClient({
                     setVolba((prev) => ({ ...prev, [row.rezervace]: 'checkin' }));
                   }}
                 >
+                  <span className="ph-nova-stav__znacka" aria-hidden="true">
+                    {checkinOk ? '✓' : '!'}
+                  </span>
                   <span className="ph-nova-stav__titulek">Check-in</span>
                   <span className="ph-nova-stav__popis">
-                    {checkinOk ? 'Hotovo' : `chybí · SMS${pocetCheckinPripoinek(row.historie) ? ` · už ${pocetCheckinPripoinek(row.historie)}×` : ''}`}
+                    {checkinOk
+                      ? 'Hotovo'
+                      : `chybí · SMS${pocetCheckinPripoinek(row.historie) ? ` · už ${pocetCheckinPripoinek(row.historie)}×` : ''}`}
                   </span>
                 </button>
                 <button
@@ -2079,9 +2113,18 @@ export function PrehledClient({
                     }
                   }}
                 >
+                  <span className="ph-nova-stav__znacka" aria-hidden="true">
+                    {pruvodceOk ? '✓' : '!'}
+                  </span>
                   <span className="ph-nova-stav__titulek">Průvodce</span>
                   <span className="ph-nova-stav__popis">
-                    {pruvodceOk ? 'Hotovo' : !casOk ? 'čeká na čas' : (row.otevrenoPocet ?? 0) === 0 ? 'neotevřen' : 'dokončit'}
+                    {pruvodceOk
+                      ? 'Hotovo'
+                      : !casOk
+                        ? 'čeká na čas'
+                        : (row.otevrenoPocet ?? 0) === 0
+                          ? 'neotevřen'
+                          : 'dokončit'}
                   </span>
                 </button>
               </div>
@@ -2212,7 +2255,7 @@ export function PrehledClient({
           <div className="ph-prijezd-cas">Odjezd {zobrazCas(odjezdCas)}</div>
         ) : null}
         {dil.radek}
-        {poplatekRadek}
+        <div className="ph-nova-platba">{poplatekRadek}</div>
         {chyba ? <div className="ph-chyba-kratka">{chyba}</div> : null}
         {cekajici === 'registrace' ? dil.registrace : null}
         {cekajici === 'odpoved' ? dil.odpoved : null}
@@ -2379,11 +2422,12 @@ export function PrehledClient({
         ) : null}
         <button
           type="button"
-          className="ph-rozbal"
+          className="ph-nova-more"
           aria-expanded={rozbaleno}
           onClick={() => setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))}
         >
-          {rozbaleno ? 'Skrýt detail ▴' : 'Detail ▾'}
+          <span>{rozbaleno ? 'Skrýt všechny údaje a akce' : 'Zobrazit všechny údaje a akce'}</span>
+          <span aria-hidden="true">{rozbaleno ? '▴' : '▾'}</span>
         </button>
         <div className="ph-detail">
           {staly?.predchozi?.length ? (

@@ -1659,30 +1659,23 @@
   margin: 0 0 0.9rem;
 }
 
-/* Nová karta: dlaždice, stavy, panel zpráv */
+/* Nová karta: blíže náhledu (dlaždice, stavy, panel) */
 .ph-nova-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.45rem;
   font-size: 0.72rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--pv-muted);
 }
 
-.ph-nova-top__left {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-}
-
 .ph-nova-pill {
-  display: inline-block;
+  flex: 0 0 auto;
   border-radius: 999px;
-  padding: 0.2rem 0.55rem;
+  padding: 0.22rem 0.6rem;
   font-weight: 650;
   font-size: 0.78rem;
   letter-spacing: 0;
@@ -1707,21 +1700,37 @@
   border-color: var(--pv-line);
 }
 
+.ph-nova-jmeno {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.55rem, 5vw, 1.85rem);
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--color-text);
+}
+
+.ph-nova-sub {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--pv-muted);
+}
+
 .ph-nova-dlazdice {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  margin: 0.55rem 0 0.65rem;
+  gap: 0.55rem;
+  margin: 0 0 0.7rem;
 }
 
 .ph-nova-tile {
   display: block;
   width: 100%;
-  min-height: 4.4rem;
+  min-height: 4.7rem;
   margin: 0;
-  padding: 0.6rem 0.65rem;
+  padding: 0.65rem 0.7rem;
   border: 1px solid var(--pv-line);
-  border-radius: 12px;
+  border-radius: 14px;
   background: var(--pv-surface-2);
   color: inherit;
   text-align: left;
@@ -1734,70 +1743,111 @@
   opacity: 1;
 }
 
+.ph-nova-tile__radek {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
+
+.ph-nova-tile__ico {
+  flex: 0 0 auto;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  color: var(--color-gold);
+}
+
+.ph-nova-tile__telo {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ph-nova-tile__znacka {
+  flex: 0 0 auto;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin-top: 0.15rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+}
+
 .ph-nova-tile__nadpis {
   display: block;
   font-size: 0.7rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--pv-muted);
-  margin-bottom: 0.15rem;
+  margin-bottom: 0.12rem;
 }
 
 .ph-nova-tile__hlavni {
   display: block;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 750;
   color: var(--color-gold);
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 .ph-nova-tile__drobek {
   display: block;
   margin-top: 0.2rem;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   color: var(--pv-muted);
 }
 
-.ph-nova-tile--ok {
-  border-color: color-mix(in srgb, #8dcea0 40%, transparent);
-  background: color-mix(in srgb, #8dcea0 8%, var(--pv-surface-2));
+.ph-nova-tile--cas .ph-nova-tile__ico {
+  color: var(--color-gold);
 }
 
+.ph-nova-tile--ok {
+  border-color: color-mix(in srgb, #8dcea0 42%, transparent);
+  background: color-mix(in srgb, #8dcea0 9%, var(--pv-surface-2));
+  color: #8dcea0;
+}
+
+.ph-nova-tile--ok .ph-nova-tile__ico,
 .ph-nova-tile--ok .ph-nova-tile__hlavni {
   color: #8dcea0;
 }
 
 .ph-nova-tile--ne,
 .ph-nova-tile--chybi {
-  border-color: color-mix(in srgb, #e07a7a 45%, transparent);
-  background: color-mix(in srgb, #e07a7a 10%, var(--pv-surface-2));
+  border-color: color-mix(in srgb, #e07a7a 48%, transparent);
+  background: color-mix(in srgb, #e07a7a 11%, var(--pv-surface-2));
+  color: #e07a7a;
 }
 
+.ph-nova-tile--ne .ph-nova-tile__ico,
 .ph-nova-tile--ne .ph-nova-tile__hlavni,
 .ph-nova-tile--ne .ph-nova-tile__drobek,
+.ph-nova-tile--chybi .ph-nova-tile__ico,
 .ph-nova-tile--chybi .ph-nova-tile__hlavni,
 .ph-nova-tile--chybi .ph-nova-tile__drobek {
   color: #e07a7a;
 }
 
 .ph-nova-tile--chybi .ph-nova-tile__hlavni {
-  font-size: 1rem;
+  font-size: 1.05rem;
 }
 
 .ph-nova-stavy {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.45rem;
-  margin: 0 0 0.65rem;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
 }
 
 .ph-nova-stav {
   display: block;
   width: 100%;
   margin: 0;
-  padding: 0.5rem 0.45rem;
+  padding: 0.55rem 0.5rem 0.5rem;
   border: 1px solid var(--pv-line);
-  border-radius: 12px;
+  border-radius: 14px;
   background: transparent;
   color: inherit;
   font: inherit;
@@ -1809,21 +1859,30 @@
   cursor: default;
 }
 
+.ph-nova-stav__znacka {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+
 .ph-nova-stav__titulek {
   display: block;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 650;
 }
 
 .ph-nova-stav__popis {
   display: block;
-  margin-top: 0.1rem;
+  margin-top: 0.12rem;
   font-size: 0.72rem;
   color: var(--pv-muted);
 }
 
 .ph-nova-stav--ok {
-  border-color: color-mix(in srgb, #8dcea0 40%, transparent);
+  border-color: color-mix(in srgb, #8dcea0 42%, transparent);
+  background: color-mix(in srgb, #8dcea0 8%, transparent);
   color: #8dcea0;
 }
 
@@ -1832,8 +1891,8 @@
 }
 
 .ph-nova-stav--ne {
-  border-color: color-mix(in srgb, #e07a7a 45%, transparent);
-  background: color-mix(in srgb, #e07a7a 8%, transparent);
+  border-color: color-mix(in srgb, #e07a7a 48%, transparent);
+  background: color-mix(in srgb, #e07a7a 9%, transparent);
   color: #e07a7a;
 }
 
@@ -1841,11 +1900,37 @@
   color: #e07a7a;
 }
 
+.ph-nova-platba {
+  margin: 0 0 0.7rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 35%, transparent);
+  background: color-mix(in srgb, var(--color-gold) 10%, var(--pv-surface));
+}
+
+.ph-nova-platba .ph-poplatek-kratky {
+  margin-top: 0;
+}
+
+.ph button.ph-nova-predani {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  margin: 0 0 0.55rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-gold);
+  color: #1c1712;
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
 .ph-nova-rada {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.45rem;
-  margin: 0.45rem 0 0.55rem;
+  gap: 0.5rem;
+  margin: 0.35rem 0 0.55rem;
 }
 
 .ph-nova-rada .ph-wa,
@@ -1854,12 +1939,41 @@
   margin: 0;
   width: 100%;
   justify-content: center;
+  min-height: 2.5rem;
+}
+
+.ph-nova-rada > a.ph-wa {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--pv-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--pv-muted);
+  text-decoration: none;
+  font-weight: 650;
 }
 
 .ph button.ph-nova-zprava {
   border-color: var(--color-gold);
   color: var(--color-gold);
   background: transparent;
+}
+
+.ph button.ph-nova-more {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0.15rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-gold) 9%, var(--pv-surface));
+  color: var(--color-gold);
+  font-size: 0.92rem;
+  font-weight: 650;
+  text-align: left;
 }
 
 .ph-nova-panel {
