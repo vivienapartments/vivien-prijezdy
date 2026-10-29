@@ -824,7 +824,7 @@ function textRozbaleni(kroky: ChybejiciKrok[]): string {
   return `Průvodce nerozbalen · chybí: ${kroky.map((krok) => nazev[krok]).join(', ')}`;
 }
 
-/** Nejbližší příjezd nahoře. V rámci dne podle času příjezdu, pak V1–V5. Kdo už odjel, je až dole. */
+/** Nejbližší příjezd nahoře. V rámci dne: nepředaní podle času, předaní až dole. Kdo už odjel, je úplně dole. */
 export function seradRadky(rows: PrehledRadek[], now = new Date()): PrehledRadek[] {
   const today = dnesVPraze(now);
   const skupina = (r: PrehledRadek) => (r.odjezd && r.odjezd < today ? 1 : 0);
@@ -842,6 +842,9 @@ export function seradRadky(rows: PrehledRadek[], now = new Date()): PrehledRadek
     const da = a.prijezd || '9999-99-99';
     const db = b.prijezd || '9999-99-99';
     if (da !== db) return da < db ? -1 : 1;
+    const predA = a.predano ? 1 : 0;
+    const predB = b.predano ? 1 : 0;
+    if (predA !== predB) return predA - predB;
     const ca = a.casPrijezdu || '';
     const cb = b.casPrijezdu || '';
     if (ca !== cb) {

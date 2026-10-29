@@ -46,7 +46,7 @@ import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
 import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
 import { nactiBranu, stavParkovani, type BranaSlot } from '@/lib/brana';
-import { GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
+import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 import {
   jmenoKdoZavad,
   stavZavadPoOdjezdu,
@@ -2186,7 +2186,22 @@ export function PrehledClient({
   }
 
   const ted = new Date();
-  const aktivni = viditelne.filter((row) => !jeHostOdjetly(hostOdjezdu(row), dnes, ted));
+  const aktivni = [...viditelne.filter((row) => !jeHostOdjetly(hostOdjezdu(row), dnes, ted))].sort((a, b) => {
+    const predA = predanoRadku(a) ? 1 : 0;
+    const predB = predanoRadku(b) ? 1 : 0;
+    if (predA !== predB) return predA - predB;
+    const ca = a.casPrijezdu || '';
+    const cb = b.casPrijezdu || '';
+    if (ca !== cb) {
+      if (ca && !cb) return -1;
+      if (!ca && cb) return 1;
+      return ca < cb ? -1 : 1;
+    }
+    const pa = a.apartman ? APT_IDS.indexOf(a.apartman as AptId) : 99;
+    const pb = b.apartman ? APT_IDS.indexOf(b.apartman as AptId) : 99;
+    if (pa !== pb) return pa - pb;
+    return a.rezervace < b.rezervace ? -1 : 1;
+  });
   const odjeli = viditelne.filter((row) => jeHostOdjetly(hostOdjezdu(row), dnes, ted));
   const pocty: Record<Zalozka, number> = {
     prijezdy: radky.filter((r) => r.prijezd === dnes && r.stav !== 'zruseno' && !jeHostOdjetly(hostOdjezdu(r), dnes, ted)).length,

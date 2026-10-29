@@ -449,6 +449,7 @@ describe('tlačítka v přehledu', () => {
       id: string,
       apartman: 'V1' | 'V2' | 'V5',
       cas: string | null,
+      predano?: string | null,
     ): PrehledRadek =>
       radekZRezervace({
         ...prazdnaRezervace(id, '2026-10-01T00:00:00.000Z'),
@@ -456,6 +457,7 @@ describe('tlačítka v přehledu', () => {
         odjezd: '2026-10-12',
         apartman,
         casPrijezdu: cas,
+        predano: predano ?? null,
         otevrenoPocet: 0,
       });
     const serazeno = seradRadky(
@@ -463,6 +465,16 @@ describe('tlačítka v přehledu', () => {
       now,
     );
     expect(serazeno.map((r) => r.rezervace)).toEqual(['a', 'b', 'c', 'd']);
+
+    const poPredani = seradRadky(
+      [
+        radek('a', 'V2', '11:00', '2026-10-11T09:00:00.000Z'),
+        radek('b', 'V5', '12:00'),
+        radek('c', 'V1', '18:00'),
+      ],
+      now,
+    );
+    expect(poPredani.map((r) => r.rezervace)).toEqual(['b', 'c', 'a']);
   });
 
   it('varování Automatu po 15 minutách ticha', () => {
