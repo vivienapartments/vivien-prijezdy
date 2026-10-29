@@ -10,7 +10,12 @@ import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 
 type Props = {
   radky: PrehledRadek[];
+  /** Den, který se sestavuje (YYYY-MM-DD). Může být i budoucí. */
   dnes: string;
+  /** Převzato / Uklizeno jen v kalendářní dnešek. Budoucí dny: šedý text. */
+  operacePovolene?: boolean;
+  /** Jen blok Úklid a odjezdy (pod kartami na Příjezdech). */
+  jenUklid?: boolean;
   ukazka?: boolean;
   brana?: BranaSlot[];
   /** Sekce nahoře v přehledu. Bez toho je to vlastní stránka. */
@@ -85,6 +90,8 @@ function odkazHosta(id: string, ukazka: boolean, vPrehledu: boolean): string {
 export function Dnesek({
   radky,
   dnes,
+  operacePovolene = true,
+  jenUklid = false,
   ukazka = false,
   brana = [],
   vPrehledu = false,
@@ -125,8 +132,9 @@ export function Dnesek({
     const casovac = window.setTimeout(() => setCerstve(null), 10_000);
     return () => window.clearTimeout(casovac);
   }, [cerstve]);
-  const maNeco =
-    pohled.uklid.length + pohled.prijezdy.length + pohled.nedoplatky.length + chybyKaret.length > 0;
+  const maNeco = jenUklid
+    ? pohled.uklid.length > 0
+    : pohled.uklid.length + pohled.prijezdy.length + pohled.nedoplatky.length + chybyKaret.length > 0;
 
   function hotovo(rezervace: string, kdy: string | null, kdo: KdoUklidil | null) {
     if (Object.prototype.hasOwnProperty.call(misto, rezervace)) return misto[rezervace];
@@ -239,7 +247,7 @@ export function Dnesek({
   }
 
   if (!maNeco) {
-    if (vPrehledu) return null;
+    if (vPrehledu || jenUklid) return null;
     return <p className="ph-dnesek__prazdno">Dnes nikdo neodjíždí ani nepřijíždí.</p>;
   }
 
@@ -360,6 +368,9 @@ export function Dnesek({
   }
 
   function tlacitkaUklidu(r: UklidRadek) {
+    if (!operacePovolene) {
+      return <p className="ph-dnesek__az-dnes">až v den odjezdu</p>;
+    }
     if (ptam === r.rezervace) {
       return (
         <p className="ph-dnesek__akce">
@@ -406,22 +417,24 @@ export function Dnesek({
   }
 
   return (
-    <section className="ph-dnesek" aria-label="Dnešek">
-      {vPrehledu ? (
+    <section className="ph-dnesek" aria-label={jenUklid ? 'Úklid a odjezdy' : 'Dnešek'}>
+      {jenUklid ? null : vPrehledu ? (
         <h2>
           <a href={odkazStranky}>Dnešek</a>
         </h2>
       ) : (
         <h1>Dnešek</h1>
       )}
-      <p className="ph-dnesek__den">{datum(dnes)}</p>
-      {chybyKaret.map((id) => (
-        <p key={id} className="ph-chyba">
-          Kartu {id} se nepodařilo načíst
-        </p>
-      ))}
+      {jenUklid ? null : <p className="ph-dnesek__den">{datum(dnes)}</p>}
+      {jenUklid
+        ? null
+        : chybyKaret.map((id) => (
+            <p key={id} className="ph-chyba">
+              Kartu {id} se nepodařilo načíst
+            </p>
+          ))}
 
-      {pohled.prijezdy.length ? (
+      {!jenUklid && pohled.prijezdy.length ? (
         <div>
           <h2>Příjezdy</h2>
           <ul>
@@ -486,9 +499,11 @@ export function Dnesek({
                       >
                         Rozbalit
                       </button>
-                      <button type="button" onClick={() => void zapis(r.rezervace, 'vratit-uklid')}>
-                        Vrátit
-                      </button>
+                      {operacePovolene ? (
+                        <button type="button" onClick={() => void zapis(r.rezervace, 'vratit-uklid')}>
+                          Vrátit
+                        </button>
+                      ) : null}
                     </p>
                   </li>
                 );
@@ -623,9 +638,11 @@ export function Dnesek({
                       >
                         Sbalit
                       </button>
-                      <button type="button" onClick={() => void zapis(r.rezervace, 'vratit-uklid')}>
-                        Vrátit
-                      </button>
+                      {operacePovolene ? (
+                        <button type="button" onClick={() => void zapis(r.rezervace, 'vratit-uklid')}>
+                          Vrátit
+                        </button>
+                      ) : null}
                     </p>
                   ) : zavadyId === r.rezervace || dotazEmail?.odjezdId === r.rezervace ? null : (
                     tlacitkaUklidu(r)
@@ -637,7 +654,7 @@ export function Dnesek({
         </div>
       ) : null}
 
-      {pohled.nedoplatky.length ? (
+      {!jenUklid && pohled.nedoplatky.length ? (
         <div>
           <h2>Nedoplatky</h2>
           <ul>

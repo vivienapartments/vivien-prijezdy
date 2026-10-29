@@ -9,6 +9,11 @@ import {
   radekZRezervace,
   seradRadky,
   souhrnDne,
+  dnyVyberu,
+  nahledDne,
+  nadpisSouhrnuDne,
+  stitekDne,
+  posunDen,
   telefonyPrehledu,
   terminKratky,
   textAutomatNebezi,
@@ -508,6 +513,55 @@ describe('tlačítka v přehledu', () => {
     expect(s.otevrelo).toBe(1);
     expect(s.neodeslano).toBe(1);
     expect(s.plan.map((h) => h.jmeno)).toEqual(['Dřív', 'Pozdě']);
+  });
+
+  it('výběr dnů: stítky, ↓↑ a červená tečka', () => {
+    expect(dnyVyberu('2026-10-29')).toEqual([
+      '2026-10-29',
+      '2026-10-30',
+      '2026-10-31',
+      '2026-11-01',
+      '2026-11-02',
+      '2026-11-03',
+      '2026-11-04',
+      '2026-11-05',
+    ]);
+    expect(stitekDne('2026-10-29', '2026-10-29')).toBe('Dnes');
+    expect(stitekDne('2026-10-31', '2026-10-29')).toBe('So 31');
+    expect(nadpisSouhrnuDne('2026-10-29', '2026-10-29')).toBe('Dnes přijíždí');
+    expect(nadpisSouhrnuDne('2026-10-31', '2026-10-29')).toBe('v sobotu přijíždí');
+    expect(posunDen('2026-10-29', 7)).toBe('2026-11-05');
+
+    const ok = radekZRezervace({
+      ...prazdnaRezervace('ok', '2026-10-01T00:00:00.000Z'),
+      prijezd: '2026-10-30',
+      odjezd: '2026-10-31',
+      jmeno: 'Hotový',
+      casPrijezdu: '15:00',
+      zpusobPrijezdu: 'pesky',
+      souhlasPravidel: { kdy: '2026-10-01T00:00:00.000Z', jazyk: 'cs', verze: '1' },
+      stav: 'odeslano',
+    });
+    const problem = radekZRezervace({
+      ...prazdnaRezervace('prob', '2026-10-01T00:00:00.000Z'),
+      prijezd: '2026-10-30',
+      odjezd: '2026-11-01',
+      jmeno: 'Bez času',
+      casPrijezdu: null,
+      stav: 'odeslano',
+    });
+    const odjezd = radekZRezervace({
+      ...prazdnaRezervace('odj', '2026-10-01T00:00:00.000Z'),
+      prijezd: '2026-10-28',
+      odjezd: '2026-10-30',
+      jmeno: 'Odjezd',
+      stav: 'odeslano',
+    });
+    const n = nahledDne([ok, problem, odjezd], '2026-10-30', '2026-10-29');
+    expect(n.prijezdy).toBe(2);
+    expect(n.odjezdy).toBe(1);
+    expect(n.problem).toBe(true);
+    expect(nahledDne([ok], '2026-10-30', '2026-10-29').problem).toBe(false);
   });
 
   it('u neodeslané rezervace se neptá a odeslání nabídne', () => {

@@ -10,6 +10,10 @@ import {
   dotazPredOdeslanimZnovu,
   textTlacitkaOdeslani,
   souhrnDne,
+  dnyVyberu,
+  nahledDne,
+  nadpisSouhrnuDne,
+  posunDen,
   cekajiciUkon,
   rozpisPlateb,
   STARY_ZAZNAM,
@@ -156,8 +160,8 @@ export function PrehledClient({
   const [stav, setStav] = useState<'' | Stav>('');
   const [zpetKam, setZpetKam] = useState<ZpetKam | null>(null);
   const [prectenoUpozorneni, setPrectenoUpozorneni] = useState<string | null>(null);
-  /** Filtr seznamu na záložce Příjezdy. Bez prázdna: vždy dnes, nebo zítra. */
-  const [den, setDen] = useState<'dnes' | 'zitra'>('dnes');
+  /** Vybraný den nahoře (YYYY-MM-DD). Jen v paměti stránky, výchozí dnes. */
+  const [vybranyDen, setVybranyDen] = useState(dnes);
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
   const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
   const [videne, setVidene] = useState<Record<string, Record<string, string>> | null>(null);
@@ -716,13 +720,18 @@ export function PrehledClient({
     return rozbalene[row.rezervace] === true;
   }
 
-  const dnesSouhrn = useMemo(
-    () => souhrnDne(radky, dnes, casy),
+  useEffect(() => {
+    const max = posunDen(dnes, 7);
+    setVybranyDen((prev) => (prev < dnes || prev > max ? dnes : prev));
+  }, [dnes]);
+
+  const dnyNahled = useMemo(
+    () => dnyVyberu(dnes).map((d) => nahledDne(radky, d, dnes, casy)),
     [radky, dnes, casy],
   );
-  const zitraSouhrn = useMemo(
-    () => souhrnDne(radky, zitra, casy),
-    [radky, zitra, casy],
+  const vybranySouhrn = useMemo(
+    () => souhrnDne(radky, vybranyDen, casy),
+    [radky, vybranyDen, casy],
   );
   const automatVarovani = useMemo(
     () => textAutomatNebezi(posledniBehCas),
@@ -730,17 +739,16 @@ export function PrehledClient({
   );
 
   const viditelne = useMemo(() => {
-    const denYmd = den === 'zitra' ? zitra : dnes;
     return radky.filter((row) => {
       if (row.nelzeNacist) return false;
-      if (row.prijezd !== denYmd) return false;
+      if (row.prijezd !== vybranyDen) return false;
       if (row.stav === 'zruseno' && stav !== 'zruseno') return false;
       if (jenNeotevreni && (row.otevrenoPocet !== 0 || row.stav === 'bez_checkinu')) return false;
       if (jenBezCheckinu && row.stav !== 'bez_checkinu') return false;
       if (stav && row.stav !== stav) return false;
       return true;
     });
-  }, [radky, stav, den, dnes, zitra, jenNeotevreni, jenBezCheckinu]);
+  }, [radky, stav, vybranyDen, jenNeotevreni, jenBezCheckinu]);
 
   function hostOdjezdu(row: PrehledRadek) {
     return {
@@ -1382,37 +1390,6 @@ export function PrehledClient({
     } catch {
       setHlaska(text);
     }
-  }
-
-  function radekDne(ktery: 'dnes' | 'zitra', nadpis: string, souhrn: ReturnType<typeof souhrnDne>) {
-    return (
-      <div className={den === ktery && zalozka === 'prijezdy' ? 'ph-den is-on' : 'ph-den'}>
-        <button
-          type="button"
-          className="ph-den__nadpis"
-          aria-pressed={den === ktery && zalozka === 'prijezdy'}
-          onClick={() => {
-            setDen(ktery);
-            otevriZalozku('prijezdy');
-          }}
-        >
-          {nadpis}: {souhrn.pocet} · průvodce otevřelo {souhrn.otevrelo} · neodesláno {souhrn.neodeslano} · bez
-          check-inu: {souhrn.bezCheckinu}
-        </button>
-        {souhrn.plan.length ? (
-          <p className="ph-plan">
-            {souhrn.plan.map((h, i) => (
-              <span key={h.rezervace}>
-                {i > 0 ? ' · ' : null}
-                <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(h.rezervace)}>
-                  {h.cas ? `${h.cas} ${h.jmeno}` : `bez času ${h.jmeno}`}
-                </button>
-              </span>
-            ))}
-          </p>
-        ) : null}
-      </div>
-    );
   }
 
   function kartaHosta(row: PrehledRadek) {
@@ -2365,8 +2342,50 @@ export function PrehledClient({
         ))}
       <header className="ph-top">
         <h1>Přehled rezervací</h1>
-        {radekDne('dnes', 'Dnes přijíždí', dnesSouhrn)}
-        {radekDne('zitra', 'Zítra přijíždí', zitraSouhrn)}
+        <div className="ph-dny" role="tablist" aria-label="Výběr dne">
+          {dnyNahled.map((d) => {
+            const on = d.den === vybranyDen;
+            return (
+              <button
+                key={d.den}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                className={on ? 'ph-dny__den is-on' : 'ph-dny__den'}
+                onClick={() => {
+                  setVybranyDen(d.den);
+                  otevriZalozku('prijezdy');
+                }}
+              >
+                <span className="ph-dny__stitek">
+                  {d.stitek}
+                  {d.problem ? <span className="ph-dny__tecka" aria-label="Chybí údaje" /> : null}
+                </span>
+                <span className="ph-dny__pocty">
+                  ↓{d.prijezdy} ↑{d.odjezdy}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div className={zalozka === 'prijezdy' ? 'ph-den is-on' : 'ph-den'}>
+          <p className="ph-den__nadpis">
+            {nadpisSouhrnuDne(vybranyDen, dnes)}: {vybranySouhrn.pocet} · průvodce otevřelo {vybranySouhrn.otevrelo} ·
+            neodesláno {vybranySouhrn.neodeslano} · bez check-inu: {vybranySouhrn.bezCheckinu}
+          </p>
+          {vybranySouhrn.plan.length ? (
+            <p className="ph-plan">
+              {vybranySouhrn.plan.map((h, i) => (
+                <span key={h.rezervace}>
+                  {i > 0 ? ' · ' : null}
+                  <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(h.rezervace)}>
+                    {h.cas ? `${h.cas} ${h.jmeno}` : `bez času ${h.jmeno}`}
+                  </button>
+                </span>
+              ))}
+            </p>
+          ) : null}
+        </div>
         {chybiWifi.length ? (
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
@@ -2439,7 +2458,8 @@ export function PrehledClient({
       {zalozka === 'dnes' ? (
         <Dnesek
           radky={radky}
-          dnes={dnes}
+          dnes={vybranyDen}
+          operacePovolene={vybranyDen === dnes}
           ukazka={ukazka}
           brana={brana}
           vPrehledu
@@ -2808,6 +2828,24 @@ export function PrehledClient({
             return kartaHosta(row);
           })
         : null}
+
+      {zalozka === 'prijezdy' ? (
+        <Dnesek
+          radky={radky}
+          dnes={vybranyDen}
+          operacePovolene={vybranyDen === dnes}
+          jenUklid
+          ukazka={ukazka}
+          brana={brana}
+          vPrehledu
+          onPrevzato={poPrevzeti}
+          onOtevri={otevriKartu}
+          onZavadyZapsany={() => {
+            setHlaska('Závady po odjezdu uloženy.');
+            router.refresh();
+          }}
+        />
+      ) : null}
 
       {zalozka === 'prijezdy' && odjeli.length ? (
         <section className="ph-odjeli">

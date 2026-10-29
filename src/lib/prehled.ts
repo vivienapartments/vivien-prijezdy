@@ -968,3 +968,72 @@ export function souhrnDne(rows: PrehledRadek[], den: string, casy: Record<string
     plan,
   };
 }
+
+/** Dnes + dalších 7 kalendářních dní (YYYY-MM-DD). */
+export function dnyVyberu(dnes: string, dni = 8): string[] {
+  const n = Math.max(1, dni);
+  return Array.from({ length: n }, (_, i) => posunDen(dnes, i));
+}
+
+const ZKRATKY_DNE = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'] as const;
+/** „v neděli“, „v pondělí“… pro nadpis souhrnu. */
+const VE_DNI = ['v neděli', 'v pondělí', 'v úterý', 've středu', 've čtvrtek', 'v pátek', 'v sobotu'] as const;
+
+function denVTydnuUtc(ymd: string): number {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+/** Dnes → „Dnes“. Jinak „So 31“. */
+export function stitekDne(ymd: string, dnes: string): string {
+  if (ymd === dnes) return 'Dnes';
+  const cislo = Number(ymd.slice(8, 10));
+  return `${ZKRATKY_DNE[denVTydnuUtc(ymd)]} ${cislo}`;
+}
+
+/** „Dnes přijíždí“ / „V sobotu přijíždí“. */
+export function nadpisSouhrnuDne(ymd: string, dnes: string): string {
+  if (ymd === dnes) return 'Dnes přijíždí';
+  return `${VE_DNI[denVTydnuUtc(ymd)]} přijíždí`;
+}
+
+export type DenNahled = {
+  den: string;
+  stitek: string;
+  prijezdy: number;
+  odjezdy: number;
+  /** Chybí čas, check-in, nebo u auta SPZ / telefon k bráně. */
+  problem: boolean;
+};
+
+function hostMaProblemDne(
+  r: PrehledRadek,
+  casy: Record<string, string | null>,
+): boolean {
+  if (r.stav === 'zruseno' || r.nelzeNacist) return false;
+  if (r.stav === 'bez_checkinu') return true;
+  const cas = casy[r.rezervace] ?? r.casPrijezdu;
+  if (!cas) return true;
+  if (r.zpusobPrijezdu === 'auto' && (!r.telefonBrana || (!r.spz && !r.spzPujcene))) {
+    return true;
+  }
+  return false;
+}
+
+/** Počty ↓↑ a červená tečka pro tlačítko dne. Jen z už načtených karet. */
+export function nahledDne(
+  rows: PrehledRadek[],
+  den: string,
+  dnes: string,
+  casy: Record<string, string | null> = {},
+): DenNahled {
+  const prijezdy = rows.filter((r) => r.prijezd === den && r.stav !== 'zruseno' && !r.nelzeNacist);
+  const odjezdy = rows.filter((r) => r.odjezd === den && r.stav !== 'zruseno' && !r.nelzeNacist);
+  return {
+    den,
+    stitek: stitekDne(den, dnes),
+    prijezdy: prijezdy.length,
+    odjezdy: odjezdy.length,
+    problem: prijezdy.some((r) => hostMaProblemDne(r, casy)),
+  };
+}
