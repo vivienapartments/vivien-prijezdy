@@ -20,17 +20,24 @@ type Props = {
   okno: OknoPohled;
 };
 
+const PRAZDNO = '';
+
 export function OknoHosta({ lang, token, cteni, okno }: Props) {
   const t = vety(lang);
   const prijezd = textStavu(lang, 'prijezd', okno.zadostPrijezd);
   const odjezd = textStavu(lang, 'odjezd', okno.zadostOdjezd);
-  const [casPrijezd, setCasPrijezd] = useState(okno.slotyPrijezd[0] || '');
-  const [casOdjezd, setCasOdjezd] = useState(okno.slotyOdjezd[0] || '');
-  const [zeleny, setZeleny] = useState(okno.slotyZelene[0] || '');
+  const [casPrijezd, setCasPrijezd] = useState(PRAZDNO);
+  const [casOdjezd, setCasOdjezd] = useState(PRAZDNO);
+  const [zeleny, setZeleny] = useState(PRAZDNO);
   const [cekam, setCekam] = useState(false);
   const [hotovo, setHotovo] = useState('');
 
-  async function poslat(tela: { casPrijezd?: string; casOdjezd?: string; od?: string }) {
+  async function poslat(tela: {
+    casPrijezd?: string;
+    casOdjezd?: string;
+    od?: string;
+    zrusit?: 'prijezd' | 'odjezd' | 'oboji';
+  }) {
     if (cteni || !token) {
       setHotovo(t.cekaPrijezd.replaceAll('{cas}', tela.casPrijezd || tela.casOdjezd || ''));
       return;
@@ -49,6 +56,8 @@ export function OknoHosta({ lang, token, cteni, okno }: Props) {
     }
   }
 
+  const muzePoslat = Boolean(casPrijezd || casOdjezd);
+
   return (
     <>
       {okno.zeleny ? (
@@ -58,6 +67,7 @@ export function OknoHosta({ lang, token, cteni, okno }: Props) {
           {okno.slotyZelene.length ? (
             <label>
               <select id="pripraveno-cas" value={zeleny} onChange={(e) => setZeleny(e.target.value)}>
+                <option value={PRAZDNO}>—</option>
                 <optgroup label={skupinaDrive(lang)}>
                   {okno.slotyZelene.map((cas) => (
                     <option key={cas} value={cas}>
@@ -83,9 +93,20 @@ export function OknoHosta({ lang, token, cteni, okno }: Props) {
           {prijezd?.veta ? <p>{prijezd.veta}</p> : null}
           {odjezd?.kratce ? <p>{odjezd.kratce}</p> : null}
           {odjezd?.veta ? <p>{odjezd.veta}</p> : null}
-          {okno.sekcePrijezd && okno.zadostPrijezd?.stav !== 'potvrzeno' && okno.slotyPrijezd.length ? (
+          {okno.zadostPrijezd?.stav === 'ceka' ? (
+            <button type="button" disabled={cekam} onClick={() => void poslat({ zrusit: 'prijezd' })}>
+              {t.zrusit}
+            </button>
+          ) : null}
+          {okno.zadostOdjezd?.stav === 'ceka' ? (
+            <button type="button" disabled={cekam} onClick={() => void poslat({ zrusit: 'odjezd' })}>
+              {t.zrusit}
+            </button>
+          ) : null}
+          {okno.sekcePrijezd && okno.zadostPrijezd?.stav !== 'potvrzeno' && okno.zadostPrijezd?.stav !== 'ceka' && okno.slotyPrijezd.length ? (
             <label>
               <select id="drivejsi-cas" value={casPrijezd} onChange={(e) => setCasPrijezd(e.target.value)}>
+                <option value={PRAZDNO}>—</option>
                 <optgroup label={skupinaDrive(lang)}>
                   {okno.slotyPrijezd.map((cas) => (
                     <option key={cas} value={cas}>
@@ -97,9 +118,10 @@ export function OknoHosta({ lang, token, cteni, okno }: Props) {
               <span className="pv-odjezd__poznamka">{poznamkaDrive(lang)}</span>
             </label>
           ) : null}
-          {okno.sekceOdjezd && okno.zadostOdjezd?.stav !== 'potvrzeno' && okno.slotyOdjezd.length ? (
+          {okno.sekceOdjezd && okno.zadostOdjezd?.stav !== 'potvrzeno' && okno.zadostOdjezd?.stav !== 'ceka' && okno.slotyOdjezd.length ? (
             <label>
               <select id="pozdejsi" value={casOdjezd} onChange={(e) => setCasOdjezd(e.target.value)}>
+                <option value={PRAZDNO}>—</option>
                 <optgroup label={skupinaPozde(lang)}>
                   {okno.slotyOdjezd.map((cas) => (
                     <option key={cas} value={cas}>
@@ -110,18 +132,20 @@ export function OknoHosta({ lang, token, cteni, okno }: Props) {
               </select>
             </label>
           ) : null}
-          <button
-            type="button"
-            disabled={cekam}
-            onClick={() =>
-              void poslat({
-                casPrijezd: okno.sekcePrijezd ? casPrijezd : undefined,
-                casOdjezd: okno.sekceOdjezd ? casOdjezd : undefined,
-              })
-            }
-          >
-            {t.odeslat}
-          </button>
+          {muzePoslat ? (
+            <button
+              type="button"
+              disabled={cekam}
+              onClick={() =>
+                void poslat({
+                  casPrijezd: casPrijezd || undefined,
+                  casOdjezd: casOdjezd || undefined,
+                })
+              }
+            >
+              {t.odeslat}
+            </button>
+          ) : null}
         </section>
       ) : null}
     </>

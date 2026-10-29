@@ -122,17 +122,19 @@ describe('odjezd', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'odjezd-'));
     const store = new FileProcessStore(path.join(dir, 'store.json'));
     const id = '120260036';
+    const prijezd = '2026-11-16';
+    const odjezd = '2026-11-17';
     const zaklad = host({
       rezervace: id,
       apartman: 'V3',
       jmeno: 'Jan Novák',
-      prijezd: '2026-10-16',
-      odjezd: '2026-10-17',
+      prijezd,
+      odjezd,
       jazyk: 'cs',
       casOdjezdu: '10:00',
     });
     await store.setRezervace(id, zapisMajitele(zaklad, 'casOdjezdu', { casOdjezdu: '10:00' }, 'Čas odjezdu'));
-    const token = createToken({ r: id, a: 'V3', p: '2026-10-16', d: '2026-10-17', l: 'cs' }, SECRET);
+    const token = createToken({ r: id, a: 'V3', p: prijezd, d: odjezd, l: 'cs' }, SECRET);
     const vysledek = await ulozVstupHosta(store, token, { akce: 'odjezd', cas: '09:30' });
     expect(vysledek.ok).toBe(true);
     const rec = await store.getRezervace(id);
@@ -281,6 +283,9 @@ describe('odjezd', () => {
     expect(ukazatRamecekOdjezdu('2026-10-17', casVPraze('2026-10-14', 15, 0))).toBe(false);
     expect(ukazatRamecekOdjezdu('2026-10-17', casVPraze('2026-10-14', 15, 0), true)).toBe(true);
     expect(jeSlotOdjezdu('10:00')).toBe(true);
+    expect(jeSlotOdjezdu('08:00')).toBe(true);
+    expect(jeSlotOdjezdu('08:15')).toBe(true);
+    expect(jeSlotOdjezdu('08:45')).toBe(true);
     expect(jeSlotOdjezdu('10:30')).toBe(false);
     const dnes = denPraha(new Date());
     const html = renderToStaticMarkup(

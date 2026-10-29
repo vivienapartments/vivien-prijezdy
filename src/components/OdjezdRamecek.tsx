@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { denPraha } from '@/lib/brana';
 import { casyPozde, optionPozde, posunDen, skupinaOdjezd, skupinaPozde } from '@/lib/okno-pobytu';
+import { CHECKOUT } from '@/lib/constants';
 import { jeHodina, slotsOdjezdu, TEXT_ODJEZDU, ukazatRamecekOdjezdu, zobrazCas } from '@/lib/odjezd';
 import type { GuideLang } from '@/lib/types';
 
@@ -33,7 +34,8 @@ export function OdjezdRamecek({
   const pozde = casyPozde(nejpozdeji);
   const [ulozeny, setUlozeny] = useState(jeHodina(cas) ? cas : '');
   const [otevreno, setOtevreno] = useState(!jeHodina(cas));
-  const [vyber, setVyber] = useState(jeHodina(cas) ? cas : bezne[bezne.length - 1] || bezne[0]);
+  /** Bez volby je standardní check-out 10:00. Nic placeného se nepředvolí. */
+  const [vyber, setVyber] = useState(jeHodina(cas) ? cas : CHECKOUT);
   const [cekam, setCekam] = useState(false);
   const [chyba, setChyba] = useState('');
   if (!ukazatRamecekOdjezdu(den, new Date(), ubytovan)) return null;

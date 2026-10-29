@@ -4,7 +4,8 @@ export const PREDSTIH_PRIJEZDU_MIN = 60;
 /** Běžný odjezd. Host v průvodci volí od 6:00 po půlhodinách až sem. */
 export const CHECKOUT = '10:00';
 export const ODJEZD_OD = '06:00';
-export const ODJEZD_KROK_MIN = 30;
+/** Běžný odjezd do 10:00 po čtvrthodinách. Pozdější (placené) zůstává po půlhodinách. */
+export const ODJEZD_KROK_MIN = 15;
 /** Rámeček v průvodci od této hodiny dne před odjezdem. */
 export const HODINA_RAMCEKU_ODJEZDU = 12;
 /** Push se seznamem zítřejších odjezdů. */

@@ -142,7 +142,7 @@ export async function ulozVstupHosta(
       const zapis = { ...v.rec, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
       await store.setRezervace(id, zapis);
       await ohlas(store, id, v.push);
-      return { ok: true, cas: rec.casOdjezdu || undefined, uroven: urovenZRezervace(zapis) };
+      return { ok: true, cas: v.rec.zadostOdjezd?.cas || cas, uroven: urovenZRezervace(zapis) };
     }
     if (!jeSlotOdjezdu(cas)) {
       await spalit();
