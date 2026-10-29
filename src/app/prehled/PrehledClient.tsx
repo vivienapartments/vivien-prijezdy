@@ -2228,7 +2228,6 @@ export function PrehledClient({
         ) : null}
         {telefonNahore ? telefonPole(row) : null}
         {kontaktNahore ? tlacitkoKontakt : null}
-        {!casAktualni ? casPole : null}
         {panelZpravy[row.rezervace] ? (
           <div className="ph-nova-panel">
             <h3>Napsat zprávu</h3>
@@ -2471,7 +2470,7 @@ export function PrehledClient({
           ) : null}
           {namisteTlacitko}
           {!telefonNahore ? telefonPole(row) : null}
-          {casAktualni ? casPole : null}
+          {casPole}
           {odjezdPole}
           {zpravyNahore ? null : (
             <>
