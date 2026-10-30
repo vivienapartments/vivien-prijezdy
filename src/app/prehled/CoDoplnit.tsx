@@ -231,7 +231,11 @@ export function CoDoplnit({
                     </span>
                     <span className="ph-co-doplnit__stitky">
                       {stitky.map((s, i) => (
-                        <span key={`${s.text}-${i}`} className={s.akce ? 'ph-co-doplnit__stitek is-akce' : 'ph-co-doplnit__stitek'}>
+                        <span
+                          key={`${s.text}-${i}`}
+                          className={s.akce ? 'ph-co-doplnit__stitek is-akce' : 'ph-co-doplnit__stitek'}
+                          title={s.plny || s.text}
+                        >
                           {s.text}
                         </span>
                       ))}
@@ -239,6 +243,13 @@ export function CoDoplnit({
                   </button>
                   {open ? (
                     <div className="ph-co-doplnit__rozbal">
+                      {stitky
+                        .filter((s) => s.plny && s.plny !== s.text)
+                        .map((s, i) => (
+                          <p key={`plny-${i}`} className="ph-co-doplnit__otevreni">
+                            {s.plny}
+                          </p>
+                        ))}
                       {poleRadku({
                         row,
                         filtr,
@@ -275,6 +286,11 @@ export function CoDoplnit({
               <tbody>
                 {seznam.map((row) => {
                   const url = (row.checkinUrl || '').trim();
+                  const otevreni =
+                    filtr === 'bez_telefonu' ||
+                    (filtr === 'vse' && !chybiCheckin(row) && !chybiPruvodce(row))
+                      ? null
+                      : textOtevreniDoplnit(row);
                   return (
                     <tr key={row.rezervace}>
                       <td data-label="Příjezd">{row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—'}</td>
@@ -291,6 +307,9 @@ export function CoDoplnit({
                       <td data-label="Zdroj">{row.zdrojText || row.zdroj || '—'}</td>
                       <td data-label="Údaje">
                         <div className="ph-co-doplnit__rozbal">
+                          {otevreni ? (
+                            <p className="ph-co-doplnit__otevreni">{otevreni.plny || otevreni.text}</p>
+                          ) : null}
                           {poleRadku({
                             row,
                             filtr,
@@ -326,30 +345,48 @@ function textVyzvyStitek(
   return { text: dalsi ? `${v.kratky} · další ${dalsi}` : v.kratky, akce: false };
 }
 
-function textOtevreniStitek(row: PrehledRadek): string {
+type StitekDoplnit = { text: string; plny?: string; akce: boolean };
+
+/** Stejný čas jako na kartě (z otevreniText). kratky do sbaleného řádku, plny do rozbalení. */
+function textOtevreniDoplnit(row: PrehledRadek): StitekDoplnit | null {
   const n = row.otevrenoPocet;
-  if (n == null || n <= 0) return 'neotevřel';
-  return `otevřel ${n}×`;
+  if (n == null) return null;
+  if (n <= 0) return { text: 'neotevřel', plny: 'neotevřel', akce: false };
+  const m = /^Otevřel\s+(.+?)\s+\((\d+)×\)$/i.exec((row.otevreniText || '').trim());
+  if (m) {
+    return {
+      text: `${m[2]}× · ${m[1]}`,
+      plny: `otevřel ${m[2]}× · naposledy ${m[1]}`,
+      akce: false,
+    };
+  }
+  return { text: `${n}×`, plny: `otevřel ${n}×`, akce: false };
+}
+
+function pridejOtevreni(out: StitekDoplnit[], row: PrehledRadek) {
+  const o = textOtevreniDoplnit(row);
+  if (o) out.push(o);
 }
 
 function stitkyRadku(
   row: PrehledRadek,
   filtr: FiltrDoplnit,
   dnes: string,
-): { stitky: { text: string; akce: boolean }[]; naRade: boolean } {
+): { stitky: StitekDoplnit[]; naRade: boolean } {
   if (filtr === 'bez_checkinu') {
     const v = textVyzvyStitek('checkin', row, dnes);
-    return { stitky: [{ text: 'check-in', akce: v.akce }, v], naRade: v.akce };
+    const stitky: StitekDoplnit[] = [{ text: 'check-in', akce: v.akce }, v];
+    pridejOtevreni(stitky, row);
+    return { stitky, naRade: v.akce };
   }
   if (filtr === 'bez_pruvodce') {
     const v = textVyzvyStitek('pruvodce', row, dnes);
-    return {
-      stitky: [{ text: 'průvodce', akce: v.akce }, v, { text: textOtevreniStitek(row), akce: false }],
-      naRade: v.akce,
-    };
+    const stitky: StitekDoplnit[] = [{ text: 'průvodce', akce: v.akce }, v];
+    pridejOtevreni(stitky, row);
+    return { stitky, naRade: v.akce };
   }
   if (filtr === 'bez_telefonu') return { stitky: [{ text: 'telefon', akce: true }], naRade: true };
-  const out: { text: string; akce: boolean }[] = [];
+  const out: StitekDoplnit[] = [];
   let naRade = false;
   if (chybiCheckin(row)) {
     const v = textVyzvyStitek('checkin', row, dnes);
@@ -358,9 +395,10 @@ function stitkyRadku(
   }
   if (chybiPruvodce(row)) {
     const v = textVyzvyStitek('pruvodce', row, dnes);
-    out.push({ text: 'průvodce', akce: v.akce }, v, { text: textOtevreniStitek(row), akce: false });
+    out.push({ text: 'průvodce', akce: v.akce }, v);
     if (v.akce) naRade = true;
   }
+  if (chybiCheckin(row) || chybiPruvodce(row)) pridejOtevreni(out, row);
   if (chybiTelefon(row)) {
     out.push({ text: 'telefon', akce: true });
     naRade = true;
