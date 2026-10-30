@@ -3,6 +3,13 @@ import path from 'path';
 import type { Duvod } from './chyby';
 import { UCHOVAT_KARTU_MESICU } from './constants';
 import type { PoplatekStav } from './poplatek';
+import {
+  maOtevrenaVlakna,
+  nactiVlaknoPrani,
+  nactiZpravuPrani,
+  type VlaknoPrani,
+  type ZpravaPrani,
+} from './prani';
 import type { VyjezdPolozka } from './priplatek-prijezd';
 import type { AptId, GuideLang } from './types';
 import { prevedZaplaceno } from './platby-hosta';
@@ -274,6 +281,11 @@ export type UpozorneniZaznam = {
 export type RezervaceEntry = { id: string; record: RezervaceRecord; chybaNahrani?: boolean };
 export type MessageEntry = { id: string; record: MessageRecord };
 
+type PraniFileSlot = {
+  vlakna: Record<string, VlaknoPrani>;
+  zpravy: ZpravaPrani[];
+};
+
 type StoreData = {
   messages: Record<string, MessageRecord>;
   rezervace: Record<string, RezervaceRecord>;
@@ -285,6 +297,9 @@ type StoreData = {
   brana?: unknown;
   objednatPokusy?: Record<string, ObjednatPokus>;
   schrankaStav?: SchrankaStav | null;
+  /** Přání hosta mimo rez:* (prompt 57A). */
+  praniOtevrena?: string[];
+  prani?: Record<string, PraniFileSlot>;
 };
 
 const RUCNI_KLIC = new Set<RucniPole>([
@@ -309,6 +324,14 @@ const RUCNI_KLIC = new Set<RucniPole>([
 ]);
 
 const ODKUD = new Set<OdkudNavrh>(['check-in', 'rezervace', 'host', 'potvrzeni']);
+
+export type PraniTtlOpts = { odjezd: string | null; persist: boolean };
+
+export type OtevrenaPraniPolozka = {
+  rezervace: string;
+  vlakna: VlaknoPrani[];
+  zpravy: ZpravaPrani[];
+};
 
 export interface ProcessStore {
   isMessageProcessed(messageId: string): Promise<boolean>;
@@ -335,6 +358,26 @@ export interface ProcessStore {
   setObjednatPokusy(pokusy: Record<string, ObjednatPokus>): Promise<void>;
   getSchrankaStav(): Promise<SchrankaStav | null>;
   setSchrankaStav(stav: SchrankaStav): Promise<void>;
+  listPrani(rez: string): Promise<{ vlakna: Record<string, VlaknoPrani>; zpravy: ZpravaPrani[] }>;
+  pridejZpravuPrani(rez: string, zprava: ZpravaPrani, vlakno: VlaknoPrani, ttl: PraniTtlOpts): Promise<void>;
+  nastavVlaknoPrani(rez: string, vlakno: VlaknoPrani, ttl: PraniTtlOpts): Promise<void>;
+  upravZpravuPrani(
+    rez: string,
+    id: string,
+    patch: Partial<Pick<ZpravaPrani, 'text' | 'upraveno' | 'smazano'>>,
+    ttl: PraniTtlOpts,
+  ): Promise<void>;
+  smazVlaknoPrani(rez: string, vlaknoId: string, ttl: PraniTtlOpts): Promise<void>;
+  listOtevrenaPrani(): Promise<OtevrenaPraniPolozka[]>;
+}
+
+function ttlPraniSec(ttl: PraniTtlOpts, now = new Date()): number | 'persist' | null {
+  if (ttl.persist) return 'persist';
+  if (!ttl.odjezd) return MESSAGE_TTL_SEC;
+  const limit = smazatPoOdjezdu(ttl.odjezd);
+  if (!limit) return MESSAGE_TTL_SEC;
+  if (limit.getTime() <= now.getTime()) return 60;
+  return Math.max(60, Math.ceil((limit.getTime() - now.getTime()) / 1000));
 }
 
 export function nactiUpozorneniSeznam(raw: unknown): UpozorneniZaznam[] {
@@ -756,6 +799,10 @@ export class FileProcessStore implements ProcessStore {
         brana: parsed.brana ?? null,
         objednatPokusy: parsed.objednatPokusy,
         schrankaStav: nactiSchrankaStav(parsed.schrankaStav),
+        praniOtevrena: Array.isArray(parsed.praniOtevrena)
+          ? parsed.praniOtevrena.filter((x): x is string => typeof x === 'string')
+          : [],
+        prani: parsed.prani && typeof parsed.prani === 'object' ? parsed.prani : {},
       };
     } catch {
       return emptyData();
@@ -908,6 +955,79 @@ export class FileProcessStore implements ProcessStore {
     const data = this.read();
     data.schrankaStav = cisty;
     this.write(data);
+  }
+
+  private syncOtevrenaPrani(data: StoreData, rez: string, vlakna: Record<string, VlaknoPrani>): void {
+    const set = new Set(data.praniOtevrena || []);
+    if (maOtevrenaVlakna(Object.values(vlakna))) set.add(rez);
+    else set.delete(rez);
+    data.praniOtevrena = [...set];
+  }
+
+  async listPrani(rez: string): Promise<{ vlakna: Record<string, VlaknoPrani>; zpravy: ZpravaPrani[] }> {
+    const slot = this.read().prani?.[rez];
+    return { vlakna: { ...(slot?.vlakna || {}) }, zpravy: [...(slot?.zpravy || [])] };
+  }
+
+  async pridejZpravuPrani(rez: string, zprava: ZpravaPrani, vlakno: VlaknoPrani, _ttl: PraniTtlOpts): Promise<void> {
+    const data = this.read();
+    const slot = data.prani?.[rez] || { vlakna: {}, zpravy: [] };
+    slot.vlakna = { ...slot.vlakna, [vlakno.id]: vlakno };
+    slot.zpravy = [...slot.zpravy, zprava];
+    data.prani = { ...(data.prani || {}), [rez]: slot };
+    this.syncOtevrenaPrani(data, rez, slot.vlakna);
+    this.write(data);
+  }
+
+  async nastavVlaknoPrani(rez: string, vlakno: VlaknoPrani, _ttl: PraniTtlOpts): Promise<void> {
+    const data = this.read();
+    const slot = data.prani?.[rez] || { vlakna: {}, zpravy: [] };
+    slot.vlakna = { ...slot.vlakna, [vlakno.id]: vlakno };
+    data.prani = { ...(data.prani || {}), [rez]: slot };
+    this.syncOtevrenaPrani(data, rez, slot.vlakna);
+    this.write(data);
+  }
+
+  async upravZpravuPrani(
+    rez: string,
+    id: string,
+    patch: Partial<Pick<ZpravaPrani, 'text' | 'upraveno' | 'smazano'>>,
+    _ttl: PraniTtlOpts,
+  ): Promise<void> {
+    const data = this.read();
+    const slot = data.prani?.[rez];
+    if (!slot) return;
+    const i = slot.zpravy.findIndex((z) => z.id === id);
+    if (i < 0) return;
+    slot.zpravy = slot.zpravy.map((z, idx) => (idx === i ? { ...z, ...patch } : z));
+    data.prani = { ...(data.prani || {}), [rez]: slot };
+    this.write(data);
+  }
+
+  async smazVlaknoPrani(rez: string, vlaknoId: string, _ttl: PraniTtlOpts): Promise<void> {
+    const data = this.read();
+    const slot = data.prani?.[rez];
+    if (!slot) return;
+    const { [vlaknoId]: _odebrano, ...zbytek } = slot.vlakna;
+    slot.vlakna = zbytek;
+    data.prani = { ...(data.prani || {}), [rez]: slot };
+    this.syncOtevrenaPrani(data, rez, slot.vlakna);
+    this.write(data);
+  }
+
+  async listOtevrenaPrani(): Promise<OtevrenaPraniPolozka[]> {
+    const data = this.read();
+    const out: OtevrenaPraniPolozka[] = [];
+    for (const rez of data.praniOtevrena || []) {
+      const slot = data.prani?.[rez];
+      if (!slot) continue;
+      out.push({
+        rezervace: rez,
+        vlakna: Object.values(slot.vlakna),
+        zpravy: slot.zpravy,
+      });
+    }
+    return out;
   }
 }
 
@@ -1247,6 +1367,121 @@ export class UpstashProcessStore implements ProcessStore {
     const cisty = nactiSchrankaStav(stav);
     if (!cisty) return;
     await this.cmd('SET', 'schranka:stav', JSON.stringify(cisty));
+  }
+
+  private praniVlaknaKey(rez: string): string {
+    return `prani:${rez}:vlakna`;
+  }
+
+  private praniZpravyKey(rez: string): string {
+    return `prani:${rez}:zpravy`;
+  }
+
+  private async nastavTtlPrani(rez: string, ttl: PraniTtlOpts): Promise<void> {
+    const sec = ttlPraniSec(ttl);
+    const klice = [this.praniVlaknaKey(rez), this.praniZpravyKey(rez)];
+    if (sec === 'persist') {
+      for (const k of klice) await this.cmd('PERSIST', k);
+      return;
+    }
+    if (sec == null) return;
+    for (const k of klice) await this.cmd('EXPIRE', k, sec);
+  }
+
+  private async syncOtevrenaPraniUpstash(rez: string, vlakna: Record<string, VlaknoPrani>): Promise<void> {
+    if (maOtevrenaVlakna(Object.values(vlakna))) await this.cmd('SADD', 'prani:otevrena', rez);
+    else await this.cmd('SREM', 'prani:otevrena', rez);
+  }
+
+  async listPrani(rez: string): Promise<{ vlakna: Record<string, VlaknoPrani>; zpravy: ZpravaPrani[] }> {
+    const rawHash = await this.cmd<Record<string, string> | null>('HGETALL', this.praniVlaknaKey(rez));
+    const vlakna: Record<string, VlaknoPrani> = {};
+    if (rawHash && typeof rawHash === 'object' && !Array.isArray(rawHash)) {
+      for (const [k, v] of Object.entries(rawHash)) {
+        try {
+          const vl = nactiVlaknoPrani(JSON.parse(v));
+          if (vl) vlakna[k] = vl;
+        } catch {
+          /* přeskočit */
+        }
+      }
+    } else if (Array.isArray(rawHash)) {
+      /** Upstash někdy vrací flat pole [field, value, …]. */
+      for (let i = 0; i + 1 < rawHash.length; i += 2) {
+        const k = String(rawHash[i]);
+        const v = String(rawHash[i + 1]);
+        try {
+          const vl = nactiVlaknoPrani(JSON.parse(v));
+          if (vl) vlakna[k] = vl;
+        } catch {
+          /* přeskočit */
+        }
+      }
+    }
+    const rawList = await this.cmd<string[] | null>('LRANGE', this.praniZpravyKey(rez), 0, -1);
+    const zpravy: ZpravaPrani[] = [];
+    for (const row of rawList || []) {
+      try {
+        const z = nactiZpravuPrani(JSON.parse(row));
+        if (z) zpravy.push(z);
+      } catch {
+        /* přeskočit */
+      }
+    }
+    return { vlakna, zpravy };
+  }
+
+  async pridejZpravuPrani(rez: string, zprava: ZpravaPrani, vlakno: VlaknoPrani, ttl: PraniTtlOpts): Promise<void> {
+    await this.cmd('RPUSH', this.praniZpravyKey(rez), JSON.stringify(zprava));
+    await this.cmd('HSET', this.praniVlaknaKey(rez), vlakno.id, JSON.stringify(vlakno));
+    const { vlakna } = await this.listPrani(rez);
+    await this.syncOtevrenaPraniUpstash(rez, vlakna);
+    await this.nastavTtlPrani(rez, ttl);
+  }
+
+  async nastavVlaknoPrani(rez: string, vlakno: VlaknoPrani, ttl: PraniTtlOpts): Promise<void> {
+    await this.cmd('HSET', this.praniVlaknaKey(rez), vlakno.id, JSON.stringify(vlakno));
+    const { vlakna } = await this.listPrani(rez);
+    await this.syncOtevrenaPraniUpstash(rez, vlakna);
+    await this.nastavTtlPrani(rez, ttl);
+  }
+
+  async upravZpravuPrani(
+    rez: string,
+    id: string,
+    patch: Partial<Pick<ZpravaPrani, 'text' | 'upraveno' | 'smazano'>>,
+    ttl: PraniTtlOpts,
+  ): Promise<void> {
+    const rawList = await this.cmd<string[] | null>('LRANGE', this.praniZpravyKey(rez), 0, -1);
+    const list = rawList || [];
+    for (let i = 0; i < list.length; i += 1) {
+      try {
+        const z = nactiZpravuPrani(JSON.parse(list[i]));
+        if (!z || z.id !== id) continue;
+        await this.cmd('LSET', this.praniZpravyKey(rez), i, JSON.stringify({ ...z, ...patch }));
+        await this.nastavTtlPrani(rez, ttl);
+        return;
+      } catch {
+        continue;
+      }
+    }
+  }
+
+  async smazVlaknoPrani(rez: string, vlaknoId: string, ttl: PraniTtlOpts): Promise<void> {
+    await this.cmd('HDEL', this.praniVlaknaKey(rez), vlaknoId);
+    const { vlakna } = await this.listPrani(rez);
+    await this.syncOtevrenaPraniUpstash(rez, vlakna);
+    await this.nastavTtlPrani(rez, ttl);
+  }
+
+  async listOtevrenaPrani(): Promise<OtevrenaPraniPolozka[]> {
+    const ids = (await this.cmd<string[] | null>('SMEMBERS', 'prani:otevrena')) || [];
+    const out: OtevrenaPraniPolozka[] = [];
+    for (const rezervace of ids) {
+      const { vlakna, zpravy } = await this.listPrani(rezervace);
+      out.push({ rezervace, vlakna: Object.values(vlakna), zpravy });
+    }
+    return out;
   }
 }
 

@@ -34,6 +34,13 @@ import { upozorniMajitele } from '@/lib/upozorneni';
 import { polozkyZRezervace, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
 import { vratPlatbu, zaplatDruhy } from '@/lib/platby-hosta';
 import { oznacPrevzeti, vratPrevzeti } from '@/lib/zalozky';
+import {
+  adminOdpovedPrani,
+  adminOtevritPrani,
+  adminPrectenoPrani,
+  adminVyrizenoPrani,
+  jeKdoPrani,
+} from '@/lib/prani';
 import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { prehledPrihlasen } from '@/lib/prehled-session';
@@ -95,6 +102,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     text?: string;
     dalsiRezervace?: string;
     iDalsimu?: boolean;
+    vlakno?: string;
+    id?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -159,7 +168,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'zavady-odeslat' &&
       akce !== 'zavady-po-odjezdu' &&
       akce !== 'zavady-po-odjezdu-odeslat' &&
-      akce !== 'email-hosta')
+      akce !== 'email-hosta' &&
+      akce !== 'prani-odpoved' &&
+      akce !== 'prani-precteno' &&
+      akce !== 'prani-vyrizeno' &&
+      akce !== 'prani-otevrit')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -731,6 +744,40 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!url) return chyba(400, 'Chybí apartmán, datum nebo jazyk.');
     await store.setRezervace(id, pridej(rec, 'Zkopírován odkaz na průvodce'));
     return NextResponse.json({ ok: true, url }, { headers: noStore });
+  }
+
+  if (
+    akce === 'prani-odpoved' ||
+    akce === 'prani-precteno' ||
+    akce === 'prani-vyrizeno' ||
+    akce === 'prani-otevrit'
+  ) {
+    const vlakno = typeof body?.vlakno === 'string' ? body.vlakno.trim() : '';
+    const kdo = jeKdoPrani(body?.kdo);
+    if (!vlakno || !kdo) return chyba(400, 'Chybí údaje k přání.');
+    if (akce === 'prani-odpoved') {
+      const vysledek = await adminOdpovedPrani(store, rec, {
+        vlakno,
+        id: typeof body?.id === 'string' ? body.id : '',
+        text: typeof body?.text === 'string' ? body.text : '',
+        kdo,
+      });
+      if (!vysledek.ok) return chyba(vysledek.duvod === 'nenalezeno' ? 404 : 400, vysledek.duvod);
+      return NextResponse.json({ ok: true, uz: Boolean(vysledek.uz) }, { headers: noStore });
+    }
+    if (akce === 'prani-precteno') {
+      const vysledek = await adminPrectenoPrani(store, rec, { vlakno, kdo });
+      if (!vysledek.ok) return chyba(404, vysledek.duvod);
+      return NextResponse.json({ ok: true }, { headers: noStore });
+    }
+    if (akce === 'prani-vyrizeno') {
+      const vysledek = await adminVyrizenoPrani(store, rec, { vlakno, kdo });
+      if (!vysledek.ok) return chyba(404, vysledek.duvod);
+      return NextResponse.json({ ok: true }, { headers: noStore });
+    }
+    const vysledek = await adminOtevritPrani(store, rec, { vlakno, kdo });
+    if (!vysledek.ok) return chyba(404, vysledek.duvod);
+    return NextResponse.json({ ok: true }, { headers: noStore });
   }
 
   let pracovni = rec;
