@@ -15,7 +15,14 @@ import {
   WALK_BACK_MAPY_URL,
   WIFI_GARDEN_SSID,
 } from '@/lib/constants';
-import { aptRecord, visibleKroky, visibleSekce, sectionNavLabel, stepLabel } from '@/lib/guide-data';
+import {
+  aptRecord,
+  nadpisKDomuAVstup,
+  visibleKroky,
+  visibleSekce,
+  sectionNavLabel,
+  stepLabel,
+} from '@/lib/guide-data';
 import {
   apartmentTitle,
   fillPlaceholders,
@@ -39,10 +46,13 @@ import { textStavu, type OknoPohled } from '@/lib/okno-pobytu';
 import { ukazatDokladyRamecek } from '@/lib/doklady-texty';
 import { DokladyRamecek } from './DokladyRamecek';
 import { OdjezdRamecek } from './OdjezdRamecek';
-import { PraniHosta } from './PraniHosta';
+import { PraniAlert, PraniHosta } from './PraniHosta';
 import { StavApartmanu } from './StavApartmanu';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
+import { PRANI_NADPIS, PRANI_VETA_SBALENA, textPrani } from '@/lib/prani-texty';
 import './guide.scss';
+
+const ALIAS_K_DOMU = ['pesky-parkoviste-dum'];
 
 function klicSbaleni(rezervace: string | null | undefined, id: string): string {
   return `vivien-pv-sbal:${rezervace || 'x'}:${id}`;
@@ -53,7 +63,8 @@ function SbalenaSekce({
   rezervace,
   vychoziOtevreno,
   nadpis,
-  veta,
+  veta = '',
+  aliasIds = [],
   expandLabel,
   collapseLabel,
   children,
@@ -62,7 +73,9 @@ function SbalenaSekce({
   rezervace?: string | null;
   vychoziOtevreno: boolean;
   nadpis: string;
-  veta: string;
+  veta?: string;
+  /** Staré kotvy (#pv-…) otevřou tutéž dlaždici. */
+  aliasIds?: string[];
   expandLabel: string;
   collapseLabel: string;
   children: ReactNode;
@@ -82,10 +95,13 @@ function SbalenaSekce({
   }, [id, rezervace, vychoziOtevreno]);
 
   useEffect(() => {
+    function sediHash(raw: string): boolean {
+      if (raw === `pv-${id}` || raw === id) return true;
+      return aliasIds.some((a) => raw === `pv-${a}` || raw === a);
+    }
     function otevriZHash() {
       const raw = window.location.hash.replace(/^#/, '').trim();
-      if (!raw) return;
-      if (raw !== `pv-${id}` && raw !== id) return;
+      if (!raw || !sediHash(raw)) return;
       setOtevreno(true);
       try {
         localStorage.setItem(klicSbaleni(rezervace, id), '1');
@@ -103,7 +119,7 @@ function SbalenaSekce({
     otevriZHash();
     window.addEventListener('hashchange', otevriZHash);
     return () => window.removeEventListener('hashchange', otevriZHash);
-  }, [id, rezervace]);
+  }, [id, rezervace, aliasIds]);
 
   return (
     <details
@@ -343,11 +359,14 @@ export function Guide({
   const [gardenQr, setGardenQr] = useState<string | null>(null);
   const [ziveKody, setZiveKody] = useState<KodRadek[] | null>(kody ?? null);
   const [dnesDen, setDnesDen] = useState(() => denPraha(new Date()));
+  const [praniOtevrit, setPraniOtevrit] = useState(false);
   const hodnoty = vstup?.hodnoty ?? lokalne ?? { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false };
   const ubytovan = Boolean(vstup?.ubytovan);
   const odDnePrijezdu = Boolean(prijezdDen && /^\d{4}-\d{2}-\d{2}$/.test(prijezdDen) && dnesDen >= prijezdDen);
   /** Přání vidí od dne příjezdu i bez kliknutí Předáno. PINy zůstávají jen po předání. */
   const ukazPrani = ubytovan || Boolean(ziveKody) || odDnePrijezdu;
+  const praniToken = vstup?.token ?? null;
+  const praniCteni = Boolean(vstup?.cteni) || showDevBar;
   /** Po předání / od dne příjezdu jsou všechny části výchozí sbalené. */
   const vseSbalene = ubytovan || Boolean(ziveKody) || odDnePrijezdu;
   const krokyHotove = pruvodceRozbalen({
@@ -486,7 +505,15 @@ export function Guide({
     return `https://vivienapartments.cz/${lang}${p}`;
   };
   const quizUrl = sitePath(TX.psApartmany.quizPath);
-  const kontaktIndex = kreslene.findIndex((s) => s.id === 'kontakt');
+  const osa = useMemo(() => {
+    const out: ({ kind: 'sekce'; s: (typeof kreslene)[number] } | { kind: 'prani' })[] = [];
+    for (const s of kreslene) {
+      out.push({ kind: 'sekce', s });
+      if (s.id === 'wifi' && ukazPrani) out.push({ kind: 'prani' });
+    }
+    return out;
+  }, [kreslene, ukazPrani]);
+  const kontaktIndex = osa.findIndex((p) => p.kind === 'sekce' && p.s.id === 'kontakt');
 
   const renderTipsSection = (num: number) => (
     <li
@@ -659,13 +686,7 @@ export function Guide({
               nejpozdeji={okno?.nejpozdeji}
               zadostOdjezd={okno?.zadostOdjezd ?? null}
             />
-            {ukazPrani ? (
-              <PraniHosta
-                token={vstup?.cteni ? null : (vstup?.token ?? null)}
-                lang={lang}
-                cteni={Boolean(vstup?.cteni) || showDevBar}
-              />
-            ) : null}
+            {ukazPrani ? <PraniAlert token={praniToken} lang={lang} cteni={praniCteni} /> : null}
           </>
         ) : krokyHotove ? (
           <>
@@ -684,13 +705,7 @@ export function Guide({
                 else setLokalne(next);
               }}
             />
-            {ukazPrani ? (
-              <PraniHosta
-                token={vstup?.cteni ? null : (vstup?.token ?? null)}
-                lang={lang}
-                cteni={Boolean(vstup?.cteni) || showDevBar}
-              />
-            ) : null}
+            {ukazPrani ? <PraniAlert token={praniToken} lang={lang} cteni={praniCteni} /> : null}
           </>
         ) : (
           <>
@@ -709,32 +724,64 @@ export function Guide({
               }}
             />
             <StavApartmanu lang={lang} stav={okno?.stavApartmanu} />
-            {ukazPrani ? (
-              <PraniHosta
-                token={vstup?.cteni ? null : (vstup?.token ?? null)}
-                lang={lang}
-                cteni={Boolean(vstup?.cteni) || showDevBar}
-              />
-            ) : null}
+            {ukazPrani ? <PraniAlert token={praniToken} lang={lang} cteni={praniCteni} /> : null}
           </>
         )}
 
-        {kreslene.length ? (
+        {osa.length ? (
           <ol className="pv-flow pv-flow--axis" aria-label="Kroky průvodce">
-            {kreslene.flatMap((s, si) => {
+            {osa.flatMap((pol, oi) => {
+              const displayNum =
+                kontaktIndex >= 0 && oi >= kontaktIndex ? oi + 2 : oi + 1;
+              const tone = ((displayNum - 1) % 4) + 1;
+
+              if (pol.kind === 'prani') {
+                return [
+                  <li
+                    key="prani-hosta"
+                    id="pv-prani-hosta"
+                    className={`pv-flow__step pv-flow__step--prani pv-flow__step--${tone}`}
+                  >
+                    <div className="pv-flow__marker" aria-hidden="true">
+                      <span className="pv-flow__num">✦</span>
+                    </div>
+                    <div className="pv-flow__card pv-flow__card--prani">
+                      <SbalenaSekce
+                        id="prani-hosta"
+                        rezervace={rezervace}
+                        vychoziOtevreno={praniOtevrit}
+                        nadpis={`${displayNum}. ${textPrani(PRANI_NADPIS, lang)}`}
+                        veta={textPrani(PRANI_VETA_SBALENA, lang)}
+                        expandLabel={tt(TX.ui.expandSection)}
+                        collapseLabel={tt(TX.ui.collapseSection)}
+                      >
+                        <PraniHosta
+                          token={praniToken}
+                          lang={lang}
+                          cteni={praniCteni}
+                          onChceOtevrit={setPraniOtevrit}
+                        />
+                      </SbalenaSekce>
+                    </div>
+                  </li>,
+                ];
+              }
+
+              const s = pol.s;
               const insertBefore =
                 kontaktIndex >= 0 && s.id === 'kontakt'
                   ? [renderTipsSection(kontaktIndex + 1)]
                   : [];
-              const displayNum =
-                kontaktIndex >= 0 && si >= kontaktIndex ? si + 2 : si + 1;
               const insertAfter =
                 kontaktIndex >= 0 && s.id === 'kontakt'
                   ? [renderPsSection(displayNum + 1)]
                   : [];
               const kroky = visibleKroky(s, apt);
-              const tone = ((displayNum - 1) % 4) + 1;
-              const vychoziOtevreno = !vseSbalene && si === 0;
+              const vychoziOtevreno = !vseSbalene && oi === 0;
+              const nadpisSekce =
+                s.id === 'prijezd-k-domu'
+                  ? nadpisKDomuAVstup(lang, prijezdSekci)
+                  : sectionNavLabel(s, lang);
               const sectionLi = (
                 <li
                   key={s.id}
@@ -749,19 +796,10 @@ export function Guide({
                       id={s.id}
                       rezervace={rezervace}
                       vychoziOtevreno={vychoziOtevreno}
-                      nadpis={`${displayNum}. ${sectionNavLabel(s, lang)}`}
+                      nadpis={`${displayNum}. ${nadpisSekce}`}
+                      aliasIds={s.id === 'prijezd-k-domu' ? ALIAS_K_DOMU : undefined}
                       expandLabel={tt(TX.ui.expandSection)}
                       collapseLabel={tt(TX.ui.collapseSection)}
-                      veta={
-                        s.id === 'wifi' && popisky['nad_nadpisem']
-                          ? tt(popisky['nad_nadpisem'])
-                          : (() => {
-                              const prvni = kroky[0]?.text ? tt(kroky[0].text) : '';
-                              const tecka = prvni.indexOf('.');
-                              if (tecka > 0 && tecka < 180) return prvni.slice(0, tecka + 1);
-                              return prvni.slice(0, 140);
-                            })()
-                      }
                     >
                     {s.id === 'zadost-o-parkovani' ? (
                       <>
@@ -790,9 +828,36 @@ export function Guide({
                       <>
                         <div className="pv-flow__card-head">
                           <h2 className="pv-flow__title">
-                            {displayNum}. {sectionNavLabel(s, lang)}
+                            {displayNum}. {nadpisSekce}
                           </h2>
                         </div>
+                        {prijezdSekci === 'auto' ? (
+                          <>
+                            <a
+                              className="pv-navcta"
+                              href={WALK_BACK_MAPY_URL}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
+                              <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
+                              <span className="pv-navcta__hint">
+                                {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes}{' '}
+                                {tt(TX.ui.minWalk)}. {tt(TX.ui.openMapy)}
+                              </span>
+                            </a>
+                            <p className="pv-navcta__alt">
+                              <a
+                                className="pv-link"
+                                href={WALK_BACK_GOOGLE_URL}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {tt(TX.ui.orGoogle)}
+                              </a>
+                            </p>
+                          </>
+                        ) : null}
                         {prijezdSekci === 'pesky' ? (
                           <>
                             <a
@@ -897,36 +962,6 @@ export function Guide({
                             );
                           })}
                         </div>
-                      </>
-                    ) : s.id === 'pesky-parkoviste-dum' ? (
-                      <>
-                        <div className="pv-flow__card-head">
-                          <h2 className="pv-flow__title">
-                            {displayNum}. {sectionNavLabel(s, lang)}
-                          </h2>
-                        </div>
-                        <a
-                          className="pv-navcta"
-                          href={WALK_BACK_MAPY_URL}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
-                          <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
-                          <span className="pv-navcta__hint">
-                            {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes} {tt(TX.ui.minWalk)}. {tt(TX.ui.openMapy)}
-                          </span>
-                        </a>
-                        <p className="pv-navcta__alt">
-                          <a
-                            className="pv-link"
-                            href={WALK_BACK_GOOGLE_URL}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {tt(TX.ui.orGoogle)}
-                          </a>
-                        </p>
                       </>
                     ) : s.id === 'parkovani' ? (
                       <>
@@ -1227,6 +1262,9 @@ export function Guide({
                     )}
                     </SbalenaSekce>
                   </div>
+                  {s.id === 'prijezd-k-domu' ? (
+                    <span id="pv-pesky-parkoviste-dum" className="pv-kotva-alias" aria-hidden="true" />
+                  ) : null}
                 </li>
               );
               return [...insertBefore, sectionLi, ...insertAfter];

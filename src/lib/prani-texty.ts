@@ -6,14 +6,43 @@ export const PRANI_NADPIS: T = {
   cs: 'Prostor pro vaše přání',
   en: 'A space for your wishes',
   de: 'Raum für Ihre Wünsche',
-  pl: 'Przestrzeń na Wasze życzenia',
+  pl: 'Miejsce na Wasze życzenia',
   uk: 'Простір для ваших побажань',
   'zh-Hant': '您的心願空間',
-  sv: 'Utrymme för era önskemål',
+  sv: 'Plats för era önskemål',
   es: 'Espacio para sus deseos',
-  fr: 'Espace pour vos souhaits',
-  it: 'Spazio per i vostri desideri',
-  hu: 'Hely a kívánságainak',
+  fr: 'Un espace pour vos souhaits',
+  it: 'Uno spazio per i vostri desideri',
+  hu: 'Hely az önök kívánságainak',
+};
+
+/** Věta pod nadpisem sbalené dlaždice (Prompt 64). */
+export const PRANI_VETA_SBALENA: T = {
+  cs: 'Chybí vám něco? Napište nám přímo z průvodce.',
+  en: 'Missing something? Write to us right from the guide.',
+  de: 'Fehlt Ihnen etwas? Schreiben Sie uns direkt aus dem Führer.',
+  pl: 'Czegoś Wam brakuje? Napiszcie do nas prosto z przewodnika.',
+  uk: 'Вам чогось бракує? Напишіть нам прямо з путівника.',
+  'zh-Hant': '缺少什麼嗎？直接在指南中寫信給我們。',
+  sv: 'Saknar ni något? Skriv till oss direkt från guiden.',
+  es: '¿Les falta algo? Escríbannos directamente desde la guía.',
+  fr: 'Il vous manque quelque chose ? Écrivez-nous directement depuis le guide.',
+  it: 'Vi manca qualcosa? Scriveteci direttamente dalla guida.',
+  hu: 'Hiányzik valami? Írjanak nekünk közvetlenül az útmutatóból.',
+};
+
+export const PRANI_NAHLED: T = {
+  cs: 'Náhled, píše jen host',
+  en: 'Preview, only the guest writes',
+  de: 'Vorschau, nur der Gast schreibt',
+  pl: 'Podgląd, pisze tylko gość',
+  uk: 'Перегляд, пише лише гість',
+  'zh-Hant': '預覽，僅房客可寫',
+  sv: 'Förhandsvisning, bara gästen skriver',
+  es: 'Vista previa, solo escribe el huésped',
+  fr: 'Aperçu, seul l’hôte écrit',
+  it: 'Anteprima, scrive solo l’ospite',
+  hu: 'Előnézet, csak a vendég ír',
 };
 
 export const PRANI_UVOD: T = {
@@ -101,17 +130,17 @@ export const PRANI_ODESLANO: T = {
 };
 
 export const PRANI_VYRIZENO: T = {
-  cs: 'Vyřízeno',
-  en: 'Done',
-  de: 'Erledigt',
-  pl: 'Załatwione',
-  uk: 'Вирішено',
-  'zh-Hant': '已處理',
-  sv: 'Klart',
-  es: 'Resuelto',
-  fr: 'Traité',
-  it: 'Risolto',
-  hu: 'Elintézve',
+  cs: 'Vyřízeno ✓',
+  en: 'Done ✓',
+  de: 'Erledigt ✓',
+  pl: 'Załatwione ✓',
+  uk: 'Вирішено ✓',
+  'zh-Hant': '已處理 ✓',
+  sv: 'Klart ✓',
+  es: 'Resuelto ✓',
+  fr: 'Traité ✓',
+  it: 'Risolto ✓',
+  hu: 'Elintézve ✓',
 };
 
 export const PRANI_NOVA_ODPOVED: T = {

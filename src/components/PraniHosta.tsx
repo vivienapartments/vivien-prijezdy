@@ -6,7 +6,7 @@ import {
   PRANI_CHYBA,
   PRANI_DOSTUPNOST,
   PRANI_LIMIT,
-  PRANI_NADPIS,
+  PRANI_NAHLED,
   PRANI_NOVA_ODPOVED,
   PRANI_ODESILAM,
   PRANI_ODESLANO,
@@ -29,6 +29,8 @@ type Props = {
   lang: GuideLang;
   /** Náhled majitele. Nic se neodesílá. */
   cteni?: boolean;
+  /** Nová odpověď / otevřené vlákno → rodič rozbalí dlaždici. */
+  onChceOtevrit?: (otevrit: boolean) => void;
 };
 
 type Stav = {
@@ -60,7 +62,77 @@ function casKratky(iso: string): string {
   }
 }
 
-export function PraniHosta({ token, lang, cteni = false }: Props) {
+function otevriDlazdiciPrani() {
+  try {
+    window.location.hash = 'pv-prani-hosta';
+  } catch {
+    document.getElementById('pv-prani-hosta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+/** Rámeček nahoře: „Máme pro vás odpověď“. */
+export function PraniAlert({ token, lang, cteni = false }: Omit<Props, 'onChceOtevrit'>) {
+  const tt = (tab: Parameters<typeof textPrani>[0]) => textPrani(tab, lang);
+  const [ceka, setCeka] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!token || cteni) return;
+    let zrus = false;
+    async function nacti() {
+      try {
+        const res = await fetch('/api/pruvodce/prani', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, akce: 'nacti' }),
+        });
+        const data = (await res.json().catch(() => null)) as Stav & { ok?: boolean } | null;
+        if (zrus || !res.ok || !data?.ok) return;
+        const ids: string[] = [];
+        for (const v of data.vlakna || []) {
+          let videl = false;
+          try {
+            videl = Boolean(localStorage.getItem(klicVidel(token!, v.id)));
+          } catch {
+            videl = false;
+          }
+          if (videl) continue;
+          if ([...v.zpravy].reverse().find((z) => z.autor === 'vivien')) ids.push(v.id);
+        }
+        setCeka(ids);
+      } catch {
+        /* síť */
+      }
+    }
+    void nacti();
+    return () => {
+      zrus = true;
+    };
+  }, [token, cteni]);
+
+  if (!ceka.length) return null;
+  return (
+    <aside className="pv-prani-alert" lang={lang}>
+      <p className="pv-prani-alert__nadpis">{tt(PRANI_RAMECEK_ODPOVED)}</p>
+      <button
+        type="button"
+        className="pv-prani-alert__btn"
+        onClick={() => {
+          try {
+            localStorage.setItem(klicVidel(token!, ceka[0]), '1');
+          } catch {
+            /* paměť */
+          }
+          otevriDlazdiciPrani();
+        }}
+      >
+        {tt(PRANI_ZOBRAZIT)}
+      </button>
+    </aside>
+  );
+}
+
+/** Obsah dlaždice přání (v ose za WiFi). */
+export function PraniHosta({ token, lang, cteni = false, onChceOtevrit }: Props) {
   const tt = (tab: Parameters<typeof textPrani>[0]) => textPrani(tab, lang);
   const [stav, setStav] = useState<Stav | null>(null);
   const [text, setText] = useState('');
@@ -72,7 +144,7 @@ export function PraniHosta({ token, lang, cteni = false }: Props) {
   const [videne, setVidene] = useState<Record<string, boolean>>({});
 
   const nacti = useCallback(async () => {
-    if (!token || cteni) return;
+    if (!token) return;
     try {
       const res = await fetch('/api/pruvodce/prani', {
         method: 'POST',
@@ -81,7 +153,10 @@ export function PraniHosta({ token, lang, cteni = false }: Props) {
       });
       const data = (await res.json().catch(() => null)) as Stav & { ok?: boolean } | null;
       if (!res.ok || !data?.ok) return;
-      setStav({ vlakna: data.vlakna || [], muzePsat: Boolean(data.muzePsat) });
+      setStav({
+        vlakna: data.vlakna || [],
+        muzePsat: cteni ? false : Boolean(data.muzePsat),
+      });
     } catch {
       /* síť */
     }
@@ -120,7 +195,7 @@ export function PraniHosta({ token, lang, cteni = false }: Props) {
   }, [token, cteni, nacti]);
 
   function oznacVidel(vlaknoId: string) {
-    if (!token) return;
+    if (!token || cteni) return;
     try {
       localStorage.setItem(klicVidel(token, vlaknoId), '1');
     } catch {
@@ -130,12 +205,19 @@ export function PraniHosta({ token, lang, cteni = false }: Props) {
   }
 
   function maNovouOdpoved(v: VlaknoProHosta): boolean {
+    if (cteni) return false;
     if (videne[v.id]) return false;
     const posledni = [...v.zpravy].reverse().find((z) => z.autor === 'vivien');
     return Boolean(posledni);
   }
 
   const cekaOdpoved = (stav?.vlakna || []).filter(maNovouOdpoved);
+  const otevreneVlakno = (stav?.vlakna || []).some((v) => v.stav !== 'vyrizeno');
+
+  useEffect(() => {
+    if (!onChceOtevrit || !stav) return;
+    onChceOtevrit(cekaOdpoved.length > 0 || otevreneVlakno);
+  }, [onChceOtevrit, stav, cekaOdpoved.length, otevreneVlakno]);
 
   async function posli(akce: 'napis' | 'uprav' | 'smaz', telo: Record<string, string>) {
     if (!token || cteni) return false;
@@ -164,7 +246,7 @@ export function PraniHosta({ token, lang, cteni = false }: Props) {
 
   async function odesliNove() {
     const t = text.trim();
-    if (!t || odesilam) return;
+    if (!t || odesilam || cteni) return;
     const id = noveId();
     const ok = await posli('napis', { id, text: t });
     if (ok) {
@@ -175,14 +257,14 @@ export function PraniHosta({ token, lang, cteni = false }: Props) {
 
   async function odesliOdpoved(vlakno: string) {
     const t = odpovedText.trim();
-    if (!t || odesilam) return;
+    if (!t || odesilam || cteni) return;
     const ok = await posli('napis', { id: noveId(), vlakno, text: t });
     if (ok) setOdpovedText('');
   }
 
   async function ulozUpravu(id: string) {
     const t = text.trim();
-    if (!t || odesilam) return;
+    if (!t || odesilam || cteni) return;
     const ok = await posli('uprav', { id, text: t });
     if (ok) {
       setUpravaId(null);
@@ -190,158 +272,152 @@ export function PraniHosta({ token, lang, cteni = false }: Props) {
     }
   }
 
-  if (cteni) {
+  if (!token) {
+    if (!cteni) return null;
     return (
-      <aside className="pv-prani" lang={lang} id="pv-prani">
-        <h2 className="pv-prani__nadpis">{tt(PRANI_NADPIS)}</h2>
+      <div className="pv-prani pv-prani--v-ose pv-prani--cteni" lang={lang}>
         <p className="pv-prani__uvod">{tt(PRANI_UVOD)}</p>
         <p className="pv-prani__dost">{tt(PRANI_DOSTUPNOST)}</p>
-        <p className="pv-prani__muted">Náhled. Host tady píše po předání.</p>
-      </aside>
+        <p className="pv-prani__muted">{tt(PRANI_NAHLED)}</p>
+        <div className="pv-prani__form">
+          <label>
+            {tt(PRANI_POLE)}
+            <textarea value="" maxLength={1000} rows={4} disabled />
+          </label>
+          <button type="button" disabled>
+            {tt(PRANI_ODESLAT)}
+          </button>
+        </div>
+      </div>
     );
   }
 
-  if (!token) return null;
+  const muzeForm = Boolean(stav?.muzePsat) && !cteni && !upravaId;
 
   return (
-    <>
-      {cekaOdpoved.length ? (
-        <aside className="pv-prani-alert" lang={lang}>
-          <p className="pv-prani-alert__nadpis">{tt(PRANI_RAMECEK_ODPOVED)}</p>
-          <button
-            type="button"
-            className="pv-prani-alert__btn"
-            onClick={() => {
-              const id = cekaOdpoved[0].id;
-              oznacVidel(id);
-              setOtevrene(id);
-              document.getElementById('pv-prani')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }}
-          >
-            {tt(PRANI_ZOBRAZIT)}
-          </button>
-        </aside>
-      ) : null}
+    <div className={`pv-prani pv-prani--v-ose${cteni ? ' pv-prani--cteni' : ''}`} lang={lang}>
+      <p className="pv-prani__uvod">{tt(PRANI_UVOD)}</p>
+      <p className="pv-prani__dost">{tt(PRANI_DOSTUPNOST)}</p>
+      {cteni ? <p className="pv-prani__muted">{tt(PRANI_NAHLED)}</p> : null}
 
-      <aside className="pv-prani" lang={lang} id="pv-prani">
-        <h2 className="pv-prani__nadpis">
-          {tt(PRANI_NADPIS)}
-          {cekaOdpoved.length ? <span className="pv-prani__tecka" aria-hidden="true" /> : null}
-        </h2>
-        <p className="pv-prani__uvod">{tt(PRANI_UVOD)}</p>
-        <p className="pv-prani__dost">{tt(PRANI_DOSTUPNOST)}</p>
-
-        {(stav?.vlakna || []).map((v) => {
-          const nova = maNovouOdpoved(v);
-          const open = otevrene === v.id;
-          return (
-            <div key={v.id} className="pv-prani__vlakno" id={`pv-prani-${v.id}`}>
-              <button
-                type="button"
-                className="pv-prani__vlakno-hlava"
-                onClick={() => {
-                  setOtevrene(open ? null : v.id);
-                  if (!open) oznacVidel(v.id);
-                }}
-              >
-                <span className="pv-prani__vlakno-nadpis">
-                  {(v.zpravy.find((z) => z.autor === 'host')?.text || '').slice(0, 80)}
-                </span>
-                <span className="pv-prani__stav">
-                  {nova ? tt(PRANI_NOVA_ODPOVED) : v.stav === 'vyrizeno' ? tt(PRANI_VYRIZENO) : tt(PRANI_ODESLANO)}
-                </span>
-              </button>
-              {open ? (
-                <div className="pv-prani__konverzace">
-                  {v.zpravy.map((z) => (
-                    <div key={z.id} className={`pv-prani__bublina pv-prani__bublina--${z.autor}`}>
-                      <div className="pv-prani__meta">
-                        {z.autor === 'vivien' ? `${z.jmeno || 'VIVIEN'} · VIVIEN` : 'Vy'}
-                        {z.cas ? ` · ${casKratky(z.cas)}` : ''}
-                        {z.upraveno ? ' · upraveno' : ''}
-                      </div>
-                      <p>{z.text}</p>
-                      {z.muzeUpravit && stav?.muzePsat ? (
-                        <div className="pv-prani__akce">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setUpravaId(z.id);
-                              setText(z.text);
-                            }}
-                          >
-                            {tt(PRANI_UPRAVIT)}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => void posli('smaz', { id: z.id })}
-                          >
-                            {tt(PRANI_SMAZAT)}
-                          </button>
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                  {upravaId ? (
-                    <div className="pv-prani__form">
-                      <label>
-                        {tt(PRANI_POLE)}
-                        <textarea
-                          value={text}
-                          maxLength={1000}
-                          rows={3}
-                          onChange={(e) => setText(e.target.value)}
-                        />
-                      </label>
-                      <button type="button" disabled={odesilam || !text.trim()} onClick={() => void ulozUpravu(upravaId)}>
-                        {odesilam ? tt(PRANI_ODESILAM) : tt(PRANI_ODESLAT)}
-                      </button>
-                      <button type="button" onClick={() => { setUpravaId(null); setText(''); }}>
-                        Zrušit
-                      </button>
-                    </div>
-                  ) : stav?.muzePsat ? (
-                    <div className="pv-prani__form">
-                      <label>
-                        {tt(PRANI_ODPOVEDET)}
-                        <textarea
-                          value={odpovedText}
-                          maxLength={1000}
-                          rows={3}
-                          onChange={(e) => setOdpovedText(e.target.value)}
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        disabled={odesilam || !odpovedText.trim()}
-                        onClick={() => void odesliOdpoved(v.id)}
-                      >
-                        {odesilam ? tt(PRANI_ODESILAM) : tt(PRANI_ODESLAT)}
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-
-        {stav && !stav.muzePsat ? <p className="pv-prani__okno">{tt(PRANI_OKNO_ZAVRENO)}</p> : null}
-
-        {stav?.muzePsat && !upravaId ? (
-          <div className="pv-prani__form">
-            <label>
-              {tt(PRANI_POLE)}
-              <textarea value={text} maxLength={1000} rows={4} onChange={(e) => setText(e.target.value)} />
-            </label>
-            <button type="button" disabled={odesilam || !text.trim()} onClick={() => void odesliNove()}>
-              {odesilam ? tt(PRANI_ODESILAM) : tt(PRANI_ODESLAT)}
+      {(stav?.vlakna || []).map((v) => {
+        const nova = maNovouOdpoved(v);
+        const open = otevrene === v.id || cteni;
+        return (
+          <div key={v.id} className="pv-prani__vlakno" id={`pv-prani-${v.id}`}>
+            <button
+              type="button"
+              className="pv-prani__vlakno-hlava"
+              onClick={() => {
+                if (cteni) return;
+                setOtevrene(open ? null : v.id);
+                if (!open) oznacVidel(v.id);
+              }}
+            >
+              <span className="pv-prani__vlakno-nadpis">
+                {(v.zpravy.find((z) => z.autor === 'host')?.text || '').slice(0, 80)}
+              </span>
+              <span className="pv-prani__stav">
+                {nova ? tt(PRANI_NOVA_ODPOVED) : v.stav === 'vyrizeno' ? tt(PRANI_VYRIZENO) : tt(PRANI_ODESLANO)}
+              </span>
             </button>
+            {open ? (
+              <div className="pv-prani__konverzace">
+                {v.zpravy.map((z) => (
+                  <div key={z.id} className={`pv-prani__bublina pv-prani__bublina--${z.autor}`}>
+                    <div className="pv-prani__meta">
+                      {z.autor === 'vivien' ? `${z.jmeno || 'VIVIEN'} · VIVIEN` : 'Vy'}
+                      {z.cas ? ` · ${casKratky(z.cas)}` : ''}
+                      {z.upraveno ? ' · upraveno' : ''}
+                    </div>
+                    <p>{z.text}</p>
+                    {z.muzeUpravit && stav?.muzePsat && !cteni ? (
+                      <div className="pv-prani__akce">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUpravaId(z.id);
+                            setText(z.text);
+                          }}
+                        >
+                          {tt(PRANI_UPRAVIT)}
+                        </button>
+                        <button type="button" onClick={() => void posli('smaz', { id: z.id })}>
+                          {tt(PRANI_SMAZAT)}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+                {upravaId && !cteni ? (
+                  <div className="pv-prani__form">
+                    <label>
+                      {tt(PRANI_POLE)}
+                      <textarea
+                        value={text}
+                        maxLength={1000}
+                        rows={3}
+                        onChange={(e) => setText(e.target.value)}
+                      />
+                    </label>
+                    <button type="button" disabled={odesilam || !text.trim()} onClick={() => void ulozUpravu(upravaId)}>
+                      {odesilam ? tt(PRANI_ODESILAM) : tt(PRANI_ODESLAT)}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUpravaId(null);
+                        setText('');
+                      }}
+                    >
+                      Zrušit
+                    </button>
+                  </div>
+                ) : stav?.muzePsat && !cteni ? (
+                  <div className="pv-prani__form">
+                    <label>
+                      {tt(PRANI_ODPOVEDET)}
+                      <textarea
+                        value={odpovedText}
+                        maxLength={1000}
+                        rows={3}
+                        onChange={(e) => setOdpovedText(e.target.value)}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={odesilam || !odpovedText.trim()}
+                      onClick={() => void odesliOdpoved(v.id)}
+                    >
+                      {odesilam ? tt(PRANI_ODESILAM) : tt(PRANI_ODESLAT)}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        );
+      })}
 
-        {hlaska ? <p className="pv-prani__chyba">{hlaska}</p> : null}
-      </aside>
-    </>
+      {stav && !stav.muzePsat && !cteni ? <p className="pv-prani__okno">{tt(PRANI_OKNO_ZAVRENO)}</p> : null}
+
+      <div className="pv-prani__form">
+        <label>
+          {tt(PRANI_POLE)}
+          <textarea
+            value={muzeForm ? text : cteni || !upravaId ? text : ''}
+            maxLength={1000}
+            rows={4}
+            disabled={!muzeForm}
+            onChange={(e) => setText(e.target.value)}
+          />
+        </label>
+        <button type="button" disabled={!muzeForm || odesilam || !text.trim()} onClick={() => void odesliNove()}>
+          {odesilam ? tt(PRANI_ODESILAM) : tt(PRANI_ODESLAT)}
+        </button>
+      </div>
+
+      {hlaska ? <p className="pv-prani__chyba">{hlaska}</p> : null}
+    </div>
   );
 }

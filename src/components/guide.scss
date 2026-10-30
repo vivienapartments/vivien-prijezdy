@@ -207,7 +207,7 @@
 
 .pv-predani__text {
   margin: 0;
-  text-align: justify;
+  text-align: left;
   hyphens: auto;
   -webkit-hyphens: auto;
   overflow-wrap: break-word;
@@ -237,7 +237,7 @@
 }
 
 .pv-cas__text {
-  text-align: justify;
+  text-align: left;
   hyphens: auto;
   -webkit-hyphens: auto;
   overflow-wrap: break-word;
@@ -540,8 +540,8 @@
 .pv p,
 .pv li,
 .pv-hub__choice-text {
-  text-align: justify;
-  text-justify: inter-word;
+  text-align: left;
+  text-justify: auto;
   hyphens: auto;
   -webkit-hyphens: auto;
 }
@@ -1260,7 +1260,7 @@ a.pv-phone.pv-phone--zari {
 
   p {
     margin: 0 0 0.45rem;
-    text-align: justify;
+    text-align: left;
     hyphens: auto;
     -webkit-hyphens: auto;
   }
@@ -1492,13 +1492,34 @@ a.pv-phone.pv-phone--zari {
   margin-top: 0.05rem;
   padding: 0.28rem 0.7rem;
   border: 1.5px solid #c9a84c;
-  border-radius: 999px;
+  border-radius: 6px;
   background: rgba(201, 168, 76, 0.12);
   color: #c9a84c;
   font-size: 0.82rem;
   font-weight: 650;
   line-height: 1.2;
   white-space: nowrap;
+}
+
+.pv-kotva-alias {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pv-flow__step--prani .pv-flow__num {
+  background: rgba(201, 168, 76, 0.22);
+  border-color: #c9a84c;
+  color: #c9a84c;
+  font-size: 1rem;
+}
+
+.pv-flow__card--prani {
+  border-color: rgba(201, 168, 76, 0.65);
+  background: color-mix(in srgb, #c9a84c 8%, transparent);
+  box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.2);
 }
 
 .pv-sbal__btn-close {
@@ -1540,7 +1561,7 @@ a.pv-phone.pv-phone--zari {
 
   p {
     margin: 0;
-    text-align: justify;
+    text-align: left;
     hyphens: auto;
   }
 }
@@ -1710,9 +1731,9 @@ a.pv-phone.pv-phone--zari {
   margin-left: var(--pv-axis-inset);
   padding: 0.75rem 1rem;
   border-radius: 14px;
-  border: 1px solid #c9a84c;
-  background: #f4ead7;
-  color: #1c1712;
+  border: 1px solid rgba(201, 168, 76, 0.55);
+  background: color-mix(in srgb, #c9a84c 12%, transparent);
+  color: var(--color-cream, #f5efe3);
 }
 
 .pv-prani-alert__nadpis {
@@ -1724,7 +1745,7 @@ a.pv-phone.pv-phone--zari {
   display: inline-block;
   padding: 0.4rem 0.9rem;
   border: 0;
-  border-radius: 999px;
+  border-radius: 6px;
   background: #c9a84c;
   color: #1c1712;
   font-weight: 700;
@@ -1732,13 +1753,15 @@ a.pv-phone.pv-phone--zari {
 }
 
 .pv-prani {
-  margin: 0 0 1rem;
-  margin-left: var(--pv-axis-inset);
-  padding: 0.75rem 1rem 0.9rem;
-  border-radius: 14px;
-  border: 1px solid #cbb896;
-  background: #f7f1e6;
-  color: #1c1712;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.pv-prani--v-ose {
+  margin: 0.15rem 0 0;
 }
 
 .pv-prani__nadpis {
@@ -1763,7 +1786,7 @@ a.pv-phone.pv-phone--zari {
 .pv-prani__chyba,
 .pv-prani__muted {
   margin: 0 0 0.55rem;
-  text-align: justify;
+  text-align: left;
   hyphens: auto;
 }
 
@@ -1773,12 +1796,17 @@ a.pv-phone.pv-phone--zari {
 }
 
 .pv-prani__chyba {
-  color: #8a2f2f;
+  color: #e07a7a;
+}
+
+.pv-prani__muted {
+  font-size: 0.85rem;
+  opacity: 0.75;
 }
 
 .pv-prani__vlakno {
   margin: 0.55rem 0;
-  border-top: 1px solid #d8c9a8;
+  border-top: 1px solid rgba(201, 168, 76, 0.28);
   padding-top: 0.45rem;
 }
 
@@ -1804,21 +1832,32 @@ a.pv-phone.pv-phone--zari {
   flex: 0 0 auto;
   font-size: 0.85rem;
   font-weight: 700;
-  color: #6a5428;
+  color: #c9a84c;
+}
+
+.pv-prani__konverzace {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
 }
 
 .pv-prani__bublina {
   margin: 0.45rem 0;
   padding: 0.5rem 0.65rem;
   border-radius: 10px;
+  max-width: 92%;
 }
 
 .pv-prani__bublina--host {
-  background: #ebe3d4;
+  margin-left: auto;
+  background: color-mix(in srgb, #c9a84c 22%, transparent);
+  border: 1px solid rgba(201, 168, 76, 0.45);
 }
 
 .pv-prani__bublina--vivien {
-  background: #e7f0e4;
+  margin-right: auto;
+  background: rgba(20, 18, 16, 0.55);
+  border: 1px solid rgba(201, 168, 76, 0.4);
 }
 
 .pv-prani__meta {
@@ -1829,7 +1868,7 @@ a.pv-phone.pv-phone--zari {
 
 .pv-prani__bublina p {
   margin: 0;
-  text-align: justify;
+  text-align: left;
   hyphens: auto;
 }
 
@@ -1841,12 +1880,19 @@ a.pv-phone.pv-phone--zari {
 
 .pv-prani__akce button,
 .pv-prani__form button {
-  border: 1px solid #cbb896;
-  background: #fff;
-  border-radius: 999px;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  background: rgba(201, 168, 76, 0.12);
+  color: inherit;
+  border-radius: 6px;
   padding: 0.35rem 0.75rem;
   font-weight: 650;
   cursor: pointer;
+}
+
+.pv-prani__form button:disabled,
+.pv-prani__form textarea:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .pv-prani__form {
@@ -1863,11 +1909,13 @@ a.pv-phone.pv-phone--zari {
 
 .pv-prani__form textarea {
   width: 100%;
-  border: 1px solid #cbb896;
+  border: 1px solid rgba(201, 168, 76, 0.4);
   border-radius: 10px;
   padding: 0.55rem 0.65rem;
   font: inherit;
   resize: vertical;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
 }
 
 .pv-doklady {
@@ -1887,7 +1935,7 @@ a.pv-phone.pv-phone--zari {
 
 .pv-doklady__text {
   margin: 0;
-  text-align: justify;
+  text-align: left;
   hyphens: auto;
 }
 

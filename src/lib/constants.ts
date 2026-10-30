@@ -79,13 +79,11 @@ export const PARKING_ONLY_SECTIONS = new Set([
   'zadost-o-parkovani',
   'brana-parkoviste',
   'parkovani',
-  'pesky-parkoviste-dum',
 ]);
 
 export const AUTO_SECTION_ORDER = [
   'zadost-o-parkovani',
   'brana-parkoviste',
   'parkovani',
-  'pesky-parkoviste-dum',
   'prijezd-k-domu',
 ];

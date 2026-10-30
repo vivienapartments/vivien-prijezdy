@@ -22,8 +22,12 @@ export function aptRecord(apt: AptId): AptRecord {
 
 export function visibleSekce(apt: AptId, prijezd: Prijezd | null): Sekce[] {
   if (!prijezd) return [];
+  // pesky-parkoviste-dum je sloučené do prijezd-k-domu (Prompt 64).
   const list = sekceAll.filter(
-    (s) => visibleItem(s, apt) && !(prijezd === 'pesky' && PARKING_ONLY_SECTIONS.has(s.id)),
+    (s) =>
+      s.id !== 'pesky-parkoviste-dum' &&
+      visibleItem(s, apt) &&
+      !(prijezd === 'pesky' && PARKING_ONLY_SECTIONS.has(s.id)),
   );
   if (prijezd !== 'auto') return list;
   return [...list].sort((a, b) => {
@@ -33,6 +37,12 @@ export function visibleSekce(apt: AptId, prijezd: Prijezd | null): Sekce[] {
     const bv = bi === -1 ? 100 + list.findIndex((x) => x.id === b.id) : bi;
     return av - bv;
   });
+}
+
+/** Nadpis spojené dlaždice K domu + vstup (auto vs pěšky). */
+export function nadpisKDomuAVstup(lang: GuideLang, prijezd: Prijezd | null): string {
+  const klic = prijezd === 'pesky' ? 'k-domu-a-vstup-pesky' : 'k-domu-a-vstup';
+  return t(SECTION_NAV[klic], lang);
 }
 
 export function visibleKroky(s: Sekce, apt: AptId) {

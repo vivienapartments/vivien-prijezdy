@@ -171,8 +171,11 @@ describe('průvodce se otevře až po údajích', () => {
     // Prompt 61: každá část je ve details; autem je Brána výchozí open.
     expect(cast('pv-brana-parkoviste')).toMatch(/pv-flow__card"><details class="pv-sbal" open/);
     expect(cast('pv-parkovani')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
-    expect(cast('pv-pesky-parkoviste-dum')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
+    // Prompt 64: K domu + Dům spojené; stará kotva zůstává jako alias.
+    expect(text).toContain('id="pv-pesky-parkoviste-dum"');
     expect(cast('pv-prijezd-k-domu')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
+    expect(cast('pv-prijezd-k-domu')).toContain('routeType=foot_fast');
+    expect(cast('pv-prijezd-k-domu')).toContain('fasada');
     expect(cast('pv-prijezd-k-domu')).not.toContain('mapy.com/fnc/v1/showmap');
     expect(text).toContain('Rozbalit');
   });
