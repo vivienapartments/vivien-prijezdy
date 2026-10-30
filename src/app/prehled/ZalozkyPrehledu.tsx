@@ -21,12 +21,12 @@ const JAKY: { id: JakPlatby; text: string }[] = [
   { id: 'cena', text: 'v ceně rezervace' },
 ];
 
-const FILTRY: { id: FiltrHledani; text: string }[] = [
-  { id: 'dnes', text: 'Dnes' },
-  { id: 'zitra', text: 'Zítra' },
-  { id: 'tyden', text: 'Tento týden' },
-  { id: 'minule', text: 'Minulé' },
-  { id: 'dluh', text: 'S nedoplatkem' },
+const FILTRY: { id: FiltrHledani; text: string; kratke: string }[] = [
+  { id: 'dnes', text: 'Dnes', kratke: 'Dnes' },
+  { id: 'zitra', text: 'Zítra', kratke: 'Zítra' },
+  { id: 'tyden', text: 'Tento týden', kratke: 'Týden' },
+  { id: 'minule', text: 'Minulé', kratke: 'Minulé' },
+  { id: 'dluh', text: 'S nedoplatkem', kratke: 'Dluh' },
 ];
 
 function denKratce(ymd: string | null): string {
@@ -398,20 +398,21 @@ export function Hledani({
           placeholder="jméno, číslo, apartmán nebo datum"
         />
       </label>
-      <div className="ph-zalozky">
+      <div className="ph-hledat__filtry" role="group" aria-label="Rychlé filtry">
         {FILTRY.map((f) => (
-          <button key={f.id} type="button" className={filtr === f.id ? 'is-on' : undefined} onClick={() => setFiltr((n) => (n === f.id ? '' : f.id))}>
-            {f.text}
+          <button
+            key={f.id}
+            type="button"
+            className={filtr === f.id ? 'is-on' : undefined}
+            title={f.text}
+            aria-label={f.text}
+            onClick={() => setFiltr((n) => (n === f.id ? '' : f.id))}
+          >
+            <span className="ph-hledat__filtr-plne">{f.text}</span>
+            <span className="ph-hledat__filtr-kratke">{f.kratke}</span>
           </button>
         ))}
       </div>
-      {onNovaRezervace ? (
-        <p className="ph-dnesek__akce">
-          <button type="button" onClick={() => onNovaRezervace(null)}>
-            Nová rezervace – nový host
-          </button>
-        </p>
-      ) : null}
       {dotaz || filtr ? (
         nalezene.length ? (
           <ul>

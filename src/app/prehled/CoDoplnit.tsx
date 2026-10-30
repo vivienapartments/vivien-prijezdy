@@ -13,7 +13,7 @@ import {
   type PoctyStitkuDoplnit,
 } from '@/lib/co-doplnit';
 import type { PrehledRadek } from '@/lib/prehled';
-import { textVyzvyHosta } from '@/lib/pripominky-stupne';
+import { datumDalsiVyzvy, textVyzvyHosta } from '@/lib/pripominky-stupne';
 
 type Props = {
   radky: PrehledRadek[];
@@ -78,10 +78,18 @@ export function StitkyDoplnit14({
       {kusy.map((k) => {
         const klid = !k.akce && (k.id === 'bez_checkinu' || k.id === 'bez_pruvodce');
         const cls = [aktivni === k.id ? 'is-on' : '', k.akce ? 'is-akce' : ''].filter(Boolean).join(' ') || undefined;
+        const viditelne = klid ? `${k.text} ${k.n} ✓` : `${k.text} ${k.n}`;
+        const plne = klid ? `${k.text} ${k.n} · ✓ posláno` : `${k.text} ${k.n}`;
         return (
-          <button key={k.id} type="button" className={cls} onClick={() => onKlep(k.id)}>
-            {k.text} {k.n}
-            {klid ? ' · ✓ posláno' : ''}
+          <button
+            key={k.id}
+            type="button"
+            className={cls}
+            title={plne}
+            aria-label={plne}
+            onClick={() => onKlep(k.id)}
+          >
+            {viditelne}
           </button>
         );
       })}
@@ -158,43 +166,43 @@ export function CoDoplnit({
     >
       <summary className="ph-co-doplnit__souhrn">Co doplnit ({seznam.length})</summary>
       <div className="ph-co-doplnit__hlava ph-co-doplnit__hlava--akce">
-        <div className="ph-doplnit-stitky ph-doplnit-stitky--hlava" role="group" aria-label="Filtr">
-          <button
-            type="button"
-            className={filtr === 'vse' ? 'is-on' : undefined}
-            onClick={() => onFiltr('vse')}
-          >
-            Vše
-          </button>
-          {pocty.bez_checkinu ? (
-            <button
-              type="button"
-              className={filtr === 'bez_checkinu' ? 'is-on' : undefined}
-              onClick={() => onFiltr('bez_checkinu')}
+        {(() => {
+          const filtry = [
+            { id: 'vse' as const, plne: 'Vše', kratke: 'Vše', n: 0 },
+            ...(pocty.bez_checkinu
+              ? [{ id: 'bez_checkinu' as const, plne: `Bez check-inu ${pocty.bez_checkinu}`, kratke: `Check-in ${pocty.bez_checkinu}`, n: pocty.bez_checkinu }]
+              : []),
+            ...(pocty.bez_pruvodce
+              ? [{ id: 'bez_pruvodce' as const, plne: `Bez průvodce ${pocty.bez_pruvodce}`, kratke: `Průvodce ${pocty.bez_pruvodce}`, n: pocty.bez_pruvodce }]
+              : []),
+            ...(pocty.bez_telefonu
+              ? [{ id: 'bez_telefonu' as const, plne: `Bez telefonu ${pocty.bez_telefonu}`, kratke: `Telefon ${pocty.bez_telefonu}`, n: pocty.bez_telefonu }]
+              : []),
+          ];
+          return (
+            <div
+              className="ph-doplnit-stitky ph-doplnit-stitky--hlava"
+              data-n={filtry.length}
+              role="group"
+              aria-label="Filtr"
             >
-              Bez check-inu {pocty.bez_checkinu}
-            </button>
-          ) : null}
-          {pocty.bez_pruvodce ? (
-            <button
-              type="button"
-              className={filtr === 'bez_pruvodce' ? 'is-on' : undefined}
-              onClick={() => onFiltr('bez_pruvodce')}
-            >
-              Bez průvodce {pocty.bez_pruvodce}
-            </button>
-          ) : null}
-          {pocty.bez_telefonu ? (
-            <button
-              type="button"
-              className={filtr === 'bez_telefonu' ? 'is-on' : undefined}
-              onClick={() => onFiltr('bez_telefonu')}
-            >
-              Bez telefonu {pocty.bez_telefonu}
-            </button>
-          ) : null}
-        </div>
-        <OdkazyZeSchrankyTlacitko />
+              {filtry.map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  className={filtr === f.id ? 'is-on' : undefined}
+                  title={f.plne}
+                  aria-label={f.plne}
+                  onClick={() => onFiltr(f.id)}
+                >
+                  <span className="ph-doplnit__plne">{f.plne}</span>
+                  <span className="ph-doplnit__kratke">{f.kratke}</span>
+                </button>
+              ))}
+            </div>
+          );
+        })()}
+        {filtr === 'vse' || filtr === 'bez_checkinu' ? <OdkazyZeSchrankyTlacitko /> : null}
       </div>
       {hlaska ? <p className="ph-co-doplnit__ok">{hlaska}</p> : null}
 
@@ -222,9 +230,9 @@ export function CoDoplnit({
                       {prijezd} · {row.apartman || '—'} · {row.jmeno || row.rezervace} · {zdroj}
                     </span>
                     <span className="ph-co-doplnit__stitky">
-                      {stitky.map((s) => (
-                        <span key={s} className="ph-co-doplnit__stitek">
-                          {s}
+                      {stitky.map((s, i) => (
+                        <span key={`${s.text}-${i}`} className={s.akce ? 'ph-co-doplnit__stitek is-akce' : 'ph-co-doplnit__stitek'}>
+                          {s.text}
                         </span>
                       ))}
                     </span>
@@ -305,34 +313,56 @@ export function CoDoplnit({
   );
 }
 
+function textVyzvyStitek(
+  druh: 'checkin' | 'pruvodce',
+  row: PrehledRadek,
+  dnes: string,
+): { text: string; akce: boolean } {
+  const v = textVyzvyHosta(druh, { historie: row.historie, prijezd: row.prijezd, dnes });
+  if (v.naRade || v.kratky === 'bez výzvy' || v.kratky === 'Poslední výzva') {
+    return { text: v.kratky, akce: v.naRade };
+  }
+  const dalsi = datumDalsiVyzvy(druh, row.historie);
+  return { text: dalsi ? `${v.kratky} · další ${dalsi}` : v.kratky, akce: false };
+}
+
+function textOtevreniStitek(row: PrehledRadek): string {
+  const n = row.otevrenoPocet;
+  if (n == null || n <= 0) return 'neotevřel';
+  return `otevřel ${n}×`;
+}
+
 function stitkyRadku(
   row: PrehledRadek,
   filtr: FiltrDoplnit,
   dnes: string,
-): { stitky: string[]; naRade: boolean } {
+): { stitky: { text: string; akce: boolean }[]; naRade: boolean } {
   if (filtr === 'bez_checkinu') {
-    const v = textVyzvyHosta('checkin', { historie: row.historie, prijezd: row.prijezd, dnes });
-    return { stitky: ['check-in', v.kratky], naRade: v.naRade };
+    const v = textVyzvyStitek('checkin', row, dnes);
+    return { stitky: [{ text: 'check-in', akce: v.akce }, v], naRade: v.akce };
   }
   if (filtr === 'bez_pruvodce') {
-    const v = textVyzvyHosta('pruvodce', { historie: row.historie, prijezd: row.prijezd, dnes });
-    return { stitky: ['průvodce', v.kratky], naRade: v.naRade };
+    const v = textVyzvyStitek('pruvodce', row, dnes);
+    return {
+      stitky: [{ text: 'průvodce', akce: v.akce }, v, { text: textOtevreniStitek(row), akce: false }],
+      naRade: v.akce,
+    };
   }
-  if (filtr === 'bez_telefonu') return { stitky: ['telefon'], naRade: true };
-  const out: string[] = [];
+  if (filtr === 'bez_telefonu') return { stitky: [{ text: 'telefon', akce: true }], naRade: true };
+  const out: { text: string; akce: boolean }[] = [];
   let naRade = false;
   if (chybiCheckin(row)) {
-    const v = textVyzvyHosta('checkin', { historie: row.historie, prijezd: row.prijezd, dnes });
-    out.push('check-in', v.kratky);
-    if (v.naRade) naRade = true;
+    const v = textVyzvyStitek('checkin', row, dnes);
+    out.push({ text: 'check-in', akce: v.akce }, v);
+    if (v.akce) naRade = true;
   }
   if (chybiPruvodce(row)) {
-    const v = textVyzvyHosta('pruvodce', { historie: row.historie, prijezd: row.prijezd, dnes });
-    out.push('průvodce', v.kratky);
-    if (v.naRade) naRade = true;
+    const v = textVyzvyStitek('pruvodce', row, dnes);
+    out.push({ text: 'průvodce', akce: v.akce }, v, { text: textOtevreniStitek(row), akce: false });
+    if (v.akce) naRade = true;
   }
   if (chybiTelefon(row)) {
-    out.push('telefon');
+    out.push({ text: 'telefon', akce: true });
     naRade = true;
   }
   return { stitky: out, naRade };

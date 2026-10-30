@@ -114,6 +114,15 @@ function stitekDneKarty(prijezd: string | null, dnesDen: string): string {
   return `${Number(casti[2])}.\u00A0${Number(casti[1])}.`;
 }
 
+/** Dlaždice Průvodce: krátký stav otevření do předání. */
+function textOtevreniDlazdice(row: PrehledRadek): string {
+  const n = row.otevrenoPocet;
+  if (n == null || n <= 0) return 'zatím neotevřel';
+  const m = /^Otevřel\s+(.+?)\s+\((\d+)×\)$/i.exec((row.otevreniText || '').trim());
+  if (m) return `otevřel ${m[2]}× · naposledy ${m[1]}`;
+  return `otevřel ${n}×`;
+}
+
 type DetailSekceId =
   | 'kontakt'
   | 'casy'
@@ -2728,6 +2737,11 @@ export function PrehledClient({
                           ? 'neotevřen'
                           : 'dokončit'}
                   </span>
+                  {!predanoRadku(row) ? (
+                    <span className="ph-nova-stav__otevreni" title={row.otevreniTitle || undefined}>
+                      {textOtevreniDlazdice(row)}
+                    </span>
+                  ) : null}
                   {!pruvodceOk ? <span className="ph-nova-stav__vyzva">{vyzvaPruvodce.plny}</span> : null}
                 </button>
               </div>
@@ -3255,6 +3269,10 @@ export function PrehledClient({
                   ) : (
                     <div className="ph-pruvodce ph-pruvodce--ano">Průvodce je odemčený</div>
                   )}
+                  <p className="ph-pruvodce-otevreni" title={row.otevreniTitle || undefined}>
+                    {row.otevreniText}
+                    {row.otevreniTitle ? ` · ${row.otevreniTitle}` : ''}
+                  </p>
                   {dotazDalsi?.id === row.rezervace ? (
                     <div className="ph-predano-dotaz">
                       <p>Opravdu odemknout celý průvodce? Kódy se tím neotevřou.</p>

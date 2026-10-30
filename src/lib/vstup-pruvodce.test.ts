@@ -168,7 +168,8 @@ describe('průvodce se otevře až po údajích', () => {
     const text = html('auto', false);
     const cast = (id: string) => text.split(`id="${id}"`)[1]?.split('id="pv-')[0] || '';
     expect(cast('pv-brana-parkoviste')).toContain('pv-flow__card-head');
-    expect(cast('pv-brana-parkoviste')).not.toMatch(/pv-flow__card"><details class="pv-sbal"/);
+    // Prompt 61: každá část je ve details; autem je Brána výchozí open.
+    expect(cast('pv-brana-parkoviste')).toMatch(/pv-flow__card"><details class="pv-sbal" open/);
     expect(cast('pv-parkovani')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
     expect(cast('pv-pesky-parkoviste-dum')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
     expect(cast('pv-prijezd-k-domu')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
