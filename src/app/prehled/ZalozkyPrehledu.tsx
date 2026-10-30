@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { nazevDluhu, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
 import type { PrehledRadek } from '@/lib/prehled';
 import type { JakPlatby, PlatbaPolozky } from '@/lib/store';
@@ -51,11 +51,13 @@ export function RadaZalozek({
   pocty,
   nove,
   onZmena,
+  onNovaRezervace,
 }: {
   zalozka: Zalozka;
   pocty: Record<Zalozka, number>;
   nove: Record<Zalozka, boolean>;
   onZmena: (z: Zalozka) => void;
+  onNovaRezervace?: () => void;
 }) {
   const polozky: { id: Zalozka; text: string }[] = [
     { id: 'dnes', text: 'Dnešek' },
@@ -80,6 +82,11 @@ export function RadaZalozek({
           </button>
         );
       })}
+      {onNovaRezervace ? (
+        <button type="button" className="ph-zalozky__rezervace" onClick={onNovaRezervace}>
+          ＋ Rezervace
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -341,7 +348,7 @@ export function Hledani({
   onNovaRezervace,
   dotaz: dotazVenku,
   onDotaz,
-  jenVysledky = false,
+  autofokus = false,
 }: {
   radky: PrehledRadek[];
   dnes: string;
@@ -349,16 +356,20 @@ export function Hledani({
   onOtevri: (id: string) => void;
   /** Otevře formulář nové rezervace, volitelně předvyplněný z hosta. */
   onNovaRezervace?: (zHosta?: PrehledRadek | null) => void;
-  /** Když je zvenku, hledání řídí rodič (pole nahoře v přehledu). */
+  /** Když je zvenku, hledání řídí rodič. */
   dotaz?: string;
   onDotaz?: (text: string) => void;
-  /** Jen seznam výsledků, bez vlastního políčka. */
-  jenVysledky?: boolean;
+  autofokus?: boolean;
 }) {
   const [dotazVnitrni, setDotazVnitrni] = useState('');
   const [filtr, setFiltr] = useState<FiltrHledani>('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const dotaz = dotazVenku ?? dotazVnitrni;
   const setDotaz = onDotaz ?? setDotazVnitrni;
+  useEffect(() => {
+    if (!autofokus) return;
+    inputRef.current?.focus();
+  }, [autofokus]);
   const hoste = radky
     .filter((r) => !r.nelzeNacist)
     .map((r) => ({
@@ -373,12 +384,15 @@ export function Hledani({
   const nalezene = hledejHosty(hoste, dotaz, filtr, dnes, zitra);
   return (
     <section className="ph-hledat" aria-label="Hledat">
-      {jenVysledky ? null : (
       <label>
         Hledat
-        <input value={dotaz} onChange={(e) => setDotaz(e.target.value)} placeholder="jméno, číslo, apartmán nebo datum" />
+        <input
+          ref={inputRef}
+          value={dotaz}
+          onChange={(e) => setDotaz(e.target.value)}
+          placeholder="jméno, číslo, apartmán nebo datum"
+        />
       </label>
-      )}
       <div className="ph-zalozky">
         {FILTRY.map((f) => (
           <button key={f.id} type="button" className={filtr === f.id ? 'is-on' : undefined} onClick={() => setFiltr((n) => (n === f.id ? '' : f.id))}>

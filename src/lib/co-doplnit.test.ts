@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatPrijezdDoplnit, hosteCoDoplnit } from './co-doplnit';
+import {
+  chybiPruvodce,
+  formatPrijezdDoplnit,
+  hosteCoDoplnit,
+  hosteCoDoplnitFiltr,
+  poctyStitkuDoplnit,
+} from './co-doplnit';
 import type { PrehledRadek } from './prehled';
 
 function radek(partial: Partial<PrehledRadek> & { rezervace: string }): PrehledRadek {
@@ -13,6 +19,14 @@ function radek(partial: Partial<PrehledRadek> & { rezervace: string }): PrehledR
     telefonText: partial.telefonText ?? null,
     telefonWa: partial.telefonWa ?? null,
     checkinUrl: partial.checkinUrl ?? null,
+    predano: partial.predano ?? null,
+    otevrenoPocet: partial.otevrenoPocet ?? 0,
+    casPrijezdu: partial.casPrijezdu ?? null,
+    zpusobPrijezdu: partial.zpusobPrijezdu ?? null,
+    telefonBrana: partial.telefonBrana ?? null,
+    spz: partial.spz ?? null,
+    spzPujcene: partial.spzPujcene ?? false,
+    souhlas: partial.souhlas ?? false,
     zdroj: partial.zdroj ?? 'Booking',
     zdrojText: partial.zdrojText ?? 'Booking',
     historie: partial.historie ?? [],
@@ -22,7 +36,7 @@ function radek(partial: Partial<PrehledRadek> & { rezervace: string }): PrehledR
 describe('Co doplnit', () => {
   const dnes = '2026-10-30';
 
-  it('jen hosté na 14 dní bez odkazu check-inu nebo telefonu, bez zrušených', () => {
+  it('jen hosté na 14 dní bez odkazu check-inu nebo telefonu, bez zrušených a předaných', () => {
     const list = hosteCoDoplnit(
       [
         radek({ rezervace: '1', stav: 'bez_checkinu', prijezd: '2026-10-30', telefonText: '+420 777 111 222', telefonWa: '420777111222' }),
@@ -39,13 +53,20 @@ describe('Co doplnit', () => {
           telefonText: '+420 777 000 111',
           telefonWa: '420777000111',
         }),
+        radek({
+          rezervace: '8',
+          stav: 'bez_checkinu',
+          prijezd: '2026-10-31',
+          predano: '2026-10-31T12:00:00.000Z',
+          telefonText: null,
+        }),
       ],
       dnes,
     );
     expect(list.map((r) => r.rezervace)).toEqual(['1', '2']);
   });
 
-  it('po uložení odkazu check-in zmizí, telefon zůstane když chybí', () => {
+  it('po uložení odkazu check-in zmizí z Vše, telefon zůstane když chybí', () => {
     const list = hosteCoDoplnit(
       [
         radek({
@@ -59,6 +80,54 @@ describe('Co doplnit', () => {
       dnes,
     );
     expect(list.map((r) => r.rezervace)).toEqual(['a']);
+  });
+
+  it('filtr Bez check-inu zahrne i hosta s uloženým odkazem; Vše ne', () => {
+    const r = radek({
+      rezervace: 'x',
+      stav: 'bez_checkinu',
+      checkinUrl: 'https://x.test/c',
+      telefonText: '+420 777 111 222',
+      telefonWa: '420777111222',
+    });
+    expect(hosteCoDoplnitFiltr([r], dnes, 'vse').map((h) => h.rezervace)).toEqual([]);
+    expect(hosteCoDoplnitFiltr([r], dnes, 'bez_checkinu').map((h) => h.rezervace)).toEqual(['x']);
+  });
+
+  it('počty štítků: předaní a zrušení nikde, průvodce podle kroků', () => {
+    const radky = [
+      radek({ rezervace: 'c1', stav: 'bez_checkinu', checkinUrl: 'https://x', telefonText: '+420 1', telefonWa: '4201' }),
+      radek({
+        rezervace: 'p1',
+        stav: 'odeslano',
+        otevrenoPocet: 0,
+        telefonText: '+420 2',
+        telefonWa: '4202',
+      }),
+      radek({
+        rezervace: 'p2',
+        stav: 'odeslano',
+        otevrenoPocet: 2,
+        casPrijezdu: '15:00',
+        zpusobPrijezdu: 'pesky',
+        souhlas: true,
+        telefonText: null,
+      }),
+      radek({ rezervace: 'z1', stav: 'zruseno', telefonText: null }),
+      radek({
+        rezervace: 'pred',
+        stav: 'bez_checkinu',
+        predano: '2026-10-30T10:00:00.000Z',
+        telefonText: null,
+      }),
+    ];
+    expect(poctyStitkuDoplnit(radky, dnes)).toEqual({
+      bez_checkinu: 1,
+      bez_pruvodce: 1,
+      bez_telefonu: 1,
+    });
+    expect(chybiPruvodce(radky[1])).toBe(true);
+    expect(chybiPruvodce(radky[2])).toBe(false);
   });
 
   it('řadí podle příjezdu a apartmánu', () => {

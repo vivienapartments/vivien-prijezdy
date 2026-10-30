@@ -58,10 +58,11 @@ import { jeProPohodu, textPohody } from '@/lib/pohoda';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
-import { CoDoplnit } from './CoDoplnit';
+import { CoDoplnit, StitkyDoplnit14 } from './CoDoplnit';
 import { Dnesek } from './Dnesek';
 import { PraniDetail, PraniRamecekDomu, PraniStitek } from './PraniAdmin';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
+import { poctyStitkuDoplnit, type FiltrDoplnit } from '@/lib/co-doplnit';
 import type { PraniRadekPrehled, PraniStitekKarty } from '@/lib/prani';
 import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
 import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
@@ -341,8 +342,8 @@ export function PrehledClient({
   const [vybrana, setVybrana] = useState<string | null>(null);
   const [dotazVratitOdjezd, setDotazVratitOdjezd] = useState<string | null>(null);
   const zalozkaNactena = useRef(false);
-  const [jenNeotevreni, setJenNeotevreni] = useState(false);
-  const [jenBezCheckinu, setJenBezCheckinu] = useState(false);
+  const [filtrDoplnit, setFiltrDoplnit] = useState<FiltrDoplnit>('vse');
+  const [otevriDoplnitSignal, setOtevriDoplnitSignal] = useState(0);
   const [odjeliOtevreno, setOdjeliOtevreno] = useState(false);
   const [otevreno, setOtevreno] = useState<string | null>(null);
   const [hlaska, setHlaska] = useState('');
@@ -1080,12 +1081,36 @@ export function PrehledClient({
       if (row.nelzeNacist) return false;
       if (row.prijezd !== vybranyDen) return false;
       if (row.stav === 'zruseno' && stav !== 'zruseno') return false;
-      if (jenNeotevreni && (row.otevrenoPocet !== 0 || row.stav === 'bez_checkinu')) return false;
-      if (jenBezCheckinu && row.stav !== 'bez_checkinu') return false;
       if (stav && row.stav !== stav) return false;
       return true;
     });
-  }, [radky, stav, vybranyDen, jenNeotevreni, jenBezCheckinu]);
+  }, [radky, stav, vybranyDen]);
+
+  const poctyDoplnit = useMemo(() => {
+    const sUrl = radky.map((r) => ({
+      ...r,
+      checkinUrl: (odkazy[r.rezervace] ?? r.checkinUrl ?? '').trim() || null,
+    }));
+    return poctyStitkuDoplnit(sUrl, dnes);
+  }, [radky, odkazy, dnes]);
+
+  function otevriStitekDoplnit(f: FiltrDoplnit) {
+    setFiltrDoplnit(f);
+    setOtevriDoplnitSignal((n) => n + 1);
+    requestAnimationFrame(() => {
+      document.getElementById('ph-co-doplnit')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  function otevriZpravuHosta(id: string) {
+    const row = radky.find((r) => r.rezervace === id);
+    if (!row) return;
+    const menu = zpravyRadku(row);
+    const zvol = menu.find((z) => z.vychozi)?.id || menu[0]?.id || 'checkin';
+    otevriKartu(id);
+    setVolba((prev) => ({ ...prev, [id]: zvol }));
+    setPanelZpravy((prev) => ({ ...prev, [id]: true }));
+  }
 
   function hostOdjezdu(row: PrehledRadek) {
     return {
@@ -3574,24 +3599,21 @@ export function PrehledClient({
           })()
         : null}
 
-      {pohledDomu ? <RadaZalozek zalozka={zalozka} pocty={pocty} nove={nove} onZmena={otevriZalozku} /> : null}
       {pohledDomu ? (
-        <label className="ph-hledat-nahore">
-          Hledat hosta
-          <input
-            value={hledatDotaz}
-            onChange={(e) => {
-              const text = e.target.value;
-              setHledatDotaz(text);
-              if (text.trim()) otevriZalozku('hledat');
-            }}
-            onFocus={() => {
-              if (hledatDotaz.trim()) otevriZalozku('hledat');
-            }}
-            placeholder="jméno, číslo rezervace, apartmán…"
-            autoComplete="off"
-          />
-        </label>
+        <RadaZalozek
+          zalozka={zalozka}
+          pocty={pocty}
+          nove={nove}
+          onZmena={otevriZalozku}
+          onNovaRezervace={() => otevriNovouRezervaci(null)}
+        />
+      ) : null}
+      {pohledDomu ? (
+        <StitkyDoplnit14
+          pocty={poctyDoplnit}
+          aktivni={filtrDoplnit === 'vse' ? null : filtrDoplnit}
+          onKlep={otevriStitekDoplnit}
+        />
       ) : null}
 
       {pohledDomu && zalozka === 'dnes' ? (
@@ -3627,7 +3649,7 @@ export function PrehledClient({
             zitra={zitra}
             dotaz={hledatDotaz}
             onDotaz={setHledatDotaz}
-            jenVysledky
+            autofokus
             onOtevri={otevriKartu}
             onNovaRezervace={otevriNovouRezervaci}
           />
@@ -3711,15 +3733,7 @@ export function PrehledClient({
 
       {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu ? (
       <>
-      {pohledDomu ? (
-        <p className="ph-dnesek__akce">
-          <button type="button" onClick={() => otevriNovouRezervaci(null)}>
-            Nová rezervace – nový host
-          </button>
-        </p>
-      ) : null}
-
-      {pohledDomu ? (
+      {!pohledDomu ? (
         <div className="ph-filtry">
           <label>
             Stav
@@ -3731,22 +3745,6 @@ export function PrehledClient({
               ))}
             </select>
           </label>
-          <button
-            type="button"
-            className={jenNeotevreni ? 'is-on' : ''}
-            aria-pressed={jenNeotevreni}
-            onClick={() => setJenNeotevreni((v) => !v)}
-          >
-            Neotevřeli průvodce
-          </button>
-          <button
-            type="button"
-            className={jenBezCheckinu ? 'is-on' : ''}
-            aria-pressed={jenBezCheckinu}
-            onClick={() => setJenBezCheckinu((v) => !v)}
-          >
-            Bez check-inu
-          </button>
         </div>
       ) : null}
 
@@ -3994,7 +3992,11 @@ export function PrehledClient({
           radky={radky}
           dnes={dnes}
           odkazy={odkazy}
+          filtr={filtrDoplnit}
+          onFiltr={setFiltrDoplnit}
+          otevrenoVenku={otevriDoplnitSignal}
           onOtevri={(id) => otevriKartu(id)}
+          onNapsat={otevriZpravuHosta}
           onUlozOdkaz={(row, text) => ulozOdkaz(row, text)}
           onUlozTelefon={(row, text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
         />

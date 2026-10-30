@@ -5,8 +5,11 @@ import {
   chybiCheckin,
   chybiTelefon,
   formatPrijezdDoplnit,
-  hosteCoDoplnit,
+  hosteCoDoplnitFiltr,
+  poctyStitkuDoplnit,
   zkratOdkaz,
+  type FiltrDoplnit,
+  type PoctyStitkuDoplnit,
 } from '@/lib/co-doplnit';
 import type { PrehledRadek } from '@/lib/prehled';
 
@@ -14,19 +17,71 @@ type Props = {
   radky: PrehledRadek[];
   dnes: string;
   odkazy: Record<string, string>;
+  filtr: FiltrDoplnit;
+  onFiltr: (f: FiltrDoplnit) => void;
+  /** Zvýšení otevře sekci (štítek nahoře). */
+  otevrenoVenku?: number;
   onOtevri: (id: string) => void;
+  onNapsat: (id: string) => void;
   onUlozOdkaz: (row: PrehledRadek, text: string) => Promise<{ ok: boolean; hodnota?: string }>;
   onUlozTelefon: (row: PrehledRadek, text: string) => Promise<{ ok: boolean; hodnota?: string }>;
 };
 
-export function CoDoplnit({ radky, dnes, odkazy, onOtevri, onUlozOdkaz, onUlozTelefon }: Props) {
-  const seznam = hosteCoDoplnit(
-    radky.map((r) => ({
-      ...r,
-      checkinUrl: (odkazy[r.rezervace] ?? r.checkinUrl ?? '').trim() || null,
-    })),
-    dnes,
+function sUrl(row: PrehledRadek, odkazy: Record<string, string>): PrehledRadek {
+  return {
+    ...row,
+    checkinUrl: (odkazy[row.rezervace] ?? row.checkinUrl ?? '').trim() || null,
+  };
+}
+
+export function StitkyDoplnit14({
+  pocty,
+  aktivni,
+  onKlep,
+}: {
+  pocty: PoctyStitkuDoplnit;
+  aktivni?: FiltrDoplnit | null;
+  onKlep: (f: FiltrDoplnit) => void;
+}) {
+  const kusy = (
+    [
+      { id: 'bez_checkinu' as const, text: 'Bez check-inu', n: pocty.bez_checkinu },
+      { id: 'bez_pruvodce' as const, text: 'Bez průvodce', n: pocty.bez_pruvodce },
+      { id: 'bez_telefonu' as const, text: 'Bez telefonu', n: pocty.bez_telefonu },
+    ] satisfies { id: FiltrDoplnit; text: string; n: number }[]
+  ).filter((k) => k.n > 0);
+  if (!kusy.length) return null;
+  return (
+    <div className="ph-doplnit-stitky" role="group" aria-label="Co doplnit na 14 dní">
+      {kusy.map((k) => (
+        <button
+          key={k.id}
+          type="button"
+          className={aktivni === k.id ? 'is-on' : undefined}
+          onClick={() => onKlep(k.id)}
+        >
+          {k.text} {k.n}
+        </button>
+      ))}
+    </div>
   );
+}
+
+export function CoDoplnit({
+  radky,
+  dnes,
+  odkazy,
+  filtr,
+  onFiltr,
+  otevrenoVenku,
+  onOtevri,
+  onNapsat,
+  onUlozOdkaz,
+  onUlozTelefon,
+}: Props) {
+  const sUrlRadky = radky.map((r) => sUrl(r, odkazy));
+  const seznam = hosteCoDoplnitFiltr(sUrlRadky, dnes, filtr);
+  const pocty = poctyStitkuDoplnit(sUrlRadky, dnes);
   const [hlaska, setHlaska] = useState('');
   const [predchoziPocet, setPredchoziPocet] = useState(seznam.length);
   const [otevreno, setOtevreno] = useState(false);
@@ -43,6 +98,10 @@ export function CoDoplnit({ radky, dnes, odkazy, onOtevri, onUlozOdkaz, onUlozTe
   }, []);
 
   useEffect(() => {
+    if (otevrenoVenku && otevrenoVenku > 0) setOtevreno(true);
+  }, [otevrenoVenku, filtr]);
+
+  useEffect(() => {
     if (predchoziPocet > 0 && seznam.length < predchoziPocet) {
       setHlaska('Doplněno ✓');
       const t = window.setTimeout(() => setHlaska(''), 2500);
@@ -52,9 +111,12 @@ export function CoDoplnit({ radky, dnes, odkazy, onOtevri, onUlozOdkaz, onUlozTe
     setPredchoziPocet(seznam.length);
   }, [seznam.length, predchoziPocet]);
 
-  if (!seznam.length) {
+  const prazdneVse =
+    filtr === 'vse' && !pocty.bez_checkinu && !pocty.bez_pruvodce && !pocty.bez_telefonu && !seznam.length;
+
+  if (prazdneVse) {
     return (
-      <section className="ph-co-doplnit">
+      <section className="ph-co-doplnit" id="ph-co-doplnit">
         <div className="ph-co-doplnit__hlava">
           <h2>Co doplnit</h2>
           <OdkazyZeSchrankyTlacitko />
@@ -68,112 +130,211 @@ export function CoDoplnit({ radky, dnes, odkazy, onOtevri, onUlozOdkaz, onUlozTe
   return (
     <details
       className="ph-co-doplnit"
+      id="ph-co-doplnit"
       open={otevreno}
       onToggle={(e) => setOtevreno(e.currentTarget.open)}
     >
-      <summary className="ph-co-doplnit__souhrn">
-        Co doplnit ({seznam.length})
-      </summary>
+      <summary className="ph-co-doplnit__souhrn">Co doplnit ({seznam.length})</summary>
       <div className="ph-co-doplnit__hlava ph-co-doplnit__hlava--akce">
+        <div className="ph-doplnit-stitky ph-doplnit-stitky--hlava" role="group" aria-label="Filtr">
+          <button
+            type="button"
+            className={filtr === 'vse' ? 'is-on' : undefined}
+            onClick={() => onFiltr('vse')}
+          >
+            Vše
+          </button>
+          {pocty.bez_checkinu ? (
+            <button
+              type="button"
+              className={filtr === 'bez_checkinu' ? 'is-on' : undefined}
+              onClick={() => onFiltr('bez_checkinu')}
+            >
+              Bez check-inu {pocty.bez_checkinu}
+            </button>
+          ) : null}
+          {pocty.bez_pruvodce ? (
+            <button
+              type="button"
+              className={filtr === 'bez_pruvodce' ? 'is-on' : undefined}
+              onClick={() => onFiltr('bez_pruvodce')}
+            >
+              Bez průvodce {pocty.bez_pruvodce}
+            </button>
+          ) : null}
+          {pocty.bez_telefonu ? (
+            <button
+              type="button"
+              className={filtr === 'bez_telefonu' ? 'is-on' : undefined}
+              onClick={() => onFiltr('bez_telefonu')}
+            >
+              Bez telefonu {pocty.bez_telefonu}
+            </button>
+          ) : null}
+        </div>
         <OdkazyZeSchrankyTlacitko />
       </div>
       {hlaska ? <p className="ph-co-doplnit__ok">{hlaska}</p> : null}
 
-      <ul className="ph-co-doplnit__mobil">
-        {seznam.map((row) => {
-          const url = (odkazy[row.rezervace] ?? row.checkinUrl ?? '').trim();
-          const bezCheckinu = chybiCheckin(row);
-          const bezTelefonu = chybiTelefon(row);
-          const open = Boolean(rozbalene[row.rezervace]);
-          const prijezd = row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—';
-          const zdroj = row.zdrojText || row.zdroj || '—';
-          return (
-            <li key={row.rezervace} className={open ? 'is-open' : undefined}>
-              <button
-                type="button"
-                className="ph-co-doplnit__radek"
-                onClick={() =>
-                  setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))
-                }
-              >
-                <span className="ph-co-doplnit__radek-text">
-                  {prijezd} · {row.apartman || '—'} · {row.jmeno || row.rezervace} · {zdroj}
-                </span>
-                <span className="ph-co-doplnit__stitky">
-                  {bezCheckinu ? <span className="ph-co-doplnit__stitek">check-in</span> : null}
-                  {bezTelefonu ? <span className="ph-co-doplnit__stitek">telefon</span> : null}
-                </span>
-              </button>
-              {open ? (
-                <div className="ph-co-doplnit__rozbal">
-                  {bezCheckinu ? (
-                    <OdkazPole url={url} onUloz={(text) => onUlozOdkaz(row, text)} />
-                  ) : null}
-                  {bezTelefonu ? (
-                    <TelefonPole onUloz={(text) => onUlozTelefon(row, text)} />
-                  ) : null}
+      {!seznam.length ? (
+        <p className="ph-co-doplnit__prazdne">V tomhle filtru teď nic není.</p>
+      ) : (
+        <>
+          <ul className="ph-co-doplnit__mobil">
+            {seznam.map((row) => {
+              const url = (row.checkinUrl || '').trim();
+              const open = Boolean(rozbalene[row.rezervace]);
+              const prijezd = row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—';
+              const zdroj = row.zdrojText || row.zdroj || '—';
+              const stitky = stitkyRadku(row, filtr);
+              return (
+                <li key={row.rezervace} className={open ? 'is-open' : undefined}>
                   <button
                     type="button"
-                    className="ph-co-doplnit__karta"
-                    onClick={() => onOtevri(row.rezervace)}
+                    className="ph-co-doplnit__radek"
+                    onClick={() =>
+                      setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))
+                    }
                   >
-                    karta →
+                    <span className="ph-co-doplnit__radek-text">
+                      {prijezd} · {row.apartman || '—'} · {row.jmeno || row.rezervace} · {zdroj}
+                    </span>
+                    <span className="ph-co-doplnit__stitky">
+                      {stitky.map((s) => (
+                        <span key={s} className="ph-co-doplnit__stitek">
+                          {s}
+                        </span>
+                      ))}
+                    </span>
                   </button>
-                </div>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
-
-      <div className="ph-co-doplnit__tabulka">
-        <table>
-          <thead>
-            <tr>
-              <th>Příjezd</th>
-              <th>Apt</th>
-              <th>Host</th>
-              <th>Zdroj</th>
-              <th>Odkaz na check-in</th>
-              <th>Telefon</th>
-            </tr>
-          </thead>
-          <tbody>
-            {seznam.map((row) => {
-              const url = (odkazy[row.rezervace] ?? row.checkinUrl ?? '').trim();
-              const bezCheckinu = chybiCheckin(row);
-              const bezTelefonu = chybiTelefon(row);
-              return (
-                <tr key={row.rezervace}>
-                  <td data-label="Příjezd">{row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—'}</td>
-                  <td data-label="Apt">{row.apartman || '—'}</td>
-                  <td data-label="Host">
-                    <button type="button" className="ph-co-doplnit__jmeno" onClick={() => onOtevri(row.rezervace)}>
-                      {row.jmeno || row.rezervace}
-                    </button>
-                  </td>
-                  <td data-label="Zdroj">{row.zdrojText || row.zdroj || '—'}</td>
-                  <td data-label="Odkaz na check-in">
-                    {bezCheckinu ? (
-                      <OdkazPole url={url} onUloz={(text) => onUlozOdkaz(row, text)} />
-                    ) : (
-                      <span className="ph-co-doplnit__hotovo">—</span>
-                    )}
-                  </td>
-                  <td data-label="Telefon">
-                    {bezTelefonu ? (
-                      <TelefonPole onUloz={(text) => onUlozTelefon(row, text)} />
-                    ) : (
-                      <span className="ph-co-doplnit__hotovo">—</span>
-                    )}
-                  </td>
-                </tr>
+                  {open ? (
+                    <div className="ph-co-doplnit__rozbal">
+                      {poleRadku({
+                        row,
+                        filtr,
+                        url,
+                        onUlozOdkaz,
+                        onUlozTelefon,
+                        onNapsat,
+                      })}
+                      <button
+                        type="button"
+                        className="ph-co-doplnit__karta"
+                        onClick={() => onOtevri(row.rezervace)}
+                      >
+                        karta →
+                      </button>
+                    </div>
+                  ) : null}
+                </li>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </ul>
+
+          <div className="ph-co-doplnit__tabulka">
+            <table>
+              <thead>
+                <tr>
+                  <th>Příjezd</th>
+                  <th>Apt</th>
+                  <th>Host</th>
+                  <th>Zdroj</th>
+                  <th>Údaje</th>
+                </tr>
+              </thead>
+              <tbody>
+                {seznam.map((row) => {
+                  const url = (row.checkinUrl || '').trim();
+                  return (
+                    <tr key={row.rezervace}>
+                      <td data-label="Příjezd">{row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—'}</td>
+                      <td data-label="Apt">{row.apartman || '—'}</td>
+                      <td data-label="Host">
+                        <button
+                          type="button"
+                          className="ph-co-doplnit__jmeno"
+                          onClick={() => onOtevri(row.rezervace)}
+                        >
+                          {row.jmeno || row.rezervace}
+                        </button>
+                      </td>
+                      <td data-label="Zdroj">{row.zdrojText || row.zdroj || '—'}</td>
+                      <td data-label="Údaje">
+                        <div className="ph-co-doplnit__rozbal">
+                          {poleRadku({
+                            row,
+                            filtr,
+                            url,
+                            onUlozOdkaz,
+                            onUlozTelefon,
+                            onNapsat,
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </details>
+  );
+}
+
+function stitkyRadku(row: PrehledRadek, filtr: FiltrDoplnit): string[] {
+  if (filtr === 'bez_checkinu') return ['check-in'];
+  if (filtr === 'bez_pruvodce') return ['průvodce'];
+  if (filtr === 'bez_telefonu') return ['telefon'];
+  const out: string[] = [];
+  if (chybiCheckin(row)) out.push('check-in');
+  if (chybiTelefon(row)) out.push('telefon');
+  return out;
+}
+
+function poleRadku({
+  row,
+  filtr,
+  url,
+  onUlozOdkaz,
+  onUlozTelefon,
+  onNapsat,
+}: {
+  row: PrehledRadek;
+  filtr: FiltrDoplnit;
+  url: string;
+  onUlozOdkaz: Props['onUlozOdkaz'];
+  onUlozTelefon: Props['onUlozTelefon'];
+  onNapsat: (id: string) => void;
+}) {
+  if (filtr === 'bez_pruvodce') {
+    return (
+      <button type="button" className="ph-ulozit" onClick={() => onNapsat(row.rezervace)}>
+        Napsat zprávu
+      </button>
+    );
+  }
+  if (filtr === 'bez_telefonu') {
+    return <TelefonPole onUloz={(text) => onUlozTelefon(row, text)} />;
+  }
+  if (filtr === 'bez_checkinu') {
+    if (!url) return <OdkazPole url="" onUloz={(text) => onUlozOdkaz(row, text)} />;
+    return (
+      <span className="ph-co-doplnit__odkaz-ok">
+        <span>odkaz ✓</span>
+        <span title={url}>{zkratOdkaz(url)}</span>
+        <button type="button" className="ph-ulozit" onClick={() => onNapsat(row.rezervace)}>
+          Napsat zprávu
+        </button>
+      </span>
+    );
+  }
+  return (
+    <>
+      {chybiCheckin(row) ? <OdkazPole url={url} onUloz={(text) => onUlozOdkaz(row, text)} /> : null}
+      {chybiTelefon(row) ? <TelefonPole onUloz={(text) => onUlozTelefon(row, text)} /> : null}
+    </>
   );
 }
 

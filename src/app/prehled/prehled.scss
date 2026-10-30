@@ -2278,6 +2278,41 @@
   color: rgba(255, 255, 255, 0.72);
 }
 
+.ph-zalozky__rezervace {
+  margin-left: auto;
+}
+
+.ph-doplnit-stitky {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.15rem 0 0.55rem;
+}
+
+.ph-doplnit-stitky button {
+  height: 32px;
+  padding: 0 0.65rem;
+  border: 1px solid rgba(220, 80, 80, 0.45);
+  border-radius: 999px;
+  background: rgba(220, 80, 80, 0.12);
+  color: #ffb4c0;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ph-doplnit-stitky button.is-on {
+  border-color: var(--color-gold);
+  background: rgba(201, 168, 76, 0.18);
+  color: var(--color-gold);
+}
+
+.ph-doplnit-stitky--hlava button {
+  border-color: rgba(201, 168, 76, 0.4);
+  background: rgba(201, 168, 76, 0.08);
+  color: rgba(245, 239, 227, 0.85);
+}
+
 .ph-zalozky button.is-on {
   border-color: var(--color-gold);
   color: var(--color-gold);
