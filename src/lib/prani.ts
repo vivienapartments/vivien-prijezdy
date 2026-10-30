@@ -416,6 +416,71 @@ export function nactiZpravuPrani(raw: unknown): ZpravaPrani | null {
   };
 }
 
+export type PraniRadekPrehled = {
+  rezervace: string;
+  apartman: string;
+  host: string;
+  vlakno: string;
+  cas: string;
+  nahled: string;
+};
+
+export type PraniStitekKarty = {
+  rezervace: string;
+  pocet: number;
+  nove: number;
+};
+
+/** Řádky rámečku Domů: jen vlákna ve stavu nove. */
+export function radkyNovychPrani(
+  polozky: {
+    rezervace: string;
+    vlakna: VlaknoPrani[];
+    zpravy: ZpravaPrani[];
+    apartman?: string | null;
+    jmeno?: string | null;
+  }[],
+): PraniRadekPrehled[] {
+  const out: PraniRadekPrehled[] = [];
+  for (const p of polozky) {
+    const casti = (p.jmeno || '').trim().split(/\s+/).filter(Boolean);
+    const host = casti.length ? casti[casti.length - 1] : p.rezervace;
+    for (const v of p.vlakna) {
+      if (v.stav !== 'nove') continue;
+      const hostMsg = [...zpravyVlakna(p.zpravy, v.id)]
+        .filter((z) => z.autor === 'host' && !z.smazano)
+        .sort((a, b) => Date.parse(b.cas) - Date.parse(a.cas))[0];
+      if (!hostMsg) continue;
+      out.push({
+        rezervace: p.rezervace,
+        apartman: p.apartman || 'Apartmán',
+        host,
+        vlakno: v.id,
+        cas: hostMsg.cas,
+        nahled: hostMsg.text.slice(0, 80),
+      });
+    }
+  }
+  out.sort((a, b) => Date.parse(b.cas) - Date.parse(a.cas));
+  return out;
+}
+
+export function stitkyPraniKarty(
+  polozky: { rezervace: string; vlakna: VlaknoPrani[] }[],
+): Record<string, PraniStitekKarty> {
+  const out: Record<string, PraniStitekKarty> = {};
+  for (const p of polozky) {
+    const otevrene = p.vlakna.filter((v) => v.stav === 'nove' || v.stav === 'precteno');
+    if (!otevrene.length) continue;
+    out[p.rezervace] = {
+      rezervace: p.rezervace,
+      pocet: otevrene.length,
+      nove: otevrene.filter((v) => v.stav === 'nove').length,
+    };
+  }
+  return out;
+}
+
 export function nactiVlaknoPrani(raw: unknown): VlaknoPrani | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;

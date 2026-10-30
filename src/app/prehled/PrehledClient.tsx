@@ -60,7 +60,9 @@ import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
 import { CoDoplnit } from './CoDoplnit';
 import { Dnesek } from './Dnesek';
+import { PraniDetail, PraniRamecekDomu, PraniStitek } from './PraniAdmin';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
+import type { PraniRadekPrehled, PraniStitekKarty } from '@/lib/prani';
 import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
 import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
 import { jeIos, nactiBranu, smsOdkaz, stavParkovani, type BranaSlot } from '@/lib/brana';
@@ -97,6 +99,7 @@ type DetailSekceId =
   | 'kontakt'
   | 'casy'
   | 'predani'
+  | 'prani'
   | 'parkovani'
   | 'pruvodce'
   | 'penize'
@@ -107,6 +110,7 @@ const DETAIL_SEKCE_VSE: DetailSekceId[] = [
   'kontakt',
   'casy',
   'predani',
+  'prani',
   'parkovani',
   'pruvodce',
   'penize',
@@ -200,6 +204,10 @@ type Props = {
   posledniBehCas?: string | null;
   /** Soupis upozornění z Upstash (jednou při otevření). */
   upozorneniSeznam?: UpozorneniZaznam[];
+  /** Nepřečtená přání pro rámeček Domů. */
+  praniRadky?: PraniRadekPrehled[];
+  /** Štítky přání na kartách. */
+  praniStitky?: Record<string, PraniStitekKarty>;
   /** Místní náhled. Číslo se zapíše jen na obrazovce, ne do ostrých rezervací. */
   ukazka?: boolean;
   /** User-Agent prohlížeče. Na Androidu z něj vznikne odkaz na WhatsApp Business. */
@@ -286,6 +294,8 @@ export function PrehledClient({
   chybiWifi,
   posledniBehCas = null,
   upozorneniSeznam = [],
+  praniRadky: praniRadkyVstup = [],
+  praniStitky: praniStitkyVstup = {},
   ukazka = false,
   userAgent = '',
   brana = [],
@@ -301,6 +311,9 @@ export function PrehledClient({
   const [stav, setStav] = useState<'' | Stav>('');
   const [zpetKam, setZpetKam] = useState<ZpetKam | null>(null);
   const [prectenoUpozorneni, setPrectenoUpozorneni] = useState<string | null>(null);
+  const [praniRadky, setPraniRadky] = useState(praniRadkyVstup);
+  const [praniStitky, setPraniStitky] = useState(praniStitkyVstup);
+  const [praniFocus, setPraniFocus] = useState<Record<string, string>>({});
   /** Vybraný den nahoře (YYYY-MM-DD). Jen v paměti stránky, výchozí dnes. */
   const [vybranyDen, setVybranyDen] = useState(dnes);
   /** Domů = provoz (upozornění, záložky, hledat). Den = jen karty vybraného dne. */
@@ -442,6 +455,58 @@ export function PrehledClient({
     }
   }
 
+  function praniZUrl(url: string): string | null {
+    const m = (url || '').match(/[?#&]prani=([^&#]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function otevriPrani(rezervace: string, vlakno?: string | null) {
+    if (!radky.some((r) => r.rezervace === rezervace && !r.nelzeNacist)) {
+      setHlaska(`Kartu ${rezervace} teď v přehledu nevidím. Zkuste Hledat.`);
+      otevriZalozku('hledat');
+      setHledatDotaz(rezervace);
+      return;
+    }
+    otevriKartu(rezervace);
+    setDetailSekce((prev) => {
+      const cur = prev[rezervace] || DETAIL_SEKCE_VSE;
+      return { ...prev, [rezervace]: cur.includes('prani') ? cur : [...cur, 'prani'] };
+    });
+    if (vlakno) {
+      setPraniFocus((prev) => ({ ...prev, [rezervace]: vlakno }));
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            document.getElementById(`ph-prani-${vlakno}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } catch {
+            /* scroll */
+          }
+        });
+      });
+    }
+  }
+
+  async function prectenoPraniRadek(rezervace: string, vlakno: string) {
+    if (ukazka) return;
+    try {
+      await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace, akce: 'prani-precteno', vlakno, kdo: kdoKouka }),
+      });
+      setPraniRadky((prev) => prev.filter((r) => !(r.rezervace === rezervace && r.vlakno === vlakno)));
+      setPraniStitky((prev) => {
+        const st = prev[rezervace];
+        if (!st) return prev;
+        const nove = Math.max(0, st.nove - 1);
+        return { ...prev, [rezervace]: { ...st, nove, pocet: Math.max(st.pocet, nove) } };
+      });
+      router.refresh();
+    } catch {
+      setHlaska('Přečtení přání se neuložilo.');
+    }
+  }
+
   function otevriZUpozorneni(url: string, text = '') {
     const id = idZUpozorneniUrl(url);
     if (id) {
@@ -449,6 +514,11 @@ export function PrehledClient({
         setHlaska(`Kartu ${id} teď v přehledu nevidím. Zkuste Hledat.`);
         otevriZalozku('hledat');
         setHledatDotaz(id);
+        return;
+      }
+      const prani = praniZUrl(url);
+      if (prani) {
+        otevriPrani(id, prani);
         return;
       }
       otevriKartu(id);
@@ -497,6 +567,11 @@ export function PrehledClient({
   }
 
   useEffect(() => {
+    setPraniRadky(praniRadkyVstup);
+    setPraniStitky(praniStitkyVstup);
+  }, [praniRadkyVstup, praniStitkyVstup]);
+
+  useEffect(() => {
     function zHash() {
       const raw = window.location.hash.replace(/^#/, '').trim();
       const id = raw.split(/[?&]/)[0].trim();
@@ -512,6 +587,22 @@ export function PrehledClient({
       setVybrana(id);
       rozbalDetailKarty(id);
       setZalozka('hledat');
+      const prani = praniZUrl(window.location.href) || praniZUrl(`#${raw}`);
+      if (prani) {
+        setDetailSekce((prev) => {
+          const cur = prev[id] || DETAIL_SEKCE_VSE;
+          return { ...prev, [id]: cur.includes('prani') ? cur : [...cur, 'prani'] };
+        });
+        setPraniFocus((prev) => ({ ...prev, [id]: prani }));
+        requestAnimationFrame(() => {
+          try {
+            document.getElementById(`ph-prani-${prani}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } catch {
+            /* scroll */
+          }
+        });
+        return;
+      }
       const zprava = zpravaZUpozorneniUrl(window.location.href);
       if (zprava) {
         setVolba((prev) => ({ ...prev, [id]: zprava }));
@@ -2330,6 +2421,13 @@ export function PrehledClient({
               {staly ? (
                 <p className={staly.shoda === 'slaba' ? 'ph-staly is-slaba' : 'ph-staly'}>{textStalehoHosta(staly)}</p>
               ) : null}
+              {praniStitky[row.rezervace] ? (
+                <PraniStitek
+                  pocet={praniStitky[row.rezervace].pocet}
+                  nove={praniStitky[row.rezervace].nove}
+                  onClick={() => otevriPrani(row.rezervace)}
+                />
+              ) : null}
               {kontaktNahoreBlok}
               <div className="ph-nova-dlazdice">
                 <button
@@ -2962,6 +3060,28 @@ export function PrehledClient({
                 </DetailSekce>
 
                 <DetailSekce
+                  nazev="Přání hosta"
+                  drobek={
+                    praniStitky[row.rezervace]
+                      ? `${praniStitky[row.rezervace].pocet} otevřená${
+                          praniStitky[row.rezervace].nove
+                            ? ` · ${praniStitky[row.rezervace].nove} nové`
+                            : ''
+                        }`
+                      : null
+                  }
+                  otevreno={jeOtevrena('prani')}
+                  onToggle={() => prepni('prani')}
+                >
+                  <PraniDetail
+                    rezervace={row.rezervace}
+                    kdo={kdoKouka}
+                    focusVlakno={praniFocus[row.rezervace] || null}
+                    ukazka={ukazka}
+                  />
+                </DetailSekce>
+
+                <DetailSekce
                   nazev="Parkování"
                   drobek={parkDrobek}
                   otevreno={jeOtevrena('parkovani')}
@@ -3375,6 +3495,13 @@ export function PrehledClient({
         ) : null}
       </header>
       {automatVarovani ? <p className="ph-automat">{automatVarovani}</p> : null}
+      {pohledDomu ? (
+        <PraniRamecekDomu
+          radky={praniRadky}
+          onOtevri={(rez, vlakno) => otevriPrani(rez, vlakno)}
+          onPrecteno={prectenoPraniRadek}
+        />
+      ) : null}
       {pohledDomu
         ? (() => {
             const nova = upozorneniSeznam.filter((u) => !prectenoUpozorneni || u.cas > prectenoUpozorneni);

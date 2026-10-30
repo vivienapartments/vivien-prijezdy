@@ -1929,6 +1929,195 @@
   color: var(--color-gold);
 }
 
+.ph-prani-seznam {
+  margin: 0.75rem 0 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  border-radius: 10px;
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.ph-prani-seznam__hlava {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.45rem;
+}
+
+.ph-prani-seznam__hlava h2 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-gold);
+}
+
+.ph-prani-seznam ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ph-prani-seznam li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ph-prani-seznam__radek {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  flex: 1 1 12rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ph-prani-seznam__radek:hover,
+.ph-prani-seznam__radek:active {
+  border-color: rgba(201, 168, 76, 0.45);
+  background: rgba(201, 168, 76, 0.12);
+}
+
+.ph-prani-seznam__cas {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.ph-prani-seznam__nahled {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.ph-prani-stitek {
+  display: inline-flex;
+  align-items: center;
+  margin: 0.35rem 0 0.15rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  border-radius: 999px;
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--color-gold);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.ph-prani-stitek.is-nove {
+  border-color: rgba(201, 168, 76, 0.75);
+  background: rgba(201, 168, 76, 0.22);
+}
+
+.ph-prani-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.ph-prani-detail__vlakno {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.ph-prani-detail__hlava {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ph-prani-detail__stav {
+  flex: 0 0 auto;
+  color: var(--color-gold);
+  font-size: 0.85rem;
+}
+
+.ph-prani-detail__bublina {
+  margin: 0.35rem 0.65rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+}
+
+.ph-prani-detail__bublina.is-host {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ph-prani-detail__bublina.is-vivien {
+  background: rgba(201, 168, 76, 0.12);
+}
+
+.ph-prani-detail__meta {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 0.2rem;
+}
+
+.ph-prani-detail__bublina p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.ph-prani-detail__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem 0.65rem;
+}
+
+.ph-prani-detail__form textarea {
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+
+.ph-prani-detail__tlacitka {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.ph-prani-detail__tlacitka button {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  border-radius: 8px;
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--color-gold);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ph-prani-detail__tlacitka button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .ph-karta-nahled {
   padding-top: 0.75rem;
 }

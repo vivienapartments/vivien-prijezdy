@@ -172,7 +172,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prani-odpoved' &&
       akce !== 'prani-precteno' &&
       akce !== 'prani-vyrizeno' &&
-      akce !== 'prani-otevrit')
+      akce !== 'prani-otevrit' &&
+      akce !== 'prani-nacti')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -744,6 +745,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!url) return chyba(400, 'Chybí apartmán, datum nebo jazyk.');
     await store.setRezervace(id, pridej(rec, 'Zkopírován odkaz na průvodce'));
     return NextResponse.json({ ok: true, url }, { headers: noStore });
+  }
+
+  if (akce === 'prani-nacti') {
+    const data = await store.listPrani(id);
+    return NextResponse.json(
+      { ok: true, vlakna: Object.values(data.vlakna), zpravy: data.zpravy },
+      { headers: noStore },
+    );
   }
 
   if (

@@ -1705,6 +1705,171 @@ a.pv-phone.pv-phone--zari {
   border-color: #2f7d32;
 }
 
+.pv-prani-alert {
+  margin: 0 0 1rem;
+  margin-left: var(--pv-axis-inset);
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #c9a84c;
+  background: #f4ead7;
+  color: #1c1712;
+}
+
+.pv-prani-alert__nadpis {
+  margin: 0 0 0.55rem;
+  font-weight: 700;
+}
+
+.pv-prani-alert__btn {
+  display: inline-block;
+  padding: 0.4rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: #c9a84c;
+  color: #1c1712;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pv-prani {
+  margin: 0 0 1rem;
+  margin-left: var(--pv-axis-inset);
+  padding: 0.75rem 1rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid #cbb896;
+  background: #f7f1e6;
+  color: #1c1712;
+}
+
+.pv-prani__nadpis {
+  margin: 0 0 0.45rem;
+  font-weight: 700;
+  position: relative;
+}
+
+.pv-prani__tecka {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-left: 0.4rem;
+  border-radius: 50%;
+  background: #c45c2a;
+  vertical-align: 0.1rem;
+}
+
+.pv-prani__uvod,
+.pv-prani__dost,
+.pv-prani__okno,
+.pv-prani__chyba,
+.pv-prani__muted {
+  margin: 0 0 0.55rem;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.pv-prani__dost {
+  font-size: 0.92rem;
+  opacity: 0.92;
+}
+
+.pv-prani__chyba {
+  color: #8a2f2f;
+}
+
+.pv-prani__vlakno {
+  margin: 0.55rem 0;
+  border-top: 1px solid #d8c9a8;
+  padding-top: 0.45rem;
+}
+
+.pv-prani__vlakno-hlava {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.pv-prani__vlakno-nadpis {
+  font-weight: 650;
+}
+
+.pv-prani__stav {
+  flex: 0 0 auto;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #6a5428;
+}
+
+.pv-prani__bublina {
+  margin: 0.45rem 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+}
+
+.pv-prani__bublina--host {
+  background: #ebe3d4;
+}
+
+.pv-prani__bublina--vivien {
+  background: #e7f0e4;
+}
+
+.pv-prani__meta {
+  font-size: 0.78rem;
+  opacity: 0.85;
+  margin-bottom: 0.2rem;
+}
+
+.pv-prani__bublina p {
+  margin: 0;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.pv-prani__akce {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+.pv-prani__akce button,
+.pv-prani__form button {
+  border: 1px solid #cbb896;
+  background: #fff;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.pv-prani__form {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.65rem;
+}
+
+.pv-prani__form label {
+  display: grid;
+  gap: 0.3rem;
+  font-weight: 650;
+}
+
+.pv-prani__form textarea {
+  width: 100%;
+  border: 1px solid #cbb896;
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  resize: vertical;
+}
+
 .pv-doklady {
   margin: 0 0 1rem;
   margin-left: var(--pv-axis-inset);

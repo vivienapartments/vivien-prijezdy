@@ -38,6 +38,7 @@ import { textStavu, type OknoPohled } from '@/lib/okno-pobytu';
 import { ukazatDokladyRamecek } from '@/lib/doklady-texty';
 import { DokladyRamecek } from './DokladyRamecek';
 import { OdjezdRamecek } from './OdjezdRamecek';
+import { PraniHosta } from './PraniHosta';
 import { StavApartmanu } from './StavApartmanu';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import './guide.scss';
@@ -591,17 +592,25 @@ export function Guide({
           <DokladyRamecek lang={lang} narodnost={narodnost} />
         ) : null}
         {ubytovan || ziveKody ? (
-          <OdjezdRamecek
-            lang={lang}
-            den={odjezd?.den ?? null}
-            cas={odjezd?.cas ?? null}
-            rucni={Boolean(odjezd?.rucni)}
-            token={vstup?.cteni ? null : (vstup?.token ?? null)}
-            cteni={Boolean(vstup?.cteni) || !vstup?.token}
-            ubytovan={ubytovan || Boolean(ziveKody)}
-            nejpozdeji={okno?.nejpozdeji}
-            zadostOdjezd={okno?.zadostOdjezd ?? null}
-          />
+          <>
+            <OdjezdRamecek
+              lang={lang}
+              den={odjezd?.den ?? null}
+              cas={odjezd?.cas ?? null}
+              rucni={Boolean(odjezd?.rucni)}
+              token={vstup?.cteni ? null : (vstup?.token ?? null)}
+              cteni={Boolean(vstup?.cteni) || !vstup?.token}
+              ubytovan={ubytovan || Boolean(ziveKody)}
+              nejpozdeji={okno?.nejpozdeji}
+              zadostOdjezd={okno?.zadostOdjezd ?? null}
+            />
+            {/* Varianta B: přání hned nahoře po předání */}
+            <PraniHosta
+              token={vstup?.cteni ? null : (vstup?.token ?? null)}
+              lang={lang}
+              cteni={Boolean(vstup?.cteni) || showDevBar}
+            />
+          </>
         ) : krokyHotove ? (
           <>
             <StavApartmanu lang={lang} stav={okno?.stavApartmanu} />

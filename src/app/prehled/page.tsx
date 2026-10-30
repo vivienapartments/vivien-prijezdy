@@ -7,6 +7,7 @@ import { ukazkoveRadky } from '@/lib/prehled-ukazka';
 import { nactiDokument, ukazkovaBrana } from '@/lib/brana';
 import { branaJePripravena, zajistiVychoziBranu } from '@/lib/brana-akce';
 import { dnesVPraze, posunDen } from '@/lib/prehled';
+import { radkyNovychPrani, stitkyPraniKarty } from '@/lib/prani';
 import { migracePredaniJednou } from '@/lib/predani';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore } from '@/lib/store';
@@ -65,6 +66,17 @@ export default async function PrehledPage({ searchParams }: Props) {
   const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(store, now);
   const posledniBehCas = ukazka ? now.toISOString() : (await store.getBeh())?.cas ?? null;
   const upozorneniSeznam = ukazka ? [] : await store.listUpozorneni();
+  const otevrenaPrani = ukazka ? [] : await store.listOtevrenaPrani();
+  const metaPrani = new Map(
+    rows.map((r) => [r.rezervace, { apartman: r.apartman, jmeno: r.jmeno }]),
+  );
+  const polozkyPrani = otevrenaPrani.map((p) => ({
+    ...p,
+    apartman: metaPrani.get(p.rezervace)?.apartman ?? null,
+    jmeno: metaPrani.get(p.rezervace)?.jmeno ?? null,
+  }));
+  const praniRadky = ukazka ? [] : radkyNovychPrani(polozkyPrani);
+  const praniStitky = ukazka ? {} : stitkyPraniKarty(polozkyPrani);
   const branaPripravena = branaJePripravena();
   const dnes = dnesVPraze(now);
   const userAgent = (await headers()).get('user-agent') ?? '';
@@ -76,6 +88,8 @@ export default async function PrehledPage({ searchParams }: Props) {
       chybiWifi={chybejiciWifi()}
       posledniBehCas={posledniBehCas}
       upozorneniSeznam={upozorneniSeznam}
+      praniRadky={praniRadky}
+      praniStitky={praniStitky}
       ukazka={ukazka}
       userAgent={userAgent}
       brana={branaDoc.sloty}
