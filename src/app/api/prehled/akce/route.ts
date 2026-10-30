@@ -645,6 +645,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       'denNerozbalen',
       'pruvodce3',
       'denCas',
+      'doklady',
       'brana',
       'nedojezd',
       'odjezd',
@@ -690,6 +691,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
       pripraveno: druh === 'pripraveno',
       historie: rec.historie,
+      narodnost: rec.narodnost,
     }).find((z) => z.id === druh);
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
     const patch =

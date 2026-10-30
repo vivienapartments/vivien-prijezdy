@@ -288,12 +288,15 @@ describe('tlačítka v přehledu', () => {
       'denNerozbalen',
       'pruvodce3',
       'denCas',
+      'doklady',
       'brana',
     ]);
     expect(bez.some((z) => z.id === 'nedojezd')).toBe(false);
     // V den příjezdu je text denNerozbalen stejný jako 3. stupeň (žádné měkké zprávy).
     expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toContain('může to skončit jako nedojezd');
     expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toContain(odkaz);
+    expect(bez.find((z) => z.id === 'doklady')?.nazev).toBe('Doklady k předání');
+    expect(bez.find((z) => z.vychozi)?.id).not.toBe('doklady');
 
     const sCasem = zpravyMenu({
       stav: 'odeslano',
@@ -312,13 +315,16 @@ describe('tlačítka v přehledu', () => {
       'denNerozbalen',
       'pruvodce3',
       'denCas',
+      'doklady',
       'brana',
     ]);
     expect(sCasem.find((z) => z.vychozi)?.id).not.toBe('nedojezd');
+    expect(sCasem.find((z) => z.vychozi)?.id).not.toBe('doklady');
     const textSeCasem = sCasem.find((z) => z.id === 'denCas')?.text || '';
     expect(textSeCasem).toBe(`${textDneSCasem('cs', '16:30')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
     expect(textSeCasem).toContain('16:30');
     expect(textSeCasem).not.toContain('4:30');
+    expect(textSeCasem.toLowerCase()).not.toContain('cizineck');
     expect(zpravaDneSCasem('en', '16:30', odkaz)).toContain('around 16:30');
   });
 

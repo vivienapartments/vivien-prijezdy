@@ -57,6 +57,7 @@ export default async function TokenPage({ params }: Props) {
         kody={kodyProHosta(predano, a, i ?? null, lang)}
         poplatek={poplatekZTokenu(result.payload.f)}
         initialPrijezd={null}
+        narodnost={rec?.narodnost ?? null}
         vstup={{
           token: decodeURIComponent(token),
           uroven: urovenZRezervace(rec),

@@ -213,6 +213,8 @@ export type RezervaceRecord = {
   branaPushRano: string | null;
   /** Den a čas příjezdu, na který už odešlo upozornění hodinu předem. Tvar YYYY-MM-DD HH:MM. */
   prijezdPushCas: string | null;
+  /** Den a čas příjezdu, na který už odešlo upozornění 30 min předem (doklady). */
+  dokladyPushCas: string | null;
   /** Den příjezdu, kdy už odešlo ranní upozornění, že čas neznáme. */
   prijezdPushNeznamy: string | null;
   /** Majitel odemkl průvodce i bez údajů. Kódy to neodemkne. */
@@ -620,6 +622,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     branaPushRegistrace: typeof r.branaPushRegistrace === 'string' && r.branaPushRegistrace ? r.branaPushRegistrace : null,
     branaPushRano: typeof r.branaPushRano === 'string' && r.branaPushRano ? r.branaPushRano : null,
     prijezdPushCas: typeof r.prijezdPushCas === 'string' && r.prijezdPushCas ? r.prijezdPushCas : null,
+    dokladyPushCas: typeof r.dokladyPushCas === 'string' && r.dokladyPushCas ? r.dokladyPushCas : null,
     prijezdPushNeznamy: typeof r.prijezdPushNeznamy === 'string' && r.prijezdPushNeznamy ? r.prijezdPushNeznamy : null,
     pruvodceOdemcen: typeof r.pruvodceOdemcen === 'string' && r.pruvodceOdemcen ? r.pruvodceOdemcen : null,
     hostUlozeni: Array.isArray(r.hostUlozeni) ? r.hostUlozeni.filter((x) => typeof x === 'string') : [],
@@ -710,6 +713,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     branaPushRegistrace: null,
     branaPushRano: null,
     prijezdPushCas: null,
+    dokladyPushCas: null,
     prijezdPushNeznamy: null,
     casOdjezdu: null,
     casOdjezduZadalHost: false,

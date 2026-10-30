@@ -3,12 +3,15 @@ import { casVPraze } from './brana';
 import { predmetZpravy, textEmailuHostovi } from './email-zprava';
 import {
   klicPrijezdu,
+  maUpozornitDoklady,
   maUpozornitHodinu,
   maUpozornitNeznamy,
   textCasNeznamy,
+  textDokladyPred,
   textHodinuPred,
   upozorniPrijezd,
 } from './prijezd-upozorneni';
+import { zpravaZUpozorneniUrl } from './prehled-odkaz';
 import { prazdnaRezervace, type ProcessStore, type RezervaceRecord } from './store';
 import { zpravaNedojezdu } from './whatsapp-zprava';
 
@@ -111,6 +114,60 @@ describe('upozornění hodinu před příjezdem', () => {
   });
 });
 
+describe('upozornění 30 min před příjezdem (doklady)', () => {
+  const pulPred = casVPraze(DEN, 16, 0);
+  const brzy = new Date(pulPred.getTime() - 60_000);
+  const vOkne = new Date(pulPred.getTime() + 60_000);
+  const uz = casVPraze(DEN, 16, 30);
+
+  it('text a odkaz se zprávou doklady', () => {
+    expect(textDokladyPred(host())).toBe('V3 · Novák přijede v 16:30 · pošlete vzkaz s doklady');
+    expect(zpravaZUpozorneniUrl('/prehled#1?zprava=doklady')).toBe('doklady');
+    expect(zpravaZUpozorneniUrl('https://x.cz/prehled#1?zprava=doklady')).toBe('doklady');
+  });
+
+  it('pošle se jen 30 min předem a jen jednou; po změně času znovu', () => {
+    const rec = host();
+    expect(maUpozornitDoklady(rec, brzy)).toBe(false);
+    expect(maUpozornitDoklady(rec, vOkne)).toBe(true);
+    expect(maUpozornitDoklady(rec, uz)).toBe(false);
+    expect(maUpozornitDoklady({ ...rec, dokladyPushCas: klicPrijezdu(rec) }, vOkne)).toBe(false);
+    expect(
+      maUpozornitDoklady({ ...rec, casPrijezdu: '17:00', dokladyPushCas: klicPrijezdu(rec) }, casVPraze(DEN, 16, 35)),
+    ).toBe(true);
+  });
+
+  it('nepřijde po předání ani když doklady už odešly', () => {
+    expect(maUpozornitDoklady(host({ predano: '2026-10-15T13:00:00.000Z' }), vOkne)).toBe(false);
+    expect(
+      maUpozornitDoklady(
+        host({ historie: [{ cas: '2026-10-15T10:00:00.000Z', co: 'WhatsApp: Doklady k předání' }] }),
+        vOkne,
+      ),
+    ).toBe(false);
+  });
+
+  it('když push projde, zapíše se dokladyPushCas', async () => {
+    /** Hodinové upozornění už odešlo, ať se počítá jen doklady. */
+    let aktualni = host({ prijezdPushCas: '2026-10-15 16:30' });
+    const store = {
+      async listRezervace() {
+        return [{ id: '1', record: aktualni }];
+      },
+      async getRezervace() {
+        return aktualni;
+      },
+      async setRezervace(_id: string, record: RezervaceRecord) {
+        aktualni = record;
+      },
+    } as unknown as ProcessStore;
+    expect(await upozorniPrijezd(store, vOkne, async () => 'push')).toBe(1);
+    expect(aktualni.dokladyPushCas).toBe('2026-10-15 16:30');
+    expect(aktualni.historie.at(-1)?.co).toContain('pošlete vzkaz s doklady');
+    expect(await upozorniPrijezd(store, vOkne, async () => 'push')).toBe(0);
+  });
+});
+
 describe('e-mail se zprávou hostovi', () => {
   it('předmět je podle zprávy a text má podpis i číslo', () => {
     expect(predmetZpravy('nedojezd', 'cs', '2026-10-15')).toBe('VIVIEN · Váš příjezd 15. 10. 2026');
@@ -121,3 +178,4 @@ describe('e-mail se zprávou hostovi', () => {
     expect(textEmailuHostovi('Dobrý den.\n\nNikol a rodina VIVIEN')).toContain('+420 604 692 573');
   });
 });
+

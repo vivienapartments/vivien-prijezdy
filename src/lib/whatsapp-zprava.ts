@@ -17,6 +17,7 @@ import {
   ukazatCheckinNedojezd,
   uzOdeslanPruvodce3,
 } from './pripominky-stupne';
+import { textyDokladu } from './doklady-texty';
 import {
   ODKAZ_UNIVERZALNI,
   ZPRAVA_BRANA_1,
@@ -405,6 +406,7 @@ export type DruhZpravy =
   | 'denNerozbalen'
   | 'pruvodce3'
   | 'denCas'
+  | 'doklady'
   | 'brana'
   | 'nedojezd'
   | 'odjezd'
@@ -421,6 +423,7 @@ const PORADI: DruhZpravy[] = [
   'denNerozbalen',
   'pruvodce3',
   'denCas',
+  'doklady',
   'brana',
   'nedojezd',
   'odjezd',
@@ -436,6 +439,7 @@ const NAZEV: Record<DruhZpravy, string> = {
   denNerozbalen: 'Den příjezdu, průvodce nerozbalen',
   pruvodce3: 'Průvodce, důrazný',
   denCas: 'Den příjezdu, čas známe',
+  doklady: 'Doklady k předání',
   brana: 'Chybí údaje k bráně',
   nedojezd: 'Poslední výzva (nedojezd)',
   odjezd: 'Dotaz na odjezd',
@@ -566,6 +570,13 @@ export function zpravaDneSCasem(lang: GuideLang | null, cas: string | null, odka
   return sestav(textDneSCasem(lang, cas), odkaz, lang);
 }
 
+export function zpravaDokladu(
+  lang: GuideLang | null,
+  narodnost?: string | null,
+): string {
+  return sestav(textyDokladu(narodnost, lang).zprava, null, lang);
+}
+
 export function zpravaNedojezdu(lang: GuideLang | null): string {
   const text = lang && NEDOJEZD[lang] ? NEDOJEZD[lang] : NEDOJEZD.en;
   const podpis = lang && PODPIS_HOST[lang] ? PODPIS_HOST[lang] : PODPIS_HOST.en;
@@ -660,6 +671,7 @@ export function zpravyMenu(opts: {
   dluh?: PolozkaDluhu[];
   pripraveno?: boolean;
   historie?: { co: string; cas?: string }[];
+  narodnost?: string | null;
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const historie = opts.historie || [];
@@ -686,6 +698,7 @@ export function zpravyMenu(opts: {
       : zpravaDneNerozbalen(opts.lang, chybi, opts.pruvodce),
     pruvodce3: zpravaPruvodce3(opts.lang, opts.pruvodce),
     denCas: zpravaDneSCasem(opts.lang, opts.casPrijezdu, opts.pruvodce),
+    doklady: zpravaDokladu(opts.lang, opts.narodnost),
     brana: zpravaBrany(opts.lang, branaStupen),
     nedojezd: zpravaNedojezdu(opts.lang),
     odjezd: `${zpravaOdjezdu(opts.lang, opts.dluh || [], opts.pruvodce)}\n\n${vetaOdjezduNavic(opts.lang)}${opts.pruvodce ? `\n${opts.pruvodce.split('#')[0]}#pozdejsi` : ''}`,
@@ -701,6 +714,9 @@ export function zpravyMenu(opts: {
         predano: opts.predano,
         historie,
       });
+    }
+    if (id === 'doklady') {
+      return denPrijezdu && !opts.predano;
     }
     if (id === 'nedojezd') {
       return ukazatNedojezd({ ...opts, chybi }) && uzOdeslanPruvodce3(historie);

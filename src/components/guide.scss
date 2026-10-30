@@ -1705,6 +1705,27 @@ a.pv-phone.pv-phone--zari {
   border-color: #2f7d32;
 }
 
+.pv-doklady {
+  margin: 0 0 1rem;
+  margin-left: var(--pv-axis-inset);
+  padding: 0.7rem 1rem;
+  border-radius: 14px;
+  border: 1px solid #cbb896;
+  background: #f7f1e6;
+  color: #1c1712;
+}
+
+.pv-doklady__nadpis {
+  margin: 0 0 0.4rem;
+  font-weight: 700;
+}
+
+.pv-doklady__text {
+  margin: 0;
+  text-align: justify;
+  hyphens: auto;
+}
+
 .pv-stav {
   margin: 0 0 1rem;
   margin-left: var(--pv-axis-inset);

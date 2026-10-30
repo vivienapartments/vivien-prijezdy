@@ -26,6 +26,7 @@ import {
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
+import { zpravaZUpozorneniUrl } from '@/lib/prehled-odkaz';
 import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import {
@@ -451,6 +452,11 @@ export function PrehledClient({
         return;
       }
       otevriKartu(id);
+      const zprava = zpravaZUpozorneniUrl(url);
+      if (zprava) {
+        setVolba((prev) => ({ ...prev, [id]: zprava }));
+        setPanelZpravy((prev) => ({ ...prev, [id]: true }));
+      }
       return;
     }
     let kotva = kotvaZUpozorneniUrl(url);
@@ -493,7 +499,8 @@ export function PrehledClient({
   useEffect(() => {
     function zHash() {
       const raw = window.location.hash.replace(/^#/, '').trim();
-      if (!raw || raw === 'pohoda' || raw.startsWith('odjezdy')) return;
+      const id = raw.split(/[?&]/)[0].trim();
+      if (!id || id === 'pohoda' || id.startsWith('odjezdy')) return;
       setZpetKam((prev) => {
         if (prev) return prev;
         try {
@@ -502,9 +509,14 @@ export function PrehledClient({
           return { zalozka, y: 0 };
         }
       });
-      setVybrana(raw);
-      rozbalDetailKarty(raw);
+      setVybrana(id);
+      rozbalDetailKarty(id);
       setZalozka('hledat');
+      const zprava = zpravaZUpozorneniUrl(window.location.href);
+      if (zprava) {
+        setVolba((prev) => ({ ...prev, [id]: zprava }));
+        setPanelZpravy((prev) => ({ ...prev, [id]: true }));
+      }
     }
     zHash();
     window.addEventListener('hashchange', zHash);
@@ -1461,6 +1473,7 @@ export function PrehledClient({
       branaChybi: row.zpusobPrijezdu === 'auto' && (!row.telefonBrana || (!row.spz && !row.spzPujcene)),
       pripraveno,
       historie: row.historie,
+      narodnost: row.narodnost,
     });
   }
 

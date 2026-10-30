@@ -35,6 +35,8 @@ import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import { pruvodceRozbalen, urovenPruvodce, type UrovenPruvodce } from '@/lib/vstup-pruvodce';
 import * as VT from '@/lib/vstup-texty';
 import { textStavu, type OknoPohled } from '@/lib/okno-pobytu';
+import { ukazatDokladyRamecek } from '@/lib/doklady-texty';
+import { DokladyRamecek } from './DokladyRamecek';
 import { OdjezdRamecek } from './OdjezdRamecek';
 import { StavApartmanu } from './StavApartmanu';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
@@ -251,6 +253,8 @@ export type GuideProps = {
   vikend?: boolean;
   /** Výchozí příjezd, jen když stránka údaje hosta nepředá. */
   initialPrijezd?: Prijezd | null;
+  /** Národnost z BH (CZE → verze dokladů bez cizinecké policie). */
+  narodnost?: string | null;
   /** Údaje z rezervace. Když jsou, klik v průvodci další kroky sám neotevře. */
   vstup?: {
     token: string | null;
@@ -279,6 +283,7 @@ export function Guide({
   poplatek = 'neznamo',
   vikend = false,
   initialPrijezd = null,
+  narodnost = null,
   vstup,
   odjezd = null,
   okno = null,
@@ -578,6 +583,13 @@ export function Guide({
 
       <main className="pv">
         <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />
+        {ukazatDokladyRamecek({
+          cas: hodnoty.cas,
+          predano: ubytovan || Boolean(ziveKody),
+          demo: showDevBar,
+        }) ? (
+          <DokladyRamecek lang={lang} narodnost={narodnost} />
+        ) : null}
         {ubytovan || ziveKody ? (
           <OdjezdRamecek
             lang={lang}
