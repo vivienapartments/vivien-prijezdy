@@ -23,6 +23,18 @@ export function CoDoplnit({ radky, dnes, odkazy, onOtevri, onUlozOdkaz, onUlozTe
   const seznam = hosteCoDoplnit(radky, dnes);
   const [hlaska, setHlaska] = useState('');
   const [predchoziPocet, setPredchoziPocet] = useState(seznam.length);
+  const [otevreno, setOtevreno] = useState(false);
+  const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 900px)');
+    function sync() {
+      setOtevreno(mq.matches);
+    }
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
 
   useEffect(() => {
     if (predchoziPocet > 0 && seznam.length < predchoziPocet) {
@@ -34,68 +46,128 @@ export function CoDoplnit({ radky, dnes, odkazy, onOtevri, onUlozOdkaz, onUlozTe
     setPredchoziPocet(seznam.length);
   }, [seznam.length, predchoziPocet]);
 
+  if (!seznam.length) {
+    return (
+      <section className="ph-co-doplnit">
+        <div className="ph-co-doplnit__hlava">
+          <h2>Co doplnit</h2>
+          <OdkazyZeSchrankyTlacitko />
+        </div>
+        {hlaska ? <p className="ph-co-doplnit__ok">{hlaska}</p> : null}
+        <p className="ph-co-doplnit__prazdne">Všichni hosté na 14 dní mají check-in i telefon ✓</p>
+      </section>
+    );
+  }
+
   return (
-    <section className="ph-co-doplnit">
-      <div className="ph-co-doplnit__hlava">
-        <h2>Co doplnit</h2>
+    <details
+      className="ph-co-doplnit"
+      open={otevreno}
+      onToggle={(e) => setOtevreno(e.currentTarget.open)}
+    >
+      <summary className="ph-co-doplnit__souhrn">
+        Co doplnit ({seznam.length})
+      </summary>
+      <div className="ph-co-doplnit__hlava ph-co-doplnit__hlava--akce">
         <OdkazyZeSchrankyTlacitko />
       </div>
       {hlaska ? <p className="ph-co-doplnit__ok">{hlaska}</p> : null}
-      {!seznam.length ? (
-        <p className="ph-co-doplnit__prazdne">Všichni hosté na 14 dní mají check-in i telefon ✓</p>
-      ) : (
-        <div className="ph-co-doplnit__tabulka">
-          <table>
-            <thead>
-              <tr>
-                <th>Příjezd</th>
-                <th>Apt</th>
-                <th>Host</th>
-                <th>Zdroj</th>
-                <th>Odkaz na check-in</th>
-                <th>Telefon</th>
-              </tr>
-            </thead>
-            <tbody>
-              {seznam.map((row) => {
-                const url = (odkazy[row.rezervace] ?? row.checkinUrl ?? '').trim();
-                const bezCheckinu = chybiCheckin(row);
-                const bezTelefonu = chybiTelefon(row);
-                return (
-                  <tr key={row.rezervace}>
-                    <td data-label="Příjezd">{row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—'}</td>
-                    <td data-label="Apt">{row.apartman || '—'}</td>
-                    <td data-label="Host">
-                      <button type="button" className="ph-co-doplnit__jmeno" onClick={() => onOtevri(row.rezervace)}>
-                        {row.jmeno || row.rezervace}
-                      </button>
-                    </td>
-                    <td data-label="Zdroj">{row.zdrojText || row.zdroj || '—'}</td>
-                    <td data-label="Odkaz na check-in">
-                      {bezCheckinu ? (
-                        <OdkazPole
-                          url={url}
-                          onUloz={(text) => onUlozOdkaz(row, text)}
-                        />
-                      ) : (
-                        <span className="ph-co-doplnit__hotovo">—</span>
-                      )}
-                    </td>
-                    <td data-label="Telefon">
-                      {bezTelefonu ? (
-                        <TelefonPole onUloz={(text) => onUlozTelefon(row, text)} />
-                      ) : (
-                        <span className="ph-co-doplnit__hotovo">—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
+
+      <ul className="ph-co-doplnit__mobil">
+        {seznam.map((row) => {
+          const url = (odkazy[row.rezervace] ?? row.checkinUrl ?? '').trim();
+          const bezCheckinu = chybiCheckin(row);
+          const bezTelefonu = chybiTelefon(row);
+          const open = Boolean(rozbalene[row.rezervace]);
+          const prijezd = row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—';
+          const zdroj = row.zdrojText || row.zdroj || '—';
+          return (
+            <li key={row.rezervace} className={open ? 'is-open' : undefined}>
+              <button
+                type="button"
+                className="ph-co-doplnit__radek"
+                onClick={() =>
+                  setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))
+                }
+              >
+                <span className="ph-co-doplnit__radek-text">
+                  {prijezd} · {row.apartman || '—'} · {row.jmeno || row.rezervace} · {zdroj}
+                </span>
+                <span className="ph-co-doplnit__stitky">
+                  {bezCheckinu ? <span className="ph-co-doplnit__stitek">check-in</span> : null}
+                  {bezTelefonu ? <span className="ph-co-doplnit__stitek">telefon</span> : null}
+                </span>
+              </button>
+              {open ? (
+                <div className="ph-co-doplnit__rozbal">
+                  {bezCheckinu ? (
+                    <OdkazPole url={url} onUloz={(text) => onUlozOdkaz(row, text)} />
+                  ) : null}
+                  {bezTelefonu ? (
+                    <TelefonPole onUloz={(text) => onUlozTelefon(row, text)} />
+                  ) : null}
+                  <button
+                    type="button"
+                    className="ph-co-doplnit__karta"
+                    onClick={() => onOtevri(row.rezervace)}
+                  >
+                    karta →
+                  </button>
+                </div>
+              ) : null}
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="ph-co-doplnit__tabulka">
+        <table>
+          <thead>
+            <tr>
+              <th>Příjezd</th>
+              <th>Apt</th>
+              <th>Host</th>
+              <th>Zdroj</th>
+              <th>Odkaz na check-in</th>
+              <th>Telefon</th>
+            </tr>
+          </thead>
+          <tbody>
+            {seznam.map((row) => {
+              const url = (odkazy[row.rezervace] ?? row.checkinUrl ?? '').trim();
+              const bezCheckinu = chybiCheckin(row);
+              const bezTelefonu = chybiTelefon(row);
+              return (
+                <tr key={row.rezervace}>
+                  <td data-label="Příjezd">{row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—'}</td>
+                  <td data-label="Apt">{row.apartman || '—'}</td>
+                  <td data-label="Host">
+                    <button type="button" className="ph-co-doplnit__jmeno" onClick={() => onOtevri(row.rezervace)}>
+                      {row.jmeno || row.rezervace}
+                    </button>
+                  </td>
+                  <td data-label="Zdroj">{row.zdrojText || row.zdroj || '—'}</td>
+                  <td data-label="Odkaz na check-in">
+                    {bezCheckinu ? (
+                      <OdkazPole url={url} onUloz={(text) => onUlozOdkaz(row, text)} />
+                    ) : (
+                      <span className="ph-co-doplnit__hotovo">—</span>
+                    )}
+                  </td>
+                  <td data-label="Telefon">
+                    {bezTelefonu ? (
+                      <TelefonPole onUloz={(text) => onUlozTelefon(row, text)} />
+                    ) : (
+                      <span className="ph-co-doplnit__hotovo">—</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </details>
   );
 }
 

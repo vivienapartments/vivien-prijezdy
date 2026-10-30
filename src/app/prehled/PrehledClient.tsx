@@ -87,6 +87,19 @@ import {
   ukazatCheckinNedojezd,
   type CasovaZpravaId,
 } from '@/lib/pripominky-stupne';
+import {
+  HLASKA_NENASTAVENO,
+  HLASKA_NEPOVOLENO,
+  HLASKA_NESPAROVANO,
+  HLASKA_PROHLIZEC,
+  HLASKA_ZAPINAM,
+  HLASKA_ZAPNUTO,
+  hlaskaChybyZapnuti,
+  jeSparovano,
+  nadpisPushSekce,
+  radekDiagnostikyPush,
+  type PushPovoleni,
+} from '@/lib/push-stav';
 function stitekDneKarty(prijezd: string | null, dnesDen: string): string {
   if (!prijezd) return 'Bez data';
   if (prijezd === dnesDen) return 'Dnes';
@@ -176,7 +189,7 @@ function idZUpozorneniUrl(url: string): string | null {
   const raw = (url || '').trim();
   if (!raw) return null;
   const hash = (raw.split('#')[1] || '').split(/[?&]/)[0].trim();
-  if (!hash || hash === 'pohoda' || hash.startsWith('odjezdy')) return null;
+  if (!hash || hash === 'pohoda' || hash === 'brana' || hash.startsWith('odjezdy')) return null;
   return hash;
 }
 
@@ -189,7 +202,7 @@ function zalozkaZUpozorneniUrl(url: string): Zalozka | null {
 /** Kotva sekce (pohoda, odjezdy-zitra), ne číslo rezervace. */
 function kotvaZUpozorneniUrl(url: string): string | null {
   const hash = (url || '').split('#')[1]?.split(/[?&]/)[0]?.trim() || '';
-  if (hash === 'pohoda' || hash.startsWith('odjezdy')) return hash;
+  if (hash === 'pohoda' || hash === 'brana' || hash.startsWith('odjezdy')) return hash;
   return null;
 }
 
@@ -575,7 +588,7 @@ export function PrehledClient({
     function zHash() {
       const raw = window.location.hash.replace(/^#/, '').trim();
       const id = raw.split(/[?&]/)[0].trim();
-      if (!id || id === 'pohoda' || id.startsWith('odjezdy')) return;
+      if (!id || id === 'pohoda' || id === 'brana' || id.startsWith('odjezdy')) return;
       setZpetKam((prev) => {
         if (prev) return prev;
         try {
@@ -3972,6 +3985,17 @@ export function PrehledClient({
         </section>
       ) : null}
 
+      {pohledDomu && !ukazka ? (
+        <CoDoplnit
+          radky={radky}
+          dnes={dnes}
+          odkazy={odkazy}
+          onOtevri={(id) => otevriKartu(id)}
+          onUlozOdkaz={(row, text) => ulozOdkaz(row, text)}
+          onUlozTelefon={(row, text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
+        />
+      ) : null}
+
       {pohledDomu && zalozka === 'prijezdy' ? (
         <BranaTabulka
           sloty={sloty}
@@ -3985,17 +4009,6 @@ export function PrehledClient({
             rozbalDetailKarty(id);
             document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
-        />
-      ) : null}
-
-      {pohledDomu && !ukazka ? (
-        <CoDoplnit
-          radky={radky}
-          dnes={dnes}
-          odkazy={odkazy}
-          onOtevri={(id) => otevriKartu(id)}
-          onUlozOdkaz={(row, text) => ulozOdkaz(row, text)}
-          onUlozTelefon={(row, text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
         />
       ) : null}
       <Upozorneni />
@@ -4105,6 +4118,8 @@ function Upozorneni() {
   const [ptamJmeno, setPtamJmeno] = useState(false);
   const [jmenoDraft, setJmenoDraft] = useState('');
   const [endpointTeto, setEndpointTeto] = useState('');
+  const [maOdber, setMaOdber] = useState<boolean | null>(null);
+  const [povoleni, setPovoleni] = useState<PushPovoleni>('neurceno');
 
   async function registraceSw() {
     const reg = await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
@@ -4116,18 +4131,47 @@ function Upozorneni() {
     return navigator.serviceWorker.ready;
   }
 
-  async function posliSubscription(publicKey: string, nazev: string, tise: boolean) {
+  async function nactiLokalniOdber() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setMaOdber(false);
+      return null as PushSubscription | null;
+    }
+    try {
+      const ready = await navigator.serviceWorker.ready.catch(() => null);
+      if (!ready) {
+        setMaOdber(false);
+        return null;
+      }
+      const sub = await ready.pushManager.getSubscription();
+      setMaOdber(Boolean(sub));
+      if (sub?.endpoint) setEndpointTeto(sub.endpoint);
+      return sub;
+    } catch {
+      setMaOdber(null);
+      return null;
+    }
+  }
+
+  async function posliSubscription(publicKey: string, nazev: string, tise: boolean): Promise<boolean> {
     if (!publicKey || !('serviceWorker' in navigator) || !('PushManager' in window)) {
-      if (!tise) setHlaska('Upozornění ještě nejsou nastavená.');
+      if (!tise) setHlaska(HLASKA_NENASTAVENO);
       return false;
     }
     if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
-      if (!tise) setHlaska('Upozornění jsou v telefonu vypnutá.');
+      if (!tise) setHlaska(HLASKA_NEPOVOLENO);
       return false;
     }
     try {
       const ready = await registraceSw();
       let sub = await ready.pushManager.getSubscription();
+      if (sub && !jeSparovano(sub.endpoint, zarizeni)) {
+        try {
+          await sub.unsubscribe();
+        } catch {
+          /* starý odběr */
+        }
+        sub = null;
+      }
       if (!sub) {
         sub = await ready.pushManager.subscribe({
           userVisibleOnly: true,
@@ -4136,10 +4180,11 @@ function Upozorneni() {
       }
       const jsonSub = sub.toJSON();
       if (!jsonSub.endpoint || !jsonSub.keys) {
-        if (!tise) setHlaska('Prohlížeč upozornění nepředal.');
+        if (!tise) setHlaska(HLASKA_PROHLIZEC);
         return false;
       }
       setEndpointTeto(jsonSub.endpoint);
+      setMaOdber(true);
       const res = await fetch('/api/prehled/push', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -4159,17 +4204,27 @@ function Upozorneni() {
         if (!tise) setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
         return false;
       }
-      setZarizeni(json.zarizeni || []);
+      const seznam = json.zarizeni || [];
+      setZarizeni(seznam);
+      if (!jeSparovano(jsonSub.endpoint, seznam)) {
+        if (!tise) setHlaska(HLASKA_NESPAROVANO);
+        return false;
+      }
+      if (!tise) setHlaska(HLASKA_ZAPNUTO);
       return true;
-    } catch {
-      if (!tise) setHlaska('Upozornění se nepodařilo zapnout. Zkuste znovu.');
+    } catch (err) {
+      if (!tise) setHlaska(hlaskaChybyZapnuti(err));
       return false;
     }
   }
 
   useEffect(() => {
     let zive = true;
+    if (typeof Notification !== 'undefined') {
+      setPovoleni(Notification.permission as PushPovoleni);
+    }
     (async () => {
+      await nactiLokalniOdber();
       try {
         const res = await fetch('/api/prehled/push');
         const json = (await res.json().catch(() => null)) as {
@@ -4196,39 +4251,45 @@ function Upozorneni() {
         ) {
           const ok = await posliSubscription(publicKey, nazev, true);
           if (!zive) return;
-          if (ok) setHlaska('Upozornění jsou zapnutá.');
+          if (ok) setHlaska(HLASKA_ZAPNUTO);
           else setHlaska('Po nasazení je potřeba znovu klepnout na Zapnout upozornění.');
           return;
         }
         if ((json.pocet ?? 0) === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
-      } catch {
-        /* síť */
+      } catch (err) {
+        setHlaska(hlaskaChybyZapnuti(err));
       }
     })();
     return () => {
       zive = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function zapnout() {
-    setHlaska('');
+    setHlaska(HLASKA_ZAPINAM);
     const ulozene = nactiNazevPush();
     if (!ulozene) {
       setPtamJmeno(true);
       setJmenoDraft('');
+      setHlaska('Napište, čí je to telefon.');
       return;
     }
     if (!klic) {
-      setHlaska('Upozornění ještě nejsou nastavená.');
+      setHlaska(HLASKA_NENASTAVENO);
       return;
     }
-    const povoleni = await Notification.requestPermission();
-    if (povoleni !== 'granted') {
-      setHlaska('Upozornění jsou v telefonu vypnutá.');
-      return;
+    try {
+      const pov = await Notification.requestPermission();
+      setPovoleni(pov as PushPovoleni);
+      if (pov !== 'granted') {
+        setHlaska(HLASKA_NEPOVOLENO);
+        return;
+      }
+      await posliSubscription(klic, ulozene, false);
+    } catch (err) {
+      setHlaska(hlaskaChybyZapnuti(err));
     }
-    const ok = await posliSubscription(klic, ulozene, false);
-    if (ok) setHlaska('Upozornění jsou zapnutá.');
   }
 
   async function potvrdJmeno() {
@@ -4239,17 +4300,22 @@ function Upozorneni() {
     }
     ulozNazevPush(nazev);
     setPtamJmeno(false);
+    setHlaska(HLASKA_ZAPINAM);
     if (!klic) {
-      setHlaska('Upozornění ještě nejsou nastavená.');
+      setHlaska(HLASKA_NENASTAVENO);
       return;
     }
-    const povoleni = await Notification.requestPermission();
-    if (povoleni !== 'granted') {
-      setHlaska('Upozornění jsou v telefonu vypnutá.');
-      return;
+    try {
+      const pov = await Notification.requestPermission();
+      setPovoleni(pov as PushPovoleni);
+      if (pov !== 'granted') {
+        setHlaska(HLASKA_NEPOVOLENO);
+        return;
+      }
+      await posliSubscription(klic, nazev, false);
+    } catch (err) {
+      setHlaska(hlaskaChybyZapnuti(err));
     }
-    const ok = await posliSubscription(klic, nazev, false);
-    if (ok) setHlaska('Upozornění jsou zapnutá.');
   }
 
   async function zkusit() {
@@ -4266,8 +4332,14 @@ function Upozorneni() {
   }
 
   const nazevTelefonu = nactiNazevPush();
-  const totoZapnute = Boolean(endpointTeto && zarizeni.some((z) => z.endpoint === endpointTeto));
+  const totoZapnute = jeSparovano(endpointTeto, zarizeni);
   const rozbalit = !totoZapnute || !nazevTelefonu;
+  const nadpis = nadpisPushSekce({ sparovano: totoZapnute, nazev: nazevTelefonu });
+  const diagnostika = radekDiagnostikyPush({
+    povoleni,
+    odber: maOdber,
+    sparovano: totoZapnute,
+  });
   const tedMs = Date.now();
 
   async function odebrat(z: { nazev: string; endpoint: string }) {
@@ -4293,8 +4365,8 @@ function Upozorneni() {
 
   return (
     <details className="ph-push" {...(rozbalit ? { open: true } : {})}>
-      <summary className="ph-push__souhrn">
-        ⚙ Telefon a upozornění · {nazevTelefonu || 'bez jména'}
+      <summary className={`ph-push__souhrn${nadpis.varovani ? ' is-varovani' : ''}`}>
+        {nadpis.text}
       </summary>
       <div className="ph-push__telo">
         <p className="ph-dnesek__akce">
@@ -4315,6 +4387,8 @@ function Upozorneni() {
         <button type="button" className="ph-ulozit" disabled={zkousim} onClick={() => void zkusit()}>
           {zkousim ? 'Zkouším…' : 'Zkusit upozornění'}
         </button>
+        {hlaska ? <span className="ph-push-stav">{hlaska}</span> : null}
+        <p className="ph-push__diag">{diagnostika}</p>
         {ptamJmeno ? (
           <div className="ph-predano-dotaz">
             <p>Tento telefon</p>
@@ -4355,7 +4429,6 @@ function Upozorneni() {
             })}
           </ul>
         ) : null}
-        {hlaska ? <span className="ph-push-stav">{hlaska}</span> : null}
       </div>
     </details>
   );

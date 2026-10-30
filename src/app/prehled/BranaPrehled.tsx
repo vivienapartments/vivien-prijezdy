@@ -410,8 +410,35 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
   const [konec, setKonec] = useState('');
   const [host, setHost] = useState('');
   const [dotaz, setDotaz] = useState('');
+  const [otevreno, setOtevreno] = useState(!potvrzena);
+  const ref = useRef<HTMLDetailsElement>(null);
   const prazdne = sloty.every((s) => !s.telefon && s.stav === 'prazdna');
   const now = new Date();
+  const obsazeno = sloty.filter((s) => !jeVolna(s, now)).length;
+  const cekaReg = sloty.filter((s) => s.stav === 'ceka').length;
+  const souhrn = !potvrzena
+    ? '🅿 Brána parkoviště · čeká na potvrzení stavu'
+    : `🅿 Brána parkoviště · obsazeno ${obsazeno} / ${sloty.length}${
+        cekaReg ? ` · registrace ${cekaReg} čeká` : ''
+      }`;
+
+  useEffect(() => {
+    if (!potvrzena) setOtevreno(true);
+  }, [potvrzena]);
+
+  useEffect(() => {
+    function otevriZHashe() {
+      const raw = window.location.hash.replace(/^#/, '').trim();
+      if (raw !== 'brana') return;
+      setOtevreno(true);
+      requestAnimationFrame(() => {
+        ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    otevriZHashe();
+    window.addEventListener('hashchange', otevriZHashe);
+    return () => window.removeEventListener('hashchange', otevriZHashe);
+  }, []);
 
   function stavRadku(slot: BranaSlot): { text: string; ton: string } {
     if (jeVolna(slot, now) && (slot.telefon || slot.konec)) return { text: 'vypršelo', ton: 'seda' };
@@ -442,8 +469,14 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
   }
 
   return (
-    <section className="ph-brana-sekce" id="brana">
-      <h2>Brána parkoviště</h2>
+    <details
+      ref={ref}
+      className="ph-brana-sekce"
+      id="brana"
+      open={otevreno}
+      onToggle={(e) => setOtevreno(e.currentTarget.open)}
+    >
+      <summary className={`ph-brana-sekce__souhrn${!potvrzena ? ' is-varovani' : ''}`}>{souhrn}</summary>
       {potvrzena ? null : (
         <div className="ph-brana-souhlas">
           <p>Registrace je zavřená, dokud tenhle stav nepotvrdíte.</p>
@@ -557,7 +590,7 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
         })}
       </div>
       {prazdne ? <NastaveniBrany onUloz={uloz} /> : null}
-    </section>
+    </details>
   );
 }
 
