@@ -59,9 +59,9 @@ export function RadaZalozek({
   onZmena: (z: Zalozka) => void;
   onNovaRezervace?: () => void;
 }) {
-  const polozky: { id: Zalozka; text: string }[] = [
+  const polozky: { id: Zalozka; text: string; kratke?: string }[] = [
     { id: 'dnes', text: 'Dnešek' },
-    { id: 'dluhy', text: 'Nedoplatky' },
+    { id: 'dluhy', text: 'Nedoplatky', kratke: 'Dluhy' },
     { id: 'hledat', text: 'Hledat' },
   ];
   return (
@@ -77,14 +77,27 @@ export function RadaZalozek({
             className={zalozka === p.id ? 'is-on' : nove[p.id] ? 'is-nove' : undefined}
             onClick={() => onZmena(p.id)}
           >
-            {p.text}
+            {p.kratke ? (
+              <>
+                <span className="ph-zalozky__plne">{p.text}</span>
+                <span className="ph-zalozky__kratke">{p.kratke}</span>
+              </>
+            ) : (
+              p.text
+            )}
             {cislo > 0 ? ` ${cislo}` : ''}
           </button>
         );
       })}
       {onNovaRezervace ? (
-        <button type="button" className="ph-zalozky__rezervace" onClick={onNovaRezervace}>
-          ＋ Rezervace
+        <button
+          type="button"
+          className="ph-zalozky__rezervace"
+          aria-label="Nová rezervace"
+          onClick={onNovaRezervace}
+        >
+          <span className="ph-zalozky__plne">＋ Rezervace</span>
+          <span className="ph-zalozky__kratke">＋</span>
         </button>
       ) : null}
     </div>
