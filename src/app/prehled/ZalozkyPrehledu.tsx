@@ -59,35 +59,26 @@ export function RadaZalozek({
   onZmena: (z: Zalozka) => void;
   onNovaRezervace?: () => void;
 }) {
-  const polozky: { id: Zalozka; text: string; kratke?: string }[] = [
-    { id: 'dluhy', text: 'Nedoplatky', kratke: 'Dluhy' },
-    { id: 'hledat', text: 'Hledat' },
-  ];
   return (
     <div className="ph-zalozky" role="tablist">
-      {polozky.map((p) => {
-        const cislo = pocty[p.id];
-        return (
-          <button
-            key={p.id}
-            type="button"
-            role="tab"
-            aria-selected={zalozka === p.id}
-            className={zalozka === p.id ? 'is-on' : nove[p.id] ? 'is-nove' : undefined}
-            onClick={() => onZmena(p.id)}
-          >
-            {p.kratke ? (
-              <>
-                <span className="ph-zalozky__plne">{p.text}</span>
-                <span className="ph-zalozky__kratke">{p.kratke}</span>
-              </>
-            ) : (
-              p.text
-            )}
-            {cislo > 0 ? ` ${cislo}` : ''}
-          </button>
-        );
-      })}
+      <button
+        type="button"
+        role="tab"
+        aria-selected={zalozka === 'dluhy'}
+        className={zalozka === 'dluhy' ? 'is-on' : nove.dluhy ? 'is-nove' : undefined}
+        onClick={() => onZmena('dluhy')}
+      >
+        Dluhy{pocty.dluhy > 0 ? ` ${pocty.dluhy}` : ''}
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={zalozka === 'hledat'}
+        className={zalozka === 'hledat' ? 'is-on' : nove.hledat ? 'is-nove' : undefined}
+        onClick={() => onZmena('hledat')}
+      >
+        Hledat
+      </button>
       {onNovaRezervace ? (
         <button
           type="button"
@@ -96,9 +87,11 @@ export function RadaZalozek({
           onClick={onNovaRezervace}
         >
           <span className="ph-zalozky__plne">＋ Rezervace</span>
-          <span className="ph-zalozky__kratke">＋</span>
+          <span className="ph-zalozky__nova">＋ Nová</span>
         </button>
-      ) : null}
+      ) : (
+        <span className="ph-zalozky__prazdno" aria-hidden="true" />
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { posunDen } from './brana';
 import type { PrehledRadek } from './prehled';
+import { vyzvaNaRade } from './pripominky-stupne';
 import { chybejiciKroky } from './vstup-pruvodce';
 
 const DNY = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
@@ -10,6 +11,9 @@ export type PoctyStitkuDoplnit = {
   bez_checkinu: number;
   bez_pruvodce: number;
   bez_telefonu: number;
+  /** Aspoň jeden host má výzvu teď na řadě. */
+  checkinNaRade: boolean;
+  pruvodceNaRade: boolean;
 };
 
 /** Příjezd jako „Pá 6. 11.“ */
@@ -97,12 +101,24 @@ export function hosteCoDoplnitFiltr(
     .sort(seradDoplnit);
 }
 
-export function poctyStitkuDoplnit(radky: PrehledRadek[], dnes: string): PoctyStitkuDoplnit {
+export function poctyStitkuDoplnit(
+  radky: PrehledRadek[],
+  dnes: string,
+  now = new Date(),
+): PoctyStitkuDoplnit {
   const okno = radky.filter((r) => vOkneDoplnit(r, dnes));
+  const bezCheckinu = okno.filter((r) => r.stav === 'bez_checkinu');
+  const bezPruvodce = okno.filter((r) => chybiPruvodce(r));
   return {
-    bez_checkinu: okno.filter((r) => r.stav === 'bez_checkinu').length,
-    bez_pruvodce: okno.filter((r) => chybiPruvodce(r)).length,
+    bez_checkinu: bezCheckinu.length,
+    bez_pruvodce: bezPruvodce.length,
     bez_telefonu: okno.filter((r) => chybiTelefon(r)).length,
+    checkinNaRade: bezCheckinu.some((r) =>
+      vyzvaNaRade('checkin', { historie: r.historie, prijezd: r.prijezd, dnes, now }),
+    ),
+    pruvodceNaRade: bezPruvodce.some((r) =>
+      vyzvaNaRade('pruvodce', { historie: r.historie, prijezd: r.prijezd, dnes, now }),
+    ),
   };
 }
 

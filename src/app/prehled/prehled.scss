@@ -2272,7 +2272,7 @@
   margin: 0;
   padding: 0.55rem 0.75rem;
   border: 1px solid rgba(201, 168, 76, 0.45);
-  border-radius: 10px;
+  border-radius: 6px;
   background: rgba(201, 168, 76, 0.08);
   color: var(--color-gold);
   font: inherit;
@@ -2281,8 +2281,18 @@
   cursor: pointer;
 }
 
+.ph-domu-radek__souhrn.is-akce {
+  border-color: rgba(220, 80, 80, 0.5);
+  background: rgba(220, 80, 80, 0.12);
+  color: #ffb4c0;
+}
+
 .ph-odjezdy--vnorene {
   margin-top: 0.55rem;
+}
+
+.ph-odjezdy--vnorene li.is-akce {
+  color: #ffb4c0;
 }
 
 .ph-nova-stav__vyzva,
@@ -2295,52 +2305,98 @@
   line-height: 1.25;
 }
 
-.ph-nova-stav--ne .ph-nova-stav__vyzva {
+.ph-nova-stav--ne .ph-nova-stav__vyzva,
+.ph-nova-tile--chybi .ph-nova-tile__vyzva {
   color: rgba(224, 122, 122, 0.92);
 }
 
+.ph-nova-stav--cek {
+  border-color: rgba(201, 168, 76, 0.35);
+  background: rgba(201, 168, 76, 0.06);
+  color: rgba(245, 239, 227, 0.85);
+}
+
+.ph-nova-stav--cek .ph-nova-stav__popis,
+.ph-nova-stav--cek .ph-nova-stav__vyzva {
+  color: rgba(245, 239, 227, 0.7);
+}
+
 .ph-zalozky {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.4rem;
-  margin: 0.8rem 0;
+  margin: 0.8rem 0 0.45rem;
 }
 
-.ph-zalozky button {
-  min-height: 2.6rem;
-  padding: 0.35rem 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+.ph-zalozky button,
+.ph-zalozky__prazdno {
+  min-height: 44px;
+  height: 44px;
+  padding: 0 0.55rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
   border-radius: 6px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.72);
+  background: rgba(201, 168, 76, 0.08);
+  color: rgba(245, 239, 227, 0.85);
+  font: inherit;
+  font-size: 0.95rem;
+  white-space: nowrap;
 }
 
-.ph-zalozky__rezervace {
-  margin-left: auto;
-}
-
-.ph-zalozky__kratke {
+.ph-zalozky__nova {
   display: none;
 }
 
+.ph-zalozky__rezervace {
+  margin-left: 0;
+}
+
+.ph-zalozky button.is-on {
+  border-color: var(--color-gold);
+  background: rgba(201, 168, 76, 0.18);
+  color: var(--color-gold);
+}
+
+.ph-zalozky button.is-nove {
+  border-color: #e07a7a;
+  color: #e07a7a;
+}
+
 .ph-doplnit-stitky {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
   gap: 0.35rem;
   margin: 0.15rem 0 0.55rem;
 }
 
+.ph-doplnit-stitky[data-n='1'] {
+  grid-template-columns: 1fr;
+}
+
+.ph-doplnit-stitky[data-n='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ph-doplnit-stitky[data-n='3'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .ph-doplnit-stitky button {
-  height: 32px;
-  padding: 0 0.65rem;
-  border: 1px solid rgba(220, 80, 80, 0.45);
-  border-radius: 999px;
+  min-height: 44px;
+  height: 44px;
+  padding: 0 0.55rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 6px;
+  background: rgba(201, 168, 76, 0.08);
+  color: rgba(245, 239, 227, 0.85);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ph-doplnit-stitky button.is-akce {
+  border-color: rgba(220, 80, 80, 0.5);
   background: rgba(220, 80, 80, 0.12);
   color: #ffb4c0;
-  font: inherit;
-  font-size: 0.85rem;
-  cursor: pointer;
-  flex: 0 0 auto;
 }
 
 .ph-doplnit-stitky button.is-on {
@@ -2355,60 +2411,18 @@
   color: rgba(245, 239, 227, 0.85);
 }
 
-.ph-zalozky button.is-on {
-  border-color: var(--color-gold);
-  color: var(--color-gold);
+.ph-co-doplnit__radek.is-akce .ph-co-doplnit__stitek {
+  border-color: rgba(220, 80, 80, 0.45);
+  color: #ffb4c0;
 }
 
-.ph-zalozky button.is-nove {
-  border-color: #e07a7a;
-  color: #e07a7a;
-}
-
-@media (max-width: 899px) {
-  .ph-zalozky {
-    flex-wrap: nowrap;
-    gap: 0.3rem;
-    margin: 0.55rem 0 0.25rem;
-  }
-
-  .ph-zalozky button {
-    min-height: 36px;
-    height: 36px;
-    padding: 0 0.55rem;
-    font-size: 15px;
-    white-space: nowrap;
-    flex: 0 0 auto;
-  }
-
+@media (max-width: 359px) {
   .ph-zalozky__plne {
     display: none;
   }
 
-  .ph-zalozky__kratke {
+  .ph-zalozky__nova {
     display: inline;
-  }
-
-  .ph-zalozky__rezervace {
-    margin-left: auto;
-    min-width: 36px;
-    padding: 0 0.45rem;
-  }
-
-  .ph-doplnit-stitky {
-    flex-wrap: nowrap;
-    gap: 0.3rem;
-    margin: 0.1rem 0 0.45rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-  }
-
-  .ph-doplnit-stitky button {
-    height: 30px;
-    padding: 0 0.55rem;
-    font-size: 13px;
-    white-space: nowrap;
   }
 }
 
@@ -2610,6 +2624,18 @@
 .ph-nova-tile--ok .ph-nova-tile__ico,
 .ph-nova-tile--ok .ph-nova-tile__hlavni {
   color: #8dcea0;
+}
+
+.ph-nova-tile--cek {
+  border-color: rgba(201, 168, 76, 0.35);
+  background: rgba(201, 168, 76, 0.06);
+}
+
+.ph-nova-tile--cek .ph-nova-tile__ico,
+.ph-nova-tile--cek .ph-nova-tile__hlavni,
+.ph-nova-tile--cek .ph-nova-tile__drobek,
+.ph-nova-tile--cek .ph-nova-tile__vyzva {
+  color: rgba(245, 239, 227, 0.78);
 }
 
 .ph-nova-tile--ne,

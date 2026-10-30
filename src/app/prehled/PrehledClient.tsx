@@ -85,7 +85,7 @@ import {
   popisekStupneCheckinu,
   stupenBrany,
   stupenCheckinu,
-  textVyzvy,
+  textVyzvyHosta,
   ukazatCheckinNedojezd,
   type CasovaZpravaId,
 } from '@/lib/pripominky-stupne';
@@ -339,6 +339,7 @@ export function PrehledClient({
   /** Domů = provoz (upozornění, záložky, hledat). Den = jen karty vybraného dne. */
   const [pohledDomu, setPohledDomu] = useState(true);
   const [pohodaOtevreno, setPohodaOtevreno] = useState(false);
+  const [zitraOtevreno, setZitraOtevreno] = useState(false);
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
   const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
   const [videne, setVidene] = useState<Record<string, Record<string, string>> | null>(null);
@@ -564,7 +565,7 @@ export function PrehledClient({
         otevriKartu(zitrejsi[0].rezervace);
         return;
       }
-      otevriDen(zitraYmd);
+      otevriZitraOdjezdy();
       return;
     }
 
@@ -606,7 +607,7 @@ export function PrehledClient({
         return;
       }
       if (id === 'odjezdy-zitra' || id.startsWith('odjezdy')) {
-        otevriDen(posunDen(dnes, 1));
+        otevriZitraOdjezdy();
         return;
       }
       if (id === 'brana') return;
@@ -1147,6 +1148,21 @@ export function PrehledClient({
       requestAnimationFrame(() => {
         try {
           document.getElementById('pohoda')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch {
+          /* scroll */
+        }
+      });
+    });
+  }
+
+  function otevriZitraOdjezdy() {
+    setPohledDomu(true);
+    setZitraOtevreno(true);
+    otevriZalozku('prijezdy');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          document.getElementById('odjezdy-zitra')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch {
           /* scroll */
         }
@@ -2453,6 +2469,21 @@ export function PrehledClient({
           }
           const checkinStupen = stupenCheckinu(pocetCheckinPripoinek(row.historie), denPredNeboDenCi);
           const branaStupenVal = stupenBrany(pocetBranaPripoinek(row.historie), row.prijezd === dnes);
+          const vyzvaCheckin = textVyzvyHosta('checkin', {
+            historie: row.historie,
+            prijezd: row.prijezd,
+            dnes,
+          });
+          const vyzvaPruvodce = textVyzvyHosta('pruvodce', {
+            historie: row.historie,
+            prijezd: row.prijezd,
+            dnes,
+          });
+          const vyzvaBrana = textVyzvyHosta('brana', {
+            historie: row.historie,
+            prijezd: row.prijezd,
+            dnes,
+          });
           /** Jen krátký štítek. Dlouhý text fáze (čas, brána, průvodce) je v dlaždicích. */
           const pillText = (() => {
             if (row.stav === 'zruseno') return 'Zrušeno';
@@ -2551,7 +2582,15 @@ export function PrehledClient({
                 ) : row.zpusobPrijezdu === 'auto' ? (
                   <button
                     type="button"
-                    className={`ph-nova-tile${branaOk ? ' ph-nova-tile--ok' : ' ph-nova-tile--ne'}`}
+                    className={`ph-nova-tile${
+                      branaOk
+                        ? ' ph-nova-tile--ok'
+                        : branaChybiUdaje && vyzvaBrana.naRade
+                          ? ' ph-nova-tile--chybi'
+                          : branaChybiUdaje
+                            ? ' ph-nova-tile--cek'
+                            : ' ph-nova-tile--ne'
+                    }`}
                     disabled={branaOk || odjel}
                     onClick={() => {
                       if (branaOk || odjel) return;
@@ -2595,7 +2634,7 @@ export function PrehledClient({
                               : branaDrobek}
                         </span>
                         {!branaOk && branaChybiUdaje ? (
-                          <span className="ph-nova-tile__vyzva">{textVyzvy('brana', row.historie).plny}</span>
+                          <span className="ph-nova-tile__vyzva">{vyzvaBrana.plny}</span>
                         ) : null}
                       </span>
                       {branaOk ? (
@@ -2623,7 +2662,13 @@ export function PrehledClient({
               <div className="ph-nova-stavy">
                 <button
                   type="button"
-                  className={`ph-nova-stav${checkinOk ? ' ph-nova-stav--ok' : ' ph-nova-stav--ne'}`}
+                  className={`ph-nova-stav${
+                    checkinOk
+                      ? ' ph-nova-stav--ok'
+                      : vyzvaCheckin.naRade
+                        ? ' ph-nova-stav--ne'
+                        : ' ph-nova-stav--cek'
+                  }`}
                   disabled={checkinOk || odjel}
                   onClick={() => {
                     if (checkinOk || odjel) return;
@@ -2649,13 +2694,17 @@ export function PrehledClient({
                         ? popisekStupneCheckinu('nedojezd')
                         : popisekStupneCheckinu(checkinStupen)}
                   </span>
-                  {!checkinOk ? (
-                    <span className="ph-nova-stav__vyzva">{textVyzvy('checkin', row.historie).plny}</span>
-                  ) : null}
+                  {!checkinOk ? <span className="ph-nova-stav__vyzva">{vyzvaCheckin.plny}</span> : null}
                 </button>
                 <button
                   type="button"
-                  className={`ph-nova-stav${pruvodceOk ? ' ph-nova-stav--ok' : ' ph-nova-stav--ne'}`}
+                  className={`ph-nova-stav${
+                    pruvodceOk
+                      ? ' ph-nova-stav--ok'
+                      : vyzvaPruvodce.naRade
+                        ? ' ph-nova-stav--ne'
+                        : ' ph-nova-stav--cek'
+                  }`}
                   disabled={pruvodceOk || odjel || !checkinOk}
                   onClick={() => {
                     if (pruvodceOk || odjel || !checkinOk) return;
@@ -2679,9 +2728,7 @@ export function PrehledClient({
                           ? 'neotevřen'
                           : 'dokončit'}
                   </span>
-                  {!pruvodceOk ? (
-                    <span className="ph-nova-stav__vyzva">{textVyzvy('pruvodce', row.historie).plny}</span>
-                  ) : null}
+                  {!pruvodceOk ? <span className="ph-nova-stav__vyzva">{vyzvaPruvodce.plny}</span> : null}
                 </button>
               </div>
             </>
@@ -3463,6 +3510,10 @@ export function PrehledClient({
   const hostePohoda = seradOdjezdy(radky.filter((r) => jeProPohodu(r, dnes)));
   const hosteZitraOdjezd = seradOdjezdy(radky.filter((r) => r.stav !== 'zruseno' && r.odjezd === zitra));
   const zitraDotazPoslan = hosteZitraOdjezd.filter((r) => Boolean(r.odjezdDotaz)).length;
+  const zitraCekaAkce = hosteZitraOdjezd.some(
+    (r) => !jeHodina(casOdjezduRadku(r)) && !r.odjezdDotaz,
+  );
+  const pohodaCekaAkce = hostePohoda.some((r) => !r.pohodaDotaz);
   const vybrany = vybrana ? radky.find((r) => r.rezervace === vybrana) : undefined;
 
   /** Samostatný náhled karty: nic jiného, jen ← Zpět a karta. */
@@ -3660,7 +3711,7 @@ export function PrehledClient({
         <section id="pohoda" className="ph-domu-radek">
           <button
             type="button"
-            className="ph-domu-radek__souhrn"
+            className={pohodaCekaAkce ? 'ph-domu-radek__souhrn is-akce' : 'ph-domu-radek__souhrn'}
             aria-expanded={pohodaOtevreno}
             onClick={() => setPohodaOtevreno((v) => !v)}
           >
@@ -3738,15 +3789,52 @@ export function PrehledClient({
         </section>
       ) : null}
       {pohledDomu && zalozka === 'prijezdy' && hosteZitraOdjezd.length ? (
-        <button
-          type="button"
-          id="odjezdy-zitra"
-          className="ph-domu-radek ph-domu-radek__souhrn"
-          onClick={() => otevriDen(zitra)}
-        >
-          Zítra odjíždí {hosteZitraOdjezd.length} · dotaz poslán {zitraDotazPoslan} z{' '}
-          {hosteZitraOdjezd.length} ▸
-        </button>
+        <section id="odjezdy-zitra" className="ph-domu-radek">
+          <button
+            type="button"
+            className={zitraCekaAkce ? 'ph-domu-radek__souhrn is-akce' : 'ph-domu-radek__souhrn'}
+            aria-expanded={zitraOtevreno}
+            onClick={() => setZitraOtevreno((v) => !v)}
+          >
+            Zítra odjíždí {hosteZitraOdjezd.length} · dotaz poslán {zitraDotazPoslan} z{' '}
+            {hosteZitraOdjezd.length} {zitraOtevreno ? '▴' : '▸'}
+          </button>
+          {zitraOtevreno ? (
+            <ul className="ph-odjezdy ph-odjezdy--vnorene">
+              {hosteZitraOdjezd.map((row) => {
+                const cas = casOdjezduRadku(row);
+                const znamy = jeHodina(cas);
+                const naRade = !znamy && !row.odjezdDotaz;
+                const stavText = znamy
+                  ? `odjezd ${zobrazCas(cas)} ✓`
+                  : row.odjezdDotaz
+                    ? `dotaz poslán ${casPraha(row.odjezdDotaz) || hodinaPraha(row.odjezdDotaz)}`
+                    : 'dotaz neposlán';
+                return (
+                  <li key={row.rezervace} className={naRade ? 'is-akce' : znamy ? 'is-hotovo' : undefined}>
+                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
+                      {row.apartman || '—'} · {row.jmeno || 'Host'}
+                    </button>
+                    {' · '}
+                    {stavText}
+                    {naRade ? (
+                      <>
+                        {' · '}
+                        <button
+                          type="button"
+                          className="ph-dnesek__odkaz"
+                          onClick={() => otevriZpravuHosta(row.rezervace, 'odjezd')}
+                        >
+                          Napsat zprávu
+                        </button>
+                      </>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </section>
       ) : null}
       {pohledDomu && zalozka === 'dluhy' ? (
         <Nedoplatky

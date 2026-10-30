@@ -174,21 +174,73 @@ function posledniCasNazvu(historie: { co: string; cas?: string }[], nazvy: strin
   return last;
 }
 
+function nazvySkupinyVyzvy(druh: DruhVyzvy): string[] {
+  return [...NAZVY_VYZVY[druh], ...(POSLEDNI_VYZVY[druh] || [])];
+}
+
+function pocetVyzvyDruhu(druh: DruhVyzvy, historie: { co: string }[]): number {
+  if (druh === 'checkin') return pocetCheckinPripoinek(historie);
+  if (druh === 'brana') return pocetBranaPripoinek(historie);
+  return pocetCasovychPripoinek(historie);
+}
+
+function uzPosledniVyzva(druh: DruhVyzvy, historie: { co: string }[]): boolean {
+  const nazvy = POSLEDNI_VYZVY[druh];
+  return Boolean(nazvy && pocetZKanalu(historie, nazvy) > 0);
+}
+
+const MS_24H = 24 * 60 * 60 * 1000;
+
+/** Datum další možné výzvy (poslední + 24 h), pražský den.měsíc. */
+export function datumDalsiVyzvy(
+  druh: DruhVyzvy,
+  historie: { co: string; cas?: string }[],
+): string {
+  if (uzPosledniVyzva(druh, historie)) return '';
+  const last = posledniCasNazvu(historie, nazvySkupinyVyzvy(druh));
+  if (!last) return '';
+  const t = Date.parse(last);
+  if (!Number.isFinite(t)) return '';
+  return datumVyzvyPraha(new Date(t + MS_24H).toISOString());
+}
+
+/**
+ * Majitel má teď poslat další výzvu (údaj pořád chybí, volá se jen tehdy).
+ * Po Poslední výzvě už nic. Jinak: žádná / starší než 24 h / den před či den příjezdu bez dnešní.
+ */
+export function vyzvaNaRade(
+  druh: DruhVyzvy,
+  opts: {
+    historie: { co: string; cas?: string }[];
+    prijezd: string | null;
+    dnes: string;
+    now?: Date;
+  },
+): boolean {
+  const { historie, prijezd, dnes } = opts;
+  const now = opts.now || new Date();
+  if (uzPosledniVyzva(druh, historie)) return false;
+  const nazvy = nazvySkupinyVyzvy(druh);
+  const last = posledniCasNazvu(historie, nazvy);
+  if (!last) return true;
+  const lastMs = Date.parse(last);
+  if (!Number.isFinite(lastMs)) return true;
+  if (now.getTime() - lastMs >= MS_24H) return true;
+  const denPred = prijezd ? posunDen(prijezd, -1) : '';
+  const vOkne = Boolean(prijezd && (dnes === prijezd || dnes === denPred));
+  if (vOkne && denPraha(new Date(lastMs)) !== dnes) return true;
+  return false;
+}
+
 /** Kolikrát už šla výzva (plný text na kartu, krátký do štítku). */
 export function textVyzvy(
   druh: DruhVyzvy,
   historie: { co: string; cas?: string }[],
 ): { plny: string; kratky: string } {
-  const posledniNazvy = POSLEDNI_VYZVY[druh];
-  if (posledniNazvy && pocetZKanalu(historie, posledniNazvy) > 0) {
+  if (uzPosledniVyzva(druh, historie)) {
     return { plny: 'Poslední výzva', kratky: 'Poslední výzva' };
   }
-  const n =
-    druh === 'checkin'
-      ? pocetCheckinPripoinek(historie)
-      : druh === 'brana'
-        ? pocetBranaPripoinek(historie)
-        : pocetCasovychPripoinek(historie);
+  const n = pocetVyzvyDruhu(druh, historie);
   if (n <= 0) return { plny: 'zatím bez výzvy', kratky: 'bez výzvy' };
   const cislo = `${n}. výzva`;
   const cas = posledniCasNazvu(historie, NAZVY_VYZVY[druh]);
@@ -197,4 +249,30 @@ export function textVyzvy(
     plny: datum ? `${cislo} · ${datum}` : cislo,
     kratky: cislo,
   };
+}
+
+/** Text výzvy + jestli je teď na řadě (včetně „další …“ když klid). */
+export function textVyzvyHosta(
+  druh: DruhVyzvy,
+  opts: {
+    historie: { co: string; cas?: string }[];
+    prijezd: string | null;
+    dnes: string;
+    now?: Date;
+  },
+): { plny: string; kratky: string; naRade: boolean } {
+  const naRade = vyzvaNaRade(druh, opts);
+  const zaklad = textVyzvy(druh, opts.historie);
+  if (zaklad.kratky === 'Poslední výzva' || zaklad.kratky === 'bez výzvy') {
+    return { ...zaklad, naRade };
+  }
+  if (!naRade) {
+    const dalsi = datumDalsiVyzvy(druh, opts.historie);
+    return {
+      plny: dalsi ? `${zaklad.plny} · další ${dalsi}` : zaklad.plny,
+      kratky: zaklad.kratky,
+      naRade,
+    };
+  }
+  return { ...zaklad, naRade };
 }

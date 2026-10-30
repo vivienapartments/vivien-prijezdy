@@ -125,6 +125,8 @@ describe('Co doplnit', () => {
       bez_checkinu: 1,
       bez_pruvodce: 1,
       bez_telefonu: 1,
+      checkinNaRade: true,
+      pruvodceNaRade: true,
     });
     expect(chybiPruvodce(radky[1])).toBe(true);
     expect(chybiPruvodce(radky[2])).toBe(false);

@@ -13,7 +13,7 @@ import {
   type PoctyStitkuDoplnit,
 } from '@/lib/co-doplnit';
 import type { PrehledRadek } from '@/lib/prehled';
-import { textVyzvy } from '@/lib/pripominky-stupne';
+import { textVyzvyHosta } from '@/lib/pripominky-stupne';
 
 type Props = {
   radky: PrehledRadek[];
@@ -47,24 +47,44 @@ export function StitkyDoplnit14({
 }) {
   const kusy = (
     [
-      { id: 'bez_checkinu' as const, text: 'Bez check-inu', n: pocty.bez_checkinu },
-      { id: 'bez_pruvodce' as const, text: 'Bez průvodce', n: pocty.bez_pruvodce },
-      { id: 'bez_telefonu' as const, text: 'Bez telefonu', n: pocty.bez_telefonu },
-    ] satisfies { id: FiltrDoplnit; text: string; n: number }[]
+      {
+        id: 'bez_checkinu' as const,
+        text: 'Bez check-inu',
+        n: pocty.bez_checkinu,
+        akce: pocty.checkinNaRade,
+      },
+      {
+        id: 'bez_pruvodce' as const,
+        text: 'Bez průvodce',
+        n: pocty.bez_pruvodce,
+        akce: pocty.pruvodceNaRade,
+      },
+      {
+        id: 'bez_telefonu' as const,
+        text: 'Bez telefonu',
+        n: pocty.bez_telefonu,
+        akce: true,
+      },
+    ] satisfies { id: FiltrDoplnit; text: string; n: number; akce: boolean }[]
   ).filter((k) => k.n > 0);
   if (!kusy.length) return null;
   return (
-    <div className="ph-doplnit-stitky" role="group" aria-label="Co doplnit na 14 dní">
-      {kusy.map((k) => (
-        <button
-          key={k.id}
-          type="button"
-          className={aktivni === k.id ? 'is-on' : undefined}
-          onClick={() => onKlep(k.id)}
-        >
-          {k.text} {k.n}
-        </button>
-      ))}
+    <div
+      className="ph-doplnit-stitky"
+      data-n={kusy.length}
+      role="group"
+      aria-label="Co doplnit na 14 dní"
+    >
+      {kusy.map((k) => {
+        const klid = !k.akce && (k.id === 'bez_checkinu' || k.id === 'bez_pruvodce');
+        const cls = [aktivni === k.id ? 'is-on' : '', k.akce ? 'is-akce' : ''].filter(Boolean).join(' ') || undefined;
+        return (
+          <button key={k.id} type="button" className={cls} onClick={() => onKlep(k.id)}>
+            {k.text} {k.n}
+            {klid ? ' · ✓ posláno' : ''}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -188,12 +208,12 @@ export function CoDoplnit({
               const open = Boolean(rozbalene[row.rezervace]);
               const prijezd = row.prijezd ? formatPrijezdDoplnit(row.prijezd) : '—';
               const zdroj = row.zdrojText || row.zdroj || '—';
-              const stitky = stitkyRadku(row, filtr);
+              const { stitky, naRade } = stitkyRadku(row, filtr, dnes);
               return (
                 <li key={row.rezervace} className={open ? 'is-open' : undefined}>
                   <button
                     type="button"
-                    className="ph-co-doplnit__radek"
+                    className={naRade ? 'ph-co-doplnit__radek is-akce' : 'ph-co-doplnit__radek'}
                     onClick={() =>
                       setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))
                     }
@@ -285,25 +305,37 @@ export function CoDoplnit({
   );
 }
 
-function stitkyRadku(row: PrehledRadek, filtr: FiltrDoplnit): string[] {
+function stitkyRadku(
+  row: PrehledRadek,
+  filtr: FiltrDoplnit,
+  dnes: string,
+): { stitky: string[]; naRade: boolean } {
   if (filtr === 'bez_checkinu') {
-    return ['check-in', textVyzvy('checkin', row.historie).kratky];
+    const v = textVyzvyHosta('checkin', { historie: row.historie, prijezd: row.prijezd, dnes });
+    return { stitky: ['check-in', v.kratky], naRade: v.naRade };
   }
   if (filtr === 'bez_pruvodce') {
-    return ['průvodce', textVyzvy('pruvodce', row.historie).kratky];
+    const v = textVyzvyHosta('pruvodce', { historie: row.historie, prijezd: row.prijezd, dnes });
+    return { stitky: ['průvodce', v.kratky], naRade: v.naRade };
   }
-  if (filtr === 'bez_telefonu') return ['telefon'];
+  if (filtr === 'bez_telefonu') return { stitky: ['telefon'], naRade: true };
   const out: string[] = [];
+  let naRade = false;
   if (chybiCheckin(row)) {
-    out.push('check-in');
-    out.push(textVyzvy('checkin', row.historie).kratky);
+    const v = textVyzvyHosta('checkin', { historie: row.historie, prijezd: row.prijezd, dnes });
+    out.push('check-in', v.kratky);
+    if (v.naRade) naRade = true;
   }
   if (chybiPruvodce(row)) {
-    out.push('průvodce');
-    out.push(textVyzvy('pruvodce', row.historie).kratky);
+    const v = textVyzvyHosta('pruvodce', { historie: row.historie, prijezd: row.prijezd, dnes });
+    out.push('průvodce', v.kratky);
+    if (v.naRade) naRade = true;
   }
-  if (chybiTelefon(row)) out.push('telefon');
-  return out;
+  if (chybiTelefon(row)) {
+    out.push('telefon');
+    naRade = true;
+  }
+  return { stitky: out, naRade };
 }
 
 function poleRadku({

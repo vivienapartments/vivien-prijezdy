@@ -10,6 +10,8 @@ import {
   stupenCasoveZpravy,
   stupenCheckinu,
   textVyzvy,
+  textVyzvyHosta,
+  vyzvaNaRade,
   ukazatCheckinNedojezd,
   uzOdeslanPruvodce3,
 } from './pripominky-stupne';
@@ -119,5 +121,59 @@ describe('připomínky stupně', () => {
       textVyzvy('pruvodce', [{ co: 'WhatsApp: Poslední výzva (nedojezd)', cas: '2026-10-31T12:00:00.000Z' }])
         .kratky,
     ).toBe('Poslední výzva');
+  });
+
+  it('vyzvaNaRade: 3 h klid, 25 h červená, den před bez dnešní, po Poslední klid', () => {
+    const ted = new Date('2026-10-30T15:00:00.000Z');
+    const pred3h = [{ co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-30T12:00:00.000Z' }];
+    const pred25h = [{ co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-29T14:00:00.000Z' }];
+    expect(
+      vyzvaNaRade('checkin', {
+        historie: pred3h,
+        prijezd: '2026-11-05',
+        dnes: '2026-10-30',
+        now: ted,
+      }),
+    ).toBe(false);
+    expect(
+      vyzvaNaRade('checkin', {
+        historie: pred25h,
+        prijezd: '2026-11-05',
+        dnes: '2026-10-30',
+        now: ted,
+      }),
+    ).toBe(true);
+    expect(
+      vyzvaNaRade('checkin', {
+        historie: [],
+        prijezd: '2026-11-05',
+        dnes: '2026-10-30',
+        now: ted,
+      }),
+    ).toBe(true);
+    expect(
+      vyzvaNaRade('checkin', {
+        historie: [{ co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-29T18:00:00.000Z' }],
+        prijezd: '2026-10-30',
+        dnes: '2026-10-30',
+        now: ted,
+      }),
+    ).toBe(true);
+    expect(
+      vyzvaNaRade('checkin', {
+        historie: [{ co: 'WhatsApp: Poslední výzva · check-in', cas: '2026-10-29T10:00:00.000Z' }],
+        prijezd: '2026-10-30',
+        dnes: '2026-10-30',
+        now: ted,
+      }),
+    ).toBe(false);
+    const host = textVyzvyHosta('checkin', {
+      historie: pred3h,
+      prijezd: '2026-11-05',
+      dnes: '2026-10-30',
+      now: ted,
+    });
+    expect(host.naRade).toBe(false);
+    expect(host.plny).toMatch(/další/);
   });
 });
