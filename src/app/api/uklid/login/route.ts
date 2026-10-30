@@ -41,7 +41,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const res = NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } });
-  res.cookies.set(UKLID_COOKIE, signSession(), {
+  res.cookies.set(UKLID_COOKIE, signSession('uklid'), {
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',

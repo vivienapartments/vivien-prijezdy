@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto';
 import { describe, expect, it, beforeEach } from 'vitest';
 import {
   PREHLED_COOKIE,
@@ -24,11 +25,22 @@ describe('uklid auth', () => {
     expect(hesloSedí('uklid-test-heslo')).toBe(false);
   });
 
-  it('cookie úklidu a přehledu jsou různé názvy, podpis stejný princip', () => {
+  it('cookie úklidu neprojde jako majitel, cookie majitele projde do úklidu', () => {
     expect(UKLID_COOKIE).toBe('vivien_uklid');
     expect(PREHLED_COOKIE).toBe('vivien_prehled');
-    expect(UKLID_COOKIE).not.toBe(PREHLED_COOKIE);
-    const session = signSession();
-    expect(verifySession(session)).toBe(true);
+    const uklid = signSession('uklid');
+    const majitel = signSession('majitel');
+    expect(verifySession(uklid, 'uklid')).toBe(true);
+    expect(verifySession(uklid, 'majitel')).toBe(false);
+    expect(verifySession(majitel, 'majitel')).toBe(true);
+    expect(verifySession(majitel, 'uklid')).toBe(false);
+  });
+
+  it('stará cookie majitele bez role dál funguje, stará úklid ne', () => {
+    const key = process.env.PRUVODCE_TOKEN_SECRET!;
+    const exp = String(Date.now() + 60_000);
+    const stara = `${exp}.${createHmac('sha256', key).update(exp).digest('base64url')}`;
+    expect(verifySession(stara, 'majitel')).toBe(true);
+    expect(verifySession(stara, 'uklid')).toBe(false);
   });
 });
