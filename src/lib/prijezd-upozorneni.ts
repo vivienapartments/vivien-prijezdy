@@ -96,6 +96,8 @@ export async function upozorniPrijezd(
   const list = await store.listRezervace();
   let pocet = 0;
   for (const { id, record } of list) {
+    /** Ze seznamu, nebo co se v téže iteraci právě uložilo. Bez dalšího čtení. */
+    let aktualni = record;
     const hodinu = maUpozornitHodinu(record, now);
     const neznamy = !hodinu && maUpozornitNeznamy(record, now);
     if (hodinu || neznamy) {
@@ -106,18 +108,18 @@ export async function upozorniPrijezd(
         if ((hodinu && maUpozornitHodinu(cerstvy, now)) || (neznamy && maUpozornitNeznamy(cerstvy, now))) {
           const veta = jak === 'push' ? `Upozornění na telefon: ${text}` : `Upozornění e-mailem: ${text}`;
           const klic = klicPrijezdu(cerstvy);
-          await store.setRezervace(id, {
+          aktualni = {
             ...cerstvy,
             prijezdPushCas: hodinu && klic ? klic : cerstvy.prijezdPushCas,
             prijezdPushNeznamy: neznamy ? cerstvy.prijezd : cerstvy.prijezdPushNeznamy,
             historie: [...cerstvy.historie, { cas: now.toISOString(), co: veta }].slice(-40),
-          });
+          };
+          await store.setRezervace(id, aktualni);
           pocet += 1;
         }
       }
     }
 
-    const aktualni = (await store.getRezervace(id)) || record;
     if (maUpozornitDoklady(aktualni, now)) {
       const text = textDokladyPred(aktualni);
       const jak = await posli(store, text, `/prehled#${id}?zprava=doklady`);

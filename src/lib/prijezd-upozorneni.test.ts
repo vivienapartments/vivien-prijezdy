@@ -166,6 +166,32 @@ describe('upozornění 30 min před příjezdem (doklady)', () => {
     expect(aktualni.historie.at(-1)?.co).toContain('pošlete vzkaz s doklady');
     expect(await upozorniPrijezd(store, vOkne, async () => 'push')).toBe(0);
   });
+
+  it('bez okna upozornění nečte karty po jednom', async () => {
+    const karty = Array.from({ length: 50 }, (_, i) => ({
+      id: String(i + 1),
+      record: host({
+        rezervace: String(i + 1),
+        prijezd: '2026-11-01',
+        casPrijezdu: '18:00',
+      }),
+    }));
+    let getPocet = 0;
+    const store = {
+      async listRezervace() {
+        return karty;
+      },
+      async getRezervace() {
+        getPocet += 1;
+        return null;
+      },
+      async setRezervace() {
+        return undefined;
+      },
+    } as unknown as ProcessStore;
+    expect(await upozorniPrijezd(store, casVPraze(DEN, 12, 0), async () => 'push')).toBe(0);
+    expect(getPocet).toBe(0);
+  });
 });
 
 describe('e-mail se zprávou hostovi', () => {
