@@ -5,8 +5,10 @@ import { duvod, jeVyhrada, problemEmailu } from '@/lib/chyby';
 import { nightsBetween } from '@/lib/dates';
 import { jeRucniPole, maRucni, prevzitNavrh, zapisMajitele } from '@/lib/rucni-pole';
 import { jazykZPredvolby, normalizujTelefon, textTelefonu } from '@/lib/telefon';
-import { novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA } from '@/lib/priplatek-prijezd';
+import { CAS_PO_23, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA } from '@/lib/priplatek-prijezd';
 import { denPraha } from '@/lib/brana';
+import { isoPrahaZCasu } from '@/lib/prehled';
+import { CASY_VYBERU } from '@/lib/vstup-pruvodce';
 import { posliEmailZpravy, predmetZpravy } from '@/lib/email-zprava';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
@@ -295,13 +297,35 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'na-miste') {
-    const dalsi = pridej(rec, 'Host je na místě', { naMiste: new Date().toISOString() });
+    const surovyCas = typeof body?.cas === 'string' ? body.cas.trim() : '';
+    const den = rec.prijezd && /^\d{4}-\d{2}-\d{2}$/.test(rec.prijezd) ? rec.prijezd : denPraha(new Date());
+    let kdy = new Date().toISOString();
+    let popisek = 'Host je na místě';
+    if (surovyCas) {
+      const hhmm =
+        surovyCas === CAS_PO_23 || /^po\s*23/i.test(surovyCas)
+          ? '23:30'
+          : (CASY_VYBERU as readonly string[]).includes(surovyCas)
+            ? surovyCas
+            : /^\d{2}:\d{2}$/.test(surovyCas)
+              ? surovyCas
+              : null;
+      if (!hhmm) return chyba(400, 'Neplatný čas příjezdu.');
+      const iso = isoPrahaZCasu(den, hhmm);
+      if (!iso) return chyba(400, 'Čas příjezdu se nepodařilo uložit.');
+      kdy = iso;
+      popisek =
+        surovyCas === CAS_PO_23 || /^po\s*23/i.test(surovyCas)
+          ? 'Skutečný příjezd po 23:00'
+          : `Skutečný příjezd ${hhmm}`;
+    }
+    const dalsi = pridej(rec, popisek, { naMiste: kdy });
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, naMiste: dalsi.naMiste }, { headers: noStore });
   }
 
   if (akce === 'zrusit-na-miste') {
-    const dalsi = pridej(rec, 'Vrácen čas na místě', { naMiste: null });
+    const dalsi = pridej(rec, 'Vrácen skutečný příjezd', { naMiste: null });
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, naMiste: null }, { headers: noStore });
   }

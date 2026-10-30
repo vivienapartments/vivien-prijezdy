@@ -635,6 +635,114 @@
   display: none;
 }
 
+.ph button.ph-sekce-vse {
+  display: block;
+  width: 100%;
+  margin: 0.35rem 0 0.15rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px dashed color-mix(in srgb, var(--color-gold) 45%, var(--pv-line));
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-gold);
+  font-size: 0.88rem;
+  font-weight: 650;
+  text-align: center;
+}
+
+.ph-skutecny {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.35rem 0;
+  font-size: 0.88rem;
+  color: var(--pv-ink);
+}
+
+.ph-skutecny select {
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--pv-line);
+  background: #1a1512;
+  color: var(--pv-ink);
+  font: inherit;
+}
+
+.ph-skutecny__hint {
+  font-size: 0.78rem;
+  color: var(--pv-muted);
+  line-height: 1.35;
+}
+
+.ph-sekce {
+  margin: 0.45rem 0 0;
+  border: 1px solid var(--pv-line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--pv-surface) 88%, #000);
+  overflow: hidden;
+}
+
+.ph-sekce.is-open {
+  border-color: color-mix(in srgb, var(--color-gold) 35%, var(--pv-line));
+}
+
+.ph button.ph-sekce__hlava {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--pv-ink);
+  font-size: 0.92rem;
+  font-weight: 650;
+  text-align: left;
+}
+
+.ph-sekce__leva {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.ph-sekce__nazev {
+  color: var(--color-gold);
+}
+
+.ph-sekce__drobek {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--pv-muted);
+  overflow-wrap: anywhere;
+}
+
+.ph-sekce__sipka {
+  flex-shrink: 0;
+  color: var(--color-gold);
+}
+
+.ph-sekce__telo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0 0.75rem 0.75rem;
+  border-top: 1px solid var(--pv-line);
+}
+
+.ph-sekce__telo > .ph-znovu,
+.ph-sekce__telo > .ph-soucet,
+.ph-sekce__telo > .ph-menu,
+.ph-sekce__telo > .ph-parkovani,
+.ph-sekce__telo > .ph-parkovani-detail {
+  margin-top: 0.35rem;
+}
+
 .ph-znovu {
   grid-column: 1 / -1;
   display: flex;

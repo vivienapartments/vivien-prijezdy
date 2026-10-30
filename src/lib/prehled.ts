@@ -558,6 +558,42 @@ export function hodinaPraha(iso: string): string {
   return `${hod}:${min}`;
 }
 
+/**
+ * ISO okamžik, který v Praze padne na daný den a čas (YYYY-MM-DD + HH:MM).
+ * Pro výběr skutečného příjezdu v přehledu.
+ */
+export function isoPrahaZCasu(ymd: string, hhmm: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd) || !/^\d{2}:\d{2}$/.test(hhmm)) return null;
+  const [y, mo, d] = ymd.split('-').map(Number);
+  const [h, mi] = hhmm.split(':').map(Number);
+  if (![y, mo, d, h, mi].every((n) => Number.isFinite(n))) return null;
+  let utc = Date.UTC(y, mo - 1, d, h, mi);
+  for (let i = 0; i < 4; i++) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Prague',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(new Date(utc));
+    const get = (typ: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === typ)?.value || '';
+    const gy = Number(get('year'));
+    const gm = Number(get('month'));
+    const gd = Number(get('day'));
+    const gh = Number(get('hour'));
+    const gmin = Number(get('minute'));
+    if (gy === y && gm === mo && gd === d && gh === h && gmin === mi) {
+      return new Date(utc).toISOString();
+    }
+    const want = Date.UTC(y, mo - 1, d, h, mi);
+    const got = Date.UTC(gy, gm - 1, gd, gh, gmin);
+    utc += want - got;
+  }
+  return new Date(utc).toISOString();
+}
+
 export function textOtevreni(
   pocet: number | null,
   naposled: string | null,

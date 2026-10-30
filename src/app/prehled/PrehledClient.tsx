@@ -6,6 +6,7 @@ import apartmanyJson from '@/data/apartmany.json';
 import {
   casPraha,
   hodinaPraha,
+  isoPrahaZCasu,
   nabidnoutOdeslani,
   dotazPredOdeslanimZnovu,
   textTlacitkaOdeslani,
@@ -27,7 +28,17 @@ import {
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
-import { popisekCasu, novyVyjezd, vratPosledniVyjezd, VYJEZD_CASTKA, CEKANI_MINUT, type VyjezdPolozka } from '@/lib/priplatek-prijezd';
+import {
+  CAS_PO_23,
+  popisekCasu,
+  novyVyjezd,
+  priplatekProCas,
+  vratPosledniVyjezd,
+  VYJEZD_CASTKA,
+  CEKANI_MINUT,
+  type VyjezdPolozka,
+} from '@/lib/priplatek-prijezd';
+import { CASY_VYBERU } from '@/lib/vstup-pruvodce';
 import { normalizujTelefon, textTelefonu } from '@/lib/telefon';
 import { langFromNarodnost } from '@/lib/vivien-data';
 import {
@@ -71,6 +82,56 @@ function stitekDneKarty(prijezd: string | null, dnesDen: string): string {
   const casti = prijezd.split('-');
   if (casti.length !== 3) return prijezd;
   return `${Number(casti[2])}.\u00A0${Number(casti[1])}.`;
+}
+
+type DetailSekceId =
+  | 'kontakt'
+  | 'casy'
+  | 'predani'
+  | 'parkovani'
+  | 'pruvodce'
+  | 'penize'
+  | 'rezervace'
+  | 'historie';
+
+const DETAIL_SEKCE_VSE: DetailSekceId[] = [
+  'kontakt',
+  'casy',
+  'predani',
+  'parkovani',
+  'pruvodce',
+  'penize',
+  'rezervace',
+  'historie',
+];
+
+function DetailSekce({
+  nazev,
+  drobek,
+  otevreno,
+  onToggle,
+  children,
+}: {
+  nazev: string;
+  drobek?: string | null;
+  otevreno: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`ph-sekce${otevreno ? ' is-open' : ''}`}>
+      <button type="button" className="ph-sekce__hlava" aria-expanded={otevreno} onClick={onToggle}>
+        <span className="ph-sekce__leva">
+          <span className="ph-sekce__nazev">{nazev}</span>
+          {drobek ? <span className="ph-sekce__drobek">{drobek}</span> : null}
+        </span>
+        <span className="ph-sekce__sipka" aria-hidden="true">
+          {otevreno ? '▴' : '▾'}
+        </span>
+      </button>
+      {otevreno ? <div className="ph-sekce__telo">{children}</div> : null}
+    </div>
+  );
 }
 
 type Stav = PrehledRadek['stav'];
@@ -295,6 +356,8 @@ export function PrehledClient({
   const [dotazPohoda, setDotazPohoda] = useState<string | null>(null);
   const [dotazPrestoPrijezd, setDotazPrestoPrijezd] = useState<string | null>(null);
   const [poplatekOtevren, setPoplatekOtevren] = useState<Record<string, boolean>>({});
+  /** V detailu karty: které skupiny jsou rozbalené (může jich být víc, včetně všech). */
+  const [detailSekce, setDetailSekce] = useState<Record<string, DetailSekceId[]>>({});
   const [hledatDotaz, setHledatDotaz] = useState('');
   const [kontaktUlozen, setKontaktUlozen] = useState<Record<string, string>>({});
 
@@ -312,6 +375,11 @@ export function PrehledClient({
     }
   }, []);
 
+  function rozbalDetailKarty(cislo: string) {
+    setRozbalene((prev) => ({ ...prev, [cislo]: true }));
+    setDetailSekce((prev) => ({ ...prev, [cislo]: [...DETAIL_SEKCE_VSE] }));
+  }
+
   function otevriKartu(id: string) {
     const cislo = id.trim();
     if (!cislo || cislo === 'pohoda' || cislo.startsWith('odjezdy')) return;
@@ -324,7 +392,7 @@ export function PrehledClient({
       }
     });
     setVybrana(cislo);
-    setRozbalene((prev) => ({ ...prev, [cislo]: true }));
+    rozbalDetailKarty(cislo);
     setZalozka('hledat');
     try {
       if (typeof window !== 'undefined' && window.location.hash !== `#${cislo}`) {
@@ -427,7 +495,7 @@ export function PrehledClient({
         }
       });
       setVybrana(raw);
-      setRozbalene((prev) => ({ ...prev, [raw]: true }));
+      rozbalDetailKarty(raw);
       setZalozka('hledat');
     }
     zHash();
@@ -1282,9 +1350,25 @@ export function PrehledClient({
     return row.priplatekRucni;
   }
 
-  async function ulozNaMiste(row: PrehledRadek, zapnout: boolean) {
+  async function ulozNaMiste(row: PrehledRadek, zapnout: boolean, cas?: string) {
     if (ukazka) {
-      setNaMisteStav((prev) => ({ ...prev, [row.rezervace]: zapnout ? new Date().toISOString() : null }));
+      if (!zapnout) {
+        setNaMisteStav((prev) => ({ ...prev, [row.rezervace]: null }));
+        return;
+      }
+      const den = row.prijezd && /^\d{4}-\d{2}-\d{2}$/.test(row.prijezd) ? row.prijezd : dnes;
+      const hhmm =
+        cas === CAS_PO_23 || (cas && /^po\s*23/i.test(cas))
+          ? '23:30'
+          : cas && /^\d{2}:\d{2}$/.test(cas)
+            ? cas
+            : null;
+      if (hhmm) {
+        const iso = isoPrahaZCasu(den, hhmm);
+        setNaMisteStav((prev) => ({ ...prev, [row.rezervace]: iso || new Date().toISOString() }));
+      } else {
+        setNaMisteStav((prev) => ({ ...prev, [row.rezervace]: new Date().toISOString() }));
+      }
       return;
     }
     setCekam(`${row.rezervace}:miste`);
@@ -1292,12 +1376,16 @@ export function PrehledClient({
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rezervace: row.rezervace, akce: zapnout ? 'na-miste' : 'zrusit-na-miste' }),
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce: zapnout ? 'na-miste' : 'zrusit-na-miste',
+        ...(zapnout && cas ? { cas } : {}),
+      }),
     });
     const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; naMiste?: string | null } | null;
     setCekam(null);
     if (!res.ok || !json?.ok) {
-      setHlaska(json?.error || 'Čas na místě se neuložil.');
+      setHlaska(json?.error || 'Skutečný příjezd se neuložil.');
       return;
     }
     setNaMisteStav((prev) => ({ ...prev, [row.rezervace]: json.naMiste ?? null }));
@@ -1967,18 +2055,41 @@ export function PrehledClient({
         </button>
       </div>
     ) : null;
-    const namisteTlacitko = naMisteKdy ? (
-      <div className="ph-namiste">
-        Host je na místě <span className="ph-soucet__kc">{hodinaPraha(naMisteKdy)}</span>
-        {' · '}
-        <button type="button" onClick={() => void ulozNaMiste(row, false)}>
-          Vrátit
-        </button>
-      </div>
-    ) : (
-      <button type="button" className="ph-predano" onClick={() => void ulozNaMiste(row, true)}>
-        Host je na místě
-      </button>
+    const skutecnyVolba = naMisteKdy
+      ? (() => {
+          const h = hodinaPraha(naMisteKdy);
+          if (!h) return '';
+          const [hh, mm] = h.split(':').map(Number);
+          if (hh > 23 || (hh === 23 && mm > 0)) return CAS_PO_23;
+          return h;
+        })()
+      : '';
+    const skutecnyPrijezdPole = (
+      <label className="ph-skutecny">
+        Skutečný příjezd
+        <select
+          value={skutecnyVolba}
+          disabled={cekam !== null}
+          aria-label="Skutečný příjezd pro příplatek"
+          onChange={(e) => {
+            const v = e.target.value;
+            if (!v) void ulozNaMiste(row, false);
+            else void ulozNaMiste(row, true, v);
+          }}
+        >
+          <option value="">Zvolte čas</option>
+          {CASY_VYBERU.map((hodina) => {
+            const kc = priplatekProCas(hodina);
+            return (
+              <option key={hodina} value={hodina}>
+                {kc ? `${hodina} · +${kc} Kč` : `${hodina} · bez příplatku`}
+              </option>
+            );
+          })}
+          <option value={CAS_PO_23}>po 23:00 · po domluvě</option>
+        </select>
+        <span className="ph-skutecny__hint">Pro příplatek. Domluvený čas zůstává u Časů.</span>
+      </label>
     );
     const platbaCastkaText =
       sumaNezap > 0
@@ -2537,196 +2648,18 @@ export function PrehledClient({
           type="button"
           className="ph-nova-more"
           aria-expanded={rozbaleno}
-          onClick={() => setRozbalene((prev) => ({ ...prev, [row.rezervace]: !prev[row.rezervace] }))}
+          onClick={() => {
+            if (rozbaleno) {
+              setRozbalene((prev) => ({ ...prev, [row.rezervace]: false }));
+            } else {
+              rozbalDetailKarty(row.rezervace);
+            }
+          }}
         >
-          <span>{rozbaleno ? 'Skrýt všechny údaje a akce' : 'Zobrazit všechny údaje a akce'}</span>
+          <span>{rozbaleno ? 'Skrýt další údaje' : 'Další údaje'}</span>
           <span aria-hidden="true">{rozbaleno ? '▴' : '▾'}</span>
         </button>
         <div className="ph-detail">
-          {ukazZavady ? zavadyBlok : null}
-          {!jazykNahore ? blokOdeslani : null}
-          {staly?.predchozi?.length ? (
-            <div className="ph-staly-predchozi">
-              <p>Předchozí pobyty</p>
-              <ul>
-                {staly.predchozi.map((p) => (
-                  <li key={p.rezervace}>
-                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(p.rezervace)}>
-                      {(p.apartman || 'Apartmán') +
-                        ' · ' +
-                        (p.prijezd || '?') +
-                        (p.odjezd ? `–${p.odjezd}` : '')}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-          {row.jinyTelefonKtery ? (
-            <PoleSUlozenim
-              key={`${row.rezervace}-druhe`}
-              label="Druhé číslo"
-              hodnota={row.jinyTelefonText || ''}
-              vstup={{ type: 'tel', inputMode: 'tel', autoComplete: 'tel' }}
-              onUloz={(text) => ulozTelefon(row, row.jinyTelefonKtery || 'rezervace', text)}
-            />
-          ) : null}
-          {row.jinyTelefonKtery && row.jinyTelefonNejisty ? (
-            <div className="ph-predvolba">
-              Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
-            </div>
-          ) : null}
-          {row.zpusobPrijezdu === 'auto' && (row.telefonBrana || row.spz || row.spzPujcene) ? (
-            <div className={`ph-brana${row.branaRegistrovano ? ' ph-brana--ano' : ' ph-brana--ne'}`}>
-              Brána {row.telefonBrana ? textTelefonu(row.telefonBrana) : 'bez telefonu'}
-              {' · '}
-              {row.spzPujcene ? 'SPZ později' : row.spz ? `SPZ ${row.spz.length > 4 ? `${row.spz.slice(0, -4)} ${row.spz.slice(-4)}` : row.spz}` : 'bez SPZ'}
-            </div>
-          ) : null}
-          {dil.radek}
-          {branaZTile[row.rezervace] || cekajici === 'registrace' || cekajici === 'odpoved'
-            ? null
-            : dil.registrace}
-          {branaZTile[row.rezervace] || cekajici === 'registrace' || cekajici === 'odpoved'
-            ? null
-            : dil.odpoved}
-          {dil.detail}
-          {!row.pruvodceOdemcen ? (
-            <button
-              type="button"
-              className="ph-predano"
-              disabled={cekam !== null}
-              onClick={() => setDotazDalsi({ id: row.rezervace, druh: 'odemknout' })}
-            >
-              Odemknout průvodce
-            </button>
-          ) : (
-            <div className="ph-pruvodce ph-pruvodce--ano">Průvodce je odemčený</div>
-          )}
-          {dotazDalsi?.id === row.rezervace ? (
-            <div className="ph-predano-dotaz">
-              <p>Opravdu odemknout celý průvodce? Kódy se tím neotevřou.</p>
-              <button
-                type="button"
-                disabled={cekam !== null}
-                onClick={() => {
-                  const druh = dotazDalsi.druh;
-                  setDotazDalsi(null);
-                  if (ukazka) {
-                    setRadky((prev) =>
-                      prev.map((r) =>
-                        r.rezervace === row.rezervace
-                          ? { ...r, pruvodceOdemcen: new Date().toISOString() }
-                          : r,
-                      ),
-                    );
-                    return;
-                  }
-                  void volat(row, druh);
-                }}
-              >
-                Ano
-              </button>
-              <button type="button" onClick={() => setDotazDalsi(null)}>
-                Zrušit
-              </button>
-            </div>
-          ) : null}
-          {namisteTlacitko}
-          {!telefonNahore ? telefonPole(row) : null}
-          {casPole}
-          {odjezdPole}
-          {zpravyNahore ? null : (
-            <>
-              {zpravaRamecek}
-              {akceZpravy}
-            </>
-          )}
-          {row.prevzatoKdy ? (
-            <button type="button" className="ph-predano" onClick={() => setDotazVratitOdjezd(row.rezervace)}>
-              Vrátit odjezd
-            </button>
-          ) : null}
-          {dotazVratitOdjezd === row.rezervace ? (
-            <div className="ph-predano-dotaz">
-              <p>Vrátit hosta mezi odjezdy?</p>
-              <button
-                type="button"
-                onClick={() => {
-                  setDotazVratitOdjezd(null);
-                  if (ukazka) {
-                    poPrevzeti(row.rezervace, null);
-                    return;
-                  }
-                  void fetch('/api/prehled/akce', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ rezervace: row.rezervace, akce: 'vratit-odjezd' }),
-                  }).then((res) => {
-                    if (res.ok) poPrevzeti(row.rezervace, null);
-                  });
-                }}
-              >
-                Ano, vrátit
-              </button>
-              <button type="button" onClick={() => setDotazVratitOdjezd(null)}>
-                Zrušit
-              </button>
-            </div>
-          ) : null}
-          {predaniNahore ? null : (
-            <>
-              {predaniTlacitko}
-              {predaniDotaz}
-            </>
-          )}
-          {row.poplatek === 'neznamo' && !row.poplatekOdhad ? (
-            <span className="ph-poplatek-volba">
-              <button type="button" disabled={cekam !== null} onClick={() => zvolPoplatek(row, 'ano')}>
-                Vybírat
-              </button>
-              <button type="button" disabled={cekam !== null} onClick={() => zvolPoplatek(row, 'ne')}>
-                V ceně
-              </button>
-            </span>
-          ) : null}
-          <button
-            type="button"
-            className="ph-predano"
-            disabled={cekam !== null}
-            onClick={() => setDotazVyjezdu({ id: row.rezervace, druh: 'pridat' })}
-          >
-            Opakovaný výjezd
-          </button>
-          {jizdy.length ? (
-            <button
-              type="button"
-              className="ph-predano"
-              disabled={cekam !== null}
-              onClick={() => setDotazVyjezdu({ id: row.rezervace, druh: 'vratit' })}
-            >
-              Vrátit výjezd
-            </button>
-          ) : null}
-          {dotazVyjezdu?.id === row.rezervace ? (
-            <div className="ph-predano-dotaz">
-              <p>
-                {dotazVyjezdu.druh === 'pridat'
-                  ? `Host nedorazil do ${CEKANI_MINUT} minut po domluveném čase. Započítat ${VYJEZD_CASTKA} Kč?`
-                  : `Opravdu vrátit poslední výjezd? Částka ${jizdy[jizdy.length - 1]?.castka ?? VYJEZD_CASTKA} Kč se odečte.`}
-              </p>
-              <button type="button" disabled={cekam !== null} onClick={() => ulozVyjezd(row, dotazVyjezdu.druh === 'pridat')}>
-                {dotazVyjezdu.druh === 'pridat' ? 'Ano, započítat' : 'Ano, vrátit'}
-              </button>
-              <button type="button" onClick={() => setDotazVyjezdu(null)}>
-                Zrušit
-              </button>
-            </div>
-          ) : null}
-          {kontaktNahore ? null : tlacitkoKontakt}
-          <a className="ph-hostuv-pruvodce" href={odkazPruvodceMajitele(row.rezervace, ukazka)}>
-            Průvodce hosta
-          </a>
           {row.navrhy.map((n) => (
             <p key={n.pole} className="ph-navrh">
               {n.veta}
@@ -2736,115 +2669,460 @@ export function PrehledClient({
               </button>
             </p>
           ))}
-          {soucetPole}
-          {row.souhlasZneni ? (
-            <div className="ph-souhlas-zneni">
-              <p>Znění, které host odsouhlasil</p>
-              <p>{row.souhlasZneni}</p>
-            </div>
-          ) : null}
-          <div className="ph-cell ph-cell--host" data-label="Host">
-            <div className="ph-mail">
-              <Pole text={row.email} />
-            </div>
-            {row.vlajka || row.jazykText ? (
-              <div className="ph-jazyk">
-                {row.vlajka ? <span className="ph-vlajka">{row.vlajka}</span> : null}
-                <Pole text={row.jazykText} />
-              </div>
-            ) : null}
-            {row.zdrojText ? (
-              <div className="ph-zdroj">
-                <Pole text={row.zdrojText} />
-              </div>
-            ) : null}
-            {row.telefonPuvodni ? <div className="ph-puvodni">napsáno {row.telefonPuvodni}</div> : null}
-            {row.telefonNejisty ? (
-              <div className="ph-predvolba">
-                Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
-              </div>
-            ) : null}
-            {row.jinyTelefonText ? (
-              <div className="ph-tel-jiny">
-                jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
-                {row.jinyTelefonPuvodni ? <span className="ph-puvodni"> napsáno {row.jinyTelefonPuvodni}</span> : null}
-                {row.jinyTelefonNejisty ? (
-                  <div className="ph-predvolba">
-                    Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+          {(() => {
+            const otevrene = detailSekce[row.rezervace] || [];
+            const jeOtevrena = (id: DetailSekceId) => otevrene.includes(id);
+            const vseOtevrene = DETAIL_SEKCE_VSE.every((id) => otevrene.includes(id));
+            const prepni = (id: DetailSekceId) =>
+              setDetailSekce((prev) => {
+                const cur = prev[row.rezervace] || [];
+                return {
+                  ...prev,
+                  [row.rezervace]: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id],
+                };
+              });
+            const telDrobek = row.telefonText || row.jinyTelefonText || 'bez čísla';
+            const pobytDrobek = staly && staly.poradi > 1 ? `${staly.poradi}. pobyt` : null;
+            const kontaktDrobek = [telDrobek, pobytDrobek].filter(Boolean).join(' · ');
+            const casDrobek = [
+              casAktualni ? `příjezd ${casAktualni}` : 'bez času',
+              odjezdCas ? `odjezd ${odjezdCas}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ');
+            const parkDrobek =
+              row.zpusobPrijezdu === 'pesky'
+                ? 'pěšky'
+                : row.zpusobPrijezdu === 'auto'
+                  ? row.branaRegistrovano
+                    ? 'brána zapsaná'
+                    : 'brána nehotová'
+                  : 'způsob neznámý';
+            const pruvodceDrobek = jazykZnamy ? jazykText : 'jazyk chybí';
+            const penizeDrobek = platbaHotovo
+              ? 'uhrazeno'
+              : sumaNezap
+                ? `${sumaNezap}\u00A0Kč`
+                : 'bez dluhu';
+            const historieDrobek = row.historie.length
+              ? `${row.historie.length} záznam${row.historie.length === 1 ? '' : row.historie.length < 5 ? 'y' : 'ů'}`
+              : 'prázdná';
+            const predaniDrobek = predanoKdy
+              ? `předáno${hodinaPraha(predanoKdy) ? ` ${hodinaPraha(predanoKdy)}` : ''}`
+              : 'ještě nepředáno';
+            const zavadyDrobek = zavady || zavadyPo ? 'jsou závady' : 'bez závad';
+            return (
+              <>
+                <button
+                  type="button"
+                  className="ph-sekce-vse"
+                  onClick={() =>
+                    setDetailSekce((prev) => ({
+                      ...prev,
+                      [row.rezervace]: vseOtevrene ? [] : [...DETAIL_SEKCE_VSE],
+                    }))
+                  }
+                >
+                  {vseOtevrene ? 'Sbalit vše' : 'Rozbalit vše'}
+                </button>
+                <DetailSekce
+                  nazev="Kontakt"
+                  drobek={kontaktDrobek}
+                  otevreno={jeOtevrena('kontakt')}
+                  onToggle={() => prepni('kontakt')}
+                >
+                  {!telefonNahore ? telefonPole(row) : null}
+                  {row.jinyTelefonKtery ? (
+                    <PoleSUlozenim
+                      key={`${row.rezervace}-druhe`}
+                      label="Druhé číslo"
+                      hodnota={row.jinyTelefonText || ''}
+                      vstup={{ type: 'tel', inputMode: 'tel', autoComplete: 'tel' }}
+                      onUloz={(text) => ulozTelefon(row, row.jinyTelefonKtery || 'rezervace', text)}
+                    />
+                  ) : null}
+                  {row.jinyTelefonKtery && row.jinyTelefonNejisty ? (
+                    <div className="ph-predvolba">
+                      Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+                    </div>
+                  ) : null}
+                  {row.telefonPuvodni ? <div className="ph-puvodni">napsáno {row.telefonPuvodni}</div> : null}
+                  {row.telefonNejisty ? (
+                    <div className="ph-predvolba">
+                      Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+                    </div>
+                  ) : null}
+                  {row.jinyTelefonText && !row.jinyTelefonKtery ? (
+                    <div className="ph-tel-jiny">
+                      jiné číslo z rezervace: <span className="ph-tel">{row.jinyTelefonText}</span>
+                      {row.jinyTelefonPuvodni ? (
+                        <span className="ph-puvodni"> napsáno {row.jinyTelefonPuvodni}</span>
+                      ) : null}
+                      {row.jinyTelefonNejisty ? (
+                        <div className="ph-predvolba">
+                          Doplňte předvolbu, např. <span className="ph-tel">+34&nbsp;612&nbsp;345&nbsp;678</span>
+                        </div>
+                      ) : null}
+                      {row.jinyTelefonWa && row.telefonWa && row.jinyTelefonWa !== row.telefonWa ? (
+                        <TlacitkoWhatsApp
+                          className="ph-wa--maly"
+                          wa={row.jinyTelefonWa}
+                          zprava={zpravaRadku(row)}
+                          userAgent={userAgent}
+                        />
+                      ) : null}
+                    </div>
+                  ) : null}
+                  <div className="ph-mail">
+                    <Pole text={row.email} />
                   </div>
-                ) : null}
-                {row.jinyTelefonWa && row.telefonWa && row.jinyTelefonWa !== row.telefonWa ? (
-                  <TlacitkoWhatsApp
-                    className="ph-wa--maly"
-                    wa={row.jinyTelefonWa}
-                    zprava={zpravaRadku(row)}
-                    userAgent={userAgent}
+                  {staly && staly.poradi > 1 ? (
+                    <p className="ph-staly">
+                      U nás {staly.poradi}. pobyt
+                      {staly.predchozi.length
+                        ? ` · předtím ${staly.predchozi.length}×`
+                        : null}
+                    </p>
+                  ) : null}
+                  {row.telefonText || row.jinyTelefonText ? (
+                    <a
+                      className="ph-wa"
+                      href={`tel:${String(row.telefonText || row.jinyTelefonText).replace(/\s+/g, '')}`}
+                    >
+                      Zavolat
+                    </a>
+                  ) : null}
+                  {kontaktNahore ? null : tlacitkoKontakt}
+                </DetailSekce>
+
+                <DetailSekce
+                  nazev="Časy"
+                  drobek={casDrobek}
+                  otevreno={jeOtevrena('casy')}
+                  onToggle={() => prepni('casy')}
+                >
+                  {casPole}
+                  {odjezdPole}
+                  <div className="ph-cell" data-label="Termín">
+                    <Pole text={row.termin} />
+                  </div>
+                  {row.prevzatoKdy ? (
+                    <button
+                      type="button"
+                      className="ph-predano"
+                      onClick={() => setDotazVratitOdjezd(row.rezervace)}
+                    >
+                      Vrátit odjezd
+                    </button>
+                  ) : null}
+                  {dotazVratitOdjezd === row.rezervace ? (
+                    <div className="ph-predano-dotaz">
+                      <p>Vrátit hosta mezi odjezdy?</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDotazVratitOdjezd(null);
+                          if (ukazka) {
+                            poPrevzeti(row.rezervace, null);
+                            return;
+                          }
+                          void fetch('/api/prehled/akce', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ rezervace: row.rezervace, akce: 'vratit-odjezd' }),
+                          }).then((res) => {
+                            if (res.ok) poPrevzeti(row.rezervace, null);
+                          });
+                        }}
+                      >
+                        Ano, vrátit
+                      </button>
+                      <button type="button" onClick={() => setDotazVratitOdjezd(null)}>
+                        Zrušit
+                      </button>
+                    </div>
+                  ) : null}
+                  <p className="ph-hlaska">Skutečný příjezd pro příplatek je u Peněz.</p>
+                </DetailSekce>
+
+                <DetailSekce
+                  nazev="Předání"
+                  drobek={`${predaniDrobek} · ${zavadyDrobek}`}
+                  otevreno={jeOtevrena('predani')}
+                  onToggle={() => prepni('predani')}
+                >
+                  {predaniNahore ? null : (
+                    <>
+                      {predaniTlacitko}
+                      {predaniDotaz}
+                    </>
+                  )}
+                  {predaniNahore ? (
+                    <p className="ph-hlaska">Předat apartmán je nahoře na kartě.</p>
+                  ) : null}
+                  {ukazZavady ? zavadyBlok : <p className="ph-hlaska">Zatím bez závad.</p>}
+                </DetailSekce>
+
+                <DetailSekce
+                  nazev="Parkování"
+                  drobek={parkDrobek}
+                  otevreno={jeOtevrena('parkovani')}
+                  onToggle={() => prepni('parkovani')}
+                >
+                  {row.zpusobPrijezdu === 'auto' && (row.telefonBrana || row.spz || row.spzPujcene) ? (
+                    <div className={`ph-brana${row.branaRegistrovano ? ' ph-brana--ano' : ' ph-brana--ne'}`}>
+                      Brána {row.telefonBrana ? textTelefonu(row.telefonBrana) : 'bez telefonu'}
+                      {' · '}
+                      {row.spzPujcene
+                        ? 'SPZ později'
+                        : row.spz
+                          ? `SPZ ${row.spz.length > 4 ? `${row.spz.slice(0, -4)} ${row.spz.slice(-4)}` : row.spz}`
+                          : 'bez SPZ'}
+                    </div>
+                  ) : null}
+                  {dil.radek}
+                  {branaZTile[row.rezervace] || cekajici === 'registrace' || cekajici === 'odpoved'
+                    ? null
+                    : dil.registrace}
+                  {branaZTile[row.rezervace] || cekajici === 'registrace' || cekajici === 'odpoved'
+                    ? null
+                    : dil.odpoved}
+                  {dil.detail}
+                </DetailSekce>
+
+                <DetailSekce
+                  nazev="Průvodce"
+                  drobek={pruvodceDrobek}
+                  otevreno={jeOtevrena('pruvodce')}
+                  onToggle={() => prepni('pruvodce')}
+                >
+                  {!jazykNahore ? blokOdeslani : null}
+                  {!row.pruvodceOdemcen ? (
+                    <button
+                      type="button"
+                      className="ph-predano"
+                      disabled={cekam !== null}
+                      onClick={() => setDotazDalsi({ id: row.rezervace, druh: 'odemknout' })}
+                    >
+                      Odemknout průvodce
+                    </button>
+                  ) : (
+                    <div className="ph-pruvodce ph-pruvodce--ano">Průvodce je odemčený</div>
+                  )}
+                  {dotazDalsi?.id === row.rezervace ? (
+                    <div className="ph-predano-dotaz">
+                      <p>Opravdu odemknout celý průvodce? Kódy se tím neotevřou.</p>
+                      <button
+                        type="button"
+                        disabled={cekam !== null}
+                        onClick={() => {
+                          const druh = dotazDalsi.druh;
+                          setDotazDalsi(null);
+                          if (ukazka) {
+                            setRadky((prev) =>
+                              prev.map((r) =>
+                                r.rezervace === row.rezervace
+                                  ? { ...r, pruvodceOdemcen: new Date().toISOString() }
+                                  : r,
+                              ),
+                            );
+                            return;
+                          }
+                          void volat(row, druh);
+                        }}
+                      >
+                        Ano
+                      </button>
+                      <button type="button" onClick={() => setDotazDalsi(null)}>
+                        Zrušit
+                      </button>
+                    </div>
+                  ) : null}
+                  <PoleSUlozenim
+                    key={`${row.rezervace}-checkin`}
+                    label="Odkaz na check-in"
+                    hodnota={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
+                    vstup={{ autoComplete: 'off', placeholder: 'https://' }}
+                    onUloz={(text) => ulozOdkaz(row, text)}
                   />
-                ) : null}
-              </div>
-            ) : null}
-            <>
-                <PoleSUlozenim
-                  key={`${row.rezervace}-checkin`}
-                  label="Odkaz na check-in"
-                  hodnota={odkazy[row.rezervace] ?? row.checkinUrl ?? ''}
-                  vstup={{ autoComplete: 'off', placeholder: 'https://' }}
-                  onUloz={(text) => ulozOdkaz(row, text)}
-                />
-                {odkazy[row.rezervace] || row.checkinUrl ? (
+                  {odkazy[row.rezervace] || row.checkinUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = odkazy[row.rezervace] || row.checkinUrl || '';
+                        if (url) void navigator.clipboard.writeText(url);
+                      }}
+                    >
+                      Zkopírovat odkaz
+                    </button>
+                  ) : null}
+                  <a className="ph-hostuv-pruvodce" href={odkazPruvodceMajitele(row.rezervace, ukazka)}>
+                    Průvodce hosta
+                  </a>
+                  {zpravyNahore ? null : (
+                    <>
+                      {zpravaRamecek}
+                      {akceZpravy}
+                    </>
+                  )}
+                  {row.stav !== 'bez_checkinu' ? (
+                    <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
+                      Zkopírovat odkaz na průvodce
+                    </button>
+                  ) : null}
+                </DetailSekce>
+
+                <DetailSekce
+                  nazev="Peníze"
+                  drobek={
+                    skutecnyVolba
+                      ? `${penizeDrobek} · skutečný ${skutecnyVolba === CAS_PO_23 ? 'po 23:00' : skutecnyVolba}`
+                      : `${penizeDrobek} · skutečný čas chybí`
+                  }
+                  otevreno={jeOtevrena('penize')}
+                  onToggle={() => prepni('penize')}
+                >
+                  {skutecnyPrijezdPole}
+                  {row.poplatek === 'neznamo' && !row.poplatekOdhad ? (
+                    <span className="ph-poplatek-volba">
+                      <button type="button" disabled={cekam !== null} onClick={() => zvolPoplatek(row, 'ano')}>
+                        Vybírat
+                      </button>
+                      <button type="button" disabled={cekam !== null} onClick={() => zvolPoplatek(row, 'ne')}>
+                        V ceně
+                      </button>
+                    </span>
+                  ) : null}
+                  {soucetPole}
                   <button
                     type="button"
-                    onClick={() => {
-                      const url = odkazy[row.rezervace] || row.checkinUrl || '';
-                      if (url) void navigator.clipboard.writeText(url);
-                    }}
+                    className="ph-predano"
+                    disabled={cekam !== null}
+                    onClick={() => setDotazVyjezdu({ id: row.rezervace, druh: 'pridat' })}
                   >
-                    Zkopírovat odkaz
+                    Opakovaný výjezd
                   </button>
-                ) : null}
+                  {jizdy.length ? (
+                    <button
+                      type="button"
+                      className="ph-predano"
+                      disabled={cekam !== null}
+                      onClick={() => setDotazVyjezdu({ id: row.rezervace, druh: 'vratit' })}
+                    >
+                      Vrátit výjezd
+                    </button>
+                  ) : null}
+                  {dotazVyjezdu?.id === row.rezervace ? (
+                    <div className="ph-predano-dotaz">
+                      <p>
+                        {dotazVyjezdu.druh === 'pridat'
+                          ? `Host nedorazil do ${CEKANI_MINUT} minut po domluveném čase. Započítat ${VYJEZD_CASTKA} Kč?`
+                          : `Opravdu vrátit poslední výjezd? Částka ${jizdy[jizdy.length - 1]?.castka ?? VYJEZD_CASTKA} Kč se odečte.`}
+                      </p>
+                      <button
+                        type="button"
+                        disabled={cekam !== null}
+                        onClick={() => ulozVyjezd(row, dotazVyjezdu.druh === 'pridat')}
+                      >
+                        {dotazVyjezdu.druh === 'pridat' ? 'Ano, započítat' : 'Ano, vrátit'}
+                      </button>
+                      <button type="button" onClick={() => setDotazVyjezdu(null)}>
+                        Zrušit
+                      </button>
+                    </div>
+                  ) : null}
+                </DetailSekce>
+
+                <DetailSekce
+                  nazev="Rezervace"
+                  drobek={row.rezervace}
+                  otevreno={jeOtevrena('rezervace')}
+                  onToggle={() => prepni('rezervace')}
+                >
+                  {staly?.predchozi?.length ? (
+                    <div className="ph-staly-predchozi">
+                      <p>Předchozí pobyty</p>
+                      <ul>
+                        {staly.predchozi.map((p) => (
+                          <li key={p.rezervace}>
+                            <button
+                              type="button"
+                              className="ph-dnesek__odkaz"
+                              onClick={() => otevriKartu(p.rezervace)}
+                            >
+                              {(p.apartman || 'Apartmán') +
+                                ' · ' +
+                                (p.prijezd || '?') +
+                                (p.odjezd ? `–${p.odjezd}` : '')}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  {row.vlajka || row.jazykText ? (
+                    <div className="ph-jazyk">
+                      {row.vlajka ? <span className="ph-vlajka">{row.vlajka}</span> : null}
+                      <Pole text={row.jazykText} />
+                    </div>
+                  ) : null}
+                  {row.zdrojText ? (
+                    <div className="ph-zdroj">
+                      <Pole text={row.zdrojText} />
+                    </div>
+                  ) : null}
+                  <div className="ph-cell" data-label="Vytvořeno">
+                    <Pole text={row.vytvorenoText} />
+                  </div>
+                  <div className="ph-cell" data-label="Rezervace">
+                    <div>{row.rezervace}</div>
+                  </div>
+                </DetailSekce>
+
+                <DetailSekce
+                  nazev="Historie"
+                  drobek={historieDrobek}
+                  otevreno={jeOtevrena('historie')}
+                  onToggle={() => prepni('historie')}
+                >
+                  <div className="ph-cell" data-label="Co se stalo">
+                    <Pole text={row.coSeStalo} />
+                  </div>
+                  <div className="ph-cell" data-label="Poslední pokus">
+                    <Pole text={row.posledniPokusText} />
+                  </div>
+                  <div className="ph-akce">
+                    {nabidnoutOdeslani(row.stav) ? (
+                      <button
+                        type="button"
+                        onClick={() => setOtevreno(otevreno === row.rezervace ? null : row.rezervace)}
+                      >
+                        Opravit a odeslat
+                      </button>
+                    ) : null}
+                  </div>
+                  {nabidnoutOdeslani(row.stav) && otevreno === row.rezervace ? (
+                    <OpravitForm
+                      row={row}
+                      cekam={cekam !== null}
+                      onSubmit={(extra) => volat(row, 'opravit', extra)}
+                    />
+                  ) : null}
+                  {row.historie.length ? (
+                    <ul className="ph-historie">
+                      {row.historie.map((h, i) => (
+                        <li key={`${h.cas}-${i}`}>
+                          {casPraha(h.cas) ? `${casPraha(h.cas)} ${h.co}` : h.co}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="ph-hlaska">Zatím bez záznamů.</p>
+                  )}
+                </DetailSekce>
               </>
-          </div>
-          <div className="ph-cell" data-label="Příjezd">
-            <Pole text={row.termin} />
-          </div>
-          <div className="ph-cell" data-label="Vytvořeno">
-            <Pole text={row.vytvorenoText} />
-          </div>
-          <div className="ph-cell" data-label="Rezervace">
-            <div>{row.rezervace}</div>
-          </div>
-          <div className="ph-cell" data-label="Co se stalo">
-            <Pole text={row.coSeStalo} />
-          </div>
-          <div className="ph-cell" data-label="Poslední pokus">
-            <Pole text={row.posledniPokusText} />
-          </div>
-          <div className="ph-akce">
-            {nabidnoutOdeslani(row.stav) ? (
-              <button type="button" onClick={() => setOtevreno(otevreno === row.rezervace ? null : row.rezervace)}>
-                Opravit a odeslat
-              </button>
-            ) : null}
-            {row.stav !== 'bez_checkinu' ? (
-              <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
-                Zkopírovat odkaz
-              </button>
-            ) : null}
-          </div>
-          {nabidnoutOdeslani(row.stav) && otevreno === row.rezervace ? (
-            <OpravitForm
-              row={row}
-              cekam={cekam !== null}
-              onSubmit={(extra) => volat(row, 'opravit', extra)}
-            />
-          ) : null}
-          {row.historie.length ? (
-            <ul className="ph-historie">
-              {row.historie.map((h, i) => (
-                <li key={`${h.cas}-${i}`}>{casPraha(h.cas) ? `${casPraha(h.cas)} ${h.co}` : h.co}</li>
-              ))}
-            </ul>
-          ) : null}
+            );
+          })()}
         </div>
       </article>
         )}
@@ -3422,7 +3700,7 @@ export function PrehledClient({
                   className="ph-dnesek__radek is-uklizeno is-sbaleno ph-predano-sbal"
                   onClick={() => {
                     setRozbalPredano((s) => ({ ...s, [row.rezervace]: true }));
-                    setRozbalene((prev) => ({ ...prev, [row.rezervace]: true }));
+                    rozbalDetailKarty(row.rezervace);
                   }}
                 >
                   <strong>{row.apartman || 'Apartmán'}</strong>
@@ -3479,7 +3757,7 @@ export function PrehledClient({
           onSloty={setSloty}
           onHlaska={setHlaska}
           onHost={(id) => {
-            setRozbalene((prev) => ({ ...prev, [id]: true }));
+            rozbalDetailKarty(id);
             document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }}
         />
