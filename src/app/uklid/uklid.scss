@@ -1,0 +1,284 @@
+.uk {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 1rem 1rem 3rem;
+  color: var(--color-text);
+  min-height: 100vh;
+  background: var(--color-bg, #1c1712);
+}
+
+.uk h1 {
+  margin: 0.2rem 0 0.15rem;
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 400;
+  font-size: 1.7rem;
+  color: var(--color-gold);
+}
+
+.uk-kdo {
+  color: var(--pv-muted, #a89a82);
+  font-size: 0.88rem;
+  margin: 0 0 0.9rem;
+}
+
+.uk-dny {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+}
+
+.uk-dny button {
+  margin: 0;
+  padding: 0.55rem 0.25rem;
+  border: 1px solid var(--pv-line, #3d3326);
+  border-radius: 6px;
+  background: var(--pv-surface, #26201a);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.92rem;
+  text-align: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.uk-dny button.is-on {
+  border-color: var(--color-gold);
+  background: #3a3020;
+  color: var(--color-gold);
+}
+
+.uk-karta {
+  background: var(--pv-surface, #26201a);
+  border: 1px solid var(--pv-line, #3d3326);
+  border-radius: 6px;
+  padding: 0.75rem 0.9rem;
+  margin: 0 0 0.65rem;
+}
+
+.uk-karta.is-hotovo {
+  border-color: #2f5a35;
+  background: #1f2a20;
+}
+
+.uk-karta.is-sbaleno .uk-karta__telo {
+  display: none;
+}
+
+.uk-karta__hlava {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.uk-apt {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.35rem;
+  color: var(--color-gold);
+}
+
+.uk-stitek {
+  font-size: 0.75rem;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  background: #3a3123;
+  color: #e9d9b0;
+}
+
+.uk-stitek.is-ok {
+  background: #203a24;
+  color: #7fbf7f;
+}
+
+.uk-stitek.is-ted {
+  background: #43221e;
+  color: #e0786b;
+}
+
+.uk-radky {
+  margin: 0.55rem 0 0.25rem;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #d9cdb8;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.uk-radky b {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.uk-poznamka {
+  margin-top: 0.4rem;
+  font-size: 0.88rem;
+  background: #2d2517;
+  border-left: 3px solid var(--color-gold);
+  padding: 0.4rem 0.55rem;
+  border-radius: 0 6px 6px 0;
+}
+
+.uk-tl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+
+.uk-tl button {
+  margin: 0;
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold);
+  background: transparent;
+  border-radius: 6px;
+  padding: 0.7rem 0.4rem;
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.uk-tl button.is-hl {
+  background: var(--color-gold);
+  color: #1c1712;
+  font-weight: 700;
+}
+
+.uk-tl button.is-email {
+  border-color: #2f5a35;
+  color: #7fbf7f;
+  grid-column: 1 / -1;
+}
+
+.uk-tl button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.uk-tl button.is-siroke {
+  grid-column: 1 / -1;
+}
+
+.uk-mdl {
+  color: var(--pv-muted, #a89a82);
+  font-size: 0.82rem;
+  text-align: center;
+  margin: 0.4rem 0 0;
+}
+
+.uk-prazdno {
+  color: var(--pv-muted, #a89a82);
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.uk-login {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 22rem;
+  margin: 2rem auto;
+}
+
+.uk-login label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--pv-muted, #a89a82);
+}
+
+.uk-login input {
+  min-height: 2.6rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--pv-line, #3d3326);
+  border-radius: 6px;
+  background: var(--pv-surface, #26201a);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.uk-login button {
+  margin: 0;
+  min-height: 2.6rem;
+  border: 1px solid var(--color-gold);
+  border-radius: 6px;
+  background: var(--color-gold);
+  color: #1c1712;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.uk-chyba {
+  color: #e0786b;
+  margin: 0;
+}
+
+.uk-zavady {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.uk-zavady textarea {
+  min-height: 4.5rem;
+  padding: 0.5rem;
+  border: 1px solid var(--pv-line, #3d3326);
+  border-radius: 6px;
+  background: #1a1510;
+  color: var(--color-text);
+  font: inherit;
+}
+
+.uk-push {
+  margin-top: 1.5rem;
+  border-top: 1px dashed var(--pv-line, #3d3326);
+  padding-top: 0.75rem;
+}
+
+.uk-push summary {
+  cursor: pointer;
+  color: var(--pv-muted, #a89a82);
+  font-size: 0.9rem;
+}
+
+.uk-push__telo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.uk-push__telo button {
+  margin: 0;
+  border: 1px solid var(--color-gold);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-gold);
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ph-poznamka-uklid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.85rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--pv-muted);
+}
+
+.ph-poznamka-uklid textarea {
+  font: inherit;
+  color: var(--color-text);
+  min-height: 3.5rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 6px;
+  background: var(--pv-surface);
+  resize: vertical;
+}

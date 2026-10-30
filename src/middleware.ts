@@ -16,6 +16,13 @@ export function middleware(request: NextRequest) {
   if (cesta.startsWith('/prehled') && !ikonaPrehledu) {
     response.headers.set('Cache-Control', 'no-store');
   }
+  const ikonaUklidu =
+    cesta.startsWith('/uklid/icon') ||
+    cesta === '/uklid/manifest.webmanifest' ||
+    cesta === '/uklid/sw.js';
+  if (cesta.startsWith('/uklid') && !ikonaUklidu) {
+    response.headers.set('Cache-Control', 'no-store');
+  }
   return response;
 }
 

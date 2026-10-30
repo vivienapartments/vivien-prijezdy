@@ -3,7 +3,8 @@ import { HODINA_RANIHO_DNE, MINUTA_RANIHO_DNE } from './constants';
 import { hostZRezervace, klicUklidu, sestavDnesek, textRano, textZmenyPoradi } from './dnesek';
 import { nactiOdjezdBeh } from './odjezd';
 import type { ProcessStore } from './store';
-import { upozorniMajitele } from './upozorneni';
+import { sestavUklidDen, textRanoUklid } from './uklid-den';
+import { upozorniMajitele, upozorniUklid } from './upozorneni';
 
 const STRANKA = '/prehled';
 
@@ -50,6 +51,15 @@ export async function upozorniDnes(
       beh.uklid = klic;
       zmena = true;
       pocet += 1;
+      const uklidDen = sestavUklidDen(list, dnes, now);
+      const vetaUklid = textRanoUklid(uklidDen.karty);
+      if (vetaUklid) {
+        try {
+          await upozorniUklid(store, vetaUklid, '/uklid');
+        } catch {
+          /* úklid nesmí shodit ranní běh */
+        }
+      }
     }
   } else if (beh.rano === dnes && poradiDnes(beh.uklid, dnes) !== poradiDnes(klic, dnes)) {
     const stare = poradiDnes(beh.uklid, dnes);

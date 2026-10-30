@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import type { ProcessStore, PushZarizeni, RezervaceRecord } from './store';
+import { rolePush, type ProcessStore, type PushZarizeni, type PushRole, type RezervaceRecord } from './store';
 
 export function popisHosta(rec: Pick<RezervaceRecord, 'apartman' | 'jmeno' | 'rezervace'>): string {
   const casti = (rec.jmeno || '').trim().split(/\s+/).filter(Boolean);
@@ -73,13 +73,16 @@ export async function upozorniMajitelePodrobne(
   const privateKey = process.env.VAPID_PRIVATE?.trim();
   const subject = process.env.VAPID_SUBJECT?.trim() || 'mailto:info@vivienapartments.cz';
 
-  if (publicKey && privateKey && zarizeni.length && !process.env.VITEST) {
+  const cilova: PushZarizeni[] = zarizeni.filter((z) => rolePush(z) === 'majitel');
+  const ostatni = zarizeni.filter((z) => rolePush(z) !== 'majitel');
+
+  if (publicKey && privateKey && cilova.length && !process.env.VITEST) {
     try {
       const webpush = await import('web-push');
       webpush.setVapidDetails(subject, publicKey, privateKey);
-      const zustane: PushZarizeni[] = [];
+      const zustane: PushZarizeni[] = [...ostatni];
       const smazane: PushZarizeni[] = [];
-      for (const z of zarizeni) {
+      for (const z of cilova) {
         try {
           await webpush.sendNotification(
             { endpoint: z.endpoint, keys: { p256dh: z.p256dh, auth: z.auth } },
@@ -138,6 +141,67 @@ export async function upozorniMajitele(
 ): Promise<'push' | 'email' | 'nic'> {
   const vysledek = await upozorniMajitelePodrobne(store, text, url);
   return vysledek.jak;
+}
+
+/** Push jen na zařízení s rolí úklid. Bez e-mailu majiteli. */
+export async function upozorniUklid(
+  store: ProcessStore,
+  text: string,
+  url: string,
+): Promise<'push' | 'nic'> {
+  let zarizeni: PushZarizeni[] = [];
+  try {
+    zarizeni = await store.listPush();
+  } catch (err) {
+    console.error('Upozorneni uklid: listPush selhalo', err instanceof Error ? err.message : err);
+    return 'nic';
+  }
+  const cilova = zarizeni.filter((z) => rolePush(z) === 'uklid');
+  if (!cilova.length) return 'nic';
+
+  const publicKey = process.env.VAPID_PUBLIC?.trim();
+  const privateKey = process.env.VAPID_PRIVATE?.trim();
+  const subject = process.env.VAPID_SUBJECT?.trim() || 'mailto:info@vivienapartments.cz';
+  if (!publicKey || !privateKey || process.env.VITEST) {
+    if (process.env.VITEST) return 'push';
+    return 'nic';
+  }
+
+  let doruceno = 0;
+  try {
+    const webpush = await import('web-push');
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+    const zustane: PushZarizeni[] = zarizeni.filter((z) => rolePush(z) !== 'uklid');
+    for (const z of cilova) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: z.endpoint, keys: { p256dh: z.p256dh, auth: z.auth } },
+          JSON.stringify({ title: 'VIVIEN Úklid', body: text, url }),
+        );
+        doruceno += 1;
+        zustane.push(z);
+      } catch (err) {
+        const status = (err as { statusCode?: number }).statusCode;
+        if (status === 404 || status === 410) continue;
+        zustane.push(z);
+      }
+    }
+    if (zustane.length !== zarizeni.length) {
+      try {
+        await store.savePush(zustane);
+      } catch (err) {
+        console.error('Upozorneni uklid: savePush selhalo', err instanceof Error ? err.message : err);
+      }
+    }
+  } catch (err) {
+    console.error('Upozorneni uklid: web-push selhalo', err instanceof Error ? err.message : err);
+  }
+  return doruceno > 0 ? 'push' : 'nic';
+}
+
+/** Export pro testy: která zařízení dostanou které upozornění. */
+export function zarizeniProRoli(list: PushZarizeni[], role: PushRole): PushZarizeni[] {
+  return list.filter((z) => rolePush(z) === role);
 }
 
 /** Text pro tlačítko Zkusit upozornění. */

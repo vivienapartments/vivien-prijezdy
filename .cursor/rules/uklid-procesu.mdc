@@ -1,0 +1,14 @@
+---
+description: Šetrné procesy na notebooku majitele (procesor, paměť, ventilátor)
+alwaysApply: true
+---
+
+# Úklid procesů (platí vždy)
+
+Majitel pracuje na notebooku. Node procesy, které zůstanou běžet, ho vytěžují na 100 % CPU celý den.
+
+- **Testy jen jednorázově, nikdy ve watch režimu.** Web (Angular): `npx ng test --watch=false`. Aplikace (vitest): `npm test` (= `vitest run`). Nikdy `ng test`, `vitest` bez `run` ani `npm run watch`.
+- **Dev server** (`ng serve`, `npm start`, `next dev`) spouštěj jen když opravdu potřebuješ náhled v prohlížeči. Po použití ho **vždy ukonči** (Ctrl+C / kill).
+- **Build** (`ng build`, `next build`) spouštěj jednou na konci úkolu, ne opakovaně při každé drobné změně.
+- **Na konci každého úkolu** ukonči všechny procesy, které jsi spustil (dev servery, testy, watchery, náhledy na localhost). Zavři terminály, které nic nedělají. V závěrečné zprávě napiš „Procesy ukončeny.“
+- Nespouštěj dva buildy nebo dva dev servery současně.

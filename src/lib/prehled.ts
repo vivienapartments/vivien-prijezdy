@@ -130,6 +130,8 @@ export type PrehledRadek = {
   navrhy: { pole: RucniPole; veta: string; hodnota: string }[];
   /** Kdy majitel uložil kontakt do telefonu. null = ještě ne, tlačítko je nahoře. */
   kontaktUlozenKdy: string | null;
+  /** Poznámka pro Milušku u úklidu příjezdu. */
+  poznamkaUklid: string | null;
   /** Stejný host z minulých karet (počítá se v paměti). */
   stalyHost?: StalyHostInfo | null;
 };
@@ -850,6 +852,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     fazeTon: faze.ton,
     navrhy: (rec.navrhy || []).map((n) => ({ pole: n.pole, veta: vetaNavrhu(n), hodnota: n.hodnota })),
     kontaktUlozenKdy: rec.kontaktUlozenKdy || null,
+    poznamkaUklid: rec.poznamkaUklid || null,
   };
 }
 

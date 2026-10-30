@@ -90,7 +90,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!endpoint || !p256dh || !auth) return chyba(400, 'Prohlížeč upozornění nepředal.');
   const bez = list.filter((z) => z.endpoint !== endpoint);
   const nazev = (body.nazev || 'Telefon').replace(/\s+/g, ' ').trim().slice(0, 40) || 'Telefon';
-  const dalsi: PushZarizeni = { endpoint, p256dh, auth, nazev, cas: new Date().toISOString() };
+  const dalsi: PushZarizeni = {
+    endpoint,
+    p256dh,
+    auth,
+    nazev,
+    cas: new Date().toISOString(),
+    role: 'majitel',
+  };
   await store.savePush([...bez, dalsi]);
   return NextResponse.json({ ok: true, zarizeni: vypis([...bez, dalsi]) }, { headers: noStore });
 }

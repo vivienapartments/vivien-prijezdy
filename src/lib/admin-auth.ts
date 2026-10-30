@@ -1,7 +1,9 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 
 export const PREHLED_COOKIE = 'vivien_prehled';
+export const UKLID_COOKIE = 'vivien_uklid';
 export const PREHLED_MAX_AGE_SEC = 60 * 60 * 24 * 30;
+export const UKLID_MAX_AGE_SEC = PREHLED_MAX_AGE_SEC;
 
 const OKNO_MS = 15 * 60 * 1000;
 const MAX_POKUSU = 5;
@@ -16,6 +18,15 @@ function secret(): string {
 
 export function hesloSedí(zadane: string): boolean {
   const expected = process.env.ADMIN_HESLO?.trim() || '';
+  if (!expected || !zadane) return false;
+  const a = Buffer.from(zadane);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return timingSafeEqual(a, b);
+}
+
+export function uklidHesloSedi(zadane: string): boolean {
+  const expected = process.env.UKLID_HESLO?.trim() || '';
   if (!expected || !zadane) return false;
   const a = Buffer.from(zadane);
   const b = Buffer.from(expected);

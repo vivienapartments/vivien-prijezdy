@@ -262,6 +262,43 @@ function Pole({ text }: { text: string }) {
   return <>{text}</>;
 }
 
+function PoznamkaUklidPole({
+  hodnota,
+  disabled,
+  onUloz,
+}: {
+  hodnota: string;
+  disabled?: boolean;
+  onUloz: (text: string) => Promise<void>;
+}) {
+  const [text, setText] = useState(hodnota);
+  const [cekam, setCekam] = useState(false);
+  return (
+    <label className="ph-poznamka-uklid">
+      Poznámka pro úklid
+      <textarea
+        value={text}
+        disabled={disabled || cekam}
+        rows={2}
+        maxLength={500}
+        placeholder="postýlka, přistýlka, dřívější příjezd…"
+        onChange={(e) => setText(e.target.value)}
+      />
+      <button
+        type="button"
+        className="ph-ulozit"
+        disabled={disabled || cekam || text.trim() === (hodnota || '').trim()}
+        onClick={() => {
+          setCekam(true);
+          void onUloz(text.trim()).finally(() => setCekam(false));
+        }}
+      >
+        {cekam ? 'Ukládám…' : 'Uložit poznámku'}
+      </button>
+    </label>
+  );
+}
+
 function UlozitKontakt({
   row,
   onUlozeno,
@@ -3199,6 +3236,51 @@ export function PrehledClient({
                     <p className="ph-hlaska">Předat apartmán je nahoře na kartě.</p>
                   ) : null}
                   {ukazZavady ? zavadyBlok : <p className="ph-hlaska">Zatím bez závad.</p>}
+                  <PoznamkaUklidPole
+                    key={`${row.rezervace}:${row.poznamkaUklid || ''}`}
+                    hodnota={row.poznamkaUklid || ''}
+                    disabled={ukazka || cekam !== null}
+                    onUloz={async (text) => {
+                      if (ukazka) {
+                        setRadky((prev) =>
+                          prev.map((r) =>
+                            r.rezervace === row.rezervace ? { ...r, poznamkaUklid: text || null } : r,
+                          ),
+                        );
+                        return;
+                      }
+                      setCekam(`${row.rezervace}:poznamka-uklid`);
+                      try {
+                        const res = await fetch('/api/prehled/akce', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            rezervace: row.rezervace,
+                            akce: 'poznamka-uklid',
+                            text,
+                          }),
+                        });
+                        const json = (await res.json().catch(() => null)) as {
+                          ok?: boolean;
+                          poznamkaUklid?: string | null;
+                          error?: string;
+                        } | null;
+                        if (!res.ok || !json?.ok) {
+                          setHlaska(json?.error || 'Poznámka se neuložila.');
+                          return;
+                        }
+                        setRadky((prev) =>
+                          prev.map((r) =>
+                            r.rezervace === row.rezervace
+                              ? { ...r, poznamkaUklid: json.poznamkaUklid ?? null }
+                              : r,
+                          ),
+                        );
+                      } finally {
+                        setCekam(null);
+                      }
+                    }}
+                  />
                 </DetailSekce>
 
                 <DetailSekce

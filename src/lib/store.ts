@@ -234,6 +234,8 @@ export type RezervaceRecord = {
   navrhy: NavrhPole[];
   /** Kdy majitel uložil kontakt (vizitku) do telefonu. null = ještě ne. */
   kontaktUlozenKdy: string | null;
+  /** Poznámka majitele pro Milušku (postýlka, dřívější příjezd…). */
+  poznamkaUklid: string | null;
 };
 
 export type RucniPole =
@@ -255,7 +257,8 @@ export type RucniPole =
   | 'zaplaceno'
   | 'poplatekVybral'
   | 'poplatek'
-  | 'accessPin';
+  | 'accessPin'
+  | 'poznamkaUklid';
 
 export type OdkudNavrh = 'check-in' | 'rezervace' | 'host' | 'potvrzeni';
 
@@ -263,12 +266,16 @@ export type NavrhPole = { pole: RucniPole; od: OdkudNavrh; hodnota: string };
 
 export type RucniZnacka = { pole: RucniPole; cas: string };
 
+export type PushRole = 'majitel' | 'uklid';
+
 export type PushZarizeni = {
   endpoint: string;
   p256dh: string;
   auth: string;
   nazev: string;
   cas: string;
+  /** Chybí = majitel (stará zařízení). */
+  role?: PushRole;
 };
 
 /** Jedna položka v seznamu upozornění pro přehled (posledních 100). */
@@ -321,6 +328,7 @@ const RUCNI_KLIC = new Set<RucniPole>([
   'zaplaceno',
   'poplatekVybral',
   'accessPin',
+  'poznamkaUklid',
 ]);
 
 const ODKUD = new Set<OdkudNavrh>(['check-in', 'rezervace', 'host', 'potvrzeni']);
@@ -468,14 +476,28 @@ function nactiNavrhy(raw: unknown): NavrhPole[] {
 
 function nactiPush(raw: unknown): PushZarizeni[] {
   if (!Array.isArray(raw)) return [];
-  return raw.filter(
-    (z): z is PushZarizeni =>
-      Boolean(z) &&
-      typeof z === 'object' &&
-      typeof (z as PushZarizeni).endpoint === 'string' &&
-      typeof (z as PushZarizeni).p256dh === 'string' &&
-      typeof (z as PushZarizeni).auth === 'string',
-  );
+  const out: PushZarizeni[] = [];
+  for (const z of raw) {
+    if (!z || typeof z !== 'object') continue;
+    const r = z as PushZarizeni;
+    if (typeof r.endpoint !== 'string' || typeof r.p256dh !== 'string' || typeof r.auth !== 'string') {
+      continue;
+    }
+    const role = r.role === 'uklid' || r.role === 'majitel' ? r.role : undefined;
+    out.push({
+      endpoint: r.endpoint,
+      p256dh: r.p256dh,
+      auth: r.auth,
+      nazev: typeof r.nazev === 'string' ? r.nazev : 'Telefon',
+      cas: typeof r.cas === 'string' ? r.cas : new Date(0).toISOString(),
+      ...(role ? { role } : {}),
+    });
+  }
+  return out;
+}
+
+export function rolePush(z: PushZarizeni): PushRole {
+  return z.role === 'uklid' ? 'uklid' : 'majitel';
 }
 
 /**
@@ -695,6 +717,8 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     zavadyPoOdjezdu: nactiZavadyPoOdjezdu(r.zavadyPoOdjezdu),
     kontaktUlozenKdy:
       typeof r.kontaktUlozenKdy === 'string' && r.kontaktUlozenKdy ? r.kontaktUlozenKdy : null,
+    poznamkaUklid:
+      typeof r.poznamkaUklid === 'string' && r.poznamkaUklid.trim() ? r.poznamkaUklid.trim().slice(0, 500) : null,
   };
 }
 
@@ -772,6 +796,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     rucniZnacky: [],
     navrhy: [],
     kontaktUlozenKdy: null,
+    poznamkaUklid: null,
   };
 }
 

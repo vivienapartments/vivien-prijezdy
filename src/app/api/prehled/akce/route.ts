@@ -30,7 +30,7 @@ import {
   poUklidu,
   predmetPripraveno,
 } from '@/lib/okno-pobytu';
-import { upozorniMajitele } from '@/lib/upozorneni';
+import { upozorniMajitele, upozorniUklid } from '@/lib/upozorneni';
 import { polozkyZRezervace, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
 import { vratPlatbu, zaplatDruhy } from '@/lib/platby-hosta';
 import { oznacPrevzeti, vratPrevzeti } from '@/lib/zalozky';
@@ -173,7 +173,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prani-precteno' &&
       akce !== 'prani-vyrizeno' &&
       akce !== 'prani-otevrit' &&
-      akce !== 'prani-nacti')
+      akce !== 'prani-nacti' &&
+      akce !== 'poznamka-uklid')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -194,6 +195,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, jazyk }, { headers: noStore });
+  }
+
+  if (akce === 'poznamka-uklid') {
+    const text = typeof body?.text === 'string' ? body.text.trim().slice(0, 500) : '';
+    const stejne = (rec.poznamkaUklid || '') === text;
+    const dalsi = zapisMajitele(
+      rec,
+      'poznamkaUklid',
+      { poznamkaUklid: text || null },
+      stejne ? '' : text ? 'Poznámka pro úklid uložena' : 'Poznámka pro úklid smazána',
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, poznamkaUklid: dalsi.poznamkaUklid }, { headers: noStore });
   }
 
   if (akce === 'zavady') {
@@ -455,6 +469,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'prevzato') {
     const dalsi = oznacPrevzeti(rec);
     await store.setRezervace(id, dalsi);
+    const apt = dalsi.apartman || 'Apartmán';
+    try {
+      await upozorniUklid(store, `${apt} převzato, můžete uklízet`, '/uklid');
+    } catch {
+      /* upozornění úklidu nesmí shodit převzetí */
+    }
     return NextResponse.json({ ok: true, prevzatoKdy: dalsi.prevzatoKdy }, { headers: noStore });
   }
 
