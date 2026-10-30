@@ -232,7 +232,7 @@ describe('tlačítka v přehledu', () => {
       hlavniZprava({ stav: 'bez_checkinu', otevrenoPocet: 0, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11' }),
     ).toBe('checkin');
     expect(
-      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 0, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11' }),
+      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 0, casPrijezdu: null, prijezd: '2026-10-12', dnes: '2026-10-11' }),
     ).toBe('neotevrel');
     expect(
       hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-12', dnes: '2026-10-11', chybi: ['cas', 'zpusob', 'pravidla'] }),
@@ -248,8 +248,25 @@ describe('tlačítka v přehledu', () => {
       }),
     ).toBe('denCas');
     expect(
-      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-11', dnes: '2026-10-11', chybi: ['cas'] }),
+      hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-12', dnes: '2026-10-11', chybi: ['cas'] }),
     ).toBe('nerozbalen');
+  });
+
+  it('v den příjezdu je předvybraný 3. stupeň průvodce i bez předchozích zpráv', () => {
+    const menu = zpravyMenu({
+      stav: 'odeslano',
+      lang: 'cs',
+      pruvodce: 'https://pruvodce.example/host',
+      otevrenoPocet: 0,
+      casPrijezdu: null,
+      prijezd: '2026-10-15',
+      dnes: '2026-10-15',
+      chybi: ['cas', 'zpusob', 'pravidla'],
+      historie: [],
+    });
+    expect(menu.find((z) => z.vychozi)?.id).toBe('pruvodce3');
+    expect(menu.find((z) => z.id === 'pruvodce3')?.text).toContain('může to skončit jako nedojezd');
+    expect(menu.some((z) => z.id === 'nedojezd')).toBe(false);
   });
 
   it('den příjezdu má dvě verze podle políčka času', () => {
@@ -274,9 +291,9 @@ describe('tlačítka v přehledu', () => {
       'brana',
     ]);
     expect(bez.some((z) => z.id === 'nedojezd')).toBe(false);
-    expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toBe(
-      `${textDneNerozbalen('cs', ['cas', 'zpusob', 'pravidla'])}\n\n${odkaz}\n\nNikol a rodina VIVIEN`,
-    );
+    // V den příjezdu je text denNerozbalen stejný jako 3. stupeň (žádné měkké zprávy).
+    expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toContain('může to skončit jako nedojezd');
+    expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toContain(odkaz);
 
     const sCasem = zpravyMenu({
       stav: 'odeslano',

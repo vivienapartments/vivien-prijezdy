@@ -57,6 +57,7 @@ import { jeProPohodu, textPohody } from '@/lib/pohoda';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
+import { CoDoplnit } from './CoDoplnit';
 import { Dnesek } from './Dnesek';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
@@ -1489,6 +1490,9 @@ export function PrehledClient({
     const url = hodnota.trim();
     if (ukazka) {
       setOdkazy((prev) => ({ ...prev, [row.rezervace]: url }));
+      setRadky((prev) =>
+        prev.map((r) => (r.rezervace === row.rezervace ? { ...r, checkinUrl: url } : r)),
+      );
       return { ok: true, hodnota: url };
     }
     const res = await fetch('/api/prehled/akce', {
@@ -1500,6 +1504,9 @@ export function PrehledClient({
     if (!res.ok || !json?.ok) return { ok: false };
     const hotovo = json.hodnota ?? url;
     setOdkazy((prev) => ({ ...prev, [row.rezervace]: hotovo }));
+    setRadky((prev) =>
+      prev.map((r) => (r.rezervace === row.rezervace ? { ...r, checkinUrl: hotovo } : r)),
+    );
     return { ok: true, hodnota: hotovo };
   }
 
@@ -2252,15 +2259,14 @@ export function PrehledClient({
           const pruvodcePocet = pocetCasovychPripoinek(row.historie);
           const denPredNeboDenCi =
             Boolean(row.prijezd) && (dnes === row.prijezd || dnes === posunDen(row.prijezd!, -1));
-          let casZpravaId: CasovaZpravaId = dalsiCasovaZprava(pruvodcePocet);
+          let casZpravaId: CasovaZpravaId = dalsiCasovaZprava(
+            pruvodcePocet,
+            row.prijezd === dnes,
+            row.historie,
+          );
           if (
             casZpravaId === 'nedojezd' &&
-            !(
-              pruvodcePocet >= 3 &&
-              denPredNeboDenCi &&
-              row.stav !== 'zruseno' &&
-              !predanoRadku(row)
-            )
+            !(denPredNeboDenCi && row.stav !== 'zruseno' && !predanoRadku(row))
           ) {
             casZpravaId = 'pruvodce3';
           }
@@ -3842,7 +3848,16 @@ export function PrehledClient({
         />
       ) : null}
 
-      {ukazka ? null : <OdkazyZeSchranky />}
+      {pohledDomu && !ukazka ? (
+        <CoDoplnit
+          radky={radky}
+          dnes={dnes}
+          odkazy={odkazy}
+          onOtevri={(id) => otevriKartu(id)}
+          onUlozOdkaz={(row, text) => ulozOdkaz(row, text)}
+          onUlozTelefon={(row, text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
+        />
+      ) : null}
       <Upozorneni />
     </main>
   );
@@ -3904,108 +3919,6 @@ function PoleSUlozenim({
       {stav === 'ok' ? <span className="ph-ulozeno">Uloženo ✓</span> : null}
       {stav === 'chyba' ? <span className="ph-neulozeno">Neuloženo, zkuste znovu</span> : null}
     </label>
-  );
-}
-
-type RadekOdkazu = {
-  rezervace: string;
-  host: string;
-  nalezen: string;
-  naKarte: string;
-  stane: string;
-};
-
-function OdkazyZeSchranky() {
-  const [radky, setRadky] = useState<RadekOdkazu[] | null>(null);
-  const [cekam, setCekam] = useState('');
-  const [hlaska, setHlaska] = useState('');
-  const [potvrdit, setPotvrdit] = useState(false);
-
-  async function nacti(akce: 'ukazat' | 'doplnit') {
-    setCekam(akce);
-    setHlaska('');
-    const res = await fetch('/api/prehled/checkin-odkazy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ akce }),
-    });
-    const json = (await res.json().catch(() => null)) as {
-      ok?: boolean;
-      error?: string;
-      radky?: RadekOdkazu[];
-      doplneno?: { rezervace: string; host: string }[];
-    } | null;
-    setCekam('');
-    if (!res.ok || !json?.ok || !json.radky) {
-      setHlaska(json?.error || 'Schránku se nepodařilo přečíst.');
-      return;
-    }
-    setRadky(json.radky);
-    setPotvrdit(false);
-    if (akce === 'doplnit') {
-      const kdo = (json.doplneno || []).map((r) => `${r.rezervace} ${r.host}`).join(', ');
-      setHlaska(kdo ? `Doplněno u ${json.doplneno?.length}: ${kdo}.` : 'Doplněno nikde. Odkaz už na kartách je.');
-    }
-  }
-
-  const jdeDoplnit = Boolean(radky?.some((r) => r.stane === 'doplní se'));
-
-  return (
-    <section className="ph-odkazy-schranka">
-      <p>Odkazy na check-in ze schránky</p>
-      <button type="button" className="ph-ulozit" disabled={cekam !== ''} onClick={() => void nacti('ukazat')}>
-        {cekam === 'ukazat' ? 'Čtu schránku…' : 'Ukázat'}
-      </button>
-      {hlaska ? <p>{hlaska}</p> : null}
-      {radky ? (
-        <div className="ph-odkazy-tabulka">
-          <table>
-            <thead>
-              <tr>
-                <th>Rezervace</th>
-                <th>Host</th>
-                <th>Odkaz nalezen</th>
-                <th>Na kartě už je</th>
-                <th>Co se stane</th>
-              </tr>
-            </thead>
-            <tbody>
-              {radky.length ? (
-                radky.map((r) => (
-                  <tr key={r.rezervace}>
-                    <td>{r.rezervace}</td>
-                    <td>{r.host}</td>
-                    <td>{r.nalezen}</td>
-                    <td>{r.naKarte}</td>
-                    <td>{r.stane}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5}>Za 30 dní tu žádná výzva k check-inu není.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      ) : null}
-      {jdeDoplnit && !potvrdit ? (
-        <button type="button" className="ph-ulozit" disabled={cekam !== ''} onClick={() => setPotvrdit(true)}>
-          Doplnit
-        </button>
-      ) : null}
-      {potvrdit ? (
-        <div className="ph-predano-dotaz">
-          <p>Doplnit odkaz jen tam, kde na kartě žádný není?</p>
-          <button type="button" disabled={cekam !== ''} onClick={() => void nacti('doplnit')}>
-            {cekam === 'doplnit' ? 'Doplňuji…' : 'Ano, doplnit'}
-          </button>
-          <button type="button" onClick={() => setPotvrdit(false)}>
-            Zrušit
-          </button>
-        </div>
-      ) : null}
-    </section>
   );
 }
 
@@ -4214,59 +4127,97 @@ function Upozorneni() {
 
   const nazevTelefonu = nactiNazevPush();
   const totoZapnute = Boolean(endpointTeto && zarizeni.some((z) => z.endpoint === endpointTeto));
+  const rozbalit = !totoZapnute || !nazevTelefonu;
+  const tedMs = Date.now();
+
+  async function odebrat(z: { nazev: string; endpoint: string }) {
+    if (!window.confirm(`Odebrat ${z.nazev}? Tomuto zařízení přestanou chodit upozornění.`)) return;
+    setHlaska('');
+    const res = await fetch('/api/prehled/push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ akce: 'vypnout', endpoint: z.endpoint }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
+      error?: string;
+    } | null;
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Zařízení se nepodařilo odebrat.');
+      return;
+    }
+    setZarizeni(json.zarizeni || []);
+    setHlaska(`Odebráno: ${z.nazev}.`);
+  }
 
   return (
-    <div className="ph-push">
-      <p className="ph-dnesek__akce">
-        Tento telefon: {nazevTelefonu || 'neuvedeno'}
-        <button
-          type="button"
-          onClick={() => {
-            setPtamJmeno(true);
-            setJmenoDraft(nazevTelefonu || '');
-          }}
-        >
-          změnit
+    <details className="ph-push" {...(rozbalit ? { open: true } : {})}>
+      <summary className="ph-push__souhrn">
+        ⚙ Telefon a upozornění · {nazevTelefonu || 'bez jména'}
+      </summary>
+      <div className="ph-push__telo">
+        <p className="ph-dnesek__akce">
+          Tento telefon: {nazevTelefonu || 'neuvedeno'}
+          <button
+            type="button"
+            onClick={() => {
+              setPtamJmeno(true);
+              setJmenoDraft(nazevTelefonu || '');
+            }}
+          >
+            změnit
+          </button>
+        </p>
+        <button type="button" className="ph-ulozit" onClick={() => void zapnout()}>
+          {totoZapnute ? 'Obnovit upozornění' : 'Zapnout upozornění'}
         </button>
-      </p>
-      <button type="button" className="ph-ulozit" onClick={() => void zapnout()}>
-        {totoZapnute ? 'Obnovit upozornění' : 'Zapnout upozornění'}
-      </button>
-      <button type="button" className="ph-ulozit" disabled={zkousim} onClick={() => void zkusit()}>
-        {zkousim ? 'Zkouším…' : 'Zkusit upozornění'}
-      </button>
-      {ptamJmeno ? (
-        <div className="ph-predano-dotaz">
-          <p>Tento telefon</p>
-          <input
-            value={jmenoDraft}
-            onChange={(e) => setJmenoDraft(e.target.value)}
-            maxLength={40}
-            autoComplete="name"
-            placeholder="Pravoslav, Nikol…"
-            aria-label="Tento telefon"
-          />
-          <button type="button" onClick={() => void potvrdJmeno()}>
-            Uložit
-          </button>
-          <button type="button" onClick={() => setPtamJmeno(false)}>
-            Zrušit
-          </button>
-        </div>
-      ) : null}
-      {zarizeni.length ? (
-        <ul className="ph-push-seznam">
-          {zarizeni.map((z) => (
-            <li key={z.endpoint}>
-              {z.nazev}
-              {z.endpoint === endpointTeto ? ' · tento telefon' : ''}
-              {z.cas ? ` · přihlášeno ${datumPrihlaseniPush(z.cas)}` : ''}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {hlaska ? <span className="ph-push-stav">{hlaska}</span> : null}
-    </div>
+        <button type="button" className="ph-ulozit" disabled={zkousim} onClick={() => void zkusit()}>
+          {zkousim ? 'Zkouším…' : 'Zkusit upozornění'}
+        </button>
+        {ptamJmeno ? (
+          <div className="ph-predano-dotaz">
+            <p>Tento telefon</p>
+            <input
+              value={jmenoDraft}
+              onChange={(e) => setJmenoDraft(e.target.value)}
+              maxLength={40}
+              autoComplete="name"
+              placeholder="Pravoslav, Nikol…"
+              aria-label="Tento telefon"
+            />
+            <button type="button" onClick={() => void potvrdJmeno()}>
+              Uložit
+            </button>
+            <button type="button" onClick={() => setPtamJmeno(false)}>
+              Zrušit
+            </button>
+          </div>
+        ) : null}
+        {zarizeni.length ? (
+          <ul className="ph-push-seznam">
+            {zarizeni.map((z) => {
+              const stary =
+                z.cas && tedMs - new Date(z.cas).getTime() > 30 * 24 * 60 * 60 * 1000;
+              const tento = z.endpoint === endpointTeto;
+              return (
+                <li key={z.endpoint} className={stary ? 'is-stary' : undefined}>
+                  {z.nazev}
+                  {tento ? ' · tento telefon' : ''}
+                  {z.cas ? ` · přihlášeno ${datumPrihlaseniPush(z.cas)}` : ''}
+                  {!tento ? (
+                    <button type="button" className="ph-push__odebrat" onClick={() => void odebrat(z)}>
+                      Odebrat
+                    </button>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        ) : null}
+        {hlaska ? <span className="ph-push-stav">{hlaska}</span> : null}
+      </div>
+    </details>
   );
 }
 

@@ -15,6 +15,7 @@ import {
   stupenBrany,
   stupenCheckinu,
   ukazatCheckinNedojezd,
+  uzOdeslanPruvodce3,
 } from './pripominky-stupne';
 import {
   ODKAZ_UNIVERZALNI,
@@ -629,7 +630,9 @@ export function hlavniZprava(opts: {
   if (faze.id === 1) return 'checkin';
   if (faze.id === 2) return 'neotevrel';
   if (faze.id === 3) {
-    const id = dalsiCasovaZprava(pocetCasovychPripoinek(opts.historie || []));
+    const denPrijezdu = Boolean(opts.prijezd && opts.dnes === opts.prijezd);
+    const historie = opts.historie || [];
+    const id = dalsiCasovaZprava(pocetCasovychPripoinek(historie), denPrijezdu, historie);
     return id === 'nedojezd' ? 'pruvodce3' : id;
   }
   if (opts.branaChybi) return 'brana';
@@ -656,7 +659,7 @@ export function zpravyMenu(opts: {
   casOdjezdu?: string | null;
   dluh?: PolozkaDluhu[];
   pripraveno?: boolean;
-  historie?: { co: string }[];
+  historie?: { co: string; cas?: string }[];
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const historie = opts.historie || [];
@@ -666,15 +669,21 @@ export function zpravyMenu(opts: {
   const denPrijezdu = Boolean(opts.prijezd && opts.dnes === opts.prijezd);
   const checkinStupen = stupenCheckinu(pocetCheckinPripoinek(historie), denPredNeboDen);
   const pruvodcePocet = pocetCasovychPripoinek(historie);
-  const neotevrelStupen = Math.min(3, Math.max(1, pruvodcePocet + 1)) as 1 | 2 | 3;
+  const pruvodceStupen = denPrijezdu
+    ? (3 as const)
+    : (Math.min(3, Math.max(1, pruvodcePocet + 1)) as 1 | 2 | 3);
   const branaStupen = stupenBrany(pocetBranaPripoinek(historie), denPrijezdu);
 
   const texty: Record<DruhZpravy, string> = {
     checkin: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl, checkinStupen),
     checkinNedojezd: zpravaCheckinNedojezdu(opts.lang, opts.checkinUrl),
-    neotevrel: zpravaHostovi(opts.lang, opts.pruvodce, neotevrelStupen),
-    nerozbalen: zpravaNerozbalen(opts.lang, chybi, opts.pruvodce),
-    denNerozbalen: zpravaDneNerozbalen(opts.lang, chybi, opts.pruvodce),
+    neotevrel: zpravaHostovi(opts.lang, opts.pruvodce, pruvodceStupen),
+    nerozbalen: denPrijezdu
+      ? zpravaPruvodce3(opts.lang, opts.pruvodce)
+      : zpravaNerozbalen(opts.lang, chybi, opts.pruvodce),
+    denNerozbalen: denPrijezdu
+      ? zpravaPruvodce3(opts.lang, opts.pruvodce)
+      : zpravaDneNerozbalen(opts.lang, chybi, opts.pruvodce),
     pruvodce3: zpravaPruvodce3(opts.lang, opts.pruvodce),
     denCas: zpravaDneSCasem(opts.lang, opts.casPrijezdu, opts.pruvodce),
     brana: zpravaBrany(opts.lang, branaStupen),
@@ -694,7 +703,7 @@ export function zpravyMenu(opts: {
       });
     }
     if (id === 'nedojezd') {
-      return ukazatNedojezd({ ...opts, chybi }) && pruvodcePocet >= 3;
+      return ukazatNedojezd({ ...opts, chybi }) && uzOdeslanPruvodce3(historie);
     }
     if (id === 'pripraveno') return opts.pripraveno === true;
     if (id === 'pohoda') {
@@ -749,10 +758,12 @@ export function vychoziZprava(
   }
 
   if (!pruvodceHotovo && opts.stav !== 'bez_checkinu' && opts.stav !== 'neodeslano') {
-    if (!otevren && pocetCasovychPripoinek(historie) === 0 && videt.includes('neotevrel')) {
+    const denPrijezdu = Boolean(opts.prijezd && opts.dnes === opts.prijezd);
+    const pocet = pocetCasovychPripoinek(historie);
+    if (!denPrijezdu && !otevren && pocet === 0 && videt.includes('neotevrel')) {
       return 'neotevrel';
     }
-    let id = dalsiCasovaZprava(pocetCasovychPripoinek(historie));
+    let id = dalsiCasovaZprava(pocet, denPrijezdu, historie);
     if (id === 'nedojezd' && !videt.includes('nedojezd')) id = 'pruvodce3';
     if (videt.includes(id)) return id;
   }

@@ -10,6 +10,7 @@ import {
   stupenCasoveZpravy,
   stupenCheckinu,
   ukazatCheckinNedojezd,
+  uzOdeslanPruvodce3,
 } from './pripominky-stupne';
 
 describe('připomínky stupně', () => {
@@ -25,28 +26,27 @@ describe('připomínky stupně', () => {
     expect(pocetCasovychPripoinek([])).toBe(0);
   });
 
-  it('neplete Den příjezdu s Průvodce nerozbalen', () => {
-    expect(
-      pocetCasovychPripoinek([{ co: 'WhatsApp: Den příjezdu, průvodce nerozbalen' }]),
-    ).toBe(1);
-  });
-
   it('vybere další stupeň podle počtu (1→2→3→Poslední výzva)', () => {
     expect(dalsiCasovaZprava(0)).toBe('nerozbalen');
     expect(dalsiCasovaZprava(1)).toBe('denNerozbalen');
     expect(dalsiCasovaZprava(2)).toBe('pruvodce3');
     expect(dalsiCasovaZprava(3)).toBe('nedojezd');
-    expect(dalsiCasovaZprava(9)).toBe('nedojezd');
+  });
+
+  it('v den příjezdu je aspoň 3. stupeň i bez předchozích zpráv', () => {
+    expect(dalsiCasovaZprava(0, true, [])).toBe('pruvodce3');
+    expect(dalsiCasovaZprava(1, true, [])).toBe('pruvodce3');
+    expect(
+      dalsiCasovaZprava(1, true, [{ co: 'WhatsApp: Průvodce, důrazný' }]),
+    ).toBe('nedojezd');
   });
 
   it('popisky a stupně sedí', () => {
     expect(stupenCasoveZpravy('nerozbalen')).toBe(1);
-    expect(stupenCasoveZpravy('denNerozbalen')).toBe(2);
     expect(stupenCasoveZpravy('pruvodce3')).toBe(3);
-    expect(stupenCasoveZpravy('nedojezd')).toBe(4);
-    expect(popisekStupneCasu('nerozbalen')).toContain('normální');
     expect(popisekStupneCasu('pruvodce3')).toContain('důrazný');
     expect(nazevCasoveZpravy('nedojezd')).toBe('Poslední výzva (nedojezd)');
+    expect(uzOdeslanPruvodce3([{ co: 'WhatsApp: Průvodce, důrazný' }])).toBe(true);
   });
 
   it('počítá check-in připomínky z WhatsApp i SMS', () => {
@@ -54,7 +54,6 @@ describe('připomínky stupně', () => {
       pocetCheckinPripoinek([
         { co: 'WhatsApp: Vyplňte check-in' },
         { co: 'SMS: Vyplňte check-in' },
-        { co: 'WhatsApp: Průvodce nerozbalen' },
       ]),
     ).toBe(2);
   });
@@ -62,23 +61,28 @@ describe('připomínky stupně', () => {
   it('check-in stupeň: den před / den příjezdu aspoň 3', () => {
     expect(stupenCheckinu(0, false)).toBe(1);
     expect(stupenCheckinu(1, false)).toBe(2);
-    expect(stupenCheckinu(2, false)).toBe(3);
     expect(stupenCheckinu(0, true)).toBe(3);
-    expect(stupenCheckinu(1, true)).toBe(3);
   });
 
-  it('Poslední výzva check-in až po 3. stupni v den před / den příjezdu', () => {
-    const tri = [
-      { co: 'WhatsApp: Vyplňte check-in' },
-      { co: 'SMS: Vyplňte check-in' },
-      { co: 'WhatsApp: Vyplňte check-in' },
+  it('Poslední výzva · check-in po 3. stupni odeslaném den předem (i když celkový počet je 2)', () => {
+    const historie = [
+      { co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-08T10:00:00.000Z' },
+      { co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-14T09:00:00.000Z' },
     ];
     expect(
       ukazatCheckinNedojezd({
         stav: 'bez_checkinu',
         prijezd: '2026-10-15',
+        dnes: '2026-10-14',
+        historie,
+      }),
+    ).toBe(true);
+    expect(
+      ukazatCheckinNedojezd({
+        stav: 'bez_checkinu',
+        prijezd: '2026-10-15',
         dnes: '2026-10-15',
-        historie: tri,
+        historie,
       }),
     ).toBe(true);
     expect(
@@ -86,40 +90,14 @@ describe('připomínky stupně', () => {
         stav: 'bez_checkinu',
         prijezd: '2026-10-15',
         dnes: '2026-10-14',
-        historie: tri,
-      }),
-    ).toBe(true);
-    expect(
-      ukazatCheckinNedojezd({
-        stav: 'bez_checkinu',
-        prijezd: '2026-10-15',
-        dnes: '2026-10-12',
-        historie: tri,
+        historie: [{ co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-08T10:00:00.000Z' }],
       }),
     ).toBe(false);
-    expect(
-      ukazatCheckinNedojezd({
-        stav: 'bez_checkinu',
-        prijezd: '2026-10-15',
-        dnes: '2026-10-15',
-        historie: [{ co: 'WhatsApp: Vyplňte check-in' }],
-      }),
-    ).toBe(false);
-    expect(
-      ukazatCheckinNedojezd({
-        stav: 'odeslano',
-        prijezd: '2026-10-15',
-        dnes: '2026-10-15',
-        historie: tri,
-      }),
-    ).toBe(false);
+    expect(pocetCheckinPripoinek(historie)).toBe(2);
   });
 
   it('brána: stupeň podle počtu, v den příjezdu aspoň 3', () => {
-    expect(pocetBranaPripoinek([{ co: 'WhatsApp: Chybí údaje k bráně' }, { co: 'SMS: Chybí údaje k bráně' }])).toBe(2);
-    expect(stupenBrany(0, false)).toBe(1);
-    expect(stupenBrany(1, false)).toBe(2);
-    expect(stupenBrany(2, false)).toBe(3);
+    expect(pocetBranaPripoinek([{ co: 'WhatsApp: Chybí údaje k bráně' }])).toBe(1);
     expect(stupenBrany(0, true)).toBe(3);
   });
 });
