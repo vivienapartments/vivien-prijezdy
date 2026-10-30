@@ -341,9 +341,19 @@ export function VstupHosta({
               type="button"
               className={`pv-hub__choice${zpusob === 'pesky' ? ' pv-hub__choice--on' : ''}`}
               onClick={() => {
+                const y = typeof window !== 'undefined' ? window.scrollY : 0;
                 setZpusob('pesky');
                 setChybaTelefonu('');
                 setChybaSpz('');
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    try {
+                      window.scrollTo(0, y);
+                    } catch {
+                      /* scroll */
+                    }
+                  });
+                });
               }}
               disabled={cteni}
             >
@@ -352,7 +362,19 @@ export function VstupHosta({
             <button
               type="button"
               className={`pv-hub__choice${zpusob === 'auto' ? ' pv-hub__choice--on' : ''}`}
-              onClick={() => setZpusob('auto')}
+              onClick={() => {
+                const y = typeof window !== 'undefined' ? window.scrollY : 0;
+                setZpusob('auto');
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    try {
+                      window.scrollTo(0, y);
+                    } catch {
+                      /* scroll */
+                    }
+                  });
+                });
+              }}
               disabled={cteni}
             >
               <span className="pv-hub__choice-title">{tt(VT.vstupAutem)}</span>

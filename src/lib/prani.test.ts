@@ -62,7 +62,20 @@ describe('validace a okno psaní', () => {
     const denPred = posunDen('2026-10-25', -1);
     expect(muzeHostPsat(rec, casVPraze(denPred, 18, 59))).toBe(true);
     expect(muzeHostPsat(rec, casVPraze(denPred, 19, 1))).toBe(false);
-    expect(muzeHostPsat({ ...rec, predano: null }, casVPraze(denPred, 12, 0))).toBe(false);
+  });
+
+  it('bez Předáno: od 14:00 v den příjezdu, den před ne; s Předáno dřív', () => {
+    const bez = hostRec({ predano: null, prijezd: '2026-10-20', odjezd: '2026-10-25' });
+    expect(muzeHostPsat(bez, casVPraze('2026-10-19', 18, 0))).toBe(false);
+    expect(muzeHostPsat(bez, casVPraze('2026-10-20', 13, 59))).toBe(false);
+    expect(muzeHostPsat(bez, casVPraze('2026-10-20', 14, 0))).toBe(true);
+    expect(muzeHostPsat(bez, casVPraze('2026-10-24', 12, 0))).toBe(true);
+    const sPredanim = hostRec({
+      predano: '2026-10-20T10:00:00.000Z',
+      prijezd: '2026-10-20',
+      odjezd: '2026-10-25',
+    });
+    expect(muzeHostPsat(sPredanim, casVPraze('2026-10-20', 12, 0))).toBe(true);
   });
 });
 

@@ -108,6 +108,8 @@ export function NahledClient({ secrets, searchParams }: Props) {
       kody={kodyProHosta(predano, apt, accessPin, lang)}
       tvar={tvar}
       vikend={vikend}
+      prijezdDen={one(searchParams.prijezd) || denPraha(new Date())}
+      rezervace="nahled"
       vstup={vstup}
       onVstup={zapisVstup}
       showDevBar

@@ -31,6 +31,7 @@ import type { GuideSecrets } from '@/lib/secrets';
 import * as TX from '@/lib/texts';
 import { ukazatPoplatek, type PoplatekStav } from '@/lib/poplatek';
 import { DOTAZ_PREDANI_MS } from '@/lib/pruvodce-majitel';
+import { denPraha } from '@/lib/brana';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import { pruvodceRozbalen, urovenPruvodce, type UrovenPruvodce } from '@/lib/vstup-pruvodce';
 import * as VT from '@/lib/vstup-texty';
@@ -43,51 +44,89 @@ import { StavApartmanu } from './StavApartmanu';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import './guide.scss';
 
-const SBALENE = new Set([
-  'parkovani',
-  'pesky-parkoviste-dum',
-  'prijezd-k-domu',
-  'wifi',
-  'zahrada',
-  'posezeni-venku',
-  'televize',
-  'pravidla',
-  'odjezd',
-]);
-
-/** Po Předáno se sbalí i Brána. Předtím zůstává otevřená (večer / víkend). */
-const SBALENE_PO_PREDANI = new Set(['brana-parkoviste']);
+function klicSbaleni(rezervace: string | null | undefined, id: string): string {
+  return `vivien-pv-sbal:${rezervace || 'x'}:${id}`;
+}
 
 function SbalenaSekce({
-  ano,
+  id,
+  rezervace,
+  vychoziOtevreno,
   nadpis,
   veta,
   expandLabel,
   collapseLabel,
   children,
 }: {
-  ano: boolean;
+  id: string;
+  rezervace?: string | null;
+  vychoziOtevreno: boolean;
   nadpis: string;
   veta: string;
   expandLabel: string;
   collapseLabel: string;
   children: ReactNode;
 }) {
-  if (!ano) return <>{children}</>;
+  const [otevreno, setOtevreno] = useState(vychoziOtevreno);
+
+  useEffect(() => {
+    const klic = klicSbaleni(rezervace, id);
+    try {
+      const u = localStorage.getItem(klic);
+      if (u === '1') setOtevreno(true);
+      else if (u === '0') setOtevreno(false);
+      else setOtevreno(vychoziOtevreno);
+    } catch {
+      setOtevreno(vychoziOtevreno);
+    }
+  }, [id, rezervace, vychoziOtevreno]);
+
+  useEffect(() => {
+    function otevriZHash() {
+      const raw = window.location.hash.replace(/^#/, '').trim();
+      if (!raw) return;
+      if (raw !== `pv-${id}` && raw !== id) return;
+      setOtevreno(true);
+      try {
+        localStorage.setItem(klicSbaleni(rezervace, id), '1');
+      } catch {
+        /* paměť */
+      }
+      requestAnimationFrame(() => {
+        try {
+          document.getElementById(`pv-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch {
+          /* scroll */
+        }
+      });
+    }
+    otevriZHash();
+    window.addEventListener('hashchange', otevriZHash);
+    return () => window.removeEventListener('hashchange', otevriZHash);
+  }, [id, rezervace]);
+
   return (
-    <details className="pv-sbal">
+    <details
+      className="pv-sbal"
+      open={otevreno}
+      onToggle={(e) => {
+        const next = e.currentTarget.open;
+        setOtevreno(next);
+        try {
+          localStorage.setItem(klicSbaleni(rezervace, id), next ? '1' : '0');
+        } catch {
+          /* paměť */
+        }
+      }}
+    >
       <summary>
         <span className="pv-sbal__text">
           <span className="pv-sbal__nadpis">{nadpis}</span>
           {veta ? <span className="pv-sbal__veta">{veta}</span> : null}
         </span>
         <span className="pv-sbal__btn" aria-hidden="true">
-          <span className="pv-sbal__btn-open">
-            {expandLabel} ▾
-          </span>
-          <span className="pv-sbal__btn-close">
-            {collapseLabel} ▴
-          </span>
+          <span className="pv-sbal__btn-open">{expandLabel} ▾</span>
+          <span className="pv-sbal__btn-close">{collapseLabel} ▴</span>
         </span>
       </summary>
       {children}
@@ -254,6 +293,10 @@ export type GuideProps = {
   vikend?: boolean;
   /** Výchozí příjezd, jen když stránka údaje hosta nepředá. */
   initialPrijezd?: Prijezd | null;
+  /** Den příjezdu YYYY-MM-DD (z karty nebo tokenu). */
+  prijezdDen?: string | null;
+  /** Číslo rezervace pro paměť sbalení. */
+  rezervace?: string | null;
   /** Národnost z BH (CZE → verze dokladů bez cizinecké policie). */
   narodnost?: string | null;
   /** Údaje z rezervace. Když jsou, klik v průvodci další kroky sám neotevře. */
@@ -284,6 +327,8 @@ export function Guide({
   poplatek = 'neznamo',
   vikend = false,
   initialPrijezd = null,
+  prijezdDen = null,
+  rezervace = null,
   narodnost = null,
   vstup,
   odjezd = null,
@@ -297,8 +342,14 @@ export function Guide({
   const [wifiQr, setWifiQr] = useState<string | null>(null);
   const [gardenQr, setGardenQr] = useState<string | null>(null);
   const [ziveKody, setZiveKody] = useState<KodRadek[] | null>(kody ?? null);
+  const [dnesDen, setDnesDen] = useState(() => denPraha(new Date()));
   const hodnoty = vstup?.hodnoty ?? lokalne ?? { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false };
   const ubytovan = Boolean(vstup?.ubytovan);
+  const odDnePrijezdu = Boolean(prijezdDen && /^\d{4}-\d{2}-\d{2}$/.test(prijezdDen) && dnesDen >= prijezdDen);
+  /** Přání vidí od dne příjezdu i bez kliknutí Předáno. PINy zůstávají jen po předání. */
+  const ukazPrani = ubytovan || Boolean(ziveKody) || odDnePrijezdu;
+  /** Po předání / od dne příjezdu jsou všechny části výchozí sbalené. */
+  const vseSbalene = ubytovan || Boolean(ziveKody) || odDnePrijezdu;
   const krokyHotove = pruvodceRozbalen({
     cas: hodnoty.cas,
     zpusob: hodnoty.zpusob,
@@ -349,6 +400,10 @@ export function Guide({
   useEffect(() => {
     setPrijezd(initialPrijezd);
   }, [initialPrijezd]);
+
+  useEffect(() => {
+    setDnesDen(denPraha(new Date()));
+  }, []);
 
   useEffect(() => {
     if (!ukazWifi) {
@@ -604,12 +659,13 @@ export function Guide({
               nejpozdeji={okno?.nejpozdeji}
               zadostOdjezd={okno?.zadostOdjezd ?? null}
             />
-            {/* Varianta B: přání hned nahoře po předání */}
-            <PraniHosta
-              token={vstup?.cteni ? null : (vstup?.token ?? null)}
-              lang={lang}
-              cteni={Boolean(vstup?.cteni) || showDevBar}
-            />
+            {ukazPrani ? (
+              <PraniHosta
+                token={vstup?.cteni ? null : (vstup?.token ?? null)}
+                lang={lang}
+                cteni={Boolean(vstup?.cteni) || showDevBar}
+              />
+            ) : null}
           </>
         ) : krokyHotove ? (
           <>
@@ -628,6 +684,13 @@ export function Guide({
                 else setLokalne(next);
               }}
             />
+            {ukazPrani ? (
+              <PraniHosta
+                token={vstup?.cteni ? null : (vstup?.token ?? null)}
+                lang={lang}
+                cteni={Boolean(vstup?.cteni) || showDevBar}
+              />
+            ) : null}
           </>
         ) : (
           <>
@@ -646,6 +709,13 @@ export function Guide({
               }}
             />
             <StavApartmanu lang={lang} stav={okno?.stavApartmanu} />
+            {ukazPrani ? (
+              <PraniHosta
+                token={vstup?.cteni ? null : (vstup?.token ?? null)}
+                lang={lang}
+                cteni={Boolean(vstup?.cteni) || showDevBar}
+              />
+            ) : null}
           </>
         )}
 
@@ -664,6 +734,7 @@ export function Guide({
                   : [];
               const kroky = visibleKroky(s, apt);
               const tone = ((displayNum - 1) % 4) + 1;
+              const vychoziOtevreno = !vseSbalene && si === 0;
               const sectionLi = (
                 <li
                   key={s.id}
@@ -675,7 +746,9 @@ export function Guide({
                   </div>
                   <div className="pv-flow__card">
                     <SbalenaSekce
-                      ano={SBALENE.has(s.id) || (ubytovan && SBALENE_PO_PREDANI.has(s.id))}
+                      id={s.id}
+                      rezervace={rezervace}
+                      vychoziOtevreno={vychoziOtevreno}
                       nadpis={`${displayNum}. ${sectionNavLabel(s, lang)}`}
                       expandLabel={tt(TX.ui.expandSection)}
                       collapseLabel={tt(TX.ui.collapseSection)}

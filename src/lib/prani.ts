@@ -62,14 +62,32 @@ export function validujTextPrani(raw: unknown): { ok: true; text: string } | { o
   return { ok: true, text: t };
 }
 
-/** Od předání do 19:00 (Praha) dne před odjezdem. */
+/**
+ * Od předání nebo od 14:00 v den příjezdu (co nastane dřív)
+ * do 19:00 (Praha) dne před odjezdem.
+ */
 export function muzeHostPsat(
-  opts: { predano: string | null | undefined; odjezd: string | null | undefined },
+  opts: {
+    predano?: string | null | undefined;
+    odjezd?: string | null | undefined;
+    prijezd?: string | null | undefined;
+  },
   now = new Date(),
 ): boolean {
-  if (!opts.predano || !opts.odjezd || !/^\d{4}-\d{2}-\d{2}$/.test(opts.odjezd)) return false;
+  if (!opts.odjezd || !/^\d{4}-\d{2}-\d{2}$/.test(opts.odjezd)) return false;
   const konec = casVPraze(posunDen(opts.odjezd, -1), 19, 0);
-  return now.getTime() < konec.getTime();
+  if (now.getTime() >= konec.getTime()) return false;
+
+  const starty: number[] = [];
+  if (opts.predano) {
+    const t = Date.parse(opts.predano);
+    if (Number.isFinite(t)) starty.push(t);
+  }
+  if (opts.prijezd && /^\d{4}-\d{2}-\d{2}$/.test(opts.prijezd)) {
+    starty.push(casVPraze(opts.prijezd, 14, 0).getTime());
+  }
+  if (!starty.length) return false;
+  return now.getTime() >= Math.min(...starty);
 }
 
 export function maOtevrenaVlakna(vlakna: VlaknoPrani[]): boolean {

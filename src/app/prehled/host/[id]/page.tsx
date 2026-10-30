@@ -55,6 +55,8 @@ export default async function PruvodceHostaPage({ params, searchParams }: Props)
           stay={{ noci: rec.noci, osob: rec.osob }}
           kody={kodyProHosta(predano, apt, rec.accessPin, lang)}
           poplatek={rec.poplatek}
+          prijezdDen={rec.prijezd}
+          rezervace={rec.rezervace}
           narodnost={rec.narodnost}
           vstup={{
             token: null,
