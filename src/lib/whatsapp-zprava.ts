@@ -7,6 +7,29 @@ import type { ChybejiciKrok } from './vstup-pruvodce';
 import { fazeHosta } from './faze-hosta';
 import { PRIPLATEK_KC, PRIPLATEK_OD } from './constants';
 import { casZMinut, priplatekProCas } from './priplatek-prijezd';
+import {
+  dalsiCasovaZprava,
+  pocetCasovychPripoinek,
+  pocetCheckinPripoinek,
+  pocetBranaPripoinek,
+  stupenBrany,
+  stupenCheckinu,
+  ukazatCheckinNedojezd,
+} from './pripominky-stupne';
+import {
+  ODKAZ_UNIVERZALNI,
+  ZPRAVA_BRANA_1,
+  ZPRAVA_BRANA_2,
+  ZPRAVA_BRANA_3,
+  ZPRAVA_CHECKIN_1,
+  ZPRAVA_CHECKIN_2,
+  ZPRAVA_CHECKIN_3,
+  ZPRAVA_CHECKIN_NEDOJEZD,
+  ZPRAVA_DEN_CAS,
+  ZPRAVA_PRUVODCE_1,
+  ZPRAVA_PRUVODCE_2,
+  ZPRAVA_PRUVODCE_3,
+} from './zpravy-stupne';
 
 type JazykZpravy = 'cs' | 'en' | 'de' | 'pl' | 'uk' | 'zh-Hant' | 'sv' | 'hu' | 'es' | 'fr' | 'it';
 type ZdrojZpravy = 'booking' | 'airbnb' | 'prima' | 'jiny';
@@ -375,9 +398,11 @@ const PODPIS_HOST: Record<GuideLang, string> = {
 
 export type DruhZpravy =
   | 'checkin'
+  | 'checkinNedojezd'
   | 'neotevrel'
   | 'nerozbalen'
   | 'denNerozbalen'
+  | 'pruvodce3'
   | 'denCas'
   | 'brana'
   | 'nedojezd'
@@ -389,9 +414,11 @@ export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string; vychozi:
 
 const PORADI: DruhZpravy[] = [
   'checkin',
+  'checkinNedojezd',
   'neotevrel',
   'nerozbalen',
   'denNerozbalen',
+  'pruvodce3',
   'denCas',
   'brana',
   'nedojezd',
@@ -402,9 +429,11 @@ const PORADI: DruhZpravy[] = [
 
 const NAZEV: Record<DruhZpravy, string> = {
   checkin: 'Vyplňte check-in',
+  checkinNedojezd: 'Poslední výzva · check-in',
   neotevrel: 'Neotevřel průvodce',
   nerozbalen: 'Průvodce nerozbalen',
   denNerozbalen: 'Den příjezdu, průvodce nerozbalen',
+  pruvodce3: 'Průvodce, důrazný',
   denCas: 'Den příjezdu, čas známe',
   brana: 'Chybí údaje k bráně',
   nedojezd: 'Poslední výzva (nedojezd)',
@@ -412,6 +441,33 @@ const NAZEV: Record<DruhZpravy, string> = {
   pohoda: 'Je vše v pořádku?',
   pripraveno: 'Apartmán je připravený',
 };
+
+const CHECKIN_STUPEN: Record<1 | 2 | 3, Record<GuideLang, string>> = {
+  1: ZPRAVA_CHECKIN_1,
+  2: ZPRAVA_CHECKIN_2,
+  3: ZPRAVA_CHECKIN_3,
+};
+
+const PRUVODCE_STUPEN: Record<1 | 2 | 3, Record<GuideLang, string>> = {
+  1: ZPRAVA_PRUVODCE_1,
+  2: ZPRAVA_PRUVODCE_2,
+  3: ZPRAVA_PRUVODCE_3,
+};
+
+const BRANA_STUPEN: Record<1 | 2 | 3, Record<GuideLang, string>> = {
+  1: ZPRAVA_BRANA_1,
+  2: ZPRAVA_BRANA_2,
+  3: ZPRAVA_BRANA_3,
+};
+
+function textOdkazuCheckinu(lang: GuideLang | null, url?: string | null): string {
+  if (url && /^https:\/\//i.test(url)) return url.trim();
+  return textHosta(ODKAZ_UNIVERZALNI, lang);
+}
+
+function nahradCheckinOdkaz(sablona: string, lang: GuideLang | null, url?: string | null): string {
+  return sablona.replaceAll('{odkaz}', textOdkazuCheckinu(lang, url));
+}
 
 function vetaCheckinu(lang: GuideLang | null, zdroj: string | null | undefined, sOdkazem = false): string {
   const uvod = textHosta(CHECKIN_UVOD, lang);
@@ -422,24 +478,38 @@ function vetaCheckinu(lang: GuideLang | null, zdroj: string | null | undefined, 
   return `${uvod} ${textHosta(CHECKIN_CHVILKA, lang)}\n\n${odkaz}\n\n${konec}`;
 }
 
+export function textPruvodceStupne(lang: GuideLang | null, stupen: 1 | 2 | 3): string {
+  return textHosta(PRUVODCE_STUPEN[stupen], lang);
+}
+
+/** Neotevřel průvodce = 1. stupeň (pevný text). */
 export function textZpravy(lang: GuideLang | null): string {
-  return textVJazyce(NEOTEVREL, lang);
+  return textPruvodceStupne(lang, 1);
 }
 
-export function textCheckinu(lang: GuideLang | null, zdroj?: string | null, sOdkazem = false): string {
-  return vetaCheckinu(lang, zdroj, sOdkazem);
+export function textCheckinu(
+  lang: GuideLang | null,
+  _zdroj?: string | null,
+  url?: string | null,
+  stupen: 1 | 2 | 3 = 1,
+): string {
+  return nahradCheckinOdkaz(textHosta(CHECKIN_STUPEN[stupen], lang), lang, url || null);
 }
 
-export function textNerozbalen(lang: GuideLang | null, chybi: ChybejiciKrok[]): string {
-  return textVJazyce(NEROZBALEN, lang).replaceAll('{kroky}', spojKroky(lang, chybi));
+export function textNerozbalen(lang: GuideLang | null, _chybi?: ChybejiciKrok[]): string {
+  return textPruvodceStupne(lang, 1);
 }
 
-export function textBrany(lang: GuideLang | null): string {
-  return textVJazyce(BRANA, lang);
+export function textBrany(lang: GuideLang | null, stupen: 1 | 2 | 3 = 1): string {
+  return textHosta(BRANA_STUPEN[stupen], lang);
 }
 
-export function textDneNerozbalen(lang: GuideLang | null, chybi: ChybejiciKrok[]): string {
-  return textVJazyce(DEN_NEROZBALEN, lang).replaceAll('{kroky}', spojKroky(lang, chybi));
+export function textDneNerozbalen(lang: GuideLang | null, _chybi?: ChybejiciKrok[]): string {
+  return textPruvodceStupne(lang, 2);
+}
+
+export function textPruvodce3(lang: GuideLang | null): string {
+  return textPruvodceStupne(lang, 3);
 }
 
 export function textUpominky(lang: GuideLang | null, chybi: ChybejiciKrok[]): string {
@@ -449,34 +519,46 @@ export function textUpominky(lang: GuideLang | null, chybi: ChybejiciKrok[]): st
 
 export function textDneSCasem(lang: GuideLang | null, cas: string | null): string {
   const cisty = cas && /^([01]\d|2[0-3]):[0-5]\d$/.test(cas) ? cas : '';
-  const zaklad = textVJazyce(DEN_CAS, lang).replaceAll('{čas}', cisty);
+  const zaklad = textHosta(ZPRAVA_DEN_CAS, lang).replaceAll('{čas}', cisty);
   const kc = cisty ? priplatekProCas(cisty) : null;
   if (!kc) return zaklad;
   const veta = textVJazyce(DEN_PRIPLATEK, lang).replaceAll('{částka}', String(kc));
   return `${zaklad} ${veta}`;
 }
 
-export function zpravaCheckinu(lang: GuideLang | null, zdroj?: string | null, url?: string | null): string {
-  const ma = Boolean(url && /^https:\/\//i.test(url));
-  if (!ma) return sestav(vetaCheckinu(lang, zdroj, false), null, lang);
-  const telo = `${textHosta(CHECKIN_UVOD, lang)} ${textHosta(CHECKIN_TADY, lang)}\n\n${url!.trim()}\n\n${textHosta(CHECKIN_KONEC, lang)}`;
-  return sestav(telo, null, lang);
+export function zpravaCheckinu(
+  lang: GuideLang | null,
+  zdroj?: string | null,
+  url?: string | null,
+  stupen: 1 | 2 | 3 = 1,
+): string {
+  return sestav(textCheckinu(lang, zdroj, url, stupen), null, lang);
 }
 
-export function zpravaHostovi(lang: GuideLang | null, odkaz: string | null): string {
-  return sestav(textZpravy(lang), odkaz, lang);
+export function zpravaCheckinNedojezdu(lang: GuideLang | null, url?: string | null): string {
+  const text = nahradCheckinOdkaz(textHosta(ZPRAVA_CHECKIN_NEDOJEZD, lang), lang, url)
+    .replaceAll('{telefon}', TELEFON);
+  return sestav(text, null, lang);
 }
 
-export function zpravaNerozbalen(lang: GuideLang | null, chybi: ChybejiciKrok[], odkaz: string | null): string {
-  return sestav(textNerozbalen(lang, chybi), odkaz, lang);
+export function zpravaHostovi(lang: GuideLang | null, odkaz: string | null, stupen: 1 | 2 | 3 = 1): string {
+  return sestav(textPruvodceStupne(lang, stupen), odkaz, lang);
 }
 
-export function zpravaBrany(lang: GuideLang | null): string {
-  return sestav(textBrany(lang), null, lang);
+export function zpravaNerozbalen(lang: GuideLang | null, _chybi: ChybejiciKrok[], odkaz: string | null): string {
+  return sestav(textPruvodceStupne(lang, 1), odkaz, lang);
 }
 
-export function zpravaDneNerozbalen(lang: GuideLang | null, chybi: ChybejiciKrok[], odkaz: string | null): string {
-  return sestav(textDneNerozbalen(lang, chybi), odkaz, lang);
+export function zpravaBrany(lang: GuideLang | null, stupen: 1 | 2 | 3 = 1): string {
+  return sestav(textBrany(lang, stupen), null, lang);
+}
+
+export function zpravaDneNerozbalen(lang: GuideLang | null, _chybi: ChybejiciKrok[], odkaz: string | null): string {
+  return sestav(textPruvodceStupne(lang, 2), odkaz, lang);
+}
+
+export function zpravaPruvodce3(lang: GuideLang | null, odkaz: string | null): string {
+  return sestav(textPruvodceStupne(lang, 3), odkaz, lang);
 }
 
 export function zpravaDneSCasem(lang: GuideLang | null, cas: string | null, odkaz: string | null): string {
@@ -527,6 +609,7 @@ export function hlavniZprava(opts: {
   naMiste?: boolean;
   predano?: string;
   odjezd?: string | null;
+  historie?: { co: string }[];
 }): DruhZpravy {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const faze = fazeHosta({
@@ -545,7 +628,11 @@ export function hlavniZprava(opts: {
   });
   if (faze.id === 1) return 'checkin';
   if (faze.id === 2) return 'neotevrel';
-  if (faze.id === 3) return 'nerozbalen';
+  if (faze.id === 3) {
+    const id = dalsiCasovaZprava(pocetCasovychPripoinek(opts.historie || []));
+    return id === 'nedojezd' ? 'pruvodce3' : id;
+  }
+  if (opts.branaChybi) return 'brana';
   return 'denCas';
 }
 
@@ -569,22 +656,46 @@ export function zpravyMenu(opts: {
   casOdjezdu?: string | null;
   dluh?: PolozkaDluhu[];
   pripraveno?: boolean;
+  historie?: { co: string }[];
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
+  const historie = opts.historie || [];
+  const denPredNeboDen = Boolean(
+    opts.prijezd && (opts.dnes === opts.prijezd || opts.dnes === posunDen(opts.prijezd, -1)),
+  );
+  const denPrijezdu = Boolean(opts.prijezd && opts.dnes === opts.prijezd);
+  const checkinStupen = stupenCheckinu(pocetCheckinPripoinek(historie), denPredNeboDen);
+  const pruvodcePocet = pocetCasovychPripoinek(historie);
+  const neotevrelStupen = Math.min(3, Math.max(1, pruvodcePocet + 1)) as 1 | 2 | 3;
+  const branaStupen = stupenBrany(pocetBranaPripoinek(historie), denPrijezdu);
+
   const texty: Record<DruhZpravy, string> = {
-    checkin: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl),
-    neotevrel: zpravaHostovi(opts.lang, opts.pruvodce),
+    checkin: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl, checkinStupen),
+    checkinNedojezd: zpravaCheckinNedojezdu(opts.lang, opts.checkinUrl),
+    neotevrel: zpravaHostovi(opts.lang, opts.pruvodce, neotevrelStupen),
     nerozbalen: zpravaNerozbalen(opts.lang, chybi, opts.pruvodce),
     denNerozbalen: zpravaDneNerozbalen(opts.lang, chybi, opts.pruvodce),
+    pruvodce3: zpravaPruvodce3(opts.lang, opts.pruvodce),
     denCas: zpravaDneSCasem(opts.lang, opts.casPrijezdu, opts.pruvodce),
-    brana: zpravaBrany(opts.lang),
+    brana: zpravaBrany(opts.lang, branaStupen),
     nedojezd: zpravaNedojezdu(opts.lang),
     odjezd: `${zpravaOdjezdu(opts.lang, opts.dluh || [], opts.pruvodce)}\n\n${vetaOdjezduNavic(opts.lang)}${opts.pruvodce ? `\n${opts.pruvodce.split('#')[0]}#pozdejsi` : ''}`,
     pohoda: textPohody(opts.lang),
     pripraveno: textPripraveno(opts.lang, opts.pruvodce ? odkazPripraveno(opts.pruvodce) : ''),
   };
   const videt = PORADI.filter((id) => {
-    if (id === 'nedojezd') return ukazatNedojezd({ ...opts, chybi });
+    if (id === 'checkinNedojezd') {
+      return ukazatCheckinNedojezd({
+        stav: opts.stav,
+        prijezd: opts.prijezd,
+        dnes: opts.dnes,
+        predano: opts.predano,
+        historie,
+      });
+    }
+    if (id === 'nedojezd') {
+      return ukazatNedojezd({ ...opts, chybi }) && pruvodcePocet >= 3;
+    }
     if (id === 'pripraveno') return opts.pripraveno === true;
     if (id === 'pohoda') {
       return ukazatPohodu({
@@ -611,11 +722,11 @@ export function zpravyMenu(opts: {
     nazev: NAZEV[id],
     text: texty[id],
     vychozi: id === vychozi,
-    vystraha: id === 'nedojezd',
+    vystraha: id === 'nedojezd' || id === 'checkinNedojezd',
   }));
 }
 
-/** Po předání: den po příjezdu pohoda, den před odjezdem odjezd, jinak nic. Předtím podle fáze. */
+/** Po předání: den po příjezdu pohoda, den před odjezdem odjezd, jinak nic. Předtím: check-in → průvodce → brána → denCas. */
 export function vychoziZprava(
   opts: Parameters<typeof zpravyMenu>[0],
   videt: DruhZpravy[],
@@ -627,6 +738,31 @@ export function vychoziZprava(
     if (denPred && videt.includes('odjezd')) return 'odjezd';
     return null;
   }
+  const historie = opts.historie || [];
+  const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
+  const otevren = (opts.otevrenoPocet ?? 0) > 0;
+  const pruvodceHotovo = otevren && chybi.length === 0;
+
+  if (opts.stav === 'bez_checkinu' || opts.stav === 'neodeslano') {
+    if (videt.includes('checkinNedojezd')) return 'checkinNedojezd';
+    if (videt.includes('checkin')) return 'checkin';
+  }
+
+  if (!pruvodceHotovo && opts.stav !== 'bez_checkinu' && opts.stav !== 'neodeslano') {
+    if (!otevren && pocetCasovychPripoinek(historie) === 0 && videt.includes('neotevrel')) {
+      return 'neotevrel';
+    }
+    let id = dalsiCasovaZprava(pocetCasovychPripoinek(historie));
+    if (id === 'nedojezd' && !videt.includes('nedojezd')) id = 'pruvodce3';
+    if (videt.includes(id)) return id;
+  }
+
+  if (opts.branaChybi && videt.includes('brana')) return 'brana';
+
+  if (opts.prijezd && opts.dnes === opts.prijezd && opts.casPrijezdu && videt.includes('denCas')) {
+    return 'denCas';
+  }
+
   const hlavni = hlavniZprava(opts);
   return videt.includes(hlavni) ? hlavni : null;
 }

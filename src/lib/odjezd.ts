@@ -5,6 +5,7 @@ import { castkaPoplatku, type PoplatekStav } from './poplatek';
 import { priplatekProCas, soucetVyjezdu } from './priplatek-prijezd';
 import type { OdjezdBeh, RezervaceRecord } from './store';
 import type { AptId, GuideLang } from './types';
+import { ZPRAVA_ODJEZD } from './zpravy-stupne';
 
 /** Potvrzená žádost, nebo ručně zapsaný čas po 10:00 (75 Kč za půlhodinu). */
 export function castkaPozdejsihoOdjezdu(
@@ -294,8 +295,9 @@ export function zpravaOdjezdu(lang: GuideLang | null, polozky: PolozkaDluhu[], o
   const j = jazyk(lang);
   const t = ODSTAVEC[j];
   const dluh = vetaDluhu(j, polozky);
-  const prvni = dluh ? `${t.a} ${dluh}` : t.a;
-  const dily = [prvni, t.b];
+  const a = ZPRAVA_ODJEZD[j];
+  const prvni = dluh ? `${a} ${dluh}` : a;
+  const dily = [prvni];
   if (odkaz) dily.push(t.odkaz.replace('{odkaz}', odkaz));
   dily.push(t.podpis);
   return dily.join('\n\n');

@@ -72,9 +72,16 @@ import {
 import { textStalehoHosta } from '@/lib/staly-host';
 import {
   dalsiCasovaZprava,
+  pocetBranaPripoinek,
   pocetCasovychPripoinek,
   pocetCheckinPripoinek,
+  popisekStupneBrany,
   popisekStupneCasu,
+  popisekStupneCheckinu,
+  stupenBrany,
+  stupenCheckinu,
+  ukazatCheckinNedojezd,
+  type CasovaZpravaId,
 } from '@/lib/pripominky-stupne';
 function stitekDneKarty(prijezd: string | null, dnesDen: string): string {
   if (!prijezd) return 'Bez data';
@@ -1452,6 +1459,7 @@ export function PrehledClient({
       dluh: row.dluhPolozky.map((p) => ({ druh: p.druh, kc: p.kc })),
       branaChybi: row.zpusobPrijezdu === 'auto' && (!row.telefonBrana || (!row.spz && !row.spzPujcene)),
       pripraveno,
+      historie: row.historie,
     });
   }
 
@@ -2241,7 +2249,23 @@ export function PrehledClient({
             : branaChybiUdaje
               ? 'klik → WhatsApp'
               : 'klik → SMS do brány';
-          const casZpravaId = dalsiCasovaZprava(pocetCasovychPripoinek(row.historie));
+          const pruvodcePocet = pocetCasovychPripoinek(row.historie);
+          const denPredNeboDenCi =
+            Boolean(row.prijezd) && (dnes === row.prijezd || dnes === posunDen(row.prijezd!, -1));
+          let casZpravaId: CasovaZpravaId = dalsiCasovaZprava(pruvodcePocet);
+          if (
+            casZpravaId === 'nedojezd' &&
+            !(
+              pruvodcePocet >= 3 &&
+              denPredNeboDenCi &&
+              row.stav !== 'zruseno' &&
+              !predanoRadku(row)
+            )
+          ) {
+            casZpravaId = 'pruvodce3';
+          }
+          const checkinStupen = stupenCheckinu(pocetCheckinPripoinek(row.historie), denPredNeboDenCi);
+          const branaStupenVal = stupenBrany(pocetBranaPripoinek(row.historie), row.prijezd === dnes);
           /** Jen krátký štítek. Dlouhý text fáze (čas, brána, průvodce) je v dlaždicích. */
           const pillText = (() => {
             if (row.stav === 'zruseno') return 'Zrušeno';
@@ -2369,7 +2393,13 @@ export function PrehledClient({
                       <span className="ph-nova-tile__telo">
                         <span className="ph-nova-tile__nadpis">Autem</span>
                         <span className="ph-nova-tile__hlavni">{branaHlavni}</span>
-                        <span className="ph-nova-tile__drobek">{branaDrobek}</span>
+                        <span className="ph-nova-tile__drobek">
+                          {branaOk
+                            ? branaDrobek
+                            : branaChybiUdaje
+                              ? `${popisekStupneBrany(branaStupenVal)}${pocetBranaPripoinek(row.historie) ? ` · už ${pocetBranaPripoinek(row.historie)}×` : ''} · napsat`
+                              : branaDrobek}
+                        </span>
                       </span>
                       {branaOk ? (
                         <span className="ph-nova-tile__znacka" aria-hidden="true">
@@ -2412,7 +2442,20 @@ export function PrehledClient({
                   <span className="ph-nova-stav__popis">
                     {checkinOk
                       ? 'Hotovo'
-                      : `chybí${pocetCheckinPripoinek(row.historie) ? ` · už ${pocetCheckinPripoinek(row.historie)}×` : ''}`}
+                      : (() => {
+                          const n = pocetCheckinPripoinek(row.historie);
+                          const posledni = ukazatCheckinNedojezd({
+                            stav: row.stav,
+                            prijezd: row.prijezd,
+                            dnes,
+                            predano: predanoRadku(row) || '',
+                            historie: row.historie,
+                          });
+                          const pop = posledni
+                            ? popisekStupneCheckinu('nedojezd')
+                            : popisekStupneCheckinu(checkinStupen);
+                          return `${pop}${n ? ` · už ${n}×` : ''}`;
+                        })()}
                   </span>
                 </button>
                 <button
@@ -2493,14 +2536,50 @@ export function PrehledClient({
             )}
             {(() => {
               const idZpravy = volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id;
-              if (idZpravy !== 'nerozbalen' && idZpravy !== 'denNerozbalen' && idZpravy !== 'nedojezd') return null;
-              const uz = pocetCasovychPripoinek(row.historie);
-              return (
-                <p className="ph-nova-panel__stupen">
-                  {popisekStupneCasu(idZpravy)}
-                  {uz ? ` · už odesláno ${uz}×` : ' · ještě neodesláno'}
-                </p>
-              );
+              const denOk =
+                Boolean(row.prijezd) && (dnes === row.prijezd || dnes === posunDen(row.prijezd!, -1));
+              if (
+                idZpravy === 'nerozbalen' ||
+                idZpravy === 'denNerozbalen' ||
+                idZpravy === 'pruvodce3' ||
+                idZpravy === 'nedojezd' ||
+                idZpravy === 'neotevrel'
+              ) {
+                const uz = pocetCasovychPripoinek(row.historie);
+                const pop =
+                  idZpravy === 'neotevrel'
+                    ? popisekStupneCasu(dalsiCasovaZprava(uz) === 'nedojezd' ? 'pruvodce3' : dalsiCasovaZprava(uz))
+                    : popisekStupneCasu(idZpravy as CasovaZpravaId);
+                return (
+                  <p className="ph-nova-panel__stupen">
+                    {pop}
+                    {uz ? ` · už odesláno ${uz}×` : ' · ještě neodesláno'}
+                  </p>
+                );
+              }
+              if (idZpravy === 'checkin' || idZpravy === 'checkinNedojezd') {
+                const uz = pocetCheckinPripoinek(row.historie);
+                const pop =
+                  idZpravy === 'checkinNedojezd'
+                    ? popisekStupneCheckinu('nedojezd')
+                    : popisekStupneCheckinu(stupenCheckinu(uz, denOk));
+                return (
+                  <p className="ph-nova-panel__stupen">
+                    {pop}
+                    {uz ? ` · už odesláno ${uz}×` : ' · ještě neodesláno'}
+                  </p>
+                );
+              }
+              if (idZpravy === 'brana') {
+                const uz = pocetBranaPripoinek(row.historie);
+                return (
+                  <p className="ph-nova-panel__stupen">
+                    {popisekStupneBrany(stupenBrany(uz, row.prijezd === dnes))}
+                    {uz ? ` · už odesláno ${uz}×` : ' · ještě neodesláno'}
+                  </p>
+                );
+              }
+              return null;
             })()}
             <div className="ph-nova-nahled">{zpravaRadku(row)}</div>
             <div className="ph-nova-rada">

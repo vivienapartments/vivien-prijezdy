@@ -76,7 +76,15 @@ export function datumPobytu(ymd: string | null): string {
 export function predmetZpravy(id: DruhZpravy, lang: GuideLang | null, prijezd: string | null): string {
   if (id === 'pohoda') return PREDMET_POHODY[jazyk(lang)];
   const tabulka =
-    id === 'checkin' ? CHECKIN : id === 'neotevrel' ? PRUVODCE : id === 'brana' ? BRANA : id === 'odjezd' ? PREDMET_ODJEZDU : PRIJEZD;
+    id === 'checkin' || id === 'checkinNedojezd'
+      ? CHECKIN
+      : id === 'neotevrel' || id === 'nerozbalen' || id === 'denNerozbalen' || id === 'pruvodce3'
+        ? PRUVODCE
+        : id === 'brana'
+          ? BRANA
+          : id === 'odjezd'
+            ? PREDMET_ODJEZDU
+            : PRIJEZD;
   return tabulka[jazyk(lang)].replaceAll('{datum}', datumPobytu(prijezd));
 }
 

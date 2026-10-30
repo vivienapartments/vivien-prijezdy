@@ -177,7 +177,7 @@ describe('odjezd', () => {
   it('věta o nedoplatku je ve zprávě jen když dluh je', () => {
     const bez = rovne(zpravaOdjezdu('cs', [], 'https://example.com/pruvodce'));
     expect(bez).not.toContain('vyrovnáme');
-    expect(bez).toContain('Standardní odjezd je do 10:00.');
+    expect(bez).toContain('Běžný odjezd je do 10:00');
     expect(bez).toContain('Čas můžete zadat i tady: https://example.com/pruvodce');
     expect(bez.endsWith('Nikol a rodina VIVIEN')).toBe(true);
 
@@ -199,7 +199,7 @@ describe('odjezd', () => {
 
     const en = rovne(zpravaOdjezdu('en', [{ druh: 'poplatek', kc: 400 }], null));
     expect(en).toContain('When we take over the apartment, we will settle the remaining 400 CZK (city tax).');
-    expect(en).toContain('Standard check-out is by 10:00.');
+    expect(en).toContain('Regular check-out is by 10:00');
   });
 
   it('text souhrnu sečte druhy a samostatný push v 8:00 už neodejde', async () => {

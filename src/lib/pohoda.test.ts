@@ -43,8 +43,9 @@ describe('pohoda', () => {
       expect(textPohody(lang)).toBe(ZPRAVA_POHODA[lang]);
     }
     expect(textPohody(null)).toBe(ZPRAVA_POHODA.en);
-    expect(ZPRAVA_POHODA.cs).toContain('zda je u Vás všechno v pořádku');
+    expect(ZPRAVA_POHODA.cs).toContain('zda je u vás všechno v pořádku');
     expect(ZPRAVA_POHODA.cs).toContain('neváhejte nám napsat');
+    expect(ZPRAVA_POHODA.cs).not.toMatch(/\bVás\b|\bVám\b/);
   });
 
   it('do seznamu patří jen včerejší předaní, kteří dnes neodjíždějí', () => {

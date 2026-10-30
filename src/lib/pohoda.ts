@@ -10,9 +10,9 @@ import type { GuideLang } from './types';
 export const ZPRAVA_POHODA: Record<GuideLang, string> = {
   cs: `Dobrý den,
 
-jen jsme se chtěli zeptat, zda je u Vás všechno v pořádku a jestli jste s pobytem spokojeni. Pokud byste cokoli potřebovali, neváhejte nám napsat.
+jen jsme se chtěli zeptat, zda je u vás všechno v pořádku a jestli jste s pobytem spokojeni. Pokud byste cokoli potřebovali, neváhejte nám napsat.
 
-Přejeme Vám krásný den.
+Přejeme vám krásný den.
 
 Nikol a rodina VIVIEN`,
   en: `Hello,

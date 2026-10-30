@@ -639,9 +639,11 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'email' || akce === 'whatsapp' || akce === 'sms') {
     const druhy: DruhZpravy[] = [
       'checkin',
+      'checkinNedojezd',
       'neotevrel',
       'nerozbalen',
       'denNerozbalen',
+      'pruvodce3',
       'denCas',
       'brana',
       'nedojezd',
@@ -687,6 +689,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       dluh: polozkyZRezervace(rec),
       branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
       pripraveno: druh === 'pripraveno',
+      historie: rec.historie,
     }).find((z) => z.id === druh);
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
     const patch =

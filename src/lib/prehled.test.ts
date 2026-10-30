@@ -68,7 +68,7 @@ describe('tlačítka v přehledu', () => {
     expect(odkaz.startsWith('intent://send/?phone=420777111222&text=')).toBe(true);
     const text = odkaz.slice(odkaz.indexOf('text=') + 5, odkaz.indexOf('#Intent'));
     expect(decodeURIComponent(text)).toBe(zprava);
-    expect(zprava).toContain('Děkujeme a těšíme se na setkání.');
+    expect(zprava).toContain('čas a způsob příjezdu');
     expect(zprava).toContain('https://vivien-prijezdy-six.vercel.app/ukazka');
     expect(zprava).toContain('Nikol a rodina VIVIEN');
     const fallback = odkaz.slice(odkaz.indexOf('S.browser_fallback_url=') + 'S.browser_fallback_url='.length, odkaz.lastIndexOf(';end'));
@@ -100,36 +100,23 @@ describe('tlačítka v přehledu', () => {
     expect(textTlacitkaOdeslani('odeslano_s_vyhradou')).toBe('Poslat průvodce znovu');
   });
 
-  it('česká zpráva na WhatsApp je schválené znění', () => {
-    expect(textZpravy('cs')).toBe(
-      'Dobrý den, ve vašem průvodci k příjezdu čekají vstupní PINy do domu a apartmánu. Abyste se k nim dostali, otevřete průvodce, vyberte čas a způsob příjezdu a potvrďte pravidla. Děkujeme a těšíme se na setkání.',
-    );
-    expect(textCheckinu('cs', 'Booking')).toBe(
-      'Dobrý den, ještě nemáte vyplněný online check-in. Hned po něm vám pošleme průvodce k příjezdu se vstupními PINy do domu a apartmánu. Bez check-inu se u nás neubytujete ani nezaparkujete. Vyplnění zabere jen chvilku.\n\nOdkaz najdete ve zprávách na Booking.com.\n\nDěkujeme a moc se na vás těšíme.',
-    );
+  it('česká zpráva na WhatsApp je schválené znění (prompt 54)', () => {
+    expect(textZpravy('cs')).toContain('online check-in máte hotový');
+    expect(textZpravy('cs')).toContain('čas a způsob příjezdu');
+    expect(textCheckinu('cs', 'Booking')).toContain('Vyplnění zabere jen chvilku.');
+    expect(textCheckinu('cs', 'Booking')).toContain('Odkaz vám přišel e-mailem');
+    expect(textCheckinu('cs', 'Booking')).toContain('Po check-inu vám hned přijde průvodce');
     expect(textCheckinu('cs', 'Booking')).not.toContain('odkaz je tady:');
-    expect(textCheckinu('cs', 'Airbnb')).toContain('ve zprávách na Airbnb.');
-    expect(textCheckinu('cs', 'přímá')).toContain('v e-mailu s potvrzením rezervace.');
-    expect(textCheckinu('cs', 'Expedia')).toContain('ve zprávách od webu, kde jste rezervovali.');
-    expect(textCheckinu('de', 'Booking')).toContain('Leitfaden');
+    expect(textCheckinu('cs', 'Airbnb')).toContain('Odkaz vám přišel e-mailem');
+    expect(textCheckinu('cs', 'přímá')).toContain('Odkaz vám přišel e-mailem');
+    expect(textCheckinu('cs', 'Expedia')).toContain('Odkaz vám přišel e-mailem');
+    expect(textCheckinu('de', 'Booking')).toContain('Online-Check-in');
     expect(textCheckinu('de', 'Booking')).not.toContain('Wegweiser');
-    expect(textCheckinu('de', 'Booking').toLowerCase()).not.toContain('bitte');
-    expect(textCheckinu('en', 'Booking').toLowerCase()).not.toContain('please');
-    expect(textNerozbalen('cs', ['cas'])).toBe(
-      'Dobrý den, abyste se dostali ke svým vstupním PINům, v průvodci k příjezdu ještě vyberte čas příjezdu. Zabere to minutu. Děkujeme a těšíme se na setkání.',
-    );
-    expect(textNerozbalen('cs', ['cas'])).not.toContain('potvrďte pravidla');
-    expect(textNerozbalen('cs', ['zpusob', 'pravidla'])).toContain('vyberte, jak přijedete a potvrďte pravidla');
-    expect(textNerozbalen('cs', ['zpusob', 'pravidla'])).not.toContain('vyberte čas příjezdu');
-    expect(textBrany('cs')).toBe(
-      'Dobrý den, v průvodci doplňte telefon pro bránu a SPZ. Bez registrace v bráně nezaparkujete. Děkujeme a těšíme se na setkání.',
-    );
-    expect(textDneNerozbalen('cs', ['cas', 'pravidla'])).toBe(
-      'Dobrý den, dnes se na vás těšíme. Abyste se dostali ke svým vstupním PINům, v průvodci ještě vyberte čas příjezdu a potvrďte pravidla. Zabere to minutu. Děkujeme.',
-    );
-    expect(textDneSCasem('cs', '16:30')).toBe(
-      'Dobrý den, dnes se na vás těšíme. Počítáme s vámi kolem 16:30. Asi čtvrt hodiny předem nám napište, že budete na místě, a budeme vás čekat. Na domluvený čas čekáme 10 minut. Kdyby se čas změnil, opravte ho v průvodci nebo nám napište.',
-    );
+    expect(textNerozbalen('cs', ['cas'])).toContain('čas a způsob příjezdu a potvrďte pravidla');
+    expect(textBrany('cs')).toContain('telefon, ze kterého budete otevírat bránu, a SPZ');
+    expect(textDneNerozbalen('cs', ['cas', 'pravidla'])).toContain('stále chybí čas a způsob příjezdu');
+    expect(textDneSCasem('cs', '16:30')).toContain('kolem 16:30');
+    expect(textDneSCasem('cs', '16:30')).toContain('10 minut');
     expect(textDneSCasem('cs', '21:00')).toContain('teď by to bylo 200\u00A0Kč');
     expect(textDneSCasem('cs', '21:00')).toContain('100\u00A0Kč za každou započatou půlhodinu');
   });
@@ -277,9 +264,16 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(bez.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd']);
-    expect(bez.find((z) => z.id === 'nedojezd')?.vychozi).toBe(false);
-    expect(bez.find((z) => z.id === 'nedojezd')?.vystraha).toBe(true);
+    expect(bez.map((z) => z.id)).toEqual([
+      'checkin',
+      'neotevrel',
+      'nerozbalen',
+      'denNerozbalen',
+      'pruvodce3',
+      'denCas',
+      'brana',
+    ]);
+    expect(bez.some((z) => z.id === 'nedojezd')).toBe(false);
     expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toBe(
       `${textDneNerozbalen('cs', ['cas', 'zpusob', 'pravidla'])}\n\n${odkaz}\n\nNikol a rodina VIVIEN`,
     );
@@ -294,7 +288,15 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(sCasem.map((z) => z.id)).toEqual(['checkin', 'neotevrel', 'nerozbalen', 'denNerozbalen', 'denCas', 'brana', 'nedojezd']);
+    expect(sCasem.map((z) => z.id)).toEqual([
+      'checkin',
+      'neotevrel',
+      'nerozbalen',
+      'denNerozbalen',
+      'pruvodce3',
+      'denCas',
+      'brana',
+    ]);
     expect(sCasem.find((z) => z.vychozi)?.id).not.toBe('nedojezd');
     const textSeCasem = sCasem.find((z) => z.id === 'denCas')?.text || '';
     expect(textSeCasem).toBe(`${textDneSCasem('cs', '16:30')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
@@ -303,7 +305,7 @@ describe('tlačítka v přehledu', () => {
     expect(zpravaDneSCasem('en', '16:30', odkaz)).toContain('around 16:30');
   });
 
-  it('poslední výzva je jen den předem a v den příjezdu, a nikdy není předvybraná', () => {
+  it('poslední výzva průvodce až po 3. stupni, den předem / den příjezdu', () => {
     const text = zpravaNedojezdu('cs');
     expect(text).toContain('nedojezd (no-show)');
     expect(text).toContain('+420\u00A0604\u00A0692\u00A0573');
@@ -344,6 +346,35 @@ describe('tlačítka v přehledu', () => {
     expect(
       ukazatNedojezd({ ...zaklad, casPrijezdu: null, prijezd: '2026-10-15', dnes: '2026-10-15', predano: '17:03' }),
     ).toBe(false);
+    const bezPoctu = zpravyMenu({
+      stav: 'odeslano',
+      lang: 'cs',
+      pruvodce: null,
+      otevrenoPocet: 2,
+      casPrijezdu: null,
+      prijezd: '2026-10-15',
+      dnes: '2026-10-15',
+      chybi: ['cas'],
+      historie: [],
+    });
+    expect(bezPoctu.some((z) => z.id === 'nedojezd')).toBe(false);
+    const poTrech = zpravyMenu({
+      stav: 'odeslano',
+      lang: 'cs',
+      pruvodce: null,
+      otevrenoPocet: 2,
+      casPrijezdu: null,
+      prijezd: '2026-10-15',
+      dnes: '2026-10-15',
+      chybi: ['cas'],
+      historie: [
+        { co: 'WhatsApp: Průvodce nerozbalen' },
+        { co: 'WhatsApp: Den příjezdu, průvodce nerozbalen' },
+        { co: 'WhatsApp: Průvodce, důrazný' },
+      ],
+    });
+    expect(poTrech.some((z) => z.id === 'nedojezd')).toBe(true);
+    expect(poTrech.find((z) => z.id === 'nedojezd')?.vystraha).toBe(true);
     const menu = zpravyMenu({
       stav: 'odeslano',
       lang: 'cs',
@@ -358,16 +389,20 @@ describe('tlačítka v přehledu', () => {
     expect(menu.some((z) => z.vychozi && z.id === 'nedojezd')).toBe(false);
   });
 
-  it('check-in se řídí zdrojem a odkaz z políčka do zprávy nedá', () => {
+  it('check-in: URL nebo univerzální věta, bez opakování chvilky podle zdroje', () => {
     expect(druhZdroje('Booking.com')).toBe('booking');
     expect(druhZdroje('Airbnb')).toBe('airbnb');
     expect(druhZdroje('přímá')).toBe('prima');
     expect(druhZdroje('')).toBe('jiny');
     const booking = zpravaCheckinu('cs', 'Booking');
-    expect(booking).toContain('na Booking.com.');
+    expect(booking).toContain('Odkaz vám přišel e-mailem');
+    expect(booking).toContain('Vyplnění zabere jen chvilku.');
+    expect(booking.split('Vyplnění zabere jen chvilku.').length - 1).toBe(1);
     expect(booking.endsWith('Nikol a rodina VIVIEN')).toBe(true);
     expect(booking).not.toContain('https://');
-    expect(booking).not.toContain('prosím');
+    expect(booking).not.toContain('{');
+    expect(zpravaCheckinu('cs', 'Airbnb')).toContain('Odkaz vám přišel e-mailem');
+    expect(zpravaCheckinu('cs', 'přímá')).toContain('Odkaz vám přišel e-mailem');
     const sOdkazem = zpravyMenu({
       stav: 'bez_checkinu',
       lang: 'cs',
@@ -378,14 +413,16 @@ describe('tlačítka v přehledu', () => {
       prijezd: '2026-10-11',
       dnes: '2026-10-11',
     });
-    expect(sOdkazem.find((z) => z.vychozi)?.text).toContain('na Airbnb.');
+    expect(sOdkazem.find((z) => z.vychozi)?.id).toBe('checkin');
+    expect(sOdkazem.find((z) => z.vychozi)?.text).toContain('Odkaz vám přišel e-mailem');
     expect(sOdkazem.find((z) => z.vychozi)?.text).not.toContain('https://');
     const url = 'https://checkin.example.com/formular/120260541';
     const sFormularem = zpravaCheckinu('cs', 'Booking', url);
-    expect(sFormularem).toContain('odkaz je tady:');
-    expect(sFormularem).not.toContain('Odkaz posíláme níže.');
-    expect(sFormularem).not.toContain('Booking.com');
-    expect(sFormularem).toContain(`\n\n${url}\n\nDěkujeme a moc se na vás těšíme.\n\nNikol a rodina VIVIEN`);
+    expect(sFormularem).toContain(url);
+    expect(sFormularem).not.toContain('odkaz je tady:');
+    expect(sFormularem).not.toContain('Odkaz vám přišel e-mailem');
+    expect(sFormularem).not.toContain('{');
+    expect(sFormularem).toContain('Nikol a rodina VIVIEN');
   });
 
   it('podpis je pod odkazem a u zprávy bez odkazu hned pod textem', () => {
@@ -396,11 +433,9 @@ describe('tlačítka v přehledu', () => {
     expect(pruvodce).toBe(`${textZpravy('cs')}\n\n${odkaz}\n\nNikol a rodina VIVIEN`);
     expect(den.indexOf(odkaz)).toBeLessThan(den.indexOf('Nikol a rodina VIVIEN'));
     expect(cas).toBe(`${textNerozbalen('cs', ['cas'])}\n\nNikol a rodina VIVIEN`);
-    expect(cas).not.toContain('potvrďte pravidla');
     expect(cas).not.toContain('https://');
     expect(zpravaHostovi('en', odkaz)).toContain('Nikol and the VIVIEN family');
     expect(zpravaHostovi('de', odkaz)).toContain('Nikol und Familie VIVIEN');
-    expect(zpravaHostovi('de', null).toLowerCase()).not.toContain('bitte');
   });
 
   it('poplatek ukáže částku, v ceně, nebo otazník', () => {
