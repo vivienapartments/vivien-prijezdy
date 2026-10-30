@@ -32,7 +32,7 @@ async function upozorniPohodu(
   if (!hoste.length) {
     return { pocet: 0, beh: { ...beh, pohoda: dnes } };
   }
-  const jak = await posli(store, textPushPohody(hoste.length), '/prehled?zalozka=dnes#pohoda');
+  const jak = await posli(store, textPushPohody(hoste.length), '/prehled#pohoda');
   if (jak === 'nic') return { pocet: 0, beh };
   return { pocet: 1, beh: { ...beh, pohoda: dnes } };
 }
@@ -94,7 +94,7 @@ export async function upozorniOdjezdy(
       const url =
         bezDotazu.length === 1
           ? `/prehled#${bezDotazu[0].rezervace}`
-          : '/prehled?zalozka=dnes#odjezdy-zitra';
+          : '/prehled#odjezdy-zitra';
       const jak = await posli(store, text, url);
       if (jak !== 'nic') {
         beh.vecer = dnes;
@@ -111,7 +111,7 @@ export async function upozorniOdjezdy(
       const url =
         bezDotazu.length === 1
           ? `/prehled#${bezDotazu[0].rezervace}`
-          : '/prehled?zalozka=dnes#odjezdy-zitra';
+          : '/prehled#odjezdy-zitra';
       const jak = await posli(store, text, url);
       if (jak !== 'nic') {
         beh.pripominka = dnes;

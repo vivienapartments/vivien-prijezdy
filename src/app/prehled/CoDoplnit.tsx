@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   chybiCheckin,
+  chybiPruvodce,
   chybiTelefon,
   formatPrijezdDoplnit,
   hosteCoDoplnitFiltr,
@@ -12,6 +13,7 @@ import {
   type PoctyStitkuDoplnit,
 } from '@/lib/co-doplnit';
 import type { PrehledRadek } from '@/lib/prehled';
+import { textVyzvy } from '@/lib/pripominky-stupne';
 
 type Props = {
   radky: PrehledRadek[];
@@ -284,11 +286,22 @@ export function CoDoplnit({
 }
 
 function stitkyRadku(row: PrehledRadek, filtr: FiltrDoplnit): string[] {
-  if (filtr === 'bez_checkinu') return ['check-in'];
-  if (filtr === 'bez_pruvodce') return ['průvodce'];
+  if (filtr === 'bez_checkinu') {
+    return ['check-in', textVyzvy('checkin', row.historie).kratky];
+  }
+  if (filtr === 'bez_pruvodce') {
+    return ['průvodce', textVyzvy('pruvodce', row.historie).kratky];
+  }
   if (filtr === 'bez_telefonu') return ['telefon'];
   const out: string[] = [];
-  if (chybiCheckin(row)) out.push('check-in');
+  if (chybiCheckin(row)) {
+    out.push('check-in');
+    out.push(textVyzvy('checkin', row.historie).kratky);
+  }
+  if (chybiPruvodce(row)) {
+    out.push('průvodce');
+    out.push(textVyzvy('pruvodce', row.historie).kratky);
+  }
   if (chybiTelefon(row)) out.push('telefon');
   return out;
 }

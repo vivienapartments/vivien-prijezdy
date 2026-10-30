@@ -65,7 +65,7 @@ import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import { poctyStitkuDoplnit, type FiltrDoplnit } from '@/lib/co-doplnit';
 import type { PraniRadekPrehled, PraniStitekKarty } from '@/lib/prani';
 import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
-import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVDnesnichOdjezdech, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
+import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
 import { jeIos, nactiBranu, smsOdkaz, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 import {
@@ -85,6 +85,7 @@ import {
   popisekStupneCheckinu,
   stupenBrany,
   stupenCheckinu,
+  textVyzvy,
   ukazatCheckinNedojezd,
   type CasovaZpravaId,
 } from '@/lib/pripominky-stupne';
@@ -201,6 +202,7 @@ function idZUpozorneniUrl(url: string): string | null {
 function zalozkaZUpozorneniUrl(url: string): Zalozka | null {
   const m = (url || '').match(/[?&]zalozka=(prijezdy|dnes|dluhy|hledat)\b/);
   if (!m) return null;
+  if (m[1] === 'dnes') return 'prijezdy';
   return m[1] as Zalozka;
 }
 
@@ -336,6 +338,7 @@ export function PrehledClient({
   const [vybranyDen, setVybranyDen] = useState(dnes);
   /** Domů = provoz (upozornění, záložky, hledat). Den = jen karty vybraného dne. */
   const [pohledDomu, setPohledDomu] = useState(true);
+  const [pohodaOtevreno, setPohodaOtevreno] = useState(false);
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
   const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
   const [videne, setVidene] = useState<Record<string, Record<string, string>> | null>(null);
@@ -552,7 +555,7 @@ export function PrehledClient({
     if (!kotva && /odjíždí|dotaz na odjezd/i.test(text)) kotva = 'odjezdy-zitra';
     if (!kotva && /v pořádku/i.test(text)) kotva = 'pohoda';
 
-    if (kotva === 'odjezdy-zitra') {
+    if (kotva === 'odjezdy-zitra' || (kotva && kotva.startsWith('odjezdy'))) {
       const zitraYmd = posunDen(dnes, 1);
       const zitrejsi = radky.filter(
         (r) => !r.nelzeNacist && r.stav !== 'zruseno' && r.odjezd === zitraYmd,
@@ -561,19 +564,23 @@ export function PrehledClient({
         otevriKartu(zitrejsi[0].rezervace);
         return;
       }
+      otevriDen(zitraYmd);
+      return;
     }
 
-    const z = zalozkaZUpozorneniUrl(url) || (kotva ? 'dnes' : null);
+    if (kotva === 'pohoda') {
+      otevriPohodu();
+      return;
+    }
+
+    const z = zalozkaZUpozorneniUrl(url);
     if (z) {
+      setPohledDomu(true);
       otevriZalozku(z);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try {
-            if (kotva) {
-              document.getElementById(kotva)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-              window.scrollTo(0, 0);
-            }
+            window.scrollTo(0, 0);
           } catch {
             /* scroll */
           }
@@ -593,7 +600,16 @@ export function PrehledClient({
     function zHash() {
       const raw = window.location.hash.replace(/^#/, '').trim();
       const id = raw.split(/[?&]/)[0].trim();
-      if (!id || id === 'pohoda' || id === 'brana' || id.startsWith('odjezdy')) return;
+      if (!id) return;
+      if (id === 'pohoda') {
+        otevriPohodu();
+        return;
+      }
+      if (id === 'odjezdy-zitra' || id.startsWith('odjezdy')) {
+        otevriDen(posunDen(dnes, 1));
+        return;
+      }
+      if (id === 'brana') return;
       setZpetKam((prev) => {
         if (prev) return prev;
         try {
@@ -1102,14 +1118,40 @@ export function PrehledClient({
     });
   }
 
-  function otevriZpravuHosta(id: string) {
+  function otevriZpravuHosta(id: string, prefer?: string) {
     const row = radky.find((r) => r.rezervace === id);
     if (!row) return;
     const menu = zpravyRadku(row);
-    const zvol = menu.find((z) => z.vychozi)?.id || menu[0]?.id || 'checkin';
+    const zvol =
+      (prefer && menu.some((z) => z.id === prefer) ? prefer : null) ||
+      menu.find((z) => z.vychozi)?.id ||
+      menu[0]?.id ||
+      prefer ||
+      'checkin';
     otevriKartu(id);
     setVolba((prev) => ({ ...prev, [id]: zvol }));
     setPanelZpravy((prev) => ({ ...prev, [id]: true }));
+  }
+
+  function otevriDen(den: string) {
+    setPohledDomu(false);
+    setVybranyDen(den);
+    otevriZalozku('prijezdy');
+  }
+
+  function otevriPohodu() {
+    setPohledDomu(true);
+    setPohodaOtevreno(true);
+    otevriZalozku('prijezdy');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          document.getElementById('pohoda')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch {
+          /* scroll */
+        }
+      });
+    });
   }
 
   function hostOdjezdu(row: PrehledRadek) {
@@ -1135,13 +1177,6 @@ export function PrehledClient({
     const ted = new Date();
     if (z === 'dluhy') {
       return otisk(radky.filter((r) => patriDoDluhu(r)).map((r) => ({ id: r.rezervace, kc: kcDluhu(r) })));
-    }
-    if (z === 'dnes') {
-      return otisk(
-        radky
-          .filter((r) => !r.nelzeNacist && (jeVDnesnichOdjezdech(hostOdjezdu(r), dnes, ted) || (r.prijezd === dnes && r.stav !== 'zruseno')))
-          .map((r) => ({ id: r.rezervace, kc: 0 })),
-      );
     }
     if (z === 'prijezdy') {
       return otisk(
@@ -2556,9 +2591,12 @@ export function PrehledClient({
                           {branaOk
                             ? branaDrobek
                             : branaChybiUdaje
-                              ? `${popisekStupneBrany(branaStupenVal)}${pocetBranaPripoinek(row.historie) ? ` · už ${pocetBranaPripoinek(row.historie)}×` : ''} · napsat`
+                              ? `${popisekStupneBrany(branaStupenVal)} · napsat`
                               : branaDrobek}
                         </span>
+                        {!branaOk && branaChybiUdaje ? (
+                          <span className="ph-nova-tile__vyzva">{textVyzvy('brana', row.historie).plny}</span>
+                        ) : null}
                       </span>
                       {branaOk ? (
                         <span className="ph-nova-tile__znacka" aria-hidden="true">
@@ -2601,21 +2639,19 @@ export function PrehledClient({
                   <span className="ph-nova-stav__popis">
                     {checkinOk
                       ? 'Hotovo'
-                      : (() => {
-                          const n = pocetCheckinPripoinek(row.historie);
-                          const posledni = ukazatCheckinNedojezd({
+                      : ukazatCheckinNedojezd({
                             stav: row.stav,
                             prijezd: row.prijezd,
                             dnes,
                             predano: predanoRadku(row) || '',
                             historie: row.historie,
-                          });
-                          const pop = posledni
-                            ? popisekStupneCheckinu('nedojezd')
-                            : popisekStupneCheckinu(checkinStupen);
-                          return `${pop}${n ? ` · už ${n}×` : ''}`;
-                        })()}
+                          })
+                        ? popisekStupneCheckinu('nedojezd')
+                        : popisekStupneCheckinu(checkinStupen)}
                   </span>
+                  {!checkinOk ? (
+                    <span className="ph-nova-stav__vyzva">{textVyzvy('checkin', row.historie).plny}</span>
+                  ) : null}
                 </button>
                 <button
                   type="button"
@@ -2643,6 +2679,9 @@ export function PrehledClient({
                           ? 'neotevřen'
                           : 'dokončit'}
                   </span>
+                  {!pruvodceOk ? (
+                    <span className="ph-nova-stav__vyzva">{textVyzvy('pruvodce', row.historie).plny}</span>
+                  ) : null}
                 </button>
               </div>
             </>
@@ -3413,16 +3452,17 @@ export function PrehledClient({
   const odjeli = viditelne.filter((row) => jeHostOdjetly(hostOdjezdu(row), dnes, ted));
   const pocty: Record<Zalozka, number> = {
     prijezdy: radky.filter((r) => r.prijezd === dnes && r.stav !== 'zruseno' && !jeHostOdjetly(hostOdjezdu(r), dnes, ted)).length,
-    dnes: radky.filter((r) => jeVDnesnichOdjezdech(hostOdjezdu(r), dnes, ted) || (r.prijezd === dnes && r.stav !== 'zruseno' && !r.nelzeNacist)).length,
     dluhy: radky.filter((r) => patriDoDluhu(r)).length,
     hledat: 0,
   };
   const nove: Record<Zalozka, boolean> = {
     prijezdy: jeNove(otiskZalozky('prijezdy'), videne?.[kdoKouka]?.prijezdy || null),
-    dnes: jeNove(otiskZalozky('dnes'), videne?.[kdoKouka]?.dnes || null),
     dluhy: jeNove(otiskZalozky('dluhy'), videne?.[kdoKouka]?.dluhy || null),
     hledat: false,
   };
+  const hostePohoda = seradOdjezdy(radky.filter((r) => jeProPohodu(r, dnes)));
+  const hosteZitraOdjezd = seradOdjezdy(radky.filter((r) => r.stav !== 'zruseno' && r.odjezd === zitra));
+  const zitraDotazPoslan = hosteZitraOdjezd.filter((r) => Boolean(r.odjezdDotaz)).length;
   const vybrany = vybrana ? radky.find((r) => r.rezervace === vybrana) : undefined;
 
   /** Samostatný náhled karty: nic jiného, jen ← Zpět a karta. */
@@ -3616,21 +3656,97 @@ export function PrehledClient({
         />
       ) : null}
 
-      {pohledDomu && zalozka === 'dnes' ? (
-        <Dnesek
-          radky={radky}
-          dnes={dnes}
-          operacePovolene
-          ukazka={ukazka}
-          brana={brana}
-          vPrehledu
-          onPrevzato={poPrevzeti}
-          onOtevri={otevriKartu}
-          onZavadyZapsany={() => {
-            setHlaska('Závady po odjezdu uloženy.');
-            router.refresh();
-          }}
-        />
+      {pohledDomu && zalozka === 'prijezdy' && hostePohoda.length ? (
+        <section id="pohoda" className="ph-domu-radek">
+          <button
+            type="button"
+            className="ph-domu-radek__souhrn"
+            aria-expanded={pohodaOtevreno}
+            onClick={() => setPohodaOtevreno((v) => !v)}
+          >
+            Je vše v pořádku? · {hostePohoda.length} {pohodaOtevreno ? '▴' : '▸'}
+          </button>
+          {pohodaOtevreno ? (
+            <ul className="ph-odjezdy ph-odjezdy--vnorene">
+              {hostePohoda.map((row) => {
+                const odeslano = row.pohodaDotaz ? hodinaPraha(row.pohodaDotaz) : '';
+                const text = textPohody(jazykRadku(row));
+                const wa = row.telefonWa;
+                const email = row.email.includes('@') ? row.email : '';
+                return (
+                  <li key={row.rezervace} className={odeslano ? 'is-hotovo' : undefined}>
+                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
+                      {row.jmeno || 'Host'}
+                    </button>
+                    {' · '}
+                    {row.apartman || 'bez apartmánu'}
+                    {odeslano ? <span>{` · Odesláno ${odeslano}`}</span> : null}
+                    <span className="ph-odjezdy__akce">
+                      <TlacitkoWhatsApp
+                        wa={wa}
+                        zprava={text}
+                        userAgent={userAgent}
+                        onPredOtevrenim={() => oznacPohodu(row)}
+                      />
+                      {email ? (
+                        <button type="button" className="ph-wa" onClick={() => setDotazPohoda(row.rezervace)}>
+                          {odeslano ? 'Poslat e-mailem znovu' : 'Poslat e-mailem'}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="ph-kopie"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(text).then(
+                            () => setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`),
+                            () => setHlaska(text),
+                          );
+                        }}
+                      >
+                        Zkopírovat zprávu
+                      </button>
+                      <details>
+                        <summary>Text zprávy</summary>
+                        <p>{text}</p>
+                      </details>
+                    </span>
+                    {dotazPohoda === row.rezervace ? (
+                      <div className="ph-predano-dotaz">
+                        <p>
+                          Poslat e-mail na <span className="ph-tel">{email}</span>
+                          {odeslano ? ' znovu' : ''}?
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDotazPohoda(null);
+                            void posliEmail(row, 'pohoda');
+                          }}
+                        >
+                          Ano
+                        </button>
+                        <button type="button" onClick={() => setDotazPohoda(null)}>
+                          Zrušit
+                        </button>
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+      {pohledDomu && zalozka === 'prijezdy' && hosteZitraOdjezd.length ? (
+        <button
+          type="button"
+          id="odjezdy-zitra"
+          className="ph-domu-radek ph-domu-radek__souhrn"
+          onClick={() => otevriDen(zitra)}
+        >
+          Zítra odjíždí {hosteZitraOdjezd.length} · dotaz poslán {zitraDotazPoslan} z{' '}
+          {hosteZitraOdjezd.length} ▸
+        </button>
       ) : null}
       {pohledDomu && zalozka === 'dluhy' ? (
         <Nedoplatky
@@ -3764,170 +3880,6 @@ export function PrehledClient({
       </>
       ) : null}
 
-      {pohledDomu && zalozka === 'dnes'
-        ? (() => {
-            const hoste = seradOdjezdy(radky.filter((r) => jeProPohodu(r, dnes)));
-            if (!hoste.length) return null;
-            return (
-              <section id="pohoda" className="ph-odjezdy">
-                <h2>Je vše v pořádku?</h2>
-                <ul>
-                  {hoste.map((row) => {
-                    const odeslano = row.pohodaDotaz ? hodinaPraha(row.pohodaDotaz) : '';
-                    const text = textPohody(jazykRadku(row));
-                    const wa = row.telefonWa;
-                    const email = row.email.includes('@') ? row.email : '';
-                    return (
-                      <li key={row.rezervace} className={odeslano ? 'is-hotovo' : undefined}>
-                        <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
-                          {row.jmeno || 'Host'}
-                        </button>
-                        {' · '}
-                        {row.apartman || 'bez apartmánu'}
-                        {odeslano ? <span>{` · Odesláno ${odeslano}`}</span> : null}
-                        <span className="ph-odjezdy__akce">
-                          <TlacitkoWhatsApp
-                            wa={wa}
-                            zprava={text}
-                            userAgent={userAgent}
-                            onPredOtevrenim={() => oznacPohodu(row)}
-                          />
-                          {email ? (
-                            <button type="button" className="ph-wa" onClick={() => setDotazPohoda(row.rezervace)}>
-                              {odeslano ? 'Poslat e-mailem znovu' : 'Poslat e-mailem'}
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            className="ph-kopie"
-                            onClick={() => {
-                              void navigator.clipboard.writeText(text).then(
-                                () => setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`),
-                                () => setHlaska(text),
-                              );
-                            }}
-                          >
-                            Zkopírovat zprávu
-                          </button>
-                          <details>
-                            <summary>Text zprávy</summary>
-                            <p>{text}</p>
-                          </details>
-                        </span>
-                        {dotazPohoda === row.rezervace ? (
-                          <div className="ph-predano-dotaz">
-                            <p>
-                              Poslat e-mail na <span className="ph-tel">{email}</span>
-                              {odeslano ? ' znovu' : ''}?
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDotazPohoda(null);
-                                void posliEmail(row, 'pohoda');
-                              }}
-                            >
-                              Ano
-                            </button>
-                            <button type="button" onClick={() => setDotazPohoda(null)}>
-                              Zrušit
-                            </button>
-                          </div>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            );
-          })()
-        : null}
-
-      {(pohledDomu && zalozka === 'dnes' ? [{ den: zitra, nadpis: 'Zítřejší odjezdy', kotva: 'odjezdy-zitra' }] : []).map((sekce) => {
-        const hoste = seradOdjezdy(radky.filter((r) => r.stav !== 'zruseno' && r.odjezd === sekce.den));
-        if (!hoste.length) return null;
-        return (
-          <section key={sekce.kotva} id={sekce.kotva} className="ph-odjezdy">
-            <h2>{sekce.nadpis}</h2>
-            <ul>
-              {hoste.map((row) => {
-                const cas = casOdjezduRadku(row);
-                const znamy = jeHodina(cas);
-                const dluh = vyberPoplatku(row).kdy ? '' : row.dluhText;
-                const dotaz = row.odjezdDotaz ? hodinaPraha(row.odjezdDotaz) : '';
-                const text = textDotazuOdjezdu(row);
-                const wa = row.telefonWa;
-                const email = row.email.includes('@') ? row.email : '';
-                return (
-                  <li key={row.rezervace} className={znamy ? 'is-hotovo' : undefined}>
-                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
-                      {row.jmeno || 'Host'}
-                    </button>
-                    {' · '}
-                    {row.apartman || 'bez apartmánu'}
-                    {' · '}
-                    {znamy ? `Odjezd ${zobrazCas(cas)}` : 'čas neznámý'}
-                    {dluh ? ` · ${dluh}` : ''}
-                    {znamy ? null : dotaz ? (
-                      <span>{` · Dotaz odeslán ${dotaz}`}</span>
-                    ) : (
-                      <span className="ph-odjezdy__akce">
-                        <TlacitkoWhatsApp
-                          wa={wa}
-                          zprava={text}
-                          userAgent={userAgent}
-                          onPredOtevrenim={() => oznacDotaz(row)}
-                        />
-                        {email ? (
-                          <button type="button" className="ph-wa" onClick={() => setDotazOdjezd(row.rezervace)}>
-                            Poslat e-mailem
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          className="ph-kopie"
-                          onClick={() => {
-                            void navigator.clipboard.writeText(text).then(
-                              () => setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`),
-                              () => setHlaska(text),
-                            );
-                          }}
-                        >
-                          Zkopírovat zprávu
-                        </button>
-                        <details>
-                          <summary>Text zprávy</summary>
-                          <p>{text}</p>
-                        </details>
-                      </span>
-                    )}
-                    {dotazOdjezd === row.rezervace ? (
-                      <div className="ph-predano-dotaz">
-                        <p>
-                          Poslat e-mail na <span className="ph-tel">{email}</span>?
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDotazOdjezd(null);
-                            void posliEmail(row, 'odjezd');
-                          }}
-                        >
-                          Ano
-                        </button>
-                        <button type="button" onClick={() => setDotazOdjezd(null)}>
-                          Zrušit
-                        </button>
-                      </div>
-                    ) : null}
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        );
-      })}
-
       {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu
         ? aktivni.map((row) => {
             const pred = predanoRadku(row);
@@ -3954,17 +3906,18 @@ export function PrehledClient({
           })
         : null}
 
-      {pohledDomu && zalozka === 'prijezdy' ? (
+      {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu ? (
         <Dnesek
           radky={radky}
-          dnes={dnes}
-          operacePovolene
+          dnes={pohledDomu ? dnes : vybranyDen}
+          operacePovolene={pohledDomu || vybranyDen === dnes}
           jenUklid
           ukazka={ukazka}
           brana={brana}
           vPrehledu
           onPrevzato={poPrevzeti}
           onOtevri={otevriKartu}
+          onNapsatOdjezd={(id) => otevriZpravuHosta(id, 'odjezd')}
           onZavadyZapsany={() => {
             setHlaska('Závady po odjezdu uloženy.');
             router.refresh();

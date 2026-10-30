@@ -5,6 +5,7 @@ import { stavParkovani, type BranaSlot } from '@/lib/brana';
 import { sestavDnesek, textUklizeno, type HostDne, type KdoUklidil, type UklidRadek } from '@/lib/dnesek';
 import { odkazPripraveno, textPripraveno } from '@/lib/okno-pobytu';
 import type { PrehledRadek } from '@/lib/prehled';
+import { hodinaPraha } from '@/lib/prehled';
 import { casPrevzetiText } from '@/lib/zalozky';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 
@@ -23,6 +24,8 @@ type Props = {
   onPrevzato?: (id: string, kdy: string | null) => void;
   /** Otevře kartu hosta v přehledu (jako Hledat). */
   onOtevri?: (id: string) => void;
+  /** Otevře panel zpráv s dotazem na odjezd. */
+  onNapsatOdjezd?: (id: string) => void;
   onZavadyZapsany?: (odjizdejici: string, prijezdejici: string | null) => void;
 };
 
@@ -97,6 +100,7 @@ export function Dnesek({
   vPrehledu = false,
   onPrevzato,
   onOtevri,
+  onNapsatOdjezd,
   onZavadyZapsany,
 }: Props) {
   const [mistoPrevzeti, setMistoPrevzeti] = useState<Record<string, string | null>>({});
@@ -534,6 +538,28 @@ export function Dnesek({
                         <span className="ph-dnesek__nestihne">{r.nedoplatek}</span>
                       </>
                     ) : null}
+                    {r.casOdjezduText === 'čas neznámý'
+                      ? (() => {
+                          const row = radky.find((x) => x.rezervace === r.rezervace);
+                          const dotaz = row?.odjezdDotaz ? hodinaPraha(row.odjezdDotaz) : '';
+                          if (dotaz) return <span>{` · Dotaz odeslán ${dotaz}`}</span>;
+                          if (onNapsatOdjezd) {
+                            return (
+                              <>
+                                {' · '}
+                                <button
+                                  type="button"
+                                  className="ph-dnesek__odkaz"
+                                  onClick={() => onNapsatOdjezd(r.rezervace)}
+                                >
+                                  Napsat zprávu
+                                </button>
+                              </>
+                            );
+                          }
+                          return null;
+                        })()
+                      : null}
                   </p>
                   <p>
                     Přijíždí:{' '}

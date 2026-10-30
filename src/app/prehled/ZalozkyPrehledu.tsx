@@ -60,7 +60,6 @@ export function RadaZalozek({
   onNovaRezervace?: () => void;
 }) {
   const polozky: { id: Zalozka; text: string; kratke?: string }[] = [
-    { id: 'dnes', text: 'Dnešek' },
     { id: 'dluhy', text: 'Nedoplatky', kratke: 'Dluhy' },
     { id: 'hledat', text: 'Hledat' },
   ];

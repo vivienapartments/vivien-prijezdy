@@ -5,7 +5,7 @@ import { nactiOdjezdBeh } from './odjezd';
 import type { ProcessStore } from './store';
 import { upozorniMajitele } from './upozorneni';
 
-const STRANKA = '/prehled?zalozka=dnes';
+const STRANKA = '/prehled';
 
 function poradiDnes(klic: string | null, den: string): string | null {
   const predpona = `${den}:`;

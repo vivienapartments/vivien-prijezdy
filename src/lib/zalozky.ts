@@ -3,7 +3,7 @@ import { PREVZETI_NEZNAMY_HODINA, PREVZETI_PO_HODINACH } from './constants';
 import type { DruhDluhu } from './odjezd';
 import type { RezervaceRecord } from './store';
 
-export type Zalozka = 'prijezdy' | 'dnes' | 'dluhy' | 'hledat';
+export type Zalozka = 'prijezdy' | 'dluhy' | 'hledat';
 export type FiltrHledani = '' | 'dnes' | 'zitra' | 'tyden' | 'minule' | 'dluh';
 
 export type HostOdjezdu = {
@@ -166,9 +166,14 @@ export function vychoziZalozka(
   dnes: string,
   zUrl: string | null,
 ): Zalozka {
-  if (zUrl === 'prijezdy' || zUrl === 'dnes' || zUrl === 'dluhy' || zUrl === 'hledat') return zUrl;
-  if (ulozena && ulozena.den === dnes && (ulozena.zalozka === 'prijezdy' || ulozena.zalozka === 'dnes' || ulozena.zalozka === 'dluhy' || ulozena.zalozka === 'hledat')) {
-    return ulozena.zalozka;
+  /** Stará záložka Dnešek → Domů (příjezdy). */
+  if (zUrl === 'dnes') return 'prijezdy';
+  if (zUrl === 'prijezdy' || zUrl === 'dluhy' || zUrl === 'hledat') return zUrl;
+  if (ulozena && ulozena.den === dnes) {
+    if (ulozena.zalozka === 'dnes') return 'prijezdy';
+    if (ulozena.zalozka === 'prijezdy' || ulozena.zalozka === 'dluhy' || ulozena.zalozka === 'hledat') {
+      return ulozena.zalozka;
+    }
   }
   return 'prijezdy';
 }

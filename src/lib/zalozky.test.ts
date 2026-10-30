@@ -163,6 +163,8 @@ describe('záložky a hledání', () => {
     expect(vychoziZalozka({ den: '2026-10-15', zalozka: 'dluhy' }, DEN, null)).toBe('prijezdy');
     expect(vychoziZalozka({ den: DEN, zalozka: 'hledat' }, DEN, null)).toBe('hledat');
     expect(vychoziZalozka({ den: DEN, zalozka: 'hledat' }, DEN, 'dluhy')).toBe('dluhy');
+    expect(vychoziZalozka({ den: DEN, zalozka: 'dnes' }, DEN, null)).toBe('prijezdy');
+    expect(vychoziZalozka(null, DEN, 'dnes')).toBe('prijezdy');
   });
 
   it('jelinek najde Jelínek, a taky číslo rezervace a datum', () => {

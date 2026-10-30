@@ -2262,6 +2262,43 @@
   font: inherit;
 }
 
+.ph-domu-radek {
+  margin: 0.45rem 0 0.65rem;
+}
+
+.ph-domu-radek__souhrn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  border-radius: 10px;
+  background: rgba(201, 168, 76, 0.08);
+  color: var(--color-gold);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ph-odjezdy--vnorene {
+  margin-top: 0.55rem;
+}
+
+.ph-nova-stav__vyzva,
+.ph-nova-tile__vyzva {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: rgba(245, 239, 227, 0.72);
+  line-height: 1.25;
+}
+
+.ph-nova-stav--ne .ph-nova-stav__vyzva {
+  color: rgba(224, 122, 122, 0.92);
+}
+
 .ph-zalozky {
   display: flex;
   flex-wrap: wrap;

@@ -9,6 +9,7 @@ import {
   stupenBrany,
   stupenCasoveZpravy,
   stupenCheckinu,
+  textVyzvy,
   ukazatCheckinNedojezd,
   uzOdeslanPruvodce3,
 } from './pripominky-stupne';
@@ -99,5 +100,24 @@ describe('připomínky stupně', () => {
   it('brána: stupeň podle počtu, v den příjezdu aspoň 3', () => {
     expect(pocetBranaPripoinek([{ co: 'WhatsApp: Chybí údaje k bráně' }])).toBe(1);
     expect(stupenBrany(0, true)).toBe(3);
+  });
+
+  it('textVyzvy: 0 / počet s datem / Poslední výzva', () => {
+    expect(textVyzvy('checkin', []).plny).toBe('zatím bez výzvy');
+    expect(textVyzvy('checkin', []).kratky).toBe('bez výzvy');
+    expect(
+      textVyzvy('checkin', [
+        { co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-30T10:00:00.000Z' },
+        { co: 'SMS: Vyplňte check-in', cas: '2026-10-31T09:00:00.000Z' },
+      ]).plny,
+    ).toMatch(/^2\. výzva · 31\. 10\.$/);
+    expect(
+      textVyzvy('checkin', [{ co: 'WhatsApp: Poslední výzva · check-in', cas: '2026-10-31T12:00:00.000Z' }])
+        .plny,
+    ).toBe('Poslední výzva');
+    expect(
+      textVyzvy('pruvodce', [{ co: 'WhatsApp: Poslední výzva (nedojezd)', cas: '2026-10-31T12:00:00.000Z' }])
+        .kratky,
+    ).toBe('Poslední výzva');
   });
 });

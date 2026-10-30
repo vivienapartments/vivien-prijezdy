@@ -136,3 +136,65 @@ export function stupenBrany(pocetUzPoslanych: number, denPrijezdu: boolean): 1 |
 export function popisekStupneBrany(stupen: 1 | 2 | 3): string {
   return popisekStupneCheckinu(stupen);
 }
+
+export type DruhVyzvy = 'checkin' | 'pruvodce' | 'brana';
+
+const NAZVY_VYZVY: Record<DruhVyzvy, string[]> = {
+  checkin: [CHECKIN_NAZEV],
+  pruvodce: [...Object.values(NAZEV_CAS), ...STARE_NAZVY_PRUVODCE],
+  brana: [BRANA_NAZEV],
+};
+
+const POSLEDNI_VYZVY: Partial<Record<DruhVyzvy, string[]>> = {
+  checkin: [CHECKIN_NEDOJEZD_NAZEV],
+  pruvodce: [NAZEV_CAS.nedojezd],
+};
+
+function datumVyzvyPraha(iso: string): string {
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return '';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/Prague',
+    day: 'numeric',
+    month: 'numeric',
+  }).formatToParts(new Date(t));
+  const den = parts.find((p) => p.type === 'day')?.value || '';
+  const mes = parts.find((p) => p.type === 'month')?.value || '';
+  if (!den || !mes) return '';
+  return `${den}. ${mes}.`;
+}
+
+function posledniCasNazvu(historie: { co: string; cas?: string }[], nazvy: string[]): string | null {
+  const platne = new Set(nazvy.flatMap((n) => [`WhatsApp: ${n}`, `SMS: ${n}`]));
+  let last: string | null = null;
+  for (const h of historie) {
+    if (!platne.has(h.co) || !h.cas) continue;
+    if (!last || h.cas > last) last = h.cas;
+  }
+  return last;
+}
+
+/** Kolikrát už šla výzva (plný text na kartu, krátký do štítku). */
+export function textVyzvy(
+  druh: DruhVyzvy,
+  historie: { co: string; cas?: string }[],
+): { plny: string; kratky: string } {
+  const posledniNazvy = POSLEDNI_VYZVY[druh];
+  if (posledniNazvy && pocetZKanalu(historie, posledniNazvy) > 0) {
+    return { plny: 'Poslední výzva', kratky: 'Poslední výzva' };
+  }
+  const n =
+    druh === 'checkin'
+      ? pocetCheckinPripoinek(historie)
+      : druh === 'brana'
+        ? pocetBranaPripoinek(historie)
+        : pocetCasovychPripoinek(historie);
+  if (n <= 0) return { plny: 'zatím bez výzvy', kratky: 'bez výzvy' };
+  const cislo = `${n}. výzva`;
+  const cas = posledniCasNazvu(historie, NAZVY_VYZVY[druh]);
+  const datum = cas ? datumVyzvyPraha(cas) : '';
+  return {
+    plny: datum ? `${cislo} · ${datum}` : cislo,
+    kratky: cislo,
+  };
+}
