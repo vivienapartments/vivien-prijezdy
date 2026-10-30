@@ -15,11 +15,13 @@ export function chybiTelefon(row: Pick<PrehledRadek, 'telefonText' | 'telefonWa'
   return !row.telefonText && !row.telefonWa;
 }
 
-export function chybiCheckin(row: Pick<PrehledRadek, 'stav'>): boolean {
-  return row.stav === 'bez_checkinu';
+/** Chybí odkaz na check-in (ne hotový check-in u hosta). */
+export function chybiCheckin(row: Pick<PrehledRadek, 'stav' | 'checkinUrl'>): boolean {
+  if (row.stav !== 'bez_checkinu') return false;
+  return !(row.checkinUrl || '').trim();
 }
 
-/** Nezrušení s příjezdem dnes až +14 dní, kterým chybí check-in nebo telefon. */
+/** Nezrušení s příjezdem dnes až +14 dní, kterým chybí odkaz na check-in nebo telefon. */
 export function hosteCoDoplnit(radky: PrehledRadek[], dnes: string): PrehledRadek[] {
   const max = posunDen(dnes, 14);
   return radky

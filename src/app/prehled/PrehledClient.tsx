@@ -92,12 +92,16 @@ import {
   HLASKA_NEPOVOLENO,
   HLASKA_NESPAROVANO,
   HLASKA_PROHLIZEC,
+  HLASKA_READY_TIMEOUT,
   HLASKA_ZAPINAM,
   HLASKA_ZAPNUTO,
   hlaskaChybyZapnuti,
+  hlaskaNacteniPush,
   jeSparovano,
+  nactiLokalniOdberZeSw,
   nadpisPushSekce,
   radekDiagnostikyPush,
+  sTimeoutem,
   type PushPovoleni,
 } from '@/lib/push-stav';
 function stitekDneKarty(prijezd: string | null, dnesDen: string): string {
@@ -4128,28 +4132,72 @@ function Upozorneni() {
     } catch {
       /* starý prohlížeč */
     }
-    return navigator.serviceWorker.ready;
+    const ready = await sTimeoutem(navigator.serviceWorker.ready, 10_000, () => {
+      throw new Error(HLASKA_READY_TIMEOUT);
+    });
+    return ready;
   }
 
   async function nactiLokalniOdber() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       setMaOdber(false);
-      return null as PushSubscription | null;
+      return;
     }
+    const lokalne = await nactiLokalniOdberZeSw(navigator.serviceWorker, 3000);
+    setMaOdber(lokalne.odber);
+    if (lokalne.endpoint) setEndpointTeto(lokalne.endpoint);
+  }
+
+  type PushNastaveni = {
+    publicKey: string;
+    zarizeni: { nazev: string; endpoint: string; cas?: string }[];
+    pocet: number;
+    chybaUlaziste?: string;
+  };
+
+  async function nactiPushZeServeru(): Promise<
+    { ok: true; data: PushNastaveni } | { ok: false; hlaska: string }
+  > {
     try {
-      const ready = await navigator.serviceWorker.ready.catch(() => null);
-      if (!ready) {
-        setMaOdber(false);
-        return null;
+      const res = await fetch('/api/prehled/push');
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        publicKey?: string;
+        zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
+        pocet?: number;
+        chybaUlaziste?: string;
+      } | null;
+      if (!res.ok || !json?.ok) {
+        return { ok: false, hlaska: hlaskaNacteniPush(res.status || 'sit') };
       }
-      const sub = await ready.pushManager.getSubscription();
-      setMaOdber(Boolean(sub));
-      if (sub?.endpoint) setEndpointTeto(sub.endpoint);
-      return sub;
+      return {
+        ok: true,
+        data: {
+          publicKey: json.publicKey || '',
+          zarizeni: json.zarizeni || [],
+          pocet: json.pocet ?? (json.zarizeni || []).length,
+          chybaUlaziste: json.chybaUlaziste,
+        },
+      };
     } catch {
-      setMaOdber(null);
+      return { ok: false, hlaska: hlaskaNacteniPush('sit') };
+    }
+  }
+
+  async function zajistiKlic(): Promise<string | null> {
+    if (klic) return klic;
+    const nacteno = await nactiPushZeServeru();
+    if (!nacteno.ok) {
+      setHlaska(nacteno.hlaska);
       return null;
     }
+    setKlic(nacteno.data.publicKey);
+    setZarizeni(nacteno.data.zarizeni);
+    if (!nacteno.data.publicKey) {
+      setHlaska(HLASKA_NENASTAVENO);
+      return null;
+    }
+    return nacteno.data.publicKey;
   }
 
   async function posliSubscription(publicKey: string, nazev: string, tise: boolean): Promise<boolean> {
@@ -4213,7 +4261,12 @@ function Upozorneni() {
       if (!tise) setHlaska(HLASKA_ZAPNUTO);
       return true;
     } catch (err) {
-      if (!tise) setHlaska(hlaskaChybyZapnuti(err));
+      if (!tise) {
+        const text = err instanceof Error && err.message === HLASKA_READY_TIMEOUT
+          ? HLASKA_READY_TIMEOUT
+          : hlaskaChybyZapnuti(err);
+        setHlaska(text);
+      }
       return false;
     }
   }
@@ -4223,42 +4276,35 @@ function Upozorneni() {
     if (typeof Notification !== 'undefined') {
       setPovoleni(Notification.permission as PushPovoleni);
     }
+    void nactiLokalniOdber();
     (async () => {
-      await nactiLokalniOdber();
-      try {
-        const res = await fetch('/api/prehled/push');
-        const json = (await res.json().catch(() => null)) as {
-          ok?: boolean;
-          publicKey?: string;
-          zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
-          pocet?: number;
-          chybaUlaziste?: string;
-        } | null;
-        if (!zive || !json?.ok) return;
-        const publicKey = json.publicKey || '';
-        setKlic(publicKey);
-        setZarizeni(json.zarizeni || []);
-        if (json.chybaUlaziste) {
-          setHlaska('Úložiště teď neodpovídá. Zkuste zapnout znovu za chvíli.');
-          return;
-        }
-        const nazev = nactiNazevPush();
-        if (
-          nazev &&
-          publicKey &&
-          typeof Notification !== 'undefined' &&
-          Notification.permission === 'granted'
-        ) {
-          const ok = await posliSubscription(publicKey, nazev, true);
-          if (!zive) return;
-          if (ok) setHlaska(HLASKA_ZAPNUTO);
-          else setHlaska('Po nasazení je potřeba znovu klepnout na Zapnout upozornění.');
-          return;
-        }
-        if ((json.pocet ?? 0) === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
-      } catch (err) {
-        setHlaska(hlaskaChybyZapnuti(err));
+      const nacteno = await nactiPushZeServeru();
+      if (!zive) return;
+      if (!nacteno.ok) {
+        setHlaska(nacteno.hlaska);
+        return;
       }
+      const { publicKey, zarizeni: seznam, pocet, chybaUlaziste } = nacteno.data;
+      setKlic(publicKey);
+      setZarizeni(seznam);
+      if (chybaUlaziste) {
+        setHlaska('Úložiště teď neodpovídá. Zkuste zapnout znovu za chvíli.');
+        return;
+      }
+      const nazev = nactiNazevPush();
+      if (
+        nazev &&
+        publicKey &&
+        typeof Notification !== 'undefined' &&
+        Notification.permission === 'granted'
+      ) {
+        const ok = await posliSubscription(publicKey, nazev, true);
+        if (!zive) return;
+        if (ok) setHlaska(HLASKA_ZAPNUTO);
+        else setHlaska('Po nasazení je potřeba znovu klepnout na Zapnout upozornění.');
+        return;
+      }
+      if (pocet === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
     })();
     return () => {
       zive = false;
@@ -4275,10 +4321,8 @@ function Upozorneni() {
       setHlaska('Napište, čí je to telefon.');
       return;
     }
-    if (!klic) {
-      setHlaska(HLASKA_NENASTAVENO);
-      return;
-    }
+    const publicKey = await zajistiKlic();
+    if (!publicKey) return;
     try {
       const pov = await Notification.requestPermission();
       setPovoleni(pov as PushPovoleni);
@@ -4286,7 +4330,7 @@ function Upozorneni() {
         setHlaska(HLASKA_NEPOVOLENO);
         return;
       }
-      await posliSubscription(klic, ulozene, false);
+      await posliSubscription(publicKey, ulozene, false);
     } catch (err) {
       setHlaska(hlaskaChybyZapnuti(err));
     }
@@ -4301,10 +4345,8 @@ function Upozorneni() {
     ulozNazevPush(nazev);
     setPtamJmeno(false);
     setHlaska(HLASKA_ZAPINAM);
-    if (!klic) {
-      setHlaska(HLASKA_NENASTAVENO);
-      return;
-    }
+    const publicKey = await zajistiKlic();
+    if (!publicKey) return;
     try {
       const pov = await Notification.requestPermission();
       setPovoleni(pov as PushPovoleni);
@@ -4312,7 +4354,7 @@ function Upozorneni() {
         setHlaska(HLASKA_NEPOVOLENO);
         return;
       }
-      await posliSubscription(klic, nazev, false);
+      await posliSubscription(publicKey, nazev, false);
     } catch (err) {
       setHlaska(hlaskaChybyZapnuti(err));
     }

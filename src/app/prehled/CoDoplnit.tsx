@@ -20,7 +20,13 @@ type Props = {
 };
 
 export function CoDoplnit({ radky, dnes, odkazy, onOtevri, onUlozOdkaz, onUlozTelefon }: Props) {
-  const seznam = hosteCoDoplnit(radky, dnes);
+  const seznam = hosteCoDoplnit(
+    radky.map((r) => ({
+      ...r,
+      checkinUrl: (odkazy[r.rezervace] ?? r.checkinUrl ?? '').trim() || null,
+    })),
+    dnes,
+  );
   const [hlaska, setHlaska] = useState('');
   const [predchoziPocet, setPredchoziPocet] = useState(seznam.length);
   const [otevreno, setOtevreno] = useState(false);
