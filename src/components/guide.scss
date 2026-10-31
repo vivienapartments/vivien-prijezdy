@@ -1571,14 +1571,17 @@ a.pv-phone.pv-phone--zari {
 }
 
 .pv-piny--predano {
-  background: #e7f6ea;
-  border-color: #1f7a3a;
-  color: #14301c;
+  background: #1c1714;
+  border: 2px solid #c9a84c;
+  color: #f5efe3;
 
-  h2,
+  h2 {
+    color: #c9a84c;
+  }
+
   .pv-piny__hodnota,
   .pv-phone {
-    color: #14301c;
+    color: #c9a84c;
   }
 
   .pv-codes {
@@ -1588,7 +1591,15 @@ a.pv-phone.pv-phone--zari {
   }
 
   .pv-codes__row dt {
-    color: #1f7a3a;
+    color: #cfc3b0;
+  }
+
+  .pv-ikona--fajfka {
+    color: #2f8f4e;
+  }
+
+  .pv-piny__navod {
+    color: #cfc3b0;
   }
 }
 
