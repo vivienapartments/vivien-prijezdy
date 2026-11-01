@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   apartmanPozice,
   denKonce,
+  denPraha,
   jeVolna,
   jmenoNaPozici,
   konecZOdjezdu,
@@ -37,50 +38,90 @@ function staniApartmanu(apartman: string | null): number | null {
   }
 }
 
-/** Obsazené pozice s Brána OK u hosta (aktuální registrace). */
-function aktualniBranaOk(
-  sloty: BranaSlot[],
-  radky: PrehledRadek[],
-  now: Date,
-): {
+type AktualniSpzRadek = {
   rezervace: string;
   jmeno: string;
   apartman: string;
   stani: number | null;
+  /** Text SPZ hosta (nebo „půjčené“ / „bez SPZ“). */
   spz: string;
   telefon: string;
-  pozice: number;
+  pozice: number | null;
   konec: string | null;
-}[] {
-  const mapa = new Map(radky.map((r) => [r.rezervace, r]));
-  const out: {
-    rezervace: string;
-    jmeno: string;
-    apartman: string;
-    stani: number | null;
-    spz: string;
-    telefon: string;
-    pozice: number;
-    konec: string | null;
-  }[] = [];
-  for (const slot of sloty) {
-    if (jeVolna(slot, now)) continue;
-    if (!slot.rezervace) continue;
-    const row = mapa.get(slot.rezervace);
-    if (!row?.branaRegistrovano) continue;
-    const spz = row.spzPujcene ? 'půjčené' : (row.spz || '').trim();
-    out.push({
-      rezervace: row.rezervace,
-      jmeno: row.jmeno || row.rezervace,
-      apartman: row.apartman || apartmanPozice(slot.pozice) || '—',
-      stani: staniApartmanu(row.apartman),
-      spz: spz || 'bez SPZ',
-      telefon: slot.telefon || row.telefonBrana || '',
-      pozice: slot.pozice,
-      konec: slot.konec,
-    });
+};
+
+function textSpzHosta(row: PrehledRadek): string {
+  if (row.spzPujcene) return 'půjčené';
+  const s = (row.spz || '').trim();
+  return s || 'bez SPZ';
+}
+
+function stejnyTelefon(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  return textTelefonu(a) === textTelefonu(b);
+}
+
+/**
+ * Hosté s Brána OK, co teď bydlí nebo mají aktivní pozici.
+ * SPZ bere z karty hosta (ne z pozice brány).
+ */
+function aktualniBranaOk(sloty: BranaSlot[], radky: PrehledRadek[], now: Date): AktualniSpzRadek[] {
+  const dnesDen = denPraha(now);
+  const out: AktualniSpzRadek[] = [];
+  const uz = new Set<string>();
+
+  for (const row of radky) {
+    if (!row.branaRegistrovano) continue;
+    if (row.stav === 'zruseno') continue;
+    const bydli =
+      Boolean(row.prijezd && row.odjezd) && row.prijezd! <= dnesDen && dnesDen < row.odjezd!;
+    const slotyHosta = sloty.filter(
+      (s) =>
+        !jeVolna(s, now) &&
+        (s.rezervace === row.rezervace || stejnyTelefon(s.telefon, row.telefonBrana)),
+    );
+    if (!bydli && !slotyHosta.length) continue;
+
+    const spz = textSpzHosta(row);
+    if (slotyHosta.length) {
+      for (const slot of slotyHosta) {
+        const klic = `${row.rezervace}:${slot.pozice}`;
+        if (uz.has(klic)) continue;
+        uz.add(klic);
+        out.push({
+          rezervace: row.rezervace,
+          jmeno: row.jmeno || row.rezervace,
+          apartman: row.apartman || apartmanPozice(slot.pozice) || '—',
+          stani: staniApartmanu(row.apartman),
+          spz,
+          telefon: slot.telefon || row.telefonBrana || '',
+          pozice: slot.pozice,
+          konec: slot.konec,
+        });
+      }
+    } else {
+      const klic = `${row.rezervace}:0`;
+      if (uz.has(klic)) continue;
+      uz.add(klic);
+      out.push({
+        rezervace: row.rezervace,
+        jmeno: row.jmeno || row.rezervace,
+        apartman: row.apartman || '—',
+        stani: staniApartmanu(row.apartman),
+        spz,
+        telefon: row.telefonBrana || '',
+        pozice: null,
+        konec: null,
+      });
+    }
   }
-  return out.sort((a, b) => a.pozice - b.pozice);
+
+  return out.sort((a, b) => {
+    if (a.pozice == null && b.pozice == null) return a.jmeno.localeCompare(b.jmeno, 'cs');
+    if (a.pozice == null) return 1;
+    if (b.pozice == null) return -1;
+    return a.pozice - b.pozice;
+  });
 }
 
 type RadkaProps = {
@@ -480,6 +521,7 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
   const [otevreno, setOtevreno] = useState(!potvrzena);
   const [hledaniSpz, setHledaniSpz] = useState('');
   const [ukazAktualniSpz, setUkazAktualniSpz] = useState(true);
+  const [ukazPrazdnePozice, setUkazPrazdnePozice] = useState(false);
   const ref = useRef<HTMLDetailsElement>(null);
   const prazdne = sloty.every((s) => !s.telefon && s.stav === 'prazdna');
   const now = new Date();
@@ -617,7 +659,7 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
           aktualniFiltrovane.length ? (
             <ul className="ph-brana-aktualni__seznam">
               {aktualniFiltrovane.map((a) => (
-                <li key={`${a.rezervace}-${a.pozice}`}>
+                <li key={`${a.rezervace}-${a.pozice ?? 'x'}`}>
                   <button type="button" className="ph-brana-aktualni__radek" onClick={() => onHost(a.rezervace)}>
                     <span className="ph-brana-aktualni__spz">
                       {a.spz === 'bez SPZ' || a.spz === 'půjčené' ? a.spz : formatSpz(a.spz)}
@@ -626,7 +668,7 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
                     <span className="ph-brana-aktualni__meta">
                       {a.apartman}
                       {a.stani != null ? ` · stání ${a.stani}` : ''}
-                      {` · pozice ${a.pozice}`}
+                      {a.pozice != null ? ` · pozice ${a.pozice}` : ''}
                       {a.telefon ? ` · ${textTelefonu(a.telefon)}` : ''}
                       {a.konec ? ` · do ${textKonce(a.konec)}` : ''}
                     </span>
@@ -637,16 +679,34 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
             </ul>
           ) : (
             <p className="ph-brana-aktualni__prazdne">
-              {hledany ? 'Nic s touhle SPZ teď v bráně není.' : 'Teď nikdo s Brána OK v aktivní pozici není.'}
+              {hledany
+                ? 'Nic s touhle SPZ teď není (Brána OK + pobyt / aktivní pozice).'
+                : 'Teď nikdo s Brána OK (a SPZ na kartě) v aktivním pobytu není.'}
             </p>
           )
         ) : null}
       </div>
 
       <div className="ph-brana-tabulka">
-        {sloty.map((slot) => {
+        <button
+          type="button"
+          className="ph-brana-tabulka__prepni"
+          onClick={() => setUkazPrazdnePozice((v) => !v)}
+        >
+          {ukazPrazdnePozice ? 'Skrýt prázdné pozice' : 'Ukázat všechny pozice brány'}
+        </button>
+        {sloty
+          .filter((slot) => {
+            if (ukazPrazdnePozice) return true;
+            if (slot.telefon || slot.rezervace) return true;
+            return !jeVolna(slot, now);
+          })
+          .map((slot) => {
           const stav = stavRadku(slot);
           const apt = radky.find((r) => r.rezervace === slot.rezervace)?.apartman || apartmanPozice(slot.pozice);
+          const rowSpz = slot.rezervace
+            ? radky.find((r) => r.rezervace === slot.rezervace)
+            : null;
           const konecText = textKonce(slot.konec);
           return (
             <div key={slot.pozice} className="ph-brana-radek">
@@ -655,6 +715,16 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
                 <span>{apt || ''}</span>
                 <span className={`ph-brana-stav ph-brana-stav--${stav.ton}`}>{stav.text}</span>
               </div>
+              {rowSpz ? (
+                <div className="ph-brana-radek__spz">
+                  SPZ{' '}
+                  {rowSpz.spzPujcene
+                    ? 'půjčené'
+                    : rowSpz.spz
+                      ? formatSpz(rowSpz.spz)
+                      : 'neuvedena'}
+                </div>
+              ) : null}
               {slot.rezervace ? (
                 <button type="button" className="ph-brana-host" onClick={() => onHost(slot.rezervace || '')}>
                   {jmenoNaPozici(slot, radky)}

@@ -4167,7 +4167,7 @@ export function PrehledClient({
         />
       ) : null}
 
-      {pohledDomu && zalozka === 'prijezdy' ? (
+      {pohledDomu ? (
         <BranaTabulka
           sloty={sloty}
           radky={radky}

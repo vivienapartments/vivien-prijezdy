@@ -1898,8 +1898,25 @@
 }
 
 .ph-brana-aktualni__spz {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #f0d78c;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ph-brana-tabulka__prepni {
+  margin: 0 0 0.55rem;
+  min-height: 44px;
+  border-radius: 6px;
+}
+
+.ph-brana-radek__spz {
+  font-size: 1.05rem;
   font-weight: 750;
-  color: var(--color-gold);
+  color: #f0d78c;
   letter-spacing: 0.04em;
 }
 
