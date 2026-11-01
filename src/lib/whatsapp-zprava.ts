@@ -737,6 +737,7 @@ export function zpravyMenu(opts: {
         odjezd: opts.odjezd,
         dnes: opts.dnes,
         casOdjezdu: opts.casOdjezdu,
+        predano: opts.predano,
       });
     }
     return true;

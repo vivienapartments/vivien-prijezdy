@@ -2613,34 +2613,77 @@ export function PrehledClient({
               ) : null}
               {kontaktNahoreBlok}
               <div className="ph-nova-dlazdice">
-                <button
-                  type="button"
-                  className={`ph-nova-tile${casOk ? ' ph-nova-tile--ok' : ' ph-nova-tile--chybi'}`}
-                  disabled={casOk || odjel}
-                  onClick={() => {
-                    if (casOk || odjel) return;
-                    setVolba((prev) => ({ ...prev, [row.rezervace]: casZpravaId }));
-                    setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: prev[row.rezervace] || 'whatsapp' }));
-                    setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: true }));
-                  }}
-                >
-                  <span className="ph-nova-tile__radek">
-                    <span className="ph-nova-tile__ico" aria-hidden="true">
-                      ⏱
-                    </span>
-                    <span className="ph-nova-tile__telo">
-                      <span className="ph-nova-tile__nadpis">Příjezd</span>
-                      <span className="ph-nova-tile__hlavni">{casOk ? casText : 'Čas chybí'}</span>
-                      <span className="ph-nova-tile__drobek">
-                        {casOk
-                          ? row.casZadalHost
-                            ? 'Čas zadal host'
-                            : 'Čas máme'
-                          : `${popisekStupneCasu(casZpravaId)} · napsat`}
+                {predanoKdy ? (
+                  <button
+                    type="button"
+                    className={`ph-nova-tile${
+                      jeHodina(odjezdCas) ? ' ph-nova-tile--ok' : ' ph-nova-tile--chybi'
+                    }`}
+                    disabled={jeHodina(odjezdCas) || odjel}
+                    onClick={() => {
+                      if (jeHodina(odjezdCas) || odjel) return;
+                      setVolba((prev) => ({ ...prev, [row.rezervace]: 'odjezd' }));
+                      setKanalZpravy((prev) => ({
+                        ...prev,
+                        [row.rezervace]: prev[row.rezervace] || 'whatsapp',
+                      }));
+                      setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: true }));
+                    }}
+                  >
+                    <span className="ph-nova-tile__radek">
+                      <span className="ph-nova-tile__ico" aria-hidden="true">
+                        ⏱
+                      </span>
+                      <span className="ph-nova-tile__telo">
+                        <span className="ph-nova-tile__nadpis">Odjezd</span>
+                        <span className="ph-nova-tile__hlavni">
+                          {jeHodina(odjezdCas) ? zobrazCas(odjezdCas) : 'Čas chybí'}
+                        </span>
+                        <span className="ph-nova-tile__drobek">
+                          {jeHodina(odjezdCas)
+                            ? row.casOdjezduZadalHost && !casyOdjezdu[row.rezervace]
+                              ? 'Čas zadal host'
+                              : 'Čas máme'
+                            : row.odjezdDotaz
+                              ? 'Dotaz poslán · napsat znovu'
+                              : 'Napsat o čas'}
+                        </span>
                       </span>
                     </span>
-                  </span>
-                </button>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className={`ph-nova-tile${casOk ? ' ph-nova-tile--ok' : ' ph-nova-tile--chybi'}`}
+                    disabled={casOk || odjel}
+                    onClick={() => {
+                      if (casOk || odjel) return;
+                      setVolba((prev) => ({ ...prev, [row.rezervace]: casZpravaId }));
+                      setKanalZpravy((prev) => ({
+                        ...prev,
+                        [row.rezervace]: prev[row.rezervace] || 'whatsapp',
+                      }));
+                      setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: true }));
+                    }}
+                  >
+                    <span className="ph-nova-tile__radek">
+                      <span className="ph-nova-tile__ico" aria-hidden="true">
+                        ⏱
+                      </span>
+                      <span className="ph-nova-tile__telo">
+                        <span className="ph-nova-tile__nadpis">Příjezd</span>
+                        <span className="ph-nova-tile__hlavni">{casOk ? casText : 'Čas chybí'}</span>
+                        <span className="ph-nova-tile__drobek">
+                          {casOk
+                            ? row.casZadalHost
+                              ? 'Čas zadal host'
+                              : 'Čas máme'
+                            : `${popisekStupneCasu(casZpravaId)} · napsat`}
+                        </span>
+                      </span>
+                    </span>
+                  </button>
+                )}
                 {row.zpusobPrijezdu === 'pesky' ? (
                   <button type="button" className="ph-nova-tile ph-nova-tile--ok" disabled>
                     <span className="ph-nova-tile__radek">

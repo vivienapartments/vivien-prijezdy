@@ -23,6 +23,7 @@ import {
   textPulHodiny,
   textSouhrnu,
   textVecer,
+  ukazatDotazOdjezdu,
   ukazatRamecekOdjezdu,
   zpravaOdjezdu,
 } from './odjezd';
@@ -299,6 +300,46 @@ describe('odjezd', () => {
       casOdjezdu: '09:30',
     });
     expect(seCasem.some((z) => z.id === 'odjezd')).toBe(false);
+  });
+
+  it('po předání je dotaz na odjezd celý zbývající pobyt, bez času', () => {
+    expect(
+      ukazatDotazOdjezdu({
+        dnes: '2026-10-16',
+        odjezd: '2026-10-20',
+        casOdjezdu: null,
+        predano: '2026-10-15T14:00:00.000Z',
+      }),
+    ).toBe(true);
+    expect(
+      ukazatDotazOdjezdu({
+        dnes: '2026-10-16',
+        odjezd: '2026-10-20',
+        casOdjezdu: null,
+      }),
+    ).toBe(false);
+    expect(
+      ukazatDotazOdjezdu({
+        dnes: '2026-10-16',
+        odjezd: '2026-10-20',
+        casOdjezdu: '10:00',
+        predano: 'ano',
+      }),
+    ).toBe(false);
+
+    const menu = zpravyMenu({
+      stav: 'odeslano',
+      lang: 'cs',
+      pruvodce: null,
+      otevrenoPocet: 1,
+      casPrijezdu: '16:00',
+      prijezd: '2026-10-15',
+      dnes: '2026-10-16',
+      odjezd: '2026-10-20',
+      casOdjezdu: null,
+      predano: '2026-10-15T14:00:00.000Z',
+    });
+    expect(menu.some((z) => z.id === 'odjezd')).toBe(true);
   });
 
   it('ruční čas po 10:00 napočítá příplatek za pozdější odjezd', () => {

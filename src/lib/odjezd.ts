@@ -322,10 +322,14 @@ export function ukazatDotazOdjezdu(opts: {
   odjezd?: string | null;
   dnes: string;
   casOdjezdu?: string | null;
+  /** Po předání: dotaz jde celý zbývající pobyt (jako rámeček v průvodci). */
+  predano?: string | boolean | null;
 }): boolean {
   if (opts.stav === 'zruseno') return false;
   if (!opts.odjezd) return false;
   if (jeHodina(opts.casOdjezdu)) return false;
+  if (opts.dnes > opts.odjezd) return false;
+  if (opts.predano) return true;
   const denPred = posunDen(opts.odjezd, -1);
   return opts.dnes === opts.odjezd || opts.dnes === denPred;
 }
