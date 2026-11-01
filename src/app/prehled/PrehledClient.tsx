@@ -197,7 +197,31 @@ const STAVY: { id: '' | Stav; text: string }[] = [
   { id: 'zruseno', text: 'Zrušeno' },
 ];
 
-const KLIC_UPOZORNENI_PRECTENO = 'vivien-upozorneni-precteno';
+/** Skrytá upozornění po jedné (klíče cas:text). */
+const KLIC_UPOZORNENI_SKRYTE = 'vivien-upozorneni-skryte';
+
+function klicUpozorneniPolozky(u: { cas: string; text: string }): string {
+  return `${u.cas}:${u.text}`;
+}
+
+function nactiSkrytaUpozorneni(): string[] {
+  try {
+    const raw = localStorage.getItem(KLIC_UPOZORNENI_SKRYTE);
+    if (!raw) return [];
+    const data = JSON.parse(raw) as unknown;
+    return Array.isArray(data) ? data.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function ulozSkrytaUpozorneni(klice: string[]) {
+  try {
+    localStorage.setItem(KLIC_UPOZORNENI_SKRYTE, JSON.stringify(klice));
+  } catch {
+    /* paměť */
+  }
+}
 
 /** Číslo rezervace z odkazu upozornění (`/prehled#12026…`). */
 function idZUpozorneniUrl(url: string): string | null {
@@ -376,7 +400,7 @@ export function PrehledClient({
   const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
   const [stav, setStav] = useState<'' | Stav>('');
   const [zpetKam, setZpetKam] = useState<ZpetKam | null>(null);
-  const [prectenoUpozorneni, setPrectenoUpozorneni] = useState<string | null>(null);
+  const [skrytaUpozorneni, setSkrytaUpozorneni] = useState<string[]>([]);
   const [praniRadky, setPraniRadky] = useState(praniRadkyVstup);
   const [praniStitky, setPraniStitky] = useState(praniStitkyVstup);
   const [praniFocus, setPraniFocus] = useState<Record<string, string>>({});
@@ -458,12 +482,17 @@ export function PrehledClient({
   }, [rows, brana, branaPotvrzena]);
 
   useEffect(() => {
-    try {
-      setPrectenoUpozorneni(localStorage.getItem(KLIC_UPOZORNENI_PRECTENO));
-    } catch {
-      setPrectenoUpozorneni(null);
-    }
+    setSkrytaUpozorneni(nactiSkrytaUpozorneni());
   }, []);
+
+  function skryjUpozorneni(klic: string) {
+    setSkrytaUpozorneni((prev) => {
+      if (prev.includes(klic)) return prev;
+      const next = [...prev, klic];
+      ulozSkrytaUpozorneni(next);
+      return next;
+    });
+  }
 
   function rozbalDetailKarty(cislo: string) {
     setRozbalene((prev) => ({ ...prev, [cislo]: true }));
@@ -3737,35 +3766,22 @@ export function PrehledClient({
       ) : null}
       {pohledDomu
         ? (() => {
-            const nova = upozorneniSeznam.filter((u) => !prectenoUpozorneni || u.cas > prectenoUpozorneni);
+            const skryta = new Set(skrytaUpozorneni);
+            const nova = upozorneniSeznam.filter((u) => !skryta.has(klicUpozorneniPolozky(u)));
             if (!nova.length) return null;
             return (
               <div className="ph-upozorneni-seznam">
                 <div className="ph-upozorneni-seznam__hlava">
                   <h2>Nová upozornění ({nova.length})</h2>
-                  <button
-                    type="button"
-                    className="ph-ulozit"
-                    onClick={() => {
-                      const ted = new Date().toISOString();
-                      try {
-                        localStorage.setItem(KLIC_UPOZORNENI_PRECTENO, ted);
-                      } catch {
-                        /* paměť */
-                      }
-                      setPrectenoUpozorneni(ted);
-                    }}
-                  >
-                    Přečetl jsem
-                  </button>
                 </div>
                 <ul>
                   {nova.map((u) => {
+                    const klic = klicUpozorneniPolozky(u);
                     const id = idZUpozorneniUrl(u.url);
                     const kotva = kotvaZUpozorneniUrl(u.url);
                     const maCil = Boolean(id || kotva || zalozkaZUpozorneniUrl(u.url));
                     return (
-                      <li key={`${u.cas}:${u.text}`}>
+                      <li key={klic} className="ph-upozorneni-seznam__polozka">
                         <button
                           type="button"
                           className={maCil ? 'ph-upozorneni-seznam__radek' : 'ph-upozorneni-seznam__radek is-bez-odkazu'}
@@ -3780,6 +3796,14 @@ export function PrehledClient({
                           ) : maCil ? (
                             <span className="ph-upozorneni-seznam__hint">Otevřít ▸</span>
                           ) : null}
+                        </button>
+                        <button
+                          type="button"
+                          className="ph-upozorneni-seznam__hotovo"
+                          aria-label="Skrýt toto upozornění"
+                          onClick={() => skryjUpozorneni(klic)}
+                        >
+                          Hotovo
                         </button>
                       </li>
                     );

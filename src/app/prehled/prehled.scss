@@ -2026,12 +2026,19 @@
   gap: 0.35rem;
 }
 
+.ph-upozorneni-seznam__polozka {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+}
+
 .ph-upozorneni-seznam__radek {
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.15rem;
-  width: 100%;
+  min-width: 0;
   padding: 0.45rem 0.55rem;
   border: 1px solid transparent;
   border-radius: 8px;
@@ -2039,6 +2046,20 @@
   color: inherit;
   text-align: left;
   font: inherit;
+  cursor: pointer;
+}
+
+.ph-upozorneni-seznam__hotovo {
+  flex: 0 0 auto;
+  align-self: center;
+  min-height: 44px;
+  padding: 0 0.7rem;
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  border-radius: 6px;
+  background: rgba(201, 168, 76, 0.1);
+  color: var(--color-gold);
+  font: inherit;
+  font-size: 0.88rem;
   cursor: pointer;
 }
 
