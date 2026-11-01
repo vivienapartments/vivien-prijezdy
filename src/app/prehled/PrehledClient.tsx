@@ -3257,6 +3257,24 @@ export function PrehledClient({
                 >
                   {vseOtevrene ? 'Sbalit vše' : 'Rozbalit vše'}
                 </button>
+                <PoleSUlozenim
+                  key={`${row.rezervace}-den-odjezdu:${row.odjezd || ''}`}
+                  label="Den odjezdu"
+                  hodnota={row.odjezd || ''}
+                  vstup={{ type: 'date' }}
+                  onUloz={(text) => ulozDenOdjezdu(row, text)}
+                />
+                <PoleSUlozenim
+                  key={`${row.rezervace}-pin:${row.accessPin || ''}`}
+                  label="PIN apartmánu"
+                  hodnota={row.accessPin || ''}
+                  vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
+                  onUloz={(text) => ulozPin(row, text)}
+                />
+                <p className="ph-hlaska">
+                  Den odjezdu drží průvodce a upozornění. PIN se ukáže hostovi v průvodci. Na Klice
+                  změňte ručně. Bez nového e-mailu, Better Hotel to nepřepíše.
+                </p>
                 <DetailSekce
                   nazev="Kontakt"
                   drobek={kontaktDrobek}
@@ -3680,24 +3698,6 @@ export function PrehledClient({
                   <div className="ph-cell" data-label="Rezervace">
                     <div>{row.rezervace}</div>
                   </div>
-                  <PoleSUlozenim
-                    key={`${row.rezervace}-den-odjezdu:${row.odjezd || ''}`}
-                    label="Den odjezdu"
-                    hodnota={row.odjezd || ''}
-                    vstup={{ type: 'date' }}
-                    onUloz={(text) => ulozDenOdjezdu(row, text)}
-                  />
-                  <PoleSUlozenim
-                    key={`${row.rezervace}-pin:${row.accessPin || ''}`}
-                    label="PIN apartmánu"
-                    hodnota={row.accessPin || ''}
-                    vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
-                    onUloz={(text) => ulozPin(row, text)}
-                  />
-                  <p className="ph-hlaska">
-                    Den odjezdu drží průvodce a upozornění. PIN se ukáže hostovi v průvodci. Na Klice
-                    změňte ručně. Bez nového e-mailu, Better Hotel to nepřepíše.
-                  </p>
                 </DetailSekce>
 
                 <DetailSekce
