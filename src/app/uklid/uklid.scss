@@ -196,6 +196,7 @@
   background: var(--pv-surface, #26201a);
   color: var(--color-text);
   font: inherit;
+  font-size: 16px;
 }
 
 .uk-login button {
@@ -230,6 +231,7 @@
   background: #1a1510;
   color: var(--color-text);
   font: inherit;
+  font-size: 16px;
 }
 
 .uk-push {
@@ -274,6 +276,7 @@
 
 .ph-poznamka-uklid textarea {
   font: inherit;
+  font-size: 16px;
   color: var(--color-text);
   min-height: 3.5rem;
   padding: 0.45rem 0.6rem;

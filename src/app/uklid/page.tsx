@@ -20,8 +20,14 @@ export const metadata = {
   appleWebApp: { capable: true, title: 'VIVIEN Úklid', statusBarStyle: 'black-translucent' as const },
 };
 
+/** Stejně jako Přehled: bez pinch-zoom na iPhonu. */
 export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: '#1c1712',
+  viewportFit: 'cover' as const,
 };
 
 export default async function UklidPage() {

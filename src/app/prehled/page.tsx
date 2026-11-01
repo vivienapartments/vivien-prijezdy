@@ -30,8 +30,14 @@ export const metadata = {
   appleWebApp: { capable: true, title: 'VIVIEN', statusBarStyle: 'black-translucent' as const },
 };
 
+/** Bez pinch-zoom: na iPhonu se po SMS / návratu z jiné app jinak často „zasekne“ zvětšení. */
 export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
   themeColor: '#1c1712',
+  viewportFit: 'cover' as const,
 };
 
 type Props = { searchParams: Promise<{ ukazka?: string }> };

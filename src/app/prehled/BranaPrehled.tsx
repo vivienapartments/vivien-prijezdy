@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   apartmanPozice,
   denKonce,
@@ -13,8 +13,75 @@ import {
   type BranaSlot,
   type NahledBrany,
 } from '@/lib/brana';
+import { aptRecord } from '@/lib/guide-data';
 import type { PrehledRadek } from '@/lib/prehled';
 import { textTelefonu } from '@/lib/telefon';
+import type { AptId } from '@/lib/types';
+
+function normalizujSpz(text: string): string {
+  return text.replace(/\s+/g, '').toUpperCase();
+}
+
+function formatSpz(text: string): string {
+  const ciste = text.replace(/\s+/g, '').toUpperCase();
+  if (ciste.length > 4) return `${ciste.slice(0, -4)} ${ciste.slice(-4)}`;
+  return ciste;
+}
+
+function staniApartmanu(apartman: string | null): number | null {
+  if (!apartman || !/^V[1-5]$/.test(apartman)) return null;
+  try {
+    return aptRecord(apartman as AptId).stani;
+  } catch {
+    return null;
+  }
+}
+
+/** Obsazené pozice s Brána OK u hosta (aktuální registrace). */
+function aktualniBranaOk(
+  sloty: BranaSlot[],
+  radky: PrehledRadek[],
+  now: Date,
+): {
+  rezervace: string;
+  jmeno: string;
+  apartman: string;
+  stani: number | null;
+  spz: string;
+  telefon: string;
+  pozice: number;
+  konec: string | null;
+}[] {
+  const mapa = new Map(radky.map((r) => [r.rezervace, r]));
+  const out: {
+    rezervace: string;
+    jmeno: string;
+    apartman: string;
+    stani: number | null;
+    spz: string;
+    telefon: string;
+    pozice: number;
+    konec: string | null;
+  }[] = [];
+  for (const slot of sloty) {
+    if (jeVolna(slot, now)) continue;
+    if (!slot.rezervace) continue;
+    const row = mapa.get(slot.rezervace);
+    if (!row?.branaRegistrovano) continue;
+    const spz = row.spzPujcene ? 'půjčené' : (row.spz || '').trim();
+    out.push({
+      rezervace: row.rezervace,
+      jmeno: row.jmeno || row.rezervace,
+      apartman: row.apartman || apartmanPozice(slot.pozice) || '—',
+      stani: staniApartmanu(row.apartman),
+      spz: spz || 'bez SPZ',
+      telefon: slot.telefon || row.telefonBrana || '',
+      pozice: slot.pozice,
+      konec: slot.konec,
+    });
+  }
+  return out.sort((a, b) => a.pozice - b.pozice);
+}
 
 type RadkaProps = {
   row: PrehledRadek;
@@ -411,11 +478,25 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
   const [host, setHost] = useState('');
   const [dotaz, setDotaz] = useState('');
   const [otevreno, setOtevreno] = useState(!potvrzena);
+  const [hledaniSpz, setHledaniSpz] = useState('');
+  const [ukazAktualniSpz, setUkazAktualniSpz] = useState(true);
   const ref = useRef<HTMLDetailsElement>(null);
   const prazdne = sloty.every((s) => !s.telefon && s.stav === 'prazdna');
   const now = new Date();
   const obsazeno = sloty.filter((s) => !jeVolna(s, now)).length;
   const cekaReg = sloty.filter((s) => s.stav === 'ceka').length;
+  const aktualni = useMemo(() => aktualniBranaOk(sloty, radky, new Date()), [sloty, radky]);
+  const hledany = normalizujSpz(hledaniSpz);
+  const aktualniFiltrovane = !hledany
+    ? aktualni
+    : aktualni.filter(
+        (a) =>
+          normalizujSpz(a.spz).includes(hledany) ||
+          a.jmeno.toLowerCase().includes(hledaniSpz.trim().toLowerCase()) ||
+          a.apartman.toLowerCase().includes(hledaniSpz.trim().toLowerCase()) ||
+          String(a.pozice).includes(hledany) ||
+          (a.stani != null && String(a.stani).includes(hledany)),
+      );
   const souhrn = !potvrzena
     ? '🅿 Brána parkoviště · čeká na potvrzení stavu'
     : `🅿 Brána parkoviště · obsazeno ${obsazeno} / ${sloty.length}${
@@ -508,6 +589,60 @@ export function BranaTabulka({ sloty, radky, ukazka, potvrzena, onPotvrzeno, onS
           </button>
         </div>
       )}
+
+      <div className="ph-brana-aktualni">
+        <div className="ph-brana-aktualni__hlava">
+          <label className="ph-brana-aktualni__hledat">
+            Hledat SPZ
+            <input
+              value={hledaniSpz}
+              onChange={(e) => {
+                setHledaniSpz(e.target.value);
+                if (e.target.value.trim()) setUkazAktualniSpz(true);
+              }}
+              placeholder="1C2 3456"
+              autoComplete="off"
+              inputMode="text"
+            />
+          </label>
+          <button
+            type="button"
+            className={ukazAktualniSpz ? 'is-on' : undefined}
+            onClick={() => setUkazAktualniSpz((v) => !v)}
+          >
+            Aktuální SPZ{aktualni.length ? ` (${aktualni.length})` : ''}
+          </button>
+        </div>
+        {ukazAktualniSpz ? (
+          aktualniFiltrovane.length ? (
+            <ul className="ph-brana-aktualni__seznam">
+              {aktualniFiltrovane.map((a) => (
+                <li key={`${a.rezervace}-${a.pozice}`}>
+                  <button type="button" className="ph-brana-aktualni__radek" onClick={() => onHost(a.rezervace)}>
+                    <span className="ph-brana-aktualni__spz">
+                      {a.spz === 'bez SPZ' || a.spz === 'půjčené' ? a.spz : formatSpz(a.spz)}
+                    </span>
+                    <span className="ph-brana-aktualni__jmeno">{a.jmeno}</span>
+                    <span className="ph-brana-aktualni__meta">
+                      {a.apartman}
+                      {a.stani != null ? ` · stání ${a.stani}` : ''}
+                      {` · pozice ${a.pozice}`}
+                      {a.telefon ? ` · ${textTelefonu(a.telefon)}` : ''}
+                      {a.konec ? ` · do ${textKonce(a.konec)}` : ''}
+                    </span>
+                    <span className="ph-brana-aktualni__hint">karta ▸</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="ph-brana-aktualni__prazdne">
+              {hledany ? 'Nic s touhle SPZ teď v bráně není.' : 'Teď nikdo s Brána OK v aktivní pozici není.'}
+            </p>
+          )
+        ) : null}
+      </div>
+
       <div className="ph-brana-tabulka">
         {sloty.map((slot) => {
           const stav = stavRadku(slot);

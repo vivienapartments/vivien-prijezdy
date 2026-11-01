@@ -270,13 +270,17 @@
 
 .ph input,
 .ph select,
+.ph textarea,
 .ph button {
   font: inherit;
   color: var(--color-text);
 }
 
 .ph input,
-.ph select {
+.ph select,
+.ph textarea {
+  /* iPhone jinak při fokusu zvětší celou stránku (font pod 16 px). */
+  font-size: 16px;
   min-height: 2.6rem;
   padding: 0.4rem 0.6rem;
   border: 1px solid var(--pv-line);
@@ -1817,6 +1821,106 @@
 
 .ph-brana-sekce__souhrn.is-varovani {
   color: #ffb4c0;
+}
+
+.ph-brana-aktualni {
+  margin: 0.75rem 0 1rem;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.ph-brana-aktualni__hlava {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: flex-end;
+}
+
+.ph-brana-aktualni__hledat {
+  display: flex;
+  flex: 1 1 10rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  font-size: 0.85rem;
+  color: rgba(245, 239, 227, 0.75);
+}
+
+.ph-brana-aktualni__hledat input {
+  min-height: 44px;
+  font-size: 16px;
+}
+
+.ph-brana-aktualni__hlava > button {
+  min-height: 44px;
+  margin: 0;
+  border-radius: 6px;
+}
+
+.ph-brana-aktualni__hlava > button.is-on {
+  border-color: var(--color-gold);
+  background: rgba(201, 168, 76, 0.18);
+  color: var(--color-gold);
+}
+
+.ph-brana-aktualni__seznam {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ph-brana-aktualni__radek {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.12rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ph-brana-aktualni__radek:hover,
+.ph-brana-aktualni__radek:active {
+  border-color: rgba(201, 168, 76, 0.45);
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.ph-brana-aktualni__spz {
+  font-weight: 750;
+  color: var(--color-gold);
+  letter-spacing: 0.04em;
+}
+
+.ph-brana-aktualni__jmeno {
+  font-weight: 650;
+}
+
+.ph-brana-aktualni__meta {
+  font-size: 0.88rem;
+  color: rgba(245, 239, 227, 0.72);
+}
+
+.ph-brana-aktualni__hint {
+  font-size: 0.8rem;
+  color: var(--color-gold);
+}
+
+.ph-brana-aktualni__prazdne {
+  margin: 0.55rem 0 0;
+  color: rgba(245, 239, 227, 0.55);
+  font-size: 0.92rem;
 }
 
 .ph-brana-radek {
