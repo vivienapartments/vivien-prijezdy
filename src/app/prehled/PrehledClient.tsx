@@ -466,6 +466,7 @@ export function PrehledClient({
     krok: 'kdo' | 'jak';
     kdo: 'pravoslav' | 'nikol' | null;
   } | null>(null);
+  const [editPlatby, setEditPlatby] = useState<{ id: string; druh: DruhDluhu; text: string } | null>(null);
   const [jazyky, setJazyky] = useState<Record<string, GuideLang>>({});
   const [dotazZnovu, setDotazZnovu] = useState<string | null>(null);
   const [dotazDalsi, setDotazDalsi] = useState<{ id: string; druh: 'brana' | 'odemknout' } | null>(null);
@@ -872,6 +873,71 @@ export function PrehledClient({
       setHlaska('Platbu se nepodařilo vrátit.');
       return;
     }
+    zapisPlatbyRadku(row.rezervace, json.platby || [], json.zaplaceno ?? null, json.dluh || '', zive);
+  }
+
+  async function upravPlatbuKarty(row: PrehledRadek, druh: DruhDluhu, castka: string) {
+    const surovy = castka.trim().replace(',', '.');
+    const kc = Math.round(Number(surovy));
+    if (!Number.isFinite(kc) || kc < 0) return;
+    const zive = polozkyKarty(row);
+    if (ukazka) {
+      const plna = zive.find((p) => p.druh === druh)?.kc ?? kc;
+      const cil = Math.min(kc, plna);
+      const stare = (row.platby || []).filter((p) => p.druh === druh);
+      let platbyRadku = (row.platby || []).filter((p) => p.druh !== druh);
+      if (cil > 0) {
+        platbyRadku = [
+          ...platbyRadku,
+          {
+            druh,
+            kc: cil,
+            jak: stare[0]?.jak || 'prevod',
+            kdo: stare[0]?.kdo || 'pravoslav',
+            kdy: new Date().toISOString(),
+          },
+        ];
+      }
+      const zbyva = zive
+        .map((p) => {
+          const uz = platbyRadku.filter((x) => x.druh === p.druh).reduce((s, x) => s + x.kc, 0);
+          return { ...p, kc: Math.max(0, p.kc - uz) };
+        })
+        .filter((p) => p.kc > 0);
+      zapisPlatbyRadku(
+        row.rezervace,
+        platbyRadku,
+        zbyva.length ? null : row.zaplaceno || new Date().toISOString(),
+        textRozpisu(zbyva),
+        zive,
+      );
+      setEditPlatby(null);
+      return;
+    }
+    setCekam(`${row.rezervace}:platba`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce: 'upravit-platbu',
+        druh,
+        castka: String(kc),
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      platby?: PlatbaPolozky[];
+      zaplaceno?: string | null;
+      dluh?: string;
+      error?: string;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json) {
+      setHlaska(json?.error || 'Platbu se nepodařilo upravit.');
+      return;
+    }
+    setEditPlatby(null);
     zapisPlatbyRadku(row.rezervace, json.platby || [], json.zaplaceno ?? null, json.dluh || '', zive);
   }
 
@@ -2698,33 +2764,82 @@ export function PrehledClient({
           <div className="ph-poplatek-rozpis">
             {nahled.poznamka ? <p>{nahled.poznamka}</p> : null}
             {nahled.radky.map((polozka) => (
-              <p key={polozka.druh}>
-                {polozka.nazev}{' '}
-                {polozka.zaplacena
-                  ? formatKc(polozka.plnaKc)
-                  : polozka.zaplacenoKc > 0
-                    ? `${formatKc(polozka.kc)} zbývá (z ${formatKc(polozka.plnaKc)}, už ${formatKc(polozka.zaplacenoKc)})`
-                    : formatKc(polozka.kc)}
-                {polozka.vypocet ? ` (${polozka.vypocet})` : ''}
-                {polozka.zaplacena || polozka.zaplacenoKc > 0
-                  ? ` · ${[polozka.kdo, polozka.kdy, polozka.jak].filter(Boolean).join(', ')}`
-                  : null}
-                {polozka.zaplacena || polozka.zaplacenoKc > 0 ? (
-                  <button type="button" className="ph-predano" onClick={() => void vratPlatbuKarty(row, polozka.druh)}>
-                    Vrátit platbu
-                  </button>
+              <div key={polozka.druh} className="ph-poplatek-radek">
+                <p>
+                  {polozka.nazev}{' '}
+                  {polozka.zaplacena
+                    ? formatKc(polozka.plnaKc)
+                    : polozka.zaplacenoKc > 0
+                      ? `${formatKc(polozka.kc)} zbývá (z ${formatKc(polozka.plnaKc)}, už ${formatKc(polozka.zaplacenoKc)})`
+                      : formatKc(polozka.kc)}
+                  {polozka.vypocet ? ` (${polozka.vypocet})` : ''}
+                  {polozka.zaplacena || polozka.zaplacenoKc > 0
+                    ? ` · ${[polozka.kdo, polozka.kdy, polozka.jak].filter(Boolean).join(', ')}`
+                    : null}
+                  {polozka.zaplacena || polozka.zaplacenoKc > 0 ? (
+                    <>
+                      <button
+                        type="button"
+                        className="ph-predano"
+                        disabled={cekam !== null}
+                        onClick={() =>
+                          setEditPlatby({
+                            id: row.rezervace,
+                            druh: polozka.druh,
+                            text: String(polozka.zaplacenoKc || 0),
+                          })
+                        }
+                      >
+                        Upravit
+                      </button>
+                      <button
+                        type="button"
+                        className="ph-predano"
+                        onClick={() => void vratPlatbuKarty(row, polozka.druh)}
+                      >
+                        Vrátit platbu
+                      </button>
+                    </>
+                  ) : null}
+                  {!polozka.zaplacena ? (
+                    <button
+                      type="button"
+                      className="ph-zaplatit"
+                      disabled={cekam !== null}
+                      onClick={() =>
+                        setVolbaPlatby({ id: row.rezervace, druh: polozka.druh, krok: 'kdo', kdo: null })
+                      }
+                    >
+                      Zaplatit
+                    </button>
+                  ) : null}
+                </p>
+                {editPlatby?.id === row.rezervace && editPlatby.druh === polozka.druh ? (
+                  <div className="ph-predano-dotaz">
+                    <p>Už zaplaceno (z {formatKc(polozka.plnaKc)})</p>
+                    <span className="ph-pole-rada">
+                      <input
+                        inputMode="numeric"
+                        autoComplete="off"
+                        value={editPlatby.text}
+                        onChange={(e) => setEditPlatby({ ...editPlatby, text: e.target.value })}
+                        aria-label="Upravit zaplacenou částku"
+                      />
+                      <button
+                        type="button"
+                        className="ph-ulozit"
+                        disabled={cekam !== null}
+                        onClick={() => void upravPlatbuKarty(row, polozka.druh, editPlatby.text)}
+                      >
+                        Uložit
+                      </button>
+                      <button type="button" onClick={() => setEditPlatby(null)}>
+                        Zrušit
+                      </button>
+                    </span>
+                  </div>
                 ) : null}
-                {!polozka.zaplacena ? (
-                  <button
-                    type="button"
-                    className="ph-zaplatit"
-                    disabled={cekam !== null}
-                    onClick={() => setVolbaPlatby({ id: row.rezervace, druh: polozka.druh, krok: 'kdo', kdo: null })}
-                  >
-                    Zaplatit
-                  </button>
-                ) : null}
-              </p>
+              </div>
             ))}
           </div>
         ) : null}
@@ -3967,7 +4082,9 @@ export function PrehledClient({
   };
   const hostePohoda = seradOdjezdy(radky.filter((r) => jeProPohodu(r, dnes)));
   const hosteZitraOdjezd = seradOdjezdy(radky.filter((r) => r.stav !== 'zruseno' && r.odjezd === zitra));
-  const zitraDotazPoslan = hosteZitraOdjezd.filter((r) => Boolean(r.odjezdDotaz)).length;
+  const zitraVyrizeno = hosteZitraOdjezd.filter(
+    (r) => jeHodina(casOdjezduRadku(r)) || Boolean(r.odjezdDotaz),
+  ).length;
   const zitraCekaAkce = hosteZitraOdjezd.some(
     (r) => !jeHodina(casOdjezduRadku(r)) && !r.odjezdDotaz,
   );
@@ -4249,7 +4366,7 @@ export function PrehledClient({
             aria-expanded={zitraOtevreno}
             onClick={() => setZitraOtevreno((v) => !v)}
           >
-            Zítra odjíždí {hosteZitraOdjezd.length} · dotaz poslán {zitraDotazPoslan} z{' '}
+            Zítra odjíždí {hosteZitraOdjezd.length} · vyřízeno {zitraVyrizeno} z{' '}
             {hosteZitraOdjezd.length} {zitraOtevreno ? '▴' : '▸'}
           </button>
           {zitraOtevreno ? (

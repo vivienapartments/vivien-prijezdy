@@ -556,10 +556,11 @@ export function hosteNaDen(list: RezervaceRecord[], den: string): RezervaceRecor
 }
 
 /**
- * Ještě nemá odeslaný dotaz na odjezd.
- * Čas zadaný majitelem nestačí. Až po WhatsApp / e-mailu (odjezdDotaz).
+ * Ještě potřebuje Dotaz na odjezd.
+ * Když už čas známe (host nebo majitel), psát hostovi není potřeba.
  */
 export function chybiDotaz(rec: RezervaceRecord): boolean {
+  if (jeHodina(rec.casOdjezdu)) return false;
   return !rec.odjezdDotaz;
 }
 

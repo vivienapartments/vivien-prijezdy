@@ -83,7 +83,7 @@ export async function upozorniOdjezdy(
   const dnes = denPraha(now);
   const zitra = posunDen(dnes, 1);
   const zitrejsi = hosteNaDen(list, zitra);
-  /** Jen kdo ještě nedostal dotaz. Čas od majitele nestačí. */
+  /** Jen kdo ještě nemá čas odjezdu ani odeslaný dotaz. */
   const bezDotazu = zitrejsi.filter(chybiDotaz);
 
   if (beh.vecer !== dnes) {

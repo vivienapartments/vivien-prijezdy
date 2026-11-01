@@ -97,7 +97,25 @@ describe('odjezd', () => {
     expect(texty[0]).toMatch(/V1|V3/);
   });
 
-  it('večer neupozorní, když už je dotaz na odjezd odeslaný (čas od majitele nestačí)', async () => {
+  it('večer neupozorní, když už je dotaz na odjezd odeslaný', async () => {
+    const now = casVPraze('2026-10-16', 18, 5);
+    const { store } = pamet([
+      host({
+        rezervace: '1',
+        apartman: 'V1',
+        odjezd: '2026-10-17',
+        odjezdDotaz: '2026-10-16T10:00:00.000Z',
+      }),
+    ]);
+    const texty: string[] = [];
+    await upozorniOdjezdy(store, now, async (_s, text) => {
+      texty.push(text);
+      return 'push';
+    });
+    expect(texty).toEqual([]);
+  });
+
+  it('večer neupozorní, když už známe čas odjezdu (dotaz netřeba)', async () => {
     const now = casVPraze('2026-10-16', 18, 5);
     const { store } = pamet([
       host({
@@ -105,7 +123,6 @@ describe('odjezd', () => {
         apartman: 'V1',
         odjezd: '2026-10-17',
         casOdjezdu: '10:00',
-        odjezdDotaz: '2026-10-16T10:00:00.000Z',
       }),
     ]);
     const texty: string[] = [];

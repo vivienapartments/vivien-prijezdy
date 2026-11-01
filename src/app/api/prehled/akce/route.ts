@@ -32,7 +32,7 @@ import {
 } from '@/lib/okno-pobytu';
 import { upozorniMajitele, upozorniUklid } from '@/lib/upozorneni';
 import { polozkyZRezervace, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
-import { vratPlatbu, zaplatCastku, zaplatDruhy } from '@/lib/platby-hosta';
+import { upravitPlatbuDruhu, vratPlatbu, zaplatCastku, zaplatDruhy } from '@/lib/platby-hosta';
 import { oznacPrevzeti, vratPrevzeti } from '@/lib/zalozky';
 import {
   adminOdpovedPrani,
@@ -173,6 +173,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'jazyk' &&
       akce !== 'platba' &&
       akce !== 'vratit-platbu' &&
+      akce !== 'upravit-platbu' &&
       akce !== 'prevzato' &&
       akce !== 'vratit-odjezd' &&
       akce !== 'prevzit' &&
@@ -486,13 +487,25 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  if (akce === 'platba' || akce === 'vratit-platbu') {
+  if (akce === 'platba' || akce === 'vratit-platbu' || akce === 'upravit-platbu') {
     const druh = jeDruh(body?.druh);
     if (!druh) return chyba(400, 'Chybí položka.');
     if (akce === 'vratit-platbu') {
       const dalsi = vratPlatbu(rec, druh);
       await store.setRezervace(id, dalsi);
       return NextResponse.json({ ok: true, platby: dalsi.platby, zaplaceno: dalsi.zaplaceno, dluh: textRozpisu(polozkyZRezervace(dalsi)) }, { headers: noStore });
+    }
+    if (akce === 'upravit-platbu') {
+      if (druh === 'vse') return chyba(400, 'Chybí položka.');
+      const surovy = String(body?.castka ?? '').trim().replace(',', '.');
+      const kc = Math.round(Number(surovy));
+      if (!Number.isFinite(kc) || kc < 0 || kc > 100_000) return chyba(400, 'Napište částku v Kč.');
+      const dalsi = upravitPlatbuDruhu(rec, druh, kc);
+      await store.setRezervace(id, dalsi);
+      return NextResponse.json(
+        { ok: true, platby: dalsi.platby, zaplaceno: dalsi.zaplaceno, dluh: textRozpisu(polozkyZRezervace(dalsi)) },
+        { headers: noStore },
+      );
     }
     const jak = jeJak(body?.jak);
     const kdo = body?.kdo === 'pravoslav' || body?.kdo === 'nikol' ? body.kdo : null;

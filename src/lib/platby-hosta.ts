@@ -123,6 +123,36 @@ export function vratPlatbu(rec: RezervaceRecord, druh: DruhDluhu | 'vse', now = 
   );
 }
 
+/**
+ * Upraví už zapsanou částku u druhu (např. 250 místo 300).
+ * 0 = jako vrácení. Vic než dluh druhu se ořízne.
+ */
+export function upravitPlatbuDruhu(
+  rec: RezervaceRecord,
+  druh: DruhDluhu,
+  kc: number,
+  now = new Date(),
+): RezervaceRecord {
+  const polozka = polozkyVsechny(rec).find((p) => p.druh === druh);
+  if (!polozka) return rec;
+  const surovy = Math.round(kc);
+  if (!Number.isFinite(surovy) || surovy < 0) return rec;
+  const cil = Math.min(surovy, polozka.kc);
+  const stare = (rec.platby || []).filter((p) => p.druh === druh);
+  const bylo = stare.reduce((s, p) => s + p.kc, 0);
+  if (bylo === cil && (cil > 0 || stare.length === 0)) return rec;
+  const jak = stare[0]?.jak || 'prevod';
+  const kdo = stare[0]?.kdo || 'pravoslav';
+  const platby = (rec.platby || []).filter((p) => p.druh !== druh);
+  if (cil > 0) {
+    platby.push({ druh, kc: cil, jak, kdo, kdy: now.toISOString() });
+  }
+  const nazev = nazevDluhu(druh);
+  const veta =
+    cil === 0 ? `Vrácena platba, ${nazev}.` : `Upravena platba ${nazev} ${bylo} Kč → ${cil} Kč.`;
+  return poZaplaceni(rec, platby, veta, kdo, now.toISOString());
+}
+
 export function dluhZmizel(rec: RezervaceRecord): boolean {
   return polozkyZRezervace(rec).length === 0;
 }
