@@ -13,10 +13,6 @@ function kdoText(kdo: 'pravoslav' | 'nikol'): string {
   return kdo === 'nikol' ? 'Nikol' : 'Pravoslav';
 }
 
-function druhyZ(rec: RezervaceRecord): Set<DruhDluhu> {
-  return new Set((rec.platby || []).map((p) => p.druh));
-}
-
 /** Když staré zaplaceno krylo vše, ostatní položky zůstanou v seznamu plateb. */
 function pokryjStare(rec: RezervaceRecord, platby: PlatbaPolozky[], kdo: 'pravoslav' | 'nikol'): PlatbaPolozky[] {
   if (!rec.zaplaceno || (rec.platby || []).length > 0) return platby;
@@ -31,31 +27,15 @@ function pokryjStare(rec: RezervaceRecord, platby: PlatbaPolozky[], kdo: 'pravos
   return dalsi;
 }
 
-export function zaplatDruhy(
+function poZaplaceni(
   rec: RezervaceRecord,
-  druhy: Array<DruhDluhu | 'vse'>,
-  jak: JakPlatby,
+  platby: PlatbaPolozky[],
+  veta: string,
   kdo: 'pravoslav' | 'nikol',
-  now = new Date(),
+  kdy: string,
 ): RezervaceRecord {
-  const vse = polozkyVsechny(rec);
-  const cile = druhy.includes('vse') ? vse : vse.filter((p) => druhy.includes(p.druh));
-  const uz = druhyZ(rec);
-  if (rec.zaplaceno && (rec.platby || []).length === 0) {
-    for (const p of vse) uz.add(p.druh);
-  }
-  const nove = cile.filter((p) => !uz.has(p.druh));
-  if (!nove.length) return rec;
-  const kdy = now.toISOString();
-  let platby: PlatbaPolozky[] = [
-    ...(rec.platby || []),
-    ...nove.map((p) => ({ druh: p.druh, kc: p.kc, jak, kdo, kdy })),
-  ];
-  platby = pokryjStare(rec, platby, kdo);
-  const pokryte = new Set(platby.map((p) => p.druh));
-  const zbyva = vse.filter((p) => !pokryte.has(p.druh));
-  const text = nove.map((p) => `${nazevDluhu(p.druh, 'cs', p.popis)} ${p.kc} Kč`).join(', ');
-  const veta = `Zaplaceno ${JAK[jak]}, ${text}. Zapsal ${kdoText(kdo)}.`;
+  const pracovni = { ...rec, platby };
+  const zbyva = polozkyZRezervace(pracovni);
   return zapisMajitele(
     rec,
     'zaplaceno',
@@ -68,13 +48,67 @@ export function zaplatDruhy(
   );
 }
 
+/** Zaplatí zbytek vybraných druhů (nebo vše). Už částečně zaplacené druhy doplatí. */
+export function zaplatDruhy(
+  rec: RezervaceRecord,
+  druhy: Array<DruhDluhu | 'vse'>,
+  jak: JakPlatby,
+  kdo: 'pravoslav' | 'nikol',
+  now = new Date(),
+): RezervaceRecord {
+  const nezap = polozkyZRezervace(rec);
+  const cile = druhy.includes('vse') ? nezap : nezap.filter((p) => druhy.includes(p.druh));
+  if (!cile.length) return rec;
+  const kdy = now.toISOString();
+  let platby: PlatbaPolozky[] = [
+    ...(rec.platby || []),
+    ...cile.map((p) => ({ druh: p.druh, kc: p.kc, jak, kdo, kdy })),
+  ];
+  platby = pokryjStare(rec, platby, kdo);
+  const text = cile.map((p) => `${nazevDluhu(p.druh, 'cs', p.popis)} ${p.kc} Kč`).join(', ');
+  const veta = `Zaplaceno ${JAK[jak]}, ${text}. Zapsal ${kdoText(kdo)}.`;
+  return poZaplaceni(rec, platby, veta, kdo, kdy);
+}
+
+/**
+ * Host už zaplatil částku (faktura, převod…). Rozloží se na nezaplacené položky
+ * od začátku (poplatek, příjezd, …). Zbytek položky zůstane dluhem.
+ */
+export function zaplatCastku(
+  rec: RezervaceRecord,
+  kc: number,
+  jak: JakPlatby,
+  kdo: 'pravoslav' | 'nikol',
+  poznamka?: string | null,
+  now = new Date(),
+): RezervaceRecord {
+  let zbyva = Math.round(kc);
+  if (!Number.isFinite(zbyva) || zbyva < 1) return rec;
+  const nezap = polozkyZRezervace(rec);
+  if (!nezap.length) return rec;
+  const kdy = now.toISOString();
+  const nove: PlatbaPolozky[] = [];
+  for (const p of nezap) {
+    if (zbyva <= 0) break;
+    const cast = Math.min(p.kc, zbyva);
+    nove.push({ druh: p.druh, kc: cast, jak, kdo, kdy });
+    zbyva -= cast;
+  }
+  if (!nove.length) return rec;
+  let platby: PlatbaPolozky[] = [...(rec.platby || []), ...nove];
+  platby = pokryjStare(rec, platby, kdo);
+  const text = nove.map((p) => `${nazevDluhu(p.druh, 'cs')} ${p.kc} Kč`).join(', ');
+  const note = poznamka?.trim() ? ` (${poznamka.trim().slice(0, 200)})` : '';
+  const veta = `Host už zaplatil ${Math.round(kc)} Kč ${JAK[jak]}${note}: ${text}. Zapsal ${kdoText(kdo)}.`;
+  return poZaplaceni(rec, platby, veta, kdo, kdy);
+}
+
 export function vratPlatbu(rec: RezervaceRecord, druh: DruhDluhu | 'vse', now = new Date()): RezervaceRecord {
   const kdo = rec.poplatekVybral === 'nikol' ? 'nikol' : 'pravoslav';
   let platby = druh === 'vse' ? [] : (rec.platby || []).filter((p) => p.druh !== druh);
   if (druh !== 'vse') platby = pokryjStare(rec, platby, kdo).filter((p) => p.druh !== druh);
-  const vse = polozkyVsechny(rec);
-  const pokryte = new Set(platby.map((p) => p.druh));
-  const zbyva = vse.filter((p) => !pokryte.has(p.druh));
+  const pracovni = { ...rec, platby };
+  const zbyva = polozkyZRezervace(pracovni);
   const nazev = druh === 'vse' ? 'celá platba' : nazevDluhu(druh);
   const veta = `Vrácena platba, ${nazev}.`;
   return zapisMajitele(

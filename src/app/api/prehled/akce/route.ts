@@ -32,7 +32,7 @@ import {
 } from '@/lib/okno-pobytu';
 import { upozorniMajitele, upozorniUklid } from '@/lib/upozorneni';
 import { polozkyZRezervace, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
-import { vratPlatbu, zaplatDruhy } from '@/lib/platby-hosta';
+import { vratPlatbu, zaplatCastku, zaplatDruhy } from '@/lib/platby-hosta';
 import { oznacPrevzeti, vratPrevzeti } from '@/lib/zalozky';
 import {
   adminOdpovedPrani,
@@ -143,6 +143,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'den-odjezdu' &&
       akce !== 'pin' &&
       akce !== 'dohoda' &&
+      akce !== 'uz-zaplaceno' &&
       akce !== 'odjezd-dotaz' &&
       akce !== 'pohoda-dotaz' &&
       akce !== 'checkin' &&
@@ -459,6 +460,30 @@ export async function POST(request: Request): Promise<NextResponse> {
     const dalsi = zapisMajitele(rec, 'poplatek', { poplatek: stav }, veta);
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, poplatek: stav }, { headers: noStore });
+  }
+
+  if (akce === 'uz-zaplaceno') {
+    const surovy = String(body?.castka ?? '').trim().replace(',', '.');
+    const kc = Math.round(Number(surovy));
+    if (!Number.isFinite(kc) || kc < 1 || kc > 100_000) return chyba(400, 'Napište částku v Kč.');
+    const jak = jeJak(body?.jak) || 'prevod';
+    const kdo = body?.kdo === 'nikol' ? 'nikol' : 'pravoslav';
+    const poznamka = String(body?.text ?? '').trim().slice(0, 200);
+    const pred = polozkyZRezervace(rec);
+    if (!pred.length) return chyba(400, 'Teď není co započítat.');
+    const dalsi = zaplatCastku(rec, kc, jak, kdo, poznamka || null);
+    if (dalsi === rec) return chyba(400, 'Teď není co započítat.');
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json(
+      {
+        ok: true,
+        platby: dalsi.platby,
+        zaplaceno: dalsi.zaplaceno,
+        dluh: textRozpisu(polozkyZRezervace(dalsi)),
+        dluhPolozky: polozkyZRezervace(dalsi),
+      },
+      { headers: noStore },
+    );
   }
 
   if (akce === 'platba' || akce === 'vratit-platbu') {

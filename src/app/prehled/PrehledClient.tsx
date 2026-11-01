@@ -1608,6 +1608,78 @@ export function PrehledClient({
     return { ok: true, hodnota: json.pin };
   }
 
+  async function ulozUzZaplaceno(
+    row: PrehledRadek,
+    castka: string,
+    text: string,
+  ): Promise<{ ok: boolean }> {
+    const surovy = castka.trim().replace(',', '.');
+    const kc = Math.round(Number(surovy));
+    if (!Number.isFinite(kc) || kc < 1) return { ok: false };
+    if (ukazka) {
+      const zive = polozkyKarty(row);
+      let zbyva = kc;
+      const nove: PlatbaPolozky[] = [];
+      const nezap = zive
+        .map((p) => {
+          const uz = (row.platby || []).filter((x) => x.druh === p.druh).reduce((s, x) => s + x.kc, 0);
+          return { ...p, kc: Math.max(0, p.kc - uz) };
+        })
+        .filter((p) => p.kc > 0);
+      const kdy = new Date().toISOString();
+      for (const p of nezap) {
+        if (zbyva <= 0) break;
+        const cast = Math.min(p.kc, zbyva);
+        nove.push({ druh: p.druh, kc: cast, jak: 'prevod', kdo: 'pravoslav', kdy });
+        zbyva -= cast;
+      }
+      if (!nove.length) return { ok: false };
+      const platbyRadku = [...(row.platby || []), ...nove];
+      const po = zive
+        .map((p) => {
+          const uz = platbyRadku.filter((x) => x.druh === p.druh).reduce((s, x) => s + x.kc, 0);
+          return { ...p, kc: Math.max(0, p.kc - uz) };
+        })
+        .filter((p) => p.kc > 0);
+      zapisPlatbyRadku(
+        row.rezervace,
+        platbyRadku,
+        po.length ? row.zaplaceno : kdy,
+        textRozpisu(po),
+        zive,
+      );
+      return { ok: true };
+    }
+    setCekam(`${row.rezervace}:uz-zaplaceno`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce: 'uz-zaplaceno',
+        castka: String(kc),
+        text,
+        jak: 'prevod',
+        kdo: 'pravoslav',
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      platby?: PlatbaPolozky[];
+      zaplaceno?: string | null;
+      dluh?: string;
+      error?: string;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Částku se nepodařilo zapsat.');
+      return { ok: false };
+    }
+    zapisPlatbyRadku(row.rezervace, json.platby || [], json.zaplaceno ?? null, json.dluh || '', polozkyKarty(row));
+    return { ok: true };
+  }
+
   async function ulozDohodu(
     row: PrehledRadek,
     castka: string,
@@ -2627,16 +2699,22 @@ export function PrehledClient({
             {nahled.poznamka ? <p>{nahled.poznamka}</p> : null}
             {nahled.radky.map((polozka) => (
               <p key={polozka.druh}>
-                {polozka.nazev} {formatKc(polozka.kc)}
-                {polozka.vypocet ? ` (${polozka.vypocet})` : ''}
+                {polozka.nazev}{' '}
                 {polozka.zaplacena
+                  ? formatKc(polozka.plnaKc)
+                  : polozka.zaplacenoKc > 0
+                    ? `${formatKc(polozka.kc)} zbývá (z ${formatKc(polozka.plnaKc)}, už ${formatKc(polozka.zaplacenoKc)})`
+                    : formatKc(polozka.kc)}
+                {polozka.vypocet ? ` (${polozka.vypocet})` : ''}
+                {polozka.zaplacena || polozka.zaplacenoKc > 0
                   ? ` · ${[polozka.kdo, polozka.kdy, polozka.jak].filter(Boolean).join(', ')}`
                   : null}
-                {polozka.zaplacena ? (
+                {polozka.zaplacena || polozka.zaplacenoKc > 0 ? (
                   <button type="button" className="ph-predano" onClick={() => void vratPlatbuKarty(row, polozka.druh)}>
                     Vrátit platbu
                   </button>
-                ) : (
+                ) : null}
+                {!polozka.zaplacena ? (
                   <button
                     type="button"
                     className="ph-zaplatit"
@@ -2645,7 +2723,7 @@ export function PrehledClient({
                   >
                     Zaplatit
                   </button>
-                )}
+                ) : null}
               </p>
             ))}
           </div>
@@ -3364,9 +3442,15 @@ export function PrehledClient({
                     poznamka={row.dohodaPoznamka}
                     onUloz={(castka, text) => ulozDohodu(row, castka, text)}
                   />
+                  <HostUzZaplatilPole
+                    key={`${row.rezervace}-uz-zaplaceno`}
+                    disabled={cekam !== null}
+                    onUloz={(castka, text) => ulozUzZaplaceno(row, castka, text)}
+                  />
                   <p className="ph-hlaska">
                     Den odjezdu drží průvodce. PIN se ukáže v průvodci (na Klice ručně). Domluvená
-                    částka je v Platbách na kartě. Bez nového e-mailu, Better Hotel to nepřepíše.
+                    částka i „Host už zaplatil“ jdou do Plateb. Bez nového e-mailu, Better Hotel to
+                    nepřepíše.
                   </p>
                 </DetailSekce>
                 <DetailSekce
@@ -3697,6 +3781,11 @@ export function PrehledClient({
                   otevreno={jeOtevrena('penize')}
                   onToggle={() => prepni('penize')}
                 >
+                  <HostUzZaplatilPole
+                    key={`${row.rezervace}-uz-zaplaceno-penize`}
+                    disabled={cekam !== null}
+                    onUloz={(castka, text) => ulozUzZaplaceno(row, castka, text)}
+                  />
                   {skutecnyPrijezdPole}
                   {row.poplatek === 'neznamo' && !row.poplatekOdhad ? (
                     <span className="ph-poplatek-volba">
@@ -4424,6 +4513,68 @@ export function PrehledClient({
       ) : null}
       <Upozorneni />
     </main>
+  );
+}
+
+function HostUzZaplatilPole({
+  disabled,
+  onUloz,
+}: {
+  disabled?: boolean;
+  onUloz: (castka: string, text: string) => Promise<{ ok: boolean }>;
+}) {
+  const [castka, setCastka] = useState('');
+  const [text, setText] = useState('');
+  const [stav, setStav] = useState<'nic' | 'ok' | 'chyba'>('nic');
+
+  return (
+    <div className="ph-cas ph-pole">
+      <span>Host už zaplatil</span>
+      <span className="ph-pole-rada">
+        <input
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="Kč"
+          value={castka}
+          disabled={disabled}
+          onChange={(e) => {
+            setCastka(e.target.value);
+            setStav('nic');
+          }}
+          aria-label="Už zaplacená částka v Kč"
+        />
+        <button
+          type="button"
+          className="ph-ulozit"
+          disabled={disabled}
+          onClick={async () => {
+            const vysledek = await onUloz(castka, text);
+            if (!vysledek.ok) {
+              setStav('chyba');
+              return;
+            }
+            setCastka('');
+            setText('');
+            setStav('ok');
+          }}
+        >
+          Zapsat
+        </button>
+      </span>
+      <input
+        autoComplete="off"
+        placeholder="Poznámka (faktura, převod…)"
+        value={text}
+        disabled={disabled}
+        onChange={(e) => {
+          setText(e.target.value);
+          setStav('nic');
+        }}
+        aria-label="Poznámka k už zaplacené částce"
+      />
+      {stav === 'ok' ? <span className="ph-ulozeno">Zapsáno ✓</span> : null}
+      {stav === 'chyba' ? <span className="ph-neulozeno">Nezapsáno, zkuste znovu</span> : null}
+    </div>
   );
 }
 

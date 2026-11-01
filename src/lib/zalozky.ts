@@ -224,7 +224,10 @@ const JAK_PLATBY: Record<string, string> = {
 export type RadekPlatbyHosta = {
   druh: DruhDluhu;
   nazev: string;
+  /** Zbývá zaplatit, nebo plná částka když je hotovo. */
   kc: number;
+  plnaKc: number;
+  zaplacenoKc: number;
   zaplacena: boolean;
   jak: string | null;
   kdo: string | null;
@@ -262,35 +265,44 @@ export function nahledPlateb(v: {
   zaplaceno: string | null;
   poplatekVybral?: 'ja' | 'nikol' | null;
 }): NahledPlateb {
-  const mapa = new Map(v.platby.map((p) => [p.druh, p]));
   const legacy = Boolean(v.zaplaceno) && v.platby.length === 0;
   const kdoLegacy = v.poplatekVybral === 'nikol' ? 'Nikol' : v.zaplaceno ? 'Pravoslav' : null;
   const vypocet =
     v.poplatek === 'ano' && v.noci && v.osob && v.noci > 0 && v.osob > 0 ? `${v.osob} × ${v.noci} × 50 Kč` : null;
   const radky = v.polozky.map((p) => {
-    const platba = mapa.get(p.druh);
-    const zaplacena = Boolean(platba) || legacy;
+    const platbyDruhu = v.platby.filter((x) => x.druh === p.druh);
+    const zaplacenoKc = platbyDruhu.reduce((s, x) => s + x.kc, 0);
+    const posledni = platbyDruhu[platbyDruhu.length - 1];
+    const zbytek = Math.max(0, p.kc - zaplacenoKc);
+    const zaplacena = legacy || zbytek <= 0;
     return {
       druh: p.druh,
       nazev: p.nazev,
-      kc: platba?.kc ?? p.kc,
+      kc: zaplacena ? p.kc : zbytek < p.kc ? zbytek : p.kc,
+      plnaKc: p.kc,
+      zaplacenoKc: legacy ? p.kc : zaplacenoKc,
       zaplacena,
-      jak: platba ? JAK_PLATBY[platba.jak] || null : null,
-      kdo: platba ? (platba.kdo === 'nikol' ? 'Nikol' : 'Pravoslav') : legacy ? kdoLegacy : null,
-      kdy: platba ? kdyPlatby(platba.kdy) : legacy ? kdyPlatby(v.zaplaceno) : null,
+      jak: posledni ? JAK_PLATBY[posledni.jak] || null : legacy ? null : null,
+      kdo: posledni ? (posledni.kdo === 'nikol' ? 'Nikol' : 'Pravoslav') : legacy ? kdoLegacy : null,
+      kdy: posledni ? kdyPlatby(posledni.kdy) : legacy ? kdyPlatby(v.zaplaceno) : null,
       vypocet: p.druh === 'poplatek' ? vypocet : null,
     };
   });
   const suma = (xs: { kc: number }[]) => xs.reduce((s, r) => s + r.kc, 0);
   const nezap = radky.filter((r) => !r.zaplacena);
   const zap = radky.filter((r) => r.zaplacena);
+  const sumaZbytku = suma(nezap);
+  const sumaZaplaceno = radky.reduce((s, r) => s + (r.zaplacenoKc || 0), 0);
   let text = 'Platby: nic';
   let ton: NahledPlateb['ton'] = 'seda';
-  if (suma(nezap) > 0) {
-    text = `Platby: ${formatKc(suma(nezap))}`;
+  if (sumaZbytku > 0) {
+    text =
+      sumaZaplaceno > 0
+        ? `Platby: ${formatKc(sumaZbytku)} (už ${formatKc(sumaZaplaceno)})`
+        : `Platby: ${formatKc(sumaZbytku)}`;
     ton = 'normal';
-  } else if (suma(zap) > 0) {
-    text = `Platby: zaplaceno ${formatKc(suma(zap))} ✓`;
+  } else if (suma(zap) > 0 || sumaZaplaceno > 0) {
+    text = `Platby: zaplaceno ${formatKc(sumaZaplaceno || suma(zap))} ✓`;
     ton = 'zelena';
   }
   const poznamka =

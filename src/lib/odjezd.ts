@@ -177,9 +177,23 @@ function vstupDluhu(rec: RezervaceRecord, zaplacene: DruhDluhu[] | null): VstupD
   };
 }
 
+/** Kolik už je na daném druhu zapsáno v platbách. */
+export function soucetPlatebDruhu(rec: Pick<RezervaceRecord, 'platby'>, druh: DruhDluhu): number {
+  return (rec.platby || []).filter((p) => p.druh === druh).reduce((s, p) => s + p.kc, 0);
+}
+
+/**
+ * Nezaplacené položky. Když je zapsaná jen část (např. 250 z 300), zbývá zbytek.
+ * Staré zaplaceno bez seznamu plateb kryje vše, co teď na kartě je.
+ */
 export function polozkyZRezervace(rec: RezervaceRecord): PolozkaDluhu[] {
-  const zaplacene = (rec.platby || []).map((p) => p.druh);
-  return polozkyDluhu(vstupDluhu(rec, zaplacene.length ? zaplacene : null));
+  const vse = polozkyVsechny(rec);
+  if (rec.zaplaceno && !(rec.platby || []).length) return [];
+  return vse.flatMap((p) => {
+    const zbytek = p.kc - soucetPlatebDruhu(rec, p.druh);
+    if (zbytek <= 0) return [];
+    return [{ ...p, kc: zbytek }];
+  });
 }
 
 /** Všechny položky bez ohledu na to, co už je zaplacené. */
