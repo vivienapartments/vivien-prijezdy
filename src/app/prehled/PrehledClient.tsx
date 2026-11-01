@@ -126,6 +126,7 @@ function textOtevreniDlazdice(row: PrehledRadek): string {
 }
 
 type DetailSekceId =
+  | 'zmeny'
   | 'kontakt'
   | 'casy'
   | 'predani'
@@ -137,6 +138,7 @@ type DetailSekceId =
   | 'historie';
 
 const DETAIL_SEKCE_VSE: DetailSekceId[] = [
+  'zmeny',
   'kontakt',
   'casy',
   'predani',
@@ -3243,6 +3245,10 @@ export function PrehledClient({
               ? `předáno${hodinaPraha(predanoKdy) ? ` ${hodinaPraha(predanoKdy)}` : ''}`
               : 'ještě nepředáno';
             const zavadyDrobek = zavady || zavadyPo ? 'jsou závady' : 'bez závad';
+            const zmenyDrobek = [
+              row.odjezd ? `odjezd ${row.odjezd}` : 'bez odjezdu',
+              row.accessPin ? 'PIN ano' : 'bez PINu',
+            ].join(' · ');
             return (
               <>
                 <button
@@ -3257,24 +3263,31 @@ export function PrehledClient({
                 >
                   {vseOtevrene ? 'Sbalit vše' : 'Rozbalit vše'}
                 </button>
-                <PoleSUlozenim
-                  key={`${row.rezervace}-den-odjezdu:${row.odjezd || ''}`}
-                  label="Den odjezdu"
-                  hodnota={row.odjezd || ''}
-                  vstup={{ type: 'date' }}
-                  onUloz={(text) => ulozDenOdjezdu(row, text)}
-                />
-                <PoleSUlozenim
-                  key={`${row.rezervace}-pin:${row.accessPin || ''}`}
-                  label="PIN apartmánu"
-                  hodnota={row.accessPin || ''}
-                  vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
-                  onUloz={(text) => ulozPin(row, text)}
-                />
-                <p className="ph-hlaska">
-                  Den odjezdu drží průvodce a upozornění. PIN se ukáže hostovi v průvodci. Na Klice
-                  změňte ručně. Bez nového e-mailu, Better Hotel to nepřepíše.
-                </p>
+                <DetailSekce
+                  nazev="Změny"
+                  drobek={zmenyDrobek}
+                  otevreno={jeOtevrena('zmeny')}
+                  onToggle={() => prepni('zmeny')}
+                >
+                  <PoleSUlozenim
+                    key={`${row.rezervace}-den-odjezdu:${row.odjezd || ''}`}
+                    label="Den odjezdu"
+                    hodnota={row.odjezd || ''}
+                    vstup={{ type: 'date' }}
+                    onUloz={(text) => ulozDenOdjezdu(row, text)}
+                  />
+                  <PoleSUlozenim
+                    key={`${row.rezervace}-pin:${row.accessPin || ''}`}
+                    label="PIN apartmánu"
+                    hodnota={row.accessPin || ''}
+                    vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
+                    onUloz={(text) => ulozPin(row, text)}
+                  />
+                  <p className="ph-hlaska">
+                    Den odjezdu drží průvodce a upozornění. PIN se ukáže hostovi v průvodci. Na Klice
+                    změňte ručně. Bez nového e-mailu, Better Hotel to nepřepíše.
+                  </p>
+                </DetailSekce>
                 <DetailSekce
                   nazev="Kontakt"
                   drobek={kontaktDrobek}
