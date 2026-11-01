@@ -60,7 +60,15 @@ function jeJak(v: unknown): JakPlatby | null {
 }
 
 function jeDruh(v: unknown): DruhDluhu | 'vse' | null {
-  return v === 'vse' || v === 'poplatek' || v === 'prijezd' || v === 'cesta' || v === 'drive' || v === 'pozde' ? v : null;
+  return v === 'vse' ||
+    v === 'poplatek' ||
+    v === 'prijezd' ||
+    v === 'cesta' ||
+    v === 'drive' ||
+    v === 'pozde' ||
+    v === 'dohoda'
+    ? v
+    : null;
 }
 
 function pridej(rec: RezervaceRecord, co: string, patch: Partial<RezervaceRecord> = {}): RezervaceRecord {
@@ -134,6 +142,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'cas-odjezdu' &&
       akce !== 'den-odjezdu' &&
       akce !== 'pin' &&
+      akce !== 'dohoda' &&
       akce !== 'odjezd-dotaz' &&
       akce !== 'pohoda-dotaz' &&
       akce !== 'checkin' &&
@@ -590,6 +599,41 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, pin }, { headers: noStore });
+  }
+
+  if (akce === 'dohoda') {
+    const surovy = String(body?.castka ?? '').trim().replace(',', '.');
+    const poznamka = String(body?.text ?? '')
+      .trim()
+      .slice(0, 200);
+    if (!surovy) {
+      const dalsi = zapisMajitele(
+        rec,
+        ['dohodaKc', 'dohodaPoznamka'],
+        {
+          dohodaKc: null,
+          dohodaPoznamka: null,
+          platby: (rec.platby || []).filter((p) => p.druh !== 'dohoda'),
+        },
+        rec.dohodaKc ? `Domluvená částka ${rec.dohodaKc} Kč smazána` : '',
+      );
+      await store.setRezervace(id, dalsi);
+      return NextResponse.json({ ok: true, dohodaKc: null, dohodaPoznamka: null }, { headers: noStore });
+    }
+    const kc = Math.round(Number(surovy));
+    if (!Number.isFinite(kc) || kc < 1 || kc > 100_000) return chyba(400, 'Napište částku v Kč.');
+    const popis = poznamka || null;
+    const veta = popis
+      ? `Domluvená částka ${kc} Kč (${popis})`
+      : `Domluvená částka ${kc} Kč`;
+    const dalsi = zapisMajitele(
+      rec,
+      ['dohodaKc', 'dohodaPoznamka'],
+      { dohodaKc: kc, dohodaPoznamka: popis },
+      veta,
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, dohodaKc: kc, dohodaPoznamka: popis }, { headers: noStore });
   }
 
   if (akce === 'cas-odjezdu') {

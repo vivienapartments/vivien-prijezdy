@@ -801,6 +801,8 @@ export function PrehledClient({
       noci: row.noci,
       osob: row.osob,
       priplatekRucni: priplatekRadku(row),
+      dohodaKc: row.dohodaKc,
+      dohodaPoznamka: row.dohodaPoznamka,
       casPrijezdu: casSoucet,
       naMiste: naMisteRadku(row),
       predano: predanoRadku(row),
@@ -808,7 +810,7 @@ export function PrehledClient({
       priplatekDrive: row.zadostPrijezd?.stav === 'potvrzeno' ? row.zadostPrijezd.kc : null,
       priplatekPozde: castkaPozdejsihoOdjezdu(row),
     });
-    return polozky.map((p) => ({ ...p, nazev: nazevDluhu(p.druh) }));
+    return polozky.map((p) => ({ ...p, nazev: nazevDluhu(p.druh, 'cs', p.popis) }));
   }
 
   async function ulozPlatbu(row: PrehledRadek, druh: DruhDluhu | 'vse', jak: JakPlatby, kdo: 'pravoslav' | 'nikol') {
@@ -1604,6 +1606,75 @@ export function PrehledClient({
       prev.map((r) => (r.rezervace === row.rezervace ? { ...r, accessPin: json.pin! } : r)),
     );
     return { ok: true, hodnota: json.pin };
+  }
+
+  async function ulozDohodu(
+    row: PrehledRadek,
+    castka: string,
+    text: string,
+  ): Promise<{ ok: boolean; dohodaKc?: number | null; dohodaPoznamka?: string | null }> {
+    if (ukazka) {
+      const surovy = castka.trim().replace(',', '.');
+      const kc = surovy ? Math.round(Number(surovy)) : null;
+      const poznamka = text.trim().slice(0, 200) || null;
+      if (surovy && (!kc || kc < 1)) return { ok: false };
+      setRadky((prev) =>
+        prev.map((r) =>
+          r.rezervace === row.rezervace
+            ? {
+                ...r,
+                dohodaKc: kc && kc > 0 ? kc : null,
+                dohodaPoznamka: kc && kc > 0 ? poznamka : null,
+              }
+            : r,
+        ),
+      );
+      return {
+        ok: true,
+        dohodaKc: kc && kc > 0 ? kc : null,
+        dohodaPoznamka: kc && kc > 0 ? poznamka : null,
+      };
+    }
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce: 'dohoda',
+        castka,
+        text,
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      dohodaKc?: number | null;
+      dohodaPoznamka?: string | null;
+      error?: string;
+    } | null;
+    if (!res.ok || !json?.ok) {
+      if (json?.error) setHlaska(json.error);
+      return { ok: false };
+    }
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              dohodaKc: json.dohodaKc ?? null,
+              dohodaPoznamka: json.dohodaPoznamka ?? null,
+              platby:
+                json.dohodaKc == null
+                  ? (r.platby || []).filter((p) => p.druh !== 'dohoda')
+                  : r.platby,
+            }
+          : r,
+      ),
+    );
+    return {
+      ok: true,
+      dohodaKc: json.dohodaKc ?? null,
+      dohodaPoznamka: json.dohodaPoznamka ?? null,
+    };
   }
 
   async function oznacDotaz(row: PrehledRadek) {
@@ -3249,7 +3320,10 @@ export function PrehledClient({
             const zmenyDrobek = [
               row.odjezd ? `odjezd ${row.odjezd}` : 'bez odjezdu',
               row.accessPin ? 'PIN ano' : 'bez PINu',
-            ].join(' · ');
+              row.dohodaKc ? `${row.dohodaKc} Kč` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ');
             return (
               <>
                 <button
@@ -3284,9 +3358,15 @@ export function PrehledClient({
                     vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
                     onUloz={(text) => ulozPin(row, text)}
                   />
+                  <DohodaPole
+                    key={`${row.rezervace}-dohoda:${row.dohodaKc || 0}:${row.dohodaPoznamka || ''}`}
+                    kc={row.dohodaKc}
+                    poznamka={row.dohodaPoznamka}
+                    onUloz={(castka, text) => ulozDohodu(row, castka, text)}
+                  />
                   <p className="ph-hlaska">
-                    Den odjezdu drží průvodce a upozornění. PIN se ukáže hostovi v průvodci. Na Klice
-                    změňte ručně. Bez nového e-mailu, Better Hotel to nepřepíše.
+                    Den odjezdu drží průvodce. PIN se ukáže v průvodci (na Klice ručně). Domluvená
+                    částka je v Platbách na kartě. Bez nového e-mailu, Better Hotel to nepřepíše.
                   </p>
                 </DetailSekce>
                 <DetailSekce
@@ -4344,6 +4424,88 @@ export function PrehledClient({
       ) : null}
       <Upozorneni />
     </main>
+  );
+}
+
+function DohodaPole({
+  kc,
+  poznamka,
+  onUloz,
+}: {
+  kc: number | null;
+  poznamka: string | null;
+  onUloz: (
+    castka: string,
+    text: string,
+  ) => Promise<{ ok: boolean; dohodaKc?: number | null; dohodaPoznamka?: string | null }>;
+}) {
+  const [castka, setCastka] = useState(kc != null ? String(kc) : '');
+  const [text, setText] = useState(poznamka || '');
+  const [stav, setStav] = useState<'nic' | 'ok' | 'chyba'>('nic');
+
+  return (
+    <div className="ph-cas ph-pole">
+      <span>Domluvená částka</span>
+      <span className="ph-pole-rada">
+        <input
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="Kč"
+          value={castka}
+          onChange={(e) => {
+            setCastka(e.target.value);
+            setStav('nic');
+          }}
+          aria-label="Částka v Kč"
+        />
+        <button
+          type="button"
+          className="ph-ulozit"
+          onClick={async () => {
+            const vysledek = await onUloz(castka, text);
+            if (!vysledek.ok) {
+              setStav('chyba');
+              return;
+            }
+            setCastka(vysledek.dohodaKc != null ? String(vysledek.dohodaKc) : '');
+            setText(vysledek.dohodaPoznamka || '');
+            setStav('ok');
+          }}
+        >
+          Uložit
+        </button>
+        {kc != null ? (
+          <button
+            type="button"
+            className="ph-ulozit"
+            onClick={async () => {
+              const vysledek = await onUloz('', '');
+              if (!vysledek.ok) {
+                setStav('chyba');
+                return;
+              }
+              setCastka('');
+              setText('');
+              setStav('ok');
+            }}
+          >
+            Smazat
+          </button>
+        ) : null}
+      </span>
+      <input
+        autoComplete="off"
+        placeholder="Za co (poznámka)"
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          setStav('nic');
+        }}
+        aria-label="Poznámka k částce"
+      />
+      {stav === 'ok' ? <span className="ph-ulozeno">Uloženo ✓</span> : null}
+      {stav === 'chyba' ? <span className="ph-neulozeno">Neuloženo, zkuste znovu</span> : null}
+    </div>
   );
 }
 

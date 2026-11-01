@@ -58,7 +58,7 @@ export type OdjezdBeh = {
 };
 
 export type JakPlatby = 'hotove' | 'karta' | 'prevod' | 'cena';
-export type DruhPlatby = 'poplatek' | 'prijezd' | 'cesta' | 'drive' | 'pozde';
+export type DruhPlatby = 'poplatek' | 'prijezd' | 'cesta' | 'drive' | 'pozde' | 'dohoda';
 
 /** Jedna zaplacená položka. Prázdné platby a vyplněné zaplaceno znamenají starší „zaplaceno vše“. */
 export type PlatbaPolozky = {
@@ -171,6 +171,10 @@ export type RezervaceRecord = {
   naMiste: string | null;
   /** Ruční příplatek za čas. Když je vyplněný, výpočet ho nepřepíše. */
   priplatekRucni: number | null;
+  /** Domluvená částka k zaplacení (Změny). null = nic. */
+  dohodaKc: number | null;
+  /** Za co je domluvená částka. */
+  dohodaPoznamka: string | null;
   /** Čas, kdy byl vybraný městský poplatek. S prázdnými platbami kryje vše, co v tu chvíli bylo. */
   zaplaceno: string | null;
   /** Jednotlivé zaplacené položky. Nová položka po zaplacení zůstane dluhem. */
@@ -254,6 +258,8 @@ export type RucniPole =
   | 'jazyk'
   | 'predano'
   | 'priplatekRucni'
+  | 'dohodaKc'
+  | 'dohodaPoznamka'
   | 'zaplaceno'
   | 'poplatekVybral'
   | 'poplatek'
@@ -325,6 +331,8 @@ const RUCNI_KLIC = new Set<RucniPole>([
   'jazyk',
   'predano',
   'priplatekRucni',
+  'dohodaKc',
+  'dohodaPoznamka',
   'zaplaceno',
   'poplatekVybral',
   'accessPin',
@@ -512,7 +520,7 @@ export function smazatPoOdjezdu(odjezdYmd: string): Date | null {
   return new Date(Date.UTC(y + Math.floor(celkem / 12), celkem % 12, d, 12, 0, 0));
 }
 
-const DRUHY_PLATBY: DruhPlatby[] = ['poplatek', 'prijezd', 'cesta', 'drive', 'pozde'];
+const DRUHY_PLATBY: DruhPlatby[] = ['poplatek', 'prijezd', 'cesta', 'drive', 'pozde', 'dohoda'];
 const JAKY_PLATBY: JakPlatby[] = ['hotove', 'karta', 'prevod', 'cena'];
 
 function nactiPlatby(raw: unknown): PlatbaPolozky[] {
@@ -705,6 +713,14 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       typeof r.priplatekRucni === 'number' && Number.isFinite(r.priplatekRucni) && r.priplatekRucni >= 0
         ? Math.round(r.priplatekRucni)
         : null,
+    dohodaKc:
+      typeof r.dohodaKc === 'number' && Number.isFinite(r.dohodaKc) && r.dohodaKc > 0
+        ? Math.round(r.dohodaKc)
+        : null,
+    dohodaPoznamka:
+      typeof r.dohodaPoznamka === 'string' && r.dohodaPoznamka.trim()
+        ? r.dohodaPoznamka.trim().slice(0, 200)
+        : null,
     zaplaceno: typeof r.zaplaceno === 'string' && r.zaplaceno ? r.zaplaceno : null,
     platby: nactiPlatby(r.platby),
     poplatekVybral: r.poplatekVybral === 'ja' || r.poplatekVybral === 'nikol' ? r.poplatekVybral : null,
@@ -761,6 +777,8 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     predano: null,
     naMiste: null,
     priplatekRucni: null,
+    dohodaKc: null,
+    dohodaPoznamka: null,
     zaplaceno: null,
     platby: [],
     poplatekVybral: null,

@@ -21,8 +21,8 @@ function popis(rec: Pick<RezervaceRecord, 'apartman' | 'jmeno' | 'rezervace'>): 
   return `${rec.apartman || 'Apartmán'} ${prijmeni}`;
 }
 
-export type DruhDluhu = 'poplatek' | 'prijezd' | 'cesta' | 'drive' | 'pozde';
-export type PolozkaDluhu = { druh: DruhDluhu; kc: number };
+export type DruhDluhu = 'poplatek' | 'prijezd' | 'cesta' | 'drive' | 'pozde' | 'dohoda';
+export type PolozkaDluhu = { druh: DruhDluhu; kc: number; popis?: string };
 
 export type VstupDluhu = {
   zaplaceno: string | null;
@@ -31,6 +31,8 @@ export type VstupDluhu = {
   noci: number | null;
   osob: number | null;
   priplatekRucni: number | null;
+  dohodaKc?: number | null;
+  dohodaPoznamka?: string | null;
   casPrijezdu: string | null;
   naMiste: string | null;
   predano: string | null;
@@ -46,17 +48,17 @@ export type VstupDluhu = {
 const PORADI_APT: Record<string, number> = { V1: 1, V2: 2, V3: 3, V4: 4, V5: 5 };
 
 const NAZEV: Record<GuideLang, Record<DruhDluhu, string>> = {
-  cs: { poplatek: 'poplatek z pobytu', prijezd: 'pozdní příjezd', cesta: 'opakovaná cesta', drive: 'dřívější příjezd', pozde: 'pozdější odjezd' },
-  en: { poplatek: 'city tax', prijezd: 'late arrival', cesta: 'extra trip', drive: 'earlier arrival', pozde: 'later departure' },
-  de: { poplatek: 'Ortstaxe', prijezd: 'späte Anreise', cesta: 'weitere Fahrt', drive: 'frühere Anreise', pozde: 'spätere Abreise' },
-  pl: { poplatek: 'opłata miejscowa', prijezd: 'późny przyjazd', cesta: 'kolejny dojazd', drive: 'wcześniejszy przyjazd', pozde: 'późniejszy wyjazd' },
-  uk: { poplatek: 'міський збір', prijezd: 'пізній приїзд', cesta: 'повторна поїздка', drive: 'ранній приїзд', pozde: 'пізніший виїзд' },
-  'zh-Hant': { poplatek: '城市稅', prijezd: '較晚抵達', cesta: '再次接送', drive: '提早入住', pozde: '延遲退房' },
-  es: { poplatek: 'tasa municipal', prijezd: 'llegada tardía', cesta: 'viaje extra', drive: 'llegada anticipada', pozde: 'salida más tarde' },
-  fr: { poplatek: 'taxe de séjour', prijezd: 'arrivée tardive', cesta: 'trajet supplémentaire', drive: 'arrivée plus tôt', pozde: 'départ plus tard' },
-  it: { poplatek: 'tassa di soggiorno', prijezd: 'arrivo tardivo', cesta: 'corsa in più', drive: 'arrivo anticipato', pozde: 'partenza posticipata' },
-  sv: { poplatek: 'stadsskatt', prijezd: 'sen ankomst', cesta: 'extra resa', drive: 'tidigare ankomst', pozde: 'senare avresa' },
-  hu: { poplatek: 'idegenforgalmi adó', prijezd: 'késői érkezés', cesta: 'ismételt út', drive: 'korábbi érkezés', pozde: 'későbbi távozás' },
+  cs: { poplatek: 'poplatek z pobytu', prijezd: 'pozdní příjezd', cesta: 'opakovaná cesta', drive: 'dřívější příjezd', pozde: 'pozdější odjezd', dohoda: 'domluvená částka' },
+  en: { poplatek: 'city tax', prijezd: 'late arrival', cesta: 'extra trip', drive: 'earlier arrival', pozde: 'later departure', dohoda: 'agreed amount' },
+  de: { poplatek: 'Ortstaxe', prijezd: 'späte Anreise', cesta: 'weitere Fahrt', drive: 'frühere Anreise', pozde: 'spätere Abreise', dohoda: 'vereinbarter Betrag' },
+  pl: { poplatek: 'opłata miejscowa', prijezd: 'późny przyjazd', cesta: 'kolejny dojazd', drive: 'wcześniejszy przyjazd', pozde: 'późniejszy wyjazd', dohoda: 'uzgodniona kwota' },
+  uk: { poplatek: 'міський збір', prijezd: 'пізній приїзд', cesta: 'повторна поїздка', drive: 'ранній приїзд', pozde: 'пізніший виїзд', dohoda: 'домовлена сума' },
+  'zh-Hant': { poplatek: '城市稅', prijezd: '較晚抵達', cesta: '再次接送', drive: '提早入住', pozde: '延遲退房', dohoda: '約定金額' },
+  es: { poplatek: 'tasa municipal', prijezd: 'llegada tardía', cesta: 'viaje extra', drive: 'llegada anticipada', pozde: 'salida más tarde', dohoda: 'importe acordado' },
+  fr: { poplatek: 'taxe de séjour', prijezd: 'arrivée tardive', cesta: 'trajet supplémentaire', drive: 'arrivée plus tôt', pozde: 'départ plus tard', dohoda: 'montant convenu' },
+  it: { poplatek: 'tassa di soggiorno', prijezd: 'arrivo tardivo', cesta: 'corsa in più', drive: 'arrivo anticipato', pozde: 'partenza posticipata', dohoda: 'importo concordato' },
+  sv: { poplatek: 'stadsskatt', prijezd: 'sen ankomst', cesta: 'extra resa', drive: 'tidigare ankomst', pozde: 'senare avresa', dohoda: 'överenskommet belopp' },
+  hu: { poplatek: 'idegenforgalmi adó', prijezd: 'késői érkezés', cesta: 'ismételt út', drive: 'korábbi érkezés', pozde: 'későbbi távozás', dohoda: 'megbeszélt összeg' },
 };
 
 function jazyk(lang: GuideLang | null): GuideLang {
@@ -144,6 +146,10 @@ export function polozkyDluhu(v: VstupDluhu): PolozkaDluhu[] {
   if (cesta > 0) ven.push({ druh: 'cesta', kc: cesta });
   if (typeof v.priplatekDrive === 'number' && v.priplatekDrive > 0) ven.push({ druh: 'drive', kc: Math.round(v.priplatekDrive) });
   if (typeof v.priplatekPozde === 'number' && v.priplatekPozde > 0) ven.push({ druh: 'pozde', kc: Math.round(v.priplatekPozde) });
+  if (typeof v.dohodaKc === 'number' && v.dohodaKc > 0) {
+    const popis = v.dohodaPoznamka?.trim() || undefined;
+    ven.push({ druh: 'dohoda', kc: Math.round(v.dohodaKc), ...(popis ? { popis } : {}) });
+  }
   const zaplacene = v.zaplacene || [];
   if (v.zaplaceno && zaplacene.length === 0) return [];
   if (!zaplacene.length) return ven;
@@ -159,6 +165,8 @@ function vstupDluhu(rec: RezervaceRecord, zaplacene: DruhDluhu[] | null): VstupD
     noci: rec.noci,
     osob: rec.osob,
     priplatekRucni: rec.priplatekRucni,
+    dohodaKc: rec.dohodaKc,
+    dohodaPoznamka: rec.dohodaPoznamka,
     casPrijezdu: rec.casPrijezdu,
     naMiste: rec.naMiste,
     predano: rec.predano,
@@ -179,8 +187,13 @@ export function polozkyVsechny(rec: RezervaceRecord): PolozkaDluhu[] {
   return polozkyDluhu({ ...vstupDluhu(rec, []), zaplaceno: null });
 }
 
-export function nazevDluhu(druh: DruhDluhu, lang: GuideLang = 'cs'): string {
+export function nazevDluhu(druh: DruhDluhu, lang: GuideLang = 'cs', popis?: string | null): string {
+  if (druh === 'dohoda' && popis?.trim()) return popis.trim();
   return NAZEV[jazyk(lang)][druh];
+}
+
+function popisekPolozky(p: PolozkaDluhu, lang: GuideLang): string {
+  return nazevDluhu(p.druh, lang, p.popis);
 }
 
 export function soucetDluhu(polozky: PolozkaDluhu[]): number {
@@ -193,7 +206,7 @@ export function textRozpisu(polozky: PolozkaDluhu[]): string {
   const lang: GuideLang = 'cs';
   const soucet = soucetDluhu(polozky);
   const vnitrni = polozky
-    .map((p) => `${NAZEV.cs[p.druh]}${polozky.length > 1 ? ` ${castka(p.kc, lang)}` : ''}`)
+    .map((p) => `${popisekPolozky(p, lang)}${polozky.length > 1 ? ` ${castka(p.kc, lang)}` : ''}`)
     .join(', ');
   return `${castka(soucet, lang)} (${vnitrni})`;
 }
@@ -204,8 +217,8 @@ function vetaDluhu(lang: GuideLang, polozky: PolozkaDluhu[]): string {
   const soucet = soucetDluhu(polozky);
   const vnitrni =
     polozky.length === 1
-      ? NAZEV[j][polozky[0].druh]
-      : polozky.map((p) => `${NAZEV[j][p.druh]} ${castka(p.kc, j)}`).join(', ');
+      ? popisekPolozky(polozky[0], j)
+      : polozky.map((p) => `${popisekPolozky(p, j)} ${castka(p.kc, j)}`).join(', ');
   const sablony: Record<GuideLang, string> = {
     cs: `Při převzetí apartmánu vyrovnáme ještě ${castka(soucet, j)} (${vnitrni}).`,
     en: `When we take over the apartment, we will settle the remaining ${castka(soucet, j)} (${vnitrni}).`,

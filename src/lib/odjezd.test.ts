@@ -21,6 +21,7 @@ import {
   polozkyZRezervace,
   seradOdjezdy,
   textPulHodiny,
+  textRozpisu,
   textSouhrnu,
   textVecer,
   ukazatDotazOdjezdu,
@@ -348,6 +349,18 @@ describe('odjezd', () => {
     expect(castkaPozdejsihoOdjezdu({ casOdjezdu: '11:00', zadostOdjezd: null })).toBe(150);
     const rec = host({ rezervace: '77', casOdjezdu: '10:30' });
     expect(polozkyZRezervace(rec).some((p) => p.druh === 'pozde' && p.kc === 75)).toBe(true);
+  });
+
+  it('domluvená částka je v dluhu s poznámkou', () => {
+    const rec = host({
+      rezervace: 'dohoda-1',
+      dohodaKc: 500,
+      dohodaPoznamka: 'parkování navíc',
+      poplatek: 'ne',
+    });
+    const polozky = polozkyZRezervace(rec);
+    expect(polozky).toEqual([{ druh: 'dohoda', kc: 500, popis: 'parkování navíc' }]);
+    expect(textRozpisu(polozky)).toContain('parkování navíc');
   });
 
   it('rámeček je nad PINy den před odjezdem od poledne a po uložení se sbalí', () => {

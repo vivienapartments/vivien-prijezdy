@@ -54,7 +54,7 @@ export function zaplatDruhy(
   platby = pokryjStare(rec, platby, kdo);
   const pokryte = new Set(platby.map((p) => p.druh));
   const zbyva = vse.filter((p) => !pokryte.has(p.druh));
-  const text = nove.map((p) => `${nazevDluhu(p.druh)} ${p.kc} Kč`).join(', ');
+  const text = nove.map((p) => `${nazevDluhu(p.druh, 'cs', p.popis)} ${p.kc} Kč`).join(', ');
   const veta = `Zaplaceno ${JAK[jak]}, ${text}. Zapsal ${kdoText(kdo)}.`;
   return zapisMajitele(
     rec,

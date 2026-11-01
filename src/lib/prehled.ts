@@ -95,6 +95,10 @@ export type PrehledRadek = {
   naMiste: string | null;
   /** Ruční příplatek za čas. null = počítá se sám. */
   priplatekRucni: number | null;
+  /** Domluvená částka. null = nic. */
+  dohodaKc: number | null;
+  /** Poznámka k domluvené částce. */
+  dohodaPoznamka: string | null;
   /** Čas, kdy byl vybraný městský poplatek. null = ještě není vybraný. */
   zaplaceno: string | null;
   poplatekVybral: 'ja' | 'nikol' | null;
@@ -817,7 +821,11 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     odjezdDotaz: rec.odjezdDotaz,
     pohodaDotaz: rec.pohodaDotaz,
     dluhText: textRozpisu(polozkyZRezervace(rec)),
-    dluhPolozky: polozkyVsechny(rec).map((p) => ({ druh: p.druh, kc: p.kc, nazev: nazevDluhu(p.druh) })),
+    dluhPolozky: polozkyVsechny(rec).map((p) => ({
+      druh: p.druh,
+      kc: p.kc,
+      nazev: nazevDluhu(p.druh, 'cs', p.popis),
+    })),
     platby: rec.platby || [],
     prevzatoKdy: rec.prevzatoKdy,
     uklizenoKdy: rec.uklizenoKdy,
@@ -832,6 +840,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     predano: rec.predano,
     naMiste: rec.naMiste,
     priplatekRucni: rec.priplatekRucni,
+    dohodaKc: rec.dohodaKc,
+    dohodaPoznamka: rec.dohodaPoznamka,
     zaplaceno: rec.zaplaceno,
     poplatekVybral: rec.poplatekVybral,
     vyjezdy: rec.vyjezdy || [],

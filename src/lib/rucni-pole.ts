@@ -36,6 +36,8 @@ const VSECHNA: RucniPole[] = [
   'jazyk',
   'predano',
   'priplatekRucni',
+  'dohodaKc',
+  'dohodaPoznamka',
   'zaplaceno',
   'poplatekVybral',
   'poplatek',
