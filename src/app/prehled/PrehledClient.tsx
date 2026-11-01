@@ -500,7 +500,8 @@ export function PrehledClient({
 
   function rozbalDetailKarty(cislo: string) {
     setRozbalene((prev) => ({ ...prev, [cislo]: true }));
-    setDetailSekce((prev) => ({ ...prev, [cislo]: [...DETAIL_SEKCE_VSE] }));
+    /** Skupiny (Změny, Kontakt, …) zůstanou sbalené. Majitel si je otevře sám. */
+    setDetailSekce((prev) => ({ ...prev, [cislo]: prev[cislo] ?? [] }));
   }
 
   function otevriKartu(id: string) {
@@ -570,7 +571,7 @@ export function PrehledClient({
     }
     otevriKartu(rezervace);
     setDetailSekce((prev) => {
-      const cur = prev[rezervace] || DETAIL_SEKCE_VSE;
+      const cur = prev[rezervace] || [];
       return { ...prev, [rezervace]: cur.includes('prani') ? cur : [...cur, 'prani'] };
     });
     if (vlakno) {
@@ -704,7 +705,7 @@ export function PrehledClient({
       const prani = praniZUrl(window.location.href) || praniZUrl(`#${raw}`);
       if (prani) {
         setDetailSekce((prev) => {
-          const cur = prev[id] || DETAIL_SEKCE_VSE;
+          const cur = prev[id] || [];
           return { ...prev, [id]: cur.includes('prani') ? cur : [...cur, 'prani'] };
         });
         setPraniFocus((prev) => ({ ...prev, [id]: prani }));

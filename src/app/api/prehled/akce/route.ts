@@ -132,6 +132,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'odkaz' &&
       akce !== 'cas' &&
       akce !== 'cas-odjezdu' &&
+      akce !== 'den-odjezdu' &&
+      akce !== 'pin' &&
       akce !== 'odjezd-dotaz' &&
       akce !== 'pohoda-dotaz' &&
       akce !== 'checkin' &&
