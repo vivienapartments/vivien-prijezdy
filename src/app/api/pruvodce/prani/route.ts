@@ -6,7 +6,7 @@ import {
   hostUpravPrani,
 } from '@/lib/prani';
 import { createProcessStore } from '@/lib/store';
-import { verifyToken } from '@/lib/token';
+import { denPlatnostiPruvodce, isDepartureExpired, parseSignedToken } from '@/lib/token';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,7 +29,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const token = typeof body?.token === 'string' ? body.token : '';
   let payload;
   try {
-    const vysledek = verifyToken(token);
+    const vysledek = parseSignedToken(token);
     if (!vysledek.ok) return chyba(401, 'token');
     payload = vysledek.payload;
   } catch {
@@ -43,6 +43,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   const rec = await store.getRezervace(rez);
   if (!rec) return chyba(404, 'nenalezeno');
   if (rec.stav === 'zruseno') return chyba(404, 'zruseno');
+  if (isDepartureExpired(denPlatnostiPruvodce(payload.d, rec.odjezd))) {
+    return chyba(401, 'token');
+  }
 
   const akce = body?.akce;
   if (akce === 'nacti') {

@@ -1,7 +1,7 @@
 import { kodyProHosta, type KodRadek } from './kody-pruvodce';
 import { predanoRezervace } from './predani';
 import type { ProcessStore, RezervaceRecord } from './store';
-import { verifyToken } from './token';
+import { denPlatnostiPruvodce, isDepartureExpired, parseSignedToken } from './token';
 import type { GuideLang } from './types';
 
 export type StavPruvodce =
@@ -20,16 +20,22 @@ export async function nactiStavPruvodce(
 ): Promise<StavPruvodce> {
   let overeni;
   try {
-    overeni = verifyToken(token, undefined, now);
+    overeni = parseSignedToken(token);
   } catch {
     return { ok: false };
   }
   if (!overeni.ok) return { ok: false };
 
   const { a, l, i, r } = overeni.payload;
+  const rec = await store.getRezervace(r);
+  if (isDepartureExpired(denPlatnostiPruvodce(overeni.payload.d, rec?.odjezd), now)) {
+    return { ok: false };
+  }
   const predano = await predanoRezervace(store, r);
   if (!predano) return { ok: true, predano: false, kody: null };
-  const kody = kodyProHosta(true, a, i ?? null, l as GuideLang);
+  const apt = rec?.apartman || a;
+  const pin = (rec?.accessPin || i || '').trim() || null;
+  const kody = kodyProHosta(true, apt, pin, l as GuideLang);
   if (!kody) return { ok: true, predano: false, kody: null };
   return { ok: true, predano: true, kody };
 }

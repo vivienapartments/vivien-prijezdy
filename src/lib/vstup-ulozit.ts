@@ -5,7 +5,7 @@ import { popisekCasu } from './priplatek-prijezd';
 import { maRucni } from './rucni-pole';
 import type { ProcessStore, RezervaceRecord } from './store';
 import { textTelefonu } from './telefon';
-import { verifyToken } from './token';
+import { denPlatnostiPruvodce, isDepartureExpired, parseSignedToken } from './token';
 import { GUIDE_LANGS } from './types';
 import { popisHosta, poznamenejUpozorneni, upozorniMajitele } from './upozorneni';
 import {
@@ -79,10 +79,20 @@ export async function ulozVstupHosta(
     od?: string;
   },
 ): Promise<VysledekUlozeni> {
-  const overeni = verifyToken(token);
+  let overeni;
+  try {
+    overeni = parseSignedToken(token);
+  } catch {
+    return { ok: false, duvod: 'token' };
+  }
   if (!overeni.ok) return { ok: false, duvod: 'token' };
   const id = overeni.payload.r;
   const rec = await store.getRezervace(id);
+  if (
+    isDepartureExpired(denPlatnostiPruvodce(overeni.payload.d, rec?.odjezd))
+  ) {
+    return { ok: false, duvod: 'token' };
+  }
   if (!rec || rec.stav === 'zruseno') return { ok: false, duvod: 'chybi' };
   if (!smiUlozit(rec.hostUlozeni || [])) return { ok: false, duvod: 'limit' };
 

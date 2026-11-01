@@ -72,6 +72,18 @@ export function isDepartureExpired(departureYmd: string, now = new Date()): bool
   return now.getTime() > noonPrague.getTime();
 }
 
+/**
+ * Den, do kterého průvodce drží. Když majitel na kartě prodlouží odjezd,
+ * platí karta (i se starým odkazem z e-mailu). Bez karty zůstává den z odkazu.
+ */
+export function denPlatnostiPruvodce(
+  odjezdZOdkazu: string,
+  odjezdZKarty: string | null | undefined,
+): string {
+  if (odjezdZKarty && /^\d{4}-\d{2}-\d{2}$/.test(odjezdZKarty)) return odjezdZKarty;
+  return odjezdZOdkazu;
+}
+
 export function pragueLocalToUtc(
   year: number,
   month: number,
@@ -110,7 +122,8 @@ export function pragueLocalToUtc(
   return new Date(Date.UTC(year, month - 1, day, hour - 1, minute, second));
 }
 
-export function verifyToken(token: string, secret = getSecret(), now = new Date()): TokenResult {
+/** Podpis a tvar. Platnost do odjezdu neřeší (tu bere stránka z karty). */
+export function parseSignedToken(token: string, secret = getSecret()): TokenResult {
   const parts = token.split('.');
   if (parts.length !== 2) return { ok: false, reason: 'invalid' };
   const [bodyB64, sig] = parts;
@@ -168,11 +181,22 @@ export function verifyToken(token: string, secret = getSecret(), now = new Date(
 
   if (raw.f === 0 || raw.f === 1) payload.f = raw.f;
 
-  if (isDepartureExpired(d, now)) {
+  return { ok: true, payload };
+}
+
+export function verifyToken(
+  token: string,
+  secret = getSecret(),
+  now = new Date(),
+  odjezdZKarty?: string | null,
+): TokenResult {
+  const parsed = parseSignedToken(token, secret);
+  if (!parsed.ok) return parsed;
+  const den = denPlatnostiPruvodce(parsed.payload.d, odjezdZKarty);
+  if (isDepartureExpired(den, now)) {
     return { ok: false, reason: 'expired' };
   }
-
-  return { ok: true, payload };
+  return parsed;
 }
 
 export function stayFromPayload(payload: TokenPayload): StayFacts {

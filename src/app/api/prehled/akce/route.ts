@@ -555,6 +555,41 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, hodnota: nove === 'žádný' ? '' : nove }, { headers: noStore });
   }
 
+  if (akce === 'den-odjezdu') {
+    const odjezd = (body?.odjezd || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(odjezd)) return chyba(400, 'Datum je ve špatném tvaru.');
+    if (!rec.prijezd) return chyba(400, 'Nejdřív doplňte den příjezdu.');
+    const noci = nightsBetween(rec.prijezd, odjezd);
+    if (noci == null) return chyba(400, 'Odjezd musí být po příjezdu.');
+    const bylo = rec.odjezd || 'žádný';
+    const dalsi = zapisMajitele(
+      rec,
+      ['odjezd', 'noci'],
+      { odjezd, noci },
+      bylo === odjezd ? '' : `Den odjezdu ${bylo} → ${odjezd}`,
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json(
+      { ok: true, odjezd, noci, termin: `${rec.prijezd} – ${odjezd}` },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'pin') {
+    const pin = (body?.pin || '').trim();
+    if (!pin) return chyba(400, duvod('chybi_pin').veta);
+    if (pin.length > 64) return chyba(400, 'PIN je moc dlouhý.');
+    const bylo = rec.accessPin || 'žádný';
+    const dalsi = zapisMajitele(
+      rec,
+      'accessPin',
+      { accessPin: pin },
+      bylo === pin ? '' : `PIN apartmánu ${bylo} → ${pin}`,
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, pin }, { headers: noStore });
+  }
+
   if (akce === 'cas-odjezdu') {
     const surovy = (body?.cas || '').trim();
     let cas: string | null;

@@ -2,12 +2,18 @@ import { notFound } from 'next/navigation';
 import { Guide } from '@/components/Guide';
 import { OtevreniBeacon } from '@/components/OtevreniBeacon';
 import { Expired } from '@/components/Expired';
+import { nightsBetween } from '@/lib/dates';
 import { kodyProHosta } from '@/lib/kody-pruvodce';
 import { oknoProHosta } from '@/lib/okno-pobytu';
 import { poplatekZTokenu } from '@/lib/poplatek';
 import { loadSecrets } from '@/lib/secrets';
 import { createProcessStore } from '@/lib/store';
-import { stayFromPayload, verifyToken } from '@/lib/token';
+import {
+  denPlatnostiPruvodce,
+  isDepartureExpired,
+  parseSignedToken,
+  stayFromPayload,
+} from '@/lib/token';
 import type { GuideLang } from '@/lib/types';
 import { urovenZRezervace, vstupZRezervace } from '@/lib/vstup-pruvodce';
 
@@ -17,26 +23,36 @@ export default async function TokenPage({ params }: Props) {
   const { token } = await params;
   let result;
   try {
-    result = verifyToken(decodeURIComponent(token));
+    result = parseSignedToken(decodeURIComponent(token));
   } catch {
     notFound();
   }
 
   if (!result.ok) {
-    if (result.reason === 'expired') {
-      return <Expired lang="cs" />;
-    }
     notFound();
   }
 
-  const { a, l, i, r } = result.payload;
+  const { a, l, i, r, p, d, f } = result.payload;
   const secrets = loadSecrets();
-  const stay = stayFromPayload(result.payload);
   const lang = l as GuideLang;
   const store = createProcessStore();
   const rec = await store.getRezervace(r);
+  const denPlatnosti = denPlatnostiPruvodce(d, rec?.odjezd);
+  if (isDepartureExpired(denPlatnosti)) {
+    return <Expired lang="cs" />;
+  }
+
+  const stayFromKarty =
+    rec?.prijezd && rec.odjezd
+      ? { noci: nightsBetween(rec.prijezd, rec.odjezd), osob: rec.osob }
+      : null;
+  const stay = stayFromKarty ?? stayFromPayload(result.payload);
   const vstupHosta = vstupZRezervace(rec);
   const predano = Boolean(rec?.predano);
+  const apt = rec?.apartman || a;
+  const pin = (rec?.accessPin || i || '').trim() || null;
+  const poplatek =
+    rec?.poplatek === 'ano' || rec?.poplatek === 'ne' ? rec.poplatek : poplatekZTokenu(f);
   const okno = rec
     ? oknoProHosta(
         rec,
@@ -50,14 +66,14 @@ export default async function TokenPage({ params }: Props) {
     <>
       <OtevreniBeacon token={decodeURIComponent(token)} />
       <Guide
-        apt={a}
+        apt={apt}
         lang={lang}
         secrets={secrets}
         stay={stay}
-        kody={kodyProHosta(predano, a, i ?? null, lang)}
-        poplatek={poplatekZTokenu(result.payload.f)}
+        kody={kodyProHosta(predano, apt, pin, lang)}
+        poplatek={poplatek}
         initialPrijezd={null}
-        prijezdDen={rec?.prijezd ?? result.payload.p ?? null}
+        prijezdDen={rec?.prijezd ?? p ?? null}
         rezervace={r}
         narodnost={rec?.narodnost ?? null}
         vstup={{

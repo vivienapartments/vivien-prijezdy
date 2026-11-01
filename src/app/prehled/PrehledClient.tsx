@@ -19,6 +19,8 @@ import {
   rozpisPlateb,
   STARY_ZAZNAM,
   terminKratky,
+  terminText,
+  pobytText,
   textAutomatNebezi,
   textPoplatku,
   vetaChyby,
@@ -1516,6 +1518,89 @@ export function PrehledClient({
     const hotovo = json.hodnota ?? cas;
     setCasyOdjezdu((prev) => ({ ...prev, [row.rezervace]: hotovo }));
     return { ok: true, hodnota: hotovo };
+  }
+
+  async function ulozDenOdjezdu(
+    row: PrehledRadek,
+    hodnota: string,
+  ): Promise<{ ok: boolean; hodnota?: string }> {
+    const odjezd = hodnota.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(odjezd)) return { ok: false };
+    if (ukazka) {
+      setRadky((prev) =>
+        prev.map((r) =>
+          r.rezervace === row.rezervace
+            ? {
+                ...r,
+                odjezd,
+                termin: terminText(r.prijezd, odjezd),
+                pobytText: pobytText(r.noci, r.osob),
+              }
+            : r,
+        ),
+      );
+      return { ok: true, hodnota: odjezd };
+    }
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'den-odjezdu', odjezd }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      odjezd?: string;
+      noci?: number | null;
+      error?: string;
+    } | null;
+    if (!res.ok || !json?.ok || !json.odjezd) {
+      if (json?.error) setHlaska(json.error);
+      return { ok: false };
+    }
+    const noci = json.noci ?? null;
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              odjezd: json.odjezd!,
+              noci,
+              termin: terminText(r.prijezd, json.odjezd!),
+              pobytText: pobytText(noci, r.osob),
+              poplatekText: textPoplatku(r.poplatek, noci, r.osob),
+            }
+          : r,
+      ),
+    );
+    return { ok: true, hodnota: json.odjezd };
+  }
+
+  async function ulozPin(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
+    const pin = hodnota.trim();
+    if (!pin) return { ok: false };
+    if (ukazka) {
+      setRadky((prev) =>
+        prev.map((r) => (r.rezervace === row.rezervace ? { ...r, accessPin: pin } : r)),
+      );
+      return { ok: true, hodnota: pin };
+    }
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'pin', pin }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      pin?: string;
+      error?: string;
+    } | null;
+    if (!res.ok || !json?.ok || !json.pin) {
+      if (json?.error) setHlaska(json.error);
+      return { ok: false };
+    }
+    setRadky((prev) =>
+      prev.map((r) => (r.rezervace === row.rezervace ? { ...r, accessPin: json.pin! } : r)),
+    );
+    return { ok: true, hodnota: json.pin };
   }
 
   async function oznacDotaz(row: PrehledRadek) {
@@ -3595,6 +3680,24 @@ export function PrehledClient({
                   <div className="ph-cell" data-label="Rezervace">
                     <div>{row.rezervace}</div>
                   </div>
+                  <PoleSUlozenim
+                    key={`${row.rezervace}-den-odjezdu:${row.odjezd || ''}`}
+                    label="Den odjezdu"
+                    hodnota={row.odjezd || ''}
+                    vstup={{ type: 'date' }}
+                    onUloz={(text) => ulozDenOdjezdu(row, text)}
+                  />
+                  <PoleSUlozenim
+                    key={`${row.rezervace}-pin:${row.accessPin || ''}`}
+                    label="PIN apartmánu"
+                    hodnota={row.accessPin || ''}
+                    vstup={{ inputMode: 'numeric', autoComplete: 'off' }}
+                    onUloz={(text) => ulozPin(row, text)}
+                  />
+                  <p className="ph-hlaska">
+                    Den odjezdu drží průvodce a upozornění. PIN se ukáže hostovi v průvodci. Na Klice
+                    změňte ručně. Bez nového e-mailu, Better Hotel to nepřepíše.
+                  </p>
                 </DetailSekce>
 
                 <DetailSekce

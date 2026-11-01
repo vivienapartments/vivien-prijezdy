@@ -1,4 +1,4 @@
-import { verifyToken } from './token';
+import { denPlatnostiPruvodce, isDepartureExpired, parseSignedToken } from './token';
 import type { ProcessStore, RezervaceRecord } from './store';
 
 const MINUTA_MS = 60_000;
@@ -76,7 +76,9 @@ export async function zpracujBeacon(opts: {
   const now = opts.now ?? new Date();
   let overeni;
   try {
-    overeni = opts.secret ? verifyToken(opts.token, opts.secret, now) : verifyToken(opts.token, undefined, now);
+    overeni = opts.secret
+      ? parseSignedToken(opts.token, opts.secret)
+      : parseSignedToken(opts.token);
   } catch {
     return 'neplatny';
   }
@@ -85,6 +87,9 @@ export async function zpracujBeacon(opts: {
   const id = overeni.payload.r;
   const rec = await opts.store.getRezervace(id);
   if (!rec) return 'chybi';
+  if (isDepartureExpired(denPlatnostiPruvodce(overeni.payload.d, rec.odjezd), now)) {
+    return 'neplatny';
+  }
 
   const nowMs = now.getTime();
   const minule = posledniZapis.get(id) ?? 0;

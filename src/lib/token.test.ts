@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createToken, pragueLocalToUtc, stayFromPayload, verifyToken } from './token';
+import {
+  createToken,
+  denPlatnostiPruvodce,
+  pragueLocalToUtc,
+  stayFromPayload,
+  verifyToken,
+} from './token';
 import type { TokenPayload } from './types';
 
 const SECRET = 'test-secret-at-least-32-bytes-long!!';
@@ -16,6 +22,16 @@ describe('token', () => {
     const token = createToken(base, SECRET);
     const result = verifyToken(token, SECRET, new Date('2099-01-01T10:00:00Z'));
     expect(result).toEqual({ ok: true, payload: base });
+  });
+
+  it('prodloužený odjezd na kartě drží starý odkaz', () => {
+    expect(denPlatnostiPruvodce('2026-10-08', '2026-10-09')).toBe('2026-10-09');
+    expect(denPlatnostiPruvodce('2026-10-08', null)).toBe('2026-10-08');
+    const payload: TokenPayload = { ...base, d: '2026-10-08' };
+    const token = createToken(payload, SECRET);
+    const afterNoon = pragueLocalToUtc(2026, 10, 8, 12, 0, 1);
+    expect(verifyToken(token, SECRET, afterNoon)).toEqual({ ok: false, reason: 'expired' });
+    expect(verifyToken(token, SECRET, afterNoon, '2026-10-09').ok).toBe(true);
   });
 
   it('token s p a o', () => {
