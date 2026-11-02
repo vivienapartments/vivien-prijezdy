@@ -4931,7 +4931,13 @@ function Upozorneni() {
     if (sUpdate) {
       try {
         const regUpdate = await navigator.serviceWorker.getRegistration('/prehled/');
-        await sTimeoutem(regUpdate?.update() ?? Promise.resolve(), 8_000, () => undefined);
+        if (regUpdate) {
+          await sTimeoutem(
+            regUpdate.update().then(() => undefined),
+            8_000,
+            () => undefined,
+          );
+        }
       } catch {
         /* starý prohlížeč */
       }
