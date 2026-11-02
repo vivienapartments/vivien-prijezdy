@@ -59,9 +59,47 @@ export const HLASKA_NESPAROVANO =
 export const HLASKA_NEPOVOLENO = 'Upozornění jsou v telefonu vypnutá.';
 export const HLASKA_NENASTAVENO = 'Upozornění ještě nejsou nastavená. (server nemá klíč VAPID)';
 export const HLASKA_PROHLIZEC = 'Prohlížeč upozornění nepředal.';
-export const HLASKA_READY_TIMEOUT = 'Prohlížeč nepřipravil upozornění, zkuste znovu.';
+export const HLASKA_READY_TIMEOUT =
+  'Prohlížeč nepřipravil upozornění. Zkuste Resetovat, nebo v Chrome smažte data webu pro tento přehled.';
 export const HLASKA_ODBER_TIMEOUT =
   'Telefon nevytvořil odběr upozornění. Zkuste Resetovat upozornění níže.';
+
+/** Počká na aktivní service worker bez navigator.serviceWorker.ready (na Androidu často visí). */
+export async function pockejNaAktivniSw(
+  reg: ServiceWorkerRegistration,
+  ms: number,
+): Promise<ServiceWorkerRegistration> {
+  if (reg.active) return reg;
+  return sTimeoutem(
+    new Promise<ServiceWorkerRegistration>((resolve) => {
+      const konec = Date.now() + ms;
+      const tick = () => {
+        if (reg.active) {
+          resolve(reg);
+          return;
+        }
+        const sw = reg.installing || reg.waiting;
+        if (sw) {
+          sw.addEventListener(
+            'statechange',
+            () => {
+              if (reg.active || sw.state === 'activated') resolve(reg);
+            },
+            { once: true },
+          );
+        }
+        if (Date.now() < konec) {
+          setTimeout(tick, 250);
+        }
+      };
+      tick();
+    }),
+    ms + 800,
+    () => {
+      throw new Error(HLASKA_READY_TIMEOUT);
+    },
+  );
+}
 export const HLASKA_SIT_TIMEOUT = 'Server neodpověděl včas. Zkuste znovu.';
 export const HLASKA_CELEK_TIMEOUT =
   'Zapínání trvalo moc dlouho a skončilo. Zkuste Resetovat upozornění níže.';

@@ -110,6 +110,7 @@ import {
   nactiLokalniOdberZeSw,
   nadpisPushSekce,
   pockejMs,
+  pockejNaAktivniSw,
   radekDiagnostikyPush,
   sTimeoutem,
   type PushPovoleni,
@@ -4919,41 +4920,36 @@ function Upozorneni() {
     pushZamekDo.current = 0;
   }
 
-  /** Jen SW se scope /prehled/ (ne /uklid/). update() jen při Resetu. register má vlastní limit. */
+  /**
+   * Bez navigator.serviceWorker.ready (na Androidu u 1/3 často visí navždy).
+   * Nejdřív existující registrace, jinak register + čekání na active.
+   */
   async function registraceSw(sUpdate = false): Promise<ServiceWorkerRegistration> {
-    await sTimeoutem(
-      navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' }),
-      12_000,
-      () => {
-        throw new Error(HLASKA_READY_TIMEOUT);
-      },
-    );
-    if (sUpdate) {
-      try {
-        const regUpdate = await navigator.serviceWorker.getRegistration('/prehled/');
-        if (regUpdate) {
-          await sTimeoutem(
-            regUpdate.update().then(() => undefined),
-            8_000,
-            () => undefined,
-          );
-        }
-      } catch {
-        /* starý prohlížeč */
-      }
-    }
-    await sTimeoutem(navigator.serviceWorker.ready, 12_000, () => {
-      throw new Error(HLASKA_READY_TIMEOUT);
-    });
-    const reg = await sTimeoutem(
+    let reg = await sTimeoutem(
       navigator.serviceWorker.getRegistration('/prehled/'),
       5_000,
       () => undefined,
     );
     if (!reg || !jePrehledSwScope(reg.scope)) {
-      throw new Error(HLASKA_READY_TIMEOUT);
+      if (!sUpdate) {
+        /* hláška jen u uživatelského Zapnout přes volající kód */
+      }
+      reg = await sTimeoutem(
+        navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' }),
+        10_000,
+        () => {
+          throw new Error(HLASKA_READY_TIMEOUT);
+        },
+      );
     }
-    return reg;
+    if (sUpdate) {
+      try {
+        await sTimeoutem(reg.update().then(() => undefined), 8_000, () => undefined);
+      } catch {
+        /* starý prohlížeč */
+      }
+    }
+    return pockejNaAktivniSw(reg, 10_000);
   }
 
   async function nactiLokalniOdber() {
@@ -5044,9 +5040,23 @@ function Upozorneni() {
       return false;
     }
     try {
-      if (!tise) setHlaska('1/3 Prohlížeč…');
-      const ready = await registraceSw(false);
-      let sub = await sTimeoutem(ready.pushManager.getSubscription(), 8_000, () => null);
+      if (!tise) setHlaska('1/3 Hledám odběr…');
+      /* Rychlá cesta: když už Chrome odběr má, nečekáme na SW ready (to shodilo Android na 1/3). */
+      let reg = await sTimeoutem(
+        navigator.serviceWorker.getRegistration('/prehled/'),
+        4_000,
+        () => undefined,
+      );
+      let sub =
+        reg && jePrehledSwScope(reg.scope)
+          ? await sTimeoutem(reg.pushManager.getSubscription(), 5_000, () => null)
+          : null;
+
+      if (!sub || vymenit) {
+        if (!tise) setHlaska('1/3 Prohlížeč…');
+        reg = await registraceSw(false);
+        sub = await sTimeoutem(reg.pushManager.getSubscription(), 8_000, () => null);
+      }
 
       if (sub && vymenit) {
         if (!tise) setHlaska('Ruším starý odběr…');
@@ -5060,9 +5070,10 @@ function Upozorneni() {
       }
 
       if (!sub) {
+        if (!reg) reg = await registraceSw(false);
         if (!tise) setHlaska('2/3 Odběr u Googlu…');
         sub = await sTimeoutem(
-          ready.pushManager.subscribe({
+          reg.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: klicNaBajty(publicKey),
           }),
