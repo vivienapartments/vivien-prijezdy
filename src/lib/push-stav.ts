@@ -198,7 +198,12 @@ export async function nactiLokalniOdberZeSw(
 export function nadpisPushSekce(opts: {
   sparovano: boolean;
   nazev: string;
+  /** false = ještě se načítá, ať nebliká „nedostává“. */
+  nacteno?: boolean;
 }): { text: string; varovani: boolean } {
+  if (opts.nacteno === false) {
+    return { text: '⚙ Telefon a upozornění · kontroluji…', varovani: false };
+  }
   if (!opts.sparovano) {
     return { text: '⚙ Telefon a upozornění · tento telefon upozornění nedostává', varovani: true };
   }

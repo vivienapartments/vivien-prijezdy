@@ -4907,6 +4907,7 @@ function Upozorneni() {
   const [endpointTeto, setEndpointTeto] = useState('');
   const [maOdber, setMaOdber] = useState<boolean | null>(null);
   const [povoleni, setPovoleni] = useState<PushPovoleni>('neurceno');
+  const [pushNacteno, setPushNacteno] = useState(false);
   /** Zámek s časem vypršení (ms). Boolean nestačil: Android visel a Zapnout zůstalo zablokované. */
   const pushZamekDo = useRef(0);
 
@@ -5284,6 +5285,7 @@ function Upozorneni() {
       if (!zive) return;
       if (!nacteno.ok) {
         setHlaska(nacteno.hlaska);
+        setPushNacteno(true);
         return;
       }
       const { publicKey, zarizeni: seznam, pocet, chybaUlaziste } = nacteno.data;
@@ -5291,6 +5293,7 @@ function Upozorneni() {
       setZarizeni(seznam);
       if (chybaUlaziste) {
         setHlaska('Úložiště teď neodpovídá. Zkuste zapnout znovu za chvíli.');
+        setPushNacteno(true);
         return;
       }
       /* Bez automatického posliSubscription při otevření: na Androidu to drželo zámek a blokovalo Zapnout. */
@@ -5311,6 +5314,7 @@ function Upozorneni() {
       } else if (pocet === 0) {
         setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
       }
+      setPushNacteno(true);
     })();
     return () => {
       zive = false;
@@ -5427,13 +5431,19 @@ function Upozorneni() {
 
   const nazevTelefonu = nactiNazevPush();
   const totoZapnute = jeSparovano(endpointTeto, zarizeni);
-  const rozbalit = !totoZapnute || !nazevTelefonu;
-  const nadpis = nadpisPushSekce({ sparovano: totoZapnute, nazev: nazevTelefonu });
-  const diagnostika = radekDiagnostikyPush({
-    povoleni,
-    odber: maOdber,
+  const rozbalit = pushNacteno && (!totoZapnute || !nazevTelefonu);
+  const nadpis = nadpisPushSekce({
     sparovano: totoZapnute,
+    nazev: nazevTelefonu,
+    nacteno: pushNacteno,
   });
+  const diagnostika = pushNacteno
+    ? radekDiagnostikyPush({
+        povoleni,
+        odber: maOdber,
+        sparovano: totoZapnute,
+      })
+    : 'Povolení: … · Odběr v prohlížeči: … · Spárováno se serverem: …';
   const tedMs = Date.now();
 
   async function odebrat(z: { nazev: string; endpoint: string }) {
