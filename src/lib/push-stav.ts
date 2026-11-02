@@ -31,11 +31,25 @@ export function radekDiagnostikyPush(opts: {
 
 /** Hláška po neúspěchu zapnutí (bez tajných údajů). */
 export function hlaskaChybyZapnuti(err: unknown): string {
+  if (err instanceof Error) {
+    const jmeno = err.name?.trim();
+    const text = err.message?.trim();
+    if (jmeno && text && text !== jmeno) return `Upozornění se nepodařilo zapnout (${jmeno}: ${text.slice(0, 80)}).`;
+    if (jmeno) return `Upozornění se nepodařilo zapnout (${jmeno}).`;
+    if (text) return `Upozornění se nepodařilo zapnout (${text.slice(0, 80)}).`;
+  }
   if (err && typeof err === 'object' && 'name' in err && typeof (err as { name: unknown }).name === 'string') {
     const jmeno = (err as { name: string }).name.trim();
     if (jmeno) return `Upozornění se nepodařilo zapnout (${jmeno}).`;
   }
   return 'Upozornění se nepodařilo zapnout. Zkuste znovu.';
+}
+
+/** Pauza mezi zrušením a novým odběrem (Android jinak často selže). */
+export function pockejMs(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 }
 
 export const HLASKA_ZAPINAM = 'Zapínám…';
@@ -48,6 +62,34 @@ export const HLASKA_PROHLIZEC = 'Prohlížeč upozornění nepředal.';
 export const HLASKA_READY_TIMEOUT = 'Prohlížeč nepřipravil upozornění, zkuste znovu.';
 export const HLASKA_ODBER_TIMEOUT =
   'Telefon nevytvořil odběr upozornění. Zkuste Resetovat upozornění níže.';
+export const HLASKA_SIT_TIMEOUT = 'Server neodpověděl včas. Zkuste znovu.';
+export const HLASKA_CELEK_TIMEOUT =
+  'Zapínání trvalo moc dlouho a skončilo. Zkuste Resetovat upozornění níže.';
+
+/** fetch s horním limitem (Android jinak umí viset na Zapínám…). */
+export async function fetchSTimeoutem(
+  vstup: RequestInfo | URL,
+  init: RequestInit | undefined,
+  ms: number,
+): Promise<Response> {
+  const ctrl = new AbortController();
+  const vnitrni = init?.signal;
+  const naAbort = () => ctrl.abort();
+  if (vnitrni) {
+    if (vnitrni.aborted) ctrl.abort();
+    else vnitrni.addEventListener('abort', naAbort, { once: true });
+  }
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(vstup, { ...init, signal: ctrl.signal });
+  } catch (err) {
+    if (ctrl.signal.aborted) throw new Error(HLASKA_SIT_TIMEOUT);
+    throw err;
+  } finally {
+    clearTimeout(timer);
+    if (vnitrni) vnitrni.removeEventListener('abort', naAbort);
+  }
+}
 
 /** Jen registrace se scope /prehled/ (ne /uklid/). */
 export function jePrehledSwScope(scope: string | undefined | null): boolean {

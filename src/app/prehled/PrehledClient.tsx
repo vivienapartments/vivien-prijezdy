@@ -98,14 +98,18 @@ import {
   HLASKA_ODBER_TIMEOUT,
   HLASKA_PROHLIZEC,
   HLASKA_READY_TIMEOUT,
+  HLASKA_CELEK_TIMEOUT,
+  HLASKA_SIT_TIMEOUT,
   HLASKA_ZAPINAM,
   HLASKA_ZAPNUTO,
+  fetchSTimeoutem,
   hlaskaChybyZapnuti,
   hlaskaNacteniPush,
   jePrehledSwScope,
   jeSparovano,
   nactiLokalniOdberZeSw,
   nadpisPushSekce,
+  pockejMs,
   radekDiagnostikyPush,
   sTimeoutem,
   type PushPovoleni,
@@ -4841,8 +4845,9 @@ function PoleSUlozenim({
 
 const PUSH_NAZEV_KLIC = 'vivien-push-nazev';
 const PUSH_OBNOVA_KLIC = 'vivien-push-obnova-ms';
-/** Při návratu do aplikace obnova tokenu nejvýš jednou za 30 minut. */
+/** Při návratu do aplikace jen znovu uložit odběr, nejvýš jednou za 30 minut. */
 const PUSH_OBNOVA_MIN_MS = 30 * 60 * 1000;
+const PUSH_VYMENA_KLIC = 'vivien-push-vymena-ms';
 
 function nactiNazevPush(): string {
   try {
@@ -4855,8 +4860,7 @@ function nactiNazevPush(): string {
 function smiObnovitPushTed(vcetnePrvniho: boolean): boolean {
   try {
     const minule = Number(localStorage.getItem(PUSH_OBNOVA_KLIC) || '0');
-    if (!minule) return true;
-    if (vcetnePrvniho) return true;
+    if (!minule || vcetnePrvniho) return true;
     return Date.now() - minule >= PUSH_OBNOVA_MIN_MS;
   } catch {
     return true;
@@ -4866,6 +4870,14 @@ function smiObnovitPushTed(vcetnePrvniho: boolean): boolean {
 function ulozCasObnovyPush() {
   try {
     localStorage.setItem(PUSH_OBNOVA_KLIC, String(Date.now()));
+  } catch {
+    /* paměť */
+  }
+}
+
+function ulozCasVymenyPush() {
+  try {
+    localStorage.setItem(PUSH_VYMENA_KLIC, String(Date.now()));
   } catch {
     /* paměť */
   }
@@ -4906,22 +4918,25 @@ function Upozorneni() {
   const [endpointTeto, setEndpointTeto] = useState('');
   const [maOdber, setMaOdber] = useState<boolean | null>(null);
   const [povoleni, setPovoleni] = useState<PushPovoleni>('neurceno');
+  const pushZamek = useRef(false);
 
-  /** Jen SW se scope /prehled/ (ne /uklid/). */
-  async function registraceSw(): Promise<ServiceWorkerRegistration> {
+  /** Jen SW se scope /prehled/ (ne /uklid/). update() jen při Resetu, Android jinak často visí. */
+  async function registraceSw(sUpdate = false): Promise<ServiceWorkerRegistration> {
     await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
-    try {
-      const regUpdate = await navigator.serviceWorker.getRegistration('/prehled/');
-      await regUpdate?.update();
-    } catch {
-      /* starý prohlížeč */
+    if (sUpdate) {
+      try {
+        const regUpdate = await navigator.serviceWorker.getRegistration('/prehled/');
+        await regUpdate?.update();
+      } catch {
+        /* starý prohlížeč */
+      }
     }
-    await sTimeoutem(navigator.serviceWorker.ready, 10_000, () => {
+    await sTimeoutem(navigator.serviceWorker.ready, 20_000, () => {
       throw new Error(HLASKA_READY_TIMEOUT);
     });
     const reg = await sTimeoutem(
       navigator.serviceWorker.getRegistration('/prehled/'),
-      5_000,
+      8_000,
       () => undefined,
     );
     if (!reg || !jePrehledSwScope(reg.scope)) {
@@ -4951,7 +4966,7 @@ function Upozorneni() {
     { ok: true; data: PushNastaveni } | { ok: false; hlaska: string }
   > {
     try {
-      const res = await fetch('/api/prehled/push');
+      const res = await fetchSTimeoutem('/api/prehled/push', undefined, 12_000);
       const json = (await res.json().catch(() => null)) as {
         ok?: boolean;
         publicKey?: string;
@@ -4992,7 +5007,16 @@ function Upozorneni() {
     return nacteno.data.publicKey;
   }
 
-  async function posliSubscription(publicKey: string, nazev: string, tise: boolean): Promise<boolean> {
+  /**
+   * Soft (vymenit=false): existující odběr jen uložit, nový jen když žádný není.
+   * Hard (vymenit=true): jen Reset. Android při unsubscribe+subscribe často visí na Zapínám….
+   */
+  async function posliSubscription(
+    publicKey: string,
+    nazev: string,
+    tise: boolean,
+    vymenit = false,
+  ): Promise<boolean> {
     if (!publicKey || !('serviceWorker' in navigator) || !('PushManager' in window)) {
       if (!tise) setHlaska(HLASKA_NENASTAVENO);
       return false;
@@ -5001,30 +5025,44 @@ function Upozorneni() {
       if (!tise) setHlaska(HLASKA_NEPOVOLENO);
       return false;
     }
+    if (pushZamek.current) {
+      if (!tise) setHlaska('Ještě probíhá předchozí krok upozornění, chvilku počkejte…');
+      return false;
+    }
+    pushZamek.current = true;
     try {
-      const ready = await registraceSw();
-      let sub = await sTimeoutem(ready.pushManager.getSubscription(), 5_000, () => null);
-      /* Vždy nový FCM token: i při každém otevření přehledu (tise), jinak Android drží mrtvý. */
-      if (sub) {
+      if (!tise) setHlaska('1/3 Prohlížeč…');
+      const ready = await registraceSw(false);
+      let sub = await sTimeoutem(ready.pushManager.getSubscription(), 8_000, () => null);
+
+      if (sub && vymenit) {
+        if (!tise) setHlaska('Ruším starý odběr…');
         try {
-          await sTimeoutem(sub.unsubscribe(), 5_000, () => false);
+          await sTimeoutem(sub.unsubscribe(), 8_000, () => false);
         } catch {
           /* starý odběr */
         }
         sub = null;
+        await pockejMs(500);
       }
+
       if (!sub) {
+        if (!tise) setHlaska('2/3 Odběr u Googlu…');
         sub = await sTimeoutem(
           ready.pushManager.subscribe({
             userVisibleOnly: true,
             applicationServerKey: klicNaBajty(publicKey),
           }),
-          15_000,
+          20_000,
           () => {
             throw new Error(HLASKA_ODBER_TIMEOUT);
           },
         );
+        if (vymenit) ulozCasVymenyPush();
+      } else if (!tise) {
+        setHlaska('2/3 Odběr už je, ukládám…');
       }
+
       const jsonSub = sub.toJSON();
       if (!jsonSub.endpoint || !jsonSub.keys) {
         if (!tise) setHlaska(HLASKA_PROHLIZEC);
@@ -5032,23 +5070,35 @@ function Upozorneni() {
       }
       setEndpointTeto(jsonSub.endpoint);
       setMaOdber(true);
-      const res = await fetch('/api/prehled/push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          akce: 'zapnout',
-          nazev,
-          endpoint: jsonSub.endpoint,
-          keys: jsonSub.keys,
-        }),
-      });
+      if (!tise) setHlaska('3/3 Ukládám na server…');
+      const res = await fetchSTimeoutem(
+        '/api/prehled/push',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            akce: 'zapnout',
+            nazev,
+            endpoint: jsonSub.endpoint,
+            keys: jsonSub.keys,
+          }),
+        },
+        12_000,
+      );
       const json = (await res.json().catch(() => null)) as {
         ok?: boolean;
         zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
         error?: string;
       } | null;
       if (!res.ok || !json?.ok) {
-        if (!tise) setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
+        if (!tise) {
+          setHlaska(
+            json?.error ||
+              (res.status === 401
+                ? 'Nejste přihlášený. Obnovte stránku a znovu se přihlaste.'
+                : `Upozornění se nepodařilo zapnout (server ${res.status}).`),
+          );
+        }
         return false;
       }
       const seznam = json.zarizeni || [];
@@ -5058,26 +5108,31 @@ function Upozorneni() {
         return false;
       }
       ulozCasObnovyPush();
-      if (!tise) {
-        setHlaska('Zapnuto. Zkouším doručení…');
-        await zkusitVnitrni();
-      }
+      if (!tise) setHlaska(HLASKA_ZAPNUTO);
       return true;
     } catch (err) {
       if (!tise) {
         const msg = err instanceof Error ? err.message : '';
         const text =
-          msg === HLASKA_READY_TIMEOUT || msg === HLASKA_ODBER_TIMEOUT
+          msg === HLASKA_READY_TIMEOUT ||
+          msg === HLASKA_ODBER_TIMEOUT ||
+          msg === HLASKA_SIT_TIMEOUT ||
+          msg === HLASKA_CELEK_TIMEOUT
             ? msg
             : hlaskaChybyZapnuti(err);
         setHlaska(text);
       }
       return false;
+    } finally {
+      pushZamek.current = false;
     }
   }
 
   async function pozadejPovoleni(): Promise<NotificationPermission> {
-    return sTimeoutem(Notification.requestPermission(), 15_000, () => {
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      return 'granted';
+    }
+    return sTimeoutem(Notification.requestPermission(), 12_000, () => {
       throw new Error(HLASKA_ODBER_TIMEOUT);
     });
   }
@@ -5094,21 +5149,27 @@ function Upozorneni() {
       setHlaska(HLASKA_NENASTAVENO);
       return;
     }
+    if (pushZamek.current) {
+      setHlaska('Ještě probíhá předchozí krok upozornění, chvilku počkejte…');
+      return;
+    }
+    pushZamek.current = true;
     try {
       setHlaska('Mažu starou registraci…');
-      const regs = await sTimeoutem(navigator.serviceWorker.getRegistrations(), 10_000, () => {
+      const regs = await sTimeoutem(navigator.serviceWorker.getRegistrations(), 15_000, () => {
         throw new Error(HLASKA_READY_TIMEOUT);
       });
       for (const reg of regs) {
         if (!jePrehledSwScope(reg.scope)) continue;
         try {
-          const sub = await sTimeoutem(reg.pushManager.getSubscription(), 5_000, () => null);
-          if (sub) await sTimeoutem(sub.unsubscribe(), 5_000, () => false);
+          const sub = await sTimeoutem(reg.pushManager.getSubscription(), 8_000, () => null);
+          if (sub) await sTimeoutem(sub.unsubscribe(), 10_000, () => false);
         } catch {
           /* starý odběr */
         }
-        await sTimeoutem(reg.unregister(), 10_000, () => false);
+        await sTimeoutem(reg.unregister(), 15_000, () => false);
       }
+      await pockejMs(700);
 
       setHlaska('Registruji znovu…');
       const publicKey = await zajistiKlic();
@@ -5120,14 +5181,14 @@ function Upozorneni() {
         return;
       }
 
-      setHlaska('Vytvářím odběr…');
-      const ready = await registraceSw();
+      setHlaska('Vytvářím odběr u Googlu…');
+      const ready = await registraceSw(true);
       const sub = await sTimeoutem(
         ready.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: klicNaBajty(publicKey),
         }),
-        15_000,
+        30_000,
         () => {
           throw new Error(HLASKA_ODBER_TIMEOUT);
         },
@@ -5141,23 +5202,32 @@ function Upozorneni() {
       setHlaska('Ukládám…');
       setEndpointTeto(jsonSub.endpoint);
       setMaOdber(true);
-      const res = await fetch('/api/prehled/push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          akce: 'zapnout',
-          nazev: ulozene,
-          endpoint: jsonSub.endpoint,
-          keys: jsonSub.keys,
-        }),
-      });
+      const res = await fetchSTimeoutem(
+        '/api/prehled/push',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            akce: 'zapnout',
+            nazev: ulozene,
+            endpoint: jsonSub.endpoint,
+            keys: jsonSub.keys,
+          }),
+        },
+        12_000,
+      );
       const json = (await res.json().catch(() => null)) as {
         ok?: boolean;
         zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
         error?: string;
       } | null;
       if (!res.ok || !json?.ok) {
-        setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
+        setHlaska(
+          json?.error ||
+            (res.status === 401
+              ? 'Nejste přihlášený. Obnovte stránku a znovu se přihlaste.'
+              : `Upozornění se nepodařilo zapnout (server ${res.status}).`),
+        );
         return;
       }
       const seznam = json.zarizeni || [];
@@ -5166,15 +5236,20 @@ function Upozorneni() {
         setHlaska(HLASKA_NESPAROVANO);
         return;
       }
-      setHlaska('Reset hotov. Zkouším doručení…');
-      await zkusitVnitrni();
+      ulozCasObnovyPush();
+      ulozCasVymenyPush();
+      setHlaska(HLASKA_ZAPNUTO + ' Můžete klepnout Zkusit upozornění.');
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       setHlaska(
-        msg === HLASKA_READY_TIMEOUT || msg === HLASKA_ODBER_TIMEOUT
+        msg === HLASKA_READY_TIMEOUT ||
+          msg === HLASKA_ODBER_TIMEOUT ||
+          msg === HLASKA_SIT_TIMEOUT
           ? msg
           : hlaskaChybyZapnuti(err),
       );
+    } finally {
+      pushZamek.current = false;
     }
   }
 
@@ -5192,13 +5267,12 @@ function Upozorneni() {
       try {
         const publicKey = klicUz || (await zajistiKlic());
         if (!zive || !publicKey) return;
-        const ok = await posliSubscription(publicKey, nazev, true);
+        /* Při otevření jen znovu uložit existující odběr. Nový token jen po Zapnout/Obnovit/Reset. */
+        const ok = await posliSubscription(publicKey, nazev, true, false);
         if (!zive) return;
         if (ok) {
           setHlaska(
-            duvod === 'otevreni'
-              ? 'Upozornění obnovena při otevření přehledu.'
-              : 'Upozornění obnovena po návratu do přehledu.',
+            duvod === 'otevreni' ? 'Upozornění jsou zapnutá.' : 'Upozornění znovu uložena.',
           );
         } else if (duvod === 'otevreni') {
           setHlaska('Obnova upozornění se nepovedla. Klepněte Zapnout nebo Resetovat.');
@@ -5250,6 +5324,19 @@ function Upozorneni() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function zapnoutBeh(nazev: string) {
+    const publicKey = await zajistiKlic();
+    if (!publicKey) return;
+    const pov = await pozadejPovoleni();
+    setPovoleni(pov as PushPovoleni);
+    if (pov !== 'granted') {
+      setHlaska(HLASKA_NEPOVOLENO);
+      return;
+    }
+    /* Soft: bez rušení odběru. To na Androidu shazovalo Zapínám…. */
+    await posliSubscription(publicKey, nazev, false, false);
+  }
+
   async function zapnout() {
     setHlaska(HLASKA_ZAPINAM);
     const ulozene = nactiNazevPush();
@@ -5259,19 +5346,21 @@ function Upozorneni() {
       setHlaska('Napište, čí je to telefon.');
       return;
     }
-    const publicKey = await zajistiKlic();
-    if (!publicKey) return;
     try {
-      const pov = await pozadejPovoleni();
-      setPovoleni(pov as PushPovoleni);
-      if (pov !== 'granted') {
-        setHlaska(HLASKA_NEPOVOLENO);
-        return;
-      }
-      await posliSubscription(publicKey, ulozene, false);
+      await sTimeoutem(zapnoutBeh(ulozene), 45_000, () => {
+        pushZamek.current = false;
+        throw new Error(HLASKA_CELEK_TIMEOUT);
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
-      setHlaska(msg === HLASKA_ODBER_TIMEOUT ? msg : hlaskaChybyZapnuti(err));
+      setHlaska(
+        msg === HLASKA_ODBER_TIMEOUT ||
+          msg === HLASKA_CELEK_TIMEOUT ||
+          msg === HLASKA_SIT_TIMEOUT ||
+          msg === HLASKA_READY_TIMEOUT
+          ? msg
+          : hlaskaChybyZapnuti(err),
+      );
     }
   }
 
@@ -5284,30 +5373,36 @@ function Upozorneni() {
     ulozNazevPush(nazev);
     setPtamJmeno(false);
     setHlaska(HLASKA_ZAPINAM);
-    const publicKey = await zajistiKlic();
-    if (!publicKey) return;
     try {
-      const pov = await pozadejPovoleni();
-      setPovoleni(pov as PushPovoleni);
-      if (pov !== 'granted') {
-        setHlaska(HLASKA_NEPOVOLENO);
-        return;
-      }
-      await posliSubscription(publicKey, nazev, false);
+      await sTimeoutem(zapnoutBeh(nazev), 45_000, () => {
+        pushZamek.current = false;
+        throw new Error(HLASKA_CELEK_TIMEOUT);
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
-      setHlaska(msg === HLASKA_ODBER_TIMEOUT ? msg : hlaskaChybyZapnuti(err));
+      setHlaska(
+        msg === HLASKA_ODBER_TIMEOUT ||
+          msg === HLASKA_CELEK_TIMEOUT ||
+          msg === HLASKA_SIT_TIMEOUT ||
+          msg === HLASKA_READY_TIMEOUT
+          ? msg
+          : hlaskaChybyZapnuti(err),
+      );
     }
   }
 
   async function zkusitVnitrni() {
     setZkousim(true);
     try {
-      const res = await fetch('/api/prehled/push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ akce: 'zkusit' }),
-      });
+      const res = await fetchSTimeoutem(
+        '/api/prehled/push',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ akce: 'zkusit' }),
+        },
+        15_000,
+      );
       const json = (await res.json().catch(() => null)) as {
         ok?: boolean;
         text?: string;
@@ -5322,8 +5417,9 @@ function Upozorneni() {
       } else {
         setHlaska(text);
       }
-    } catch {
-      setHlaska('Zkouška se nepovedla (síť).');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      setHlaska(msg === HLASKA_SIT_TIMEOUT ? msg : 'Zkouška se nepovedla (síť).');
     } finally {
       setZkousim(false);
     }
