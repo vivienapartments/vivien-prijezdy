@@ -3538,15 +3538,15 @@ export function PrehledClient({
             (casOkFaze || branaPripravenaFaze || branaOkFaze);
           if (!ukazFaze) return null;
           return (
-            <div className="ph-faze">
+            <div className="ph-potvrzeni">
               {casOkFaze ? (
                 potvrzeni ? (
-                  <div className="ph-faze__radek">
-                    <span className="ph-faze__stav">
+                  <div className="ph-potvrzeni__blok">
+                    <p className="ph-potvrzeni__nadpis">
                       {potvrzeni === 'osobne' ? 'Osobně ubytujeme' : 'Jsme na telefonu'}
                       {potvrzeni === 'osobne' ? ' · zpráva hostovi' : ''}
-                    </span>
-                    <div className="ph-faze__akce">
+                    </p>
+                    <div className="ph-potvrzeni__akce">
                       <button
                         type="button"
                         className={potvrzeni === 'osobne' ? 'is-on' : ''}
@@ -3561,36 +3561,38 @@ export function PrehledClient({
                         disabled={cekam !== null}
                         onClick={() => void ulozPotvrzeniPrijezdu(row, 'telefon')}
                       >
-                        Telefon
+                        Na telefonu
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="ph-faze__blok">
-                    <p className="ph-faze__nadpis">Čas {casText || casAktualni} · jak ubytujeme?</p>
-                    <div className="ph-faze__akce">
+                  <div className="ph-potvrzeni__blok">
+                    <p className="ph-potvrzeni__nadpis">
+                      Čas {casText || casAktualni}. Jak ubytujeme?
+                    </p>
+                    <div className="ph-potvrzeni__akce">
                       <button
                         type="button"
                         disabled={cekam !== null}
                         onClick={() => void ulozPotvrzeniPrijezdu(row, 'osobne')}
                       >
-                        Osobně ubytujeme
+                        Osobně
                       </button>
                       <button
                         type="button"
                         disabled={cekam !== null}
                         onClick={() => void ulozPotvrzeniPrijezdu(row, 'telefon')}
                       >
-                        Jsme na telefonu
+                        Na telefonu
                       </button>
                     </div>
                   </div>
                 )
               ) : null}
               {branaPripravenaFaze ? (
-                <div className="ph-faze__blok">
-                  <p className="ph-faze__nadpis">Brána · číslo máme, zapsat?</p>
-                  <div className="ph-faze__akce">
+                <div className="ph-potvrzeni__blok">
+                  <p className="ph-potvrzeni__nadpis">Brána. Číslo máme, zapsat?</p>
+                  <div className="ph-potvrzeni__akce">
                     <button
                       type="button"
                       disabled={cekam !== null}
@@ -3602,12 +3604,12 @@ export function PrehledClient({
                 </div>
               ) : null}
               {branaOkFaze ? (
-                <div className="ph-faze__radek">
-                  <span className="ph-faze__stav">
+                <div className="ph-potvrzeni__blok">
+                  <p className="ph-potvrzeni__stav">
                     Brána OK
                     {row.zpravaBranaOdeslana ? ' · zpráva hostovi' : ''}
                     {row.telefonBrana ? ` · ${row.telefonBrana}` : ''}
-                  </span>
+                  </p>
                 </div>
               ) : null}
             </div>
