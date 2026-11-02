@@ -46,6 +46,19 @@ export const HLASKA_NEPOVOLENO = 'Upozornění jsou v telefonu vypnutá.';
 export const HLASKA_NENASTAVENO = 'Upozornění ještě nejsou nastavená. (server nemá klíč VAPID)';
 export const HLASKA_PROHLIZEC = 'Prohlížeč upozornění nepředal.';
 export const HLASKA_READY_TIMEOUT = 'Prohlížeč nepřipravil upozornění, zkuste znovu.';
+export const HLASKA_ODBER_TIMEOUT =
+  'Telefon nevytvořil odběr upozornění. Zkuste Resetovat upozornění níže.';
+
+/** Jen registrace se scope /prehled/ (ne /uklid/). */
+export function jePrehledSwScope(scope: string | undefined | null): boolean {
+  if (!scope) return false;
+  try {
+    const cesta = new URL(scope, 'https://local.invalid').pathname;
+    return cesta === '/prehled' || cesta.startsWith('/prehled/');
+  } catch {
+    return scope.includes('/prehled');
+  }
+}
 
 export function hlaskaNacteniPush(status: number | 'sit' | null): string {
   if (status === 'sit' || status == null) return 'Nepodařilo se načíst nastavení upozornění (síť).';

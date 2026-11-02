@@ -2,10 +2,12 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   HLASKA_NENASTAVENO,
   HLASKA_NESPAROVANO,
+  HLASKA_ODBER_TIMEOUT,
   HLASKA_READY_TIMEOUT,
   HLASKA_ZAPNUTO,
   hlaskaChybyZapnuti,
   hlaskaNacteniPush,
+  jePrehledSwScope,
   jeSparovano,
   nactiLokalniOdberZeSw,
   nadpisPushSekce,
@@ -36,10 +38,18 @@ describe('push-stav', () => {
     expect(HLASKA_NESPAROVANO).toMatch(/nespároval/i);
     expect(HLASKA_NENASTAVENO).toMatch(/VAPID/);
     expect(HLASKA_READY_TIMEOUT).toMatch(/nepřipravil/i);
+    expect(HLASKA_ODBER_TIMEOUT).toMatch(/Resetovat upozornění/);
     expect(hlaskaNacteniPush(401)).toContain('401');
     expect(hlaskaNacteniPush('sit')).toMatch(/síť/);
     expect(hlaskaChybyZapnuti(new DOMException('x', 'AbortError'))).toContain('AbortError');
     expect(hlaskaChybyZapnuti('x')).toMatch(/Zkuste znovu/);
+  });
+
+  it('jePrehledSwScope oddělí /prehled/ od /uklid/', () => {
+    expect(jePrehledSwScope('https://x.example/prehled/')).toBe(true);
+    expect(jePrehledSwScope('/prehled/')).toBe(true);
+    expect(jePrehledSwScope('https://x.example/uklid/')).toBe(false);
+    expect(jePrehledSwScope('/uklid/')).toBe(false);
   });
 
   it('nadpis sekce', () => {

@@ -95,12 +95,14 @@ import {
   HLASKA_NENASTAVENO,
   HLASKA_NEPOVOLENO,
   HLASKA_NESPAROVANO,
+  HLASKA_ODBER_TIMEOUT,
   HLASKA_PROHLIZEC,
   HLASKA_READY_TIMEOUT,
   HLASKA_ZAPINAM,
   HLASKA_ZAPNUTO,
   hlaskaChybyZapnuti,
   hlaskaNacteniPush,
+  jePrehledSwScope,
   jeSparovano,
   nactiLokalniOdberZeSw,
   nadpisPushSekce,
@@ -4883,17 +4885,27 @@ function Upozorneni() {
   const [maOdber, setMaOdber] = useState<boolean | null>(null);
   const [povoleni, setPovoleni] = useState<PushPovoleni>('neurceno');
 
-  async function registraceSw() {
-    const reg = await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
+  /** Jen SW se scope /prehled/ (ne /uklid/). */
+  async function registraceSw(): Promise<ServiceWorkerRegistration> {
+    await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
     try {
-      await reg.update();
+      const regUpdate = await navigator.serviceWorker.getRegistration('/prehled/');
+      await regUpdate?.update();
     } catch {
       /* starý prohlížeč */
     }
-    const ready = await sTimeoutem(navigator.serviceWorker.ready, 10_000, () => {
+    await sTimeoutem(navigator.serviceWorker.ready, 10_000, () => {
       throw new Error(HLASKA_READY_TIMEOUT);
     });
-    return ready;
+    const reg = await sTimeoutem(
+      navigator.serviceWorker.getRegistration('/prehled/'),
+      5_000,
+      () => undefined,
+    );
+    if (!reg || !jePrehledSwScope(reg.scope)) {
+      throw new Error(HLASKA_READY_TIMEOUT);
+    }
+    return reg;
   }
 
   async function nactiLokalniOdber() {
@@ -4969,20 +4981,26 @@ function Upozorneni() {
     }
     try {
       const ready = await registraceSw();
-      let sub = await ready.pushManager.getSubscription();
+      let sub = await sTimeoutem(ready.pushManager.getSubscription(), 5_000, () => null);
       if (sub && !jeSparovano(sub.endpoint, zarizeni)) {
         try {
-          await sub.unsubscribe();
+          await sTimeoutem(sub.unsubscribe(), 5_000, () => false);
         } catch {
           /* starý odběr */
         }
         sub = null;
       }
       if (!sub) {
-        sub = await ready.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: klicNaBajty(publicKey),
-        });
+        sub = await sTimeoutem(
+          ready.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: klicNaBajty(publicKey),
+          }),
+          15_000,
+          () => {
+            throw new Error(HLASKA_ODBER_TIMEOUT);
+          },
+        );
       }
       const jsonSub = sub.toJSON();
       if (!jsonSub.endpoint || !jsonSub.keys) {
@@ -5020,12 +5038,115 @@ function Upozorneni() {
       return true;
     } catch (err) {
       if (!tise) {
-        const text = err instanceof Error && err.message === HLASKA_READY_TIMEOUT
-          ? HLASKA_READY_TIMEOUT
-          : hlaskaChybyZapnuti(err);
+        const msg = err instanceof Error ? err.message : '';
+        const text =
+          msg === HLASKA_READY_TIMEOUT || msg === HLASKA_ODBER_TIMEOUT
+            ? msg
+            : hlaskaChybyZapnuti(err);
         setHlaska(text);
       }
       return false;
+    }
+  }
+
+  async function pozadejPovoleni(): Promise<NotificationPermission> {
+    return sTimeoutem(Notification.requestPermission(), 15_000, () => {
+      throw new Error(HLASKA_ODBER_TIMEOUT);
+    });
+  }
+
+  async function resetovatUpozorneni() {
+    const ulozene = nactiNazevPush();
+    if (!ulozene) {
+      setPtamJmeno(true);
+      setJmenoDraft('');
+      setHlaska('Napište, čí je to telefon.');
+      return;
+    }
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setHlaska(HLASKA_NENASTAVENO);
+      return;
+    }
+    try {
+      setHlaska('Mažu starou registraci…');
+      const regs = await sTimeoutem(navigator.serviceWorker.getRegistrations(), 10_000, () => {
+        throw new Error(HLASKA_READY_TIMEOUT);
+      });
+      for (const reg of regs) {
+        if (!jePrehledSwScope(reg.scope)) continue;
+        try {
+          const sub = await sTimeoutem(reg.pushManager.getSubscription(), 5_000, () => null);
+          if (sub) await sTimeoutem(sub.unsubscribe(), 5_000, () => false);
+        } catch {
+          /* starý odběr */
+        }
+        await sTimeoutem(reg.unregister(), 10_000, () => false);
+      }
+
+      setHlaska('Registruji znovu…');
+      const publicKey = await zajistiKlic();
+      if (!publicKey) return;
+      const pov = await pozadejPovoleni();
+      setPovoleni(pov as PushPovoleni);
+      if (pov !== 'granted') {
+        setHlaska(HLASKA_NEPOVOLENO);
+        return;
+      }
+
+      setHlaska('Vytvářím odběr…');
+      const ready = await registraceSw();
+      const sub = await sTimeoutem(
+        ready.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: klicNaBajty(publicKey),
+        }),
+        15_000,
+        () => {
+          throw new Error(HLASKA_ODBER_TIMEOUT);
+        },
+      );
+      const jsonSub = sub.toJSON();
+      if (!jsonSub.endpoint || !jsonSub.keys) {
+        setHlaska(HLASKA_PROHLIZEC);
+        return;
+      }
+
+      setHlaska('Ukládám…');
+      setEndpointTeto(jsonSub.endpoint);
+      setMaOdber(true);
+      const res = await fetch('/api/prehled/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          akce: 'zapnout',
+          nazev: ulozene,
+          endpoint: jsonSub.endpoint,
+          keys: jsonSub.keys,
+        }),
+      });
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        zarizeni?: { nazev: string; endpoint: string; cas?: string }[];
+        error?: string;
+      } | null;
+      if (!res.ok || !json?.ok) {
+        setHlaska(json?.error || 'Upozornění se nepodařilo zapnout.');
+        return;
+      }
+      const seznam = json.zarizeni || [];
+      setZarizeni(seznam);
+      if (!jeSparovano(jsonSub.endpoint, seznam)) {
+        setHlaska(HLASKA_NESPAROVANO);
+        return;
+      }
+      setHlaska(HLASKA_ZAPNUTO);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      setHlaska(
+        msg === HLASKA_READY_TIMEOUT || msg === HLASKA_ODBER_TIMEOUT
+          ? msg
+          : hlaskaChybyZapnuti(err),
+      );
     }
   }
 
@@ -5082,7 +5203,7 @@ function Upozorneni() {
     const publicKey = await zajistiKlic();
     if (!publicKey) return;
     try {
-      const pov = await Notification.requestPermission();
+      const pov = await pozadejPovoleni();
       setPovoleni(pov as PushPovoleni);
       if (pov !== 'granted') {
         setHlaska(HLASKA_NEPOVOLENO);
@@ -5090,7 +5211,8 @@ function Upozorneni() {
       }
       await posliSubscription(publicKey, ulozene, false);
     } catch (err) {
-      setHlaska(hlaskaChybyZapnuti(err));
+      const msg = err instanceof Error ? err.message : '';
+      setHlaska(msg === HLASKA_ODBER_TIMEOUT ? msg : hlaskaChybyZapnuti(err));
     }
   }
 
@@ -5106,7 +5228,7 @@ function Upozorneni() {
     const publicKey = await zajistiKlic();
     if (!publicKey) return;
     try {
-      const pov = await Notification.requestPermission();
+      const pov = await pozadejPovoleni();
       setPovoleni(pov as PushPovoleni);
       if (pov !== 'granted') {
         setHlaska(HLASKA_NEPOVOLENO);
@@ -5114,7 +5236,8 @@ function Upozorneni() {
       }
       await posliSubscription(publicKey, nazev, false);
     } catch (err) {
-      setHlaska(hlaskaChybyZapnuti(err));
+      const msg = err instanceof Error ? err.message : '';
+      setHlaska(msg === HLASKA_ODBER_TIMEOUT ? msg : hlaskaChybyZapnuti(err));
     }
   }
 
@@ -5186,6 +5309,9 @@ function Upozorneni() {
         </button>
         <button type="button" className="ph-ulozit" disabled={zkousim} onClick={() => void zkusit()}>
           {zkousim ? 'Zkouším…' : 'Zkusit upozornění'}
+        </button>
+        <button type="button" onClick={() => void resetovatUpozorneni()}>
+          Resetovat upozornění
         </button>
         {hlaska ? <span className="ph-push-stav">{hlaska}</span> : null}
         <p className="ph-push__diag">{diagnostika}</p>
