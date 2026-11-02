@@ -1,4 +1,4 @@
-/* vivien-prehled-sw 2026-10-30 */
+/* vivien-prehled-sw 2026-11-02 */
 self.addEventListener('install', function (event) {
   self.skipWaiting();
 });
@@ -12,13 +12,21 @@ self.addEventListener('push', function (event) {
   try {
     data = event.data ? event.data.json() : {};
   } catch (e) {
-    data = { body: '' };
+    data = { body: event.data ? String(event.data.text()) : '' };
   }
+  var title = data.title || 'VIVIEN';
+  var body = data.body || '';
+  var url = data.url || '/prehled';
   event.waitUntil(
-    self.registration.showNotification(data.title || 'VIVIEN', {
-      body: data.body || '',
+    self.registration.showNotification(title, {
+      body: body,
       icon: '/prehled/icon-192.png',
-      data: { url: data.url || '/prehled' },
+      badge: '/prehled/icon-192.png',
+      data: { url: url },
+      requireInteraction: true,
+      tag: 'vivien-prehled',
+      renotify: true,
+      vibrate: [120, 60, 120],
     }),
   );
 });
@@ -26,5 +34,15 @@ self.addEventListener('push', function (event) {
 self.addEventListener('notificationclick', function (event) {
   event.notification.close();
   var url = (event.notification.data && event.notification.data.url) || '/prehled';
-  event.waitUntil(self.clients.openWindow(url));
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (klienti) {
+      for (var i = 0; i < klienti.length; i++) {
+        var c = klienti[i];
+        if (c.url && c.url.indexOf('/prehled') !== -1 && 'focus' in c) {
+          return c.focus();
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    }),
+  );
 });

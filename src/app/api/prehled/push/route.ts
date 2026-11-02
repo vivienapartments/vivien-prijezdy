@@ -88,8 +88,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   const p256dh = body.keys?.p256dh || '';
   const auth = body.keys?.auth || '';
   if (!endpoint || !p256dh || !auth) return chyba(400, 'Prohlížeč upozornění nepředal.');
-  const bez = list.filter((z) => z.endpoint !== endpoint);
   const nazev = (body.nazev || 'Telefon').replace(/\s+/g, ' ').trim().slice(0, 40) || 'Telefon';
+  const nazevNorm = nazev.toLowerCase();
+  /* Stejné jméno = stejný telefon. Starý FCM token smažeme, ať neblokuje doručení. */
+  const bez = list.filter((z) => {
+    if (z.endpoint === endpoint) return false;
+    if ((z.nazev || '').trim().toLowerCase() === nazevNorm) return false;
+    return true;
+  });
   const dalsi: PushZarizeni = {
     endpoint,
     p256dh,

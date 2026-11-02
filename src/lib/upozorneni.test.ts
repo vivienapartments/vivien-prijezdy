@@ -17,11 +17,26 @@ describe('zkusit upozornění', () => {
         dorucenoJmena: ['Pravoslav', 'Nikol'],
       }),
     ).toBe('Doručeno: Pravoslav, Nikol');
-    expect(textZkuseni({ jak: 'email', zarizeni: 0, doruceno: 0, dorucenoJmena: [] })).toBe(
-      'Odesláno e-mailem',
+    expect(
+      textZkuseni({
+        jak: 'push',
+        zarizeni: 2,
+        doruceno: 1,
+        dorucenoJmena: ['Nikol'],
+        chyby: ['Pravoslav (403)'],
+      }),
+    ).toBe('Doručeno: Nikol. Nešlo: Pravoslav (403)');
+    expect(textZkuseni({ jak: 'email', zarizeni: 1, doruceno: 0, dorucenoJmena: [], chyby: ['Pravoslav (403)'] })).toBe(
+      'Odesláno e-mailem. Push nešel: Pravoslav (403). Na telefonu klepněte Resetovat upozornění.',
     );
     expect(textZkuseni({ jak: 'nic', zarizeni: 0, doruceno: 0, dorucenoJmena: [] })).toBe(
       'Žádné zařízení, zapněte upozornění',
     );
+    expect(
+      textZkuseni({ jak: 'nic', zarizeni: 1, doruceno: 0, dorucenoJmena: [], odpojeno: ['Pravoslav'] }),
+    ).toBe('Google odpojil: Pravoslav. Klepněte Resetovat upozornění.');
+    expect(
+      textZkuseni({ jak: 'nic', zarizeni: 1, doruceno: 0, dorucenoJmena: [], chyby: ['Pravoslav (403)'] }),
+    ).toBe('Push nešel: Pravoslav (403). Klepněte Resetovat upozornění.');
   });
 });

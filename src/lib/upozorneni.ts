@@ -33,7 +33,14 @@ export type VysledekUpozorneni = {
   zarizeni: number;
   doruceno: number;
   dorucenoJmena: string[];
+  /** Krátké popisy selhání (pro Zkusit). */
+  chyby?: string[];
+  /** Telefony, které Google/FCM odpojil (404/410). */
+  odpojeno?: string[];
 };
+
+const PUSH_TTL_SEC = 60 * 60;
+const PUSH_OPTS = { TTL: PUSH_TTL_SEC, urgency: 'high' as const, headers: { Urgency: 'high' } };
 
 async function emailOdpojeni(nazev: string): Promise<void> {
   const text = `Upozornění na telefonu ${nazev} se odpojila. Otevřete na něm jednou přehled a klepněte na Zapnout upozornění.`;
@@ -69,6 +76,8 @@ export async function upozorniMajitelePodrobne(
 
   let doruceno = 0;
   const dorucenoJmena: string[] = [];
+  const chyby: string[] = [];
+  const odpojeno: string[] = [];
   const publicKey = process.env.VAPID_PUBLIC?.trim();
   const privateKey = process.env.VAPID_PRIVATE?.trim();
   const subject = process.env.VAPID_SUBJECT?.trim() || 'mailto:info@vivienapartments.cz';
@@ -76,27 +85,37 @@ export async function upozorniMajitelePodrobne(
   const cilova: PushZarizeni[] = zarizeni.filter((z) => rolePush(z) === 'majitel');
   const ostatni = zarizeni.filter((z) => rolePush(z) !== 'majitel');
 
-  if (publicKey && privateKey && cilova.length && !process.env.VITEST) {
+  if (!publicKey || !privateKey) {
+    chyby.push('Na serveru chybí klíč VAPID');
+  } else if (!cilova.length) {
+    /* nic k odeslání */
+  } else if (!process.env.VITEST) {
     try {
       const webpush = await import('web-push');
       webpush.setVapidDetails(subject, publicKey, privateKey);
       const zustane: PushZarizeni[] = [...ostatni];
       const smazane: PushZarizeni[] = [];
       for (const z of cilova) {
+        const jmeno = z.nazev || 'Telefon';
         try {
           await webpush.sendNotification(
             { endpoint: z.endpoint, keys: { p256dh: z.p256dh, auth: z.auth } },
             JSON.stringify({ title: 'VIVIEN', body: text, url }),
+            PUSH_OPTS,
           );
           doruceno += 1;
-          dorucenoJmena.push(z.nazev || 'Telefon');
+          dorucenoJmena.push(jmeno);
           zustane.push(z);
         } catch (err) {
           const status = (err as { statusCode?: number }).statusCode;
           if (status === 404 || status === 410) {
             smazane.push(z);
+            odpojeno.push(jmeno);
             continue;
           }
+          const kod = typeof status === 'number' ? String(status) : 'chyba';
+          chyby.push(`${jmeno} (${kod})`);
+          console.error(`Upozorneni: push selhalo ${jmeno} status=${kod}`, err instanceof Error ? err.message : err);
           zustane.push(z);
         }
       }
@@ -106,32 +125,46 @@ export async function upozorniMajitelePodrobne(
         } catch (err) {
           console.error('Upozorneni: savePush selhalo', err instanceof Error ? err.message : err);
         }
-        for (const z of smazane) {
-          await emailOdpojeni(z.nazev || 'Telefon');
+        if (!opts?.zkuseni) {
+          for (const z of smazane) {
+            await emailOdpojeni(z.nazev || 'Telefon');
+          }
         }
       }
     } catch (err) {
+      chyby.push('web-push');
       console.error('Upozorneni: web-push selhalo', err instanceof Error ? err.message : err);
     }
   }
 
+  const detail = {
+    zarizeni: zarizeni.length,
+    doruceno,
+    dorucenoJmena,
+    ...(chyby.length ? { chyby } : {}),
+    ...(odpojeno.length ? { odpojeno } : {}),
+  };
+
   if (doruceno > 0) {
-    console.log(`Upozorneni: push (${doruceno}/${zarizeni.length})`);
-    return { jak: 'push', zarizeni: zarizeni.length, doruceno, dorucenoJmena };
+    console.log(`Upozorneni: push (${doruceno}/${cilova.length})`);
+    return { jak: 'push', ...detail };
   }
 
-  try {
-    const mailed = await emailMajiteli(text);
-    if (mailed) {
-      console.log(`Upozorneni: email (zarizeni ${zarizeni.length})`);
-      return { jak: 'email', zarizeni: zarizeni.length, doruceno: 0, dorucenoJmena: [] };
+  /* Zkušební tlačítko nesmí schovat selhání e-mailem. */
+  if (!opts?.zkuseni) {
+    try {
+      const mailed = await emailMajiteli(text);
+      if (mailed) {
+        console.log(`Upozorneni: email (zarizeni ${zarizeni.length})`);
+        return { jak: 'email', ...detail };
+      }
+    } catch (err) {
+      console.error('Upozorneni: email selhal', err instanceof Error ? err.message : err);
     }
-  } catch (err) {
-    console.error('Upozorneni: email selhal', err instanceof Error ? err.message : err);
   }
 
   console.log(`Upozorneni: nic (zarizeni ${zarizeni.length})`);
-  return { jak: 'nic', zarizeni: zarizeni.length, doruceno: 0, dorucenoJmena: [] };
+  return { jak: 'nic', ...detail };
 }
 
 export async function upozorniMajitele(
@@ -177,6 +210,7 @@ export async function upozorniUklid(
         await webpush.sendNotification(
           { endpoint: z.endpoint, keys: { p256dh: z.p256dh, auth: z.auth } },
           JSON.stringify({ title: 'VIVIEN Úklid', body: text, url }),
+          PUSH_OPTS,
         );
         doruceno += 1;
         zustane.push(z);
@@ -207,13 +241,31 @@ export function zarizeniProRoli(list: PushZarizeni[], role: PushRole): PushZariz
 /** Text pro tlačítko Zkusit upozornění. */
 export function textZkuseni(v: VysledekUpozorneni): string {
   if (v.jak === 'push') {
-    if (v.dorucenoJmena.length) return `Doručeno: ${v.dorucenoJmena.join(', ')}`;
-    const n = v.doruceno;
-    if (n === 1) return 'Doručeno na 1 zařízení';
-    return `Doručeno na ${n} zařízení`;
+    let zaklad = v.dorucenoJmena.length
+      ? `Doručeno: ${v.dorucenoJmena.join(', ')}`
+      : v.doruceno === 1
+        ? 'Doručeno na 1 zařízení'
+        : `Doručeno na ${v.doruceno} zařízení`;
+    if (v.chyby?.length) zaklad += `. Nešlo: ${v.chyby.join(', ')}`;
+    if (v.odpojeno?.length) zaklad += `. Google odpojil: ${v.odpojeno.join(', ')}`;
+    return zaklad;
   }
-  if (v.jak === 'email') return 'Odesláno e-mailem';
-  return 'Žádné zařízení, zapněte upozornění';
+  if (v.jak === 'email') {
+    const duvod = v.chyby?.length
+      ? ` Push nešel: ${v.chyby.join(', ')}.`
+      : v.odpojeno?.length
+        ? ` Google odpojil: ${v.odpojeno.join(', ')}.`
+        : '';
+    return `Odesláno e-mailem.${duvod} Na telefonu klepněte Resetovat upozornění.`;
+  }
+  if (v.odpojeno?.length) {
+    return `Google odpojil: ${v.odpojeno.join(', ')}. Klepněte Resetovat upozornění.`;
+  }
+  if (v.chyby?.length) {
+    return `Push nešel: ${v.chyby.join(', ')}. Klepněte Resetovat upozornění.`;
+  }
+  if (v.zarizeni === 0) return 'Žádné zařízení, zapněte upozornění';
+  return 'Push nedorazil. Klepněte Resetovat upozornění.';
 }
 
 export async function poznamenejUpozorneni(store: ProcessStore, id: string, jak: 'push' | 'email' | 'nic'): Promise<void> {

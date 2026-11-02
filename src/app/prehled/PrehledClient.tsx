@@ -4840,12 +4840,34 @@ function PoleSUlozenim({
 }
 
 const PUSH_NAZEV_KLIC = 'vivien-push-nazev';
+const PUSH_OBNOVA_KLIC = 'vivien-push-obnova-ms';
+/** Při návratu do aplikace obnova tokenu nejvýš jednou za 30 minut. */
+const PUSH_OBNOVA_MIN_MS = 30 * 60 * 1000;
 
 function nactiNazevPush(): string {
   try {
     return (localStorage.getItem(PUSH_NAZEV_KLIC) || '').trim().slice(0, 40);
   } catch {
     return '';
+  }
+}
+
+function smiObnovitPushTed(vcetnePrvniho: boolean): boolean {
+  try {
+    const minule = Number(localStorage.getItem(PUSH_OBNOVA_KLIC) || '0');
+    if (!minule) return true;
+    if (vcetnePrvniho) return true;
+    return Date.now() - minule >= PUSH_OBNOVA_MIN_MS;
+  } catch {
+    return true;
+  }
+}
+
+function ulozCasObnovyPush() {
+  try {
+    localStorage.setItem(PUSH_OBNOVA_KLIC, String(Date.now()));
+  } catch {
+    /* paměť */
   }
 }
 
@@ -4982,7 +5004,8 @@ function Upozorneni() {
     try {
       const ready = await registraceSw();
       let sub = await sTimeoutem(ready.pushManager.getSubscription(), 5_000, () => null);
-      if (sub && !jeSparovano(sub.endpoint, zarizeni)) {
+      /* Vždy nový FCM token: i při každém otevření přehledu (tise), jinak Android drží mrtvý. */
+      if (sub) {
         try {
           await sTimeoutem(sub.unsubscribe(), 5_000, () => false);
         } catch {
@@ -5034,7 +5057,11 @@ function Upozorneni() {
         if (!tise) setHlaska(HLASKA_NESPAROVANO);
         return false;
       }
-      if (!tise) setHlaska(HLASKA_ZAPNUTO);
+      ulozCasObnovyPush();
+      if (!tise) {
+        setHlaska('Zapnuto. Zkouším doručení…');
+        await zkusitVnitrni();
+      }
       return true;
     } catch (err) {
       if (!tise) {
@@ -5139,7 +5166,8 @@ function Upozorneni() {
         setHlaska(HLASKA_NESPAROVANO);
         return;
       }
-      setHlaska(HLASKA_ZAPNUTO);
+      setHlaska('Reset hotov. Zkouším doručení…');
+      await zkusitVnitrni();
     } catch (err) {
       const msg = err instanceof Error ? err.message : '';
       setHlaska(
@@ -5152,6 +5180,34 @@ function Upozorneni() {
 
   useEffect(() => {
     let zive = true;
+    let beziObnova = false;
+
+    async function obnovPriNavsteve(duvod: 'otevreni' | 'navrat', klicUz?: string) {
+      if (!zive || beziObnova) return;
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      const nazev = nactiNazevPush();
+      if (!nazev) return;
+      if (!smiObnovitPushTed(duvod === 'otevreni')) return;
+      beziObnova = true;
+      try {
+        const publicKey = klicUz || (await zajistiKlic());
+        if (!zive || !publicKey) return;
+        const ok = await posliSubscription(publicKey, nazev, true);
+        if (!zive) return;
+        if (ok) {
+          setHlaska(
+            duvod === 'otevreni'
+              ? 'Upozornění obnovena při otevření přehledu.'
+              : 'Upozornění obnovena po návratu do přehledu.',
+          );
+        } else if (duvod === 'otevreni') {
+          setHlaska('Obnova upozornění se nepovedla. Klepněte Zapnout nebo Resetovat.');
+        }
+      } finally {
+        beziObnova = false;
+      }
+    }
+
     if (typeof Notification !== 'undefined') {
       setPovoleni(Notification.permission as PushPovoleni);
     }
@@ -5177,16 +5233,19 @@ function Upozorneni() {
         typeof Notification !== 'undefined' &&
         Notification.permission === 'granted'
       ) {
-        const ok = await posliSubscription(publicKey, nazev, true);
-        if (!zive) return;
-        if (ok) setHlaska(HLASKA_ZAPNUTO);
-        else setHlaska('Po nasazení je potřeba znovu klepnout na Zapnout upozornění.');
+        await obnovPriNavsteve('otevreni', publicKey);
         return;
       }
       if (pocet === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
     })();
+
+    function priViditelnosti() {
+      if (document.visibilityState === 'visible') void obnovPriNavsteve('navrat');
+    }
+    document.addEventListener('visibilitychange', priViditelnosti);
     return () => {
       zive = false;
+      document.removeEventListener('visibilitychange', priViditelnosti);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -5241,17 +5300,38 @@ function Upozorneni() {
     }
   }
 
-  async function zkusit() {
+  async function zkusitVnitrni() {
     setZkousim(true);
+    try {
+      const res = await fetch('/api/prehled/push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ akce: 'zkusit' }),
+      });
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        text?: string;
+        error?: string;
+        jak?: string;
+      } | null;
+      const text = json?.text || json?.error || 'Zkouška se nepovedla.';
+      if (json?.jak === 'push') {
+        setHlaska(
+          `${text}. Když nic nevidíte, v Androidu: Nastavení → Aplikace → Chrome → Oznámení musí být zapnutá.`,
+        );
+      } else {
+        setHlaska(text);
+      }
+    } catch {
+      setHlaska('Zkouška se nepovedla (síť).');
+    } finally {
+      setZkousim(false);
+    }
+  }
+
+  async function zkusit() {
     setHlaska('');
-    const res = await fetch('/api/prehled/push', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ akce: 'zkusit' }),
-    });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; text?: string; error?: string } | null;
-    setZkousim(false);
-    setHlaska(json?.text || json?.error || 'Zkouška se nepovedla.');
+    await zkusitVnitrni();
   }
 
   const nazevTelefonu = nactiNazevPush();
