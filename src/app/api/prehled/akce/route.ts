@@ -168,6 +168,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'vyjezd' &&
       akce !== 'vratit-vyjezd' &&
       akce !== 'brana' &&
+      akce !== 'potvrzeni-prijezdu' &&
+      akce !== 'zrusit-potvrzeni-prijezdu' &&
       akce !== 'odemknout' &&
       akce !== 'email' &&
       akce !== 'whatsapp' &&
@@ -575,8 +577,48 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (akce === 'brana') {
     if (rec.zpusobPrijezdu !== 'auto' || !rec.telefonBrana) return chyba(400, 'Chybí telefon pro bránu.');
-    await store.setRezervace(id, pridej(rec, 'Zaregistrováno v bráně', { branaRegistrovano: new Date().toISOString() }));
-    return NextResponse.json({ ok: true }, { headers: noStore });
+    const ted = new Date().toISOString();
+    await store.setRezervace(
+      id,
+      pridej(rec, 'Zaregistrováno v bráně', {
+        branaRegistrovano: ted,
+        zpravaBranaOdeslana: ted,
+        zpravaBranaPrectena: null,
+      }),
+    );
+    return NextResponse.json({ ok: true, branaRegistrovano: ted, zpravaBranaOdeslana: ted }, { headers: noStore });
+  }
+
+  if (akce === 'potvrzeni-prijezdu') {
+    const druh = body?.druh === 'osobne' || body?.druh === 'telefon' ? body.druh : null;
+    if (!druh) return chyba(400, 'Vyberte Osobně nebo Telefon.');
+    if (!rec.casPrijezdu) return chyba(400, 'Nejdřív musí být čas příjezdu.');
+    const ted = new Date().toISOString();
+    const popisek = druh === 'osobne' ? 'Osobně ubytujeme' : 'Jsme na telefonu';
+    await store.setRezervace(
+      id,
+      pridej(rec, `Potvrzení příjezdu: ${popisek}`, {
+        potvrzeniPrijezdu: druh,
+        potvrzeniPrijezduKdy: ted,
+        zpravaCasPrectena: null,
+      }),
+    );
+    return NextResponse.json(
+      { ok: true, potvrzeniPrijezdu: druh, potvrzeniPrijezduKdy: ted },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'zrusit-potvrzeni-prijezdu') {
+    await store.setRezervace(
+      id,
+      pridej(rec, 'Zrušeno potvrzení příjezdu', {
+        potvrzeniPrijezdu: null,
+        potvrzeniPrijezduKdy: null,
+        zpravaCasPrectena: null,
+      }),
+    );
+    return NextResponse.json({ ok: true, potvrzeniPrijezdu: null }, { headers: noStore });
   }
 
   if (akce === 'odemknout') {

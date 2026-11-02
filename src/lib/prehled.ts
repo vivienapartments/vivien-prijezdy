@@ -126,6 +126,11 @@ export type PrehledRadek = {
   spz: string | null;
   spzPujcene: boolean;
   branaRegistrovano: string | null;
+  potvrzeniPrijezdu: 'osobne' | 'telefon' | null;
+  potvrzeniPrijezduKdy: string | null;
+  zpravaCasPrectena: string | null;
+  zpravaBranaOdeslana: string | null;
+  zpravaBranaPrectena: string | null;
   pruvodceOdemcen: string | null;
   rozbalen: boolean;
   rozbalenText: string;
@@ -855,6 +860,11 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     spz: rec.spz,
     spzPujcene: rec.spzPujcene,
     branaRegistrovano: rec.branaRegistrovano,
+    potvrzeniPrijezdu: rec.potvrzeniPrijezdu,
+    potvrzeniPrijezduKdy: rec.potvrzeniPrijezduKdy,
+    zpravaCasPrectena: rec.zpravaCasPrectena,
+    zpravaBranaOdeslana: rec.zpravaBranaOdeslana,
+    zpravaBranaPrectena: rec.zpravaBranaPrectena,
     pruvodceOdemcen: rec.pruvodceOdemcen,
     rozbalen: kroky.length === 0,
     rozbalenText: textRozbaleni(kroky),

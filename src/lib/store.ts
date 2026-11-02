@@ -223,6 +223,20 @@ export type RezervaceRecord = {
   spzPujcene: boolean;
   /** Majitel označil, že číslo je v bráně. */
   branaRegistrovano: string | null;
+  /**
+   * Jak hostitele potvrdil čas příjezdu hostovi.
+   * osobne = čekáme před domem, telefon = jsme na telefonu.
+   * null = ještě nepotvrdil.
+   */
+  potvrzeniPrijezdu: 'osobne' | 'telefon' | null;
+  /** Kdy majitel potvrdil čas. */
+  potvrzeniPrijezduKdy: string | null;
+  /** Kdy host v průvodci klepl Pokračovat u zprávy k času. */
+  zpravaCasPrectena: string | null;
+  /** Kdy se hostovi odeslala zpráva k bráně (po Brána OK). Starší záznamy bez toho zprávu neukážou. */
+  zpravaBranaOdeslana: string | null;
+  /** Kdy host v průvodci klepl Pokračovat u zprávy k bráně. */
+  zpravaBranaPrectena: string | null;
   /** Už odešlo upozornění, ať se brána zaregistruje. */
   branaPushRegistrace: string | null;
   /** Den příjezdu, kdy už odešlo ranní upozornění na bránu. */
@@ -711,6 +725,14 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     spz: typeof r.spz === 'string' && r.spz ? r.spz : null,
     spzPujcene: r.spzPujcene === true,
     branaRegistrovano: typeof r.branaRegistrovano === 'string' && r.branaRegistrovano ? r.branaRegistrovano : null,
+    potvrzeniPrijezdu: r.potvrzeniPrijezdu === 'osobne' || r.potvrzeniPrijezdu === 'telefon' ? r.potvrzeniPrijezdu : null,
+    potvrzeniPrijezduKdy:
+      typeof r.potvrzeniPrijezduKdy === 'string' && r.potvrzeniPrijezduKdy ? r.potvrzeniPrijezduKdy : null,
+    zpravaCasPrectena: typeof r.zpravaCasPrectena === 'string' && r.zpravaCasPrectena ? r.zpravaCasPrectena : null,
+    zpravaBranaOdeslana:
+      typeof r.zpravaBranaOdeslana === 'string' && r.zpravaBranaOdeslana ? r.zpravaBranaOdeslana : null,
+    zpravaBranaPrectena:
+      typeof r.zpravaBranaPrectena === 'string' && r.zpravaBranaPrectena ? r.zpravaBranaPrectena : null,
     branaPushRegistrace: typeof r.branaPushRegistrace === 'string' && r.branaPushRegistrace ? r.branaPushRegistrace : null,
     branaPushRano: typeof r.branaPushRano === 'string' && r.branaPushRano ? r.branaPushRano : null,
     prijezdPushCas: typeof r.prijezdPushCas === 'string' && r.prijezdPushCas ? r.prijezdPushCas : null,
@@ -814,6 +836,11 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     spz: null,
     spzPujcene: false,
     branaRegistrovano: null,
+    potvrzeniPrijezdu: null,
+    potvrzeniPrijezduKdy: null,
+    zpravaCasPrectena: null,
+    zpravaBranaOdeslana: null,
+    zpravaBranaPrectena: null,
     branaPushRegistrace: null,
     branaPushRano: null,
     prijezdPushCas: null,

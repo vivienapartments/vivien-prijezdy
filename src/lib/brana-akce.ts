@@ -277,8 +277,13 @@ export async function potvrdBranu(
   await ulozSloty(store, dalsi);
   const konecCas = slot.konec ? new Date(slot.konec).getTime() : Number.NaN;
   const zneplatneni = Number.isFinite(konecCas) && konecCas <= Date.now();
+  const ted = new Date().toISOString();
   const patch =
-    slot.ktery === 'druhy' ? {} : { branaRegistrovano: zneplatneni ? null : new Date().toISOString() };
+    slot.ktery === 'druhy'
+      ? {}
+      : zneplatneni
+        ? { branaRegistrovano: null, zpravaBranaOdeslana: null, zpravaBranaPrectena: null }
+        : { branaRegistrovano: ted, zpravaBranaOdeslana: ted, zpravaBranaPrectena: null };
   const veta = zneplatneni ? `Brána: pozice ${pozice} zneplatněna` : `Brána potvrdila, pozice ${pozice}`;
   await store.setRezervace(rezervace, poznamenej(rec, veta, patch));
   return { ok: true, sloty: dalsi };
@@ -318,7 +323,11 @@ export async function zrusParkovani(
   const patch =
     slot.ktery === 'druhy'
       ? {}
-      : { branaRegistrovano: vraceno.stav === 'plati' ? rec.branaRegistrovano || new Date().toISOString() : null };
+      : vraceno.stav === 'plati'
+        ? {
+            branaRegistrovano: rec.branaRegistrovano || new Date().toISOString(),
+          }
+        : { branaRegistrovano: null, zpravaBranaOdeslana: null, zpravaBranaPrectena: null };
   await store.setRezervace(
     rezervace,
     poznamenej(rec, `Brána: parkování zrušeno v přehledu, pozice ${pozice}. Bráně se nic neposlalo.`, patch),

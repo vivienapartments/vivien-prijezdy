@@ -274,6 +274,8 @@ export async function ulozVstupHosta(
         spz,
         spzPujcene: pujcene,
         branaRegistrovano: zmenaTelefonu ? null : rec.branaRegistrovano,
+        zpravaBranaOdeslana: zmenaTelefonu ? null : rec.zpravaBranaOdeslana,
+        zpravaBranaPrectena: zmenaTelefonu ? null : rec.zpravaBranaPrectena,
         ...(uprava?.patch || { zadostPrijezd: null }),
         navrhy,
         ...souhlas.patch,
@@ -352,6 +354,8 @@ export async function ulozVstupHosta(
           spz: null,
           spzPujcene: false,
           branaRegistrovano: null,
+          zpravaBranaOdeslana: null,
+          zpravaBranaPrectena: null,
         }),
       );
       return { ok: true, uroven: urovenZRezervace({ ...rec, zpusobPrijezdu: 'pesky' }) };
@@ -382,6 +386,8 @@ export async function ulozVstupHosta(
         spz,
         spzPujcene: pujcene,
         branaRegistrovano: zmenaTelefonu ? null : rec.branaRegistrovano,
+        zpravaBranaOdeslana: zmenaTelefonu ? null : rec.zpravaBranaOdeslana,
+        zpravaBranaPrectena: zmenaTelefonu ? null : rec.zpravaBranaPrectena,
       }),
     );
     if (novyTelefon) {

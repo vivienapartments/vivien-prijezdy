@@ -49,6 +49,7 @@ import { OdjezdRamecek } from './OdjezdRamecek';
 import { PraniAlert, PraniHosta } from './PraniHosta';
 import { StavApartmanu } from './StavApartmanu';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
+import { ZpravyOdNas, type ZpravaOdNas } from './ZpravyOdNas';
 import { PRANI_NADPIS, PRANI_VETA_SBALENA, textPrani } from '@/lib/prani-texty';
 import './guide.scss';
 
@@ -332,6 +333,9 @@ export type GuideProps = {
   onVstup?: (next: VstupHodnoty) => void;
   showDevBar?: boolean;
   onDevChange?: (next: { apt: AptId; lang: GuideLang; vikend: boolean; prijezd: Prijezd | null }) => void;
+  /** Potvrzení času / brány od nás. Nové se ukážou přes celou obrazovku. */
+  zpravyOdNas?: ZpravaOdNas[];
+  onZpravaPrectena?: (id: ZpravaOdNas['id']) => void;
 };
 
 export function Guide({
@@ -352,6 +356,8 @@ export function Guide({
   onVstup,
   showDevBar = false,
   onDevChange,
+  zpravyOdNas = [],
+  onZpravaPrectena,
 }: GuideProps) {
   const [prijezd, setPrijezd] = useState<Prijezd | null>(initialPrijezd);
   const [lokalne, setLokalne] = useState<VstupHodnoty | null>(null);
@@ -360,6 +366,7 @@ export function Guide({
   const [ziveKody, setZiveKody] = useState<KodRadek[] | null>(kody ?? null);
   const [dnesDen, setDnesDen] = useState(() => denPraha(new Date()));
   const [praniOtevrit, setPraniOtevrit] = useState(false);
+  const [zpravyLokal, setZpravyLokal] = useState<ZpravaOdNas[]>(zpravyOdNas);
   const hodnoty = vstup?.hodnoty ?? lokalne ?? { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false };
   const ubytovan = Boolean(vstup?.ubytovan);
   const odDnePrijezdu = Boolean(prijezdDen && /^\d{4}-\d{2}-\d{2}$/.test(prijezdDen) && dnesDen >= prijezdDen);
@@ -467,6 +474,22 @@ export function Guide({
   useEffect(() => {
     setZiveKody(kody ?? null);
   }, [kody]);
+
+  useEffect(() => {
+    setZpravyLokal(zpravyOdNas);
+  }, [zpravyOdNas]);
+
+  function prectiZpravuOdNas(id: ZpravaOdNas['id']) {
+    setZpravyLokal((prev) => prev.map((z) => (z.id === id ? { ...z, nova: false } : z)));
+    onZpravaPrectena?.(id);
+    const token = vstup?.token;
+    if (!token || vstup?.cteni) return;
+    void fetch('/api/pruvodce/zprava', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, id }),
+    }).catch(() => undefined);
+  }
 
   useEffect(() => {
     const token = vstup?.token;
@@ -727,6 +750,10 @@ export function Guide({
             {ukazPrani ? <PraniAlert token={praniToken} lang={lang} cteni={praniCteni} /> : null}
           </>
         )}
+
+        {zpravyLokal.length > 0 ? (
+          <ZpravyOdNas zpravy={zpravyLokal} onPrecteno={prectiZpravuOdNas} />
+        ) : null}
 
         {osa.length ? (
           <ol className="pv-flow pv-flow--axis" aria-label="Kroky průvodce">

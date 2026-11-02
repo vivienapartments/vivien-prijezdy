@@ -16,6 +16,7 @@ import {
 } from '@/lib/token';
 import type { GuideLang } from '@/lib/types';
 import { urovenZRezervace, vstupZRezervace } from '@/lib/vstup-pruvodce';
+import { zpravyOdNasZRezervace } from '@/lib/zpravy-od-nas';
 
 type Props = { params: Promise<{ token: string }> };
 
@@ -96,6 +97,7 @@ export default async function TokenPage({ params }: Props) {
             : null
         }
         okno={okno}
+        zpravyOdNas={zpravyOdNasZRezervace(rec)}
       />
     </>
   );

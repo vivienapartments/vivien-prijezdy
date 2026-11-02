@@ -2058,3 +2058,315 @@ a.pv-phone.pv-phone--zari {
     border-color: #1c1712;
   }
 }
+
+/* Potvrzovaci zpravy od nas (C2: zlato + zeleny sepot) */
+.pv-zprava-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0.85rem;
+  background: rgba(12, 10, 8, 0.78);
+}
+
+.pv-zprava-overlay__karta {
+  width: min(100%, 20.5rem);
+  height: 13.25rem;
+  margin: 0;
+  padding: 0.9rem 0.95rem 0.85rem;
+  background: #1c1a14;
+  border: 2px solid #c9a84c;
+  border-radius: 14px;
+  color: #f5efe3;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px color-mix(in srgb, #6d9a6a 28%, transparent);
+}
+
+.pv-zprava-overlay__krok {
+  margin: 0 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8fad84;
+  flex: 0 0 auto;
+}
+
+.pv-zprava-overlay__nadpis {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: 1.12rem;
+  font-weight: 650;
+  line-height: 1.25;
+  color: #c9a84c;
+  flex: 0 0 auto;
+}
+
+.pv-zprava-overlay__text {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #ebe4d4;
+  text-align: left;
+  flex: 1 1 auto;
+  overflow: auto;
+
+  .pv-phone {
+    color: #c9a84c;
+    font-weight: 700;
+  }
+}
+
+.pv-zprava-box__telo .pv-phone {
+  color: #c9a84c;
+  font-weight: 700;
+}
+
+.pv-zprava-overlay__btn {
+  display: block;
+  width: 100%;
+  margin-top: auto;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 12px;
+  background: #c9a84c;
+  color: #1c1712;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.pv-zprava-box {
+  margin: 0 0 0.75rem;
+  margin-left: var(--pv-axis-inset);
+  padding: 0.75rem 1rem;
+  background: #1c1a14;
+  border: 2px solid #c9a84c;
+  border-radius: 14px;
+  color: #f5efe3;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, #6d9a6a 28%, transparent);
+}
+
+.pv-zprava-box__hlavicka {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pv-zprava-box__titulek {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: #c9a84c;
+}
+
+.pv-zprava-box__akce {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #8fad84;
+  font: inherit;
+  font-weight: 750;
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pv-zprava-box__telo {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid color-mix(in srgb, #c9a84c 35%, transparent);
+}
+
+.pv-zprava-box__nadpis {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: #c9a84c;
+}
+
+.pv-zprava-box__telo p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: #ebe4d4;
+  text-align: left;
+}
+
+.zkus__lista {
+  position: sticky;
+  top: 0;
+  z-index: 70;
+  padding: 0.75rem 1rem 0.9rem;
+  background: #0f0c09;
+  border-bottom: 1px solid #c9a84c;
+  color: #f5efe3;
+}
+
+.zkus__nadpis {
+  margin: 0 0 0.25rem;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.05rem;
+  color: #c9a84c;
+}
+
+.zkus__popis {
+  margin: 0 0 0.65rem;
+  font-size: 0.82rem;
+  color: #cfc3b0;
+  line-height: 1.35;
+}
+
+.zkus__tlacitka {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.zkus__tlacitka button {
+  appearance: none;
+  border: 1px solid #c9a84c;
+  background: transparent;
+  color: #f5efe3;
+  border-radius: 999px;
+  padding: 0.45rem 0.75rem;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.zkus__tlacitka button.is-on {
+  background: #c9a84c;
+  color: #1c1712;
+  font-weight: 700;
+}
+
+.zkus-hostitel {
+  max-width: 26rem;
+  margin: 0 auto;
+  padding: 1rem 0.85rem 2rem;
+}
+
+.zkus-karta {
+  background: #241e18;
+  border: 1px solid #3d342a;
+  border-radius: 12px;
+  padding: 0.95rem 1rem 1.05rem;
+  color: #e8dfc8;
+}
+
+.zkus-karta__hlava h2 {
+  margin: 0;
+  font-family: var(--font-display, Georgia, serif);
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: #c9a84c;
+}
+
+.zkus-karta__hlava p {
+  margin: 0.2rem 0 0.85rem;
+  font-size: 0.88rem;
+  color: #cbbba8;
+}
+
+.zkus-karta__radek {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0;
+  border-top: 1px solid #3d342a;
+}
+
+.zkus-karta__stitek {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #cbbba8;
+  margin-bottom: 0.15rem;
+}
+
+.zkus-karta__cas {
+  color: #c9a84c;
+  font-size: 1.15rem;
+}
+
+.zkus-karta__stav {
+  font-size: 0.82rem;
+  color: #9aa8b8;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.zkus-karta__akce {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+  padding: 0 0 0.55rem;
+}
+
+.zkus-karta__akce button {
+  appearance: none;
+  border: 1px solid #c9a84c;
+  background: transparent;
+  color: #c9a84c;
+  border-radius: 8px;
+  padding: 0.7rem 0.55rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.zkus-karta__akce button:only-child {
+  grid-column: 1 / -1;
+}
+
+.zkus-karta__akce button.is-on {
+  background: #c9a84c;
+  color: #1c1712;
+}
+
+.zkus-karta .pv-phone {
+  color: #f5efe3;
+  font-weight: 700;
+}
+
+.zkus-karta__hint {
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: #2a221c;
+  border-left: 3px solid #c9a84c;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: #e8dfc8;
+}
+
+.zkus-karta__nahled {
+  display: block;
+  width: 100%;
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  background: #c9a84c;
+  color: #1c1712;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+}
