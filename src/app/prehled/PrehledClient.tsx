@@ -4845,8 +4845,6 @@ function PoleSUlozenim({
 
 const PUSH_NAZEV_KLIC = 'vivien-push-nazev';
 const PUSH_OBNOVA_KLIC = 'vivien-push-obnova-ms';
-/** Při návratu do aplikace jen znovu uložit odběr, nejvýš jednou za 30 minut. */
-const PUSH_OBNOVA_MIN_MS = 30 * 60 * 1000;
 const PUSH_VYMENA_KLIC = 'vivien-push-vymena-ms';
 
 function nactiNazevPush(): string {
@@ -4854,16 +4852,6 @@ function nactiNazevPush(): string {
     return (localStorage.getItem(PUSH_NAZEV_KLIC) || '').trim().slice(0, 40);
   } catch {
     return '';
-  }
-}
-
-function smiObnovitPushTed(vcetnePrvniho: boolean): boolean {
-  try {
-    const minule = Number(localStorage.getItem(PUSH_OBNOVA_KLIC) || '0');
-    if (!minule || vcetnePrvniho) return true;
-    return Date.now() - minule >= PUSH_OBNOVA_MIN_MS;
-  } catch {
-    return true;
   }
 }
 
@@ -4918,25 +4906,42 @@ function Upozorneni() {
   const [endpointTeto, setEndpointTeto] = useState('');
   const [maOdber, setMaOdber] = useState<boolean | null>(null);
   const [povoleni, setPovoleni] = useState<PushPovoleni>('neurceno');
-  const pushZamek = useRef(false);
+  /** Zámek s časem vypršení (ms). Boolean nestačil: Android visel a Zapnout zůstalo zablokované. */
+  const pushZamekDo = useRef(0);
 
-  /** Jen SW se scope /prehled/ (ne /uklid/). update() jen při Resetu, Android jinak často visí. */
+  function zamekDrzeny(): boolean {
+    return Date.now() < pushZamekDo.current;
+  }
+  function vezmiZamek(ms = 55_000) {
+    pushZamekDo.current = Date.now() + ms;
+  }
+  function uvolniZamek() {
+    pushZamekDo.current = 0;
+  }
+
+  /** Jen SW se scope /prehled/ (ne /uklid/). update() jen při Resetu. register má vlastní limit. */
   async function registraceSw(sUpdate = false): Promise<ServiceWorkerRegistration> {
-    await navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' });
+    await sTimeoutem(
+      navigator.serviceWorker.register('/prehled/sw.js', { scope: '/prehled/' }),
+      12_000,
+      () => {
+        throw new Error(HLASKA_READY_TIMEOUT);
+      },
+    );
     if (sUpdate) {
       try {
         const regUpdate = await navigator.serviceWorker.getRegistration('/prehled/');
-        await regUpdate?.update();
+        await sTimeoutem(regUpdate?.update() ?? Promise.resolve(), 8_000, () => undefined);
       } catch {
         /* starý prohlížeč */
       }
     }
-    await sTimeoutem(navigator.serviceWorker.ready, 20_000, () => {
+    await sTimeoutem(navigator.serviceWorker.ready, 12_000, () => {
       throw new Error(HLASKA_READY_TIMEOUT);
     });
     const reg = await sTimeoutem(
       navigator.serviceWorker.getRegistration('/prehled/'),
-      8_000,
+      5_000,
       () => undefined,
     );
     if (!reg || !jePrehledSwScope(reg.scope)) {
@@ -5009,7 +5014,8 @@ function Upozorneni() {
 
   /**
    * Soft (vymenit=false): existující odběr jen uložit, nový jen když žádný není.
-   * Hard (vymenit=true): jen Reset. Android při unsubscribe+subscribe často visí na Zapínám….
+   * Hard (vymenit=true): jen Reset.
+   * tise=true nebere zámek (pozadí nesmí blokovat tlačítko Zapnout).
    */
   async function posliSubscription(
     publicKey: string,
@@ -5025,11 +5031,12 @@ function Upozorneni() {
       if (!tise) setHlaska(HLASKA_NEPOVOLENO);
       return false;
     }
-    if (pushZamek.current) {
-      if (!tise) setHlaska('Ještě probíhá předchozí krok upozornění, chvilku počkejte…');
+    if (!tise) {
+      /* Uživatel má přednost: případný zaseknutý zámek z pozadí zrušíme. */
+      vezmiZamek();
+    } else if (zamekDrzeny()) {
       return false;
     }
-    pushZamek.current = true;
     try {
       if (!tise) setHlaska('1/3 Prohlížeč…');
       const ready = await registraceSw(false);
@@ -5124,7 +5131,7 @@ function Upozorneni() {
       }
       return false;
     } finally {
-      pushZamek.current = false;
+      if (!tise) uvolniZamek();
     }
   }
 
@@ -5149,11 +5156,7 @@ function Upozorneni() {
       setHlaska(HLASKA_NENASTAVENO);
       return;
     }
-    if (pushZamek.current) {
-      setHlaska('Ještě probíhá předchozí krok upozornění, chvilku počkejte…');
-      return;
-    }
-    pushZamek.current = true;
+    vezmiZamek(90_000);
     try {
       setHlaska('Mažu starou registraci…');
       const regs = await sTimeoutem(navigator.serviceWorker.getRegistrations(), 15_000, () => {
@@ -5249,39 +5252,12 @@ function Upozorneni() {
           : hlaskaChybyZapnuti(err),
       );
     } finally {
-      pushZamek.current = false;
+      uvolniZamek();
     }
   }
 
   useEffect(() => {
     let zive = true;
-    let beziObnova = false;
-
-    async function obnovPriNavsteve(duvod: 'otevreni' | 'navrat', klicUz?: string) {
-      if (!zive || beziObnova) return;
-      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
-      const nazev = nactiNazevPush();
-      if (!nazev) return;
-      if (!smiObnovitPushTed(duvod === 'otevreni')) return;
-      beziObnova = true;
-      try {
-        const publicKey = klicUz || (await zajistiKlic());
-        if (!zive || !publicKey) return;
-        /* Při otevření jen znovu uložit existující odběr. Nový token jen po Zapnout/Obnovit/Reset. */
-        const ok = await posliSubscription(publicKey, nazev, true, false);
-        if (!zive) return;
-        if (ok) {
-          setHlaska(
-            duvod === 'otevreni' ? 'Upozornění jsou zapnutá.' : 'Upozornění znovu uložena.',
-          );
-        } else if (duvod === 'otevreni') {
-          setHlaska('Obnova upozornění se nepovedla. Klepněte Zapnout nebo Resetovat.');
-        }
-      } finally {
-        beziObnova = false;
-      }
-    }
-
     if (typeof Notification !== 'undefined') {
       setPovoleni(Notification.permission as PushPovoleni);
     }
@@ -5300,26 +5276,27 @@ function Upozorneni() {
         setHlaska('Úložiště teď neodpovídá. Zkuste zapnout znovu za chvíli.');
         return;
       }
+      /* Bez automatického posliSubscription při otevření: na Androidu to drželo zámek a blokovalo Zapnout. */
+      const lokalne = await nactiLokalniOdberZeSw(navigator.serviceWorker, 3000);
+      if (!zive) return;
+      setMaOdber(lokalne.odber);
+      if (lokalne.endpoint) setEndpointTeto(lokalne.endpoint);
       const nazev = nactiNazevPush();
-      if (
+      if (jeSparovano(lokalne.endpoint, seznam)) {
+        setHlaska(HLASKA_ZAPNUTO);
+      } else if (
         nazev &&
         publicKey &&
         typeof Notification !== 'undefined' &&
         Notification.permission === 'granted'
       ) {
-        await obnovPriNavsteve('otevreni', publicKey);
-        return;
+        setHlaska('Telefon není spárovaný. Klepněte Zapnout upozornění.');
+      } else if (pocet === 0) {
+        setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
       }
-      if (pocet === 0) setHlaska('Žádné zařízení. Zapněte upozornění na tomto telefonu.');
     })();
-
-    function priViditelnosti() {
-      if (document.visibilityState === 'visible') void obnovPriNavsteve('navrat');
-    }
-    document.addEventListener('visibilitychange', priViditelnosti);
     return () => {
       zive = false;
-      document.removeEventListener('visibilitychange', priViditelnosti);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -5333,11 +5310,11 @@ function Upozorneni() {
       setHlaska(HLASKA_NEPOVOLENO);
       return;
     }
-    /* Soft: bez rušení odběru. To na Androidu shazovalo Zapínám…. */
     await posliSubscription(publicKey, nazev, false, false);
   }
 
   async function zapnout() {
+    uvolniZamek();
     setHlaska(HLASKA_ZAPINAM);
     const ulozene = nactiNazevPush();
     if (!ulozene) {
@@ -5348,7 +5325,7 @@ function Upozorneni() {
     }
     try {
       await sTimeoutem(zapnoutBeh(ulozene), 45_000, () => {
-        pushZamek.current = false;
+        uvolniZamek();
         throw new Error(HLASKA_CELEK_TIMEOUT);
       });
     } catch (err) {
@@ -5365,6 +5342,7 @@ function Upozorneni() {
   }
 
   async function potvrdJmeno() {
+    uvolniZamek();
     const nazev = jmenoDraft.trim().slice(0, 40);
     if (!nazev) {
       setHlaska('Napište, čí je to telefon.');
@@ -5375,7 +5353,7 @@ function Upozorneni() {
     setHlaska(HLASKA_ZAPINAM);
     try {
       await sTimeoutem(zapnoutBeh(nazev), 45_000, () => {
-        pushZamek.current = false;
+        uvolniZamek();
         throw new Error(HLASKA_CELEK_TIMEOUT);
       });
     } catch (err) {
