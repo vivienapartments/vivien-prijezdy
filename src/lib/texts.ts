@@ -14,6 +14,7 @@ export const fasadaNadpis: LText = {
   hu: "A házunk az utcáról",
   fr: "Notre maison vue de la rue",
   it: "La nostra casa vista dalla strada",
+  pt: 'A nossa casa vista da rua',
 };
 
 export const fasadaText: LText = {
@@ -28,6 +29,7 @@ export const fasadaText: LText = {
   hu: "Így néz ki a ház, amikor megérkeznek. A zöld homlokzatot keressék a Nádražní utcán.",
   fr: "Voici à quoi ressemble la maison à votre arrivée. Cherchez la façade verte dans la rue Nádražní.",
   it: "Ecco come appare la casa al vostro arrivo. Cercate la facciata verde in via Nádražní.",
+  pt: 'É assim que a casa se vê quando chegam. Procurem a fachada verde na Nádražní.',
 };
 
 export const predDomemText: LText = {
@@ -42,6 +44,7 @@ export const predDomemText: LText = {
   hu: "Közvetlenül a ház előtt megállni tilos.",
   fr: "Il est interdit de s’arrêter juste devant la maison.",
   it: "Davanti alla casa è vietato fermarsi.",
+  pt: 'Parar mesmo em frente à casa não é permitido.',
 };
 
 export const vstupNadpis: LText = {
@@ -56,6 +59,7 @@ export const vstupNadpis: LText = {
   hu: "A kódjaik",
   fr: "Vos codes",
   it: "I vostri codici",
+  pt: 'Os vossos códigos',
 };
 
 /** Úplně nahoře, ještě nad časem příjezdu. Po předání se změní na krátkou větu. */
@@ -71,6 +75,7 @@ export const predaniNadpis: LText = {
   hu: 'Az apartmant személyesen adjuk át',
   fr: "Nous vous remettons l’appartement en personne",
   it: "Vi consegniamo l’appartamento di persona",
+  pt: 'Entregamos o apartamento pessoalmente',
 };
 
 export const predaniText: LText = {
@@ -85,6 +90,7 @@ export const predaniText: LText = {
   hu: 'A ház és az apartman kódjai itt csak az átadás és az okmányok ellenőrzése után jelennek meg. Átadás nélkül nem jutnak be, ezért írják meg, hánykor érkeznek.',
   fr: "Les codes de la maison et de l’appartement n’apparaîtront ici qu’après la remise des clés et le contrôle des pièces d’identité. Sans cette remise, vous ne pourrez pas entrer : écrivez-nous donc l’heure de votre arrivée.",
   it: "I codici della casa e dell’appartamento compariranno qui solo dopo la consegna e il controllo dei documenti. Senza la consegna non potete entrare, quindi scriveteci l’orario del vostro arrivo.",
+  pt: 'Os códigos da casa e do apartamento só aparecem aqui depois da entrega e da verificação dos documentos. Sem a entrega não conseguem entrar, por isso escrevam-nos a indicar a hora a que chegam.',
 };
 
 export const predaniHotovo: LText = {
@@ -99,6 +105,7 @@ export const predaniHotovo: LText = {
   hu: 'Az apartman átadva.',
   fr: "L’appartement vous a été remis.",
   it: "L’appartamento vi è stato consegnato.",
+  pt: 'O apartamento foi entregue.',
 };
 
 export const predaniHotovoOdkaz: LText = {
@@ -113,6 +120,7 @@ export const predaniHotovoOdkaz: LText = {
   hu: 'A kódok lejjebb vannak.',
   fr: "Vous trouverez les codes ci-dessous.",
   it: "I codici li trovate qui sotto.",
+  pt: 'Encontram os códigos mais abaixo.',
 };
 
 /** Nahoře v průvodci, ještě před volbou autem nebo pěšky. */
@@ -128,6 +136,7 @@ export const casPrijezduNadpis: LText = {
   hu: "Írják meg, hánykor érkeznek",
   fr: "Dites-nous à quelle heure vous arriverez",
   it: "Diteci a che ora arriverete",
+  pt: 'Digam-nos a que horas chegam',
 };
 
 export const casPrijezduText: LText = {
@@ -142,6 +151,7 @@ export const casPrijezduText: LText = {
   hu: "Az apartmant személyesen adjuk át, és utána kapcsoljuk be a kódokat. Hogy készen álljunk, és ne kelljen a ház előtt várniuk, küldjék el az érkezés idejét, amint tudják, SMS-ben vagy WhatsAppon a +420 604 692 573 számra. Ha az időpont változik, szóljanak. Körülbelül 15 perccel az érkezés előtt írjanak még egyszer.",
   fr: "Nous vous remettons l’appartement en personne, puis nous activons vos codes. Pour que nous soyons prêts et que vous n’ayez pas à attendre devant la maison, envoyez-nous votre heure d’arrivée dès que possible, par SMS ou WhatsApp au +420 604 692 573. Si l’heure change, prévenez-nous. Environ 15 minutes avant votre arrivée, écrivez-nous encore une fois.",
   it: "Vi consegniamo l’appartamento di persona e poi attiviamo i vostri codici. Perché siamo pronti e non dobbiate aspettare davanti alla casa, mandateci l’orario di arrivo appena potete, via SMS o WhatsApp al +420 604 692 573. Se l’orario cambia, avvisateci. Circa 15 minuti prima dell’arrivo scriveteci ancora una volta.",
+  pt: 'Entregamos o apartamento pessoalmente e logo a seguir ativamos os vossos códigos. Para estarmos preparados e vocês não terem de esperar à porta da casa, enviem-nos a hora de chegada o mais depressa possível, por SMS ou WhatsApp para +420 604 692 573. Se a hora mudar, avisem-nos. Cerca de 15 minutos antes de chegarem, escrevam-nos mais uma vez.',
 };
 
 export const casPrijezduCheckin: LText = {
@@ -156,6 +166,7 @@ export const casPrijezduCheckin: LText = {
   hu: "A bejelentkezés 14:00–20:00.",
   fr: "L’arrivée se fait de 14:00 à 20:00.",
   it: "Il check-in è dalle 14:00 alle 20:00.",
+  pt: 'O check-in é das 14:00 às 20:00.',
 };
 
 export const casPrijezduSms: LText = {
@@ -170,6 +181,7 @@ export const casPrijezduSms: LText = {
   hu: "SMS küldése",
   fr: "Envoyer un SMS",
   it: "Inviare un SMS",
+  pt: 'Enviar uma SMS',
 };
 
 export const casPrijezduWhatsapp: LText = {
@@ -184,6 +196,7 @@ export const casPrijezduWhatsapp: LText = {
   hu: "Írás WhatsAppon",
   fr: "Écrire sur WhatsApp",
   it: "Scrivere su WhatsApp",
+  pt: 'Mensagem no WhatsApp',
 };
 
 export const vstupText: LText = {
@@ -198,6 +211,7 @@ export const vstupText: LText = {
   hu: "A házba személyesen kísérjük be önöket. Az iratok ellenőrzése után bekapcsoljuk a kódokat. Itt vannak a teljes tartózkodásra.",
   fr: "Nous vous accompagnerons en personne dans la maison. Après le contrôle de vos pièces d’identité, nous activons les codes. Gardez-les ici pour tout le séjour.",
   it: "Vi accompagneremo in casa di persona. Dopo il controllo dei documenti attiviamo i codici. Li trovate qui per tutto il soggiorno.",
+  pt: 'Acompanhamo-vos pessoalmente até dentro da casa. Depois de verificarmos os documentos, ativamos os códigos. Guardem-nos aqui durante toda a estadia.',
 };
 
 /** Červený nápis pod tečkami, dokud majitel v přehledu neklepne Předáno. 13. 10. 2026. */
@@ -211,6 +225,7 @@ export const kodyCekaji: LText = {
   es: 'Se mostrarán tras la entrega personal del apartamento.',
   fr: 'Ils s’afficheront après la remise en personne de l’appartement.',
   it: 'Compariranno dopo la consegna di persona dell’appartamento.',
+  pt: 'Aparecem depois de o apartamento ser entregue pessoalmente.',
   sv: 'De visas efter att lägenheten har lämnats över personligen.',
   hu: "A személyes átadás után jelennek meg.",
 };
@@ -227,6 +242,7 @@ export const kodDumLabel: LText = {
   hu: "Bejutás a házba",
   fr: "Entrée de la maison",
   it: "Ingresso della casa",
+  pt: 'Entrada da casa',
 };
 
 export const kodAptLabel: LText = {
@@ -241,6 +257,7 @@ export const kodAptLabel: LText = {
   hu: "Bejutás az apartmanba",
   fr: "Entrée de l’appartement",
   it: "Ingresso dell’appartamento",
+  pt: 'Entrada do apartamento',
 };
 
 export const kodZahradaLabel: LText = {
@@ -255,6 +272,7 @@ export const kodZahradaLabel: LText = {
   hu: "Bejutás a kertbe",
   fr: "Entrée du jardin",
   it: "Ingresso del giardino",
+  pt: 'Entrada do jardim',
 };
 
 export const poplatekNadpis: LText = {
@@ -269,6 +287,7 @@ export const poplatekNadpis: LText = {
   hu: "Városi idegenforgalmi díj",
   fr: "Taxe de séjour de la ville",
   it: "Tassa di soggiorno comunale",
+  pt: 'Taxa turística da cidade',
 };
 
 export const poplatekZaklad: LText = {
@@ -283,6 +302,7 @@ export const poplatekZaklad: LText = {
   hu: "50 CZK személyenként és éjszakánként. A városnak szedjük be, nem a mi felárunk. Kérjük, az átadáskor fizessék ki, lehetőleg kártyával (készpénzben pontos összeget).",
   fr: "50 CZK par personne et par nuit. Nous la percevons pour la ville, ce n’est pas un supplément de notre part. Merci de la payer lors de la remise de l’appartement, de préférence par carte (en espèces, le montant exact).",
   it: "50 CZK a persona a notte. La riscuotiamo per il comune, non è un nostro supplemento. Pagatela alla consegna dell’appartamento, preferibilmente con carta (in contanti, l’importo esatto).",
+  pt: '50 CZK por pessoa e por noite. Cobramos em nome da cidade, não é um custo adicional nosso. Paguem-na na entrega do apartamento, de preferência com cartão (em dinheiro, o valor exato).',
 };
 
 export const poplatekFormulaStitek: LText = {
@@ -297,6 +317,7 @@ export const poplatekFormulaStitek: LText = {
   hu: "Tájékoztatásul",
   fr: "À titre indicatif",
   it: "Indicativamente",
+  pt: 'A título indicativo',
 };
 
 export const poplatekFormulaDetail: LText = {
@@ -311,6 +332,7 @@ export const poplatekFormulaDetail: LText = {
   hu: "{{POPLATEK_NOCI}} éjszaka × {{POPLATEK_OSOB}} vendég × 50 CZK",
   fr: "{{POPLATEK_NOCI}} nuits × {{POPLATEK_OSOB}} personnes × 50 CZK",
   it: "{{POPLATEK_NOCI}} notti × {{POPLATEK_OSOB}} persone × 50 CZK",
+  pt: '{{POPLATEK_NOCI}} noites × {{POPLATEK_OSOB}} hóspedes × 50 CZK',
 };
 
 export const odjezdTextL: LText = {
@@ -325,6 +347,7 @@ export const odjezdTextL: LText = {
   hu: "A kijelentkezés legkésőbb 10:00. A távozás előtti este együtt megbeszéljük a pontos időt. Röviden végignézzük önökkel az apartmant, és személyesen vesszük át.",
   fr: "Le départ se fait avant 10:00. La veille du départ, nous conviendrons ensemble de l’heure exacte. Nous ferons rapidement le tour de l’appartement avec vous et le reprendrons en personne.",
   it: "Il check-out è entro le 10:00. La sera prima della partenza concordiamo insieme l’orario esatto. Faremo con voi un breve giro dell’appartamento e lo riprenderemo di persona.",
+  pt: 'O check-out é até às 10:00. Na noite anterior à partida combinamos juntos a hora exata. Percorremos brevemente o apartamento convosco e recebemo-lo pessoalmente.',
 };
 
 export const wifiLabelApt: LText = {
@@ -339,6 +362,7 @@ export const wifiLabelApt: LText = {
   hu: "Az apartmanban",
   fr: "Dans l’appartement",
   it: "Nell’appartamento",
+  pt: 'No apartamento',
 };
 
 export const wifiLabelGarden: LText = {
@@ -353,6 +377,7 @@ export const wifiLabelGarden: LText = {
   hu: "A kertben",
   fr: "Dans le jardin",
   it: "In giardino",
+  pt: 'No jardim',
 };
 
 export const zahradaUzitek: { stitek: LText; nadpis: LText; text: LText }[] = [
@@ -369,6 +394,7 @@ export const zahradaUzitek: { stitek: LText; nadpis: LText; text: LText }[] = [
       hu: "A kertben",
       fr: "Dans le jardin",
       it: "In giardino",
+      pt: 'No jardim',
     },
     nadpis: {
       cs: 'Klid od města',
@@ -382,6 +408,7 @@ export const zahradaUzitek: { stitek: LText; nadpis: LText; text: LText }[] = [
       hu: "Csend a várostól",
       fr: "Au calme, loin de la ville",
       it: "Tranquillità lontano dalla città",
+      pt: 'Sossego longe da cidade',
     },
     text: {
       cs: 'Dveře vedou do klidné zahrady. Je tu zeleň a posezení, stranou od ruchu města.',
@@ -395,6 +422,7 @@ export const zahradaUzitek: { stitek: LText; nadpis: LText; text: LText }[] = [
       hu: "Az ajtó egy csendes kertbe vezet. Van ott növényzet és ülőhely, távol a város zajától.",
       fr: "La porte mène à un jardin calme. Vous y trouverez de la verdure et des sièges, loin du bruit de la ville.",
       it: "La porta conduce a un giardino tranquillo. C’è verde e ci si può sedere, lontano dal rumore della città.",
+      pt: 'A porta dá para um jardim sossegado. Há verde e lugares para sentar, longe do ruído da cidade.',
     },
   },
   {
@@ -410,6 +438,7 @@ export const zahradaUzitek: { stitek: LText; nadpis: LText; text: LText }[] = [
       hu: "Pihenéshez",
       fr: "Pour se détendre",
       it: "Per rilassarsi",
+      pt: 'Para descansar',
     },
     nadpis: {
       cs: 'Ráno i podvečer',
@@ -423,6 +452,7 @@ export const zahradaUzitek: { stitek: LText; nadpis: LText; text: LText }[] = [
       hu: "Reggel és este",
       fr: "Matin et soir",
       it: "Mattina e sera",
+      pt: 'De manhã e ao fim da tarde',
     },
     text: {
       cs: 'Ráno si tu dáte kávu, odpoledne sedíte ve stínu. Po dni ve městě je to dobré místo i na sklenku vína.',
@@ -436,6 +466,7 @@ export const zahradaUzitek: { stitek: LText; nadpis: LText; text: LText }[] = [
       hu: "Reggel ihatnak itt egy kávét, délután árnyékban ülhetnek. Egy városi nap után egy pohár bornak is jó hely.",
       fr: "Le matin, vous pouvez y prendre un café, l’après-midi vous profitez de l’ombre. Après une journée en ville, c’est aussi un bon endroit pour un verre de vin.",
       it: "La mattina potete prendere un caffè, il pomeriggio sedervi all’ombra. Dopo una giornata in città è anche un bel posto per un bicchiere di vino.",
+      pt: 'De manhã podem tomar aqui um café, à tarde sentam-se à sombra. Depois de um dia na cidade, é também um bom sítio para um copo de vinho.',
     },
   },
 ];
@@ -460,6 +491,7 @@ export const zahradaPravidla: {
       hu: "Közös rész",
       fr: "Espace commun",
       it: "Spazio comune",
+      pt: 'Espaço partilhado',
     },
     nadpis: {
       cs: 'Ohleduplnost',
@@ -473,6 +505,7 @@ export const zahradaPravidla: {
       hu: "Odafigyelés",
       fr: "Respect",
       it: "Rispetto",
+      pt: 'Respeito pelos outros',
     },
     text: {
       cs: 'Zahradu sdílejí hosté více apartmánů. Prosíme o klid, čistotu a ohled k ostatním. Ať si ji užije každý stejně.',
@@ -486,6 +519,7 @@ export const zahradaPravidla: {
       hu: "A kertet több apartman vendégei használják. Legyen csend és rend, és figyeljenek a többiekre. Hogy mindenki ugyanúgy jól érezze magát.",
       fr: "Les hôtes de plusieurs appartements partagent le jardin. Merci de rester calmes, de garder les lieux propres et d’être attentifs aux autres. Ainsi, tout le monde peut en profiter de la même façon.",
       it: "Il giardino è condiviso dagli ospiti di più appartamenti. Vi preghiamo di mantenere silenzio e ordine e di rispettare gli altri. Così tutti possono goderselo allo stesso modo.",
+      pt: 'Os hóspedes de vários apartamentos partilham o jardim. Mantenham-no sossegado e arrumado e tenham consideração pelos outros, para que todos o possam aproveitar da mesma forma.',
     },
   },
   {
@@ -501,6 +535,7 @@ export const zahradaPravidla: {
       hu: "Amikor elmennek",
       fr: "En partant",
       it: "Uscendo",
+      pt: 'À saída',
     },
     nadpis: {
       cs: 'Dveře zavírejte',
@@ -514,6 +549,7 @@ export const zahradaPravidla: {
       hu: "Az ajtó maradjon csukva",
       fr: "Gardez la porte fermée",
       it: "Tenete la porta chiusa",
+      pt: 'Mantenham a porta fechada',
     },
     text: {
       cs: 'Při návratu zkontrolujte, že se dveře řádně dovřely. Kód si vezměte s sebou.',
@@ -527,6 +563,7 @@ export const zahradaPravidla: {
       hu: "Amikor visszajönnek, nézzék meg, hogy az ajtó rendesen becsukódott. A kódot vigyék magukkal.",
       fr: "En revenant, vérifiez que la porte s’est bien refermée. Prenez le code avec vous.",
       it: "Al rientro controllate che la porta si sia chiusa bene. Portate con voi il codice.",
+      pt: 'Ao voltarem, verifiquem se a porta ficou bem fechada. Levem o código convosco.',
     },
   },
 ];
@@ -543,6 +580,7 @@ export const zahradaPravidlaNadpis: LText = {
   hu: "Gyakorlati tudnivalók a kerthez",
   fr: "Informations pratiques pour le jardin",
   it: "Informazioni pratiche sul giardino",
+  pt: 'Informações práticas sobre o jardim',
 };
 
 export const stayRules: { title: LText; text: LText }[] = [
@@ -559,6 +597,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Dohányzás tilos",
       fr: "Non-fumeur",
       it: "Vietato fumare",
+      pt: 'Proibido fumar',
     },
     text: {
       cs: 'V apartmánech, společných prostorách i u domu nekouříme, včetně elektronických cigaret. Platí to i pro otevřený oheň a vonné svíčky.',
@@ -572,6 +611,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Az apartmanokban, a közös terekben és a ház mellett nem dohányzunk, az elektronikus cigarettát is beleértve. Ugyanez vonatkozik a nyílt lángra és az illatgyertyákra.",
       fr: "On ne fume pas dans les appartements, les espaces communs ni près de la maison, cigarette électronique comprise. Il en va de même pour les flammes nues et les bougies parfumées.",
       it: "Non si fuma negli appartamenti, negli spazi comuni né vicino alla casa, sigarette elettroniche comprese. Lo stesso vale per fiamme libere e candele profumate.",
+      pt: 'Nos apartamentos, nos espaços comuns e junto à casa não se fuma, incluindo cigarros eletrónicos. O mesmo vale para chamas abertas e velas perfumadas.',
     },
   },
   {
@@ -587,6 +627,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Kerékpárok",
       fr: "Vélos",
       it: "Biciclette",
+      pt: 'Bicicletas',
     },
     text: {
       cs: 'Kola do apartmánu nepatří. Úschovu řešíme individuálně. Napište nám před příjezdem, co potřebujete.',
@@ -600,6 +641,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Kerékpár nem való az apartmanba. A tárolást egyenként beszéljük meg. Ha szükségük van rá, írjanak az érkezés előtt.",
       fr: "Les vélos n’ont pas leur place dans l’appartement. Nous organisons le rangement au cas par cas. Écrivez-nous avant votre arrivée si vous avez besoin de quelque chose.",
       it: "Le biciclette non vanno nell’appartamento. Il deposito lo organizziamo caso per caso. Scriveteci prima dell’arrivo se vi serve qualcosa.",
+      pt: 'As bicicletas não ficam no apartamento. Combinamos caso a caso onde as guardar. Escrevam-nos antes da chegada se precisarem de alguma coisa.',
     },
   },
   {
@@ -615,6 +657,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Háziállat nem jöhet",
       fr: "Pas d’animaux",
       it: "Niente animali",
+      pt: 'Sem animais',
     },
     text: {
       cs: 'Domácí zvířata u nás bohužel nejsou povolená. Platí to v apartmánech i ve společných prostorách.',
@@ -628,6 +671,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Háziállatot sajnos nem fogadunk. Ez az apartmanokra és a közös terekre is vonatkozik.",
       fr: "Les animaux ne sont malheureusement pas acceptés. Cela vaut pour les appartements et les espaces communs.",
       it: "Purtroppo gli animali non sono ammessi. Vale per gli appartamenti e per gli spazi comuni.",
+      pt: 'Infelizmente não são permitidos animais. Isto aplica-se aos apartamentos e aos espaços comuns.',
     },
   },
   {
@@ -643,6 +687,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Csend este",
       fr: "Calme le soir",
       it: "Silenzio la sera",
+      pt: 'Sossego à noite',
     },
     text: {
       cs: 'Jsme malý dům uprostřed města. Prosíme o ohleduplnost vůči sousedům, zvlášť večer a v noci.',
@@ -656,6 +701,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: "Kis ház vagyunk a város közepén. Kérjük, figyeljenek a szomszédokra, főleg este és éjjel.",
       fr: "Nous sommes une petite maison en plein centre-ville. Merci d’être attentifs aux voisins, surtout le soir et la nuit.",
       it: "Siamo una piccola casa in centro città. Vi preghiamo di rispettare i vicini, soprattutto la sera e di notte.",
+      pt: 'Somos uma casa pequena no meio da cidade. Tenham consideração pelos vizinhos, sobretudo ao fim da tarde e à noite.',
     },
   },
   {
@@ -671,6 +717,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: 'Az apartman átadása',
       fr: "Remise de l’appartement",
       it: "Consegna dell’appartamento",
+      pt: 'Entrega do apartamento',
     },
     text: {
       cs: 'Při předání si společně prohlédneme apartmán. Když něco není v pořádku, napíšeme to a pošleme vám to e-mailem k potvrzení.',
@@ -684,6 +731,7 @@ export const stayRules: { title: LText; text: LText }[] = [
       hu: 'Átáadáskor együtt átnézzük az apartmant. Ha valami nincs rendben, leírjuk, és e-mailben elküldjük önöknek megerősítésre.',
       fr: "Lors de la remise, nous regardons l’appartement ensemble. Si quelque chose ne va pas, nous le notons et vous l’envoyons par e-mail pour confirmation.",
       it: "Alla consegna guardiamo l’appartamento insieme. Se qualcosa non è in ordine, lo annotiamo e ve lo inviamo via e-mail per conferma.",
+      pt: 'Na entrega vemos o apartamento em conjunto. Se algo não estiver em ordem, anotamos e enviamos-vos por e-mail para confirmação.',
     },
   },
 ];
@@ -702,6 +750,7 @@ export const tvTexts = {
     hu: "A tartózkodás alatt · TV",
     fr: "Pendant votre séjour · TV",
     it: "Durante il soggiorno · TV",
+    pt: 'Durante a estadia · TV',
   } as LText,
   heading: {
     cs: 'Televize s Lepší.TV. Přes 150 programů, i zpětně',
@@ -715,6 +764,7 @@ export const tvTexts = {
     hu: "TV a Lepší.TV-vel. Több mint 150 csatorna, visszanézéssel",
     fr: "TV avec Lepší.TV. Plus de 150 chaînes, avec replay",
     it: "TV con Lepší.TV. Oltre 150 canali, anche in differita",
+    pt: 'TV com Lepší.TV. Mais de 150 canais, incluindo emissões em diferido',
   } as LText,
   lead: {
     cs: 'V každém apartmánu je televize s aplikací Lepší.TV, přihlášená a v ceně pobytu.',
@@ -728,6 +778,7 @@ export const tvTexts = {
     hu: "Minden apartmanban van tévé a Lepší.TV alkalmazással, bejelentkezve, a tartózkodás része.",
     fr: "Chaque appartement dispose d’une TV avec l’application Lepší.TV, connectée et incluse dans le séjour.",
     it: "Ogni appartamento ha una TV con l’app Lepší.TV, già collegata e inclusa nel soggiorno.",
+    pt: 'Todos os apartamentos têm uma TV com a aplicação Lepší.TV, já com sessão iniciada e incluída na estadia.',
   } as LText,
   step1: {
     cs: 'Zapněte televizi a na ovladači stiskněte tlačítko domovské stránky.',
@@ -741,6 +792,7 @@ export const tvTexts = {
     hu: "Kapcsolják be a tévét, és nyomják meg a távirányítón a kezdőlap gombot.",
     fr: "Allumez la TV et appuyez sur le bouton Accueil de la télécommande.",
     it: "Accendete la TV e premete il tasto Home del telecomando.",
+    pt: 'Liguem a TV e carreguem no botão home do comando.',
   } as LText,
   step2: {
     cs: 'V menu zvolte první položku, aplikaci Lepší.TV.',
@@ -754,6 +806,7 @@ export const tvTexts = {
     hu: "A menüben az első tételt válasszák, a Lepší.TV alkalmazást.",
     fr: "Dans le menu, choisissez le premier élément, l’application Lepší.TV.",
     it: "Nel menu scegliete la prima voce, l’app Lepší.TV.",
+    pt: 'No menu escolham o primeiro item, a aplicação Lepší.TV.',
   } as LText,
   step3: {
     cs: 'Sledujte programy živě nebo zpětně až 100 dní.',
@@ -767,6 +820,7 @@ export const tvTexts = {
     hu: "Nézhetik élőben, vagy visszamenőleg akár 100 napig.",
     fr: "Regardez en direct ou en replay jusqu’à 100 jours en arrière.",
     it: "Guardate in diretta o in differita fino a 100 giorni indietro.",
+    pt: 'Vejam em direto ou em diferido até 100 dias atrás.',
   } as LText,
   langs: {
     cs: 'Jsou tam i programy ve vašem jazyce. Německé (ZDF, Das Erste, 3sat), anglické (CNN International, Bloomberg), francouzské (France 2, TV5MONDE), polské (Polsat, TVN) a ukrajinské (1+1 International, ICTV). Na televizi je i YouTube.',
@@ -780,6 +834,7 @@ export const tvTexts = {
     hu: "Vannak csatornák az önök nyelvén is. Német (ZDF, Das Erste, 3sat), angol (CNN International, Bloomberg), francia (France 2, TV5MONDE), lengyel (Polsat, TVN) és ukrán (1+1 International, ICTV). A YouTube is rajta van a tévén.",
     fr: "Il y a aussi des chaînes dans votre langue. Allemand (ZDF, Das Erste, 3sat), anglais (CNN International, Bloomberg), français (France 2, TV5MONDE), polonais (Polsat, TVN) et ukrainien (1+1 International, ICTV). YouTube est aussi disponible sur la TV.",
     it: "Ci sono anche canali nella vostra lingua. Tedesco (ZDF, Das Erste, 3sat), inglese (CNN International, Bloomberg), francese (France 2, TV5MONDE), polacco (Polsat, TVN) e ucraino (1+1 International, ICTV). Sulla TV c’è anche YouTube.",
+    pt: 'Há também canais no vosso idioma. Alemão (ZDF, Das Erste, 3sat), inglês (CNN International, Bloomberg), francês (France 2, TV5MONDE), polaco (Polsat, TVN) e ucraniano (1+1 International, ICTV). O YouTube também está na TV.',
   } as LText,
   help: {
     cs: 'Když něco nefunguje, zavolejte Nikol na',
@@ -793,6 +848,7 @@ export const tvTexts = {
     hu: "Ha valami nem működik, hívják Nikolt ezen a számon",
     fr: "Si quelque chose ne fonctionne pas, appelez Nikol au",
     it: "Se qualcosa non funziona, chiamate Nikol al",
+    pt: 'Se algo não funcionar, liguem à Nikol para',
   } as LText,
 };
 
@@ -809,6 +865,7 @@ export const hub = {
     hu: "Hogyan érkeznek?",
     fr: "Comment arrivez-vous ?",
     it: "Come arrivate?",
+    pt: 'Como vão chegar?',
   } as LText,
   title: {
     cs: 'Vyberte způsob příjezdu',
@@ -822,6 +879,7 @@ export const hub = {
     hu: "Válasszák ki, hogyan érkeznek",
     fr: "Choisissez votre mode d’arrivée",
     it: "Scegliete come arrivate",
+    pt: 'Escolham como chegam',
   } as LText,
   lead: {
     cs: 'Ukážeme vám jen to, co potřebujete. Nemusíte číst řádky, které se vás netýkají.',
@@ -835,6 +893,7 @@ export const hub = {
     hu: "Csak azt mutatjuk, amire szükségük van. Nem kell elolvasniuk, ami nem vonatkozik önökre.",
     fr: "Nous ne vous montrons que ce dont vous avez besoin. Inutile de lire ce qui ne vous concerne pas.",
     it: "Vi mostriamo solo quello che vi serve. Non dovete leggere ciò che non vi riguarda.",
+    pt: 'Mostramos apenas o que precisam. Não têm de ler linhas que não se aplicam a vocês.',
   } as LText,
   autoKicker: {
     cs: 'Auto',
@@ -848,6 +907,7 @@ export const hub = {
     hu: "Autó",
     fr: "Voiture",
     it: "Auto",
+    pt: 'Carro',
   } as LText,
   autoTitle: {
     cs: 'Přijedu autem',
@@ -861,6 +921,7 @@ export const hub = {
     hu: "Autóval érkezem",
     fr: "J’arrive en voiture",
     it: "Arrivo in auto",
+    pt: 'Chego de carro',
   } as LText,
   autoText: {
     cs: 'Parkování, brána, stání a cesta k domu.',
@@ -874,6 +935,7 @@ export const hub = {
     hu: "Parkolás, kapu, hely és az út a házhoz.",
     fr: "Parking, portail, place et chemin à pied jusqu’à la maison.",
     it: "Parcheggio, cancello, posto auto e percorso a piedi fino alla casa.",
+    pt: 'Estacionamento, portão, lugar e o caminho até à casa.',
   } as LText,
   walkKicker: {
     cs: 'Vlak / autobus',
@@ -887,6 +949,7 @@ export const hub = {
     hu: "Vonat / busz",
     fr: "Train / bus",
     it: "Treno / autobus",
+    pt: 'Comboio / autocarro',
   } as LText,
   walkTitle: {
     cs: 'Přijdu pěšky',
@@ -900,6 +963,7 @@ export const hub = {
     hu: "Gyalog érkezem",
     fr: "J’arrive à pied",
     it: "Arrivo a piedi",
+    pt: 'Chego a pé',
   } as LText,
   walkText: {
     cs: 'Bez parkování. Rovnou k domu a do apartmánu.',
@@ -913,6 +977,7 @@ export const hub = {
     hu: "Nincs parkolás. Egyenesen a házhoz és az apartmanhoz.",
     fr: "Pas de parking. Directement à la maison et à l’appartement.",
     it: "Niente parcheggio. Direttamente alla casa e all’appartamento.",
+    pt: 'Sem estacionamento. Direto à casa e ao apartamento.',
   } as LText,
   reset: {
     cs: 'Změnit způsob příjezdu',
@@ -926,6 +991,7 @@ export const hub = {
     hu: "Az érkezés módjának módosítása",
     fr: "Changer de mode d’arrivée",
     it: "Cambia modo di arrivo",
+    pt: 'Mudar a forma de chegada',
   } as LText,
 };
 
@@ -943,6 +1009,7 @@ export const ui = {
     hu: "Út a parkolóhoz",
     fr: "Itinéraire vers le parking",
     it: "Percorso verso il parcheggio",
+    pt: 'Caminho para o estacionamento',
   } as LText,
   routeHouse: {
     cs: 'Trasa k domu',
@@ -956,6 +1023,7 @@ export const ui = {
     hu: "Út a házhoz",
     fr: "Itinéraire vers la maison",
     it: "Percorso verso la casa",
+    pt: 'Caminho para a casa',
   } as LText,
   openMapy: {
     cs: 'Klikněte sem. Otevře se mapa s trasou v Mapy.cz.',
@@ -969,6 +1037,7 @@ export const ui = {
     hu: "Kattintsanak ide. A Mapy.cz-n megnyílik a térkép az útvonallal.",
     fr: "Cliquez ici. Une carte avec l’itinéraire s’ouvre dans Mapy.cz.",
     it: "Cliccate qui. Si apre una mappa con il percorso in Mapy.cz.",
+    pt: 'Cliquem aqui. Abre-se um mapa com o caminho no Mapy.cz.',
   } as LText,
   orGoogle: {
     cs: 'Nebo stejná trasa v Google Maps.',
@@ -982,6 +1051,7 @@ export const ui = {
     hu: "Vagy ugyanaz az útvonal a Google Mapsen.",
     fr: "Ou le même itinéraire dans Google Maps.",
     it: "Oppure lo stesso percorso su Google Maps.",
+    pt: 'Ou o mesmo caminho no Google Maps.',
   } as LText,
   expandSection: {
     cs: 'Rozbalit',
@@ -994,6 +1064,7 @@ export const ui = {
     es: 'Mostrar',
     fr: 'Afficher',
     it: 'Mostra',
+    pt: 'Mostrar',
     hu: 'Kibontás',
   } as LText,
   collapseSection: {
@@ -1007,6 +1078,7 @@ export const ui = {
     es: 'Ocultar',
     fr: 'Masquer',
     it: 'Nascondi',
+    pt: 'Ocultar',
     hu: 'Összecsukás',
   } as LText,
   minWalk: {
@@ -1021,6 +1093,7 @@ export const ui = {
     hu: "perc gyalog",
     fr: "min à pied",
     it: "min a piedi",
+    pt: 'min a pé',
   } as LText,
   walkHint: {
     cs: '{{M}} m · {{MIN}} min pěšky. Klikněte sem. Otevře se mapa s trasou v Mapy.cz.',
@@ -1034,6 +1107,7 @@ export const ui = {
   hu: "{{M}} m · {{MIN}} perc gyalog. Kattintsanak ide. A Mapy.cz-n megnyílik a térkép az útvonallal.",
   fr: "{{M}} m · {{MIN}} min à pied. Cliquez ici. Une carte avec l’itinéraire s’ouvre dans Mapy.cz.",
   it: "{{M}} m · {{MIN}} min a piedi. Cliccate qui. Si apre una mappa con il percorso in Mapy.cz.",
+    pt: '{{M}} m · {{MIN}} min a pé. Cliquem aqui. Abre-se um mapa com o caminho no Mapy.cz.',
   } as LText,
   step: {
     cs: 'Krok',
@@ -1047,6 +1121,7 @@ export const ui = {
     hu: "Lépés",
     fr: "Étape",
     it: "Passo",
+    pt: 'Passo',
   } as LText,
   note: {
     cs: 'Poznámka',
@@ -1060,6 +1135,7 @@ export const ui = {
     hu: "Megjegyzés",
     fr: "Remarque",
     it: "Nota",
+    pt: 'Nota',
   } as LText,
   entry: {
     cs: 'Vstup',
@@ -1073,6 +1149,7 @@ export const ui = {
     hu: "Belépés",
     fr: "Entrée",
     it: "Ingresso",
+    pt: 'Entrada',
   } as LText,
   house: {
     cs: 'Dům',
@@ -1086,6 +1163,7 @@ export const ui = {
     hu: "Ház",
     fr: "Maison",
     it: "Casa",
+    pt: 'Casa',
   } as LText,
   rulesHeading: {
     cs: 'Co u nás platí, jednoduše a napřímo',
@@ -1099,6 +1177,7 @@ export const ui = {
     hu: "Ami itt érvényes, egyszerűen és egyenesen",
     fr: "Ce qui s’applique ici, simplement et directement",
     it: "Cosa vale qui, in modo semplice e diretto",
+    pt: 'O que se aplica aqui, de forma simples e direta',
   } as LText,
   qrApt: {
     cs: 'QR kód WiFi apartmán',
@@ -1112,6 +1191,7 @@ export const ui = {
     hu: "Az apartman WiFi QR-kódja",
     fr: "QR code WiFi de l’appartement",
     it: "Codice QR WiFi dell’appartamento",
+    pt: 'Código QR do WiFi do apartamento',
   } as LText,
   qrGarden: {
     cs: 'QR kód WiFi zahrada',
@@ -1125,6 +1205,7 @@ export const ui = {
     hu: "A kert WiFi QR-kódja",
     fr: "QR code WiFi du jardin",
     it: "Codice QR WiFi del giardino",
+    pt: 'Código QR do WiFi do jardim',
   } as LText,
   qrMissApt: {
     cs: 'QR kód se zobrazí, až bude doplněné heslo WiFi pro tento apartmán.',
@@ -1138,6 +1219,7 @@ export const ui = {
     hu: "A QR-kód akkor jelenik meg, ha ehhez az apartmanhoz megvan a WiFi jelszava.",
     fr: "Le QR code apparaîtra dès que le mot de passe WiFi de cet appartement sera défini.",
     it: "Il codice QR comparirà quando sarà impostata la password WiFi di questo appartamento.",
+    pt: 'O código QR aparece quando a palavra-passe do WiFi deste apartamento estiver definida.',
   } as LText,
   qrMissGarden: {
     cs: 'QR kód se zobrazí, až bude doplněné heslo WiFi na zahradě.',
@@ -1151,6 +1233,7 @@ export const ui = {
     hu: "A QR-kód akkor jelenik meg, ha megvan a kert WiFi jelszava.",
     fr: "Le QR code apparaîtra dès que le mot de passe WiFi du jardin sera défini.",
     it: "Il codice QR comparirà quando sarà impostata la password WiFi del giardino.",
+    pt: 'O código QR aparece quando a palavra-passe do WiFi do jardim estiver definida.',
   } as LText,
 };
 
@@ -1166,6 +1249,7 @@ export const expiredTexts: LText = {
   hu: "Ez a link lejárt",
   fr: "Ce lien a expiré",
   it: "Questo link è scaduto",
+  pt: 'Este link expirou',
 };
 
 export const expiredHelp: LText = {
@@ -1180,6 +1264,7 @@ export const expiredHelp: LText = {
   hu: "Segítség kell? Hívják Nikolt ezen a számon",
   fr: "Besoin d’aide ? Appelez Nikol au",
   it: "Serve aiuto? Chiamate Nikol al",
+  pt: 'Precisam de ajuda? Liguem à Nikol para',
 };
 
 export const SECTION_NAV: Record<string, LText> = {
@@ -1194,6 +1279,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Registro del aparcamiento',
     fr: 'Inscription au parking',
     it: 'Registrazione parcheggio',
+    pt: 'Registo do estacionamento',
     hu: 'Parkolás regisztrálása',
   },
   'brana-parkoviste': {
@@ -1207,6 +1293,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Llegada y barrera',
     fr: 'Arrivée et portail',
     it: 'Arrivo e cancello',
+    pt: 'Chegada e portão',
     hu: 'Érkezés és kapu',
   },
   parkovani: {
@@ -1220,6 +1307,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Su plaza de aparcamiento',
     fr: 'Votre place de parking',
     it: 'Il vostro posto auto',
+    pt: 'O vosso lugar de estacionamento',
     hu: 'Az önök parkolóhelye',
   },
   'k-domu-a-vstup': {
@@ -1233,6 +1321,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'A la casa y entrada',
     fr: 'Vers la maison et entrée',
     it: 'Verso la casa e ingresso',
+    pt: 'Até à casa e à entrada',
     hu: 'A házhoz és bejárat',
   },
   'k-domu-a-vstup-pesky': {
@@ -1246,6 +1335,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Camino a la casa y entrada',
     fr: 'Chemin vers la maison et entrée',
     it: 'Strada per la casa e ingresso',
+    pt: 'Caminho até à casa e à entrada',
     hu: 'Út a házhoz és bejárat',
   },
   /** Alias staré kotvy / dat; stejný text jako k-domu-a-vstup. */
@@ -1260,6 +1350,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'A la casa y entrada',
     fr: 'Vers la maison et entrée',
     it: 'Verso la casa e ingresso',
+    pt: 'Até à casa e à entrada',
     hu: 'A házhoz és bejárat',
   },
   'prijezd-k-domu': {
@@ -1273,6 +1364,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'A la casa y entrada',
     fr: 'Vers la maison et entrée',
     it: 'Verso la casa e ingresso',
+    pt: 'Até à casa e à entrada',
     hu: 'A házhoz és bejárat',
   },
   wifi: {
@@ -1286,6 +1378,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'WiFi',
     fr: 'WiFi',
     it: 'WiFi',
+    pt: 'WiFi',
     hu: 'WiFi',
   },
   'prani-hosta': {
@@ -1299,6 +1392,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Espacio para sus deseos',
     fr: 'Un espace pour vos souhaits',
     it: 'Uno spazio per i vostri desideri',
+    pt: 'Um espaço para os vossos pedidos',
     hu: 'Hely az önök kívánságainak',
   },
   zahrada: {
@@ -1312,6 +1406,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Jardín',
     fr: 'Jardin',
     it: 'Giardino',
+    pt: 'Jardim',
     hu: 'Kert',
   },
   'posezeni-venku': {
@@ -1325,6 +1420,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Zona exterior para sentarse',
     fr: 'Coin extérieur',
     it: 'Posto a sedere all’aperto',
+    pt: 'Lugares no exterior',
     hu: 'Kinti ülőhely',
   },
   televize: {
@@ -1338,6 +1434,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Televisión',
     fr: 'Télévision',
     it: 'Televisione',
+    pt: 'Televisão',
     hu: 'Televízió',
   },
   pravidla: {
@@ -1351,6 +1448,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Normas de la estancia',
     fr: 'Règlement du séjour',
     it: 'Regole del soggiorno',
+    pt: 'Regras da casa',
     hu: 'Házirend',
   },
   odjezd: {
@@ -1364,6 +1462,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Salida',
     fr: 'Départ',
     it: 'Partenza',
+    pt: 'Saída',
     hu: 'Távozás',
   },
   kontakt: {
@@ -1377,6 +1476,7 @@ export const SECTION_NAV: Record<string, LText> = {
     es: 'Horarios y contacto',
     fr: 'Horaires et contact',
     it: 'Orari e contatti',
+    pt: 'Horários e contacto',
     hu: 'Időpontok és kapcsolat',
   },
   'tipy-na-webu': {
@@ -1391,6 +1491,7 @@ export const SECTION_NAV: Record<string, LText> = {
     hu: "Tippek a tartózkodáshoz",
     fr: "Conseils pour votre séjour",
     it: "Consigli per il soggiorno",
+    pt: 'Dicas para a vossa estadia',
   },
   'ps-apartmany': {
     cs: 'P.S.',
@@ -1404,6 +1505,7 @@ export const SECTION_NAV: Record<string, LText> = {
     hu: "U.i.",
     fr: "P.S.",
     it: "P.S.",
+    pt: 'P.S.',
   },
 };
 
@@ -1421,6 +1523,7 @@ export const tipyNaWebu = {
     hu: "Tippek a tartózkodáshoz",
     fr: "Des idées pour votre séjour",
     it: "Idee per il vostro soggiorno",
+    pt: 'Receber dicas para a estadia',
   } as LText,
   lead: {
     cs: 'Klikněte na to, co vás zajímá. Otevře se rovnou daná stránka.',
@@ -1434,6 +1537,7 @@ export const tipyNaWebu = {
     hu: "Koppintsanak arra, ami érdekli önöket. Közvetlenül az az oldal nyílik meg.",
     fr: "Touchez ce qui vous intéresse. La page correspondante s’ouvre directement.",
     it: "Toccate ciò che vi interessa. Si apre direttamente la pagina giusta.",
+    pt: 'Toquem no que vos interessa. Abre diretamente essa página.',
   } as LText,
   open: {
     cs: 'otevřít',
@@ -1447,6 +1551,7 @@ export const tipyNaWebu = {
     hu: "megnyitás",
     fr: "ouvrir",
     it: "apri",
+    pt: 'abrir',
   } as LText,
   items: [
     {
@@ -1463,6 +1568,7 @@ export const tipyNaWebu = {
         hu: "Hol egyenek",
         fr: "Où manger",
         it: "Dove mangiare",
+        pt: 'Onde comer',
       } as LText,
     },
     {
@@ -1479,6 +1585,7 @@ export const tipyNaWebu = {
         hu: "Ötletek egy napos kiránduláshoz",
         fr: "Idées d’excursions",
         it: "Idee per gite",
+        pt: 'Ideias para um passeio de um dia',
       } as LText,
     },
     {
@@ -1495,6 +1602,7 @@ export const tipyNaWebu = {
         hu: "Mit csináljanak a városban",
         fr: "Que faire en ville",
         it: "Cosa fare in città",
+        pt: 'O que fazer na cidade',
       } as LText,
     },
     {
@@ -1511,6 +1619,7 @@ export const tipyNaWebu = {
         hu: "Mi történik ezen a héten",
         fr: "Ce qui se passe cette semaine",
         it: "Cosa succede questa settimana",
+        pt: 'O que há esta semana',
       } as LText,
     },
     {
@@ -1527,6 +1636,7 @@ export const tipyNaWebu = {
         hu: "Felfedező játék Budějovicében",
         fr: "Jeu de découverte de Budweis",
         it: "Gioco alla scoperta di Budweis",
+        pt: 'Jogo de descoberta de Budweis',
       } as LText,
     },
   ],
@@ -1546,6 +1656,7 @@ export const psApartmany = {
     hu: "U.i.",
     fr: "P.S.",
     it: "P.S.",
+    pt: 'P.S.',
   } as LText,
   title: {
     cs: 'Pět apartmánů, pět atmosfér',
@@ -1559,6 +1670,7 @@ export const psApartmany = {
     hu: "Öt apartman, öt hangulat",
     fr: "Cinq appartements, cinq ambiances",
     it: "Cinque appartamenti, cinque atmosfere",
+    pt: 'Cinco apartamentos, cinco ambientes',
   } as LText,
   text: {
     cs: 'Spousta hostů o tom neví. Až budete plánovat další pobyt, můžete si vybrat podle nálady.',
@@ -1572,6 +1684,7 @@ export const psApartmany = {
     hu: "Sok vendég nem tudja ezt. Amikor a következő tartózkodást tervezik, hangulat szerint választhatnak.",
     fr: "Beaucoup d’hôtes ne le savent pas. Lors de votre prochain séjour, vous pourrez choisir selon votre humeur.",
     it: "Molti ospiti non lo sanno. Quando pianificherete un altro soggiorno, potrete scegliere in base all’umore.",
+    pt: 'Muitos hóspedes não sabem disso. Quando planearem outra estadia, podem escolher consoante o ambiente.',
   } as LText,
   cta: {
     cs: 'Který apartmán by vám seděl',
@@ -1585,6 +1698,7 @@ export const psApartmany = {
     hu: "Melyik apartman illene önökhöz",
     fr: "Quel appartement vous conviendrait",
     it: "Quale appartamento fa per voi",
+    pt: 'Que apartamento combina convosco',
   } as LText,
   quizPath: '/discover-your-atmosphere',
 };

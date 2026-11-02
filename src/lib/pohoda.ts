@@ -71,6 +71,13 @@ volevamo solo chiedere se da voi è tutto a posto e se siete soddisfatti del sog
 Vi auguriamo una bella giornata.
 
 Nikol e la famiglia VIVIEN`,
+  pt: `Olá,
+
+só queríamos perguntar se está tudo bem e se estão satisfeitos com a estadia. Se precisarem de alguma coisa, escrevam-nos.
+
+Desejamos-vos um bom dia.
+
+Nikol e a família VIVIEN`,
   sv: `Hej,
 
 vi ville bara fråga om allt är bra och om ni är nöjda med vistelsen. Om ni behöver något, skriv till oss.
@@ -97,6 +104,7 @@ export const PREDMET_POHODY: Record<GuideLang, string> = {
   es: 'VIVIEN · ¿Todo bien?',
   fr: 'VIVIEN · Tout va bien ?',
   it: 'VIVIEN · Va tutto bene?',
+  pt: 'VIVIEN · Está tudo bem?',
   sv: 'VIVIEN · Är allt bra?',
   hu: 'VIVIEN · Minden rendben?',
 };

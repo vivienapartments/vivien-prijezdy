@@ -23,7 +23,7 @@ function checkLangObj(
 ) {
   if (typeof obj.en !== 'string') return;
   const en = placeholders(obj.en);
-  for (const lang of ['fr', 'it'] as const) {
+  for (const lang of ['fr', 'it', 'pt'] as const) {
     const raw = obj[lang];
     if (typeof raw !== 'string') {
       missing.push(`${path}: chybí ${lang}`);
@@ -49,7 +49,7 @@ function walk(value: unknown, path: string, issues: string[], missing: string[])
   const obj = value as Record<string, unknown>;
   if (typeof obj.en === 'string') checkLangObj(obj, path, issues, missing);
   for (const [k, v] of Object.entries(obj)) {
-    if (k === 'en' || k === 'fr' || k === 'it') continue;
+    if (k === 'en' || k === 'fr' || k === 'it' || k === 'pt') continue;
     walk(v, path ? `${path}.${k}` : k, issues, missing);
   }
 }

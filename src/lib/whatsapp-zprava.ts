@@ -34,7 +34,7 @@ import {
   ZPRAVA_PRUVODCE_3,
 } from './zpravy-stupne';
 
-type JazykZpravy = 'cs' | 'en' | 'de' | 'pl' | 'uk' | 'zh-Hant' | 'sv' | 'hu' | 'es' | 'fr' | 'it';
+type JazykZpravy = 'cs' | 'en' | 'de' | 'pl' | 'uk' | 'zh-Hant' | 'sv' | 'hu' | 'es' | 'fr' | 'it' | 'pt';
 type ZdrojZpravy = 'booking' | 'airbnb' | 'prima' | 'jiny';
 
 function textVJazyce(tabulka: Record<JazykZpravy, string>, lang: GuideLang | null): string {
@@ -60,6 +60,7 @@ const PODPIS: Record<JazykZpravy, string> = {
   hu: "Nikol és a VIVIEN család",
   fr: "Nikol et la famille VIVIEN",
   it: "Nikol e la famiglia VIVIEN",
+  pt: 'Nikol e a família VIVIEN',
 };
 
 /**
@@ -96,6 +97,7 @@ const CHECKIN_UVOD: Record<GuideLang, string> = {
   es: 'Hola, todavía no han rellenado el check-in en línea. Justo después les enviaremos la guía de llegada con los códigos PIN de entrada a la casa y al apartamento. Sin el check-in no se alojan ni aparcan.',
   fr: "Bonjour, vous n'avez pas encore rempli le check-in en ligne. Juste après, nous vous enverrons le guide d'arrivée avec les codes PIN d'entrée de la maison et de l'appartement. Sans le check-in, vous ne pouvez ni loger chez nous ni vous garer.",
   it: "Buongiorno, non avete ancora compilato il check-in online. Subito dopo vi invieremo la guida all'arrivo con i codici PIN di ingresso per la casa e l'appartamento. Senza il check-in non potete alloggiare da noi né parcheggiare.",
+  pt: 'Olá, ainda não concluíram o check-in online. Logo a seguir enviamos-vos o guia de chegada com os códigos PIN de entrada da casa e do apartamento. Sem o check-in não podem ficar connosco nem estacionar.',
   sv: 'Hej, ni har inte fyllt i online-incheckningen ännu. Direkt efter den skickar vi ankomstguiden med PIN-koderna till huset och lägenheten. Utan incheckningen kan ni varken bo hos oss eller parkera.',
   hu: 'Jó napot, az online bejelentkezést még nem töltötték ki. Rögtön utána elküldjük az érkezési útmutatót a ház és az apartman belépő PIN-kódjaival. Bejelentkezés nélkül nem tudnak nálunk megszállni és parkolni.',
 };
@@ -110,6 +112,7 @@ const CHECKIN_CHVILKA: Record<GuideLang, string> = {
   es: 'Rellenarlo lleva solo un momento.',
   fr: "Le remplissage ne prend qu'un instant.",
   it: 'La compilazione richiede solo un momento.',
+  pt: 'Demora só um momento.',
   sv: 'Det tar bara en stund.',
   hu: 'A kitöltés csak egy pillanat.',
 };
@@ -124,6 +127,7 @@ const CHECKIN_TADY: Record<GuideLang, string> = {
   es: 'Rellenarlo lleva solo un momento, el enlace está aquí:',
   fr: "Le remplissage ne prend qu'un instant, le lien est ici:",
   it: 'La compilazione richiede solo un momento, il link è qui:',
+  pt: 'Demora só um momento, aqui está o link:',
   sv: 'Det tar bara en stund, länken finns här:',
   hu: 'A kitöltés csak egy pillanat, a link itt van:',
 };
@@ -138,6 +142,7 @@ const CHECKIN_KONEC: Record<GuideLang, string> = {
   es: 'Gracias, nos alegramos mucho de verles.',
   fr: 'Merci, nous avons très hâte de vous voir.',
   it: "Grazie, non vediamo l'ora di vedervi.",
+  pt: 'Obrigado, esperamos por vocês com muito gosto.',
   sv: 'Tack, vi ser mycket fram emot att träffa er.',
   hu: 'Köszönjük, nagyon várjuk önöket.',
 };
@@ -155,6 +160,7 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
     hu: "A linket a Booking.com üzenetei között találják.",
     fr: "Vous trouverez le lien dans vos messages sur Booking.com.",
     it: "Il link lo trovate nei messaggi su Booking.com.",
+    pt: 'O link está nas vossas mensagens no Booking.com.',
   },
   airbnb: {
     cs: 'Odkaz najdete ve zprávách na Airbnb.',
@@ -168,6 +174,7 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
     hu: "A linket az Airbnb üzenetei között találják.",
     fr: "Vous trouverez le lien dans vos messages sur Airbnb.",
     it: "Il link lo trovate nei messaggi su Airbnb.",
+    pt: 'O link está nas vossas mensagens no Airbnb.',
   },
   prima: {
     cs: 'Odkaz najdete v e-mailu s potvrzením rezervace.',
@@ -181,6 +188,7 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
     hu: "A linket a foglalás visszaigazoló e-mailjében találják.",
     fr: "Vous trouverez le lien dans l’e-mail de confirmation de votre réservation.",
     it: "Il link lo trovate nell’e-mail di conferma della prenotazione.",
+    pt: 'O link está no e-mail de confirmação da reserva.',
   },
   jiny: {
     cs: 'Odkaz najdete ve zprávách od webu, kde jste rezervovali.',
@@ -194,6 +202,7 @@ const CHECKIN_ODKAZ: Record<ZdrojZpravy, Record<JazykZpravy, string>> = {
     hu: "A linket annak az oldalnak az üzenetei között találják, ahol foglaltak.",
     fr: "Vous trouverez le lien dans les messages du site où vous avez réservé.",
     it: "Il link lo trovate nei messaggi del sito dove avete prenotato.",
+    pt: 'O link está nas mensagens do site onde fizeram a reserva.',
   },
 };
 
@@ -224,6 +233,7 @@ const NEOTEVREL: Record<JazykZpravy, string> = {
   hu: 'Jó napot, az érkezési útmutatóban ott várnak a ház és az apartman belépő PIN-kódjai. Hogy elérjék őket, nyissák meg az útmutatót, válasszák ki az időt és az érkezés módját, és erősítsék meg a szabályokat. Köszönjük, várjuk önöket.',
   fr: "Bonjour, vos codes PIN d’entrée pour la maison et l’appartement vous attendent dans votre guide d’arrivée. Pour y accéder, ouvrez le guide, choisissez l’heure et le mode d’arrivée, et confirmez les règles. Merci, nous nous réjouissons de vous voir.",
   it: "Buongiorno, i vostri codici PIN di ingresso per la casa e l’appartamento vi aspettano nella guida all’arrivo. Per vederli, aprite la guida, scegliete l’orario e il modo di arrivo e confermate le regole. Grazie, vi aspettiamo.",
+  pt: 'Olá, os códigos PIN de entrada da casa e do apartamento esperam por vocês no guia de chegada. Para os ver, abram o guia, escolham a hora e a forma de chegada e confirmem as regras. Obrigado, estamos à vossa espera.',
 };
 
 const BRANA: Record<JazykZpravy, string> = {
@@ -238,6 +248,7 @@ const BRANA: Record<JazykZpravy, string> = {
   hu: 'Jó napot, az útmutatóban írják be a kapuhoz való telefont és a rendszámot. Kapuregisztráció nélkül nem tudnak parkolni. Köszönjük, várjuk önöket.',
   fr: "Bonjour, dans le guide, indiquez le téléphone pour le portail et la plaque d’immatriculation. Sans enregistrement au portail, vous ne pourrez pas vous garer. Merci, nous nous réjouissons de vous voir.",
   it: "Buongiorno, nella guida inserite il telefono per il cancello e la targa. Senza registrazione al cancello non potete parcheggiare. Grazie, vi aspettiamo.",
+  pt: 'Olá, no guia acrescentem o telefone para o portão e a matrícula. Sem registo no portão não podem estacionar. Obrigado, estamos à vossa espera.',
 };
 
 const FRAZE_KROKU: Record<'cas' | 'zpusob' | 'pravidla', Record<JazykZpravy, string>> = {
@@ -253,6 +264,7 @@ const FRAZE_KROKU: Record<'cas' | 'zpusob' | 'pravidla', Record<JazykZpravy, str
     hu: 'válasszák ki az érkezés idejét',
     fr: "choisir l’heure d’arrivée",
     it: "scegliere l’orario di arrivo",
+    pt: 'escolher a hora de chegada',
   },
   zpusob: {
     cs: 'vyberte, jak přijedete',
@@ -266,6 +278,7 @@ const FRAZE_KROKU: Record<'cas' | 'zpusob' | 'pravidla', Record<JazykZpravy, str
     hu: 'válasszák ki, hogyan érkeznek',
     fr: "choisir le mode d’arrivée",
     it: "scegliere come arrivate",
+    pt: 'escolher a forma de chegada',
   },
   pravidla: {
     cs: 'potvrďte pravidla',
@@ -279,6 +292,7 @@ const FRAZE_KROKU: Record<'cas' | 'zpusob' | 'pravidla', Record<JazykZpravy, str
     hu: 'erősítsék meg a szabályokat',
     fr: "confirmer les règles",
     it: "confermare le regole",
+    pt: 'confirmar as regras',
   },
 };
 
@@ -294,6 +308,7 @@ const SPOJKA: Record<JazykZpravy, string> = {
   hu: 'és',
   fr: "et",
   it: "e",
+  pt: 'e',
 };
 
 function spojKroky(lang: GuideLang | null, chybi: ChybejiciKrok[]): string {
@@ -316,6 +331,7 @@ const UPOMINKA: Record<JazykZpravy, string> = {
   hu: 'Az útmutatóban ott várnak a ház és az apartman belépő PIN-kódjai. Hogy elérjék őket, még {kroky}. Egy perc.',
   fr: "Vos codes PIN d’entrée pour la maison et l’appartement vous attendent dans votre guide. Pour y accéder, il vous reste à {kroky}. Cela prend une minute.",
   it: "I vostri codici PIN di ingresso per la casa e l’appartamento vi aspettano nella guida. Per vederli dovete ancora {kroky}. Ci vuole un minuto.",
+  pt: 'Os códigos PIN de entrada da casa e do apartamento esperam por vocês no guia. Para os ver, ainda têm de {kroky}. Demora um minuto.',
 };
 
 const NEROZBALEN: Record<JazykZpravy, string> = {
@@ -330,6 +346,7 @@ const NEROZBALEN: Record<JazykZpravy, string> = {
   hu: 'Jó napot, hogy elérjék a belépő PIN-kódjaikat, az érkezési útmutatóban még {kroky}. Egy perc. Köszönjük, várjuk önöket.',
   fr: "Bonjour, pour accéder à vos codes PIN d’entrée, il vous reste à {kroky} dans le guide d’arrivée. Cela prend une minute. Merci, nous nous réjouissons de vous voir.",
   it: "Buongiorno, per vedere i vostri codici PIN di ingresso, nella guida all’arrivo dovete ancora {kroky}. Ci vuole un minuto. Grazie, vi aspettiamo.",
+  pt: 'Olá, para verem os códigos PIN de entrada, no guia de chegada ainda têm de {kroky}. Demora um minuto. Obrigado, estamos à vossa espera.',
 };
 
 const DEN_NEROZBALEN: Record<JazykZpravy, string> = {
@@ -344,6 +361,7 @@ const DEN_NEROZBALEN: Record<JazykZpravy, string> = {
   hu: 'Jó napot, ma várjuk önöket. Hogy elérjék a belépő PIN-kódjaikat, az útmutatóban még {kroky}. Egy perc. Köszönjük.',
   fr: "Bonjour, nous nous réjouissons de vous accueillir aujourd’hui. Pour accéder à vos codes PIN d’entrée, il vous reste à {kroky} dans le guide. Cela prend une minute. Merci.",
   it: "Buongiorno, oggi vi aspettiamo. Per vedere i vostri codici PIN di ingresso, nella guida dovete ancora {kroky}. Ci vuole un minuto. Grazie.",
+  pt: 'Olá, hoje é o dia da vossa chegada. Para verem os códigos PIN de entrada, no guia ainda têm de {kroky}. Demora um minuto. Obrigado.',
 };
 
 const DEN_CAS: Record<JazykZpravy, string> = {
@@ -358,6 +376,7 @@ const DEN_CAS: Record<JazykZpravy, string> = {
   hu: 'Jó napot, ma várjuk önöket. Körülbelül {čas} körül számítunk önökre. Negyedórával előtte írják meg, hogy ott lesznek, és mi várunk önökre. A megbeszélt időpontra 10 percet várunk. Ha az időpont változik, javítsák ki az útmutatóban, vagy írjanak nekünk.',
   fr: "Bonjour, nous nous réjouissons de vous accueillir aujourd’hui. Nous vous attendons vers {čas}. Environ un quart d’heure avant, écrivez-nous que vous serez là, et nous vous attendrons. Nous attendons 10 minutes après l’heure convenue. Si l’heure change, corrigez-la dans le guide ou écrivez-nous.",
   it: "Buongiorno, oggi vi aspettiamo. Vi attendiamo verso le {čas}. Circa un quarto d’ora prima scriveteci che state arrivando e vi aspetteremo. Aspettiamo 10 minuti oltre l’orario concordato. Se l’orario cambia, correggetelo nella guida o scriveteci.",
+  pt: 'Olá, hoje é o dia da vossa chegada. Esperamos por vocês por volta das {čas}. Cerca de um quarto de hora antes, escrevam-nos a avisar que já vão a chegar e estaremos à vossa espera. Esperamos 10 minutos depois da hora combinada. Se a hora mudar, corrijam-na no guia ou escrevam-nos.',
 };
 
 const odHodina = casZMinut(PRIPLATEK_OD);
@@ -375,6 +394,7 @@ const DEN_PRIPLATEK: Record<JazykZpravy, string> = {
   hu: `A ${odHodina} utáni érkezés pótdíja ${kcKrok}\u00A0Kč minden megkezdett félóráért, a tényleges érkezési idő szerint. Most ez {částka}\u00A0Kč lenne, a helyszínen fizetendő.`,
   fr: `Une arrivée après ${odHodina} entraîne un supplément de ${kcKrok}\u00A0Kč par demi-heure commencée, selon l’heure d’arrivée réelle. Actuellement, cela ferait {částka}\u00A0Kč, à payer sur place.`,
   it: `L’arrivo dopo le ${odHodina} comporta un supplemento di ${kcKrok}\u00A0Kč per ogni mezz’ora iniziata, in base all’orario di arrivo effettivo. Al momento sarebbero {částka}\u00A0Kč, da pagare sul posto.`,
+  pt: `A chegada depois das ${odHodina} tem um suplemento de ${kcKrok}\u00A0Kč por cada meia hora iniciada, com base na hora real de chegada. Neste momento seriam {částka}\u00A0Kč, a pagar no local.`,
 };
 
 const TELEFON = '+420\u00A0604\u00A0692\u00A0573';
@@ -389,6 +409,7 @@ const NEDOJEZD: Record<GuideLang, string> = {
   es: `Hola, seguimos sin tener su hora de llegada y no responden a nuestros mensajes. Si no nos escriben y no llegan antes de las 20:00, tomaremos la reserva como no presentado (no-show) y la estancia se pierde. Escríbannos ahora a qué hora llegan, al ${TELEFON}. Gracias.`,
   fr: `Bonjour, nous n'avons toujours pas votre heure d'arrivée et vous ne répondez pas à nos messages. Si vous ne nous contactez pas et si vous n'arrivez pas avant 20:00, nous considérerons la réservation comme un no-show et le séjour est perdu. Écrivez-nous tout de suite à quelle heure vous arrivez, au ${TELEFON}. Merci.`,
   it: `Buongiorno, non abbiamo ancora l'orario di arrivo e non rispondete ai nostri messaggi. Se non ci scrivete e non arrivate entro le 20:00, considereremo la prenotazione come mancato arrivo (no-show) e il soggiorno decade. Scriveteci subito a che ora arrivate, al ${TELEFON}. Grazie.`,
+  pt: `Olá, ainda não temos a vossa hora de chegada e não respondem às nossas mensagens. Se não nos contactarem e não chegarem até às 20:00, consideramos a reserva uma não comparência e a estadia perde-se. Escrevam-nos agora a hora a que chegam, para ${TELEFON}. Obrigado.`,
   sv: `Hej, vi har fortfarande ingen ankomsttid från er, och ni svarar inte på våra meddelanden. Om ni inte hör av er och inte kommer före 20:00, räknar vi bokningen som utebliven ankomst (no-show) och vistelsen förfaller. Skriv till oss genast vilken tid ni kommer, till ${TELEFON}. Tack.`,
   hu: `Jó napot, még mindig nincs meg az érkezés ideje, és nem válaszolnak az üzeneteinkre. Ha nem jelentkeznek, és 20:00-ig nem érkeznek meg, a foglalást meg nem érkezésnek (no-show) vesszük, és a tartózkodás elvész. Írják meg azonnal, hánykor érkeznek, a ${TELEFON} számra. Köszönjük.`,
 };

@@ -76,6 +76,7 @@ export function greetingLine(
       hu: "Jó napot,",
       fr: "Bonjour,",
       it: "Buongiorno,",
+      pt: 'Olá,',
     },
     lang,
   );
@@ -107,6 +108,7 @@ const subjectL: LText = {
   hu: "FONTOS · Az érkezési útmutató, enélkül nem tudnak parkolni és bejutni",
   fr: "IMPORTANT · Votre guide d’arrivée, sans lui vous ne pourrez ni vous garer ni entrer",
   it: "IMPORTANTE · La vostra guida all’arrivo, senza di essa non potete parcheggiare né entrare",
+  pt: "IMPORTANTE · O vosso guia de chegada, sem ele não podem estacionar nem entrar",
 };
 
 /** Předměty průvodce ve všech jazycích. Podle nich poznáme odpověď hosta. */
@@ -133,6 +135,7 @@ const introBodyL: LText = {
   hu: 'készítettünk egy rövid érkezési útmutatót. Nyissák meg az útmutatót, és írják be, hánykor érkeznek. Utána megjelenik az út hozzánk, a parkolás és a kapu. A belépési kódok akkor jelennek meg benne, amikor az apartmant személyesen átadjuk. Hogy tudják, hova menjenek, és mit csináljanak az érkezés után.',
   fr: "Nous vous avons préparé un court guide d’arrivée. Ouvrez le guide et indiquez à quelle heure vous arriverez. Vous verrez ensuite le chemin jusqu’à nous, le parking et le portail. Les codes d’entrée n’y apparaîtront qu’après la remise de l’appartement en personne. Ainsi, vous saurez où aller et quoi faire à votre arrivée.",
   it: "Abbiamo preparato per voi una breve guida all’arrivo. Apritela e indicate a che ora arriverete. Poi vedrete la strada per arrivare da noi, il parcheggio e il cancello. I codici di ingresso vi compariranno solo dopo la consegna dell’appartamento di persona. Così saprete dove andare e cosa fare all’arrivo.",
+  pt: 'Preparámos um pequeno guia de chegada para vocês. Abram o guia e indiquem a que horas chegam. Depois vão ver o caminho até nós, o estacionamento e o portão. Os códigos de entrada só aparecem nele depois de vos entregarmos o apartamento pessoalmente. Assim sabem para onde ir e o que fazer depois de chegarem.',
 };
 
 /** Nad tlačítkem. Čas příjezdu, ať host nečeká před domem. */
@@ -148,6 +151,7 @@ const casPrijezduL: LText = {
   hu: "A legfontosabb, hogy írják meg, hánykor érkeznek. Az apartmant személyesen adjuk át, és nem kell ránk várniuk. Elég egy SMS vagy WhatsApp a +420 604 692 573 számra.",
   fr: "Le plus important est de nous écrire l’heure de votre arrivée. Nous vous remettons l’appartement en personne et vous n’aurez pas à nous attendre. Un SMS ou un WhatsApp au +420 604 692 573 suffit.",
   it: "La cosa più importante è che ci scriviate l’orario del vostro arrivo. Vi consegniamo l’appartamento di persona e non dovrete aspettarci. Basta un SMS o un WhatsApp al +420 604 692 573.",
+  pt: 'O mais importante é escreverem-nos a hora a que chegam. Entregamos o apartamento pessoalmente e vocês não ficam à nossa espera. Basta uma SMS ou WhatsApp para +420 604 692 573.',
 };
 
 const casSmsL: LText = {
@@ -162,6 +166,7 @@ const casSmsL: LText = {
   hu: "SMS küldése",
   fr: "Envoyer un SMS",
   it: "Inviare un SMS",
+  pt: 'Enviar uma SMS',
 };
 
 const casWhatsappL: LText = {
@@ -176,6 +181,7 @@ const casWhatsappL: LText = {
   hu: "Írás WhatsAppon",
   fr: "Écrire sur WhatsApp",
   it: "Scrivere su WhatsApp",
+  pt: 'Mensagem no WhatsApp',
 };
 
 /**
@@ -199,6 +205,7 @@ const uvodNovaL: LText = {
   hu: 'elküldjük az érkezési útmutatót. Csak az önök apartmanjához szól, és benne megtalálják az utat hozzánk, a parkolást és a kaput.',
   fr: "nous vous envoyons le guide d’arrivée. Il est uniquement pour votre appartement et vous y trouverez le chemin jusqu’à nous, le parking et le portail.",
   it: "vi inviamo la guida all’arrivo. È solo per il vostro appartamento e vi trovate la strada per arrivare da noi, il parcheggio e il cancello.",
+  pt: 'enviamos-vos o guia de chegada. É só para o vosso apartamento e nele encontram o caminho até nós, o estacionamento e o portão.',
 };
 
 /** Výrazný tučný box. Tlačítka SMS a WhatsApp v něm nejsou. */
@@ -214,6 +221,7 @@ const duleziteNovaL: LText = {
   hu: 'A legfontosabb: az útmutatóban ott várnak a ház és az apartman belépő PIN-kódjai. Hogy elérjék őket, nyissák meg az útmutatót, válasszák ki az időt és az érkezés módját, és erősítsék meg a szabályokat. Egy perc.',
   fr: "Le plus important : vos codes PIN d’entrée pour la maison et l’appartement vous attendent dans votre guide. Pour y accéder, ouvrez le guide, choisissez l’heure et le mode d’arrivée, et confirmez les règles. Cela prend une minute.",
   it: "La cosa più importante: i vostri codici PIN di ingresso per la casa e l’appartamento vi aspettano nella guida. Per vederli, aprite la guida, scegliete l’orario e il modo di arrivo e confermate le regole. Ci vuole un minuto.",
+  pt: 'O mais importante: os códigos PIN de entrada da casa e do apartamento esperam por vocês no guia. Para os ver, abram o guia, escolham a hora e a forma de chegada e confirmem as regras. Demora um minuto.',
 };
 
 const dumNovaL: LText = {
@@ -228,6 +236,7 @@ const dumNovaL: LText = {
   hu: 'A VIVIEN egy kis családi ház, a vendégekről mi magunk gondoskodunk, recepció és idegenek nélkül. Az apartmant személyesen adjuk át, mindent megmutatunk, és utána megkapják a PIN-kódokat. Ha tudjuk, mikor érkeznek, mi várunk önökre.',
   fr: "VIVIEN est une petite maison familiale et nous nous occupons nous-mêmes de nos hôtes, sans réception ni personnel extérieur. Nous vous remettons l’appartement en personne, vous montrons tout, puis vous recevez les codes PIN. Quand nous savons quand vous arrivez, c’est nous qui vous attendons.",
   it: "VIVIEN è una piccola casa di famiglia e ci occupiamo noi stessi degli ospiti, senza reception né personale esterno. Vi consegniamo l’appartamento di persona, vi mostriamo tutto e poi ricevete i codici PIN. Quando sappiamo a che ora arrivate, siamo noi ad aspettare voi.",
+  pt: 'A VIVIEN é uma pequena casa de família e tratamos nós mesmos dos hóspedes, sem receção e sem pessoal externo. Entregamos o apartamento pessoalmente, mostramos-vos tudo e só depois recebem os códigos PIN. Quando sabemos a que horas chegam, somos nós que vos esperamos.',
 };
 
 const checkinNovaL: LText = {
@@ -242,6 +251,7 @@ const checkinNovaL: LText = {
   hu: 'A bejelentkezés 14:00-tól 20:00-ig tart. A későbbi érkezés felár ellenében lehetséges.',
   fr: "L’arrivée se fait de 14:00 à 20:00. Une arrivée plus tardive entraîne un supplément.",
   it: "Il check-in è dalle 14:00 alle 20:00. Un arrivo più tardi comporta un supplemento.",
+  pt: 'O check-in é das 14:00 às 20:00. Uma chegada mais tarde tem suplemento.',
 };
 
 /** CTA nápověda (v HTML tučně). Jen stará verze mailu. */
@@ -257,6 +267,7 @@ const introOpenL: LText = {
   hu: "Nyissák meg az alábbi gombbal.",
   fr: "Ouvrez-le avec le bouton ci-dessous.",
   it: "Apritela con il pulsante qui sotto.",
+  pt: 'Abram-no com o botão abaixo.',
 };
 
 /** Staré české věty. Ať jdou vrátit, i když se skládá nová verze. */
@@ -278,6 +289,7 @@ const stayL: LText = {
   hu: "A tartózkodásuk",
   fr: "Votre séjour",
   it: "Il vostro soggiorno",
+  pt: 'A vossa estadia',
 };
 
 const datesL: LText = {
@@ -292,6 +304,7 @@ const datesL: LText = {
   hu: "Dátumok",
   fr: "Dates",
   it: "Date",
+  pt: 'Datas',
 };
 
 const nightsL: LText = {
@@ -306,6 +319,7 @@ const nightsL: LText = {
   hu: "Éjszakák",
   fr: "Nuits",
   it: "Notti",
+  pt: 'Noites',
 };
 
 const guestsL: LText = {
@@ -320,6 +334,7 @@ const guestsL: LText = {
   hu: "Vendégek",
   fr: "Personnes",
   it: "Ospiti",
+  pt: 'Hóspedes',
 };
 
 const openGuideL: LText = {
@@ -334,6 +349,7 @@ const openGuideL: LText = {
   hu: "Útmutató megnyitása",
   fr: "Ouvrir le guide",
   it: "Apri la guida",
+  pt: 'Abrir o guia',
 };
 
 /** Problém: nejdřív majitel, pak Nikol (číslo v podpisu). */
@@ -349,6 +365,7 @@ const helpL: LText = {
   hu: "Ha valami nem működik, hívják a +420 604 692 573 számot. Ha nem érik el, hívják Nikolt.",
   fr: "Si quelque chose ne fonctionne pas, appelez le +420 604 692 573. Si vous n’arrivez pas à nous joindre, appelez Nikol.",
   it: "Se qualcosa non funziona, chiamate il +420 604 692 573. Se non riuscite a contattarci, chiamate Nikol.",
+  pt: 'Se algo não funcionar, liguem para +420 604 692 573. Se não conseguirem falar connosco, liguem à Nikol.',
 };
 
 const familyL: LText = {
@@ -363,6 +380,7 @@ const familyL: LText = {
   hu: "Nikol és a VIVIEN család",
   fr: "Nikol et la famille VIVIEN",
   it: "Nikol e la famiglia VIVIEN",
+  pt: 'Nikol & a família VIVIEN',
 };
 
 const closingL: LText = {
@@ -377,6 +395,7 @@ const closingL: LText = {
   hu: "Üdvözlettel",
   fr: "Cordialement",
   it: "Cordiali saluti",
+  pt: 'Com os melhores cumprimentos',
 };
 
 /** Úplně na konci mailu: odkaz na veřejný web ({{WEB}} = URL podle jazyka). */
@@ -392,6 +411,7 @@ const webTipL: LText = {
   hu: "További tippek a tartózkodáshoz a {{WEB}} oldalon vannak. Hol egyenek, hova menjenek kirándulni, mi történik a városban, és a felfedező játék Budějovicében.",
   fr: "D’autres conseils pour votre séjour sont sur {{WEB}}. Où manger, où partir en excursion, ce qui se passe en ville, et le jeu de découverte de Budweis.",
   it: "Altri consigli per il soggiorno li trovate su {{WEB}}. Dove mangiare, dove andare in gita, cosa succede in città e il gioco alla scoperta di Budweis.",
+  pt: 'Mais dicas para a vossa estadia em {{WEB}}. Onde comer, para onde ir num passeio de um dia, o que há na cidade e o jogo de descoberta de Budweis.',
 };
 
 const psApartmanyL: LText = {
@@ -406,6 +426,7 @@ const psApartmanyL: LText = {
   hu: "U.i. Öt apartmanunk van, mindegyik más hangulatú. Sok vendég nem tudja ezt. Amikor a következő tartózkodást tervezik, hangulat szerint választhatnak. {{QUIZ}}",
   fr: "P.S. Nous avons cinq appartements, chacun avec une ambiance différente. Beaucoup d’hôtes ne le savent pas. Lors de votre prochain séjour, vous pourrez choisir selon votre humeur. {{QUIZ}}",
   it: "P.S. Abbiamo cinque appartamenti, ognuno con un’atmosfera diversa. Molti ospiti non lo sanno. Quando pianificherete un altro soggiorno, potrete scegliere in base all’umore. {{QUIZ}}",
+  pt: 'P.S. Temos cinco apartamentos, cada um com um ambiente diferente. Muitos hóspedes não sabem disso. Quando planearem outra estadia, podem escolher consoante o ambiente. {{QUIZ}}',
 };
 
 const psCtaL: LText = {
@@ -420,13 +441,14 @@ const psCtaL: LText = {
   hu: "Melyik apartman illene önökhöz?",
   fr: "Quel appartement vous conviendrait ?",
   it: "Quale appartamento fa per voi?",
+  pt: 'Que apartamento combina convosco?',
 };
 
 function publicSiteUrl(lang: GuideLang): string {
   const base = 'https://vivienapartments.cz';
   if (lang === 'cs') return `${base}/`;
   if (lang === 'zh-Hant') return `${base}/zh/`;
-  if (lang === 'sv' || lang === 'hu') return `${base}/en/`;
+  if (lang === 'sv' || lang === 'hu' || lang === 'pt') return `${base}/en/`;
   if (lang === 'en' || lang === 'de' || lang === 'pl' || lang === 'uk' || lang === 'es' || lang === 'fr' || lang === 'it') {
     return `${base}/${lang}/`;
   }
@@ -853,6 +875,7 @@ const upominkaPredmetL: LText = {
   hu: 'A belépő PIN-kódjaik várják önöket',
   fr: "Vos codes PIN d’entrée vous attendent",
   it: "I vostri codici PIN di ingresso vi aspettano",
+  pt: 'Os vossos códigos PIN de entrada esperam por vocês',
 };
 
 /** Upomínka den předem. Sama se neposílá, dokud na to není samostatný běh. */

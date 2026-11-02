@@ -33,7 +33,8 @@
         "hu": "Autóval jönnek? Írjanak nekünk azonnal",
         "es": "¿Vienen en coche? Escríbannos enseguida",
         "fr": "Vous venez en voiture ? Écrivez-nous tout de suite",
-        "it": "Arrivate in auto? Scriveteci subito"
+        "it": "Arrivate in auto? Scriveteci subito",
+        "pt": "Vêm de carro? Escrevam-nos já"
       },
       "poznamka": "Úplně nahoře v e-mailu po check-inu, na osobní stránce i v ranní připomínce. Výrazně (barevný rámeček).",
       "kroky": [
@@ -59,7 +60,8 @@
             "hu": "Autóval jönnek? Írjanak nekünk azonnal",
             "es": "¿Vienen en coche? Escríbannos enseguida",
             "fr": "Vous venez en voiture ? Écrivez-nous tout de suite",
-            "it": "Arrivate in auto? Scriveteci subito"
+            "it": "Arrivate in auto? Scriveteci subito",
+            "pt": "Vêm de carro? Escrevam-nos já"
           },
           "text": {
             "cs": "Parkovací stání vám zajistíme, jen když nám co nejdříve pošlete SMS nebo zprávu na číslo +420 604 692 573. Nejlépe hned teď. Ve zprávě uveďte",
@@ -72,7 +74,8 @@
             "hu": "Parkolóhelyet csak akkor tudunk foglalni, ha minél hamarabb SMS-t küldenek a +420 604 692 573 számra. Legjobb, ha azonnal. Az üzenetben adják meg",
             "es": "El sitio de aparcamiento solo se lo reservamos si nos envían un SMS al +420 604 692 573 lo antes posible. Mejor ahora mismo. En el mensaje indiquen",
             "fr": "Nous ne pouvons vous réserver une place de parking que si vous nous envoyez au plus vite un SMS au +420 604 692 573. Idéalement dès maintenant. Dans le message, indiquez",
-            "it": "Possiamo riservarvi un posto auto solo se ci mandate al più presto un SMS al +420 604 692 573. Meglio subito. Nel messaggio indicate"
+            "it": "Possiamo riservarvi un posto auto solo se ci mandate al più presto un SMS al +420 604 692 573. Meglio subito. Nel messaggio indicate",
+            "pt": "Só podemos reservar-vos um lugar de estacionamento se nos enviarem uma SMS ou uma mensagem para o número +420 604 692 573 o mais depressa possível. O melhor é fazê-lo já. Na mensagem indiquem"
           },
           "body": [
             {
@@ -86,7 +89,8 @@
               "hu": "hogy parkolóhelyet szeretnének,",
               "es": "que quieren un sitio de aparcamiento,",
               "fr": "que vous souhaitez une place de parking,",
-              "it": "che desiderate un posto auto,"
+              "it": "che desiderate un posto auto,",
+              "pt": "que querem um lugar de estacionamento,"
             },
             {
               "cs": "telefonní číslo, ze kterého budete otevírat bránu parkoviště,",
@@ -99,7 +103,8 @@
               "hu": "a telefonszámot, amellyel a parkoló kapuját nyitják,",
               "es": "el número de teléfono con el que abrirán la barrera del aparcamiento,",
               "fr": "le numéro de téléphone avec lequel vous ouvrirez le portail du parking,",
-              "it": "il numero di telefono con cui aprirete il cancello del parcheggio,"
+              "it": "il numero di telefono con cui aprirete il cancello del parcheggio,",
+              "pt": "o número de telefone que vão usar para abrir o portão do parque de estacionamento,"
             },
             {
               "cs": "registrační značku (SPZ) vašeho auta.",
@@ -112,7 +117,8 @@
               "hu": "az autó rendszámát.",
               "es": "la matrícula del coche.",
               "fr": "la plaque d’immatriculation de votre voiture.",
-              "it": "la targa della vostra auto."
+              "it": "la targa della vostra auto.",
+              "pt": "a matrícula do vosso carro."
             }
           ],
           "zaver": {
@@ -126,7 +132,8 @@
             "hu": "A számot előre fel kell vinnünk a kapuba, ezért ezt nem lehet az utolsó pillanatra hagyni. E nélkül az üzenet nélkül sajnos nem tudunk helyet adni.",
             "es": "Su número hay que registrarlo antes en el sistema de la barrera, así que no se puede dejar para el último momento. Sin este mensaje, el sitio de aparcamiento no se lo podemos dar.",
             "fr": "Nous devons enregistrer votre numéro à l’avance dans le système du portail, ce n’est donc pas possible à la dernière minute. Sans ce message, nous ne pouvons malheureusement pas vous fournir de place de parking.",
-            "it": "Dobbiamo registrare in anticipo il vostro numero nel sistema del cancello, quindi non si può fare all’ultimo momento. Senza questo messaggio purtroppo non possiamo garantirvi il posto auto."
+            "it": "Dobbiamo registrare in anticipo il vostro numero nel sistema del cancello, quindi non si può fare all’ultimo momento. Senza questo messaggio purtroppo non possiamo garantirvi il posto auto.",
+            "pt": "Temos de registar o vosso número no sistema do portão com antecedência, por isso não pode ficar para a última hora. Sem esta mensagem, infelizmente não podemos garantir-vos o lugar de estacionamento."
           }
         }
       ]
@@ -144,7 +151,8 @@
         "hu": "Érkezés a házhoz",
         "es": "Llegada a la casa",
         "fr": "Arrivée à la maison",
-        "it": "Arrivo alla casa"
+        "it": "Arrivo alla casa",
+        "pt": "Chegada à casa"
       },
       "apartmany": [
         "V1",
@@ -186,7 +194,8 @@
         "hu": "A parkoló kapuja",
         "es": "Barrera del aparcamiento",
         "fr": "Portail du parking",
-        "it": "Cancello del parcheggio"
+        "it": "Cancello del parcheggio",
+        "pt": "Portão do parque de estacionamento"
       },
       "apartmany": [
         "V1",
@@ -218,7 +227,8 @@
             "hu": "Amikor a kapu nyitva van",
             "es": "Cuándo está abierta la barrera",
             "fr": "Quand le portail est ouvert",
-            "it": "Quando il cancello è aperto"
+            "it": "Quando il cancello è aperto",
+            "pt": "Quando o portão está aberto"
           },
           "text": {
             "cs": "Ve všední dny (pondělí až pátek) je brána otevřená od 6:00 do 18:00. Večer, v noci a o víkendu celý den je zavřená. Otevřete si ji telefonním hovorem na číslo {{BRANA_TELEFON}}. Hovor nikdo nepřijme. Ozve se obsazovací tón a brána se začne otevírat.",
@@ -231,7 +241,8 @@
             "hu": "Hétköznap (hétfőtől péntekig) a kapu 6:00-tól 18:00-ig nyitva van. Este, éjjel és hétvégén egész nap zárva. Rendes hívással nyitják, a {{BRANA_TELEFON}} számon. Senki nem veszi fel. Foglalt jelzést hallanak, és a kapu nyílni kezd.",
             "es": "De lunes a viernes la barrera está abierta de 6:00 a 18:00. Después de esa hora, por la noche y todo el fin de semana está cerrada. La abren con una llamada al {{BRANA_TELEFON}}. Nadie contesta. Oirán tono de ocupado y la barrera empezará a abrirse.",
             "fr": "En semaine (du lundi au vendredi), le portail est ouvert de 6:00 à 18:00. Le soir, la nuit et toute la journée le week-end, il est fermé. Vous l’ouvrez en appelant le {{BRANA_TELEFON}}. Personne ne répondra. Vous entendrez une tonalité occupée et le portail commencera à s’ouvrir.",
-            "it": "Nei giorni feriali (dal lunedì al venerdì) il cancello è aperto dalle 6:00 alle 18:00. La sera, di notte e tutto il giorno nel fine settimana è chiuso. Lo aprite con una telefonata al {{BRANA_TELEFON}}. Nessuno risponde. Sentirete il segnale di occupato e il cancello inizierà ad aprirsi."
+            "it": "Nei giorni feriali (dal lunedì al venerdì) il cancello è aperto dalle 6:00 alle 18:00. La sera, di notte e tutto il giorno nel fine settimana è chiuso. Lo aprite con una telefonata al {{BRANA_TELEFON}}. Nessuno risponde. Sentirete il segnale di occupato e il cancello inizierà ad aprirsi.",
+            "pt": "Nos dias úteis (de segunda a sexta-feira) o portão está aberto das 6:00 às 18:00. Ao fim da tarde, à noite e durante todo o fim de semana está fechado. Abram-no com uma chamada telefónica para {{BRANA_TELEFON}}. Ninguém atende. Vão ouvir o sinal de ocupado e o portão começa a abrir."
           },
           "stav": "hotovo"
         },
@@ -257,7 +268,8 @@
             "hu": "Hogy a kapu kinyíljon",
             "es": "Para que se abra la barrera",
             "fr": "Pour que le portail s’ouvre",
-            "it": "Perché il cancello si apra"
+            "it": "Perché il cancello si apra",
+            "pt": "Para o portão abrir"
           },
           "body": [
             {
@@ -271,7 +283,8 @@
               "hu": "Arról a számról hívjanak, amelyet előre megadtak. Ha a telefonban két SIM van, arról hívjanak, amelyiken ez a szám van.",
               "es": "Llamen desde el número que nos dieron antes. Si el teléfono tiene dos tarjetas SIM, llamen desde la que tiene ese número.",
               "fr": "Appelez depuis le numéro que vous nous avez communiqué à l’avance. Si votre téléphone a deux cartes SIM, appelez depuis celle qui a ce numéro.",
-              "it": "Chiamate dal numero che ci avete comunicato in anticipo. Se il telefono ha due SIM, chiamate da quella con quel numero."
+              "it": "Chiamate dal numero che ci avete comunicato in anticipo. Se il telefono ha due SIM, chiamate da quella con quel numero.",
+              "pt": "Liguem do número de telefone que nos indicaram antecipadamente. Se o telemóvel tiver dois cartões SIM, liguem do cartão com esse número."
             },
             {
               "cs": "Volejte běžným telefonním hovorem, ne přes WhatsApp ani jinou aplikaci.",
@@ -284,7 +297,8 @@
               "hu": "Rendes hívást indítsanak, ne WhatsAppon vagy más alkalmazáson.",
               "es": "Hagan una llamada normal, no por WhatsApp ni por otra aplicación.",
               "fr": "Passez un appel téléphonique normal, pas via WhatsApp ni une autre application.",
-              "it": "Fate una normale telefonata, non tramite WhatsApp o altre app."
+              "it": "Fate una normale telefonata, non tramite WhatsApp o altre app.",
+              "pt": "Façam uma chamada normal, não pelo WhatsApp nem por outra aplicação."
             },
             {
               "cs": "Vaše číslo nesmí být skryté (vypněte skrývání čísla volajícího).",
@@ -297,7 +311,8 @@
               "hu": "A szám nem lehet rejtett (kapcsolják ki a rejtett számot).",
               "es": "El número no puede estar oculto (desactiven la ocultación de llamada).",
               "fr": "Votre numéro ne doit pas être masqué (désactivez le masquage du numéro).",
-              "it": "Il vostro numero non deve essere nascosto (disattivate l’occultamento del numero)."
+              "it": "Il vostro numero non deve essere nascosto (disattivate l’occultamento del numero).",
+              "pt": "O vosso número não pode estar oculto (desativem o bloqueio da identificação de chamadas)."
             }
           ],
           "stav": "hotovo"
@@ -324,7 +339,8 @@
             "hu": "A kapu nem nyílik?",
             "es": "¿La barrera no se abre?",
             "fr": "Le portail ne s’ouvre pas ?",
-            "it": "Il cancello non si apre?"
+            "it": "Il cancello non si apre?",
+            "pt": "O portão não abre?"
           },
           "text": {
             "cs": "Zavolejte nám na +420 604 692 573. Pokud se nedovoláte, volejte Nikol na +420 702 153 573.",
@@ -337,7 +353,8 @@
             "hu": "Hívjanak minket a +420 604 692 573 számon. Ha nem érnek el, hívják Nikolt a +420 702 153 573 számon.",
             "es": "Llámennos al +420 604 692 573. Si no contestamos, llamen a Nikol al +420 702 153 573.",
             "fr": "Appelez-nous au +420 604 692 573. Si vous n’arrivez pas à nous joindre, appelez Nikol au +420 702 153 573.",
-            "it": "Chiamateci al +420 604 692 573. Se non riuscite a contattarci, chiamate Nikol al +420 702 153 573."
+            "it": "Chiamateci al +420 604 692 573. Se non riuscite a contattarci, chiamate Nikol al +420 702 153 573.",
+            "pt": "Liguem-nos para +420 604 692 573. Se não conseguirem falar connosco, liguem à Nikol para +420 702 153 573."
           }
         }
       ],
@@ -356,7 +373,8 @@
         "hu": "Út a helyükhöz",
         "es": "Camino hasta su plaza",
         "fr": "Chemin jusqu’à votre place",
-        "it": "Percorso fino al vostro posto auto"
+        "it": "Percorso fino al vostro posto auto",
+        "pt": "Caminho até ao vosso lugar"
       },
       "apartmany": [
         "V1",
@@ -384,7 +402,8 @@
             "hu": "A parkoló áttekintése",
             "es": "Vista del aparcamiento",
             "fr": "Plan du parking",
-            "it": "Pianta del parcheggio"
+            "it": "Pianta del parcheggio",
+            "pt": "Vista geral do parque de estacionamento"
           },
           "text": {
             "cs": "",
@@ -394,7 +413,8 @@
             "uk": "",
             "zh-Hant": "",
             "sv": "",
-            "hu": ""
+            "hu": "",
+            "pt": ""
           },
           "stav": "hotovo",
           "poznamka": "Mapa má zapečený český text – v ostatních jazycích ponechat, popisek je v textu kroků."
@@ -416,7 +436,8 @@
             "hu": "A parkoló áttekintése",
             "es": "Vista del aparcamiento",
             "fr": "Plan du parking",
-            "it": "Pianta del parcheggio"
+            "it": "Pianta del parcheggio",
+            "pt": "Vista geral do parque de estacionamento"
           },
           "text": {
             "cs": "",
@@ -426,7 +447,8 @@
             "uk": "",
             "zh-Hant": "",
             "sv": "",
-            "hu": ""
+            "hu": "",
+            "pt": ""
           },
           "stav": "hotovo"
         },
@@ -447,7 +469,8 @@
             "hu": "A parkoló áttekintése",
             "es": "Vista del aparcamiento",
             "fr": "Plan du parking",
-            "it": "Pianta del parcheggio"
+            "it": "Pianta del parcheggio",
+            "pt": "Vista geral do parque de estacionamento"
           },
           "text": {
             "cs": "",
@@ -457,7 +480,8 @@
             "uk": "",
             "zh-Hant": "",
             "sv": "",
-            "hu": ""
+            "hu": "",
+            "pt": ""
           },
           "stav": "hotovo"
         },
@@ -478,7 +502,8 @@
             "hu": "A parkoló áttekintése",
             "es": "Vista del aparcamiento",
             "fr": "Plan du parking",
-            "it": "Pianta del parcheggio"
+            "it": "Pianta del parcheggio",
+            "pt": "Vista geral do parque de estacionamento"
           },
           "text": {
             "cs": "",
@@ -488,7 +513,8 @@
             "uk": "",
             "zh-Hant": "",
             "sv": "",
-            "hu": ""
+            "hu": "",
+            "pt": ""
           },
           "stav": "hotovo"
         },
@@ -509,7 +535,8 @@
             "hu": "A parkoló áttekintése",
             "es": "Vista del aparcamiento",
             "fr": "Plan du parking",
-            "it": "Pianta del parcheggio"
+            "it": "Pianta del parcheggio",
+            "pt": "Vista geral do parque de estacionamento"
           },
           "text": {
             "cs": "",
@@ -519,7 +546,8 @@
             "uk": "",
             "zh-Hant": "",
             "sv": "",
-            "hu": ""
+            "hu": "",
+            "pt": ""
           },
           "stav": "hotovo"
         },
@@ -544,7 +572,8 @@
             "hu": "Érkezés az utcáról",
             "es": "Llegada desde la calle",
             "fr": "Arrivée depuis la rue",
-            "it": "Arrivo dalla strada"
+            "it": "Arrivo dalla strada",
+            "pt": "Chegada pela rua"
           },
           "text": {
             "cs": "Orientační bod je roh budovy s nápisem LIBRA ELECTRONICS (tu vidíte z čela). Vjezd na parkoviště je u hnědého plotu s cedulí „Parkovací místa“.",
@@ -557,7 +586,8 @@
             "hu": "A tájékozódási pont a ház sarka a LIBRA ELECTRONICS táblával (szemből). A parkoló bejárata a barna kerítésnél van, a „Parkovací místa“ (parkoló) táblánál.",
             "es": "La referencia es la esquina del edificio con el letrero LIBRA ELECTRONICS (de frente). La entrada al aparcamiento está junto a la valla marrón con el cartel „Parkovací místa“ (aparcamiento).",
             "fr": "Votre repère est l’angle du bâtiment avec l’enseigne LIBRA ELECTRONICS (visible de face). L’entrée du parking se trouve près de la clôture marron avec le panneau « Parkovací místa » (parking).",
-            "it": "Il punto di riferimento è l’angolo dell’edificio con l’insegna LIBRA ELECTRONICS (visibile di fronte). L’ingresso del parcheggio è presso la recinzione marrone con il cartello „Parkovací místa“ (parcheggio)."
+            "it": "Il punto di riferimento è l’angolo dell’edificio con l’insegna LIBRA ELECTRONICS (visibile di fronte). L’ingresso del parcheggio è presso la recinzione marrone con il cartello „Parkovací místa“ (parcheggio).",
+            "pt": "O ponto de referência é a esquina do edifício com o letreiro LIBRA ELECTRONICS (vista de frente). A entrada do parque de estacionamento fica junto à vedação castanha com a placa „Parkovací místa“ (lugares de estacionamento)."
           },
           "stav": "hotovo"
         },
@@ -581,7 +611,8 @@
             "hu": "Az átjáró felé",
             "es": "Hacia el pasaje",
             "fr": "Vers le passage",
-            "it": "Verso il passaggio"
+            "it": "Verso il passaggio",
+            "pt": "Em direção à passagem"
           },
           "text": {
             "cs": "Vjeďte do dvora a pokračujte k průjezdu pod kulatou cedulí NuArt (vpravo je zeď s nápisem ELECTRONICS).",
@@ -594,7 +625,8 @@
             "hu": "Hajtsanak be az udvarra, és menjenek tovább az átjáró felé, a kerek NuArt tábla alatt (az ELECTRONICS táblás fal jobb kéz felől van).",
             "es": "Entren al patio y sigan hacia el pasaje bajo el rótulo redondo NuArt (la pared con el letrero ELECTRONICS queda a su derecha).",
             "fr": "Entrez dans la cour et continuez vers le passage sous l’enseigne ronde NuArt (le mur avec l’enseigne ELECTRONICS est à votre droite).",
-            "it": "Entrate nel cortile e proseguite verso il passaggio sotto l’insegna rotonda NuArt (il muro con l’insegna ELECTRONICS è alla vostra destra)."
+            "it": "Entrate nel cortile e proseguite verso il passaggio sotto l’insegna rotonda NuArt (il muro con l’insegna ELECTRONICS è alla vostra destra).",
+            "pt": "Entrem no pátio e sigam em direção à passagem sob o letreiro redondo NuArt (à direita fica a parede com o letreiro ELECTRONICS)."
           },
           "stav": "hotovo"
         },
@@ -618,7 +650,8 @@
             "hu": "Hajtsanak át az átjárón",
             "es": "Atraviesen el pasaje",
             "fr": "Traversez le passage",
-            "it": "Attraversate il passaggio"
+            "it": "Attraversate il passaggio",
+            "pt": "Atravessem a passagem"
           },
           "text": {
             "cs": "Průjezdem projedete na druhou stranu. Brána má omezení výšky 3,3 m, pozor na výšku vozidla.",
@@ -631,7 +664,8 @@
             "hu": "Hajtsanak át az átjárón a túloldalra. A kapu magasságkorlátja 3,3 m. Figyeljenek az autó magasságára.",
             "es": "Atraviesen el pasaje hasta el otro lado. El límite de altura es de 3,3 m. Cuidado con la altura del vehículo.",
             "fr": "Traversez le passage jusqu’à l’autre côté. Le portail est limité à 3,3 m de hauteur. Attention à la hauteur de votre véhicule.",
-            "it": "Attraversate il passaggio fino all’altro lato. Il cancello ha un limite di altezza di 3,3 m. Fate attenzione all’altezza del veicolo."
+            "it": "Attraversate il passaggio fino all’altro lato. Il cancello ha un limite di altezza di 3,3 m. Fate attenzione all’altezza del veicolo.",
+            "pt": "Atravessem a passagem até ao outro lado. O portão tem um limite de altura de 3,3 m. Atenção à altura do veículo."
           },
           "stav": "hotovo",
           "poznamka": "V originále 'Tentokrát průjezdem…' – slovo 'Tentokrát' vypuštěno, protože na stránce nenavazuje na jiný list."
@@ -653,7 +687,8 @@
             "hu": "Az átjáró után enyhén jobbra",
             "es": "Después del pasaje, a la derecha",
             "fr": "Après le passage, serrez à droite",
-            "it": "Dopo il passaggio tenete la destra"
+            "it": "Dopo il passaggio tenete la destra",
+            "pt": "Depois da passagem, ligeiramente à direita"
           },
           "text": {
             "cs": "Za průjezdem se dejte jemně doprava. Parkovací stání jsou podél protější stěny.",
@@ -666,7 +701,8 @@
             "hu": "Az átjáró után enyhén jobbra tartsanak. A helyek a szemközti fal mentén vannak.",
             "es": "Después del pasaje, giren suavemente a la derecha. Las plazas están junto a la pared de enfrente.",
             "fr": "Après le passage, serrez légèrement à droite. Les places de parking sont le long du mur d’en face.",
-            "it": "Dopo il passaggio tenete leggermente la destra. I posti auto sono lungo il muro di fronte."
+            "it": "Dopo il passaggio tenete leggermente la destra. I posti auto sono lungo il muro di fronte.",
+            "pt": "Depois da passagem, virem ligeiramente à direita. Os lugares de estacionamento ficam ao longo da parede em frente."
           },
           "stav": "hotovo"
         },
@@ -687,7 +723,8 @@
             "hu": "A cél, a 14-es hely",
             "es": "Destino, plaza n.º 14",
             "fr": "Arrivée, place n° 14",
-            "it": "Arrivo, posto n. 14"
+            "it": "Arrivo, posto n. 14",
+            "pt": "Destino, lugar n.º 14"
           },
           "text": {
             "cs": "Vaše místo je zlaté „Gentle Harmony 14“ u zdi. Zaparkujte prosím pouze zde.",
@@ -700,7 +737,8 @@
             "hu": "A helyük a falnál lévő arany „Gentle Harmony 14“. Csak ide parkoljanak.",
             "es": "Su plaza es la dorada „Gentle Harmony 14“, junto a la pared. Aparquen solo aquí.",
             "fr": "Votre place est la place dorée « Gentle Harmony 14 » le long du mur. Merci de vous garer uniquement ici.",
-            "it": "Il vostro posto è quello dorato „Gentle Harmony 14“ lungo il muro. Parcheggiate solo qui, per favore."
+            "it": "Il vostro posto è quello dorato „Gentle Harmony 14“ lungo il muro. Parcheggiate solo qui, per favore.",
+            "pt": "O vosso lugar é o dourado „Gentle Harmony 14“, junto à parede. Estacionem apenas aqui."
           },
           "stav": "hotovo"
         },
@@ -721,7 +759,8 @@
             "hu": "Az átjáró után balra. A 25-ös hely",
             "es": "Después del pasaje, a la izquierda. Plaza n.º 25",
             "fr": "Après le passage, tournez à gauche. Place n° 25",
-            "it": "Dopo il passaggio girate a sinistra. Posto n. 25"
+            "it": "Dopo il passaggio girate a sinistra. Posto n. 25",
+            "pt": "Depois da passagem, à esquerda. Lugar n.º 25"
           },
           "text": {
             "cs": "Za průjezdem odbočte doleva. Vaše místo je podélné stání, první v pořadí (hned u rohu budovy), č. 25 „Golden Balance“ (zlaté). Zaparkujte prosím pouze zde.",
@@ -734,7 +773,8 @@
             "hu": "Az átjáró után forduljanak balra. A helyük hosszirányú, az első a sorban (közvetlenül a ház sarkánál), 25-ös „Golden Balance“ (arany). Csak ide parkoljanak.",
             "es": "Después del pasaje, giren a la izquierda. Su plaza es en línea, la primera de la fila (justo en la esquina del edificio), n.º 25 „Golden Balance“ (dorado). Aparquen solo aquí.",
             "fr": "Après le passage, tournez à gauche. Votre place est une place longitudinale, la première de la rangée (juste à l’angle du bâtiment), n° 25 « Golden Balance » (dorée). Merci de vous garer uniquement ici.",
-            "it": "Dopo il passaggio girate a sinistra. Il vostro posto è longitudinale, il primo della fila (proprio all’angolo dell’edificio), n. 25 „Golden Balance“ (dorato). Parcheggiate solo qui, per favore."
+            "it": "Dopo il passaggio girate a sinistra. Il vostro posto è longitudinale, il primo della fila (proprio all’angolo dell’edificio), n. 25 „Golden Balance“ (dorato). Parcheggiate solo qui, per favore.",
+            "pt": "Depois da passagem, virem à esquerda. O vosso lugar é em linha, o primeiro da fila (mesmo na esquina do edifício), n.º 25 „Golden Balance“ (dourado). Estacionem apenas aqui."
           },
           "stav": "hotovo"
         },
@@ -755,7 +795,8 @@
             "hu": "Az átjáró után balra. A 26-os hely",
             "es": "Después del pasaje, a la izquierda. Plaza n.º 26",
             "fr": "Après le passage, tournez à gauche. Place n° 26",
-            "it": "Dopo il passaggio girate a sinistra. Posto n. 26"
+            "it": "Dopo il passaggio girate a sinistra. Posto n. 26",
+            "pt": "Depois da passagem, à esquerda. Lugar n.º 26"
           },
           "text": {
             "cs": "Za průjezdem odbočte doleva. Vaše místo je podélné stání, druhé v pořadí (uprostřed, mezi 25 a 27), č. 26 „Evening Elegance“ (modré). Zaparkujte prosím pouze zde.",
@@ -768,7 +809,8 @@
             "hu": "Az átjáró után forduljanak balra. A helyük hosszirányú, a második a sorban (középen, a 25-ös és a 27-es között), 26-os „Evening Elegance“ (kék). Csak ide parkoljanak.",
             "es": "Después del pasaje, giren a la izquierda. Su plaza es en línea, la segunda de la fila (en el medio, entre la 25 y la 27), n.º 26 „Evening Elegance“ (azul). Aparquen solo aquí.",
             "fr": "Après le passage, tournez à gauche. Votre place est une place longitudinale, la deuxième de la rangée (au milieu, entre 25 et 27), n° 26 « Evening Elegance » (bleue). Merci de vous garer uniquement ici.",
-            "it": "Dopo il passaggio girate a sinistra. Il vostro posto è longitudinale, il secondo della fila (in mezzo, tra il 25 e il 27), n. 26 „Evening Elegance“ (blu). Parcheggiate solo qui, per favore."
+            "it": "Dopo il passaggio girate a sinistra. Il vostro posto è longitudinale, il secondo della fila (in mezzo, tra il 25 e il 27), n. 26 „Evening Elegance“ (blu). Parcheggiate solo qui, per favore.",
+            "pt": "Depois da passagem, virem à esquerda. O vosso lugar é em linha, o segundo da fila (ao meio, entre o 25 e o 27), n.º 26 „Evening Elegance“ (azul). Estacionem apenas aqui."
           },
           "stav": "hotovo"
         },
@@ -789,7 +831,8 @@
             "hu": "Az átjáró után balra. A 27-es hely",
             "es": "Después del pasaje, a la izquierda. Plaza n.º 27",
             "fr": "Après le passage, tournez à gauche. Place n° 27",
-            "it": "Dopo il passaggio girate a sinistra. Posto n. 27"
+            "it": "Dopo il passaggio girate a sinistra. Posto n. 27",
+            "pt": "Depois da passagem, à esquerda. Lugar n.º 27"
           },
           "text": {
             "cs": "Za průjezdem odbočte doleva. Vaše místo je podélné stání, třetí v pořadí, č. 27 „Noble Contrast“ (zelené). Zaparkujte prosím pouze zde.",
@@ -802,7 +845,8 @@
             "hu": "Az átjáró után forduljanak balra. A helyük hosszirányú, a harmadik a sorban, 27-es „Noble Contrast“ (zöld). Csak ide parkoljanak.",
             "es": "Después del pasaje, giren a la izquierda. Su plaza es en línea, la tercera de la fila, n.º 27 „Noble Contrast“ (verde). Aparquen solo aquí.",
             "fr": "Après le passage, tournez à gauche. Votre place est une place longitudinale, la troisième de la rangée, n° 27 « Noble Contrast » (verte). Merci de vous garer uniquement ici.",
-            "it": "Dopo il passaggio girate a sinistra. Il vostro posto è longitudinale, il terzo della fila, n. 27 „Noble Contrast“ (verde). Parcheggiate solo qui, per favore."
+            "it": "Dopo il passaggio girate a sinistra. Il vostro posto è longitudinale, il terzo della fila, n. 27 „Noble Contrast“ (verde). Parcheggiate solo qui, per favore.",
+            "pt": "Depois da passagem, virem à esquerda. O vosso lugar é em linha, o terceiro da fila, n.º 27 „Noble Contrast“ (verde). Estacionem apenas aqui."
           },
           "stav": "hotovo"
         },
@@ -823,7 +867,8 @@
             "hu": "Jobbra",
             "es": "Giren a la derecha",
             "fr": "Tournez à droite",
-            "it": "Girate a destra"
+            "it": "Girate a destra",
+            "pt": "Virem à direita"
           },
           "text": {
             "cs": "Průjezdem rovně dozadu neprojíždíte (podjezd s cedulí NuArt). Ještě před ním odbočte doprava, za roh budovy.",
@@ -836,7 +881,8 @@
             "hu": "Ne hajtsanak egyenesen hátra az átjárón (az aluljáró a NuArt táblával). Közvetlenül előtte forduljanak jobbra, a ház sarka körül.",
             "es": "No sigan recto hasta el fondo por el pasaje (el paso con el rótulo NuArt). Justo antes, giren a la derecha, en la esquina del edificio.",
             "fr": "Ne continuez pas tout droit vers le fond à travers le passage (le passage couvert avec l’enseigne NuArt). Juste avant, tournez à droite, au coin du bâtiment.",
-            "it": "Non proseguite dritti verso il fondo attraverso il passaggio (il sottopassaggio con l’insegna NuArt). Subito prima girate a destra, dietro l’angolo dell’edificio."
+            "it": "Non proseguite dritti verso il fondo attraverso il passaggio (il sottopassaggio con l’insegna NuArt). Subito prima girate a destra, dietro l’angolo dell’edificio.",
+            "pt": "Não sigam em frente até ao fundo pela passagem (a passagem inferior com o letreiro NuArt). Pouco antes, virem à direita, na esquina do edifício."
           },
           "stav": "hotovo"
         },
@@ -857,7 +903,8 @@
             "hu": "A kapu és a kuka mellett",
             "es": "Junto a la barrera y el contenedor",
             "fr": "Après le portail et le conteneur",
-            "it": "Oltre il cancello e il cassonetto"
+            "it": "Oltre il cancello e il cassonetto",
+            "pt": "Junto ao portão e ao contentor"
           },
           "text": {
             "cs": "Bránou s omezením výšky 3,3 m neprojíždíte. Míjíte kontejner a po pravé straně se otevře dlážděná plocha.",
@@ -870,7 +917,8 @@
             "hu": "Ne hajtsanak át a 3,3 m magasságkorlátos kapun. Menjenek el a kuka mellett, és jobbra megnyílik a köves rész.",
             "es": "No pasen por la barrera con el límite de altura de 3,3 m. Pasen el contenedor y a la derecha se abre una zona pavimentada.",
             "fr": "Ne passez pas par le portail limité à 3,3 m de hauteur. Dépassez le conteneur à déchets et l’aire pavée s’ouvre sur votre droite.",
-            "it": "Non passate dal cancello con il limite di altezza di 3,3 m. Superate il cassonetto dei rifiuti e alla vostra destra si apre l’area lastricata."
+            "it": "Non passate dal cancello con il limite di altezza di 3,3 m. Superate il cassonetto dei rifiuti e alla vostra destra si apre l’area lastricata.",
+            "pt": "Não passem pelo portão com limite de altura de 3,3 m. Passem pelo contentor do lixo e à direita abre-se a zona pavimentada."
           },
           "stav": "hotovo"
         },
@@ -891,7 +939,8 @@
             "hu": "Köves rész",
             "es": "Zona pavimentada",
             "fr": "Aire pavée",
-            "it": "Area lastricata"
+            "it": "Area lastricata",
+            "pt": "Zona pavimentada"
           },
           "text": {
             "cs": "Pokračujte po dlážděné (zámkové) ploše.",
@@ -904,7 +953,8 @@
             "hu": "Menjenek tovább a köves részen.",
             "es": "Sigan por la zona pavimentada.",
             "fr": "Continuez sur l’aire pavée.",
-            "it": "Proseguite sull’area lastricata."
+            "it": "Proseguite sull’area lastricata.",
+            "pt": "Continuem pela zona pavimentada."
           },
           "stav": "hotovo"
         },
@@ -925,7 +975,8 @@
             "hu": "A cél, a 43-as hely",
             "es": "Destino, plaza n.º 43",
             "fr": "Arrivée, place n° 43",
-            "it": "Arrivo, posto n. 43"
+            "it": "Arrivo, posto n. 43",
+            "pt": "Destino, lugar n.º 43"
           },
           "text": {
             "cs": "Po pravé straně uvidíte své místo č. 43 (u plotu s modrou šipkou). Zaparkujte prosím pouze zde.",
@@ -938,7 +989,8 @@
             "hu": "Jobbra látják a 43-as helyüket (a kerítésnél, a kék nyílnál). Csak ide parkoljanak.",
             "es": "A su derecha verán su plaza n.º 43 (junto a la valla con la flecha azul). Aparquen solo aquí.",
             "fr": "Sur votre droite, vous verrez votre place n° 43 (près de la clôture avec la flèche bleue). Merci de vous garer uniquement ici.",
-            "it": "Alla vostra destra vedrete il vostro posto n. 43 (presso la recinzione con la freccia blu). Parcheggiate solo qui, per favore."
+            "it": "Alla vostra destra vedrete il vostro posto n. 43 (presso la recinzione con la freccia blu). Parcheggiate solo qui, per favore.",
+            "pt": "À direita vão ver o vosso lugar n.º 43 (junto à vedação com a seta azul). Estacionem apenas aqui."
           },
           "stav": "hotovo"
         },
@@ -963,7 +1015,8 @@
             "hu": "Fontos",
             "es": "Importante",
             "fr": "Important",
-            "it": "Importante"
+            "it": "Importante",
+            "pt": "Importante"
           },
           "text": {
             "cs": "Parkujte prosím POUZE na svém přiděleném místě, stání č. {{STANI}}.",
@@ -976,7 +1029,8 @@
             "hu": "Csak a kijelölt helyre parkoljanak, ez a {{STANI}}. számú.",
             "es": "Aparquen solo en su plaza, el n.º {{STANI}}.",
             "fr": "Merci de vous garer UNIQUEMENT sur la place qui vous est attribuée, n° {{STANI}}.",
-            "it": "Parcheggiate SOLO nel posto che vi è stato assegnato, n. {{STANI}}."
+            "it": "Parcheggiate SOLO nel posto che vi è stato assegnato, n. {{STANI}}.",
+            "pt": "Estacionem APENAS no lugar que vos foi atribuído, n.º {{STANI}}."
           },
           "stav": "hotovo",
           "typ": "upozorneni"
@@ -996,7 +1050,8 @@
         "hu": "A parkolóból vissza a házhoz",
         "es": "Del aparcamiento de vuelta a la casa",
         "fr": "Du parking à la maison",
-        "it": "Dal parcheggio alla casa"
+        "it": "Dal parcheggio alla casa",
+        "pt": "Do parque de estacionamento de volta à casa"
       },
       "apartmany": [
         "V1",
@@ -1027,7 +1082,8 @@
         "hu": "WiFi",
         "es": "WiFi",
         "fr": "WiFi",
-        "it": "WiFi"
+        "it": "WiFi",
+        "pt": "WiFi"
       },
       "apartmany": [
         "V1",
@@ -1052,7 +1108,8 @@
           "hu": "WiFi-hozzáférés",
           "es": "Conexión WiFi",
           "fr": "Accès WiFi",
-          "it": "Accesso WiFi"
+          "it": "Accesso WiFi",
+          "pt": "Acesso WiFi"
         },
         "nad_nadpisem": {
           "cs": "Připojení k síti",
@@ -1065,7 +1122,8 @@
           "hu": "Csatlakozás a hálózathoz",
           "es": "Conexión a la red",
           "fr": "Connexion au réseau",
-          "it": "Connessione alla rete"
+          "it": "Connessione alla rete",
+          "pt": "Ligação à rede"
         },
         "ssid": {
           "cs": "Název sítě (SSID)",
@@ -1078,7 +1136,8 @@
           "hu": "Hálózat neve (SSID)",
           "es": "Nombre de la red (SSID)",
           "fr": "Nom du réseau (SSID)",
-          "it": "Nome della rete (SSID)"
+          "it": "Nome della rete (SSID)",
+          "pt": "Nome da rede (SSID)"
         },
         "heslo": {
           "cs": "Heslo",
@@ -1091,7 +1150,8 @@
           "hu": "Jelszó",
           "es": "Contraseña",
           "fr": "Mot de passe",
-          "it": "Password"
+          "it": "Password",
+          "pt": "Palavra-passe"
         },
         "zabezpeceni": {
           "cs": "Zabezpečení",
@@ -1104,7 +1164,8 @@
           "hu": "Biztonság",
           "es": "Seguridad",
           "fr": "Sécurité",
-          "it": "Sicurezza"
+          "it": "Sicurezza",
+          "pt": "Segurança"
         },
         "qr": {
           "cs": "Naskenujte pro přímé připojení",
@@ -1117,7 +1178,8 @@
           "hu": "Beolvasás a közvetlen csatlakozáshoz",
           "es": "Escaneen para conectarse",
           "fr": "Scannez pour vous connecter directement",
-          "it": "Scansionate per collegarvi direttamente"
+          "it": "Scansionate per collegarvi direttamente",
+          "pt": "Digitalizem para se ligarem diretamente"
         }
       }
     },
@@ -1134,7 +1196,8 @@
         "hu": "Út a kertbe",
         "es": "Cómo llegar al jardín",
         "fr": "Accès au jardin",
-        "it": "Come arrivare in giardino"
+        "it": "Come arrivare in giardino",
+        "pt": "Caminho até ao jardim"
       },
       "apartmany": [
         "V1",
@@ -1162,7 +1225,8 @@
             "hu": "Le a lépcsőn",
             "es": "Bajen las escaleras",
             "fr": "Descendez l’escalier",
-            "it": "Scendete le scale"
+            "it": "Scendete le scale",
+            "pt": "Escadas para baixo"
           },
           "text": {
             "cs": "Ze svého patra sejděte po schodech dolů do přízemí. Na konci chodby uvidíte prosklené dveře vedoucí do zahrady.",
@@ -1175,7 +1239,8 @@
             "hu": "Menjenek le a lépcsőn az emeletükről a földszintre. A folyosó végén látják a kertbe vezető üvegajtót.",
             "es": "Bajen las escaleras desde su planta hasta la planta baja. Al final del pasillo verán la puerta de cristal que da al jardín.",
             "fr": "Descendez l’escalier de votre étage jusqu’au rez-de-chaussée. Au bout du couloir, vous verrez la porte vitrée qui mène au jardin.",
-            "it": "Scendete le scale dal vostro piano fino al piano terra. In fondo al corridoio vedrete la porta a vetri che conduce al giardino."
+            "it": "Scendete le scale dal vostro piano fino al piano terra. In fondo al corridoio vedrete la porta a vetri che conduce al giardino.",
+            "pt": "Desçam as escadas do vosso piso até ao rés do chão. No fim do corredor vão ver a porta de vidro que dá para o jardim."
           },
           "stav": "hotovo"
         },
@@ -1198,7 +1263,8 @@
             "hu": "Üvegajtó",
             "es": "Puerta de cristal",
             "fr": "Porte vitrée",
-            "it": "Porta a vetri"
+            "it": "Porta a vetri",
+            "pt": "Porta de vidro"
           },
           "text": {
             "cs": "Prosklené dveře jsou na konci přízemní chodby. Na pravé straně vedle dveří je kódová klávesnice.",
@@ -1211,7 +1277,8 @@
             "hu": "Az üvegajtó a földszinti folyosó végén van. Az ajtótól jobbra van a billentyűzet.",
             "es": "La puerta de cristal está al final del pasillo de la planta baja. A la derecha, junto a la puerta, hay un teclado.",
             "fr": "La porte vitrée se trouve au bout du couloir du rez-de-chaussée. À droite de la porte, il y a un clavier.",
-            "it": "La porta a vetri è in fondo al corridoio del piano terra. A destra della porta c’è una tastiera."
+            "it": "La porta a vetri è in fondo al corridoio del piano terra. A destra della porta c’è una tastiera.",
+            "pt": "A porta de vidro fica no fim do corredor do rés do chão. À direita, junto à porta, há um teclado de código."
           },
           "stav": "hotovo"
         },
@@ -1234,7 +1301,8 @@
             "hu": "Üssék be a kódot",
             "es": "Introduzcan el código",
             "fr": "Saisissez le code",
-            "it": "Inserite il codice"
+            "it": "Inserite il codice",
+            "pt": "Introduzir o código"
           },
           "text": {
             "cs": "Zadejte kód na klávesnici a potvrďte. Dveře se odemknou a otevřou do zahrady.",
@@ -1247,7 +1315,8 @@
             "hu": "Üssék be a kódot a billentyűzeten, és erősítsék meg. Az ajtó kinyílik, és a kertbe vezet.",
             "es": "Introduzcan el código en el teclado y confírmenlo. La puerta se abrirá hacia el jardín.",
             "fr": "Saisissez le code sur le clavier et confirmez-le. La porte se déverrouille et s’ouvre sur le jardin.",
-            "it": "Inserite il codice sulla tastiera e confermatelo. La porta si sblocca e si apre sul giardino."
+            "it": "Inserite il codice sulla tastiera e confermatelo. La porta si sblocca e si apre sul giardino.",
+            "pt": "Introduzam o código no teclado e confirmem. A porta destranca e abre para o jardim."
           },
           "stav": "hotovo",
           "kod": {
@@ -1262,7 +1331,8 @@
               "hu": "Kert kódja",
               "es": "Código del jardín",
               "fr": "Code du jardin",
-              "it": "Codice del giardino"
+              "it": "Codice del giardino",
+              "pt": "Código do jardim"
             },
             "hodnota": "{{KOD_ZAHRADA}} + #"
           }
@@ -1286,7 +1356,8 @@
             "hu": "A kertben vannak",
             "es": "Ya están en el jardín",
             "fr": "Vous êtes dans le jardin",
-            "it": "Siete in giardino"
+            "it": "Siete in giardino",
+            "pt": "Estão no jardim"
           },
           "text": {
             "cs": "Dveře vedou do klidné zahrady. Je tu zeleň a posezení, stranou od ruchu města.",
@@ -1299,7 +1370,8 @@
             "hu": "Az ajtó egy csendes kertbe vezet. Van ott növényzet és ülőhely, távol a város zajától.",
             "es": "La puerta da a un jardín tranquilo. Hay plantas y sitio para sentarse, apartado del ruido de la ciudad.",
             "fr": "La porte mène à un jardin calme. Vous y trouverez de la verdure et des sièges, loin du bruit de la ville.",
-            "it": "La porta conduce a un giardino tranquillo. C’è verde e ci si può sedere, lontano dal rumore della città."
+            "it": "La porta conduce a un giardino tranquillo. C’è verde e ci si può sedere, lontano dal rumore della città.",
+            "pt": "A porta dá para um jardim sossegado. Há verde e lugares para sentar, longe do ruído da cidade."
           },
           "stav": "hotovo",
           "poznamka": "Originál: 'soukromé zahrady / private garden / privaten Garten' – zahrada je ale sdílená."
@@ -1323,7 +1395,8 @@
             "hu": "Csendes sarok a kertben",
             "es": "Un rincón tranquilo en el jardín",
             "fr": "Un coin calme dans le jardin",
-            "it": "Un angolo tranquillo in giardino"
+            "it": "Un angolo tranquillo in giardino",
+            "pt": "Um canto sossegado no jardim"
           },
           "text": {
             "cs": "",
@@ -1333,7 +1406,8 @@
             "uk": "",
             "zh-Hant": "",
             "sv": "",
-            "hu": ""
+            "hu": "",
+            "pt": ""
           },
           "stav": "hotovo",
           "typ": "zahrada_info",
@@ -1351,7 +1425,8 @@
                 "hu": "Pihenéshez",
                 "es": "Para descansar",
                 "fr": "Pour se détendre",
-                "it": "Per rilassarsi"
+                "it": "Per rilassarsi",
+                "pt": "Para descansar"
               },
               "nadpis": {
                 "cs": "Ráno i podvečer",
@@ -1364,7 +1439,8 @@
                 "hu": "Reggel és este",
                 "es": "Por la mañana y al atardecer",
                 "fr": "Matin et soir",
-                "it": "Mattina e sera"
+                "it": "Mattina e sera",
+                "pt": "De manhã e ao fim da tarde"
               },
               "text": {
                 "cs": "Ráno si tu dáte kávu, odpoledne sedíte ve stínu. Po dni ve městě je to dobré místo i na sklenku vína.",
@@ -1377,7 +1453,8 @@
                 "hu": "Reggel ihatnak itt egy kávét, délután árnyékban ülhetnek. Egy városi nap után egy pohár bornak is jó hely.",
                 "es": "Por la mañana pueden tomar un café aquí, por la tarde se sientan a la sombra. Después de un día en la ciudad también es un buen sitio para una copa de vino.",
                 "fr": "Le matin, vous pouvez y prendre un café, l’après-midi vous profitez de l’ombre. Après une journée en ville, c’est aussi un bon endroit pour un verre de vin.",
-                "it": "La mattina potete prendere un caffè, il pomeriggio sedervi all’ombra. Dopo una giornata in città è anche un bel posto per un bicchiere di vino."
+                "it": "La mattina potete prendere un caffè, il pomeriggio sedervi all’ombra. Dopo una giornata in città è anche un bel posto per un bicchiere di vino.",
+                "pt": "De manhã podem tomar aqui um café, à tarde sentam-se à sombra. Depois de um dia na cidade, é também um bom sítio para um copo de vinho."
               }
             },
             {
@@ -1392,7 +1469,8 @@
                 "hu": "Közös rész",
                 "es": "Espacio compartido",
                 "fr": "Espace commun",
-                "it": "Spazio comune"
+                "it": "Spazio comune",
+                "pt": "Espaço partilhado"
               },
               "nadpis": {
                 "cs": "Ohleduplnost",
@@ -1405,7 +1483,8 @@
                 "hu": "Odafigyelés",
                 "es": "Consideración",
                 "fr": "Respect",
-                "it": "Rispetto"
+                "it": "Rispetto",
+                "pt": "Respeito pelos outros"
               },
               "text": {
                 "cs": "Zahradu sdílejí hosté více apartmánů. Prosíme o klid, čistotu a ohled k ostatním. Ať si ji užije každý stejně.",
@@ -1418,7 +1497,8 @@
                 "hu": "A kertet több apartman vendégei használják. Figyeljenek a csendre, a rendre és a többiekre, hogy mindenki ugyanúgy jól érezze magát.",
                 "es": "El jardín lo comparten los huéspedes de varios apartamentos. Les pedimos calma, orden y respeto a los demás. Así todos lo disfrutan igual.",
                 "fr": "Le jardin est partagé par les hôtes de plusieurs appartements. Merci de respecter le calme, la propreté et les autres hôtes, pour que chacun puisse en profiter comme vous.",
-                "it": "Il giardino è condiviso dagli ospiti di più appartamenti. Vi preghiamo di rispettare silenzio, pulizia e gli altri ospiti, così tutti potranno goderselo come voi."
+                "it": "Il giardino è condiviso dagli ospiti di più appartamenti. Vi preghiamo di rispettare silenzio, pulizia e gli altri ospiti, così tutti potranno goderselo come voi.",
+                "pt": "O jardim é partilhado pelos hóspedes de vários apartamentos. Pedimos sossego, limpeza e respeito pelos outros, para que todos o possam aproveitar da mesma forma."
               },
               "stav": "upraveno_ke_schvaleni"
             },
@@ -1434,7 +1514,8 @@
                 "hu": "Amikor elmennek",
                 "es": "Al salir",
                 "fr": "En partant",
-                "it": "Uscendo"
+                "it": "Uscendo",
+                "pt": "À saída"
               },
               "nadpis": {
                 "cs": "Dveře zavírejte",
@@ -1447,7 +1528,8 @@
                 "hu": "Az ajtó maradjon csukva",
                 "es": "Dejen la puerta cerrada",
                 "fr": "Gardez la porte fermée",
-                "it": "Tenete la porta chiusa"
+                "it": "Tenete la porta chiusa",
+                "pt": "Mantenham a porta fechada"
               },
               "text": {
                 "cs": "Při návratu zkontrolujte, že se dveře řádně dovřely. Kód si vezměte s sebou.",
@@ -1460,7 +1542,8 @@
                 "hu": "Amikor visszajönnek, nézzék meg, hogy az ajtó rendesen becsukódott. A kódot vigyék magukkal.",
                 "es": "Al volver, comprueben que la puerta ha quedado bien cerrada. Llévense el código.",
                 "fr": "En revenant, vérifiez que la porte s’est bien refermée. Prenez le code avec vous.",
-                "it": "Al rientro controllate che la porta si sia chiusa bene. Portate con voi il codice."
+                "it": "Al rientro controllate che la porta si sia chiusa bene. Portate con voi il codice.",
+                "pt": "Ao voltarem, verifiquem se a porta ficou bem fechada. Levem o código convosco."
               }
             }
           ]
@@ -1480,7 +1563,8 @@
         "hu": "Ülőhely a szabadban",
         "es": "Sentarse fuera",
         "fr": "S’asseoir dehors",
-        "it": "Posti a sedere all’aperto"
+        "it": "Posti a sedere all’aperto",
+        "pt": "Sentar-se no exterior"
       },
       "apartmany": [
         "V2",
@@ -1508,7 +1592,8 @@
             "hu": "Ülőhely a szabadban",
             "es": "Sentarse fuera",
             "fr": "S’asseoir dehors",
-            "it": "Posti a sedere all’aperto"
+            "it": "Posti a sedere all’aperto",
+            "pt": "Sentar-se no exterior"
           },
           "text": {
             "cs": "K posezení venku máte svou terasu. Když jsou křesílka dole v zahradě volná, můžete je využít i vy. Jsou ale určená hlavně hostům apartmánů, které terasu nemají. Děkujeme za ohleduplnost.",
@@ -1521,7 +1606,8 @@
             "hu": "Saját teraszuk van a kint üléshez. Ha a lenti székek a kertben szabadok, azokat is használhatják. Azok főleg azoknak a vendégeknek vannak, akiknek az apartmanjához nincs terasz. Köszönjük az odafigyelést.",
             "es": "Tienen su propia terraza para sentarse fuera. Si las sillas del jardín están libres, también pueden usarlas. Están pensadas sobre todo para los huéspedes de los apartamentos sin terraza. Gracias por el cuidado.",
             "fr": "Vous avez votre propre terrasse pour vous asseoir dehors. Si les chaises en bas dans le jardin sont libres, vous pouvez aussi les utiliser. Elles sont surtout destinées aux hôtes des appartements sans terrasse. Merci de votre compréhension.",
-            "it": "Avete una terrazza tutta vostra per sedervi all’aperto. Se le sedie giù in giardino sono libere, potete usarle anche voi. Sono pensate soprattutto per gli ospiti degli appartamenti senza terrazza. Grazie per la comprensione."
+            "it": "Avete una terrazza tutta vostra per sedervi all’aperto. Se le sedie giù in giardino sono libere, potete usarle anche voi. Sono pensate soprattutto per gli ospiti degli appartamenti senza terrazza. Grazie per la comprensione.",
+            "pt": "Para se sentarem no exterior têm o vosso terraço. Se as cadeiras no jardim estiverem livres, podem usá-las também. Destinam-se sobretudo aos hóspedes dos apartamentos sem terraço. Agradecemos a compreensão."
           },
           "stav": "hotovo"
         }
@@ -1541,7 +1627,8 @@
         "hu": "Televízió",
         "es": "Televisión",
         "fr": "Télévision",
-        "it": "Televisione"
+        "it": "Televisione",
+        "pt": "Televisão"
       },
       "apartmany": [
         "V1",
@@ -1581,7 +1668,8 @@
         "hu": "A tartózkodás szabályai",
         "es": "Normas de la casa",
         "fr": "Règlement de la maison",
-        "it": "Regole della casa"
+        "it": "Regole della casa",
+        "pt": "Regras da casa"
       },
       "apartmany": [
         "V1",
@@ -1621,7 +1709,8 @@
         "hu": "Távozás",
         "es": "Salida",
         "fr": "Départ",
-        "it": "Partenza"
+        "it": "Partenza",
+        "pt": "Saída"
       },
       "apartmany": [
         "V1",
@@ -1654,7 +1743,8 @@
         "hu": "Időpontok és kapcsolat",
         "es": "Horarios y contacto",
         "fr": "Horaires et contact",
-        "it": "Orari e contatti"
+        "it": "Orari e contatti",
+        "pt": "Horários e contacto"
       },
       "apartmany": [
         "V1",
@@ -1686,7 +1776,8 @@
             "hu": "Időpontok",
             "es": "Horarios",
             "fr": "Horaires",
-            "it": "Orari"
+            "it": "Orari",
+            "pt": "Horários"
           },
           "text": {
             "cs": "Check-in 14:00 až 20:00.\nCheck-out do 10:00.",
@@ -1699,7 +1790,8 @@
             "hu": "Bejelentkezés 14:00–20:00.\nKijelentkezés legkésőbb 10:00.",
             "es": "Check-in de 14:00 a 20:00.\nSalida hasta las 10:00.",
             "fr": "Arrivée de 14:00 à 20:00.\nDépart avant 10:00.",
-            "it": "Check-in dalle 14:00 alle 20:00.\nCheck-out entro le 10:00."
+            "it": "Check-in dalle 14:00 alle 20:00.\nCheck-out entro le 10:00.",
+            "pt": "Check-in das 14:00 às 20:00.\nCheck-out até às 10:00."
           },
           "stav": "hotovo"
         },
@@ -1724,7 +1816,8 @@
             "hu": "Kapcsolat",
             "es": "Contacto",
             "fr": "Contact",
-            "it": "Contatti"
+            "it": "Contatti",
+            "pt": "Contacto"
           },
           "text": {
             "cs": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
@@ -1737,7 +1830,8 @@
             "hu": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
             "es": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
             "fr": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
-            "it": "Nikol, +420 702 153 573 · info@vivienapartments.cz"
+            "it": "Nikol, +420 702 153 573 · info@vivienapartments.cz",
+            "pt": "Nikol, +420 702 153 573 · info@vivienapartments.cz"
           },
           "stav": "hotovo"
         }

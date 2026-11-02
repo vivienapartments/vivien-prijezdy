@@ -138,6 +138,7 @@ export function langFromNarodnost(raw: string | null | undefined): GuideLang {
     mapped === 'es' ||
     mapped === 'fr' ||
     mapped === 'it' ||
+    mapped === 'pt' ||
     mapped === 'sv' ||
     mapped === 'hu'
   ) {

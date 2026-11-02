@@ -18,6 +18,7 @@ export const vstupNadpis: LText = {
   hu: 'Érkezési idő nélkül nem tudnak bejelentkezni',
   fr: "Sans heure d’arrivée, pas d’enregistrement",
   it: "Senza orario di arrivo non potete fare il check-in",
+  pt: 'Sem a hora de chegada não é possível fazer o check-in',
 };
 
 export const vstupUvod: LText = {
@@ -32,6 +33,7 @@ export const vstupUvod: LText = {
   hu: 'Mindegyik szabálynak megvan a maga története. Egyeztessünk róluk mindjárt az elején, hogy később ne kelljen egymásra rosszallóan néznünk.',
   fr: "Chacune de ces règles a son histoire. Mettons-nous d’accord dès le début, pour ne pas avoir à froncer les sourcils plus tard.",
   it: "Ognuna di queste regole ha la sua storia. Mettiamoci d’accordo subito, così poi non dovremo guardarci storto.",
+  pt: 'Cada uma destas regras tem a sua história. Combinemo-las logo no início, para não termos de fazer cara feia uns aos outros mais tarde.',
 };
 
 export const vstupSouhlas: LText = {
@@ -46,6 +48,7 @@ export const vstupSouhlas: LText = {
   hu: 'Értem az érkezési szabályokat, és egyetértek velük.',
   fr: "Je comprends les règles d’arrivée et je les accepte.",
   it: "Ho capito le regole di arrivo e le accetto.",
+  pt: 'Compreendo as regras de chegada e concordo com elas.',
 };
 
 export const vstupPravidla: LText[] = [
@@ -61,6 +64,7 @@ export const vstupPravidla: LText[] = [
     hu: 'Az érkezés idejét itt válasszák ki. Elég a hozzávetőleges idő, a változást azonnal javítsák.',
     fr: "Choisissez ici votre heure d’arrivée. Une estimation suffit ; si elle change, corrigez-la tout de suite.",
     it: "Scegliete qui l’orario di arrivo. Basta una stima e, se cambia, correggetela subito.",
+    pt: 'Escolham aqui a hora de chegada. Uma estimativa chega e, se mudar, corrijam logo.',
   },
   {
     cs: 'Když nám napíšete čtvrt hodiny předem, že budete na místě, čekáme my na vás. Na domluvený čas pak čekáme 10 minut. Když nedorazíte a musíme přijet znovu, účtujeme za to {{VYJEZD}} Kč.',
@@ -74,6 +78,7 @@ export const vstupPravidla: LText[] = [
     hu: 'Amikor negyedórával előre megírják, hogy ott lesznek, mi várunk önökre. A megbeszélt időpontra utána 10 percet várunk. Ha nem érkeznek meg, és újra ki kell jönnünk, ezért {{VYJEZD}} Kč-t számítunk fel.',
     fr: "Si vous nous écrivez un quart d’heure avant que vous serez là, c’est nous qui vous attendons. Nous attendons ensuite 10 minutes après l’heure convenue. Si vous n’arrivez pas et que nous devons ressortir, nous facturons {{VYJEZD}} Kč.",
     it: "Se un quarto d’ora prima ci scrivete che state arrivando, siamo noi ad aspettare voi. Aspettiamo poi 10 minuti oltre l’orario concordato. Se non arrivate e dobbiamo uscire di nuovo, addebitiamo {{VYJEZD}} Kč.",
+    pt: 'Quando nos escrevem um quarto de hora antes a avisar que já vão a chegar, somos nós que vos esperamos. Esperamos 10 minutos depois da hora combinada. Se não chegarem e tivermos de sair outra vez, cobramos {{VYJEZD}} Kč por isso.',
   },
   {
     cs: 'Když nám čas předem nedáte, čekáte vy na nás, až hodinu. Až napíšete, že jste na místě, apartmán předáme do hodiny.',
@@ -87,6 +92,7 @@ export const vstupPravidla: LText[] = [
     hu: 'Amikor nem adják meg előre az időt, önök várnak ránk, akár egy órát. Amint megírják, hogy megérkeztek, az apartmant egy órán belül átadjuk.',
     fr: "Si vous ne nous donnez pas d’heure à l’avance, c’est vous qui nous attendez, jusqu’à une heure. Dès que vous nous écrivez que vous êtes là, nous vous remettons l’appartement dans l’heure.",
     it: "Se non ci comunicate un orario in anticipo, siete voi ad aspettare noi, fino a un’ora. Appena ci scrivete che siete arrivati, vi consegniamo l’appartamento entro un’ora.",
+    pt: 'Quando não nos indicam a hora com antecedência, são vocês que nos esperam, até uma hora. Assim que escreverem que chegaram, entregamos o apartamento dentro de uma hora.',
   },
   {
     cs: `Check-in je od 14:00 do ${od}. Později platíte ${kc} Kč za každou započatou půlhodinu podle skutečného příjezdu, na místě. Po ${dokonce} jen po domluvě.`,
@@ -100,6 +106,7 @@ export const vstupPravidla: LText[] = [
     hu: `A bejelentkezés 14:00-tól ${od}-ig tart. Később a tényleges érkezés szerint minden megkezdett félóráért ${kc} Kč pótdíjat fizetnek, a helyszínen. ${dokonce} után csak megbeszélés után.`,
     fr: `L’arrivée se fait de 14:00 à ${od}. Ensuite, vous payez ${kc} Kč par demi-heure commencée, selon l’heure d’arrivée réelle, sur place. Après ${dokonce}, uniquement sur accord.`,
     it: `Il check-in è dalle 14:00 alle ${od}. Dopo pagate ${kc} Kč per ogni mezz’ora iniziata, in base all’arrivo effettivo, sul posto. Dopo le ${dokonce} solo previo accordo.`,
+    pt: `O check-in é das 14:00 às ${od}. Depois disso pagam ${kc} Kč por cada meia hora iniciada, com base na chegada real, no local. Depois de ${dokonce} só se combinarmos.`,
   },
   {
     cs: 'PINy dostanete při osobním předání po kontrole dokladů.',
@@ -113,6 +120,7 @@ export const vstupPravidla: LText[] = [
     hu: 'A PIN-kódokat a személyes átadáskor kapják meg, az iratok ellenőrzése után.',
     fr: "Vous recevez les codes PIN lors de la remise en personne, après le contrôle de vos documents.",
     it: "I codici PIN li ricevete alla consegna di persona, dopo il controllo dei documenti.",
+    pt: 'Os códigos PIN recebem-nos na entrega pessoal, depois de verificarmos os documentos.',
   },
   {
     cs: 'Když do 20:00 nedorazíte ani se neozvete, jde o nedojezd.',
@@ -126,6 +134,7 @@ export const vstupPravidla: LText[] = [
     hu: 'Ha 20:00-ig nem érkeznek meg, és nem is szólnak, az meg nem jelenés.',
     fr: "Si vous n’arrivez pas avant 20:00 et ne nous contactez pas, il s’agit d’une non-présentation (no-show).",
     it: "Se non arrivate entro le 20:00 e non ci contattate, si tratta di un no-show.",
+    pt: 'Se não chegarem até às 20:00 e não nos contactarem, é uma não comparência.',
   },
 ];
 
@@ -141,6 +150,7 @@ export const vstupCenik: LText = {
   hu: 'Pótdíjak 20:00 után',
   fr: "Suppléments après 20:00",
   it: "Supplementi dopo le 20:00",
+  pt: 'Suplementos depois das 20:00',
 };
 
 export const vstupPriplatek: LText = {
@@ -155,6 +165,7 @@ export const vstupPriplatek: LText = {
   hu: 'pótdíj',
   fr: "supplément",
   it: "supplemento",
+  pt: 'suplemento',
 };
 
 export const vstupDo: LText = {
@@ -169,6 +180,7 @@ export const vstupDo: LText = {
   hu: 'ig',
   fr: "jusqu’à",
   it: "fino alle",
+  pt: 'até',
 };
 
 export const vstupPo23: LText = {
@@ -183,6 +195,7 @@ export const vstupPo23: LText = {
   hu: '23:00 után · csak megbeszélés után',
   fr: "Après 23:00 · uniquement sur accord",
   it: "Dopo le 23:00 · solo previo accordo",
+  pt: 'Depois das 23:00 · só se combinarmos',
 };
 
 export const vstupPozde: LText = {
@@ -197,6 +210,7 @@ export const vstupPozde: LText = {
   hu: '23:00 után csak megbeszélés után. Írjanak a +420 604 692 573 számra.',
   fr: "Après 23:00, uniquement sur accord. Écrivez-nous au +420 604 692 573.",
   it: "Dopo le 23:00 solo previo accordo. Scriveteci al +420 604 692 573.",
+  pt: 'Depois das 23:00 só se combinarmos. Escrevam-nos para +420 604 692 573.',
 };
 
 export const vstupBranaNadpis: LText = {
@@ -211,6 +225,7 @@ export const vstupBranaNadpis: LText = {
   hu: 'Kapuregisztráció nélkül nem tudnak parkolni',
   fr: "Sans enregistrement au portail, pas de stationnement",
   it: "Senza registrazione al cancello non potete parcheggiare",
+  pt: 'Sem registo no portão não é possível estacionar',
 };
 
 export const vstupBranaText: LText = {
@@ -225,6 +240,7 @@ export const vstupBranaText: LText = {
   hu: 'A számot, amelyről a kaput nyitják, előre kell rögzítenünk. Az utolsó pillanatban ez nem megy.',
   fr: "Nous devons enregistrer à l’avance le numéro avec lequel vous ouvrirez le portail. Ce n’est pas possible à la dernière minute.",
   it: "Dobbiamo registrare in anticipo il numero con cui aprirete il cancello. All’ultimo momento non è possibile.",
+  pt: 'Temos de registar com antecedência o número que vão usar para abrir o portão. Não pode ser feito à última hora.',
 };
 
 export const vstupChybaTelefon: LText = {
@@ -239,6 +255,7 @@ export const vstupChybaTelefon: LText = {
   hu: 'A számot írják előhívóval, például',
   fr: "Écrivez le numéro avec l’indicatif du pays, par exemple",
   it: "Scrivete il numero con il prefisso internazionale, ad esempio",
+  pt: 'Escrevam o número com o indicativo do país, por exemplo',
 };
 
 export const vstupChybaTelefonKonec: LText = {
@@ -253,6 +270,7 @@ export const vstupChybaTelefonKonec: LText = {
   hu: 'Enélkül a kapu nem engedi be önöket.',
   fr: "Sans lui, le portail ne vous laissera pas entrer.",
   it: "Senza di esso il cancello non vi farà entrare.",
+  pt: 'Sem ele o portão não vos deixa entrar.',
 };
 
 export const vstupChybaSpz: LText = {
@@ -267,6 +285,7 @@ export const vstupChybaSpz: LText = {
   hu: 'Ellenőrizzék a rendszámot. Betű és szám elég.',
   fr: "Vérifiez la plaque. Des lettres et des chiffres suffisent.",
   it: "Controllate la targa. Bastano lettere e numeri.",
+  pt: 'Verifiquem a matrícula. Bastam letras e algarismos.',
 };
 
 export const vstupChybaUlozeni: LText = {
@@ -281,6 +300,7 @@ export const vstupChybaUlozeni: LText = {
   hu: 'A mentés nem sikerült. Írjanak a +420 604 692 573 számra.',
   fr: "L’enregistrement n’a pas fonctionné. Écrivez-nous au +420 604 692 573.",
   it: "Il salvataggio non è riuscito. Scriveteci al +420 604 692 573.",
+  pt: 'Não foi possível guardar. Escrevam-nos para +420 604 692 573.',
 };
 
 export const vstupCeka: LText = {
@@ -295,6 +315,7 @@ export const vstupCeka: LText = {
   hu: 'A további lépések akkor jelennek meg, ha a fenti adatokat kitöltötték.',
   fr: "Les étapes suivantes apparaîtront une fois les informations ci-dessus remplies.",
   it: "I passi successivi compariranno dopo aver compilato i dati qui sopra.",
+  pt: 'Os passos seguintes aparecem depois de preencherem os dados acima.',
 };
 
 export const vstupHotovo: LText = {
@@ -309,6 +330,7 @@ export const vstupHotovo: LText = {
   hu: 'Az apartman átadva.',
   fr: "L’appartement vous a été remis.",
   it: "L’appartamento vi è stato consegnato.",
+  pt: 'O apartamento foi entregue.',
 };
 
 export const vstupHotovoOdkaz: LText = {
@@ -323,6 +345,7 @@ export const vstupHotovoOdkaz: LText = {
   hu: 'A kódok lejjebb vannak.',
   fr: "Vous trouverez les codes ci-dessous.",
   it: "I codici li trovate qui sotto.",
+  pt: 'Encontram os códigos mais abaixo.',
 };
 
 export const vstupUlozit: LText = {
@@ -337,6 +360,7 @@ export const vstupUlozit: LText = {
   hu: 'Mentés',
   fr: "Enregistrer",
   it: "Salva",
+  pt: 'Guardar',
 };
 
 export const vstupZmenit: LText = {
@@ -351,6 +375,7 @@ export const vstupZmenit: LText = {
   hu: 'Módosítás',
   fr: "Modifier",
   it: "Modifica",
+  pt: 'Alterar',
 };
 
 export const vstupPesky: LText = {
@@ -365,6 +390,7 @@ export const vstupPesky: LText = {
   hu: 'Gyalog, vonattal vagy autóbusszal',
   fr: "À pied, en train ou en bus",
   it: "A piedi, in treno o in autobus",
+  pt: 'A pé, de comboio ou de autocarro',
 };
 
 export const vstupAutem: LText = {
@@ -379,6 +405,7 @@ export const vstupAutem: LText = {
   hu: 'Autóval',
   fr: "En voiture",
   it: "In auto",
+  pt: 'De carro',
 };
 
 export const vstupPo20: LText = {
@@ -393,6 +420,7 @@ export const vstupPo20: LText = {
   hu: '20:00 után',
   fr: "Après 20:00",
   it: "Dopo le 20:00",
+  pt: 'Depois das 20:00',
 };
 
 export const vstupTelefon: LText = {
@@ -407,6 +435,7 @@ export const vstupTelefon: LText = {
   hu: 'Telefon a kapuhoz',
   fr: "Téléphone pour le portail",
   it: "Telefono per il cancello",
+  pt: 'Telefone para o portão',
 };
 
 export const vstupSpz: LText = {
@@ -421,6 +450,7 @@ export const vstupSpz: LText = {
   hu: 'Rendszám',
   fr: "Plaque d’immatriculation",
   it: "Targa",
+  pt: 'Matrícula',
 };
 
 export const vstupPripominkaSpz: LText = {
@@ -435,6 +465,7 @@ export const vstupPripominkaSpz: LText = {
   hu: 'A rendszám még hiányzik. Írják be, amikor megtudják.',
   fr: "Il manque encore la plaque. Ajoutez-la dès que vous la connaissez.",
   it: "Manca ancora la targa. Aggiungetela quando la sapete.",
+  pt: 'Ainda falta a matrícula. Acrescentem-na quando a souberem.',
 };
 
 export const vstupCekaCas: LText = {
@@ -449,6 +480,7 @@ export const vstupCekaCas: LText = {
   hu: 'Válasszanak időt',
   fr: "Choisissez une heure",
   it: "Scegliete un orario",
+  pt: 'Escolham uma hora',
 };
 
 export const vstupKolem: LText = {
@@ -463,6 +495,7 @@ export const vstupKolem: LText = {
   hu: 'Körülbelül ekkor érkeznek',
   fr: "Vous arriverez vers",
   it: "Arriverete verso le",
+  pt: 'Vão chegar por volta das',
 };
 
 export const vstupBranaKratce: LText = {
@@ -477,6 +510,7 @@ export const vstupBranaKratce: LText = {
   hu: 'kapu',
   fr: "portail",
   it: "cancello",
+  pt: 'portão',
 };
 
 export const vstupSpzPozdeji: LText = {
@@ -491,6 +525,7 @@ export const vstupSpzPozdeji: LText = {
   hu: 'A rendszámot később írják be',
   fr: "Vous ajouterez la plaque plus tard",
   it: "Aggiungerete la targa più tardi",
+  pt: 'Vão acrescentar a matrícula mais tarde',
 };
 
 export const vstupPujcene: LText = {
@@ -505,6 +540,7 @@ export const vstupPujcene: LText = {
   hu: 'Az autó bérelt, a rendszámot később írom be',
   fr: "La voiture est louée, j’ajouterai la plaque plus tard",
   it: "L’auto è a noleggio, aggiungerò la targa più tardi",
+  pt: 'O carro é alugado, acrescento a matrícula mais tarde',
 };
 
 export const pinyNadpis: LText = {
@@ -519,6 +555,7 @@ export const pinyNadpis: LText = {
   hu: 'A belépő PIN-kódjaik',
   fr: "Vos codes PIN d’entrée",
   it: "I vostri codici PIN di ingresso",
+  pt: 'Os vossos códigos PIN de entrada',
 };
 
 export const pinyCekaji: LText = {
@@ -533,6 +570,7 @@ export const pinyCekaji: LText = {
   hu: 'Itt lesznek a PIN-kódok. Lent válasszák ki az időt és az érkezés módját, és erősítsék meg a szabályokat.',
   fr: "Vos codes PIN seront ici. Plus bas, choisissez l’heure et le mode d’arrivée, et confirmez les règles.",
   it: "Qui ci saranno i vostri codici PIN. Più sotto scegliete l’orario e il modo di arrivo e confermate le regole.",
+  pt: 'Os vossos códigos PIN vão estar aqui. Abaixo, escolham a hora e a forma de chegada e confirmem as regras.',
 };
 
 export const pinyMrizka: LText = {
@@ -545,6 +583,7 @@ export const pinyMrizka: LText = {
   es: 'Escriban los números y confirmen con la tecla #.',
   fr: 'Saisissez les chiffres et confirmez avec la touche #.',
   it: 'Inserite le cifre e confermate con il tasto #.',
+  pt: 'Introduzam os algarismos e confirmem com a tecla #.',
   sv: 'Skriv in siffrorna och bekräfta med #.',
   hu: 'Írják be a számjegyeket, és erősítsék meg a # jellel.',
 };
@@ -561,6 +600,7 @@ export const pinyHotovo: LText = {
   hu: 'Kész. A PIN-kódok a személyes átadáskor jelennek meg itt.',
   fr: "C’est fait. Vos codes PIN apparaîtront ici lors de la remise en personne.",
   it: "Fatto. I codici PIN compariranno qui alla consegna di persona.",
+  pt: 'Feito. Os vossos códigos PIN vão aparecer aqui na entrega pessoal.',
 };
 
 export const vstupCasPopisek: LText = {
@@ -575,6 +615,7 @@ export const vstupCasPopisek: LText = {
   hu: 'Válasszanak hozzávetőleges időt',
   fr: "Choisissez une heure approximative",
   it: "Scegliete un orario indicativo",
+  pt: 'Escolham uma hora aproximada',
 };
 
 export const vstupJak: LText = {
@@ -589,6 +630,7 @@ export const vstupJak: LText = {
   hu: 'Hogyan érkeznek',
   fr: "Mode d’arrivée",
   it: "Come arrivate",
+  pt: 'Como vão chegar',
 };
 
 export const vstupUlozitPiny: LText = {
@@ -603,6 +645,7 @@ export const vstupUlozitPiny: LText = {
   hu: 'Mentés, és tovább a PIN-kódokhoz',
   fr: "Enregistrer et continuer vers les codes PIN",
   it: "Salva e continua ai codici PIN",
+  pt: 'Guardar e continuar para os códigos PIN',
 };
 
 export const vstupChybiCas: LText = {
@@ -617,6 +660,7 @@ export const vstupChybiCas: LText = {
   hu: 'Válasszanak időt.',
   fr: "Choisissez une heure.",
   it: "Scegliete un orario.",
+  pt: 'Escolham uma hora.',
 };
 
 export const vstupChybiZpusob: LText = {
@@ -631,6 +675,7 @@ export const vstupChybiZpusob: LText = {
   hu: 'Válasszák ki, hogyan érkeznek.',
   fr: "Choisissez votre mode d’arrivée.",
   it: "Scegliete come arrivate.",
+  pt: 'Escolham como chegam.',
 };
 
 export const vstupChybiPravidla: LText = {
@@ -645,6 +690,7 @@ export const vstupChybiPravidla: LText = {
   hu: 'Erősítsék meg az érkezési szabályokat.',
   fr: "Confirmez les règles d’arrivée.",
   it: "Confermate le regole di arrivo.",
+  pt: 'Confirmem as regras de chegada.',
 };
 
 export const vstupPeskyKratce: LText = {
@@ -659,6 +705,7 @@ export const vstupPeskyKratce: LText = {
   hu: 'gyalog',
   fr: "à pied",
   it: "a piedi",
+  pt: 'a pé',
 };
 
 export const vstupAutemKratce: LText = {
@@ -673,6 +720,7 @@ export const vstupAutemKratce: LText = {
   hu: 'autóval',
   fr: "en voiture",
   it: "in auto",
+  pt: 'de carro',
 };
 
 export const vstupRadek: LText = {
@@ -687,6 +735,7 @@ export const vstupRadek: LText = {
   hu: 'Érkezés körülbelül',
   fr: "Arrivée vers",
   it: "Arrivo verso le",
+  pt: 'Chegada por volta das',
 };
 
 export const vstupPravidlaOk: LText = {
@@ -701,6 +750,7 @@ export const vstupPravidlaOk: LText = {
   hu: 'szabályok megerősítve',
   fr: "règles confirmées",
   it: "regole confermate",
+  pt: 'regras confirmadas',
 };
 
 export const vstupZamekCesta: LText = {
@@ -715,6 +765,7 @@ export const vstupZamekCesta: LText = {
   hu: 'Az út hozzánk',
   fr: "Le chemin jusqu’à nous",
   it: "La strada per arrivare da noi",
+  pt: 'O caminho até nós',
 };
 
 export const vstupZamekParkovani: LText = {
@@ -729,6 +780,7 @@ export const vstupZamekParkovani: LText = {
   hu: 'Parkolás és a kapu',
   fr: "Parking et portail",
   it: "Parcheggio e cancello",
+  pt: 'Estacionamento e portão',
 };
 
 export const vstupZamekWifi: LText = {
@@ -743,6 +795,7 @@ export const vstupZamekWifi: LText = {
   hu: 'WiFi',
   fr: "WiFi",
   it: "WiFi",
+  pt: 'WiFi',
 };
 
 export const vstupViteji: LText = {
@@ -757,6 +810,7 @@ export const vstupViteji: LText = {
   hu: 'Örülünk, hogy üdvözölhetjük önöket.',
   fr: "Nous nous réjouissons de vous accueillir.",
   it: "Non vediamo l’ora di accogliervi.",
+  pt: 'Estamos à vossa espera.',
 };
 
 /** Prompt 45 · stav apartmánu A1 (zlatý řádek, schváleno majitelem 24. 10. 2026). */
@@ -772,6 +826,7 @@ export const stavPripravujeme: LText = {
   hu: "Az apartmant még előkészítjük önöknek",
   fr: "Nous préparons encore votre appartement",
   it: "Stiamo ancora preparando il vostro appartamento",
+  pt: "Ainda estamos a preparar o vosso apartamento",
 };
 
 /** Prompt 45 · A2 po rozbalení. */
@@ -787,6 +842,7 @@ export const stavPripravujemeText: LText = {
   hu: "Korábban érkeznének? Amint az apartman elkészül, itt zölden jelenik meg, és választhatnak korábbi érkezési időt. Visszaigazoljuk.",
   fr: "Vous souhaitez arriver plus tôt ? Dès que l’appartement sera prêt, cela s’affichera ici en vert et vous pourrez choisir une heure d’arrivée plus tôt. Nous vous la confirmerons.",
   it: "Volete arrivare prima? Appena l’appartamento sarà pronto, qui comparirà in verde e potrete scegliere un orario di arrivo anticipato. Ve lo confermeremo.",
+  pt: "Gostariam de chegar mais cedo? Assim que o apartamento estiver pronto, isto fica verde e podem escolher uma hora de chegada mais cedo. Nós confirmamos.",
 };
 
 /** Prompt 45 · B1 (zelený řádek). */
@@ -802,6 +858,7 @@ export const stavPripraveno: LText = {
   hu: "Az apartman elkészült",
   fr: "Votre appartement est prêt",
   it: "Il vostro appartamento è pronto",
+  pt: "O vosso apartamento está pronto",
 };
 
 /** Prompt 45 · B2 po rozbalení, jen před 14:00 a bez potvrzeného dřívějšího příjezdu. */
@@ -817,6 +874,7 @@ export const stavPripravenoText: LText = {
   hu: "14:00 előtt is érkezhetnek. Válasszák ki az érkezés idejét, és visszaigazoljuk.",
   fr: "Vous pouvez arriver avant 14:00. Choisissez votre heure d’arrivée et nous vous la confirmerons.",
   it: "Potete arrivare prima delle 14:00. Scegliete l’orario di arrivo e ve lo confermeremo.",
+  pt: "Podem chegar antes das 14:00. Escolham a hora de chegada e nós confirmamos.",
 };
 
 /** Prompt 45 · tlačítko u B2, vede na #cas-prijezdu. */
@@ -832,6 +890,7 @@ export const stavZmenitCas: LText = {
   hu: "Érkezési idő módosítása",
   fr: "Changer l’heure d’arrivée",
   it: "Cambia orario di arrivo",
+  pt: "Alterar a hora de chegada",
 };
 
 /** Prompt 45 · poslední volba v seznamu odjezdu. */
@@ -847,6 +906,7 @@ export const odjezdJinyCas: LText = {
   hu: "Más időpont…",
   fr: "Autre heure…",
   it: "Altro orario…",
+  pt: "Outra hora…",
 };
 
 /** Prompt 45 · popisek políčka pro vlastní čas odjezdu. */
@@ -862,6 +922,7 @@ export const odjezdVlastniPopisek: LText = {
   hu: "Írják be az időpontot",
   fr: "Indiquez votre heure",
   it: "Inserite il vostro orario",
+  pt: "Indiquem a vossa hora",
 };
 
 /** Prompt 45 · chyba při špatném vlastním čase odjezdu. */
@@ -877,4 +938,5 @@ export const odjezdVlastniChyba: LText = {
   hu: "Adjanak meg egy időpontot 6:00 és 14:00 között, például 9:40.",
   fr: "Indiquez une heure entre 6:00 et 14:00, par exemple 9:40.",
   it: "Inserite un orario tra le 6:00 e le 14:00, ad esempio 9:40.",
+  pt: "Indiquem uma hora entre as 6:00 e as 14:00, por exemplo 9:40.",
 };

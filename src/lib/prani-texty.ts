@@ -13,6 +13,7 @@ export const PRANI_NADPIS: T = {
   es: 'Espacio para sus deseos',
   fr: 'Un espace pour vos souhaits',
   it: 'Uno spazio per i vostri desideri',
+  pt: 'Um espaço para os vossos pedidos',
   hu: 'Hely az önök kívánságainak',
 };
 
@@ -28,6 +29,7 @@ export const PRANI_VETA_SBALENA: T = {
   es: '¿Les falta algo? Escríbannos directamente desde la guía.',
   fr: 'Il vous manque quelque chose ? Écrivez-nous directement depuis le guide.',
   it: 'Vi manca qualcosa? Scriveteci direttamente dalla guida.',
+  pt: 'Falta-vos alguma coisa? Escrevam-nos diretamente a partir do guia.',
   hu: 'Hiányzik valami? Írjanak nekünk közvetlenül az útmutatóból.',
 };
 
@@ -42,6 +44,7 @@ export const PRANI_NAHLED: T = {
   es: 'Vista previa, solo escribe el huésped',
   fr: 'Aperçu, seul l’hôte écrit',
   it: 'Anteprima, scrive solo l’ospite',
+  pt: 'Pré-visualização, só o hóspede escreve',
   hu: 'Előnézet, csak a vendég ír',
 };
 
@@ -56,6 +59,7 @@ export const PRANI_UVOD: T = {
   es: '¿Les falta algo, no saben cómo resolver algo o podríamos hacer la estancia más agradable? Escríbannos. Veremos con gusto qué podemos hacer.',
   fr: 'Il vous manque quelque chose, vous ne savez pas comment faire, ou nous pourrions rendre le séjour plus agréable? Écrivez-nous. Nous verrons volontiers ce que nous pouvons faire.',
   it: 'Vi manca qualcosa, non sapete come fare, o potremmo rendere il soggiorno più piacevole? Scriveteci. Vedremo volentieri cosa possiamo fare.',
+  pt: 'Falta-vos alguma coisa, têm alguma dúvida ou há algo que possamos fazer para tornar a estadia mais agradável? Escrevam-nos. Vamos ver com gosto o que podemos fazer.',
   hu: 'Hiányzik valami, nem tudnak valamiben eligazodni, vagy kellemesebbé tehetnénk a tartózkodást? Írjanak nekünk. Szívesen megnézzük, mit tehetünk.',
 };
 
@@ -70,6 +74,7 @@ export const PRANI_DOSTUPNOST: T = {
   es: 'Leemos los mensajes a lo largo del día, normalmente entre las 8:00 y las 20:00. Si es urgente, llámenos: +420 604 692 573.',
   fr: 'Nous lisons les messages au fil de la journée, en général entre 8:00 et 20:00. En cas d’urgence, appelez-nous: +420 604 692 573.',
   it: 'Leggiamo i messaggi nel corso della giornata, di solito tra le 8:00 e le 20:00. Se è urgente, chiamateci: +420 604 692 573.',
+  pt: 'Lemos as mensagens à medida que chegam, normalmente entre as 8:00 e as 20:00. Se for urgente, liguem-nos para +420 604 692 573.',
   hu: 'Az üzeneteket folyamatosan olvassuk, általában 8:00 és 20:00 között. Ha sürgős, hívjanak minket: +420 604 692 573.',
 };
 
@@ -84,6 +89,7 @@ export const PRANI_POLE: T = {
   es: 'Su deseo',
   fr: 'Votre souhait',
   it: 'Il vostro desiderio',
+  pt: 'O vosso pedido',
   hu: 'Az Önök kívánsága',
 };
 
@@ -98,6 +104,7 @@ export const PRANI_ODESLAT: T = {
   es: 'Enviar',
   fr: 'Envoyer',
   it: 'Invia',
+  pt: 'Enviar',
   hu: 'Küldés',
 };
 
@@ -112,6 +119,7 @@ export const PRANI_ODESILAM: T = {
   es: 'Enviando…',
   fr: 'Envoi…',
   it: 'Invio…',
+  pt: 'A enviar…',
   hu: 'Küldés…',
 };
 
@@ -126,6 +134,7 @@ export const PRANI_ODESLANO: T = {
   es: 'Enviado',
   fr: 'Envoyé',
   it: 'Inviato',
+  pt: 'Enviado',
   hu: 'Elküldve',
 };
 
@@ -140,6 +149,7 @@ export const PRANI_VYRIZENO: T = {
   es: 'Resuelto ✓',
   fr: 'Traité ✓',
   it: 'Risolto ✓',
+  pt: 'Feito ✓',
   hu: 'Elintézve ✓',
 };
 
@@ -154,6 +164,7 @@ export const PRANI_NOVA_ODPOVED: T = {
   es: 'Nueva respuesta',
   fr: 'Nouvelle réponse',
   it: 'Nuova risposta',
+  pt: 'Nova resposta',
   hu: 'Új válasz',
 };
 
@@ -168,6 +179,7 @@ export const PRANI_RAMECEK_ODPOVED: T = {
   es: 'Tenemos una respuesta a su deseo',
   fr: 'Nous avons une réponse à votre souhait',
   it: 'Abbiamo una risposta al vostro desiderio',
+  pt: 'Temos uma resposta ao vosso pedido',
   hu: 'Válaszoltunk a kívánságára',
 };
 
@@ -182,6 +194,7 @@ export const PRANI_ZOBRAZIT: T = {
   es: 'Mostrar',
   fr: 'Afficher',
   it: 'Mostra',
+  pt: 'Mostrar',
   hu: 'Megjelenítés',
 };
 
@@ -196,6 +209,7 @@ export const PRANI_OKNO_ZAVRENO: T = {
   es: 'Ya no llegamos a tiempo a responder deseos. Si necesitan algo para la mañana, llámenos por favor.',
   fr: 'Nous n’avons plus le temps de répondre aux souhaits. Si vous avez besoin de quelque chose pour le matin, appelez-nous s’il vous plaît.',
   it: 'Non facciamo più in tempo a rispondere ai desideri. Se vi serve qualcosa per la mattina, chiamateci per favore.',
+  pt: 'Já não conseguimos responder a pedidos a tempo. Se precisarem de alguma coisa para a manhã, liguem-nos.',
   hu: 'Kívánságokra sajnos már nem tudunk időben reagálni. Ha reggelre kell valami, kérjük, hívjanak minket.',
 };
 
@@ -210,6 +224,7 @@ export const PRANI_CHYBA: T = {
   es: 'No se pudo enviar el mensaje ahora. Inténtelo de nuevo en un momento.',
   fr: 'Le message n’a pas pu être envoyé pour le moment. Réessayez dans un instant.',
   it: 'Il messaggio non è stato inviato ora. Riprovate tra poco.',
+  pt: 'Não foi possível enviar a mensagem agora. Tentem novamente daqui a pouco.',
   hu: 'Az üzenetet most nem sikerült elküldeni. Próbálják meg egy pillanat múlva.',
 };
 
@@ -224,6 +239,7 @@ export const PRANI_LIMIT: T = {
   es: 'Inténtelo de nuevo en un momento.',
   fr: 'Réessayez dans un instant.',
   it: 'Riprovate tra poco.',
+  pt: 'Tentem novamente daqui a pouco.',
   hu: 'Próbálják meg egy pillanat múlva.',
 };
 
@@ -238,6 +254,7 @@ export const PRANI_ODPOVEDET: T = {
   es: 'Responder',
   fr: 'Répondre',
   it: 'Rispondi',
+  pt: 'Responder',
   hu: 'Válasz',
 };
 
@@ -252,6 +269,7 @@ export const PRANI_UPRAVIT: T = {
   es: 'Editar',
   fr: 'Modifier',
   it: 'Modifica',
+  pt: 'Editar',
   hu: 'Szerkesztés',
 };
 
@@ -266,6 +284,7 @@ export const PRANI_SMAZAT: T = {
   es: 'Borrar',
   fr: 'Supprimer',
   it: 'Elimina',
+  pt: 'Eliminar',
   hu: 'Törlés',
 };
 

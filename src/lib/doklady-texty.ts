@@ -17,6 +17,7 @@ export const DOKLADY_ZPRAVA_CR: Record<GuideLang, string> = {
   es: "Hola, nos vemos en un momento. Tengan preparados para la entrega el documento de identidad o el pasaporte de todos los huéspedes. Por ley anotamos los datos en el registro de huéspedes y con ellos pagamos al ayuntamiento la tasa turística. Gracias.",
   fr: "Bonjour, nous nous voyons dans un instant. Merci de préparer pour la remise la carte d’identité ou le passeport de tous les voyageurs. La loi nous oblige à inscrire ces données au registre des hôtes et à verser avec elles la taxe de séjour à la ville. Merci.",
   it: "Buongiorno, ci vediamo tra poco. Per la consegna tenete pronti la carta d’identità o il passaporto di tutti gli ospiti. Per legge registriamo i dati nel registro degli ospiti e con essi versiamo al comune l’imposta di soggiorno. Grazie.",
+  pt: "Olá, vemo-nos em breve. Tenham à mão os documentos de identificação ou passaportes de todos os hóspedes para a entrega. Por lei registamos os dados no livro de registo de hóspedes e, com eles, pagamos a taxa turística local à cidade. Obrigado.",
   hu: "Jó napot, hamarosan találkozunk. Kérjük, az átadáshoz készítsék elő minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, és ezek alapján fizetjük be a városnak az idegenforgalmi adót. Köszönjük.",
 };
 
@@ -32,6 +33,7 @@ export const DOKLADY_ZPRAVA_CIZINEC: Record<GuideLang, string> = {
   es: "Hola, nos vemos en un momento. Tengan preparados para la entrega el documento de identidad o el pasaporte de todos los huéspedes. Por ley anotamos los datos en el registro de huéspedes, con ellos pagamos al ayuntamiento la tasa turística y comunicamos a los huéspedes extranjeros a la policía de extranjería. Gracias.",
   fr: "Bonjour, nous nous voyons dans un instant. Merci de préparer pour la remise la carte d’identité ou le passeport de tous les voyageurs. La loi nous oblige à inscrire ces données au registre des hôtes, à verser avec elles la taxe de séjour à la ville et à déclarer les voyageurs étrangers à la police des étrangers. Merci.",
   it: "Buongiorno, ci vediamo tra poco. Per la consegna tenete pronti la carta d’identità o il passaporto di tutti gli ospiti. Per legge registriamo i dati nel registro degli ospiti, con essi versiamo al comune l’imposta di soggiorno e comunichiamo gli ospiti stranieri alla polizia per gli stranieri. Grazie.",
+  pt: "Olá, vemo-nos em breve. Tenham à mão os documentos de identificação ou passaportes de todos os hóspedes para a entrega. Por lei registamos os dados no livro de registo de hóspedes, pagamos com eles a taxa turística local à cidade e, no caso de hóspedes estrangeiros, comunicamo-los à polícia de estrangeiros. Obrigado.",
   hu: "Jó napot, hamarosan találkozunk. Kérjük, az átadáshoz készítsék elő minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, ezek alapján fizetjük be a városnak az idegenforgalmi adót, a külföldi vendégeket pedig bejelentjük az idegenrendészetnek. Köszönjük.",
 };
 
@@ -47,6 +49,7 @@ export const DOKLADY_PRUVODCE_NADPIS: Record<GuideLang, string> = {
   es: "Tengan preparados sus documentos",
   fr: "Merci de préparer vos papiers d’identité",
   it: "Tenete pronti i documenti",
+  pt: "Tenham os documentos à mão",
   hu: "Kérjük, készítsék elő az igazolványokat",
 };
 
@@ -62,6 +65,7 @@ export const DOKLADY_PRUVODCE_CR: Record<GuideLang, string> = {
   es: "En la entrega comprobaremos el documento de identidad o el pasaporte de todos los huéspedes. Por ley anotamos los datos en el registro de huéspedes y con ellos pagamos al ayuntamiento la tasa turística. Gracias, así la entrega será rápida.",
   fr: "Lors de la remise, nous vérifions la carte d’identité ou le passeport de tous les voyageurs. La loi nous oblige à inscrire ces données au registre des hôtes et à verser avec elles la taxe de séjour à la ville. Merci, la remise sera ainsi rapide.",
   it: "Alla consegna controlliamo la carta d’identità o il passaporto di tutti gli ospiti. Per legge registriamo i dati nel registro degli ospiti e con essi versiamo al comune l’imposta di soggiorno. Grazie, così la consegna sarà rapida.",
+  pt: "Na entrega verificamos o documento de identificação ou o passaporte de todos os hóspedes. Por lei registamos os dados no livro de registo de hóspedes e, com eles, pagamos a taxa turística local à cidade. Obrigado, assim a entrega é rápida.",
   hu: "Az apartman átadásakor ellenőrizzük minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, és ezek alapján fizetjük be a városnak az idegenforgalmi adót. Köszönjük, így gyors lesz az átadás.",
 };
 
@@ -77,6 +81,7 @@ export const DOKLADY_PRUVODCE_CIZINEC: Record<GuideLang, string> = {
   es: "En la entrega comprobaremos el documento de identidad o el pasaporte de todos los huéspedes. Por ley anotamos los datos en el registro de huéspedes, con ellos pagamos al ayuntamiento la tasa turística y comunicamos a los huéspedes extranjeros a la policía de extranjería. Gracias, así la entrega será rápida.",
   fr: "Lors de la remise, nous vérifions la carte d’identité ou le passeport de tous les voyageurs. La loi nous oblige à inscrire ces données au registre des hôtes, à verser avec elles la taxe de séjour à la ville et à déclarer les voyageurs étrangers à la police des étrangers. Merci, la remise sera ainsi rapide.",
   it: "Alla consegna controlliamo la carta d’identità o il passaporto di tutti gli ospiti. Per legge registriamo i dati nel registro degli ospiti, con essi versiamo al comune l’imposta di soggiorno e comunichiamo gli ospiti stranieri alla polizia per gli stranieri. Grazie, così la consegna sarà rapida.",
+  pt: "Na entrega verificamos o documento de identificação ou o passaporte de todos os hóspedes. Por lei registamos os dados no livro de registo de hóspedes, pagamos com eles a taxa turística local à cidade e, no caso de hóspedes estrangeiros, comunicamo-los à polícia de estrangeiros. Obrigado, assim a entrega é rápida.",
   hu: "Az apartman átadásakor ellenőrizzük minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, ezek alapján fizetjük be a városnak az idegenforgalmi adót, a külföldi vendégeket pedig bejelentjük az idegenrendészetnek. Köszönjük, így gyors lesz az átadás.",
 };
 

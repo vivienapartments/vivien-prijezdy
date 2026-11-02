@@ -68,6 +68,7 @@ const NAZEV: Record<GuideLang, Record<DruhDluhu, string>> = {
   es: { poplatek: 'tasa municipal', prijezd: 'llegada tardía', cesta: 'viaje extra', drive: 'llegada anticipada', pozde: 'salida más tarde', dohoda: 'importe acordado' },
   fr: { poplatek: 'taxe de séjour', prijezd: 'arrivée tardive', cesta: 'trajet supplémentaire', drive: 'arrivée plus tôt', pozde: 'départ plus tard', dohoda: 'montant convenu' },
   it: { poplatek: 'tassa di soggiorno', prijezd: 'arrivo tardivo', cesta: 'corsa in più', drive: 'arrivo anticipato', pozde: 'partenza posticipata', dohoda: 'importo concordato' },
+  pt: { poplatek: 'taxa turística', prijezd: 'chegada tardia', cesta: 'deslocação adicional', drive: 'chegada mais cedo', pozde: 'saída mais tarde', dohoda: 'valor acordado' },
   sv: { poplatek: 'stadsskatt', prijezd: 'sen ankomst', cesta: 'extra resa', drive: 'tidigare ankomst', pozde: 'senare avresa', dohoda: 'överenskommet belopp' },
   hu: { poplatek: 'idegenforgalmi adó', prijezd: 'késői érkezés', cesta: 'ismételt út', drive: 'korábbi érkezés', pozde: 'későbbi távozás', dohoda: 'megbeszélt összeg' },
 };
@@ -254,6 +255,7 @@ function vetaDluhu(lang: GuideLang, polozky: PolozkaDluhu[]): string {
     es: `Al recoger el apartamento saldaremos todavía ${castka(soucet, j)} (${vnitrni}).`,
     fr: `À la reprise de l'appartement, nous réglerons encore ${castka(soucet, j)} (${vnitrni}).`,
     it: `Al ritiro dell'appartamento salderemo ancora ${castka(soucet, j)} (${vnitrni}).`,
+    pt: `Quando recebermos o apartamento, acertamos o restante ${castka(soucet, j)} (${vnitrni}).`,
     sv: `När vi tar över lägenheten gör vi upp de återstående ${castka(soucet, j)} (${vnitrni}).`,
     hu: `A lakás átvételekor rendezzük a fennmaradó ${castka(soucet, j)} összeget (${vnitrni}).`,
   };
@@ -315,6 +317,12 @@ const ODSTAVEC: Record<GuideLang, { a: string; b: string; odkaz: string; podpis:
     odkaz: 'Potete indicare l\'orario anche qui: {odkaz}',
     podpis: 'Nikol e la famiglia VIVIEN',
   },
+  pt: {
+    a: `Olá, amanhã é o dia da vossa saída. Digam-nos a que horas vão sair, para nos despedirmos pessoalmente e recebermos o apartamento. O check-out habitual é até às ${CHECKOUT}.`,
+    b: 'Se tiverem algum pedido antes de saírem, basta escreverem-nos. Teremos gosto em ver-vos mais uma vez.',
+    odkaz: 'Podem indicar a hora também aqui: {odkaz}',
+    podpis: 'Nikol e a família VIVIEN',
+  },
   sv: {
     a: `Hej, i morgon är det avresedag. Skriv till oss vilken tid ni åker, så att vi kan ta farväl personligen och ta över lägenheten. Vanlig avresa är senast ${CHECKOUT}.`,
     b: 'Om ni har ett önskemål före avresan, skriv till oss. Vi ser fram emot vårt sista möte.',
@@ -351,6 +359,7 @@ export const PREDMET_ODJEZDU: Record<GuideLang, string> = {
   es: 'VIVIEN · Su salida {datum}',
   fr: 'VIVIEN · Votre départ {datum}',
   it: 'VIVIEN · La vostra partenza {datum}',
+  pt: 'VIVIEN · A vossa saída {datum}',
   sv: 'VIVIEN · Er avresa {datum}',
   hu: 'VIVIEN · Az elutazásuk {datum}',
 };
@@ -479,6 +488,15 @@ export const TEXT_ODJEZDU: Record<
     ulozit: 'Salva',
     zmenit: 'cambia',
     radek: 'Partenza',
+  },
+  pt: {
+    nadpisZitra: 'A que horas saem amanhã?',
+    nadpisDnes: 'A que horas saem hoje?',
+    nadpisJindy: 'A que horas saem?',
+    poznamka: 'Uma hora mais tarde só por acordo.',
+    ulozit: 'Guardar',
+    zmenit: 'alterar',
+    radek: 'Saída',
   },
   sv: {
     nadpisZitra: 'Vilken tid åker ni i morgon?',

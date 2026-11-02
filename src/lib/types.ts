@@ -8,6 +8,7 @@ export type GuideLang =
   | 'es'
   | 'fr'
   | 'it'
+  | 'pt'
   | 'sv'
   | 'hu';
 export type AptId = 'V1' | 'V2' | 'V3' | 'V4' | 'V5';
@@ -24,6 +25,7 @@ export const GUIDE_LANGS: GuideLang[] = [
   'es',
   'fr',
   'it',
+  'pt',
   'sv',
   'hu',
 ];
@@ -39,6 +41,7 @@ export const LANG_LABELS: Record<GuideLang, string> = {
   es: 'Español',
   fr: 'Français',
   it: 'Italiano',
+  pt: 'Português',
   sv: 'Svenska',
   hu: 'Magyar',
 };

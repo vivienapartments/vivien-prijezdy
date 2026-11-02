@@ -497,6 +497,8 @@ const VLAJKY: Record<string, string> = {
   FRA: 'FR',
   ITA: 'IT',
   ESP: 'ES',
+  PRT: 'PT',
+  PT: 'PT',
   NLD: 'NL',
   BEL: 'BE',
   HUN: 'HU',

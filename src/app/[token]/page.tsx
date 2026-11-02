@@ -14,7 +14,7 @@ import {
   parseSignedToken,
   stayFromPayload,
 } from '@/lib/token';
-import type { GuideLang } from '@/lib/types';
+import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
 import { urovenZRezervace, vstupZRezervace } from '@/lib/vstup-pruvodce';
 import { zpravyOdNasZRezervace } from '@/lib/zpravy-od-nas';
 
@@ -35,9 +35,10 @@ export default async function TokenPage({ params }: Props) {
 
   const { a, l, i, r, p, d, f } = result.payload;
   const secrets = loadSecrets();
-  const lang = l as GuideLang;
   const store = createProcessStore();
   const rec = await store.getRezervace(r);
+  const lang: GuideLang =
+    rec?.jazyk && GUIDE_LANGS.includes(rec.jazyk) ? rec.jazyk : (l as GuideLang);
   const denPlatnosti = denPlatnostiPruvodce(d, rec?.odjezd);
   if (isDepartureExpired(denPlatnosti)) {
     return <Expired lang="cs" />;

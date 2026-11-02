@@ -21,6 +21,7 @@ const PRIJEZD: Record<GuideLang, string> = {
   es: 'VIVIEN · Su llegada {datum}',
   fr: 'VIVIEN · Votre arrivée {datum}',
   it: 'VIVIEN · Il vostro arrivo {datum}',
+  pt: 'VIVIEN · A vossa chegada {datum}',
   sv: 'VIVIEN · Er ankomst {datum}',
   hu: 'VIVIEN · Az érkezésük {datum}',
 };
@@ -35,6 +36,7 @@ const CHECKIN: Record<GuideLang, string> = {
   es: 'VIVIEN · Check-in en línea {datum}',
   fr: 'VIVIEN · Check-in en ligne {datum}',
   it: 'VIVIEN · Check-in online {datum}',
+  pt: 'VIVIEN · Check-in online {datum}',
   sv: 'VIVIEN · Online-incheckning {datum}',
   hu: 'VIVIEN · Online bejelentkezés {datum}',
 };
@@ -49,6 +51,7 @@ const PRUVODCE: Record<GuideLang, string> = {
   es: 'VIVIEN · Su guía {datum}',
   fr: 'VIVIEN · Votre guide {datum}',
   it: 'VIVIEN · La vostra guida {datum}',
+  pt: 'VIVIEN · O vosso guia {datum}',
   sv: 'VIVIEN · Er guide {datum}',
   hu: 'VIVIEN · Az útmutatójuk {datum}',
 };
@@ -63,6 +66,7 @@ const BRANA: Record<GuideLang, string> = {
   es: 'VIVIEN · Datos de la barrera {datum}',
   fr: 'VIVIEN · Données de la barrière {datum}',
   it: 'VIVIEN · Dati della sbarra {datum}',
+  pt: 'VIVIEN · Dados do portão {datum}',
   sv: 'VIVIEN · Uppgifter till bommen {datum}',
   hu: 'VIVIEN · A sorompó adatai {datum}',
 };

@@ -140,6 +140,7 @@ export function textEmailuZavad(lang: GuideLang | null | undefined, text: string
     es: `Hola, en la entrega del apartamento anotamos:\n\n${zavady}\n\n${skryta}\n\nConfirmen con el botón de abajo, por favor.`,
     fr: `Bonjour, lors de la remise de l'appartement nous avons noté :\n\n${zavady}\n\n${skryta}\n\nMerci de confirmer avec le bouton ci-dessous.`,
     it: `Buongiorno, alla consegna dell'appartamento abbiamo annotato:\n\n${zavady}\n\n${skryta}\n\nConfermate con il pulsante qui sotto.`,
+    pt: `Olá, na entrega do apartamento anotámos:\n\n${zavady}\n\n${skryta}\n\nConfirmem com o botão abaixo.`,
     hu: `Jó napot, az apartman átadásakor ezt jegyeztük fel:\n\n${zavady}\n\n${skryta}\n\nKérjük, erősítsék meg az alábbi gombbal.`,
   };
   const klic = lang && lang in mapa ? lang : 'en';
@@ -158,6 +159,7 @@ export function predmetEmailuZavad(lang: GuideLang | null | undefined): string {
     es: 'VIVIEN · Anotación de la entrega',
     fr: 'VIVIEN · Note de remise',
     it: 'VIVIEN · Nota di consegna',
+    pt: 'VIVIEN · Notas da entrega',
     hu: 'VIVIEN · Átadási feljegyzés',
   };
   const klic = lang && lang in mapa ? lang : 'en';
@@ -176,6 +178,7 @@ export function tlacitkoPotvrditZavady(lang: GuideLang | null | undefined): stri
     es: 'Confirmar',
     fr: 'Confirmer',
     it: 'Conferma',
+    pt: 'Confirmar',
     hu: 'Megerősítés',
   };
   const klic = lang && lang in mapa ? lang : 'en';
@@ -225,6 +228,7 @@ export const SKRYTA_ZAVADA: Record<GuideLang, string> = {
   es: "Esta anotación recoge el estado visible en la entrega. No significa que más adelante no pueda aparecer otro defecto oculto, ni excluye que lo tratemos.",
   fr: "Ce relevé décrit l’état visible lors de la remise. Il ne signifie pas qu’un autre défaut caché ne puisse pas apparaître plus tard et n’exclut pas que nous nous en occupions.",
   it: "Questa nota riporta lo stato visibile alla consegna. Non significa che più avanti non possa emergere un altro difetto nascosto e non esclude che ce ne occuperemo.",
+  pt: "Este registo mostra o estado visível no momento da entrega. Não significa que mais tarde não possa surgir outra avaria oculta, nem exclui que venhamos a tratar dela.",
   hu: "A feljegyzés az átadáskor látható állapotot rögzíti. Nem jelenti azt, hogy később nem derülhet ki újabb rejtett hiba, és nem zárja ki, hogy foglalkozunk vele.",
 };
 
@@ -240,6 +244,7 @@ export const PREDMET_PO_ODJEZDU: Record<GuideLang, string> = {
   es: "VIVIEN · Anotación tras su salida",
   fr: "VIVIEN · Relevé après votre départ",
   it: "VIVIEN · Nota dopo la partenza",
+  pt: "VIVIEN · Notas após a vossa saída",
   hu: "VIVIEN · Feljegyzés távozás után",
 };
 
@@ -255,6 +260,7 @@ export const UVOD_PO_ODJEZDU: Record<GuideLang, string> = {
   es: "Hola, al limpiar después de su salida encontramos en el apartamento lo siguiente:",
   fr: "Bonjour, lors du ménage après votre départ, nous avons constaté dans l’appartement :",
   it: "Buongiorno, durante le pulizie dopo la vostra partenza abbiamo riscontrato nell’appartamento:",
+  pt: "Olá, ao limpar o apartamento depois da vossa saída encontrámos o seguinte:",
   hu: "Jó napot, a távozásuk utáni takarításkor az apartmanban a következőt találtuk:",
 };
 
@@ -270,6 +276,7 @@ export const PROSBA_PO_ODJEZDU: Record<GuideLang, string> = {
   es: "Por favor, respondan a este correo y cuéntennos cómo ocurrió.",
   fr: "Merci de répondre à cet e-mail pour nous dire comment cela s’est produit.",
   it: "Vi preghiamo di rispondere a questa e-mail e di dirci come è successo.",
+  pt: "Respondam a este e-mail e digam-nos como aconteceu.",
   hu: "Kérjük, válaszoljanak erre az e-mailre, és írják meg, hogyan történt.",
 };
 
@@ -285,6 +292,7 @@ export const SKRYTA_PO_ODJEZDU: Record<GuideLang, string> = {
   es: "Esta anotación no excluye que más adelante aparezca otro defecto oculto, que también trataremos.",
   fr: "Ce relevé n’exclut pas qu’un autre défaut caché apparaisse plus tard, dont nous nous occuperons également.",
   it: "Questa nota non esclude che più avanti emerga un altro difetto nascosto, di cui ci occuperemo ugualmente.",
+  pt: "Este registo não exclui que mais tarde possa surgir outra avaria oculta, da qual também iremos tratar.",
   hu: "A feljegyzés nem zárja ki, hogy később újabb rejtett hiba derül ki, amellyel szintén foglalkozni fogunk.",
 };
 
@@ -300,6 +308,7 @@ export const PODPIS_ZAVADY: Record<GuideLang, string> = {
   es: "Nikol y la familia VIVIEN",
   fr: "Nikol et la famille VIVIEN",
   it: "Nikol e la famiglia VIVIEN",
+  pt: "Nikol e a família VIVIEN",
   hu: "Nikol és a VIVIEN család",
 };
 
@@ -384,6 +393,14 @@ export const STRANKA_ZAVAD: Record<GuideLang, { nadpis: string; potvrzeno: strin
     zmizel: "La nota di consegna non è più disponibile.",
     odesilam: "Invio…",
     chyba: "La conferma non è riuscita.",
+  },
+  pt: {
+    nadpis: "Notas da entrega",
+    potvrzeno: "Obrigado. O registo está confirmado.",
+    neplatny: "Este link não é válido.",
+    zmizel: "O registo da entrega já não está aqui.",
+    odesilam: "A enviar…",
+    chyba: "A confirmação não foi concluída.",
   },
   hu: {
     nadpis: "Átadási feljegyzés",
