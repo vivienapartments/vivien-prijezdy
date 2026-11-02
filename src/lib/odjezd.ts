@@ -7,11 +7,22 @@ import type { OdjezdBeh, RezervaceRecord } from './store';
 import type { AptId, GuideLang } from './types';
 import { ZPRAVA_ODJEZD } from './zpravy-stupne';
 
-/** Potvrzená žádost, nebo ručně zapsaný čas po 10:00 (75 Kč za půlhodinu). */
+/** Potvrzený příplatek za dřívější příjezd (i když čeká ještě dřívější žádost). */
+export function platnyPriplatekDrive(rec: Pick<RezervaceRecord, 'zadostPrijezd'>): number | null {
+  const z = rec.zadostPrijezd;
+  if (!z) return null;
+  if (z.stav === 'potvrzeno') return z.kc;
+  if (z.stav === 'ceka' && z.drziPotvrzeni) return z.drziPotvrzeni.kc;
+  return null;
+}
+
+/** Potvrzená žádost (i držená při nové žádosti), nebo ručně zapsaný čas po 10:00. */
 export function castkaPozdejsihoOdjezdu(
   rec: Pick<RezervaceRecord, 'zadostOdjezd' | 'casOdjezdu'>,
 ): number | null {
-  if (rec.zadostOdjezd?.stav === 'potvrzeno') return rec.zadostOdjezd.kc;
+  const z = rec.zadostOdjezd;
+  if (z?.stav === 'potvrzeno') return z.kc;
+  if (z?.stav === 'ceka' && z.drziPotvrzeni) return z.drziPotvrzeni.kc;
   return cenaPozde(rec.casOdjezdu);
 }
 
@@ -171,7 +182,7 @@ function vstupDluhu(rec: RezervaceRecord, zaplacene: DruhDluhu[] | null): VstupD
     naMiste: rec.naMiste,
     predano: rec.predano,
     vyjezdy: rec.vyjezdy || [],
-    priplatekDrive: rec.zadostPrijezd?.stav === 'potvrzeno' ? rec.zadostPrijezd.kc : null,
+    priplatekDrive: platnyPriplatekDrive(rec),
     priplatekPozde: castkaPozdejsihoOdjezdu(rec),
     zaplacene: zaplacene || undefined,
   };

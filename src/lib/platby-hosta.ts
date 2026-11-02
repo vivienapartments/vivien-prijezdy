@@ -107,8 +107,8 @@ export function vratPlatbu(rec: RezervaceRecord, druh: DruhDluhu | 'vse', now = 
   const kdo = rec.poplatekVybral === 'nikol' ? 'nikol' : 'pravoslav';
   let platby = druh === 'vse' ? [] : (rec.platby || []).filter((p) => p.druh !== druh);
   if (druh !== 'vse') platby = pokryjStare(rec, platby, kdo).filter((p) => p.druh !== druh);
-  const pracovni = { ...rec, platby };
-  const zbyva = polozkyZRezervace(pracovni);
+  /** Bez starého zaplaceno: po vrácení poslední položky by jinak dluh zmizel. */
+  const zbyva = polozkyZRezervace({ ...rec, platby, zaplaceno: null });
   const nazev = druh === 'vse' ? 'celá platba' : nazevDluhu(druh);
   const veta = `Vrácena platba, ${nazev}.`;
   return zapisMajitele(

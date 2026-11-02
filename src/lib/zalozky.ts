@@ -1,6 +1,6 @@
 import { casVPraze, hodinaPraha, minutaPraha } from './brana';
 import { PREVZETI_NEZNAMY_HODINA, PREVZETI_PO_HODINACH } from './constants';
-import type { DruhDluhu } from './odjezd';
+import { nazevDluhu, type DruhDluhu } from './odjezd';
 import type { RezervaceRecord } from './store';
 
 export type Zalozka = 'prijezdy' | 'dluhy' | 'hledat';
@@ -269,7 +269,7 @@ export function nahledPlateb(v: {
   const kdoLegacy = v.poplatekVybral === 'nikol' ? 'Nikol' : v.zaplaceno ? 'Pravoslav' : null;
   const vypocet =
     v.poplatek === 'ano' && v.noci && v.osob && v.noci > 0 && v.osob > 0 ? `${v.osob} × ${v.noci} × 50 Kč` : null;
-  const radky = v.polozky.map((p) => {
+  const radky: RadekPlatbyHosta[] = v.polozky.map((p) => {
     const platbyDruhu = v.platby.filter((x) => x.druh === p.druh);
     const zaplacenoKc = platbyDruhu.reduce((s, x) => s + x.kc, 0);
     const posledni = platbyDruhu[platbyDruhu.length - 1];
@@ -288,18 +288,51 @@ export function nahledPlateb(v: {
       vypocet: p.druh === 'poplatek' ? vypocet : null,
     };
   });
+  const znameDruhy = new Set(v.polozky.map((p) => p.druh));
+  const preplatky = new Map<DruhDluhu, typeof v.platby>();
+  for (const p of v.platby) {
+    if (znameDruhy.has(p.druh)) continue;
+    const seznam = preplatky.get(p.druh) || [];
+    seznam.push(p);
+    preplatky.set(p.druh, seznam);
+  }
+  let sumaPreplatku = 0;
+  for (const [druh, platbyDruhu] of preplatky) {
+    const zaplacenoKc = platbyDruhu.reduce((s, x) => s + x.kc, 0);
+    if (zaplacenoKc <= 0) continue;
+    sumaPreplatku += zaplacenoKc;
+    const posledni = platbyDruhu[platbyDruhu.length - 1];
+    radky.push({
+      druh,
+      nazev: nazevDluhu(druh),
+      kc: zaplacenoKc,
+      plnaKc: 0,
+      zaplacenoKc,
+      zaplacena: true,
+      jak: posledni ? JAK_PLATBY[posledni.jak] || null : null,
+      kdo: posledni ? (posledni.kdo === 'nikol' ? 'Nikol' : 'Pravoslav') : null,
+      kdy: posledni ? kdyPlatby(posledni.kdy) : null,
+      vypocet: `přeplatek ${formatKc(zaplacenoKc)}, vrátit`,
+    });
+  }
   const suma = (xs: { kc: number }[]) => xs.reduce((s, r) => s + r.kc, 0);
   const nezap = radky.filter((r) => !r.zaplacena);
-  const zap = radky.filter((r) => r.zaplacena);
+  const zap = radky.filter((r) => r.zaplacena && r.plnaKc > 0);
   const sumaZbytku = suma(nezap);
+  const sumaCastZap = radky
+    .filter((r) => r.plnaKc > 0 && r.zaplacenoKc > 0 && r.zaplacenoKc < r.plnaKc)
+    .reduce((s, r) => s + r.zaplacenoKc, 0);
   const sumaZaplaceno = radky.reduce((s, r) => s + (r.zaplacenoKc || 0), 0);
   let text = 'Platby: nic';
   let ton: NahledPlateb['ton'] = 'seda';
   if (sumaZbytku > 0) {
     text =
-      sumaZaplaceno > 0
-        ? `Platby: ${formatKc(sumaZbytku)} (už ${formatKc(sumaZaplaceno)})`
+      sumaCastZap > 0
+        ? `Platby: ${formatKc(sumaZbytku)} (už ${formatKc(sumaCastZap)})`
         : `Platby: ${formatKc(sumaZbytku)}`;
+    ton = 'normal';
+  } else if (sumaPreplatku > 0) {
+    text = `Platby: přeplatek ${formatKc(sumaPreplatku)}`;
     ton = 'normal';
   } else if (suma(zap) > 0 || sumaZaplaceno > 0) {
     text = `Platby: zaplaceno ${formatKc(sumaZaplaceno || suma(zap))} ✓`;

@@ -36,8 +36,8 @@ describe('připomínky stupně', () => {
     expect(dalsiCasovaZprava(3)).toBe('nedojezd');
   });
 
-  it('v den příjezdu je aspoň 3. stupeň i bez předchozích zpráv', () => {
-    expect(dalsiCasovaZprava(0, true, [])).toBe('pruvodce3');
+  it('den příjezdu / den předem: 0 → 2. stupeň, 1 → 3. stupeň', () => {
+    expect(dalsiCasovaZprava(0, true, [])).toBe('denNerozbalen');
     expect(dalsiCasovaZprava(1, true, [])).toBe('pruvodce3');
     expect(
       dalsiCasovaZprava(1, true, [{ co: 'WhatsApp: Průvodce, důrazný' }]),
@@ -61,13 +61,14 @@ describe('připomínky stupně', () => {
     ).toBe(2);
   });
 
-  it('check-in stupeň: den před / den příjezdu aspoň 3', () => {
+  it('check-in stupeň: 0 → 1 (v okně 2), 1 → 2 (v okně 3)', () => {
     expect(stupenCheckinu(0, false)).toBe(1);
     expect(stupenCheckinu(1, false)).toBe(2);
-    expect(stupenCheckinu(0, true)).toBe(3);
+    expect(stupenCheckinu(0, true)).toBe(2);
+    expect(stupenCheckinu(1, true)).toBe(3);
   });
 
-  it('Poslední výzva · check-in po 3. stupni odeslaném den předem (i když celkový počet je 2)', () => {
+  it('Poslední výzva · check-in až po 3. stupni (2 zprávy, aspoň jedna v okně)', () => {
     const historie = [
       { co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-08T10:00:00.000Z' },
       { co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-14T09:00:00.000Z' },
@@ -93,15 +94,16 @@ describe('připomínky stupně', () => {
         stav: 'bez_checkinu',
         prijezd: '2026-10-15',
         dnes: '2026-10-14',
-        historie: [{ co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-08T10:00:00.000Z' }],
+        historie: [{ co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-14T09:00:00.000Z' }],
       }),
     ).toBe(false);
     expect(pocetCheckinPripoinek(historie)).toBe(2);
   });
 
-  it('brána: stupeň podle počtu, v den příjezdu aspoň 3', () => {
+  it('brána: stejný žebříček, v okně první max. 2', () => {
     expect(pocetBranaPripoinek([{ co: 'WhatsApp: Chybí údaje k bráně' }])).toBe(1);
-    expect(stupenBrany(0, true)).toBe(3);
+    expect(stupenBrany(0, true)).toBe(2);
+    expect(stupenBrany(1, true)).toBe(3);
   });
 
   it('textVyzvy: 0 / počet s datem / Poslední výzva', () => {

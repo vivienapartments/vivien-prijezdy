@@ -17,6 +17,9 @@ import {
   textStavu,
   vety,
   vyhodnotObjednavku,
+  nahledObjednavky,
+  poZmeneCasuOdjezdu,
+  poZmeneCasuPrijezdu,
   zadostOdjezdu,
   zadostPrijezdu,
   zapisPokus,
@@ -222,5 +225,103 @@ describe('okno pobytu', () => {
     expect(jiny?.bezeZmeny).toBeFalsy();
     expect(jiny?.rec.zadostPrijezd?.cas).toBe('11:00');
     expect(jiny?.push).toBeTruthy();
+  });
+
+  it('posun na 14:00 zruší potvrzený příplatek, zaplacené platby zůstanou', () => {
+    const ted = new Date('2026-10-20T10:00:00.000Z');
+    const host = zaklad('12', {
+      prijezd: '2026-10-20',
+      casPrijezdu: '12:00',
+      zadostPrijezd: {
+        cas: '12:00',
+        kc: 300,
+        stav: 'potvrzeno',
+        kdy: ted.toISOString(),
+        od: 'pruvodce',
+        hned: true,
+        upozorneno: false,
+      },
+      platby: [{ druh: 'drive', kc: 300, jak: 'hotove', kdo: 'pravoslav', kdy: ted.toISOString() }],
+    });
+    expect(polozkyZRezervace(host).some((p) => p.druh === 'drive')).toBe(false);
+    const uprava = poZmeneCasuPrijezdu(host, '14:00', ted);
+    expect(uprava?.historie).toContain('příplatek za dřívější příjezd zrušen');
+    const po = { ...host, ...uprava?.patch, casPrijezdu: '14:00' };
+    expect(po.zadostPrijezd).toBeNull();
+    expect(polozkyZRezervace(po).some((p) => p.druh === 'drive')).toBe(false);
+    expect(po.platby?.some((p) => p.druh === 'drive' && p.kc === 300)).toBe(true);
+  });
+
+  it('pozdější dřívější čas po potvrzení přepočítá dolů, dřívější čeká', () => {
+    const ted = new Date('2026-10-20T10:00:00.000Z');
+    const host = zaklad('13', {
+      prijezd: '2026-10-20',
+      casPrijezdu: '12:00',
+      zadostPrijezd: {
+        cas: '12:00',
+        kc: 300,
+        stav: 'potvrzeno',
+        kdy: ted.toISOString(),
+        od: 'pruvodce',
+        hned: true,
+        upozorneno: false,
+      },
+    });
+    const dolu = poZmeneCasuPrijezdu(host, '13:00', ted);
+    expect(dolu?.patch.zadostPrijezd?.stav).toBe('potvrzeno');
+    expect(dolu?.patch.zadostPrijezd?.kc).toBe(150);
+    const drive = zadostPrijezdu(host, [], '11:00', 'pruvodce', ted);
+    expect(drive?.rec.zadostPrijezd?.stav).toBe('ceka');
+    expect(drive?.rec.zadostPrijezd?.drziPotvrzeni?.kc).toBe(300);
+    expect(drive?.rec.casPrijezdu).toBe('12:00');
+    expect(polozkyZRezervace(drive!.rec).some((p) => p.druh === 'drive' && p.kc === 300)).toBe(true);
+  });
+
+  it('odjezd na 10:00 zruší příplatek za pozdější', () => {
+    const ted = new Date('2026-10-21T08:00:00.000Z');
+    const host = zaklad('14', {
+      odjezd: '2026-10-22',
+      casOdjezdu: '11:00',
+      zadostOdjezd: {
+        cas: '11:00',
+        kc: 150,
+        stav: 'potvrzeno',
+        kdy: ted.toISOString(),
+        od: 'pruvodce',
+        hned: true,
+        upozorneno: false,
+      },
+    });
+    const uprava = poZmeneCasuOdjezdu(host, '10:00', ted);
+    expect(uprava?.patch.zadostOdjezd).toBeNull();
+    expect(uprava?.historie).toContain('příplatek za pozdější odjezd zrušen');
+  });
+
+  it('po potvrzení jde čas v náhledu pořád měnit', () => {
+    const host = zaklad('15', {
+      prijezd: '2026-10-20',
+      odjezd: '2026-10-22',
+      zadostPrijezd: {
+        cas: '12:00',
+        kc: 300,
+        stav: 'potvrzeno',
+        kdy: '',
+        od: 'pruvodce',
+        hned: true,
+        upozorneno: false,
+      },
+      zadostOdjezd: {
+        cas: '11:00',
+        kc: 150,
+        stav: 'potvrzeno',
+        kdy: '',
+        od: 'pruvodce',
+        hned: true,
+        upozorneno: false,
+      },
+    });
+    const n = nahledObjednavky(host, [host], 'V3');
+    expect(n.muzeMenitPrijezd).toBe(true);
+    expect(n.muzeMenitOdjezd).toBe(true);
   });
 });

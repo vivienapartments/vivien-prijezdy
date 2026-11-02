@@ -89,6 +89,11 @@ export type ZadostOkna = {
   hned: boolean;
   /** Push po úklidu už odešel. */
   upozorneno: boolean;
+  /**
+   * Při žádosti o ještě dřívější čas po potvrzení: drží potvrzený čas a částku,
+   * dokud majitel novou žádost nepotvrdí.
+   */
+  drziPotvrzeni?: { cas: string; kc: number } | null;
 };
 
 export type ObjednatPokus = { od: number; pocet: number };
@@ -597,6 +602,19 @@ function nactiZadost(raw: unknown): ZadostOkna | null {
   if (z.stav !== 'ceka' && z.stav !== 'potvrzeno' && z.stav !== 'nelze') return null;
   if (typeof z.kc !== 'number' || z.kc <= 0) return null;
   const od = z.od === 'objednat' || z.od === 'pripraveno' ? z.od : 'pruvodce';
+  let drziPotvrzeni: ZadostOkna['drziPotvrzeni'] = null;
+  const rawDrzi = (z as { drziPotvrzeni?: unknown }).drziPotvrzeni;
+  if (rawDrzi && typeof rawDrzi === 'object') {
+    const d = rawDrzi as { cas?: unknown; kc?: unknown };
+    if (
+      typeof d.cas === 'string' &&
+      /^([01]\d|2[0-3]):[0-5]\d$/.test(d.cas) &&
+      typeof d.kc === 'number' &&
+      d.kc > 0
+    ) {
+      drziPotvrzeni = { cas: d.cas, kc: Math.round(d.kc) };
+    }
+  }
   return {
     cas: z.cas,
     kc: Math.round(z.kc),
@@ -605,6 +623,7 @@ function nactiZadost(raw: unknown): ZadostOkna | null {
     od,
     hned: z.hned === true,
     upozorneno: z.upozorneno === true,
+    ...(drziPotvrzeni ? { drziPotvrzeni } : {}),
   };
 }
 

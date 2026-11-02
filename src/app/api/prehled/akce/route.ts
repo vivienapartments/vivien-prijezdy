@@ -28,6 +28,8 @@ import {
   cenaPozde,
   oznacUpozorneno,
   poUklidu,
+  poZmeneCasuOdjezdu,
+  poZmeneCasuPrijezdu,
   predmetPripraveno,
 } from '@/lib/okno-pobytu';
 import { upozorniMajitele, upozorniUklid } from '@/lib/upozorneni';
@@ -594,13 +596,25 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     const bylo = rec.casPrijezdu === 'po20' ? 'po 20:00' : rec.casPrijezdu || 'žádný';
     const nove = cas === 'po20' ? 'po 20:00' : cas || 'žádný';
+    const uprava = cas && cas !== 'po20' ? poZmeneCasuPrijezdu(rec, cas, new Date()) : poZmeneCasuPrijezdu(rec, null, new Date());
     const dalsi = zapisMajitele(
       rec,
       'casPrijezdu',
-      { casPrijezdu: cas, casZadalHost: false },
-      bylo === nove ? '' : `Čas příjezdu ${bylo} → ${nove}`,
+      {
+        casPrijezdu: cas,
+        casZadalHost: false,
+        ...(uprava?.patch || { zadostPrijezd: cas && cas !== 'po20' ? rec.zadostPrijezd : null }),
+      },
+      bylo === nove ? '' : uprava?.historie || `Čas příjezdu ${bylo} → ${nove}`,
     );
     await store.setRezervace(id, dalsi);
+    if (uprava?.push) {
+      try {
+        await upozorniMajitele(store, uprava.push, `/prehled#${id}`);
+      } catch {
+        /* push není povinný */
+      }
+    }
     return NextResponse.json({ ok: true, hodnota: nove === 'žádný' ? '' : nove }, { headers: noStore });
   }
 
@@ -698,34 +712,44 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: true, hodnota: '' }, { headers: noStore });
     }
     const kc = cenaPozde(cas);
-    const now = new Date().toISOString();
+    const ted = new Date();
+    const upravaOd = poZmeneCasuOdjezdu(rec, cas, ted);
+    const now = ted.toISOString();
     const veta =
       bylo === nove
         ? ''
-        : kc
-          ? `Čas odjezdu ${bylo} → ${nove} (+${kc} Kč)`
-          : `Čas odjezdu ${bylo} → ${nove}`;
+        : upravaOd?.historie ||
+          (kc ? `Čas odjezdu ${bylo} → ${nove} (+${kc} Kč)` : `Čas odjezdu ${bylo} → ${nove}`);
     const dalsi = zapisMajitele(
       rec,
       'casOdjezdu',
       {
         casOdjezdu: cas,
         casOdjezduZadalHost: false,
-        zadostOdjezd: kc
-          ? {
-              cas,
-              kc,
-              stav: 'potvrzeno',
-              kdy: now,
-              od: 'pruvodce',
-              hned: true,
-              upozorneno: false,
-            }
-          : null,
+        ...(upravaOd?.patch || {
+          zadostOdjezd: kc
+            ? {
+                cas,
+                kc,
+                stav: 'potvrzeno' as const,
+                kdy: now,
+                od: 'pruvodce' as const,
+                hned: true,
+                upozorneno: false,
+              }
+            : null,
+        }),
       },
       veta,
     );
     await store.setRezervace(id, dalsi);
+    if (upravaOd?.push) {
+      try {
+        await upozorniMajitele(store, upravaOd.push, `/prehled#${id}`);
+      } catch {
+        /* push není povinný */
+      }
+    }
     return NextResponse.json({ ok: true, hodnota: nove }, { headers: noStore });
   }
 

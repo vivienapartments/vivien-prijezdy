@@ -1,4 +1,12 @@
-import { jeCasDrive, jeCasPozde, zadostOdjezdu, zadostPrijezdu, zrusitZadost } from './okno-pobytu';
+import {
+  jeCasDrive,
+  jeCasPozde,
+  poZmeneCasuOdjezdu,
+  poZmeneCasuPrijezdu,
+  zadostOdjezdu,
+  zadostPrijezdu,
+  zrusitZadost,
+} from './okno-pobytu';
 import { jeCasOdjezduPovoleny, textHostUlozil, zobrazCas } from './odjezd';
 import { verzeAktualni } from './pravidla-verze';
 import { popisekCasu } from './priplatek-prijezd';
@@ -176,12 +184,15 @@ export async function ulozVstupHosta(
     }
     const bylo = rec.casOdjezdu ? zobrazCas(rec.casOdjezdu) : 'žádný';
     const nove = zobrazCas(cas);
-    const zapis = poznamenej(rec, `Čas odjezdu ${bylo} → ${nove}`, {
+    const uprava = poZmeneCasuOdjezdu(rec, cas, new Date());
+    const zapis = poznamenej(rec, uprava?.historie || `Čas odjezdu ${bylo} → ${nove}`, {
       casOdjezdu: cas,
       casOdjezduZadalHost: true,
+      ...(uprava?.patch || { zadostOdjezd: null }),
     });
     await store.setRezervace(id, zapis);
-    await ohlas(store, id, textHostUlozil(rec, cas));
+    if (uprava?.push) await ohlas(store, id, uprava.push);
+    else await ohlas(store, id, textHostUlozil(rec, cas));
     return { ok: true, cas, uroven: urovenZRezervace(zapis) };
   }
 
@@ -249,9 +260,12 @@ export async function ulozVstupHosta(
       ? [...(rec.navrhy || []).filter((n) => n.pole !== 'casPrijezdu'), { pole: 'casPrijezdu' as const, od: 'host' as const, hodnota: cas }]
       : (rec.navrhy || []).filter((n) => n.pole !== 'casPrijezdu');
     const zmenaTelefonu = Boolean(rec.telefonBrana && telefonBrana && rec.telefonBrana !== telefonBrana);
+    const uprava = rucniCas ? null : poZmeneCasuPrijezdu(rec, cas, new Date());
     const zapis = poznamenej(
       rec,
-      rucniCas ? 'Host zadal jiný čas, ruční čas zůstal' : `Příjezd ${popisekCasu(rec.casPrijezdu || 'žádný')} → ${novy}`,
+      rucniCas
+        ? 'Host zadal jiný čas, ruční čas zůstal'
+        : uprava?.historie || `Příjezd ${popisekCasu(rec.casPrijezdu || 'žádný')} → ${novy}`,
       {
         casPrijezdu: rucniCas ? rec.casPrijezdu : cas,
         casZadalHost: rucniCas ? rec.casZadalHost : true,
@@ -260,7 +274,7 @@ export async function ulozVstupHosta(
         spz,
         spzPujcene: pujcene,
         branaRegistrovano: zmenaTelefonu ? null : rec.branaRegistrovano,
-        zadostPrijezd: rec.zadostPrijezd?.stav === 'potvrzeno' ? rec.zadostPrijezd : null,
+        ...(uprava?.patch || { zadostPrijezd: null }),
         navrhy,
         ...souhlas.patch,
       },
@@ -268,6 +282,7 @@ export async function ulozVstupHosta(
     if (souhlas.veta) zapis.historie = [...zapis.historie, { cas: zapis.posledniPokus, co: souhlas.veta }].slice(-40);
     await store.setRezervace(id, zapis);
     if (rucniCas) await ohlas(store, id, `${popisHosta(rec)}: host napsal ${novy}, váš čas zůstává`);
+    else if (uprava?.push) await ohlas(store, id, uprava.push);
     else if ((rec.casPrijezdu || '') !== cas) await ohlas(store, id, `${popisHosta(rec)}: příjezd kolem ${novy}`);
     if (telefonBrana && telefonBrana !== rec.telefonBrana) {
       await ohlas(store, id, `${popisHosta(rec)}: zaregistrujte v bráně ${textTelefonu(telefonBrana)}`);
@@ -300,14 +315,21 @@ export async function ulozVstupHosta(
       await ohlas(store, id, `${popisHosta(rec)}: host napsal ${novy}, váš čas zůstává`);
       return { ok: true, uroven: urovenZRezervace(rec) };
     }
-    const zapis = poznamenej(rec, `Čas příjezdu ${bylo} → ${novy}`, {
-      casPrijezdu: cas,
-      casZadalHost: true,
-      ...souhlas.patch,
-    });
+    const upravaCas = poZmeneCasuPrijezdu(rec, cas, new Date());
+    const zapis = poznamenej(
+      rec,
+      upravaCas?.historie || `Čas příjezdu ${bylo} → ${novy}`,
+      {
+        casPrijezdu: cas,
+        casZadalHost: true,
+        ...(upravaCas?.patch || (!jeCasDrive(cas) ? { zadostPrijezd: null } : {})),
+        ...souhlas.patch,
+      },
+    );
     if (souhlas.veta) zapis.historie = [...zapis.historie, { cas: zapis.posledniPokus, co: souhlas.veta }].slice(-40);
     await store.setRezervace(id, zapis);
-    await ohlas(store, id, `${popisHosta(rec)}: příjezd kolem ${novy}`);
+    if (upravaCas?.push) await ohlas(store, id, upravaCas.push);
+    else await ohlas(store, id, `${popisHosta(rec)}: příjezd kolem ${novy}`);
     return { ok: true, uroven: urovenZRezervace({ ...rec, casPrijezdu: cas, casZadalHost: true }) };
   }
 

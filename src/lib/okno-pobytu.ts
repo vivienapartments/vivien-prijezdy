@@ -863,6 +863,70 @@ export function oknoProHosta(rec: RezervaceRecord, zaznamy: RezervaceRecord[], n
   };
 }
 
+/**
+ * Po změně času příjezdu: zruší / přepočítá žádost.
+ * Zaplacené platby druhu drive nemaže (vznikne přeplatek).
+ */
+export function poZmeneCasuPrijezdu(
+  rec: RezervaceRecord,
+  novyCas: string | null,
+  now: Date,
+): { patch: Partial<RezervaceRecord>; historie: string; push: string } | null {
+  const z = rec.zadostPrijezd;
+  if (!z || z.stav === 'nelze') return null;
+  const popisCas = novyCas ? zobrazCas(novyCas) : 'žádný';
+  const kcNove = cenaDrive(novyCas);
+  if (!kcNove) {
+    return {
+      patch: { zadostPrijezd: null },
+      historie: `Příjezd změněn na ${popisCas}, příplatek za dřívější příjezd zrušen`,
+      push: `${popisHostaKratce(rec)}: příjezd ${popisCas}, příplatek za dřívější zrušen`,
+    };
+  }
+  const staryMin = minutyCasu(z.drziPotvrzeni?.cas || z.cas);
+  const novyMin = minutyCasu(novyCas);
+  if (staryMin == null || novyMin == null) return null;
+
+  if (z.stav === 'potvrzeno' && novyMin < staryMin) {
+    return {
+      patch: {
+        zadostPrijezd: {
+          ...novaZadost(novyCas!, kcNove, z.od, z.hned, now),
+          drziPotvrzeni: { cas: z.cas, kc: z.kc },
+        },
+      },
+      historie: `Žádost o dřívější příjezd ve ${zobrazCas(novyCas!)} (platí potvrzený ${zobrazCas(z.cas)})`,
+      push: textPushePrijezdu(popisHostaKratce(rec), novyCas!, kcNove, z.hned),
+    };
+  }
+
+  if (z.cas === novyCas && z.kc === kcNove && !z.drziPotvrzeni) return null;
+
+  if (z.stav === 'potvrzeno') {
+    return {
+      patch: {
+        zadostPrijezd: { ...z, cas: novyCas!, kc: kcNove, kdy: now.toISOString(), drziPotvrzeni: null },
+      },
+      historie: `Příplatek za dřívější příjezd přepočítán ${z.kc} Kč → ${kcNove} Kč (${zobrazCas(novyCas!)})`,
+      push: `${popisHostaKratce(rec)}: příplatek dřívějšího příjezdu ${kcNove} Kč`,
+    };
+  }
+
+  return {
+    patch: {
+      zadostPrijezd: {
+        ...z,
+        cas: novyCas!,
+        kc: kcNove,
+        kdy: now.toISOString(),
+        ...(z.drziPotvrzeni ? { drziPotvrzeni: z.drziPotvrzeni } : {}),
+      },
+    },
+    historie: `Žádost o dřívější příjezd upravena na ${zobrazCas(novyCas!)}`,
+    push: textPushePrijezdu(popisHostaKratce(rec), novyCas!, kcNove, z.hned),
+  };
+}
+
 export function zadostPrijezdu(
   rec: RezervaceRecord,
   zaznamy: RezervaceRecord[],
@@ -874,11 +938,31 @@ export function zadostPrijezdu(
     return { rec, push: '', bezeZmeny: true };
   }
   const kc = cenaDrive(cas);
-  if (!kc || rec.zadostPrijezd?.stav === 'potvrzeno') return null;
+  if (!kc) return null;
   const odchod = odjizdiTenDen(hosteZ(zaznamy), hostZ(rec));
   const povoleno = casyDrive(nejdrivePoOdjezdu(odchod?.casOdjezdu ?? null, Boolean(odchod)));
   if (!povoleno.includes(cas)) return null;
   const hned = !odchod;
+
+  if (rec.zadostPrijezd?.stav === 'potvrzeno') {
+    const uprava = poZmeneCasuPrijezdu(rec, cas, now);
+    if (!uprava) return { rec, push: '', bezeZmeny: true };
+    const drzi = uprava.patch.zadostPrijezd?.drziPotvrzeni;
+    const rucni = maRucni(rec, 'casPrijezdu');
+    const dalsi = poznamka(
+      rec,
+      uprava.historie,
+      {
+        ...uprava.patch,
+        // Při žádosti o ještě dřívější zůstává potvrzený čas.
+        casPrijezdu: drzi ? (rucni ? rec.casPrijezdu : drzi.cas) : rucni ? rec.casPrijezdu : cas,
+        casZadalHost: rucni ? rec.casZadalHost : true,
+      },
+      now,
+    );
+    return { rec: dalsi, push: uprava.push };
+  }
+
   const rucni = maRucni(rec, 'casPrijezdu');
   const oficialni = rucni || (rec.casPrijezdu && !jeCasDrive(rec.casPrijezdu)) ? rec.casPrijezdu : '14:00';
   const vetaHistorie = od === 'objednat' ? 'Žádost přes stránku Objednat' : `Žádost o dřívější příjezd ve ${zobrazCas(cas)}`;
@@ -895,6 +979,70 @@ export function zadostPrijezdu(
   return { rec: dalsi, push: textPushePrijezdu(popisHostaKratce(rec), cas, kc, hned) };
 }
 
+/**
+ * Po změně času odjezdu: zruší / přepočítá žádost o pozdější odjezd.
+ * Zaplacené platby druhu pozde nemaže.
+ */
+export function poZmeneCasuOdjezdu(
+  rec: RezervaceRecord,
+  novyCas: string | null,
+  now: Date,
+): { patch: Partial<RezervaceRecord>; historie: string; push: string } | null {
+  const z = rec.zadostOdjezd;
+  if (!z || z.stav === 'nelze') return null;
+  const popisCas = novyCas ? zobrazCas(novyCas) : 'žádný';
+  const kcNove = cenaPozde(novyCas);
+  if (!kcNove) {
+    return {
+      patch: { zadostOdjezd: null },
+      historie: `Odjezd změněn na ${popisCas}, příplatek za pozdější odjezd zrušen`,
+      push: `${popisHostaKratce(rec)}: odjezd ${popisCas}, příplatek za pozdější zrušen`,
+    };
+  }
+  const staryMin = minutyCasu(z.drziPotvrzeni?.cas || z.cas);
+  const novyMin = minutyCasu(novyCas);
+  if (staryMin == null || novyMin == null) return null;
+
+  if (z.stav === 'potvrzeno' && novyMin > staryMin) {
+    return {
+      patch: {
+        zadostOdjezd: {
+          ...novaZadost(novyCas!, kcNove, z.od, z.hned, now),
+          drziPotvrzeni: { cas: z.cas, kc: z.kc },
+        },
+      },
+      historie: `Žádost o pozdější odjezd ve ${zobrazCas(novyCas!)} (platí potvrzený ${zobrazCas(z.cas)})`,
+      push: textPusheOdjezdu(popisHostaKratce(rec), novyCas!, kcNove),
+    };
+  }
+
+  if (z.cas === novyCas && z.kc === kcNove && !z.drziPotvrzeni) return null;
+
+  if (z.stav === 'potvrzeno') {
+    return {
+      patch: {
+        zadostOdjezd: { ...z, cas: novyCas!, kc: kcNove, kdy: now.toISOString(), drziPotvrzeni: null },
+      },
+      historie: `Příplatek za pozdější odjezd přepočítán ${z.kc} Kč → ${kcNove} Kč (${zobrazCas(novyCas!)})`,
+      push: `${popisHostaKratce(rec)}: příplatek pozdějšího odjezdu ${kcNove} Kč`,
+    };
+  }
+
+  return {
+    patch: {
+      zadostOdjezd: {
+        ...z,
+        cas: novyCas!,
+        kc: kcNove,
+        kdy: now.toISOString(),
+        ...(z.drziPotvrzeni ? { drziPotvrzeni: z.drziPotvrzeni } : {}),
+      },
+    },
+    historie: `Žádost o pozdější odjezd upravena na ${zobrazCas(novyCas!)}`,
+    push: textPusheOdjezdu(popisHostaKratce(rec), novyCas!, kcNove),
+  };
+}
+
 export function zadostOdjezdu(
   rec: RezervaceRecord,
   zaznamy: RezervaceRecord[],
@@ -906,12 +1054,31 @@ export function zadostOdjezdu(
     return { rec, push: '', bezeZmeny: true };
   }
   const kc = cenaPozde(cas);
-  if (!kc || rec.zadostOdjezd?.stav === 'potvrzeno') return null;
+  if (!kc) return null;
   const dalsiHost = prijizdiTenDen(hosteZ(zaznamy), hostZ(rec));
   const nejpozdeji = nejpozdejiPredPrijezdem(dalsiHost?.casPrijezdu ?? null, Boolean(dalsiHost));
   const minCas = minutyCasu(cas);
   const minMax = minutyCasu(nejpozdeji);
   if (minCas == null || minMax == null || minCas > minMax) return null;
+
+  if (rec.zadostOdjezd?.stav === 'potvrzeno') {
+    const uprava = poZmeneCasuOdjezdu(rec, cas, now);
+    if (!uprava) return { rec, push: '', bezeZmeny: true };
+    const drzi = uprava.patch.zadostOdjezd?.drziPotvrzeni;
+    const rucni = maRucni(rec, 'casOdjezdu');
+    const dalsi = poznamka(
+      rec,
+      uprava.historie,
+      {
+        ...uprava.patch,
+        casOdjezdu: drzi ? (rucni ? rec.casOdjezdu : drzi.cas) : rucni ? rec.casOdjezdu : cas,
+        casOdjezduZadalHost: rucni ? rec.casOdjezduZadalHost : true,
+      },
+      now,
+    );
+    return { rec: dalsi, push: uprava.push };
+  }
+
   const vetaHistorie = od === 'objednat' ? 'Žádost přes stránku Objednat' : `Žádost o pozdější odjezd ve ${zobrazCas(cas)}`;
   const dalsi = poznamka(rec, vetaHistorie, { zadostOdjezd: novaZadost(cas, kc, od, !dalsiHost, now) }, now);
   return { rec: dalsi, push: textPusheOdjezdu(popisHostaKratce(rec), cas, kc) };
@@ -919,7 +1086,13 @@ export function zadostOdjezdu(
 
 export function zrusitZadost(rec: RezervaceRecord, druh: 'prijezd' | 'odjezd', now: Date): RezervaceRecord | null {
   const zadost = druh === 'prijezd' ? rec.zadostPrijezd : rec.zadostOdjezd;
-  if (!zadost || zadost.stav === 'potvrzeno') return null;
+  if (!zadost) return null;
+  if (zadost.stav === 'potvrzeno') {
+    const uprava =
+      druh === 'prijezd' ? poZmeneCasuPrijezdu(rec, '14:00', now) : poZmeneCasuOdjezdu(rec, '10:00', now);
+    if (!uprava) return null;
+    return poznamka(rec, uprava.historie, uprava.patch, now);
+  }
   const veta = druh === 'prijezd' ? 'Žádost o dřívější příjezd zrušena' : 'Žádost o pozdější odjezd zrušena';
   return poznamka(rec, veta, druh === 'prijezd' ? { zadostPrijezd: null } : { zadostOdjezd: null }, now);
 }
@@ -941,7 +1114,7 @@ export function aplikujPotvrzeni(
       rec,
       `Dřívější příjezd ${zobrazCas(zadost.cas)} potvrzen`,
       {
-        zadostPrijezd: { ...zadost, stav: 'potvrzeno', kdy: now.toISOString() },
+        zadostPrijezd: { ...zadost, stav: 'potvrzeno', kdy: now.toISOString(), drziPotvrzeni: null },
         casPrijezdu: rucni ? rec.casPrijezdu : zadost.cas,
         casZadalHost: rucni ? rec.casZadalHost : true,
       },
@@ -953,7 +1126,7 @@ export function aplikujPotvrzeni(
     rec,
     `Pozdější odjezd ${zobrazCas(zadost.cas)} potvrzen`,
     {
-      zadostOdjezd: { ...zadost, stav: 'potvrzeno', kdy: now.toISOString() },
+      zadostOdjezd: { ...zadost, stav: 'potvrzeno', kdy: now.toISOString(), drziPotvrzeni: null },
       casOdjezdu: rucni ? rec.casOdjezdu : zadost.cas,
       casOdjezduZadalHost: rucni ? rec.casOdjezduZadalHost : true,
     },
@@ -1133,8 +1306,8 @@ export function nahledObjednavky(rec: RezervaceRecord, zaznamy: RezervaceRecord[
     odjezd: stavZ(rec.zadostOdjezd),
     slotyPrijezd: pohled.slotyPrijezd,
     slotyOdjezd: pohled.slotyOdjezd,
-    muzeMenitPrijezd: rec.zadostPrijezd?.stav !== 'potvrzeno',
-    muzeMenitOdjezd: rec.zadostOdjezd?.stav !== 'potvrzeno',
+    muzeMenitPrijezd: true,
+    muzeMenitOdjezd: true,
   };
 }
 

@@ -36,22 +36,19 @@ export function uzOdeslanPruvodce3(historie: { co: string }[]): boolean {
 }
 
 /**
- * Další zpráva podle počtu. V den příjezdu aspoň 3. stupeň (žádné měkké zprávy).
- * Poslední výzva až když 3. stupeň (Průvodce, důrazný) už odešel.
+ * Další zpráva podle počtu.
+ * Ještě nic: běžně 1., den před / den příjezdu 2. (bez hrozeb).
+ * Po 1 zprávě: běžně 2., v okně 3. Po 2+ vždy 3. Poslední až po 3. stupni.
  */
 export function dalsiCasovaZprava(
   pocetUzPoslanych: number,
-  denPrijezdu = false,
+  denPredNeboDen = false,
   historie: { co: string }[] = [],
 ): CasovaZpravaId {
-  if (denPrijezdu) {
-    if (uzOdeslanPruvodce3(historie) || pocetUzPoslanych >= 3) return 'nedojezd';
-    return 'pruvodce3';
-  }
-  if (pocetUzPoslanych <= 0) return 'nerozbalen';
-  if (pocetUzPoslanych === 1) return 'denNerozbalen';
-  if (pocetUzPoslanych === 2) return 'pruvodce3';
-  return 'nedojezd';
+  if (uzOdeslanPruvodce3(historie) || pocetUzPoslanych >= 3) return 'nedojezd';
+  if (pocetUzPoslanych <= 0) return denPredNeboDen ? 'denNerozbalen' : 'nerozbalen';
+  if (pocetUzPoslanych === 1) return denPredNeboDen ? 'pruvodce3' : 'denNerozbalen';
+  return 'pruvodce3';
 }
 
 export function stupenCasoveZpravy(id: CasovaZpravaId): 1 | 2 | 3 | 4 {
@@ -76,11 +73,11 @@ export function pocetCheckinPripoinek(historie: { co: string }[]): number {
   return pocetZKanalu(historie, [CHECKIN_NAZEV]);
 }
 
-/** 0× → 1, 1× → 2, 2×+ → 3. Den před / den příjezdu aspoň 3. */
+/** 0× → 1 (v okně 2), 1× → 2 (v okně 3), 2×+ → 3. Okno = den před / den příjezdu. */
 export function stupenCheckinu(pocetUzPoslanych: number, denPredNeboDen: boolean): 1 | 2 | 3 {
-  let s: 1 | 2 | 3 = pocetUzPoslanych <= 0 ? 1 : pocetUzPoslanych === 1 ? 2 : 3;
-  if (denPredNeboDen) s = 3;
-  return s;
+  if (pocetUzPoslanych <= 0) return denPredNeboDen ? 2 : 1;
+  if (pocetUzPoslanych === 1) return denPredNeboDen ? 3 : 2;
+  return 3;
 }
 
 export function popisekStupneCheckinu(stupen: 1 | 2 | 3 | 'nedojezd'): string {
@@ -90,8 +87,8 @@ export function popisekStupneCheckinu(stupen: 1 | 2 | 3 | 'nedojezd'): string {
   return 'Poslední výzva';
 }
 
-/** Vyplňte check-in odeslaný den před příjezdem nebo v den příjezdu (= už to byl 3. stupeň). */
-export function checkin3OdeslanVOkne(
+/** Jestli v historii je check-in odeslaný den před / v den příjezdu. */
+export function checkinOdeslanVOkne(
   historie: { co: string; cas?: string }[],
   prijezd: string,
 ): boolean {
@@ -104,9 +101,19 @@ export function checkin3OdeslanVOkne(
   });
 }
 
+/** Už odešel 3. stupeň check-inu (ne jen 2. v okně). */
+export function checkin3OdeslanVOkne(
+  historie: { co: string; cas?: string }[],
+  prijezd: string,
+): boolean {
+  const n = pocetCheckinPripoinek(historie);
+  if (n >= 3) return true;
+  if (n < 2) return false;
+  return checkinOdeslanVOkne(historie, prijezd);
+}
+
 /**
- * Check-in chybí, den před / den příjezdu, a 3. stupeň (Vyplňte check-in) už v tom okně odešel.
- * Počet zpráv nestačí: den předem se 3. stupeň vynutí i po jedné starší zprávě.
+ * Check-in chybí, den před / den příjezdu, a 3. stupeň už odešel.
  */
 export function ukazatCheckinNedojezd(opts: {
   stav: string;
@@ -126,11 +133,9 @@ export function pocetBranaPripoinek(historie: { co: string }[]): number {
   return pocetZKanalu(historie, [BRANA_NAZEV]);
 }
 
-/** 0 → 1, 1 → 2, 2+ → 3. V den příjezdu aspoň 3. */
-export function stupenBrany(pocetUzPoslanych: number, denPrijezdu: boolean): 1 | 2 | 3 {
-  let s: 1 | 2 | 3 = pocetUzPoslanych <= 0 ? 1 : pocetUzPoslanych === 1 ? 2 : 3;
-  if (denPrijezdu) s = 3;
-  return s;
+/** Stejný žebříček jako check-in. Okno = den před / den příjezdu. */
+export function stupenBrany(pocetUzPoslanych: number, denPredNeboDen: boolean): 1 | 2 | 3 {
+  return stupenCheckinu(pocetUzPoslanych, denPredNeboDen);
 }
 
 export function popisekStupneBrany(stupen: 1 | 2 | 3): string {

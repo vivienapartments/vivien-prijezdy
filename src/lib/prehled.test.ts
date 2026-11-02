@@ -236,7 +236,7 @@ describe('tlačítka v přehledu', () => {
     ).toBe('neotevrel');
     expect(
       hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-12', dnes: '2026-10-11', chybi: ['cas', 'zpusob', 'pravidla'] }),
-    ).toBe('nerozbalen');
+    ).toBe('denNerozbalen');
     expect(
       hlavniZprava({
         stav: 'odeslano',
@@ -249,10 +249,10 @@ describe('tlačítka v přehledu', () => {
     ).toBe('denCas');
     expect(
       hlavniZprava({ stav: 'odeslano', otevrenoPocet: 2, casPrijezdu: null, prijezd: '2026-10-12', dnes: '2026-10-11', chybi: ['cas'] }),
-    ).toBe('nerozbalen');
+    ).toBe('denNerozbalen');
   });
 
-  it('v den příjezdu je předvybraný 3. stupeň průvodce i bez předchozích zpráv', () => {
+  it('v den příjezdu je předvybraný 2. stupeň průvodce i bez předchozích zpráv', () => {
     const menu = zpravyMenu({
       stav: 'odeslano',
       lang: 'cs',
@@ -264,7 +264,8 @@ describe('tlačítka v přehledu', () => {
       chybi: ['cas', 'zpusob', 'pravidla'],
       historie: [],
     });
-    expect(menu.find((z) => z.vychozi)?.id).toBe('pruvodce3');
+    expect(menu.find((z) => z.vychozi)?.id).toBe('denNerozbalen');
+    expect(menu.find((z) => z.id === 'denNerozbalen')?.text).not.toContain('může to skončit jako nedojezd');
     expect(menu.find((z) => z.id === 'pruvodce3')?.text).toContain('může to skončit jako nedojezd');
     expect(menu.some((z) => z.id === 'nedojezd')).toBe(false);
   });
@@ -292,9 +293,10 @@ describe('tlačítka v přehledu', () => {
       'brana',
     ]);
     expect(bez.some((z) => z.id === 'nedojezd')).toBe(false);
-    // V den příjezdu je text denNerozbalen stejný jako 3. stupeň (žádné měkké zprávy).
-    expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toContain('může to skončit jako nedojezd');
+    // 2. stupeň bez hrozeb; hrozby jen u 3. stupně.
+    expect(bez.find((z) => z.id === 'denNerozbalen')?.text).not.toContain('může to skončit jako nedojezd');
     expect(bez.find((z) => z.id === 'denNerozbalen')?.text).toContain(odkaz);
+    expect(bez.find((z) => z.id === 'pruvodce3')?.text).toContain('může to skončit jako nedojezd');
     expect(bez.find((z) => z.id === 'doklady')?.nazev).toBe('Doklady k předání');
     expect(bez.find((z) => z.vychozi)?.id).not.toBe('doklady');
 

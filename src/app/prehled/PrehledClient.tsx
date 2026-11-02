@@ -2885,7 +2885,7 @@ export function PrehledClient({
             Boolean(row.prijezd) && (dnes === row.prijezd || dnes === posunDen(row.prijezd!, -1));
           let casZpravaId: CasovaZpravaId = dalsiCasovaZprava(
             pruvodcePocet,
-            row.prijezd === dnes,
+            denPredNeboDenCi,
             row.historie,
           );
           if (
@@ -2895,7 +2895,7 @@ export function PrehledClient({
             casZpravaId = 'pruvodce3';
           }
           const checkinStupen = stupenCheckinu(pocetCheckinPripoinek(row.historie), denPredNeboDenCi);
-          const branaStupenVal = stupenBrany(pocetBranaPripoinek(row.historie), row.prijezd === dnes);
+          const branaStupenVal = stupenBrany(pocetBranaPripoinek(row.historie), denPredNeboDenCi);
           const vyzvaCheckin = textVyzvyHosta('checkin', {
             historie: row.historie,
             prijezd: row.prijezd,
@@ -3266,9 +3266,10 @@ export function PrehledClient({
                 idZpravy === 'neotevrel'
               ) {
                 const uz = pocetCasovychPripoinek(row.historie);
+                const dalsi = dalsiCasovaZprava(uz, denOk, row.historie);
                 const pop =
                   idZpravy === 'neotevrel'
-                    ? popisekStupneCasu(dalsiCasovaZprava(uz) === 'nedojezd' ? 'pruvodce3' : dalsiCasovaZprava(uz))
+                    ? popisekStupneCasu(dalsi === 'nedojezd' ? 'pruvodce3' : dalsi)
                     : popisekStupneCasu(idZpravy as CasovaZpravaId);
                 return (
                   <p className="ph-nova-panel__stupen">
@@ -3294,7 +3295,7 @@ export function PrehledClient({
                 const uz = pocetBranaPripoinek(row.historie);
                 return (
                   <p className="ph-nova-panel__stupen">
-                    {popisekStupneBrany(stupenBrany(uz, row.prijezd === dnes))}
+                    {popisekStupneBrany(stupenBrany(uz, denOk))}
                     {uz ? ` · už odesláno ${uz}×` : ' · ještě neodesláno'}
                   </p>
                 );
