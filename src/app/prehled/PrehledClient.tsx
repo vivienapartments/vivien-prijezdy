@@ -67,7 +67,20 @@ import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import { poctyStitkuDoplnit, type FiltrDoplnit } from '@/lib/co-doplnit';
 import type { PraniRadekPrehled, PraniStitekKarty } from '@/lib/prani';
 import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
-import { casPrevzetiText, formatKc, jeHostOdjetly, jeNove, jeVNedoplatcich, nahledPlateb, otisk, vychoziZalozka, type Zalozka } from '@/lib/zalozky';
+import {
+  casPrevzetiText,
+  formatCastka,
+  formatKc,
+  jeHostOdjetly,
+  jeNove,
+  jeVNedoplatcich,
+  KURZ_EUR_KC,
+  nahledPlateb,
+  otisk,
+  vychoziZalozka,
+  type MenaPlateb,
+  type Zalozka,
+} from '@/lib/zalozky';
 import { jeIos, nactiBranu, smsOdkaz, stavParkovani, type BranaSlot } from '@/lib/brana';
 import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 import {
@@ -1000,6 +1013,70 @@ export function PrehledClient({
       return;
     }
     setPredani((prev) => ({ ...prev, [row.rezervace]: json.predano ?? null }));
+  }
+
+  async function ulozCheckinNeni(row: PrehledRadek, zapnout: boolean) {
+    if (ukazka) {
+      setRadky((prev) =>
+        prev.map((r) => (r.rezervace === row.rezervace ? { ...r, checkinNeniPotreba: zapnout } : r)),
+      );
+      return;
+    }
+    setCekam(`${row.rezervace}:checkin-neni`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce: 'checkin-neni',
+        stav: zapnout ? 'ano' : 'ne',
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      checkinNeniPotreba?: boolean;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Neuložilo se.');
+      return;
+    }
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? { ...r, checkinNeniPotreba: json.checkinNeniPotreba === true }
+          : r,
+      ),
+    );
+  }
+
+  async function ulozMena(row: PrehledRadek, mena: MenaPlateb) {
+    if (ukazka) {
+      setRadky((prev) => prev.map((r) => (r.rezervace === row.rezervace ? { ...r, mena } : r)));
+      return;
+    }
+    setCekam(`${row.rezervace}:mena`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'mena', stav: mena }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      mena?: MenaPlateb;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Měna se neuložila.');
+      return;
+    }
+    setRadky((prev) =>
+      prev.map((r) => (r.rezervace === row.rezervace ? { ...r, mena: json.mena || mena } : r)),
+    );
   }
 
   async function ulozPotvrzeniPrijezdu(row: PrehledRadek, druh: 'osobne' | 'telefon') {
@@ -2776,12 +2853,10 @@ export function PrehledClient({
         <span className="ph-skutecny__hint">Pro příplatek. Domluvený čas zůstává u Časů.</span>
       </label>
     );
+    const menaKarty: MenaPlateb = row.mena === 'EUR' ? 'EUR' : 'CZK';
+    const castka = (kc: number) => formatCastka(kc, menaKarty);
     const platbaCastkaText =
-      sumaNezap > 0
-        ? formatKc(sumaNezap)
-        : sumaZap > 0
-          ? formatKc(sumaZap)
-          : null;
+      sumaNezap > 0 ? castka(sumaNezap) : sumaZap > 0 ? castka(sumaZap) : null;
     const platbaHint = platbaHotovo
       ? `Uhrazeno · klik pro rozpis ${poplatekRozbalen ? '▴' : '▾'}`
       : sumaNezap > 0
@@ -2869,10 +2944,10 @@ export function PrehledClient({
                 <p>
                   {polozka.nazev}{' '}
                   {polozka.zaplacena
-                    ? formatKc(polozka.plnaKc)
+                    ? castka(polozka.plnaKc)
                     : polozka.zaplacenoKc > 0
-                      ? `${formatKc(polozka.kc)} zbývá (z ${formatKc(polozka.plnaKc)}, už ${formatKc(polozka.zaplacenoKc)})`
-                      : formatKc(polozka.kc)}
+                      ? `${castka(polozka.kc)} zbývá (z ${castka(polozka.plnaKc)}, už ${castka(polozka.zaplacenoKc)})`
+                      : castka(polozka.kc)}
                   {polozka.vypocet ? ` (${polozka.vypocet})` : ''}
                   {polozka.zaplacena || polozka.zaplacenoKc > 0
                     ? ` · ${[polozka.kdo, polozka.kdy, polozka.jak].filter(Boolean).join(', ')}`
@@ -2917,7 +2992,7 @@ export function PrehledClient({
                 </p>
                 {editPlatby?.id === row.rezervace && editPlatby.druh === polozka.druh ? (
                   <div className="ph-predano-dotaz">
-                    <p>Už zaplaceno (z {formatKc(polozka.plnaKc)})</p>
+                    <p>Už zaplaceno (z {castka(polozka.plnaKc)})</p>
                     <span className="ph-pole-rada">
                       <input
                         inputMode="numeric"
@@ -2977,7 +3052,7 @@ export function PrehledClient({
         deti={(dil) => (
       <article key={row.rezervace} className={rozbaleno ? 'ph-row' : 'ph-row is-shut'} id={row.rezervace}>
         {(() => {
-          const checkinOk = row.stav !== 'bez_checkinu';
+          const checkinOk = row.stav !== 'bez_checkinu' || row.checkinNeniPotreba;
           const casOk = Boolean(casAktualni);
           const pruvodceOk = checkinOk && (row.otevrenoPocet ?? 0) > 0 && casOk && Boolean(row.souhlas);
           const branaChybiUdaje =
@@ -3262,7 +3337,9 @@ export function PrehledClient({
                   <span className="ph-nova-stav__titulek">Check-in</span>
                   <span className="ph-nova-stav__popis">
                     {checkinOk
-                      ? 'Hotovo'
+                      ? row.checkinNeniPotreba && row.stav === 'bez_checkinu'
+                        ? 'Bez check-inu'
+                        : 'Hotovo'
                       : ukazatCheckinNedojezd({
                             stav: row.stav,
                             prijezd: row.prijezd,
@@ -3764,10 +3841,20 @@ export function PrehledClient({
                     disabled={cekam !== null}
                     onUloz={(castka, text) => ulozUzZaplaceno(row, castka, text)}
                   />
+                  <div className="ph-pole-rada">
+                    <button
+                      type="button"
+                      className={`ph-predano${row.checkinNeniPotreba ? ' is-on' : ''}`}
+                      disabled={cekam !== null}
+                      onClick={() => void ulozCheckinNeni(row, !row.checkinNeniPotreba)}
+                    >
+                      {row.checkinNeniPotreba ? 'Bez check-inu · zapnuto' : 'Bez check-inu'}
+                    </button>
+                  </div>
                   <p className="ph-hlaska">
                     Den odjezdu drží průvodce. PIN se ukáže v průvodci (na Klice ručně). Domluvená
                     částka i „Host už zaplatil“ jdou do Plateb. Bez nového e-mailu, Better Hotel to
-                    nepřepíše.
+                    nepřepíše. „Bez check-inu“ vypne červené čekání na online check-in.
                   </p>
                 </DetailSekce>
                 <DetailSekce
@@ -4081,11 +4168,9 @@ export function PrehledClient({
                       {akceZpravy}
                     </>
                   )}
-                  {row.stav !== 'bez_checkinu' ? (
-                    <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
-                      Zkopírovat odkaz na průvodce
-                    </button>
-                  ) : null}
+                  <button type="button" disabled={cekam !== null} onClick={() => volat(row, 'odkaz')}>
+                    Zkopírovat odkaz na průvodce
+                  </button>
                 </DetailSekce>
 
                 <DetailSekce
@@ -4098,6 +4183,27 @@ export function PrehledClient({
                   otevreno={jeOtevrena('penize')}
                   onToggle={() => prepni('penize')}
                 >
+                  <div className="ph-pole-rada">
+                    <button
+                      type="button"
+                      className={`ph-predano${menaKarty === 'CZK' ? ' is-on' : ''}`}
+                      disabled={cekam !== null}
+                      onClick={() => void ulozMena(row, 'CZK')}
+                    >
+                      Kč
+                    </button>
+                    <button
+                      type="button"
+                      className={`ph-predano${menaKarty === 'EUR' ? ' is-on' : ''}`}
+                      disabled={cekam !== null}
+                      onClick={() => void ulozMena(row, 'EUR')}
+                    >
+                      €
+                    </button>
+                    <span className="ph-hlaska">
+                      {menaKarty === 'EUR' ? `1 € = ${KURZ_EUR_KC} Kč` : 'Částky v korunách'}
+                    </span>
+                  </div>
                   <HostUzZaplatilPole
                     key={`${row.rezervace}-uz-zaplaceno-penize`}
                     disabled={cekam !== null}

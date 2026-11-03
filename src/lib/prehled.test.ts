@@ -674,7 +674,7 @@ describe('tlačítka v přehledu', () => {
   it('u neodeslané rezervace se neptá a odeslání nabídne', () => {
     expect(nabidnoutOdeslani('neodeslano')).toBe(true);
     expect(nabidnoutOdeslani('vraceno')).toBe(true);
-    expect(nabidnoutOdeslani('bez_checkinu')).toBe(false);
+    expect(nabidnoutOdeslani('bez_checkinu')).toBe(true);
     expect(dotazPredOdeslanimZnovu('neodeslano')).toBeNull();
   });
 

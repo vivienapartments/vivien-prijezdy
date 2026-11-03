@@ -191,7 +191,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prani-vyrizeno' &&
       akce !== 'prani-otevrit' &&
       akce !== 'prani-nacti' &&
-      akce !== 'poznamka-uklid')
+      akce !== 'poznamka-uklid' &&
+      akce !== 'checkin-neni' &&
+      akce !== 'mena')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -212,6 +214,24 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, jazyk }, { headers: noStore });
+  }
+
+  if (akce === 'checkin-neni') {
+    const zapnout = body?.stav !== 'ne';
+    const dalsi = pridej(
+      rec,
+      zapnout ? 'Check-in se nečeká' : 'Check-in se zase čeká',
+      { checkinNeniPotreba: zapnout },
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, checkinNeniPotreba: zapnout }, { headers: noStore });
+  }
+
+  if (akce === 'mena') {
+    const mena = body?.stav === 'EUR' ? 'EUR' : 'CZK';
+    const dalsi = pridej(rec, mena === 'EUR' ? 'Platby v eurech' : 'Platby v korunách', { mena });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, mena }, { headers: noStore });
   }
 
   if (akce === 'poznamka-uklid') {
@@ -1052,6 +1072,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       duvody: vyhrady,
       odeslaneMessageId: sent.messageId || pracovni.odeslaneMessageId,
       smtpPokusy: 0,
+      ...(rec.stav === 'bez_checkinu' ? { checkinNeniPotreba: true } : {}),
     });
     await store.setRezervace(id, hotovo);
     return NextResponse.json({ ok: true }, { headers: noStore });

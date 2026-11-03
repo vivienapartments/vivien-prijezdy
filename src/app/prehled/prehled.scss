@@ -840,6 +840,13 @@
   font-weight: 500;
 }
 
+.ph button.ph-predano.is-on {
+  border-color: var(--color-gold);
+  background: color-mix(in srgb, var(--color-gold) 18%, var(--pv-surface));
+  color: var(--pv-text);
+  font-weight: 650;
+}
+
 .ph button.ph-predano-vyrazne {
   min-height: 2.6rem;
   padding: 0.45rem 1.05rem;

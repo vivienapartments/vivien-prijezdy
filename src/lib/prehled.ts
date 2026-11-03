@@ -141,6 +141,10 @@ export type PrehledRadek = {
   kontaktUlozenKdy: string | null;
   /** Poznámka pro Milušku u úklidu příjezdu. */
   poznamkaUklid: string | null;
+  /** Online check-in se nečeká. */
+  checkinNeniPotreba: boolean;
+  /** Zobrazení plateb. null = Kč. */
+  mena: 'CZK' | 'EUR' | null;
   /** Stejný host z minulých karet (počítá se v paměti). */
   stalyHost?: StalyHostInfo | null;
 };
@@ -148,9 +152,9 @@ export type PrehledRadek = {
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
 const apartmany = (apartmanyJson as { apartmany: AptRow[] }).apartmany;
 
-/** U zrušené rezervace se znovu neposílá. Odkaz na průvodce zůstává. */
+/** U zrušené rezervace se znovu neposílá. Odkaz na průvodce zůstává. Bez check-inu jít může (ruční rezervace). */
 export function nabidnoutOdeslani(stav: RezervaceStav): boolean {
-  return stav !== 'zruseno' && stav !== 'bez_checkinu';
+  return stav !== 'zruseno';
 }
 
 /** Popisek tlačítka: u neodeslaných „Poslat“, u odeslaných „znovu“. */
@@ -875,6 +879,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     navrhy: (rec.navrhy || []).map((n) => ({ pole: n.pole, veta: vetaNavrhu(n), hodnota: n.hodnota })),
     kontaktUlozenKdy: rec.kontaktUlozenKdy || null,
     poznamkaUklid: rec.poznamkaUklid || null,
+    checkinNeniPotreba: rec.checkinNeniPotreba === true,
+    mena: rec.mena === 'EUR' || rec.mena === 'CZK' ? rec.mena : null,
   };
 }
 

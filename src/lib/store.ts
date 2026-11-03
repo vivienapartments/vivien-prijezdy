@@ -259,6 +259,13 @@ export type RezervaceRecord = {
   kontaktUlozenKdy: string | null;
   /** Poznámka majitele pro Milušku (postýlka, dřívější příjezd…). */
   poznamkaUklid: string | null;
+  /**
+   * Online check-in se u téhle rezervace nečeká (ruční / přímá).
+   * V přehledu pak check-in nesvítí červeně.
+   */
+  checkinNeniPotreba: boolean;
+  /** Zobrazení plateb na kartě. Úložiště drží částky v Kč. null = Kč. */
+  mena: 'CZK' | 'EUR' | null;
 };
 
 export type RucniPole =
@@ -776,6 +783,8 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       typeof r.kontaktUlozenKdy === 'string' && r.kontaktUlozenKdy ? r.kontaktUlozenKdy : null,
     poznamkaUklid:
       typeof r.poznamkaUklid === 'string' && r.poznamkaUklid.trim() ? r.poznamkaUklid.trim().slice(0, 500) : null,
+    checkinNeniPotreba: r.checkinNeniPotreba === true,
+    mena: r.mena === 'EUR' || r.mena === 'CZK' ? r.mena : null,
   };
 }
 
@@ -861,6 +870,8 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     navrhy: [],
     kontaktUlozenKdy: null,
     poznamkaUklid: null,
+    checkinNeniPotreba: false,
+    mena: null,
   };
 }
 

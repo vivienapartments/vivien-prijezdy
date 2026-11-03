@@ -134,6 +134,20 @@ export function formatKc(kc: number): string {
   return `${text} Kč`;
 }
 
+/** Kolik Kč je 1 € na kartě. Částky v úložišti zůstávají v Kč, eura jsou jen zobrazení. */
+export const KURZ_EUR_KC = 25;
+
+export type MenaPlateb = 'CZK' | 'EUR';
+
+export function formatCastka(kc: number, mena: MenaPlateb | null | undefined = 'CZK'): string {
+  if (mena === 'EUR') {
+    const eur = Math.round(kc / KURZ_EUR_KC);
+    const text = new Intl.NumberFormat('cs-CZ').format(eur).replace(/[\u00a0\u202f]/g, ' ');
+    return `${text} €`;
+  }
+  return formatKc(kc);
+}
+
 export function textStarychDluhu(pocet: number, kc: number): string | null {
   if (pocet <= 0 || kc <= 0) return null;
   return `Starší nedoplatky: ${pocet} ${sklonHostu(pocet)}, ${formatKc(kc)}`;
