@@ -1,7 +1,11 @@
 .ph {
   max-width: 96rem;
   margin: 0 auto;
-  padding: 1.25rem var(--container-padding-x, 1rem) 3rem;
+  /* iPhone PWA: Domů / Zpět pod čočkou a Dynamic Island */
+  padding: calc(1.25rem + env(safe-area-inset-top, 0px))
+    max(var(--container-padding-x, 1rem), env(safe-area-inset-right, 0px))
+    calc(3rem + env(safe-area-inset-bottom, 0px))
+    max(var(--container-padding-x, 1rem), env(safe-area-inset-left, 0px));
   color: var(--color-text);
 }
 
@@ -2402,12 +2406,12 @@
 }
 
 .ph-karta-nahled {
-  padding-top: 0.75rem;
+  padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
 }
 
 .ph-karta-nahled__zpet {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 5;
   margin: 0 0 0.75rem;
   padding: 0.55rem 0;
