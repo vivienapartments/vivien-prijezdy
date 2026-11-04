@@ -14,6 +14,7 @@ import {
 } from './odjezd';
 import { hosteProPohodu, textPushPohody } from './pohoda';
 import type { OdjezdBeh, ProcessStore, RezervaceRecord } from './store';
+import { odkazKarty } from './prehled-odkaz';
 import { upozorniMajitele, vetaUpozorneni } from './upozorneni';
 import { jePondeli, jeVDnesnichOdjezdech, oznacPrevzeti, textStarychDluhu } from './zalozky';
 
@@ -48,7 +49,7 @@ export async function upozorniOdjezdy(
   for (const record of list) {
     if (!maUpozornitPul(record, now)) continue;
     const text = textPulHodiny(record, polozkyZRezervace(record));
-    const jak = await posli(store, text, `/prehled#${record.rezervace}`, { telegram: 'cas-odjezdu' });
+    const jak = await posli(store, text, odkazKarty(record.rezervace), { telegram: 'cas-odjezdu' });
     if (jak === 'nic') continue;
     const cerstvy = (await store.getRezervace(record.rezervace)) || record;
     if (!maUpozornitPul(cerstvy, now)) continue;

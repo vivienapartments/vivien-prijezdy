@@ -4,6 +4,7 @@ import { aptRecord } from '@/lib/guide-data';
 import { jeBlokPokus, jazykProhlizece, praha, vety, vyhodnotObjednavku, zapisPokus } from '@/lib/okno-pobytu';
 import { createProcessStore } from '@/lib/store';
 import { APT_IDS, GUIDE_LANGS, type GuideLang } from '@/lib/types';
+import { odkazKarty } from '@/lib/prehled-odkaz';
 import { upozorniMajitele } from '@/lib/upozorneni';
 
 export const runtime = 'nodejs';
@@ -76,7 +77,9 @@ export async function POST(req: Request) {
   if (meni) {
     await store.setRezervace(vysledek.rec.rezervace, vysledek.rec);
     for (const text of vysledek.push) {
-      await upozorniMajitele(store, text, `/prehled#${vysledek.rec.rezervace}`, { telegram: 'zadost' });
+      await upozorniMajitele(store, text, odkazKarty(vysledek.rec.rezervace, 'potvrzeni'), {
+        telegram: 'zadost',
+      });
     }
   }
   return NextResponse.json({ ok: true, nahled: vysledek.nahled }, { headers: noStore });

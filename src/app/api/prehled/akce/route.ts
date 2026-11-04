@@ -418,9 +418,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     const vse = (await store.listRezervace()).map((e) => e.record);
     const nabidka = poUklidu(dalsi, vse, new Date());
     if (nabidka.cekajici && nabidka.push) {
-      const jak = await upozorniMajitele(store, nabidka.push, `/prehled#${nabidka.cekajici.rezervace}`, {
-        telegram: 'uklizeno',
-      });
+      const jak = await upozorniMajitele(
+        store,
+        nabidka.push,
+        `/prehled#${nabidka.cekajici.rezervace}?zprava=pripraveno`,
+        { telegram: 'uklizeno' },
+      );
       if (jak !== 'nic') await store.setRezervace(nabidka.cekajici.rezervace, oznacUpozorneno(nabidka.cekajici));
     }
     return NextResponse.json(

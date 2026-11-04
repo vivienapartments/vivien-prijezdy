@@ -2,9 +2,9 @@
  * Přání hosta (prompt 57A): stavy, validace, limity. UI až 57B/57C.
  */
 import { casVPraze, posunDen } from './brana';
-import { popisHosta } from './upozorneni';
+import { odkazKarty } from './prehled-odkaz';
 import type { ProcessStore, RezervaceRecord } from './store';
-import { upozorniMajitele } from './upozorneni';
+import { popisHosta, upozorniMajitele } from './upozorneni';
 
 export type AutorPrani = 'host' | 'vivien';
 export type StavVlaknaPrani = 'nove' | 'precteno' | 'vyrizeno';
@@ -289,7 +289,7 @@ export async function hostNapisPrani(
 
   const uvod = `${popisHosta(rec)} · přání: ${valid.text.slice(0, 60)}`;
   try {
-    await posli(store, uvod, `/prehled#${rec.rezervace}?prani=${vlaknoId}`, { telegram: 'zadost' });
+    await posli(store, uvod, odkazKarty(rec.rezervace, null, { prani: vlaknoId }), { telegram: 'zadost' });
   } catch {
     /* uložení má přednost */
   }

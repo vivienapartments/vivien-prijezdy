@@ -1,5 +1,6 @@
 import type { ProcessStore, RezervaceRecord } from './store';
 import { soucetVyjezdu } from './priplatek-prijezd';
+import { odkazKarty } from './prehled-odkaz';
 import { popisHosta, upozorniMajitele, vetaUpozorneni } from './upozorneni';
 
 /** Od sedmé hodiny pražského času. */
@@ -49,7 +50,7 @@ export async function upozorniNezaplacene(store: ProcessStore, now = new Date())
   for (const { id, record } of list) {
     if (!maUpozornitPlatbu(record, now)) continue;
     const text = textNezaplaceneho(record);
-    const jak = await upozorniMajitele(store, text, `/prehled#${id}`, { telegram: 'nedoplatek' });
+    const jak = await upozorniMajitele(store, text, odkazKarty(id), { telegram: 'nedoplatek' });
     if (jak === 'nic') continue;
     const cerstvy = (await store.getRezervace(id)) || record;
     if (cerstvy.platbaUpozorneno === cerstvy.odjezd) continue;

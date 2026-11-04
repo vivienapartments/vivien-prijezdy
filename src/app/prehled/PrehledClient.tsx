@@ -28,7 +28,7 @@ import {
   type PrehledRadek,
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
-import { zpravaZUpozorneniUrl } from '@/lib/prehled-odkaz';
+import { ukolZUpozorneniUrl, zpravaZUpozorneniUrl, type UkolUpozorneni } from '@/lib/prehled-odkaz';
 import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import {
@@ -630,6 +630,35 @@ export function PrehledClient({
     }
   }
 
+  function scrollPoOtevreni(elId: string) {
+    window.setTimeout(() => {
+      try {
+        document.getElementById(elId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch {
+        /* scroll */
+      }
+    }, 180);
+  }
+
+  function otevriUkolNaKarte(id: string, ukol: UkolUpozorneni | null) {
+    if (!ukol) return;
+    if (ukol === 'doklady') {
+      setVolba((prev) => ({ ...prev, [id]: 'doklady' }));
+      setPanelZpravy((prev) => ({ ...prev, [id]: true }));
+      scrollPoOtevreni(`zprava-${id}`);
+      return;
+    }
+    if (ukol === 'brana') {
+      setBranaZTile((prev) => ({ ...prev, [id]: true }));
+      setBranaVyzva((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+      scrollPoOtevreni(`brana-${id}`);
+      return;
+    }
+    if (ukol === 'potvrzeni') {
+      scrollPoOtevreni(`ph-potvrzeni-${id}`);
+    }
+  }
+
   function otevriZUpozorneni(url: string, text = '') {
     const id = idZUpozorneniUrl(url);
     if (id) {
@@ -650,6 +679,7 @@ export function PrehledClient({
         setVolba((prev) => ({ ...prev, [id]: zprava }));
         setPanelZpravy((prev) => ({ ...prev, [id]: true }));
       }
+      otevriUkolNaKarte(id, ukolZUpozorneniUrl(url));
       return;
     }
     let kotva = kotvaZUpozorneniUrl(url);
@@ -739,11 +769,12 @@ export function PrehledClient({
         });
         return;
       }
-      const zprava = zpravaZUpozorneniUrl(window.location.href);
+      const zprava = zpravaZUpozorneniUrl(window.location.href) || zpravaZUpozorneniUrl(`#${raw}`);
       if (zprava) {
         setVolba((prev) => ({ ...prev, [id]: zprava }));
         setPanelZpravy((prev) => ({ ...prev, [id]: true }));
       }
+      otevriUkolNaKarte(id, ukolZUpozorneniUrl(window.location.href) || ukolZUpozorneniUrl(`#${raw}`));
     }
     zHash();
     window.addEventListener('hashchange', zHash);
@@ -3615,7 +3646,7 @@ export function PrehledClient({
             (casOkFaze || branaPripravenaFaze || branaOkFaze);
           if (!ukazFaze) return null;
           return (
-            <div className="ph-potvrzeni">
+            <div className="ph-potvrzeni" id={`ph-potvrzeni-${row.rezervace}`}>
               {casOkFaze ? (
                 potvrzeni ? (
                   <div className="ph-potvrzeni__blok">

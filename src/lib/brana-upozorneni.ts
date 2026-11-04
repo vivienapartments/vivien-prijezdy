@@ -1,6 +1,7 @@
 import { denPraha, hodinaPraha, stavParkovani, type BranaSlot } from './brana';
 import { zajistiVychoziBranu } from './brana-akce';
 import type { ProcessStore, RezervaceRecord } from './store';
+import { odkazKarty } from './prehled-odkaz';
 import { popisHosta, upozorniMajitele, vetaUpozorneni } from './upozorneni';
 
 const RANO = 9;
@@ -50,7 +51,7 @@ export async function upozorniBranu(store: ProcessStore, now = new Date()): Prom
     const text = registrace
       ? `${popisHosta(record)}: zaregistrujte bránu`
       : `${popisHosta(record)} dnes přijíždí, brána není zaregistrovaná`;
-    const jak = await upozorniMajitele(store, text, `/prehled#${id}`, { telegram: 'brana' });
+    const jak = await upozorniMajitele(store, text, odkazKarty(id, 'brana'), { telegram: 'brana' });
     if (jak === 'nic') continue;
     const cerstvy = (await store.getRezervace(id)) || record;
     if (registrace && cerstvy.branaPushRegistrace) continue;

@@ -15,6 +15,7 @@ import type { ProcessStore, RezervaceRecord } from './store';
 import { textTelefonu } from './telefon';
 import { denPlatnostiPruvodce, isDepartureExpired, parseSignedToken } from './token';
 import { GUIDE_LANGS } from './types';
+import { odkazKarty, type UkolUpozorneni } from './prehled-odkaz';
 import { popisHosta, poznamenejUpozorneni, upozorniMajitele, type TelegramDruh } from './upozorneni';
 import {
   jeCasHosta,
@@ -60,6 +61,13 @@ function poznamenej(rec: RezervaceRecord, co: string, patch: Partial<RezervaceRe
   };
 }
 
+function ukolZTelegram(telegram?: TelegramDruh | null): UkolUpozorneni | null {
+  if (telegram === 'brana') return 'brana';
+  if (telegram === 'cas-prijezdu') return 'potvrzeni';
+  if (telegram === 'doklady') return 'doklady';
+  return null;
+}
+
 async function ohlas(
   store: ProcessStore,
   id: string,
@@ -67,7 +75,7 @@ async function ohlas(
   telegram?: TelegramDruh | null,
 ): Promise<void> {
   try {
-    const jak = await upozorniMajitele(store, text, `/prehled#${id}`, telegram ? { telegram } : undefined);
+    const jak = await upozorniMajitele(store, text, odkazKarty(id, ukolZTelegram(telegram)), telegram ? { telegram } : undefined);
     await poznamenejUpozorneni(store, id, jak);
   } catch {
     /* upozornění nesmí shodit uložení hosta */

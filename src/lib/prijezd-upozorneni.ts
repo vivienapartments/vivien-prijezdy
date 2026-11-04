@@ -2,6 +2,7 @@ import { casVPraze, denPraha, hodinaPraha } from './brana';
 import { uzOdjel } from './zalozky';
 import { PREDSTIH_PRIJEZDU_MIN } from './constants';
 import type { ProcessStore, RezervaceRecord } from './store';
+import { odkazKarty } from './prehled-odkaz';
 import { popisHosta, upozorniMajitele, vetaUpozorneni } from './upozorneni';
 
 /** Od deváté hodiny pražského času, když čas příjezdu pořád neznáme. */
@@ -102,7 +103,7 @@ export async function upozorniPrijezd(
     const neznamy = !hodinu && maUpozornitNeznamy(record, now);
     if (hodinu || neznamy) {
       const text = hodinu ? textHodinuPred(record) : textCasNeznamy(record);
-      const jak = await posli(store, text, `/prehled#${id}`, {
+      const jak = await posli(store, text, odkazKarty(id, hodinu ? null : 'potvrzeni'), {
         telegram: hodinu ? 'hodina-pred' : 'cas-prijezdu',
       });
       if (jak !== 'nic') {
@@ -124,7 +125,7 @@ export async function upozorniPrijezd(
 
     if (maUpozornitDoklady(aktualni, now)) {
       const text = textDokladyPred(aktualni);
-      const jak = await posli(store, text, `/prehled#${id}?zprava=doklady`, { telegram: 'doklady' });
+      const jak = await posli(store, text, odkazKarty(id, 'doklady'), { telegram: 'doklady' });
       if (jak === 'nic') continue;
       const cerstvy = (await store.getRezervace(id)) || aktualni;
       if (!maUpozornitDoklady(cerstvy, now)) continue;

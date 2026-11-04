@@ -11,7 +11,7 @@ import {
   textHodinuPred,
   upozorniPrijezd,
 } from './prijezd-upozorneni';
-import { zpravaZUpozorneniUrl } from './prehled-odkaz';
+import { odkazKarty, ukolZUpozorneniUrl, zpravaZUpozorneniUrl } from './prehled-odkaz';
 import { prazdnaRezervace, type ProcessStore, type RezervaceRecord } from './store';
 import { zpravaNedojezdu } from './whatsapp-zprava';
 
@@ -124,6 +124,11 @@ describe('upozornění 30 min před příjezdem (doklady)', () => {
     expect(textDokladyPred(host())).toBe('V3 · Novák přijede v 16:30 · pošlete vzkaz s doklady');
     expect(zpravaZUpozorneniUrl('/prehled#1?zprava=doklady')).toBe('doklady');
     expect(zpravaZUpozorneniUrl('https://x.cz/prehled#1?zprava=doklady')).toBe('doklady');
+    expect(odkazKarty('1', 'doklady')).toBe('/prehled#1?zprava=doklady');
+    expect(odkazKarty('1', 'brana')).toBe('/prehled#1?ukol=brana');
+    expect(odkazKarty('1', 'potvrzeni')).toBe('/prehled#1?ukol=potvrzeni');
+    expect(ukolZUpozorneniUrl('/prehled#1?ukol=brana')).toBe('brana');
+    expect(ukolZUpozorneniUrl('/prehled#1?zprava=doklady')).toBe('doklady');
   });
 
   it('pošle se jen 30 min předem a jen jednou; po změně času znovu', () => {
