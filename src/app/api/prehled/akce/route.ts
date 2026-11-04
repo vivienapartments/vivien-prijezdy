@@ -418,7 +418,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     const vse = (await store.listRezervace()).map((e) => e.record);
     const nabidka = poUklidu(dalsi, vse, new Date());
     if (nabidka.cekajici && nabidka.push) {
-      const jak = await upozorniMajitele(store, nabidka.push, `/prehled#${nabidka.cekajici.rezervace}`);
+      const jak = await upozorniMajitele(store, nabidka.push, `/prehled#${nabidka.cekajici.rezervace}`, {
+        telegram: 'uklizeno',
+      });
       if (jak !== 'nic') await store.setRezervace(nabidka.cekajici.rezervace, oznacUpozorneno(nabidka.cekajici));
     }
     return NextResponse.json(
@@ -672,7 +674,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await store.setRezervace(id, dalsi);
     if (uprava?.push) {
       try {
-        await upozorniMajitele(store, uprava.push, `/prehled#${id}`);
+        await upozorniMajitele(store, uprava.push, `/prehled#${id}`, { telegram: 'zadost' });
       } catch {
         /* push není povinný */
       }
@@ -807,7 +809,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await store.setRezervace(id, dalsi);
     if (upravaOd?.push) {
       try {
-        await upozorniMajitele(store, upravaOd.push, `/prehled#${id}`);
+        await upozorniMajitele(store, upravaOd.push, `/prehled#${id}`, { telegram: 'zadost' });
       } catch {
         /* push není povinný */
       }

@@ -289,7 +289,7 @@ export async function hostNapisPrani(
 
   const uvod = `${popisHosta(rec)} · přání: ${valid.text.slice(0, 60)}`;
   try {
-    await posli(store, uvod, `/prehled#${rec.rezervace}?prani=${vlaknoId}`);
+    await posli(store, uvod, `/prehled#${rec.rezervace}?prani=${vlaknoId}`, { telegram: 'zadost' });
   } catch {
     /* uložení má přednost */
   }

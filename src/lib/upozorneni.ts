@@ -1,5 +1,8 @@
 import nodemailer from 'nodemailer';
 import { rolePush, type ProcessStore, type PushZarizeni, type PushRole, type RezervaceRecord } from './store';
+import { posliTelegram, type TelegramDruh } from './telegram';
+
+export type { TelegramDruh };
 
 export function popisHosta(rec: Pick<RezervaceRecord, 'apartman' | 'jmeno' | 'rezervace'>): string {
   const casti = (rec.jmeno || '').trim().split(/\s+/).filter(Boolean);
@@ -28,8 +31,17 @@ async function emailMajiteli(text: string): Promise<boolean> {
   return true;
 }
 
+export type JakUpozorneni = 'push' | 'email' | 'telegram' | 'nic';
+
+export type UpozorneniVolby = {
+  /** Zkušební tlačítko: bez e-mailu a bez Telegramu. */
+  zkuseni?: boolean;
+  /** Když je vyplněno, pošle se i do Telegramu (jen domluvené druhy). */
+  telegram?: TelegramDruh | null;
+};
+
 export type VysledekUpozorneni = {
-  jak: 'push' | 'email' | 'nic';
+  jak: JakUpozorneni;
   zarizeni: number;
   doruceno: number;
   dorucenoJmena: string[];
@@ -37,6 +49,7 @@ export type VysledekUpozorneni = {
   chyby?: string[];
   /** Telefony, které Google/FCM odpojil (404/410). */
   odpojeno?: string[];
+  telegram?: boolean;
 };
 
 const PUSH_TTL_SEC = 60 * 60;
@@ -51,18 +64,27 @@ async function emailOdpojeni(nazev: string): Promise<void> {
   }
 }
 
-/** Push na zapnuté telefony. Když žádný nedorazí, stejný text e-mailem majiteli. */
+/** Push na zapnuté telefony. Když žádný nedorazí a Telegram taky ne, stejný text e-mailem. */
 export async function upozorniMajitelePodrobne(
   store: ProcessStore,
   text: string,
   url: string,
-  opts?: { zkuseni?: boolean },
+  opts?: UpozorneniVolby,
 ): Promise<VysledekUpozorneni> {
   if (!opts?.zkuseni && !process.env.VITEST) {
     try {
       await store.pridejUpozorneni({ cas: new Date().toISOString(), text, url });
     } catch (err) {
       console.error('Upozorneni: seznam selhalo', err instanceof Error ? err.message : err);
+    }
+  }
+
+  let telegramOk = false;
+  if (!opts?.zkuseni && opts?.telegram) {
+    try {
+      telegramOk = await posliTelegram(text, opts.telegram, url);
+    } catch (err) {
+      console.error('Upozorneni: telegram selhal', err instanceof Error ? err.message : err);
     }
   }
 
@@ -143,11 +165,17 @@ export async function upozorniMajitelePodrobne(
     dorucenoJmena,
     ...(chyby.length ? { chyby } : {}),
     ...(odpojeno.length ? { odpojeno } : {}),
+    ...(telegramOk ? { telegram: true } : {}),
   };
 
   if (doruceno > 0) {
-    console.log(`Upozorneni: push (${doruceno}/${cilova.length})`);
+    console.log(`Upozorneni: push (${doruceno}/${cilova.length})${telegramOk ? ' + telegram' : ''}`);
     return { jak: 'push', ...detail };
+  }
+
+  if (telegramOk) {
+    console.log(`Upozorneni: telegram (zarizeni ${zarizeni.length})`);
+    return { jak: 'telegram', ...detail };
   }
 
   /* Zkušební tlačítko nesmí schovat selhání e-mailem. */
@@ -171,8 +199,9 @@ export async function upozorniMajitele(
   store: ProcessStore,
   text: string,
   url: string,
-): Promise<'push' | 'email' | 'nic'> {
-  const vysledek = await upozorniMajitelePodrobne(store, text, url);
+  opts?: UpozorneniVolby,
+): Promise<JakUpozorneni> {
+  const vysledek = await upozorniMajitelePodrobne(store, text, url, opts);
   return vysledek.jak;
 }
 
@@ -268,14 +297,21 @@ export function textZkuseni(v: VysledekUpozorneni): string {
   return 'Push nedorazil. Klepněte Resetovat upozornění.';
 }
 
-export async function poznamenejUpozorneni(store: ProcessStore, id: string, jak: 'push' | 'email' | 'nic'): Promise<void> {
+export function vetaUpozorneni(jak: JakUpozorneni, text?: string): string {
+  const pripona = text ? `: ${text}` : '';
+  if (jak === 'push') return `Upozornění na telefon${pripona}`;
+  if (jak === 'email') return `Upozornění e-mailem${pripona}`;
+  if (jak === 'telegram') return `Upozornění Telegramem${pripona}`;
+  return text ? `Upozornění se neodeslalo: ${text}` : 'Upozornění se neodeslalo';
+}
+
+export async function poznamenejUpozorneni(store: ProcessStore, id: string, jak: JakUpozorneni): Promise<void> {
   const rec = await store.getRezervace(id);
   if (!rec) return;
-  const veta = jak === 'push' ? 'Upozornění na telefon' : jak === 'email' ? 'Upozornění e-mailem' : 'Upozornění se neodeslalo';
   const cas = new Date().toISOString();
   await store.setRezervace(id, {
     ...rec,
-    historie: [...rec.historie, { cas, co: veta }].slice(-40),
+    historie: [...rec.historie, { cas, co: vetaUpozorneni(jak) }].slice(-40),
   });
 }
 
@@ -288,7 +324,7 @@ export async function poBehZpracovani(store: ProcessStore, ok: boolean): Promise
     }
     const n = (await store.getSelhani()) + 1;
     await store.setSelhani(n);
-    if (n === 3) await upozorniMajitele(store, 'Automat příjezdů hlásí chybu', '/prehled');
+    if (n === 3) await upozorniMajitele(store, 'Automat příjezdů hlásí chybu', '/prehled', { telegram: 'automat' });
   } catch {
     /* pojistka nesmí shodit odpověď */
   }

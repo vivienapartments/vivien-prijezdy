@@ -92,7 +92,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         text = `${apt} uklizeno · Miluška · e-mail zatím neodešel`;
       }
     }
-    await upozorniMajitele(store, text, odkazPoUklidu(prijizdi || null));
+    await upozorniMajitele(store, text, odkazPoUklidu(prijizdi || null), { telegram: 'uklizeno' });
     return NextResponse.json(
       {
         ok: true,

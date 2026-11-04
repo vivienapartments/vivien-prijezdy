@@ -2,7 +2,7 @@ import { casVPraze, denPraha, hodinaPraha } from './brana';
 import { uzOdjel } from './zalozky';
 import { PREDSTIH_PRIJEZDU_MIN } from './constants';
 import type { ProcessStore, RezervaceRecord } from './store';
-import { popisHosta, upozorniMajitele } from './upozorneni';
+import { popisHosta, upozorniMajitele, vetaUpozorneni } from './upozorneni';
 
 /** Od deváté hodiny pražského času, když čas příjezdu pořád neznáme. */
 const RANO = 9;
@@ -102,11 +102,13 @@ export async function upozorniPrijezd(
     const neznamy = !hodinu && maUpozornitNeznamy(record, now);
     if (hodinu || neznamy) {
       const text = hodinu ? textHodinuPred(record) : textCasNeznamy(record);
-      const jak = await posli(store, text, `/prehled#${id}`);
+      const jak = await posli(store, text, `/prehled#${id}`, {
+        telegram: hodinu ? 'hodina-pred' : 'cas-prijezdu',
+      });
       if (jak !== 'nic') {
         const cerstvy = (await store.getRezervace(id)) || record;
         if ((hodinu && maUpozornitHodinu(cerstvy, now)) || (neznamy && maUpozornitNeznamy(cerstvy, now))) {
-          const veta = jak === 'push' ? `Upozornění na telefon: ${text}` : `Upozornění e-mailem: ${text}`;
+          const veta = vetaUpozorneni(jak, text);
           const klic = klicPrijezdu(cerstvy);
           aktualni = {
             ...cerstvy,
@@ -122,11 +124,11 @@ export async function upozorniPrijezd(
 
     if (maUpozornitDoklady(aktualni, now)) {
       const text = textDokladyPred(aktualni);
-      const jak = await posli(store, text, `/prehled#${id}?zprava=doklady`);
+      const jak = await posli(store, text, `/prehled#${id}?zprava=doklady`, { telegram: 'doklady' });
       if (jak === 'nic') continue;
       const cerstvy = (await store.getRezervace(id)) || aktualni;
       if (!maUpozornitDoklady(cerstvy, now)) continue;
-      const veta = jak === 'push' ? `Upozornění na telefon: ${text}` : `Upozornění e-mailem: ${text}`;
+      const veta = vetaUpozorneni(jak, text);
       const klic = klicPrijezdu(cerstvy);
       await store.setRezervace(id, {
         ...cerstvy,

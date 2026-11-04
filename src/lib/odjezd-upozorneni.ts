@@ -14,7 +14,7 @@ import {
 } from './odjezd';
 import { hosteProPohodu, textPushPohody } from './pohoda';
 import type { OdjezdBeh, ProcessStore, RezervaceRecord } from './store';
-import { upozorniMajitele } from './upozorneni';
+import { upozorniMajitele, vetaUpozorneni } from './upozorneni';
 import { jePondeli, jeVDnesnichOdjezdech, oznacPrevzeti, textStarychDluhu } from './zalozky';
 
 /** Jednou denně od 11:00. Použije už načtený seznam. Hostovi odtud nic neodchází. */
@@ -48,11 +48,11 @@ export async function upozorniOdjezdy(
   for (const record of list) {
     if (!maUpozornitPul(record, now)) continue;
     const text = textPulHodiny(record, polozkyZRezervace(record));
-    const jak = await posli(store, text, `/prehled#${record.rezervace}`);
+    const jak = await posli(store, text, `/prehled#${record.rezervace}`, { telegram: 'cas-odjezdu' });
     if (jak === 'nic') continue;
     const cerstvy = (await store.getRezervace(record.rezervace)) || record;
     if (!maUpozornitPul(cerstvy, now)) continue;
-    const veta = jak === 'push' ? `Upozornění na telefon: ${text}` : `Upozornění e-mailem: ${text}`;
+    const veta = vetaUpozorneni(jak, text);
     const klic = klicOdjezdu(cerstvy);
     await store.setRezervace(record.rezervace, {
       ...cerstvy,
@@ -95,7 +95,7 @@ export async function upozorniOdjezdy(
         bezDotazu.length === 1
           ? `/prehled#${bezDotazu[0].rezervace}`
           : '/prehled#odjezdy-zitra';
-      const jak = await posli(store, text, url);
+      const jak = await posli(store, text, url, { telegram: 'cas-odjezdu' });
       if (jak !== 'nic') {
         beh.vecer = dnes;
         pocet += 1;
@@ -112,7 +112,7 @@ export async function upozorniOdjezdy(
         bezDotazu.length === 1
           ? `/prehled#${bezDotazu[0].rezervace}`
           : '/prehled#odjezdy-zitra';
-      const jak = await posli(store, text, url);
+      const jak = await posli(store, text, url, { telegram: 'cas-odjezdu' });
       if (jak !== 'nic') {
         beh.pripominka = dnes;
         pocet += 1;
@@ -157,7 +157,7 @@ async function upozorniStareDluhy(
     await store.setOdjezdBeh(beh);
     return 0;
   }
-  const jak = await posli(store, text, '/prehled?zalozka=dluhy');
+  const jak = await posli(store, text, '/prehled?zalozka=dluhy', { telegram: 'nedoplatek' });
   if (jak === 'nic') return 0;
   beh.pondeli = dnes;
   await store.setOdjezdBeh(beh);

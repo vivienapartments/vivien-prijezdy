@@ -76,7 +76,7 @@ export async function POST(req: Request) {
   if (meni) {
     await store.setRezervace(vysledek.rec.rezervace, vysledek.rec);
     for (const text of vysledek.push) {
-      await upozorniMajitele(store, text, `/prehled#${vysledek.rec.rezervace}`);
+      await upozorniMajitele(store, text, `/prehled#${vysledek.rec.rezervace}`, { telegram: 'zadost' });
     }
   }
   return NextResponse.json({ ok: true, nahled: vysledek.nahled }, { headers: noStore });

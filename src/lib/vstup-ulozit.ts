@@ -15,7 +15,7 @@ import type { ProcessStore, RezervaceRecord } from './store';
 import { textTelefonu } from './telefon';
 import { denPlatnostiPruvodce, isDepartureExpired, parseSignedToken } from './token';
 import { GUIDE_LANGS } from './types';
-import { popisHosta, poznamenejUpozorneni, upozorniMajitele } from './upozorneni';
+import { popisHosta, poznamenejUpozorneni, upozorniMajitele, type TelegramDruh } from './upozorneni';
 import {
   jeCasHosta,
   normalizujSpz,
@@ -60,9 +60,14 @@ function poznamenej(rec: RezervaceRecord, co: string, patch: Partial<RezervaceRe
   };
 }
 
-async function ohlas(store: ProcessStore, id: string, text: string): Promise<void> {
+async function ohlas(
+  store: ProcessStore,
+  id: string,
+  text: string,
+  telegram?: TelegramDruh | null,
+): Promise<void> {
   try {
-    const jak = await upozorniMajitele(store, text, `/prehled#${id}`);
+    const jak = await upozorniMajitele(store, text, `/prehled#${id}`, telegram ? { telegram } : undefined);
     await poznamenejUpozorneni(store, id, jak);
   } catch {
     /* upozornění nesmí shodit uložení hosta */
@@ -151,7 +156,7 @@ export async function ulozVstupHosta(
     const casUlozeni = now.toISOString();
     const zapis = { ...pracovni, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
     await store.setRezervace(id, zapis);
-    for (const text of pushe) await ohlas(store, id, text);
+    for (const text of pushe) await ohlas(store, id, text, 'zadost');
     return { ok: true, uroven: urovenZRezervace(zapis) };
   }
 
@@ -169,7 +174,7 @@ export async function ulozVstupHosta(
       const casUlozeni = new Date().toISOString();
       const zapis = { ...v.rec, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
       await store.setRezervace(id, zapis);
-      if (v.push) await ohlas(store, id, v.push);
+      if (v.push) await ohlas(store, id, v.push, 'zadost');
       return { ok: true, cas: v.rec.zadostOdjezd?.cas || cas, uroven: urovenZRezervace(zapis) };
     }
     if (!jeCasOdjezduPovoleny(cas)) {
@@ -179,7 +184,7 @@ export async function ulozVstupHosta(
     if (maRucni(rec, 'casOdjezdu') && rec.casOdjezdu && rec.casOdjezdu !== cas) {
       const zapis = poznamenej(rec, 'Host zadal jiný odjezd, ruční čas zůstal', {});
       await store.setRezervace(id, zapis);
-      await ohlas(store, id, `${popisHosta(rec)} napsal odjezd ${zobrazCas(cas)}, váš čas zůstává`);
+      await ohlas(store, id, `${popisHosta(rec)} napsal odjezd ${zobrazCas(cas)}, váš čas zůstává`, 'cas-odjezdu');
       return { ok: true, cas: rec.casOdjezdu, uroven: urovenZRezervace(rec) };
     }
     const bylo = rec.casOdjezdu ? zobrazCas(rec.casOdjezdu) : 'žádný';
@@ -191,8 +196,8 @@ export async function ulozVstupHosta(
       ...(uprava?.patch || { zadostOdjezd: null }),
     });
     await store.setRezervace(id, zapis);
-    if (uprava?.push) await ohlas(store, id, uprava.push);
-    else await ohlas(store, id, textHostUlozil(rec, cas));
+    if (uprava?.push) await ohlas(store, id, uprava.push, 'zadost');
+    else await ohlas(store, id, textHostUlozil(rec, cas), 'cas-odjezdu');
     return { ok: true, cas, uroven: urovenZRezervace(zapis) };
   }
 
@@ -250,7 +255,7 @@ export async function ulozVstupHosta(
         historie: souhlas.veta ? [...v.rec.historie, { cas: casUlozeni, co: souhlas.veta }].slice(-40) : v.rec.historie,
       };
       await store.setRezervace(id, zapis);
-      if (v.push) await ohlas(store, id, v.push);
+      if (v.push) await ohlas(store, id, v.push, 'zadost');
       return { ok: true, cas: zapis.casPrijezdu || undefined, uroven: urovenZRezervace(zapis) };
     }
     const novy = popisekCasu(cas);
@@ -283,15 +288,25 @@ export async function ulozVstupHosta(
     );
     if (souhlas.veta) zapis.historie = [...zapis.historie, { cas: zapis.posledniPokus, co: souhlas.veta }].slice(-40);
     await store.setRezervace(id, zapis);
-    if (rucniCas) await ohlas(store, id, `${popisHosta(rec)}: host napsal ${novy}, váš čas zůstává`);
-    else if (uprava?.push) await ohlas(store, id, uprava.push);
-    else if ((rec.casPrijezdu || '') !== cas) await ohlas(store, id, `${popisHosta(rec)}: příjezd kolem ${novy}`);
-    if (telefonBrana && telefonBrana !== rec.telefonBrana) {
-      await ohlas(store, id, `${popisHosta(rec)}: zaregistrujte v bráně ${textTelefonu(telefonBrana)}`);
-    }
-    if (spz && spz !== rec.spz) {
-      const textSpz = spz.length > 4 ? `${spz.slice(0, -4)} ${spz.slice(-4)}` : spz;
-      await ohlas(store, id, `${popisHosta(rec)}: SPZ ${textSpz}`);
+    {
+      const dilky: string[] = [];
+      let telegram: TelegramDruh = 'cas-prijezdu';
+      if (rucniCas) dilky.push(`host napsal ${novy}, váš čas zůstává`);
+      else if (uprava?.push) {
+        const host = popisHosta(rec);
+        dilky.push(uprava.push.startsWith(host) ? uprava.push.slice(host.length).replace(/^:\s*/, '') : uprava.push);
+        telegram = 'zadost';
+      } else if ((rec.casPrijezdu || '') !== cas) dilky.push(`příjezd kolem ${novy}`);
+      if (telefonBrana && telefonBrana !== rec.telefonBrana) {
+        dilky.push(`zaregistrujte v bráně ${textTelefonu(telefonBrana)}`);
+        telegram = 'brana';
+      }
+      if (spz && spz !== rec.spz) {
+        const textSpz = spz.length > 4 ? `${spz.slice(0, -4)} ${spz.slice(-4)}` : spz;
+        dilky.push(`SPZ ${textSpz}`);
+        if (telegram === 'cas-prijezdu') telegram = 'brana';
+      }
+      if (dilky.length) await ohlas(store, id, `${popisHosta(rec)}: ${dilky.join(' · ')}`, telegram);
     }
     return { ok: true, uroven: urovenZRezervace(await store.getRezervace(id)) };
   }
@@ -314,7 +329,7 @@ export async function ulozVstupHosta(
       const zapis = poznamenej(rec, 'Host zadal jiný čas, ruční čas zůstal', { navrhy, ...souhlas.patch });
       if (souhlas.veta) zapis.historie = [...zapis.historie, { cas: zapis.posledniPokus, co: souhlas.veta }].slice(-40);
       await store.setRezervace(id, zapis);
-      await ohlas(store, id, `${popisHosta(rec)}: host napsal ${novy}, váš čas zůstává`);
+      await ohlas(store, id, `${popisHosta(rec)}: host napsal ${novy}, váš čas zůstává`, 'cas-prijezdu');
       return { ok: true, uroven: urovenZRezervace(rec) };
     }
     const upravaCas = poZmeneCasuPrijezdu(rec, cas, new Date());
@@ -330,8 +345,8 @@ export async function ulozVstupHosta(
     );
     if (souhlas.veta) zapis.historie = [...zapis.historie, { cas: zapis.posledniPokus, co: souhlas.veta }].slice(-40);
     await store.setRezervace(id, zapis);
-    if (upravaCas?.push) await ohlas(store, id, upravaCas.push);
-    else await ohlas(store, id, `${popisHosta(rec)}: příjezd kolem ${novy}`);
+    if (upravaCas?.push) await ohlas(store, id, upravaCas.push, 'zadost');
+    else await ohlas(store, id, `${popisHosta(rec)}: příjezd kolem ${novy}`, 'cas-prijezdu');
     return { ok: true, uroven: urovenZRezervace({ ...rec, casPrijezdu: cas, casZadalHost: true }) };
   }
 
@@ -390,12 +405,14 @@ export async function ulozVstupHosta(
         zpravaBranaPrectena: zmenaTelefonu ? null : rec.zpravaBranaPrectena,
       }),
     );
-    if (novyTelefon) {
-      await ohlas(store, id, `${popisHosta(rec)}: zaregistrujte v bráně ${textTelefonu(tel.ulozeny)}`);
-    }
-    if (novaSpz && spz) {
-      const textSpz = spz.length > 4 ? `${spz.slice(0, -4)} ${spz.slice(-4)}` : spz;
-      await ohlas(store, id, `${popisHosta(rec)}: SPZ ${textSpz}`);
+    if (novyTelefon || (novaSpz && spz)) {
+      const dilky: string[] = [];
+      if (novyTelefon) dilky.push(`zaregistrujte v bráně ${textTelefonu(tel.ulozeny)}`);
+      if (novaSpz && spz) {
+        const textSpz = spz.length > 4 ? `${spz.slice(0, -4)} ${spz.slice(-4)}` : spz;
+        dilky.push(`SPZ ${textSpz}`);
+      }
+      await ohlas(store, id, `${popisHosta(rec)}: ${dilky.join(' · ')}`, 'brana');
     }
     return {
       ok: true,
