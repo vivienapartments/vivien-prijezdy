@@ -58,6 +58,26 @@ export const AUTOMAT_TICHY_MIN = 15;
 export const PARKING_ADDRESS = 'Chelčického 95/15';
 export const HOUSE_ADDRESS = 'Nádražní 108/43, 370 01 České Budějovice';
 export const NIKOL_PHONE = '+420 702 153 573';
+
+/** Veřejný web: stránka nové rezervace podle jazyka průvodce. */
+export function odkazRezervaceWeb(lang: string): string {
+  const mapa: Record<string, string> = {
+    cs: 'cs',
+    en: 'en',
+    de: 'de',
+    pl: 'en',
+    uk: 'en',
+    'zh-Hant': 'en',
+    sv: 'en',
+    es: 'es',
+    hu: 'en',
+    fr: 'en',
+    it: 'en',
+    pt: 'en',
+  };
+  const kod = mapa[lang] || 'en';
+  return `https://www.vivienapartments.cz/${kod}/rezervace`;
+}
 export const PARKING_OWNER_PHONE = '+420 604 692 573';
 export const WIFI_GARDEN_SSID = 'VivienGarden';
 

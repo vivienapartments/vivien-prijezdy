@@ -1223,35 +1223,99 @@ export const ui = {
   } as LText,
 };
 
-export const expiredTexts: LText = {
-  cs: 'Platnost odkazu skončila',
-  en: 'This link has expired',
-  de: 'Der Link ist abgelaufen',
-  pl: 'Link wygasł',
-  uk: 'Термін дії посилання закінчився',
-  'zh-Hant': '連結已過期',
-  sv: 'Länken har slutat gälla',
-  es: 'Este enlace ya no vale',
-  hu: "Ez a link lejárt",
-  fr: "Ce lien a expiré",
-  it: "Questo link è scaduto",
-  pt: 'Este link expirou',
+/** Přechodová stránka po odjezdu. Text podle schváleného návrhu majitele 8. 11. 2026. */
+export const expiredNadpis: LText = {
+  cs: 'Děkujeme, že jste byli našimi hosty.',
+  en: 'Thank you for being our guests.',
+  de: 'Danke, dass Sie unsere Gäste waren.',
+  pl: 'Dziękujemy, że byliście naszymi gośćmi.',
+  uk: 'Дякуємо, що були нашими гостями.',
+  'zh-Hant': '感謝您成為我們的客人。',
+  sv: 'Tack för att ni var våra gäster.',
+  es: 'Gracias por ser nuestros huéspedes.',
+  hu: 'Köszönjük, hogy a vendégeink voltak.',
+  fr: 'Merci d’avoir été nos hôtes.',
+  it: 'Grazie per essere stati nostri ospiti.',
+  pt: 'Obrigado por terem sido nossos hóspedes.',
+};
+
+export const expiredVeta1: LText = {
+  cs: 'Váš pobyt skončil a příjezdový průvodce již není aktivní.',
+  en: 'Your stay has ended and the arrival guide is no longer active.',
+  de: 'Ihr Aufenthalt ist beendet und der Anreiseführer ist nicht mehr aktiv.',
+  pl: 'Wasza wizyta się zakończyła i przewodnik przyjazdu nie jest już aktywny.',
+  uk: 'Ваше перебування завершилось, і путівник до приїзду вже неактивний.',
+  'zh-Hant': '您的住宿已結束，抵達指南已不再有效。',
+  sv: 'Er vistelse är avslutad och ankomstguiden är inte längre aktiv.',
+  es: 'Su estancia ha terminado y la guía de llegada ya no está activa.',
+  hu: 'Tartózkodásuk véget ért, és az érkezési útmutató már nem aktív.',
+  fr: 'Votre séjour est terminé et le guide d’arrivée n’est plus actif.',
+  it: 'Il soggiorno è terminato e la guida all’arrivo non è più attiva.',
+  pt: 'A vossa estadia terminou e o guia de chegada já não está ativo.',
+};
+
+export const expiredVeta2: LText = {
+  cs: 'Budeme rádi, když se k nám někdy vrátíte.',
+  en: 'We will be glad if you come back to us sometime.',
+  de: 'Wir freuen uns, wenn Sie uns irgendwann wieder besuchen.',
+  pl: 'Będziemy zadowoleni, jeśli kiedyś do nas wrócicie.',
+  uk: 'Будемо раді, якщо колись до нас повернетесь.',
+  'zh-Hant': '若您日後再回來，我們會很高興。',
+  sv: 'Vi blir glada om ni kommer tillbaka till oss någon gång.',
+  es: 'Nos alegrará que vuelvan algún día.',
+  hu: 'Örülünk, ha egyszer visszatérnek hozzánk.',
+  fr: 'Nous serons heureux de vous revoir un jour.',
+  it: 'Saremo felici se tornerete da noi qualche volta.',
+  pt: 'Ficamos felizes se voltarem ter connosco algum dia.',
+};
+
+export const expiredCta: LText = {
+  cs: 'Rezervovat další pobyt',
+  en: 'Book another stay',
+  de: 'Weiteren Aufenthalt buchen',
+  pl: 'Zarezerwujcie kolejny pobyt',
+  uk: 'Забронювати наступне перебування',
+  'zh-Hant': '再訂一次住宿',
+  sv: 'Boka en ny vistelse',
+  es: 'Reservar otra estancia',
+  hu: 'Újabb tartózkodás foglalása',
+  fr: 'Réserver un autre séjour',
+  it: 'Prenotare un altro soggiorno',
+  pt: 'Reservar outra estadia',
 };
 
 export const expiredHelp: LText = {
-  cs: 'Potřebujete pomoc? Zavolejte Nikol na',
-  en: 'Need help? Call Nikol on',
-  de: 'Brauchen Sie Hilfe? Rufen Sie Nikol an unter',
-  pl: 'Potrzebujecie pomocy? Zadzwońcie do Nikol na',
-  uk: 'Потрібна допомога? Зателефонуйте Nikol на',
-  'zh-Hant': '需要協助？請打給 Nikol',
-  sv: 'Behöver ni hjälp? Ring Nikol på',
-  es: '¿Necesitan ayuda? Llamen a Nikol al',
-  hu: "Segítség kell? Hívják Nikolt ezen a számon",
-  fr: "Besoin d’aide ? Appelez Nikol au",
-  it: "Serve aiuto? Chiamate Nikol al",
-  pt: 'Precisam de ajuda? Liguem à Nikol para',
+  cs: 'Potřebujete s něčím pomoci?',
+  en: 'Need help with anything?',
+  de: 'Brauchen Sie bei etwas Hilfe?',
+  pl: 'Potrzebujecie z czymś pomocy?',
+  uk: 'Потрібна з чимось допомога?',
+  'zh-Hant': '需要什麼協助嗎？',
+  sv: 'Behöver ni hjälp med något?',
+  es: '¿Necesitan ayuda con algo?',
+  hu: 'Segítség kell valamiben?',
+  fr: 'Avez-vous besoin d’aide pour quelque chose ?',
+  it: 'Vi serve aiuto con qualcosa?',
+  pt: 'Precisam de ajuda com alguma coisa?',
 };
+
+export const expiredZavolat: LText = {
+  cs: 'Zavolat Nikol',
+  en: 'Call Nikol',
+  de: 'Nikol anrufen',
+  pl: 'Zadzwońcie do Nikol',
+  uk: 'Зателефонувати Nikol',
+  'zh-Hant': '致電 Nikol',
+  sv: 'Ring Nikol',
+  es: 'Llamar a Nikol',
+  hu: 'Nikol hívása',
+  fr: 'Appeler Nikol',
+  it: 'Chiamare Nikol',
+  pt: 'Ligar à Nikol',
+};
+
+/** Starý nadpis (testy / záloha). */
+export const expiredTexts: LText = expiredNadpis;
 
 export const SECTION_NAV: Record<string, LText> = {
   'zadost-o-parkovani': {

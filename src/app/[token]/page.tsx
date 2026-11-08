@@ -41,7 +41,7 @@ export default async function TokenPage({ params }: Props) {
     rec?.jazyk && GUIDE_LANGS.includes(rec.jazyk) ? rec.jazyk : (l as GuideLang);
   const denPlatnosti = denPlatnostiPruvodce(d, rec?.odjezd);
   if (isDepartureExpired(denPlatnosti)) {
-    return <Expired lang="cs" />;
+    return <Expired lang={lang} />;
   }
 
   const stayFromKarty =

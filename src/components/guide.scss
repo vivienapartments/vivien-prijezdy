@@ -2477,3 +2477,134 @@ a.pv-phone.pv-phone--zari:focus-visible {
   padding: 0.8rem 1rem;
   cursor: pointer;
 }
+
+/* P?echodová stránka po odjezdu */
+.pv-expired {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 1rem var(--container-padding-x, 1.25rem) 2rem;
+  background: var(--color-cream);
+}
+
+.pv-expired__karta {
+  width: min(26rem, 100%);
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--pv-line, #3d342a);
+  background: var(--color-cream);
+}
+
+.pv-expired__foto {
+  height: 180px;
+  background:
+    linear-gradient(to bottom, transparent 35%, var(--color-cream) 100%),
+    url('/pruvodce/zahrada-po-odjezdu.jpg') center 32% / cover no-repeat;
+}
+
+.pv-expired__telo {
+  padding: 0.15rem 1.25rem 1.55rem;
+  text-align: center;
+}
+
+.pv-expired__logo {
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin: -2.1rem auto 0.75rem;
+  border-radius: 50%;
+  background: var(--color-cream);
+  object-fit: cover;
+  box-shadow: 0 0 0 4px var(--color-cream);
+}
+
+.pv-expired h1,
+.pv-expired__telo > p,
+.pv-expired__cta,
+.pv-expired__tel,
+.pv-expired__help {
+  font-family: var(--font-body), 'DM Sans', sans-serif;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.pv-expired h1 {
+  margin: 0.35rem 0 0.7rem;
+  font-size: 1.15rem;
+  color: var(--color-gold);
+}
+
+.pv-expired__telo > p {
+  margin: 0 0 0.45rem;
+  color: color-mix(in srgb, var(--color-dark) 72%, transparent);
+  font-size: 0.95rem;
+}
+
+.pv-expired__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  margin: 1rem 0 0.9rem;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  background: #b89a6a;
+  color: #1a1510;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.pv-expired__sipka {
+  font-weight: 400;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.pv-expired__help {
+  margin: 0 !important;
+  font-size: 0.95rem !important;
+  color: color-mix(in srgb, var(--color-dark) 72%, transparent) !important;
+}
+
+.pv-expired__tel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
+  color: var(--color-gold);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+
+.pv-expired__znacka {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  margin: 1.25rem 0 0;
+  max-width: 100%;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pv-expired__znacka-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.pv-expired__znacka-text {
+  font-family: var(--font-body), 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-gold) 72%, #f5efe3);
+}
