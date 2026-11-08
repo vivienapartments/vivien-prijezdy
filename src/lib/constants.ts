@@ -68,11 +68,8 @@ const VIVIEN_LON = 14.486864;
 const PARKING_LAT = 48.9754181;
 const PARKING_LON = 14.4862944;
 
-export const HOUSE_MAPY_URL = `https://mapy.com/fnc/v1/showmap?mapset=basic&center=${VIVIEN_LON},${VIVIEN_LAT}&zoom=17&marker=true`;
 export const HOUSE_GOOGLE_URL = `https://www.google.com/maps/search/?api=1&query=${VIVIEN_LAT}%2C${VIVIEN_LON}`;
-export const PARKING_DRIVE_MAPY_URL = `https://mapy.com/fnc/v1/route?mapset=basic&end=${PARKING_LON},${PARKING_LAT}&routeType=car_fast`;
 export const PARKING_DRIVE_GOOGLE_URL = `https://www.google.com/maps/dir/?api=1&destination=${PARKING_LAT},${PARKING_LON}&travelmode=driving`;
-export const WALK_BACK_MAPY_URL = `https://mapy.com/fnc/v1/route?mapset=basic&start=${PARKING_LON},${PARKING_LAT}&end=${VIVIEN_LON},${VIVIEN_LAT}&routeType=foot_fast`;
 export const WALK_BACK_GOOGLE_URL = `https://www.google.com/maps/dir/?api=1&origin=${PARKING_LAT},${PARKING_LON}&destination=${VIVIEN_LAT},${VIVIEN_LON}&travelmode=walking`;
 
 export const PARKING_ONLY_SECTIONS = new Set([

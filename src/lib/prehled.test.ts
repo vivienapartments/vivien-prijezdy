@@ -68,7 +68,8 @@ describe('tlačítka v přehledu', () => {
     expect(odkaz.startsWith('intent://send/?phone=420777111222&text=')).toBe(true);
     const text = odkaz.slice(odkaz.indexOf('text=') + 5, odkaz.indexOf('#Intent'));
     expect(decodeURIComponent(text)).toBe(zprava);
-    expect(zprava).toContain('čas a způsob příjezdu');
+    expect(zprava).toContain('čas příjezdu');
+    expect(zprava).toContain('PINy aktivujeme až při osobním předání');
     expect(zprava).toContain('https://vivien-prijezdy-six.vercel.app/ukazka');
     expect(zprava).toContain('Nikol a rodina VIVIEN');
     const fallback = odkaz.slice(odkaz.indexOf('S.browser_fallback_url=') + 'S.browser_fallback_url='.length, odkaz.lastIndexOf(';end'));
@@ -101,8 +102,9 @@ describe('tlačítka v přehledu', () => {
   });
 
   it('česká zpráva na WhatsApp je schválené znění (prompt 54)', () => {
-    expect(textZpravy('cs')).toContain('online check-in máte hotový');
-    expect(textZpravy('cs')).toContain('čas a způsob příjezdu');
+    expect(textZpravy('cs')).toContain('online check-in je hotový');
+    expect(textZpravy('cs')).toContain('čas příjezdu');
+    expect(textZpravy('cs')).toContain('PINy aktivujeme až při osobním předání');
     expect(textCheckinu('cs', 'Booking')).toContain('děkujeme, že jste si pro svůj pobyt vybrali');
     expect(textCheckinu('cs', 'Booking')).toContain('Odkaz vám přišel e-mailem');
     expect(textCheckinu('cs', 'Booking')).toContain('Po dokončení check-inu vám automaticky přijde');
@@ -112,7 +114,8 @@ describe('tlačítka v přehledu', () => {
     expect(textCheckinu('cs', 'Expedia')).toContain('Odkaz vám přišel e-mailem');
     expect(textCheckinu('de', 'Booking')).toContain('Online-Check-in');
     expect(textCheckinu('de', 'Booking')).not.toContain('Wegweiser');
-    expect(textNerozbalen('cs', ['cas'])).toContain('čas a způsob příjezdu a potvrďte pravidla');
+    expect(textNerozbalen('cs', ['cas'])).toContain('čas příjezdu');
+    expect(textNerozbalen('cs', ['cas'])).toContain('PINy aktivujeme až při osobním předání');
     expect(textBrany('cs')).toContain('telefon, ze kterého budete otevírat bránu, a SPZ');
     expect(textDneNerozbalen('cs', ['cas', 'pravidla'])).toContain('stále chybí čas a způsob příjezdu');
     expect(textDneSCasem('cs', '16:30')).toContain('kolem 16:30');

@@ -5,14 +5,11 @@ import QRCode from 'qrcode';
 import {
   HOUSE_ADDRESS,
   HOUSE_GOOGLE_URL,
-  HOUSE_MAPY_URL,
   NIKOL_PHONE,
   PARKING_ADDRESS,
   PARKING_DISTANCE,
   PARKING_DRIVE_GOOGLE_URL,
-  PARKING_DRIVE_MAPY_URL,
   WALK_BACK_GOOGLE_URL,
-  WALK_BACK_MAPY_URL,
   WIFI_GARDEN_SSID,
 } from '@/lib/constants';
 import {
@@ -164,32 +161,20 @@ function renderPhoneText(raw: string, zari = false) {
 }
 
 /** Adresa parkoviště + navigace. Jen pro příjezd autem. */
-function NavParkovani({ label, hint, orGoogle }: { label: string; hint: string; orGoogle: string }) {
+function NavParkovani({ label, hint }: { label: string; hint: string }) {
   return (
-    <>
-      <a
-        className="pv-navcta"
-        href={PARKING_DRIVE_MAPY_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="pv-navcta__label">{label}</span>
-        <span className="pv-navcta__addr">
-          {PARKING_ADDRESS}, České Budějovice
-        </span>
-        <span className="pv-navcta__hint">{hint}</span>
-      </a>
-      <p className="pv-navcta__alt">
-        <a
-          className="pv-link"
-          href={PARKING_DRIVE_GOOGLE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {orGoogle}
-        </a>
-      </p>
-    </>
+    <a
+      className="pv-navcta"
+      href={PARKING_DRIVE_GOOGLE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <span className="pv-navcta__label">{label}</span>
+      <span className="pv-navcta__addr">
+        {PARKING_ADDRESS}, České Budějovice
+      </span>
+      <span className="pv-navcta__hint">{hint}</span>
+    </a>
   );
 }
 
@@ -880,8 +865,7 @@ export function Guide({
                         ))}
                         <NavParkovani
                           label={tt(TX.ui.routeParking)}
-                          hint={tt(TX.ui.openMapy)}
-                          orGoogle={tt(TX.ui.orGoogle)}
+                          hint={tt(TX.ui.openGoogle)}
                         />
                       </>
                     ) : s.id === 'prijezd-k-domu' ? (
@@ -892,55 +876,31 @@ export function Guide({
                           </h2>
                         </div>
                         {prijezdSekci === 'auto' ? (
-                          <>
-                            <a
-                              className="pv-navcta"
-                              href={WALK_BACK_MAPY_URL}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
-                              <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
-                              <span className="pv-navcta__hint">
-                                {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes}{' '}
-                                {tt(TX.ui.minWalk)}. {tt(TX.ui.openMapy)}
-                              </span>
-                            </a>
-                            <p className="pv-navcta__alt">
-                              <a
-                                className="pv-link"
-                                href={WALK_BACK_GOOGLE_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {tt(TX.ui.orGoogle)}
-                              </a>
-                            </p>
-                          </>
+                          <a
+                            className="pv-navcta"
+                            href={WALK_BACK_GOOGLE_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
+                            <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
+                            <span className="pv-navcta__hint">
+                              {PARKING_DISTANCE.meters} m · {PARKING_DISTANCE.minutes}{' '}
+                              {tt(TX.ui.minWalk)}. {tt(TX.ui.openGoogle)}
+                            </span>
+                          </a>
                         ) : null}
                         {prijezdSekci === 'pesky' ? (
-                          <>
-                            <a
-                              className="pv-navcta"
-                              href={HOUSE_MAPY_URL}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
-                              <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
-                              <span className="pv-navcta__hint">{tt(TX.ui.openMapy)}</span>
-                            </a>
-                            <p className="pv-navcta__alt">
-                              <a
-                                className="pv-link"
-                                href={HOUSE_GOOGLE_URL}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {tt(TX.ui.orGoogle)}
-                              </a>
-                            </p>
-                          </>
+                          <a
+                            className="pv-navcta"
+                            href={HOUSE_GOOGLE_URL}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
+                            <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
+                            <span className="pv-navcta__hint">{tt(TX.ui.openGoogle)}</span>
+                          </a>
                         ) : null}
                         <article className="pv-step">
                           <p className="pv-kicker">{tt(TX.ui.house)}</p>
@@ -989,8 +949,7 @@ export function Guide({
                         </div>
                         <NavParkovani
                           label={tt(TX.ui.routeParking)}
-                          hint={tt(TX.ui.openMapy)}
-                          orGoogle={tt(TX.ui.orGoogle)}
+                          hint={tt(TX.ui.openGoogle)}
                         />
                         <div className={vikend ? 'pv-sec--weekend' : undefined}>
                           {kroky.map((k, i) => {
