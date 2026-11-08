@@ -34,7 +34,9 @@ export function fillPlaceholders(
 export function formatTelefonCs(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed || trimmed.toUpperCase() === 'DOPLNIT') return trimmed || raw;
-  const digits = trimmed.replace(/\D/g, '');
+  let digits = trimmed.replace(/\D/g, '');
+  // Mezinárodní zápis 00420… stejně jako +420…
+  if (digits.startsWith('00')) digits = digits.slice(2);
   let local = digits;
   if (local.startsWith('420') && local.length >= 12) local = local.slice(3);
   if (local.length !== 9) return trimmed;
@@ -61,18 +63,19 @@ export type PhonePart = {
 
 /** tel:+420… z zobrazeného čísla. */
 export function toTelHref(display: string): string {
-  const digits = display.replace(/\D/g, '');
+  let digits = display.replace(/\D/g, '');
+  if (digits.startsWith('00')) digits = digits.slice(2);
   if (digits.startsWith('420') && digits.length >= 12) return `tel:+${digits}`;
   if (digits.length === 9) return `tel:+420${digits}`;
   return `tel:+${digits}`;
 }
 
 /**
- * Rozdělí text a telefonní čísla (+420 s mezerami i bez)
+ * Rozdělí text a telefonní čísla (+420 / 00420, s mezerami i bez)
  * na části vhodné pro odkaz tel: na mobilu.
  */
 export function phoneParts(raw: string): PhonePart[] {
-  const re = /\+420(?:[\s\u00a0]*\d{3}){3}|\+420\d{9}/g;
+  const re = /(?:\+|00)420(?:[\s\u00a0]*\d{3}){3}|(?:\+|00)420\d{9}/g;
   const out: PhonePart[] = [];
   let last = 0;
   for (const m of raw.matchAll(re)) {

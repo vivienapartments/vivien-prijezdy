@@ -620,18 +620,19 @@ a.pv-phone.pv-phone--zari {
   display: block;
   width: max-content;
   max-width: 100%;
-  margin: 0.55rem 0 0.35rem;
-  padding: 0.55rem 0.85rem;
+  margin: 0.65rem 0 0.45rem;
+  padding: 0.65rem 0.95rem;
   color: #ff2d2d;
-  font-size: 1.35rem;
+  font-size: clamp(1.35rem, 4.5vw, 1.65rem);
   font-weight: 800;
   letter-spacing: 0.04em;
   line-height: 1.2;
   text-decoration: none;
   text-shadow: 0 0 10px rgba(255, 45, 45, 0.95);
-  background: rgba(255, 45, 45, 0.12);
+  background: rgba(255, 45, 45, 0.14);
   border: 2px solid #ff2d2d;
   border-radius: 10px;
+  white-space: nowrap;
 }
 
 a.pv-phone.pv-phone--zari:hover,
@@ -1007,13 +1008,14 @@ a.pv-phone.pv-phone--zari:focus-visible {
 }
 
 .pv-navcta {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.25rem;
   width: 100%;
   margin: 0.85rem 0 0.35rem;
-  padding: 1.15rem 1.25rem 1.2rem;
+  padding: 1.15rem 3.4rem 1.2rem 1.25rem;
   border: 1.5px solid var(--color-gold);
   border-radius: 4px;
   background: var(--pv-surface);
@@ -1037,6 +1039,15 @@ a.pv-phone.pv-phone--zari:focus-visible {
       border-color: var(--color-gold-dark);
     }
   }
+}
+
+.pv-navcta__ikona {
+  position: absolute;
+  top: 1.05rem;
+  right: 0.95rem;
+  color: var(--color-gold);
+  opacity: 0.9;
+  pointer-events: none;
 }
 
 .pv-navcta__label {

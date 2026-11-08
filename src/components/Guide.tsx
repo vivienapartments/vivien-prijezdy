@@ -160,6 +160,17 @@ function renderPhoneText(raw: string, zari = false) {
   );
 }
 
+function NavIkona() {
+  return (
+    <svg className="pv-navcta__ikona" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+      <path
+        fill="currentColor"
+        d="M12 2c-3.9 0-7 3.1-7 7 0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"
+      />
+    </svg>
+  );
+}
+
 /** Adresa parkoviště + navigace. Jen pro příjezd autem. */
 function NavParkovani({ label, hint }: { label: string; hint: string }) {
   return (
@@ -169,6 +180,7 @@ function NavParkovani({ label, hint }: { label: string; hint: string }) {
       target="_blank"
       rel="noopener noreferrer"
     >
+      <NavIkona />
       <span className="pv-navcta__label">{label}</span>
       <span className="pv-navcta__addr">
         {PARKING_ADDRESS}, České Budějovice
@@ -882,6 +894,7 @@ export function Guide({
                             target="_blank"
                             rel="noopener noreferrer"
                           >
+                            <NavIkona />
                             <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
                             <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
                             <span className="pv-navcta__hint">
@@ -897,6 +910,7 @@ export function Guide({
                             target="_blank"
                             rel="noopener noreferrer"
                           >
+                            <NavIkona />
                             <span className="pv-navcta__label">{tt(TX.ui.routeHouse)}</span>
                             <span className="pv-navcta__addr">{HOUSE_ADDRESS}</span>
                             <span className="pv-navcta__hint">{tt(TX.ui.openGoogle)}</span>

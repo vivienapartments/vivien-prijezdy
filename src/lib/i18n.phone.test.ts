@@ -15,6 +15,7 @@ describe('formatTelefonCs', () => {
   it('splits compact Czech mobile for display', () => {
     expect(formatTelefonCs('+420725582214')).toBe('+420 725 582 214');
     expect(formatTelefonCs('725 582 214')).toBe('+420 725 582 214');
+    expect(formatTelefonCs('00420725582214')).toBe('+420 725 582 214');
   });
 });
 
@@ -37,6 +38,12 @@ describe('phoneParts', () => {
     expect(parts.find((p) => p.href)?.href).toBe('tel:+420725582214');
     expect(parts.find((p) => p.href)?.text).toBe('+420 725 582 214');
   });
+
+  it('makes 00420 gate number clickable and readable', () => {
+    const parts = phoneParts('volejte na 00420725582214. Hovor nikdo nepřijme.');
+    expect(parts.find((p) => p.href)?.href).toBe('tel:+420725582214');
+    expect(parts.find((p) => p.href)?.text).toBe('+420 725 582 214');
+  });
 });
 
 describe('fillPlaceholders BRANA_TELEFON', () => {
@@ -45,6 +52,16 @@ describe('fillPlaceholders BRANA_TELEFON', () => {
       stani: 14,
       kodZahrada: '1234',
       branaTelefon: '+420725582214',
+      stay: { noci: 2, osob: 2 },
+    });
+    expect(out).toBe('volejte +420 725 582 214');
+  });
+
+  it('formats 00420 env value to clickable Czech display', () => {
+    const out = fillPlaceholders('volejte {{BRANA_TELEFON}}', {
+      stani: 14,
+      kodZahrada: '1234',
+      branaTelefon: '00420725582214',
       stay: { noci: 2, osob: 2 },
     });
     expect(out).toBe('volejte +420 725 582 214');
