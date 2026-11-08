@@ -47,7 +47,6 @@ import { PraniAlert, PraniHosta } from './PraniHosta';
 import { StavApartmanu } from './StavApartmanu';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import { ZpravyOdNas, type ZpravaOdNas } from './ZpravyOdNas';
-import { usePlochaDotaz } from './PlochaDotaz';
 import { PRANI_NADPIS, PRANI_VETA_SBALENA, textPrani } from '@/lib/prani-texty';
 import './guide.scss';
 
@@ -536,13 +535,6 @@ export function Guide({
     return out;
   }, [kreslene, ukazPrani]);
   const kontaktIndex = osa.findIndex((p) => p.kind === 'sekce' && p.s.id === 'kontakt');
-  const plocha = usePlochaDotaz({
-    lang,
-    rezervace,
-    token: vstup?.cteni ? null : (vstup?.token ?? null),
-    vypnuto: Boolean(vstup?.cteni),
-    blokovano: zpravyLokal.some((z) => z.nova),
-  });
 
   const renderTipsSection = (num: number) => (
     <li
@@ -791,8 +783,6 @@ export function Guide({
         {zpravyLokal.length > 0 ? (
           <ZpravyOdNas zpravy={zpravyLokal} onPrecteno={prectiZpravuOdNas} />
         ) : null}
-        {plocha.overlay}
-        {plocha.krok}
 
         {osa.length ? (
           <ol className="pv-flow pv-flow--axis" aria-label="Kroky průvodce">
