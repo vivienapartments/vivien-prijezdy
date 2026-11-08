@@ -1074,11 +1074,12 @@
   text-decoration: none;
 }
 
+/* S4: stejný tvar, jen zelený nádech (ne plná sytá výplň). */
 .ph a.ph-wa--zeleny,
 .ph span.ph-wa--zeleny {
   border-color: #25d366;
-  background: #25d366;
-  color: #fff;
+  background: color-mix(in srgb, #25d366 22%, transparent);
+  color: #b8f0cc;
 }
 
 .ph span.ph-wa--chybi {
@@ -2346,12 +2347,15 @@
   border-radius: 8px;
 }
 
+/* Návrh B: host lehce modrý, my zlatí. */
 .ph-prani-detail__bublina.is-host {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(120, 160, 200, 0.14);
+  border: 1px solid rgba(140, 175, 210, 0.35);
 }
 
 .ph-prani-detail__bublina.is-vivien {
-  background: rgba(201, 168, 76, 0.12);
+  background: rgba(201, 168, 76, 0.18);
+  border: 1px solid rgba(201, 168, 76, 0.5);
 }
 
 .ph-prani-detail__meta {
@@ -2363,6 +2367,28 @@
 .ph-prani-detail__bublina p {
   margin: 0;
   white-space: pre-wrap;
+}
+
+.ph-prani-detail__wa {
+  margin: 0.65rem 0 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid color-mix(in srgb, #c9a84c 55%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, #c9a84c 10%, transparent);
+
+  p {
+    margin: 0 0 0.55rem;
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+
+  .ph-wa {
+    margin-right: 0.45rem;
+  }
+
+  .ph-ulozit {
+    margin-top: 0.45rem;
+  }
 }
 
 .ph-prani-detail__form {

@@ -198,6 +198,54 @@ export const PRANI_ZOBRAZIT: T = {
   hu: 'Megjelenítés',
 };
 
+/** Štítek v okně: původní text hosta. */
+export const PRANI_VAS_DOTAZ: T = {
+  cs: 'Váš dotaz',
+  en: 'Your question',
+  de: 'Ihre Frage',
+  pl: 'Wasze pytanie',
+  uk: 'Ваше запитання',
+  'zh-Hant': '您的問題',
+  sv: 'Er fråga',
+  es: 'Su pregunta',
+  fr: 'Votre question',
+  it: 'La vostra domanda',
+  pt: 'A vossa pergunta',
+  hu: 'Az ön kérdése',
+};
+
+/** Štítek v okně: odpověď od nás. */
+export const PRANI_ODPOVED_OD: T = {
+  cs: 'Odpověď',
+  en: 'Reply',
+  de: 'Antwort',
+  pl: 'Odpowiedź',
+  uk: 'Відповідь',
+  'zh-Hant': '回覆',
+  sv: 'Svar',
+  es: 'Respuesta',
+  fr: 'Réponse',
+  it: 'Risposta',
+  pt: 'Resposta',
+  hu: 'Válasz',
+};
+
+/** Tlačítko v okně s odpovědí na přání (jako u potvrzení času / brány). */
+export const PRANI_POKRACOVAT: T = {
+  cs: 'Pokračovat',
+  en: 'Continue',
+  de: 'Weiter',
+  pl: 'Dalej',
+  uk: 'Продовжити',
+  'zh-Hant': '繼續',
+  sv: 'Fortsätt',
+  es: 'Continuar',
+  fr: 'Continuer',
+  it: 'Continua',
+  pt: 'Continuar',
+  hu: 'Tovább',
+};
+
 export const PRANI_OKNO_ZAVRENO: T = {
   cs: 'Na přání už bohužel nestihneme reagovat. Pokud potřebujete něco na ráno, zavolejte nám prosím.',
   en: 'We can no longer respond to wishes in time. If you need something for the morning, please call us.',
@@ -290,4 +338,31 @@ export const PRANI_SMAZAT: T = {
 
 export function textPrani(tab: T, lang: GuideLang): string {
   return tab[lang] || tab.en;
+}
+
+/** WhatsApp hostovi po odpovědi na přání. {odkaz} = průvodce. Varianta 2 (schválil majitel 8. 11. 2026). */
+export const PRANI_WHATSAPP_ODPOVED: T = {
+  cs: 'Dobrý den, v průvodci na vás čeká naše odpověď na vaše přání:\n{odkaz}',
+  en: 'Hello, our reply to your wish is waiting for you in the guide:\n{odkaz}',
+  de: 'Guten Tag, im Führer wartet unsere Antwort auf Ihren Wunsch auf Sie:\n{odkaz}',
+  pl: 'Dzień dobry, w przewodniku czeka na Was nasza odpowiedź na życzenie:\n{odkaz}',
+  uk: 'Добрий день, у путівнику на вас чекає наша відповідь на побажання:\n{odkaz}',
+  'zh-Hant': '您好，指南中有我們對您心願的回覆在等您：\n{odkaz}',
+  sv: 'Hej, i guiden väntar vårt svar på er önskan:\n{odkaz}',
+  es: 'Hola, en la guía le espera nuestra respuesta a su deseo:\n{odkaz}',
+  fr: 'Bonjour, dans le guide vous attend notre réponse à votre souhait:\n{odkaz}',
+  it: 'Buongiorno, nella guida vi aspetta la nostra risposta al desiderio:\n{odkaz}',
+  pt: 'Olá, no guia espera-vos a nossa resposta ao pedido:\n{odkaz}',
+  hu: 'Jó napot, az útmutatóban várja önt a válaszunk a kívánságára:\n{odkaz}',
+};
+
+export function textWhatsAppPraniOdpoved(lang: GuideLang | null | undefined, odkaz: string): string {
+  const sablona = textPrani(PRANI_WHATSAPP_ODPOVED, lang || 'en');
+  return sablona.replaceAll('{odkaz}', odkaz);
+}
+
+/** Odkaz na průvodce rovnou k dlaždici přání. */
+export function odkazPraniVPruvodci(guideUrl: string): string {
+  const zaklad = guideUrl.split('#')[0];
+  return `${zaklad}#pv-prani-hosta`;
 }

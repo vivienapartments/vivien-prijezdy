@@ -3495,12 +3495,19 @@ export function PrehledClient({
                   </p>
                 );
               }
-              if (idZpravy === 'checkin' || idZpravy === 'checkinNedojezd') {
+              if (
+                idZpravy === 'checkin' ||
+                idZpravy === 'checkin2' ||
+                idZpravy === 'checkin3' ||
+                idZpravy === 'checkinNedojezd'
+              ) {
                 const uz = pocetCheckinPripoinek(row.historie);
                 const pop =
                   idZpravy === 'checkinNedojezd'
                     ? popisekStupneCheckinu('nedojezd')
-                    : popisekStupneCheckinu(stupenCheckinu(uz, denOk));
+                    : popisekStupneCheckinu(
+                        idZpravy === 'checkin2' ? 2 : idZpravy === 'checkin3' ? 3 : 1,
+                      );
                 return (
                   <p className="ph-nova-panel__stupen">
                     {pop}
@@ -3508,11 +3515,12 @@ export function PrehledClient({
                   </p>
                 );
               }
-              if (idZpravy === 'brana') {
+              if (idZpravy === 'brana' || idZpravy === 'brana2' || idZpravy === 'brana3') {
                 const uz = pocetBranaPripoinek(row.historie);
+                const stupen = idZpravy === 'brana2' ? 2 : idZpravy === 'brana3' ? 3 : 1;
                 return (
                   <p className="ph-nova-panel__stupen">
-                    {popisekStupneBrany(stupenBrany(uz, denOk))}
+                    {popisekStupneBrany(stupen)}
                     {uz ? ` · už odesláno ${uz}×` : ' · ještě neodesláno'}
                   </p>
                 );
@@ -4090,6 +4098,8 @@ export function PrehledClient({
                     kdo={kdoKouka}
                     focusVlakno={praniFocus[row.rezervace] || null}
                     ukazka={ukazka}
+                    wa={row.telefonWa || row.jinyTelefonWa}
+                    userAgent={userAgent}
                   />
                 </DetailSekce>
 

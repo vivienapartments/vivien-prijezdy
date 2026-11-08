@@ -11,15 +11,17 @@ import {
   PRANI_ODESILAM,
   PRANI_ODESLANO,
   PRANI_ODESLAT,
+  PRANI_ODPOVED_OD,
   PRANI_ODPOVEDET,
   PRANI_OKNO_ZAVRENO,
+  PRANI_POKRACOVAT,
   PRANI_POLE,
   PRANI_RAMECEK_ODPOVED,
   PRANI_SMAZAT,
+  PRANI_VAS_DOTAZ,
   PRANI_UPRAVIT,
   PRANI_UVOD,
   PRANI_VYRIZENO,
-  PRANI_ZOBRAZIT,
   textPrani,
 } from '@/lib/prani-texty';
 import type { GuideLang } from '@/lib/types';
@@ -31,6 +33,8 @@ type Props = {
   cteni?: boolean;
   /** Nová odpověď / otevřené vlákno → rodič rozbalí dlaždici. */
   onChceOtevrit?: (otevrit: boolean) => void;
+  /** Po zavření okna s odpovědí nechat tuhle konverzaci rozbalenou. */
+  zvyradnitVlakno?: string | null;
 };
 
 type Stav = {
@@ -70,69 +74,198 @@ function otevriDlazdiciPrani() {
   }
 }
 
-/** Rámeček nahoře: „Máme pro vás odpověď“. */
-export function PraniAlert({ token, lang, cteni = false }: Omit<Props, 'onChceOtevrit'>) {
+function posledniVivien(v: VlaknoProHosta) {
+  return [...v.zpravy].reverse().find((z) => z.autor === 'vivien') || null;
+}
+
+function hostovoPrani(v: VlaknoProHosta) {
+  return v.zpravy.find((z) => z.autor === 'host') || null;
+}
+
+/** Okno s odpovědí na přání (jako potvrzení času / brány). */
+export function PraniAlert({
+  token,
+  lang,
+  cteni = false,
+  onOtevritVlakno,
+}: Omit<Props, 'onChceOtevrit' | 'zvyradnitVlakno'> & {
+  onOtevritVlakno?: (vlaknoId: string) => void;
+}) {
   const tt = (tab: Parameters<typeof textPrani>[0]) => textPrani(tab, lang);
-  const [ceka, setCeka] = useState<string[]>([]);
+  const [stav, setStav] = useState<Stav | null>(null);
+  const [aktivniId, setAktivniId] = useState<string | null>(null);
+  const [odpoved, setOdpoved] = useState('');
+  const [odesilam, setOdesilam] = useState(false);
+  const [hlaska, setHlaska] = useState('');
+
+  const nacti = useCallback(async () => {
+    if (!token || cteni) return;
+    try {
+      const res = await fetch('/api/pruvodce/prani', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, akce: 'nacti' }),
+      });
+      const data = (await res.json().catch(() => null)) as Stav & { ok?: boolean } | null;
+      if (!res.ok || !data?.ok) return;
+      setStav({
+        vlakna: data.vlakna || [],
+        muzePsat: Boolean(data.muzePsat),
+      });
+    } catch {
+      /* síť */
+    }
+  }, [token, cteni]);
+
+  useEffect(() => {
+    void nacti();
+  }, [nacti]);
 
   useEffect(() => {
     if (!token || cteni) return;
-    let zrus = false;
-    async function nacti() {
-      try {
-        const res = await fetch('/api/pruvodce/prani', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, akce: 'nacti' }),
-        });
-        const data = (await res.json().catch(() => null)) as Stav & { ok?: boolean } | null;
-        if (zrus || !res.ok || !data?.ok) return;
-        const ids: string[] = [];
-        for (const v of data.vlakna || []) {
-          let videl = false;
-          try {
-            videl = Boolean(localStorage.getItem(klicVidel(token!, v.id)));
-          } catch {
-            videl = false;
-          }
-          if (videl) continue;
-          if ([...v.zpravy].reverse().find((z) => z.autor === 'vivien')) ids.push(v.id);
-        }
-        setCeka(ids);
-      } catch {
-        /* síť */
-      }
+    function obnov() {
+      if (document.visibilityState === 'visible') void nacti();
     }
-    void nacti();
+    const t = window.setInterval(obnov, 20_000);
+    document.addEventListener('visibilitychange', obnov);
+    window.addEventListener('online', obnov);
     return () => {
-      zrus = true;
+      window.clearInterval(t);
+      document.removeEventListener('visibilitychange', obnov);
+      window.removeEventListener('online', obnov);
     };
-  }, [token, cteni]);
+  }, [token, cteni, nacti]);
 
-  if (!ceka.length) return null;
+  useEffect(() => {
+    if (!token || cteni || !stav) {
+      setAktivniId(null);
+      return;
+    }
+    const ceka = (stav.vlakna || []).filter((v) => {
+      try {
+        if (localStorage.getItem(klicVidel(token, v.id))) return false;
+      } catch {
+        /* paměť */
+      }
+      return Boolean(posledniVivien(v));
+    });
+    setAktivniId((prev) => {
+      if (prev && ceka.some((v) => v.id === prev)) return prev;
+      return ceka[0]?.id ?? null;
+    });
+  }, [stav, token, cteni]);
+
+  function oznacVidel(vlaknoId: string) {
+    if (!token || cteni) return;
+    try {
+      localStorage.setItem(klicVidel(token, vlaknoId), '1');
+    } catch {
+      /* paměť */
+    }
+  }
+
+  function dokonci(vlaknoId: string) {
+    oznacVidel(vlaknoId);
+    onOtevritVlakno?.(vlaknoId);
+    otevriDlazdiciPrani();
+    setOdpoved('');
+    setHlaska('');
+    setAktivniId(null);
+    void nacti();
+  }
+
+  async function odesliOdpoved(vlaknoId: string) {
+    const t = odpoved.trim();
+    if (!t || !token || odesilam || cteni) return;
+    setOdesilam(true);
+    setHlaska('');
+    try {
+      const res = await fetch('/api/pruvodce/prani', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, akce: 'napis', id: noveId(), vlakno: vlaknoId, text: t }),
+      });
+      const data = (await res.json().catch(() => null)) as { ok?: boolean; duvod?: string } | null;
+      if (!res.ok || !data?.ok) {
+        setHlaska(data?.duvod === 'limit' ? tt(PRANI_LIMIT) : tt(PRANI_CHYBA));
+        return;
+      }
+      dokonci(vlaknoId);
+    } catch {
+      setHlaska(tt(PRANI_CHYBA));
+    } finally {
+      setOdesilam(false);
+    }
+  }
+
+  const aktivni = (stav?.vlakna || []).find((v) => v.id === aktivniId) || null;
+  const odpovedVivien = aktivni ? posledniVivien(aktivni) : null;
+  const puvodni = aktivni ? hostovoPrani(aktivni) : null;
+
+  if (!aktivni || !odpovedVivien) return null;
+
   return (
-    <aside className="pv-prani-alert" lang={lang}>
-      <p className="pv-prani-alert__nadpis">{tt(PRANI_RAMECEK_ODPOVED)}</p>
-      <button
-        type="button"
-        className="pv-prani-alert__btn"
-        onClick={() => {
-          try {
-            localStorage.setItem(klicVidel(token!, ceka[0]), '1');
-          } catch {
-            /* paměť */
-          }
-          otevriDlazdiciPrani();
-        }}
-      >
-        {tt(PRANI_ZOBRAZIT)}
-      </button>
-    </aside>
+    <div
+      className="pv-zprava-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={`pv-prani-odpoved-${aktivni.id}`}
+    >
+      <div className="pv-zprava-overlay__karta pv-zprava-overlay__karta--prani">
+        <p className="pv-zprava-overlay__krok" id={`pv-prani-odpoved-${aktivni.id}`}>
+          {tt(PRANI_RAMECEK_ODPOVED)}
+        </p>
+        {puvodni?.text ? (
+          <div className="pv-zprava-overlay__blok pv-zprava-overlay__blok--dotaz">
+            <p className="pv-zprava-overlay__stitek">{tt(PRANI_VAS_DOTAZ)}</p>
+            <p className="pv-zprava-overlay__text pv-zprava-overlay__text--puvodni">{puvodni.text}</p>
+          </div>
+        ) : null}
+        <div className="pv-zprava-overlay__blok pv-zprava-overlay__blok--odpoved">
+          <p className="pv-zprava-overlay__stitek">
+            {tt(PRANI_ODPOVED_OD)}
+            {odpovedVivien.jmeno ? ` · ${odpovedVivien.jmeno}` : ''}
+          </p>
+          <p className="pv-zprava-overlay__text">{odpovedVivien.text}</p>
+        </div>
+        {stav?.muzePsat ? (
+          <div className="pv-zprava-overlay__form">
+            <label>
+              {tt(PRANI_ODPOVEDET)}
+              <textarea
+                value={odpoved}
+                maxLength={1000}
+                rows={3}
+                onChange={(e) => setOdpoved(e.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="pv-zprava-overlay__btn"
+              disabled={odesilam || !odpoved.trim()}
+              onClick={() => void odesliOdpoved(aktivni.id)}
+            >
+              {odesilam ? tt(PRANI_ODESILAM) : tt(PRANI_ODESLAT)}
+            </button>
+          </div>
+        ) : null}
+        {hlaska ? <p className="pv-prani__chyba">{hlaska}</p> : null}
+        <button type="button" className="pv-zprava-overlay__btn" onClick={() => dokonci(aktivni.id)}>
+          {tt(PRANI_POKRACOVAT)}
+        </button>
+      </div>
+    </div>
   );
 }
 
 /** Obsah dlaždice přání (v ose za WiFi). */
-export function PraniHosta({ token, lang, cteni = false, onChceOtevrit }: Props) {
+export function PraniHosta({
+  token,
+  lang,
+  cteni = false,
+  onChceOtevrit,
+  zvyradnitVlakno = null,
+}: Props) {
   const tt = (tab: Parameters<typeof textPrani>[0]) => textPrani(tab, lang);
   const [stav, setStav] = useState<Stav | null>(null);
   const [text, setText] = useState('');
@@ -207,8 +340,7 @@ export function PraniHosta({ token, lang, cteni = false, onChceOtevrit }: Props)
   function maNovouOdpoved(v: VlaknoProHosta): boolean {
     if (cteni) return false;
     if (videne[v.id]) return false;
-    const posledni = [...v.zpravy].reverse().find((z) => z.autor === 'vivien');
-    return Boolean(posledni);
+    return Boolean(posledniVivien(v));
   }
 
   const cekaOdpoved = (stav?.vlakna || []).filter(maNovouOdpoved);
@@ -218,6 +350,19 @@ export function PraniHosta({ token, lang, cteni = false, onChceOtevrit }: Props)
     if (!onChceOtevrit || !stav) return;
     onChceOtevrit(cekaOdpoved.length > 0 || otevreneVlakno);
   }, [onChceOtevrit, stav, cekaOdpoved.length, otevreneVlakno]);
+
+  /** Nová odpověď i po „Pokračovat“: konverzace pod přáním zůstane rozbalená. */
+  useEffect(() => {
+    if (cteni) return;
+    if (zvyradnitVlakno) {
+      setOtevrene(zvyradnitVlakno);
+      oznacVidel(zvyradnitVlakno);
+      return;
+    }
+    if (cekaOdpoved[0]?.id) setOtevrene(cekaOdpoved[0].id);
+    // oznacVidel záměrně mimo deps (jen při zvyradnit)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cteni, zvyradnitVlakno, cekaOdpoved[0]?.id]);
 
   async function posli(akce: 'napis' | 'uprav' | 'smaz', telo: Record<string, string>) {
     if (!token || cteni) return false;
@@ -310,8 +455,13 @@ export function PraniHosta({ token, lang, cteni = false, onChceOtevrit }: Props)
               className="pv-prani__vlakno-hlava"
               onClick={() => {
                 if (cteni) return;
-                setOtevrene(open ? null : v.id);
-                if (!open) oznacVidel(v.id);
+                if (open) {
+                  oznacVidel(v.id);
+                  setOtevrene(null);
+                } else {
+                  setOtevrene(v.id);
+                  oznacVidel(v.id);
+                }
               }}
             >
               <span className="pv-prani__vlakno-nadpis">

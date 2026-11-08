@@ -24,10 +24,21 @@ export function fillPlaceholders(
     .replaceAll('{{STANI}}', String(opts.stani))
     .replaceAll('{{KOD_ZAHRADA}} + #', opts.kodZahrada)
     .replaceAll('{{KOD_ZAHRADA}}', opts.kodZahrada)
-    .replaceAll('{{BRANA_TELEFON}}', opts.branaTelefon)
+    .replaceAll('{{BRANA_TELEFON}}', formatTelefonCs(opts.branaTelefon))
     .replaceAll('{{POPLATEK_NOCI}}', noci)
     .replaceAll('{{POPLATEK_OSOB}}', osob)
     .replaceAll('{{POPLATEK_ODHAD}}', odhad);
+}
+
+/** Čitelné +420 xxx xxx xxx, ať je číslo v textu vidět a jde ťuknout. */
+export function formatTelefonCs(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.toUpperCase() === 'DOPLNIT') return trimmed || raw;
+  const digits = trimmed.replace(/\D/g, '');
+  let local = digits;
+  if (local.startsWith('420') && local.length >= 12) local = local.slice(3);
+  if (local.length !== 9) return trimmed;
+  return `+420 ${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
 }
 
 export function apartmentTitle(
@@ -57,18 +68,19 @@ export function toTelHref(display: string): string {
 }
 
 /**
- * Rozdělí text a telefonní čísla +420 xxx xxx xxx
+ * Rozdělí text a telefonní čísla (+420 s mezerami i bez)
  * na části vhodné pro odkaz tel: na mobilu.
  */
 export function phoneParts(raw: string): PhonePart[] {
-  const re = /\+420[\s\u00a0]*\d{3}[\s\u00a0]*\d{3}[\s\u00a0]*\d{3}/g;
+  const re = /\+420(?:[\s\u00a0]*\d{3}){3}|\+420\d{9}/g;
   const out: PhonePart[] = [];
   let last = 0;
   for (const m of raw.matchAll(re)) {
     const start = m.index ?? 0;
     if (start > last) out.push({ text: raw.slice(last, start) });
-    out.push({ text: m[0], href: toTelHref(m[0]) });
-    last = start + m[0].length;
+    const matched = m[0];
+    out.push({ text: formatTelefonCs(matched), href: toTelHref(matched) });
+    last = start + matched.length;
   }
   if (last < raw.length) out.push({ text: raw.slice(last) });
   return out.length ? out : [{ text: raw }];

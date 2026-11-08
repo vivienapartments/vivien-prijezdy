@@ -5,19 +5,32 @@ import { denPraha, posunDen } from './brana';
 export type CasovaZpravaId = 'nerozbalen' | 'denNerozbalen' | 'pruvodce3' | 'nedojezd';
 
 const NAZEV_CAS: Record<CasovaZpravaId, string> = {
-  nerozbalen: 'Průvodce nerozbalen',
-  denNerozbalen: 'Den příjezdu, průvodce nerozbalen',
-  pruvodce3: 'Průvodce, důrazný',
+  nerozbalen: 'Průvodce · 1. stupeň (čas)',
+  denNerozbalen: 'Průvodce · 2. stupeň',
+  pruvodce3: 'Průvodce · 3. stupeň',
   nedojezd: 'Poslední výzva (nedojezd)',
 };
 
 /** Starší názvy v historii, ať se stupeň po nasazení neresetuje. */
-const STARE_NAZVY_PRUVODCE = ['Neotevřel průvodce'];
+const STARE_NAZVY_PRUVODCE = [
+  'Neotevřel průvodce',
+  'Průvodce nerozbalen',
+  'Den příjezdu, průvodce nerozbalen',
+  'Průvodce, důrazný',
+  'Průvodce · 1. stupeň',
+];
 
 const CHECKIN_NAZEV = 'Vyplňte check-in';
+const CHECKIN_NAZVY = [
+  CHECKIN_NAZEV,
+  'Check-in · 1. stupeň',
+  'Check-in · 2. stupeň',
+  'Check-in · 3. stupeň',
+];
 export const CHECKIN_NEDOJEZD_NAZEV = 'Poslední výzva · check-in';
 
 const BRANA_NAZEV = 'Chybí údaje k bráně';
+const BRANA_NAZVY = [BRANA_NAZEV, 'Brána · 1. stupeň', 'Brána · 2. stupeň', 'Brána · 3. stupeň'];
 const PRUVODCE3_NAZEV = NAZEV_CAS.pruvodce3;
 
 function pocetZKanalu(historie: { co: string }[], nazvy: string[]): number {
@@ -30,9 +43,9 @@ export function pocetCasovychPripoinek(historie: { co: string }[]): number {
   return pocetZKanalu(historie, [...Object.values(NAZEV_CAS), ...STARE_NAZVY_PRUVODCE]);
 }
 
-/** Už odešel 3. stupeň průvodce (WhatsApp/SMS: Průvodce, důrazný). */
+/** Už odešel 3. stupeň průvodce (WhatsApp/SMS). */
 export function uzOdeslanPruvodce3(historie: { co: string }[]): boolean {
-  return pocetZKanalu(historie, [PRUVODCE3_NAZEV]) > 0;
+  return pocetZKanalu(historie, [PRUVODCE3_NAZEV, 'Průvodce, důrazný']) > 0;
 }
 
 /**
@@ -70,7 +83,7 @@ export function nazevCasoveZpravy(id: CasovaZpravaId): string {
 }
 
 export function pocetCheckinPripoinek(historie: { co: string }[]): number {
-  return pocetZKanalu(historie, [CHECKIN_NAZEV]);
+  return pocetZKanalu(historie, CHECKIN_NAZVY);
 }
 
 /** 0× → 1 (v okně 2), 1× → 2 (v okně 3), 2×+ → 3. Okno = den před / den příjezdu. */
@@ -93,7 +106,7 @@ export function checkinOdeslanVOkne(
   prijezd: string,
 ): boolean {
   const denPred = posunDen(prijezd, -1);
-  const platne = new Set([`WhatsApp: ${CHECKIN_NAZEV}`, `SMS: ${CHECKIN_NAZEV}`]);
+  const platne = new Set(CHECKIN_NAZVY.flatMap((n) => [`WhatsApp: ${n}`, `SMS: ${n}`]));
   return historie.some((h) => {
     if (!platne.has(h.co) || !h.cas) return false;
     const den = denPraha(new Date(h.cas));
@@ -130,7 +143,7 @@ export function ukazatCheckinNedojezd(opts: {
 }
 
 export function pocetBranaPripoinek(historie: { co: string }[]): number {
-  return pocetZKanalu(historie, [BRANA_NAZEV]);
+  return pocetZKanalu(historie, BRANA_NAZVY);
 }
 
 /** Stejný žebříček jako check-in. Okno = den před / den příjezdu. */
@@ -145,9 +158,9 @@ export function popisekStupneBrany(stupen: 1 | 2 | 3): string {
 export type DruhVyzvy = 'checkin' | 'pruvodce' | 'brana';
 
 const NAZVY_VYZVY: Record<DruhVyzvy, string[]> = {
-  checkin: [CHECKIN_NAZEV],
+  checkin: CHECKIN_NAZVY,
   pruvodce: [...Object.values(NAZEV_CAS), ...STARE_NAZVY_PRUVODCE],
-  brana: [BRANA_NAZEV],
+  brana: BRANA_NAZVY,
 };
 
 const POSLEDNI_VYZVY: Partial<Record<DruhVyzvy, string[]>> = {

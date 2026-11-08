@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Náhled – WhatsApp po odpovědi na přání</title>
+  <style>
+    :root {
+      --bg: #1c1712;
+      --card: #241e18;
+      --ink: #e8dfc8;
+      --muted: #cbbba8;
+      --gold: #c9a84c;
+      --green: #25d366;
+      --line: #3d342a;
+      --wa-bg: #0b141a;
+      --wa-in: #005c4b;
+      --wa-bubble: #202c33;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 1.1rem 1rem 2.5rem;
+    }
+    h1 {
+      font-family: Georgia, serif;
+      font-weight: 500;
+      font-size: 1.3rem;
+      margin: 0 0 0.35rem;
+      color: var(--gold);
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      max-width: 40rem;
+      margin: 0 0 1.25rem;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+    .col { width: min(100%, 22rem); }
+    .tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 0.45rem;
+    }
+    .tag em { font-style: normal; color: var(--gold); }
+    .phone {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 0.75rem 0.7rem 0.95rem;
+      min-height: 26rem;
+    }
+    .bar {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 0 0 0.55rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .bubble {
+      margin: 0 0 0.55rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #2a221c;
+      font-size: 0.84rem;
+      line-height: 1.4;
+    }
+    .bubble.is-host { border-color: #5a4a32; }
+    .bubble.is-vivien { border-color: color-mix(in srgb, var(--gold) 55%, transparent); }
+    .meta {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    .wa-box {
+      margin-top: 0.75rem;
+      padding: 0.75rem 0.85rem;
+      border: 1px solid color-mix(in srgb, var(--gold) 55%, transparent);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--gold) 10%, transparent);
+    }
+    .wa-box p {
+      margin: 0 0 0.55rem;
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+    .btn-wa {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 0.85rem;
+      border: 0;
+      border-radius: 10px;
+      background: var(--green);
+      color: #053b1a;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .wa-phone {
+      background: var(--wa-bg);
+      border: 1px solid #1f2c33;
+      border-radius: 18px;
+      padding: 0.65rem 0.55rem 0.85rem;
+      min-height: 26rem;
+      color: #e9edef;
+    }
+    .wa-head {
+      display: flex;
+      gap: 0.55rem;
+      align-items: center;
+      padding: 0.35rem 0.45rem 0.65rem;
+      border-bottom: 1px solid #1f2c33;
+      margin-bottom: 0.75rem;
+    }
+    .wa-avatar {
+      width: 2.1rem;
+      height: 2.1rem;
+      border-radius: 50%;
+      background: #6b7c85;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      color: #111b21;
+      font-size: 0.85rem;
+    }
+    .wa-name { font-weight: 700; font-size: 0.92rem; }
+    .wa-sub { font-size: 0.72rem; color: #8696a0; }
+    .wa-msg {
+      max-width: 92%;
+      margin-left: auto;
+      background: var(--wa-in);
+      border-radius: 10px 10px 4px 10px;
+      padding: 0.55rem 0.65rem 0.4rem;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .wa-msg a {
+      color: #53bdeb;
+      word-break: break-all;
+    }
+    .wa-time {
+      display: block;
+      text-align: right;
+      font-size: 0.68rem;
+      color: #99beb5;
+      margin-top: 0.25rem;
+    }
+    .note {
+      margin: 1.2rem 0 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.45;
+      max-width: 42rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>WhatsApp po odpovědi na přání</h1>
+  <p class="lead">
+    Varianta 2. Nejdřív uložíte odpověď v přehledu, hned pod ní se ukáže zelené tlačítko.
+    Po ťuknutí se otevře WhatsApp s touhle zprávou.
+  </p>
+
+  <div class="row">
+    <div class="col">
+      <div class="tag">1 · <em>V přehledu po odeslání</em></div>
+      <div class="phone">
+        <div class="bar"><span>Přání · detail</span><span>host</span></div>
+        <div class="bubble is-host">
+          <div class="meta">Host · 13:40</div>
+          Dobrý den, šlo by prosím doplnit dětskou postýlku?
+        </div>
+        <div class="bubble is-vivien">
+          <div class="meta">Nikol · 14:18</div>
+          Ano, postýlku vám připravíme. Bude v apartmánu při předání.
+        </div>
+        <div class="wa-box">
+          <p>Odpověď je uložená. Pošlete hostovi odkaz do průvodce na WhatsApp.</p>
+          <button type="button" class="btn-wa">WhatsApp hostovi</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="tag">2 · <em>Zpráva ve WhatsApp</em></div>
+      <div class="wa-phone">
+        <div class="wa-head">
+          <div class="wa-avatar">H</div>
+          <div>
+            <div class="wa-name">Host</div>
+            <div class="wa-sub">online</div>
+          </div>
+        </div>
+        <div class="wa-msg">Dobrý den, v průvodci na vás čeká naše odpověď na vaše přání:
+<a href="#">https://priklad.vivien/…#pv-prani-hosta</a><span class="wa-time">14:19</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    Po otevření odkazu hostovi v průvodci vyskočí okno s odpovědí, stejně jako u potvrzení času nebo brány.
+  </p>
+</body>
+</html>

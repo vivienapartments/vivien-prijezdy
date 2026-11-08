@@ -618,10 +618,27 @@ a.pv-phone:focus-visible {
 }
 
 a.pv-phone.pv-phone--zari {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: 0.55rem 0 0.35rem;
+  padding: 0.55rem 0.85rem;
   color: #ff2d2d;
+  font-size: 1.35rem;
   font-weight: 800;
-  text-decoration-color: #ff2d2d;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-decoration: none;
   text-shadow: 0 0 10px rgba(255, 45, 45, 0.95);
+  background: rgba(255, 45, 45, 0.12);
+  border: 2px solid #ff2d2d;
+  border-radius: 10px;
+}
+
+a.pv-phone.pv-phone--zari:hover,
+a.pv-phone.pv-phone--zari:focus-visible {
+  text-decoration: none;
+  background: rgba(255, 45, 45, 0.2);
 }
 
 .pv-cmp-switch {
@@ -1859,16 +1876,17 @@ a.pv-phone.pv-phone--zari {
   max-width: 92%;
 }
 
+/* Návrh D: host neutrální, na?e odpov?? zlatá. */
 .pv-prani__bublina--host {
   margin-left: auto;
-  background: color-mix(in srgb, #c9a84c 22%, transparent);
-  border: 1px solid rgba(201, 168, 76, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .pv-prani__bublina--vivien {
   margin-right: auto;
-  background: rgba(20, 18, 16, 0.55);
-  border: 1px solid rgba(201, 168, 76, 0.4);
+  background: rgba(201, 168, 76, 0.2);
+  border: 1px solid rgba(201, 168, 76, 0.55);
 }
 
 .pv-prani__meta {
@@ -2086,6 +2104,90 @@ a.pv-phone.pv-phone--zari {
   box-shadow:
     0 12px 40px rgba(0, 0, 0, 0.45),
     inset 0 0 0 1px color-mix(in srgb, #6d9a6a 28%, transparent);
+}
+
+/* Odpov?? na p?ání: del?í text + mo?nost hned napsat */
+.pv-zprava-overlay__karta--prani {
+  height: auto;
+  max-height: min(88vh, 34rem);
+  width: min(100%, 22rem);
+  overflow: auto;
+}
+
+.pv-zprava-overlay__blok {
+  margin: 0 0 0.65rem;
+  flex: 0 0 auto;
+}
+
+.pv-zprava-overlay__blok--dotaz {
+  padding: 0.45rem 0.55rem;
+  border-left: 3px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0 8px 8px 0;
+}
+
+.pv-zprava-overlay__blok--odpoved {
+  padding: 0.45rem 0.55rem;
+  border-left: 3px solid #c9a84c;
+  background: rgba(201, 168, 76, 0.12);
+  border-radius: 0 8px 8px 0;
+}
+
+.pv-zprava-overlay__stitek {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8fad84;
+}
+
+.pv-zprava-overlay__blok--odpoved .pv-zprava-overlay__stitek {
+  color: #c9a84c;
+}
+
+.pv-zprava-overlay__text--puvodni {
+  margin: 0;
+  color: #cfc6b4;
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.92;
+}
+
+.pv-zprava-overlay__blok--odpoved .pv-zprava-overlay__text {
+  margin: 0;
+}
+
+.pv-zprava-overlay__form {
+  margin: 0 0 0.65rem;
+  flex: 0 0 auto;
+
+  label {
+    display: block;
+    margin: 0 0 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: #cfc6b4;
+  }
+
+  textarea {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid color-mix(in srgb, #c9a84c 45%, transparent);
+    border-radius: 10px;
+    background: #12100c;
+    color: #f5efe3;
+    font: inherit;
+    font-size: 0.88rem;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+
+  .pv-zprava-overlay__btn {
+    margin-top: 0.45rem;
+  }
 }
 
 .pv-zprava-overlay__krok {

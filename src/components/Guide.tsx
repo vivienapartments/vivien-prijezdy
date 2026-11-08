@@ -366,6 +366,7 @@ export function Guide({
   const [ziveKody, setZiveKody] = useState<KodRadek[] | null>(kody ?? null);
   const [dnesDen, setDnesDen] = useState(() => denPraha(new Date()));
   const [praniOtevrit, setPraniOtevrit] = useState(false);
+  const [praniVlakno, setPraniVlakno] = useState<string | null>(null);
   const [zpravyLokal, setZpravyLokal] = useState<ZpravaOdNas[]>(zpravyOdNas);
   const hodnoty = vstup?.hodnoty ?? lokalne ?? { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false };
   const ubytovan = Boolean(vstup?.ubytovan);
@@ -710,7 +711,17 @@ export function Guide({
               nejpozdeji={okno?.nejpozdeji}
               zadostOdjezd={okno?.zadostOdjezd ?? null}
             />
-            {ukazPrani ? <PraniAlert token={praniToken} lang={lang} cteni={praniCteni} /> : null}
+            {ukazPrani ? (
+              <PraniAlert
+                token={praniToken}
+                lang={lang}
+                cteni={praniCteni}
+                onOtevritVlakno={(id) => {
+                  setPraniVlakno(id);
+                  setPraniOtevrit(true);
+                }}
+              />
+            ) : null}
           </>
         ) : krokyHotove ? (
           <>
@@ -729,7 +740,17 @@ export function Guide({
                 else setLokalne(next);
               }}
             />
-            {ukazPrani ? <PraniAlert token={praniToken} lang={lang} cteni={praniCteni} /> : null}
+            {ukazPrani ? (
+              <PraniAlert
+                token={praniToken}
+                lang={lang}
+                cteni={praniCteni}
+                onOtevritVlakno={(id) => {
+                  setPraniVlakno(id);
+                  setPraniOtevrit(true);
+                }}
+              />
+            ) : null}
           </>
         ) : (
           <>
@@ -748,7 +769,17 @@ export function Guide({
               }}
             />
             <StavApartmanu lang={lang} stav={okno?.stavApartmanu} />
-            {ukazPrani ? <PraniAlert token={praniToken} lang={lang} cteni={praniCteni} /> : null}
+            {ukazPrani ? (
+              <PraniAlert
+                token={praniToken}
+                lang={lang}
+                cteni={praniCteni}
+                onOtevritVlakno={(id) => {
+                  setPraniVlakno(id);
+                  setPraniOtevrit(true);
+                }}
+              />
+            ) : null}
           </>
         )}
 
@@ -788,6 +819,7 @@ export function Guide({
                           lang={lang}
                           cteni={praniCteni}
                           onChceOtevrit={setPraniOtevrit}
+                          zvyradnitVlakno={praniVlakno}
                         />
                       </SbalenaSekce>
                     </div>

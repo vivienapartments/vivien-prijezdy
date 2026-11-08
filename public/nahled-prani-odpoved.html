@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Náhled – odpověď na přání</title>
+  <style>
+    :root {
+      --bg: #1c1712;
+      --card: #241e18;
+      --ink: #e8dfc8;
+      --muted: #cbbba8;
+      --gold: #c9a84c;
+      --green: #8fad84;
+      --line: #3d342a;
+      --cream: #f5efe3;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 1.1rem 1rem 2.5rem;
+    }
+    h1 {
+      font-weight: 500;
+      font-size: 1.35rem;
+      margin: 0 0 0.35rem;
+      color: var(--gold);
+    }
+    .lead {
+      font-family: system-ui, sans-serif;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      max-width: 40rem;
+      margin: 0 0 1.25rem;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+    .col { width: min(100%, 22rem); }
+    .tag {
+      font-family: system-ui, sans-serif;
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 0.45rem;
+    }
+    .tag em {
+      font-style: normal;
+      color: var(--gold);
+    }
+    .phone {
+      position: relative;
+      background: #0f0d0b;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 0.7rem 0.65rem 1rem;
+      min-height: 32rem;
+      overflow: hidden;
+    }
+    .bar {
+      font-family: system-ui, sans-serif;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 0 0 0.55rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .guide-fake {
+      opacity: 0.42;
+      pointer-events: none;
+    }
+    .pill {
+      margin: 0 0 0.55rem;
+      padding: 0.55rem 0.7rem;
+      border-radius: 12px;
+      border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+      background: #1c1a14;
+      color: var(--cream);
+      font-family: system-ui, sans-serif;
+      font-size: 0.82rem;
+    }
+    .pill strong {
+      display: block;
+      color: var(--gold);
+      margin-bottom: 0.2rem;
+      font-size: 0.9rem;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem 0.75rem;
+      background: rgba(12, 10, 8, 0.78);
+    }
+    .karta {
+      width: min(100%, 18.5rem);
+      max-height: 90%;
+      overflow: auto;
+      margin: 0;
+      padding: 0.9rem 0.95rem 0.85rem;
+      background: #1c1a14;
+      border: 2px solid #c9a84c;
+      border-radius: 14px;
+      color: #f5efe3;
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.45),
+        inset 0 0 0 1px color-mix(in srgb, #6d9a6a 28%, transparent);
+      font-family: system-ui, sans-serif;
+    }
+    .krok {
+      margin: 0 0 0.35rem;
+      font-size: 0.68rem;
+      font-weight: 650;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+    .nadpis {
+      margin: 0 0 0.4rem;
+      font-family: Georgia, serif;
+      font-size: 1.12rem;
+      font-weight: 650;
+      line-height: 1.25;
+      color: #c9a84c;
+    }
+    .puvodni {
+      margin: 0 0 0.45rem;
+      padding: 0.45rem 0.55rem;
+      border-left: 3px solid color-mix(in srgb, #c9a84c 55%, transparent);
+      color: #cfc6b4;
+      font-size: 0.8rem;
+      line-height: 1.35;
+    }
+    .text {
+      margin: 0 0 0.75rem;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      font-weight: 500;
+      color: #ebe4d4;
+    }
+    .form label {
+      display: block;
+      margin: 0 0 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 650;
+      color: #cfc6b4;
+    }
+    .form textarea {
+      display: block;
+      width: 100%;
+      margin: 0.25rem 0 0.45rem;
+      padding: 0.55rem 0.65rem;
+      border: 1px solid color-mix(in srgb, #c9a84c 45%, transparent);
+      border-radius: 10px;
+      background: #12100c;
+      color: #f5efe3;
+      font: inherit;
+      font-size: 0.88rem;
+      resize: none;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      margin-top: 0.35rem;
+      padding: 0.7rem 1rem;
+      border: 0;
+      border-radius: 12px;
+      background: #c9a84c;
+      color: #1c1712;
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn--ghost {
+      background: transparent;
+      border: 1px solid color-mix(in srgb, #c9a84c 55%, transparent);
+      color: #f5efe3;
+      margin-bottom: 0.35rem;
+    }
+    .note {
+      font-family: system-ui, sans-serif;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.45;
+      margin: 1.2rem 0 0;
+      max-width: 42rem;
+    }
+    .note strong { color: var(--gold); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Odpověď na přání v průvodci</h1>
+  <p class="lead">
+    Takto to uvidí host hned po otevření průvodce, když jste mu odpověděli.
+    Okno vyskočí samo, stejně jako potvrzení času příjezdu nebo brány.
+  </p>
+
+  <div class="row">
+    <div class="col">
+      <div class="tag">1 · <em>Okno vyskočí hned</em></div>
+      <div class="phone" aria-label="Náhled telefonu s oknem">
+        <div class="bar"><span>VIVIEN průvodce</span><span>14:22</span></div>
+        <div class="guide-fake">
+          <div class="pill"><strong>Vaše vstupní PINy</strong>Apartmán je připravený.</div>
+          <div class="pill"><strong>Prostor pro vaše přání</strong>Chybí vám něco? Napište nám…</div>
+        </div>
+        <div class="overlay" role="dialog" aria-modal="true">
+          <div class="karta">
+            <p class="krok">Máme pro vás odpověď na vaše přání</p>
+            <h2 class="nadpis">Nikol</h2>
+            <p class="puvodni">Dobrý den, šlo by prosím doplnit dětskou postýlku?</p>
+            <p class="text">Ano, postýlku vám připravíme. Bude v apartmánu při předání.</p>
+            <div class="form">
+              <label>
+                Napsat odpověď
+                <textarea rows="3" placeholder="Děkujeme…"></textarea>
+              </label>
+              <button type="button" class="btn btn--ghost">Odeslat</button>
+            </div>
+            <button type="button" class="btn">Pokračovat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="tag">2 · <em>Po Pokračovat zůstane dialog otevřený</em></div>
+      <div class="phone" aria-label="Náhled rozbalené konverzace">
+        <div class="bar"><span>VIVIEN průvodce</span><span>14:22</span></div>
+        <div class="pill">
+          <strong>Prostor pro vaše přání</strong>
+          Konverzace je rozbalená. Host může dál psát přímo tady.
+        </div>
+        <div class="pill" style="opacity:1">
+          <strong style="color:#cbbba8;font-size:0.75rem;font-weight:650">Vy · 13:40</strong>
+          Dobrý den, šlo by prosím doplnit dětskou postýlku?
+        </div>
+        <div class="pill" style="border-color:#8fad84">
+          <strong style="color:#8fad84;font-size:0.75rem;font-weight:650">Nikol · VIVIEN · 14:18</strong>
+          Ano, postýlku vám připravíme. Bude v apartmánu při předání.
+        </div>
+        <div class="pill">
+          <strong style="font-size:0.78rem">Napsat odpověď</strong>
+          <div style="height:2.6rem;border:1px solid #3d342a;border-radius:8px;background:#12100c;margin-top:0.35rem"></div>
+          <button type="button" class="btn" style="margin-top:0.55rem">Odeslat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    <strong>Upozornění, že přišla zpráva.</strong>
+    Dnes host dostane okno až když průvodce otevře.
+    Samovolný push na telefon hosta zatím nemáme (push je jen pro vás a úklid).
+    Když budete chtít, můžeme později doplnit např. e-mail nebo WhatsApp/SMS,
+    že má v průvodci novou odpověď. Až řeknete, kterou cestu chcete.
+  </p>
+</body>
+</html>

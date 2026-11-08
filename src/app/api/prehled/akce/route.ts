@@ -43,6 +43,7 @@ import {
   adminVyrizenoPrani,
   jeKdoPrani,
 } from '@/lib/prani';
+import { odkazPraniVPruvodci, textWhatsAppPraniOdpoved } from '@/lib/prani-texty';
 import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { prehledPrihlasen } from '@/lib/prehled-session';
@@ -191,6 +192,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prani-vyrizeno' &&
       akce !== 'prani-otevrit' &&
       akce !== 'prani-nacti' &&
+      akce !== 'prani-whatsapp' &&
       akce !== 'poznamka-uklid' &&
       akce !== 'checkin-neni' &&
       akce !== 'mena')
@@ -883,6 +885,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'email' || akce === 'whatsapp' || akce === 'sms') {
     const druhy: DruhZpravy[] = [
       'checkin',
+      'checkin2',
+      'checkin3',
       'checkinNedojezd',
       'neotevrel',
       'nerozbalen',
@@ -891,6 +895,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       'denCas',
       'doklady',
       'brana',
+      'brana2',
+      'brana3',
       'nedojezd',
       'odjezd',
       'pohoda',
@@ -985,6 +991,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
+  if (akce === 'prani-whatsapp') {
+    await store.setRezervace(id, pridej(rec, 'WhatsApp: Odpověď na přání'));
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
   if (
     akce === 'prani-odpoved' ||
     akce === 'prani-precteno' ||
@@ -1002,7 +1013,13 @@ export async function POST(request: Request): Promise<NextResponse> {
         kdo,
       });
       if (!vysledek.ok) return chyba(vysledek.duvod === 'nenalezeno' ? 404 : 400, vysledek.duvod);
-      return NextResponse.json({ ok: true, uz: Boolean(vysledek.uz) }, { headers: noStore });
+      const guide = odkazNaPruvodce(rec);
+      const odkaz = guide ? odkazPraniVPruvodci(guide) : null;
+      const zpravaWa = odkaz ? textWhatsAppPraniOdpoved(rec.jazyk, odkaz) : null;
+      return NextResponse.json(
+        { ok: true, uz: Boolean(vysledek.uz), odkaz, zpravaWa },
+        { headers: noStore },
+      );
     }
     if (akce === 'prani-precteno') {
       const vysledek = await adminPrectenoPrani(store, rec, { vlakno, kdo });

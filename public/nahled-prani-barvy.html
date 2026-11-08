@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Náhled – vybrané barvy přání</title>
+  <style>
+    :root {
+      --bg: #1c1712;
+      --card: #241e18;
+      --ink: #e8dfc8;
+      --muted: #cbbba8;
+      --gold: #c9a84c;
+      --line: #3d342a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 1.1rem 1rem 2.5rem;
+    }
+    h1 {
+      font-family: Georgia, serif;
+      font-weight: 500;
+      font-size: 1.3rem;
+      margin: 0 0 0.35rem;
+      color: var(--gold);
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      max-width: 42rem;
+      margin: 0 0 1.2rem;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.15rem;
+      align-items: flex-start;
+    }
+    .col { width: min(100%, 21.5rem); }
+    .tag {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 0.4rem;
+    }
+    .tag em { font-style: normal; color: var(--gold); }
+    .phone {
+      position: relative;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0.75rem 0.7rem 0.95rem;
+      min-height: 24rem;
+      overflow: hidden;
+    }
+    .bar {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin: 0 0 0.55rem;
+      display: flex;
+      justify-content: space-between;
+    }
+    .bubble {
+      margin: 0.4rem 0;
+      padding: 0.5rem 0.65rem;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      line-height: 1.4;
+      max-width: 92%;
+    }
+    .meta { font-size: 0.72rem; opacity: 0.85; margin-bottom: 0.2rem; }
+    .d-host {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .d-vivien {
+      margin-right: auto;
+      background: rgba(201, 168, 76, 0.2);
+      border: 1px solid rgba(201, 168, 76, 0.55);
+    }
+    .b-host {
+      background: rgba(120, 160, 200, 0.14);
+      border: 1px solid rgba(140, 175, 210, 0.35);
+    }
+    .b-vivien {
+      background: rgba(201, 168, 76, 0.18);
+      border: 1px solid rgba(201, 168, 76, 0.5);
+    }
+    .wa-box {
+      margin-top: 0.7rem;
+      padding: 0.7rem 0.75rem;
+      border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--gold) 8%, transparent);
+    }
+    .wa-box p { margin: 0 0 0.5rem; font-size: 0.84rem; line-height: 1.35; }
+    .btn-wa {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-height: 2.6rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid #25d366;
+      background: color-mix(in srgb, #25d366 22%, transparent);
+      color: #b8f0cc;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.85rem;
+      background: rgba(12, 10, 8, 0.78);
+    }
+    .karta {
+      width: min(100%, 18rem);
+      padding: 0.85rem 0.9rem;
+      background: #1c1a14;
+      border: 2px solid #c9a84c;
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+    }
+    .krok {
+      margin: 0 0 0.3rem;
+      font-size: 0.66rem;
+      font-weight: 650;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8fad84;
+    }
+    .nadpis {
+      margin: 0 0 0.55rem;
+      font-family: Georgia, serif;
+      font-size: 1.08rem;
+      color: #c9a84c;
+    }
+    .blok { margin: 0 0 0.55rem; padding: 0.45rem 0.55rem; border-radius: 0 8px 8px 0; }
+    .blok-dotaz {
+      border-left: 3px solid rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .blok-odpoved {
+      border-left: 3px solid #c9a84c;
+      background: rgba(201, 168, 76, 0.12);
+    }
+    .stitek {
+      margin: 0 0 0.25rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #8fad84;
+    }
+    .blok-odpoved .stitek { color: #c9a84c; }
+    .text {
+      margin: 0;
+      font-size: 0.86rem;
+      line-height: 1.4;
+      color: #ebe4d4;
+    }
+    .blok-dotaz .text { color: #cfc6b4; font-size: 0.8rem; }
+    .btn-gold {
+      display: block;
+      width: 100%;
+      margin-top: 0.35rem;
+      padding: 0.65rem 1rem;
+      border: 0;
+      border-radius: 12px;
+      background: #c9a84c;
+      color: #1c1712;
+      font: inherit;
+      font-weight: 700;
+    }
+    .dim { opacity: 0.35; }
+  </style>
+</head>
+<body>
+  <h1>Vybrané: jasný dotaz / odpověď + S4</h1>
+  <p class="lead">
+    V okně je teď štítek Váš dotaz a Odpověď · Nikol, ať to není zaměnitelné.
+    Po Pokračovat zůstává návrh D. WhatsApp má jen zelený nádech (S4).
+  </p>
+
+  <div class="row">
+    <div class="col">
+      <span class="tag">Host · <em>okno hned po otevření</em></span>
+      <div class="phone">
+        <div class="dim">
+          <div class="bar"><span>VIVIEN průvodce</span><span>14:22</span></div>
+        </div>
+        <div class="overlay">
+          <div class="karta">
+            <p class="krok">Máme pro vás odpověď na vaše přání</p>
+            <div class="blok blok-dotaz">
+              <p class="stitek">Váš dotaz</p>
+              <p class="text">Šlo by doplnit dětskou postýlku?</p>
+            </div>
+            <div class="blok blok-odpoved">
+              <p class="stitek">Odpověď · Nikol</p>
+              <p class="text">Ano, postýlku vám připravíme. Bude v apartmánu při předání.</p>
+            </div>
+            <button type="button" class="btn-gold">Pokračovat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <span class="tag">Host · <em>po Pokračovat (D)</em></span>
+      <div class="phone">
+        <div class="bar"><span>Prostor pro vaše přání</span><span>otevřeno</span></div>
+        <div class="bubble d-host"><div class="meta">Vy · 13:40</div>Šlo by doplnit dětskou postýlku?</div>
+        <div class="bubble d-vivien"><div class="meta">Nikol · VIVIEN · 14:18</div>Ano, postýlku vám připravíme. Bude v apartmánu při předání.</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <span class="tag">Přehled · <em>B + WhatsApp S4</em></span>
+      <div class="phone">
+        <div class="bar"><span>Přání</span><span>přehled</span></div>
+        <div class="bubble b-host"><div class="meta">Host</div>Šlo by doplnit dětskou postýlku?</div>
+        <div class="bubble b-vivien"><div class="meta">Nikol</div>Ano, postýlku připravíme.</div>
+        <div class="wa-box">
+          <p>Odpověď je uložená. Pošlete hostovi odkaz do průvodce na WhatsApp.</p>
+          <button type="button" class="btn-wa">WhatsApp hostovi</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

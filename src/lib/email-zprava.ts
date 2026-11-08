@@ -80,11 +80,11 @@ export function datumPobytu(ymd: string | null): string {
 export function predmetZpravy(id: DruhZpravy, lang: GuideLang | null, prijezd: string | null): string {
   if (id === 'pohoda') return PREDMET_POHODY[jazyk(lang)];
   const tabulka =
-    id === 'checkin' || id === 'checkinNedojezd'
+    id === 'checkin' || id === 'checkin2' || id === 'checkin3' || id === 'checkinNedojezd'
       ? CHECKIN
       : id === 'neotevrel' || id === 'nerozbalen' || id === 'denNerozbalen' || id === 'pruvodce3'
         ? PRUVODCE
-        : id === 'brana'
+        : id === 'brana' || id === 'brana2' || id === 'brana3'
           ? BRANA
           : id === 'odjezd'
             ? PREDMET_ODJEZDU

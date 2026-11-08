@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import type { KdoPrani, VlaknoPrani, ZpravaPrani } from '@/lib/prani';
 import type { PraniRadekPrehled } from '@/lib/prani';
-
 function casKratky(iso: string): string {
   try {
     return new Intl.DateTimeFormat('cs-CZ', {
@@ -86,11 +86,15 @@ export function PraniDetail({
   kdo,
   focusVlakno,
   ukazka,
+  wa,
+  userAgent = '',
 }: {
   rezervace: string;
   kdo: KdoPrani;
   focusVlakno?: string | null;
   ukazka?: boolean;
+  wa?: string | null;
+  userAgent?: string;
 }) {
   const router = useRouter();
   const [vlakna, setVlakna] = useState<VlaknoPrani[]>([]);
@@ -99,6 +103,7 @@ export function PraniDetail({
   const [text, setText] = useState('');
   const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState(false);
+  const [waPoOdpovedi, setWaPoOdpovedi] = useState<{ vlakno: string; zprava: string } | null>(null);
 
   async function nacti() {
     if (ukazka) return;
@@ -126,7 +131,21 @@ export function PraniDetail({
     if (focusVlakno) setOtevrene(focusVlakno);
   }, [focusVlakno]);
 
-  async function akce(telo: Record<string, string>) {
+  async function zapisWhatsAppHistorii() {
+    if (ukazka) return;
+    try {
+      await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace, akce: 'prani-whatsapp' }),
+      });
+      router.refresh();
+    } catch {
+      /* historie není povinná */
+    }
+  }
+
+  async function akce(telo: Record<string, string>, poOdpovedi = false) {
     if (ukazka) return;
     setCekam(true);
     setHlaska('');
@@ -136,12 +155,27 @@ export function PraniDetail({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rezervace, ...telo }),
       });
-      const data = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        zpravaWa?: string | null;
+      } | null;
       if (!res.ok || !data?.ok) {
         setHlaska(data?.error || 'Nepovedlo se.');
         return;
       }
-      setText('');
+      if (poOdpovedi) {
+        setText('');
+        if (data.zpravaWa && telo.vlakno) {
+          setWaPoOdpovedi({ vlakno: telo.vlakno, zprava: data.zpravaWa });
+        } else {
+          setWaPoOdpovedi(null);
+          setHlaska(data.zpravaWa === null || data.zpravaWa === undefined ? 'Odpověď uložena. Odkaz na průvodce teď nejde sestavit.' : '');
+        }
+      } else {
+        setText('');
+        setWaPoOdpovedi(null);
+      }
       await nacti();
       router.refresh();
     } catch {
@@ -168,6 +202,7 @@ export function PraniDetail({
         const open = otevrene === v.id;
         const stav =
           v.stav === 'nove' ? 'Nové' : v.stav === 'precteno' ? 'Přečtené' : 'Vyřízené';
+        const waBox = waPoOdpovedi?.vlakno === v.id ? waPoOdpovedi : null;
         return (
           <div key={v.id} className="ph-prani-detail__vlakno" id={`ph-prani-${v.id}`}>
             <button type="button" className="ph-prani-detail__hlava" onClick={() => setOtevrene(open ? null : v.id)}>
@@ -186,6 +221,22 @@ export function PraniDetail({
                     <p>{z.text}</p>
                   </div>
                 ))}
+                {waBox ? (
+                  <div className="ph-prani-detail__wa">
+                    <p>Odpověď je uložená. Pošlete hostovi odkaz do průvodce na WhatsApp.</p>
+                    <TlacitkoWhatsApp
+                      wa={wa}
+                      zprava={waBox.zprava}
+                      userAgent={userAgent}
+                      onPredOtevrenim={() => void zapisWhatsAppHistorii()}
+                    >
+                      WhatsApp hostovi
+                    </TlacitkoWhatsApp>
+                    <button type="button" className="ph-ulozit" onClick={() => setWaPoOdpovedi(null)}>
+                      Hotovo
+                    </button>
+                  </div>
+                ) : null}
                 {v.stav !== 'vyrizeno' ? (
                   <div className="ph-prani-detail__form">
                     <textarea
@@ -199,13 +250,16 @@ export function PraniDetail({
                         type="button"
                         disabled={cekam || !text.trim()}
                         onClick={() =>
-                          void akce({
-                            akce: 'prani-odpoved',
-                            vlakno: v.id,
-                            id: noveId(),
-                            text,
-                            kdo,
-                          })
+                          void akce(
+                            {
+                              akce: 'prani-odpoved',
+                              vlakno: v.id,
+                              id: noveId(),
+                              text,
+                              kdo,
+                            },
+                            true,
+                          )
                         }
                       >
                         Odeslat odpověď
