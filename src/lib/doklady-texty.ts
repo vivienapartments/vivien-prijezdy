@@ -37,7 +37,7 @@ export const DOKLADY_ZPRAVA_CIZINEC: Record<GuideLang, string> = {
   hu: "Jó napot, hamarosan találkozunk. Kérjük, az átadáshoz készítsék elő minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, ezek alapján fizetjük be a városnak az idegenforgalmi adót, a külföldi vendégeket pedig bejelentjük az idegenrendészetnek. Köszönjük.",
 };
 
-/** Nadpis rámečku v průvodci (zobrazí se po uložení času příjezdu, do předání). */
+/** Nadpis rámečku v průvodci (po čase a způsobu dopravy, do předání). */
 export const DOKLADY_PRUVODCE_NADPIS: Record<GuideLang, string> = {
   cs: "Připravte si prosím doklady",
   en: "Please have your ID ready",
@@ -117,13 +117,12 @@ export function textyDokladu(
   };
 }
 
-/** Rámeček po uložení času, do předání. V náhledu i bez času. */
+/** Rámeček až po čase a způsobu dopravy, do předání. Ať nahoře není moc oken najednou. */
 export function ukazatDokladyRamecek(opts: {
   cas: string | null | undefined;
+  zpusob?: string | null;
   predano: boolean;
-  demo?: boolean;
 }): boolean {
   if (opts.predano) return false;
-  if (opts.demo) return true;
-  return Boolean(opts.cas);
+  return Boolean(opts.cas && opts.zpusob);
 }

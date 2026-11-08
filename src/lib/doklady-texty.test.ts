@@ -40,11 +40,11 @@ describe('doklady verze CR / CIZINEC', () => {
     }
   });
 
-  it('rámeček jen s časem a do předání; demo i bez času', () => {
-    expect(ukazatDokladyRamecek({ cas: '16:30', predano: false })).toBe(true);
-    expect(ukazatDokladyRamecek({ cas: null, predano: false })).toBe(false);
-    expect(ukazatDokladyRamecek({ cas: '16:30', predano: true })).toBe(false);
-    expect(ukazatDokladyRamecek({ cas: null, predano: false, demo: true })).toBe(true);
-    expect(ukazatDokladyRamecek({ cas: '16:30', predano: true, demo: true })).toBe(false);
+  it('rámeček až po čase a způsobu dopravy, do předání', () => {
+    expect(ukazatDokladyRamecek({ cas: '16:30', zpusob: 'auto', predano: false })).toBe(true);
+    expect(ukazatDokladyRamecek({ cas: '16:30', zpusob: 'pesky', predano: false })).toBe(true);
+    expect(ukazatDokladyRamecek({ cas: '16:30', zpusob: null, predano: false })).toBe(false);
+    expect(ukazatDokladyRamecek({ cas: null, zpusob: 'auto', predano: false })).toBe(false);
+    expect(ukazatDokladyRamecek({ cas: '16:30', zpusob: 'auto', predano: true })).toBe(false);
   });
 });
