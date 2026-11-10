@@ -5,6 +5,7 @@ import { zajistiVychoziBranu } from '@/lib/brana-akce';
 import { buildPrehledSOdkazy } from '@/lib/prehled-odkazy';
 import { ukazkoveRadky } from '@/lib/prehled-ukazka';
 import { dnesVPraze } from '@/lib/prehled';
+import { migracePoplatkuBookingJednou } from '@/lib/oprava-poplatku-booking';
 import { migracePredaniJednou } from '@/lib/predani';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore } from '@/lib/store';
@@ -33,6 +34,11 @@ export default async function DnesekPage({ searchParams }: Props) {
       await migracePredaniJednou(store, dnesVPraze(now), now.toISOString());
     } catch {
       // Stránka se otevře i když se starší hosté nepodařilo označit.
+    }
+    try {
+      await migracePoplatkuBookingJednou(store, now.toISOString());
+    } catch {
+      // Stránka se otevře i když se poplatky Booking nepodařilo doopravit.
     }
     try {
       branaDoc = await zajistiVychoziBranu(store);
