@@ -216,7 +216,7 @@ describe('platby i bez poplatku z pobytu', () => {
   it('poplatek ne a příjezd ve 21:00 je 200 Kč a po zaplacení zmizí z nedoplatků', () => {
     const rec = kartaPlatby();
     expect(nahledZ(rec).text).toBe('Platby: 200 Kč');
-    expect(nahledZ(rec).poznamka).toBe('poplatek z pobytu: ne (rezervace před 5. 10.)');
+    expect(nahledZ(rec).poznamka).toBe('poplatek z pobytu: nevybíráme');
     expect(polozkyZRezervace(rec)).toEqual([{ druh: 'prijezd', kc: 200 }]);
     const zap = zaplatDruhy(rec, ['vse'], 'hotove', 'pravoslav', new Date('2026-10-16T19:00:00.000Z'));
     expect(dluhZmizel(zap)).toBe(true);
@@ -260,7 +260,7 @@ describe('platby i bez poplatku z pobytu', () => {
       casPrijezdu: '16:00',
       vyjezdy: [{ id: 'c3', kdy: '2026-10-16T18:00:00.000Z', castka: 300 }],
     });
-    expect(nahledZ(rec).poznamka).toBe('Poplatek neznámo');
+    expect(nahledZ(rec).poznamka).toBe('Poplatek neznámo — ověřit');
     expect(polozkyZRezervace(rec)).toEqual([{ druh: 'cesta', kc: 300 }]);
     const zap = zaplatDruhy(rec, ['cesta'], 'cena', 'pravoslav');
     expect(dluhZmizel(zap)).toBe(true);

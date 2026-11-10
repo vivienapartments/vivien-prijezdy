@@ -1,6 +1,13 @@
 import apartmanyJson from '@/data/apartmany.json';
 import type { PoplatekStav } from './poplatek';
-import { castkaPoplatku, poplatekZData, hraniceRezervace } from './poplatek';
+import {
+  castkaPoplatku,
+  cisloRezervaceBh,
+  jeZdrojBooking,
+  poplatekProRezervaci,
+  POPLATEK_BOOKING_OD_REZ,
+  poplatekZData,
+} from './poplatek';
 import type { PlatbaPolozky, ProcessStore, RezervaceRecord, RezervaceStav } from './store';
 import { normalizujTelefon, textTelefonu } from './telefon';
 import { AUTOMAT_TICHY_MIN } from './constants';
@@ -375,7 +382,14 @@ export function textPoplatku(stav: PoplatekStav, noci: number | null, osob: numb
 
 function zdrojPoplatku(rec: RezervaceRecord): string {
   if (maRucni(rec, 'poplatek')) return 'zvolil majitel';
+  if (jeZdrojBooking(rec.zdroj)) {
+    const n = cisloRezervaceBh(rec.rezervace);
+    if (n != null && n >= POPLATEK_BOOKING_OD_REZ && rec.poplatek === 'ne') {
+      return 'Booking vybírá';
+    }
+  }
   if (rec.vytvoreno && poplatekZData(rec.vytvoreno) !== 'neznamo') return 'z data vzniku';
+  if (poplatekProRezervaci(rec) !== 'neznamo') return 'z rezervace';
   return '';
 }
 
@@ -977,16 +991,18 @@ export function radkyBezPadu(
 
 export async function buildPrehled(store: ProcessStore, now = new Date()): Promise<PrehledRadek[]> {
   const entries = await store.listRezervace();
-  const hranice = hraniceRezervace(entries.filter((e) => !e.chybaNahrani).map((e) => e.record));
   return radkyBezPadu(entries, now, (record) => {
     const radek = radekZRezervace(record);
-    if (record.poplatek !== 'neznamo' || hranice == null || maRucni(record, 'poplatek')) return radek;
-    const n = Number(String(record.rezervace).replace(/\D/g, ''));
-    if (!Number.isFinite(n) || n < hranice) return radek;
+    if (record.poplatek !== 'neznamo' || maRucni(record, 'poplatek')) return radek;
+    const odhad = poplatekProRezervaci(record);
+    if (odhad === 'neznamo') return radek;
     return {
       ...radek,
-      poplatekText: textPoplatku('ano', record.noci, record.osob),
-      poplatekZdroj: `odhad, od rezervace ${hranice}`,
+      poplatekText: textPoplatku(odhad, record.noci, record.osob),
+      poplatekZdroj:
+        odhad === 'ne' && jeZdrojBooking(record.zdroj)
+          ? 'odhad, Booking vybírá'
+          : `odhad podle rezervace`,
       poplatekOdhad: true,
     };
   });

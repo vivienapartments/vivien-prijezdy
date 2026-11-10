@@ -33,7 +33,7 @@ import {
 import type { KodRadek } from '@/lib/kody-pruvodce';
 import type { GuideSecrets } from '@/lib/secrets';
 import * as TX from '@/lib/texts';
-import { ukazatPoplatek, type PoplatekStav } from '@/lib/poplatek';
+import { ukazatPoplatek, ukazatPoplatekVCene, type PoplatekStav } from '@/lib/poplatek';
 import { DOTAZ_PREDANI_MS } from '@/lib/pruvodce-majitel';
 import { denPraha } from '@/lib/brana';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
@@ -302,8 +302,15 @@ export type GuideProps = {
    */
   kody?: KodRadek[] | null;
   tvar?: 'dnes' | 'plny';
-  /** Chybí nebo neznámo = box se ukáže. Ne = schovaný. */
+  /**
+   * ano = výzva k platbě. ne = případně text „v ceně“ podle zdroje a data.
+   * neznamo = hostovi nic (ověření v administraci).
+   */
   poplatek?: PoplatekStav;
+  /** Zdroj rezervace (Booking, Airbnb…). Pro text „v ceně“. */
+  zdroj?: string | null;
+  /** Datum vzniku rezervace YYYY-MM-DD. Pro text „v ceně“. */
+  vytvoreno?: string | null;
   vikend?: boolean;
   /** Výchozí příjezd, jen když stránka údaje hosta nepředá. */
   initialPrijezd?: Prijezd | null;
@@ -342,6 +349,8 @@ export function Guide({
   stay,
   kody = null,
   poplatek = 'neznamo',
+  zdroj = null,
+  vytvoreno = null,
   vikend = false,
   initialPrijezd = null,
   prijezdDen = null,
@@ -951,6 +960,12 @@ export function Guide({
                               </strong>
                             </span>
                           </p>
+                        </article>
+                        ) : ukazatPoplatekVCene(poplatek, { zdroj, rezervace, vytvoreno }) ? (
+                        <article className="pv-step pv-step--note">
+                          <p className="pv-kicker">{tt(TX.ui.note)}</p>
+                          <h3>{tt(TX.poplatekNadpis)}</h3>
+                          <p>{tt(TX.poplatekVCene)}</p>
                         </article>
                         ) : null}
                       </>

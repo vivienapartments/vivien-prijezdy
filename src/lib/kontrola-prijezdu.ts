@@ -1,6 +1,6 @@
 import { apartmany } from './guide-data';
 import { fazeHosta } from './faze-hosta';
-import { hraniceRezervace } from './poplatek';
+import { jeZdrojBooking, poplatekProRezervaci } from './poplatek';
 import { pobytText, textPoplatku, casPraha, dnesVPraze, hodinaPraha } from './prehled';
 import { maRucni } from './rucni-pole';
 import { normalizujTelefon, textTelefonu } from './telefon';
@@ -114,7 +114,7 @@ export function vznikText(rec: RezervaceRecord): string {
   return `${den}, ${odkud}`;
 }
 
-export function radekKontroly(rec: RezervaceRecord, hranice: number | null = null): RadekKontroly | null {
+export function radekKontroly(rec: RezervaceRecord): RadekKontroly | null {
   if (!rec.prijezd || !KONTROLA_DNY.includes(rec.prijezd as (typeof KONTROLA_DNY)[number])) return null;
   const prijezd = denRok(rec.prijezd);
   const odjezd = rec.odjezd ? denRok(rec.odjezd) : 'odjezd není';
@@ -151,30 +151,32 @@ export function radekKontroly(rec: RezervaceRecord, hranice: number | null = nul
     checkin: checkinVivien(rec),
     odkaz: rec.checkinUrl ? 'je' : 'není',
     vznik: vznikText(rec),
-    poplatek: textPoplatkuKontroly(rec, hranice),
+    poplatek: textPoplatkuKontroly(rec),
     faze: `Fáze · ${faze.text}`,
     historie: posledni.map((h) => `${casPraha(h.cas) || h.cas} ${h.co}`.trim()),
     zruseno: rec.stav === 'zruseno',
   };
 }
 
-function textPoplatkuKontroly(rec: RezervaceRecord, hranice: number | null): string {
-  if (rec.poplatek === 'neznamo' && hranice != null && !maRucni(rec, 'poplatek')) {
-    const n = Number(String(rec.rezervace).replace(/\D/g, ''));
-    if (Number.isFinite(n) && n >= hranice) {
-      return `${textPoplatku('ano', rec.noci, rec.osob)} (odhad, od rezervace ${hranice})`;
+function textPoplatkuKontroly(rec: RezervaceRecord): string {
+  if (rec.poplatek === 'neznamo' && !maRucni(rec, 'poplatek')) {
+    const odhad = poplatekProRezervaci(rec);
+    if (odhad !== 'neznamo') {
+      const odkud =
+        odhad === 'ne' && jeZdrojBooking(rec.zdroj) ? 'odhad, Booking vybírá' : 'odhad podle rezervace';
+      return `${textPoplatku(odhad, rec.noci, rec.osob)} (${odkud})`;
     }
   }
   const text = textPoplatku(rec.poplatek, rec.noci, rec.osob);
   if (maRucni(rec, 'poplatek')) return `${text} (zvolil majitel)`;
+  if (jeZdrojBooking(rec.zdroj) && rec.poplatek === 'ne') return `${text} (Booking vybírá)`;
   if (rec.vytvoreno && rec.poplatek !== 'neznamo') return `${text} (z data vzniku)`;
   return text;
 }
 
 export function radkyKontroly(zaznamy: RezervaceRecord[]): RadekKontroly[] {
-  const hranice = hraniceRezervace(zaznamy);
   return zaznamy
-    .map((rec) => radekKontroly(rec, hranice))
+    .map((rec) => radekKontroly(rec))
     .filter((r): r is RadekKontroly => r !== null)
     .sort((a, b) => a.den.localeCompare(b.den) || a.jmeno.localeCompare(b.jmeno, 'cs') || a.rezervace.localeCompare(b.rezervace));
 }

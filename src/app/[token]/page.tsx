@@ -74,6 +74,8 @@ export default async function TokenPage({ params }: Props) {
         stay={stay}
         kody={kodyProHosta(predano, apt, pin, lang)}
         poplatek={poplatek}
+        zdroj={rec?.zdroj ?? null}
+        vytvoreno={rec?.vytvoreno ?? null}
         initialPrijezd={null}
         prijezdDen={rec?.prijezd ?? p ?? null}
         rezervace={r}

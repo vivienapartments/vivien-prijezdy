@@ -22,6 +22,7 @@ describe('ranní upozornění na platbu', () => {
     expect(maUpozornitPlatbu(host({ poplatek: 'ano', zaplaceno: '2026-10-14T06:00:00.000Z' }), rano)).toBe(false);
     expect(maUpozornitPlatbu(host({ poplatek: 'ano', platbaUpozorneno: '2026-10-14' }), rano)).toBe(false);
     expect(maUpozornitPlatbu(host({ poplatek: 'ne' }), rano)).toBe(false);
+    expect(maUpozornitPlatbu(host({ poplatek: 'neznamo' }), rano)).toBe(false);
   });
 
   it('opakovaný výjezd se počítá i když městský poplatek neplatí nebo už je vybraný', () => {

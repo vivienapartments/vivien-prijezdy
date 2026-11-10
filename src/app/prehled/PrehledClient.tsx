@@ -4253,6 +4253,7 @@ export function PrehledClient({
                   {skutecnyPrijezdPole}
                   {row.poplatek === 'neznamo' && !row.poplatekOdhad ? (
                     <span className="ph-poplatek-volba">
+                      <span className="ph-hlaska">Městský poplatek ověřit</span>
                       <button type="button" disabled={cekam !== null} onClick={() => zvolPoplatek(row, 'ano')}>
                         Vybírat
                       </button>

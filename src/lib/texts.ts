@@ -335,6 +335,22 @@ export const poplatekFormulaDetail: LText = {
   pt: '{{POPLATEK_NOCI}} noites × {{POPLATEK_OSOB}} hóspedes × 50 CZK',
 };
 
+/** Poplatek už v ceně rezervace (Booking od Sarah Bennett, ruční „v ceně“). */
+export const poplatekVCene: LText = {
+  cs: 'Městský poplatek z pobytu je již zahrnut v ceně Vaší rezervace. Na místě nic dalšího nehradíte.',
+  en: 'The city stay tax is already included in the price of your reservation. You do not pay anything extra on site.',
+  de: 'Die Kurtaxe / Aufenthaltssteuer ist bereits im Preis Ihrer Reservierung enthalten. Vor Ort zahlen Sie nichts Extra.',
+  pl: 'Miejski podatek noclegowy jest już wliczony w cenę Państwa rezerwacji. Na miejscu nie płacicie nic więcej.',
+  uk: 'Міський збір за проживання вже включено в ціну вашої резервації. На місці більше нічого не сплачуєте.',
+  'zh-Hant': '城市住宿稅已包含在您的訂房價格中。現場無需再支付任何費用。',
+  sv: 'Stadsskatten för vistelsen ingår redan i priset för er bokning. På plats betalar ni inget extra.',
+  es: 'La tasa municipal de estancia ya está incluida en el precio de su reserva. En el lugar no pagan nada más.',
+  hu: 'A városi idegenforgalmi díj már benne van a foglalás árában. Helyszínen nem fizetnek semmi további összeget.',
+  fr: 'La taxe de séjour de la ville est déjà incluse dans le prix de votre réservation. Sur place, vous ne payez rien de plus.',
+  it: 'La tassa di soggiorno comunale è già inclusa nel prezzo della vostra prenotazione. Sul posto non pagate nulla in più.',
+  pt: 'A taxa turística da cidade já está incluída no preço da sua reserva. No local não pagam mais nada.',
+};
+
 export const odjezdTextL: LText = {
   cs: 'Check-out je do 10:00. Večer před odjezdem si spolu domluvíme přesný čas. Apartmán s vámi krátce projdeme a osobně ho převezmeme.',
   en: 'Check-out is by 10:00. The evening before departure we will agree the exact time together. We will walk through the apartment with you briefly and take it over in person.',

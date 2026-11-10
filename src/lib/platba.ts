@@ -30,13 +30,13 @@ export function maUpozornitPlatbu(rec: RezervaceRecord, now = new Date()): boole
   if (!rec.odjezd || rec.odjezd !== denPraha(now)) return false;
   if (rec.platbaUpozorneno === rec.odjezd) return false;
   if (hodinaPraha(now) < RANI_HODINA) return false;
-  const mesto = rec.poplatek !== 'ne' && !rec.zaplaceno;
+  const mesto = rec.poplatek === 'ano' && !rec.zaplaceno;
   return mesto || soucetVyjezdu(rec.vyjezdy || []) > 0;
 }
 
 export function textNezaplaceneho(rec: RezervaceRecord): string {
   const casti: string[] = [];
-  if (rec.poplatek !== 'ne' && !rec.zaplaceno) casti.push('poplatek městu není vybraný');
+  if (rec.poplatek === 'ano' && !rec.zaplaceno) casti.push('poplatek městu není vybraný');
   const vyjezd = soucetVyjezdu(rec.vyjezdy || []);
   if (vyjezd > 0) casti.push(`opakovaný výjezd ${vyjezd} Kč není zaplacený`);
   return `${popisHosta(rec)}: dnes odjezd, ${casti.join(', ')}`;

@@ -13,7 +13,7 @@ import {
   type InboxMail,
   type SchrankaMeta,
 } from './inbox-mail';
-import { poplatekZData } from './poplatek';
+import { jeZdrojBooking, poplatekProRezervaci } from './poplatek';
 import {
   cisloZeSubjectu,
   jePotvrzeniPredmet,
@@ -197,9 +197,22 @@ function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partia
   poloz('narodnost', ins.narodnost);
   poloz('emailHosta', ins.email);
   poloz('accessPin', ins.accessPin);
-  if (ins.vytvoreno) {
-    poloz('vytvoreno', ins.vytvoreno);
-    poloz('poplatek', poplatekZData(ins.vytvoreno));
+  if (ins.vytvoreno) poloz('vytvoreno', ins.vytvoreno);
+  if (ins.zdroj) poloz('zdroj', ins.zdroj);
+  const zdrojPoplatku = ins.zdroj || prev?.zdroj;
+  if (
+    ins.vytvoreno ||
+    ins.zdroj ||
+    (jeZdrojBooking(zdrojPoplatku) && (ins.rezervace || prev?.rezervace))
+  ) {
+    poloz(
+      'poplatek',
+      poplatekProRezervaci({
+        vytvoreno: ins.vytvoreno || prev?.vytvoreno,
+        zdroj: zdrojPoplatku,
+        rezervace: ins.rezervace || prev?.rezervace,
+      }),
+    );
   }
   if (ins.telefon) {
     const stare = prev?.telefon;
@@ -224,7 +237,6 @@ function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partia
       data.telefonRezervaceWa = tel.wa;
     }
   }
-  if (ins.zdroj) poloz('zdroj', ins.zdroj);
   return vynechRucni(prev, data, 'check-in');
 }
 
@@ -565,9 +577,18 @@ function udajeInterni(u: InterniUdaje, stav: RezervaceStav, prev?: RezervaceReco
   }
   if (stav === 'bez_checkinu') data.jazyk = jazykZPredvolby(u.telefon);
   if (u.zdroj) data.zdroj = u.zdroj;
-  if (u.vytvoreno) {
-    data.vytvoreno = u.vytvoreno;
-    data.poplatek = poplatekZData(u.vytvoreno);
+  if (u.vytvoreno) data.vytvoreno = u.vytvoreno;
+  const zdrojPoplatku = u.zdroj || prev?.zdroj;
+  if (
+    u.vytvoreno ||
+    u.zdroj ||
+    (jeZdrojBooking(zdrojPoplatku) && (u.rezervace || prev?.rezervace))
+  ) {
+    data.poplatek = poplatekProRezervaci({
+      vytvoreno: u.vytvoreno || prev?.vytvoreno,
+      zdroj: zdrojPoplatku,
+      rezervace: u.rezervace || prev?.rezervace,
+    });
   }
   if (u.checkinUrl) data.checkinUrl = u.checkinUrl;
   const veta = vetaChybi(u.chybi);

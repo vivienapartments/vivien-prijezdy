@@ -354,9 +354,9 @@ export function nahledPlateb(v: {
   }
   const poznamka =
     v.poplatek === 'ne'
-      ? 'poplatek z pobytu: ne (rezervace před 5. 10.)'
+      ? 'poplatek z pobytu: nevybíráme'
       : v.poplatek === 'neznamo'
-        ? 'Poplatek neznámo'
+        ? 'Poplatek neznámo — ověřit'
         : null;
   return { text, ton, poznamka, radky };
 }
