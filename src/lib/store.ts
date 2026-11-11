@@ -11,6 +11,8 @@ import {
   type VlaknoPrani,
   type ZpravaPrani,
 } from './prani';
+import type { FakturaUdaje } from './faktura';
+import { nactiFakturu } from './faktura';
 import type { VyjezdPolozka } from './priplatek-prijezd';
 import type { AptId, GuideLang } from './types';
 import { prevedZaplaceno } from './platby-hosta';
@@ -56,6 +58,10 @@ export type OdjezdBeh = {
   uklid: string | null;
   pondeli: string | null;
   pohoda: string | null;
+  /** Den, kdy odešel push ve 12:00 o fakturách k dnešnímu odjezdu. */
+  fakturyPoledne: string | null;
+  /** Den, kdy odešla ranní připomínka nevystavených faktur po odjezdu. */
+  fakturyRano: string | null;
 };
 
 export type JakPlatby = 'hotove' | 'karta' | 'prevod' | 'cena';
@@ -269,6 +275,8 @@ export type RezervaceRecord = {
   checkinNeniPotreba: boolean;
   /** Zobrazení plateb na kartě. Úložiště drží částky v Kč. null = Kč. */
   mena: 'CZK' | 'EUR' | null;
+  /** Údaje na firemní fakturu. null = host nechce / nezadal. */
+  faktura: FakturaUdaje | null;
 };
 
 export type RucniPole =
@@ -789,6 +797,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       typeof r.poznamkaUklid === 'string' && r.poznamkaUklid.trim() ? r.poznamkaUklid.trim().slice(0, 500) : null,
     checkinNeniPotreba: r.checkinNeniPotreba === true,
     mena: r.mena === 'EUR' || r.mena === 'CZK' ? r.mena : null,
+    faktura: nactiFakturu(r.faktura),
   };
 }
 
@@ -877,6 +886,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     poznamkaUklid: null,
     checkinNeniPotreba: false,
     mena: null,
+    faktura: null,
   };
 }
 
@@ -1434,6 +1444,8 @@ export class UpstashProcessStore implements ProcessStore {
         uklid,
         pondeli: den(beh.pondeli),
         pohoda: den(beh.pohoda),
+        fakturyPoledne: den(beh.fakturyPoledne),
+        fakturyRano: den(beh.fakturyRano),
       };
     } catch {
       return null;

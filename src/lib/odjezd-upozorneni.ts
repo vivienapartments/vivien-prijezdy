@@ -1,5 +1,14 @@
 import { denPraha, hodinaPraha, posunDen } from './brana';
-import { HODINA_DOTAZU_ODJEZDU, HODINA_DOTAZU_POHODY, HODINA_PRIPOMINKY_ODJEZDU, HODINA_STARYCH_DLUHU } from './constants';
+import {
+  HODINA_DOTAZU_ODJEZDU,
+  HODINA_DOTAZU_POHODY,
+  HODINA_FAKTURY_ODJEZD,
+  HODINA_FAKTURY_RANO,
+  HODINA_PRIPOMINKY_ODJEZDU,
+  HODINA_STARYCH_DLUHU,
+} from './constants';
+import { fakturaCeka, seznamFakturProTelegram } from './faktura';
+import { FAKTURA_MAJITEL } from './faktura-texty';
 import {
   chybiDotaz,
   hosteNaDen,
@@ -38,6 +47,58 @@ async function upozorniPohodu(
   return { pocet: 1, beh: { ...beh, pohoda: dnes } };
 }
 
+function klicBehu(beh: OdjezdBeh): string {
+  return `${beh.vecer}|${beh.pripominka}|${beh.pohoda}|${beh.fakturyPoledne}|${beh.fakturyRano}`;
+}
+
+/**
+ * Faktury. Ve 12:00 push o dnešních odjezdech, od 9:00 připomínka těch, kdo už odjeli.
+ * Jednou denně každý. Hostovi odtud nic neodchází.
+ */
+async function upozorniFaktury(
+  store: ProcessStore,
+  list: RezervaceRecord[],
+  now: Date,
+  beh: OdjezdBeh,
+  posli: typeof upozorniMajitele,
+): Promise<{ pocet: number; beh: OdjezdBeh }> {
+  const hodina = hodinaPraha(now);
+  const dnes = denPraha(now);
+  const cekajici = list.filter((r) => r.stav !== 'zruseno' && r.odjezd && fakturaCeka(r));
+  let pocet = 0;
+  let dalsi = beh;
+
+  if (hodina >= HODINA_FAKTURY_ODJEZD && dalsi.fakturyPoledne !== dnes) {
+    const dnesni = cekajici.filter((r) => r.odjezd === dnes);
+    if (!dnesni.length) {
+      dalsi = { ...dalsi, fakturyPoledne: dnes };
+    } else {
+      const text = FAKTURA_MAJITEL.telegram_den_odjezdu.replace('{seznam}', seznamFakturProTelegram(dnesni));
+      const jak = await posli(store, text, '/prehled', { telegram: 'faktura' });
+      if (jak !== 'nic') {
+        dalsi = { ...dalsi, fakturyPoledne: dnes };
+        pocet += 1;
+      }
+    }
+  }
+
+  if (hodina >= HODINA_FAKTURY_RANO && dalsi.fakturyRano !== dnes) {
+    const stare = cekajici.filter((r) => String(r.odjezd) < dnes);
+    if (!stare.length) {
+      dalsi = { ...dalsi, fakturyRano: dnes };
+    } else {
+      const text = FAKTURA_MAJITEL.telegram_pripominka.replace('{seznam}', seznamFakturProTelegram(stare));
+      const jak = await posli(store, text, '/prehled', { telegram: 'faktura' });
+      if (jak !== 'nic') {
+        dalsi = { ...dalsi, fakturyRano: dnes };
+        pocet += 1;
+      }
+    }
+  }
+
+  return { pocet, beh: dalsi };
+}
+
 /** Jednou denně, jen majiteli a Nikol. Hostovi odtud nic neodchází. */
 export async function upozorniOdjezdy(
   store: ProcessStore,
@@ -67,17 +128,20 @@ export async function upozorniOdjezdy(
   pocet += await upozorniStareDluhy(store, list, now, posli);
 
   const hodina = hodinaPraha(now);
-  /** Beh se čte až od 11:00 (pohoda) nebo 18:00 (odjezdy). Dřív šetříme Upstash. */
-  if (hodina < HODINA_DOTAZU_POHODY) return pocet;
+  /** Beh se čte až od 9:00 (faktury), 11:00 (pohoda) nebo 18:00 (odjezdy). Dřív šetříme Upstash. */
+  if (hodina < HODINA_FAKTURY_RANO) return pocet;
 
   let beh = nactiOdjezdBeh(await store.getOdjezdBeh());
-  const predBeh = `${beh.vecer}|${beh.pripominka}|${beh.pohoda}`;
+  const predBeh = klicBehu(beh);
+  const faktury = await upozorniFaktury(store, list, now, beh, posli);
+  beh = faktury.beh;
+  pocet += faktury.pocet;
   const pohoda = await upozorniPohodu(store, list, now, beh, posli);
   beh = pohoda.beh;
   pocet += pohoda.pocet;
 
   if (hodina < HODINA_DOTAZU_ODJEZDU) {
-    if (`${beh.vecer}|${beh.pripominka}|${beh.pohoda}` !== predBeh) await store.setOdjezdBeh(beh);
+    if (klicBehu(beh) !== predBeh) await store.setOdjezdBeh(beh);
     return pocet;
   }
 
@@ -121,7 +185,7 @@ export async function upozorniOdjezdy(
     }
   }
 
-  if (`${beh.vecer}|${beh.pripominka}|${beh.pohoda}` !== predBeh) await store.setOdjezdBeh(beh);
+  if (klicBehu(beh) !== predBeh) await store.setOdjezdBeh(beh);
   return pocet;
 }
 

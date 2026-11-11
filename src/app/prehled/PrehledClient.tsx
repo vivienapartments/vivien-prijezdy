@@ -62,7 +62,9 @@ import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
 import { CoDoplnit, StitkyDoplnit14 } from './CoDoplnit';
 import { Dnesek } from './Dnesek';
+import { FakturaDetail, FakturaStitek, FakturyDomu } from './FakturaAdmin';
 import { PraniDetail, PraniRamecekDomu, PraniStitek } from './PraniAdmin';
+import type { FakturaUdaje } from '@/lib/faktura';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import { poctyStitkuDoplnit, type FiltrDoplnit } from '@/lib/co-doplnit';
 import type { PraniRadekPrehled, PraniStitekKarty } from '@/lib/prani';
@@ -151,6 +153,7 @@ type DetailSekceId =
   | 'casy'
   | 'predani'
   | 'prani'
+  | 'faktura'
   | 'parkovani'
   | 'pruvodce'
   | 'penize'
@@ -163,6 +166,7 @@ const DETAIL_SEKCE_VSE: DetailSekceId[] = [
   'casy',
   'predani',
   'prani',
+  'faktura',
   'parkovani',
   'pruvodce',
   'penize',
@@ -596,6 +600,18 @@ export function PrehledClient({
   function praniZUrl(url: string): string | null {
     const m = (url || '').match(/[?#&]prani=([^&#]+)/);
     return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function zmenFakturu(rezervace: string, faktura: FakturaUdaje | null) {
+    setRadky((prev) => prev.map((r) => (r.rezervace === rezervace ? { ...r, faktura } : r)));
+  }
+
+  function otevriFakturu(rezervace: string) {
+    otevriKartu(rezervace);
+    setDetailSekce((prev) => {
+      const cur = prev[rezervace] || [];
+      return { ...prev, [rezervace]: cur.includes('faktura') ? cur : [...cur, 'faktura'] };
+    });
   }
 
   function otevriPrani(rezervace: string, vlakno?: string | null) {
@@ -3345,6 +3361,7 @@ export function PrehledClient({
                   onClick={() => otevriPrani(row.rezervace)}
                 />
               ) : null}
+              <FakturaStitek faktura={row.faktura} onClick={() => otevriFakturu(row.rezervace)} />
               {kontaktNahoreBlok}
               <div className="ph-nova-dlazdice">
                 {predanoKdy ? (
@@ -4372,6 +4389,21 @@ export function PrehledClient({
                 </DetailSekce>
 
                 <DetailSekce
+                  nazev="Faktura"
+                  drobek={row.faktura ? (row.faktura.hotovo ? 'vyřízeno' : 'čeká na vystavení') : null}
+                  otevreno={jeOtevrena('faktura')}
+                  onToggle={() => prepni('faktura')}
+                >
+                  <FakturaDetail
+                    row={row}
+                    ukazka={ukazka}
+                    userAgent={userAgent}
+                    onZmena={zmenFakturu}
+                    onHlaska={setHlaska}
+                  />
+                </DetailSekce>
+
+                <DetailSekce
                   nazev="Parkování"
                   drobek={parkDrobek}
                   otevreno={jeOtevrena('parkovani')}
@@ -4978,6 +5010,17 @@ export function PrehledClient({
             </ul>
           ) : null}
         </section>
+      ) : null}
+      {pohledDomu && zalozka === 'prijezdy' ? (
+        <FakturyDomu
+          radky={radky}
+          dnes={dnes}
+          ukazka={ukazka}
+          userAgent={userAgent}
+          onZmena={zmenFakturu}
+          onHlaska={setHlaska}
+          onOtevriKartu={otevriKartu}
+        />
       ) : null}
       {pohledDomu && zalozka === 'prijezdy' && hostePohoda.length ? (
         <section id="pohoda" className="ph-domu-radek">

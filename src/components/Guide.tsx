@@ -43,11 +43,14 @@ import { stavPrijezduProPruvodce, textStavu, type OknoPohled } from '@/lib/okno-
 import { ukazatDokladyRamecek } from '@/lib/doklady-texty';
 import { DokladyRamecek } from './DokladyRamecek';
 import { OdjezdRamecek } from './OdjezdRamecek';
+import { FakturaHosta } from './FakturaHosta';
 import { PraniAlert, PraniHosta } from './PraniHosta';
 import { StavApartmanu } from './StavApartmanu';
 import { VstupHosta, type VstupHodnoty } from './VstupHosta';
 import { ZpravyOdNas, type ZpravaOdNas } from './ZpravyOdNas';
 import { PRANI_NADPIS, PRANI_VETA_SBALENA, textPrani } from '@/lib/prani-texty';
+import type { FakturaUdaje } from '@/lib/faktura';
+import { FAKTURA_NADPIS, FAKTURA_VETA_SBALENA } from '@/lib/faktura-texty';
 import './guide.scss';
 
 const ALIAS_K_DOMU = ['pesky-parkoviste-dum'];
@@ -340,6 +343,8 @@ export type GuideProps = {
   /** Potvrzení času / brány od nás. Nové se ukážou přes celou obrazovku. */
   zpravyOdNas?: ZpravaOdNas[];
   onZpravaPrectena?: (id: ZpravaOdNas['id']) => void;
+  /** Uložené údaje na firemní fakturu. */
+  faktura?: FakturaUdaje | null;
 };
 
 export function Guide({
@@ -364,6 +369,7 @@ export function Guide({
   onDevChange,
   zpravyOdNas = [],
   onZpravaPrectena,
+  faktura = null,
 }: GuideProps) {
   const [prijezd, setPrijezd] = useState<Prijezd | null>(initialPrijezd);
   const [lokalne, setLokalne] = useState<VstupHodnoty | null>(null);
@@ -536,10 +542,13 @@ export function Guide({
   };
   const quizUrl = sitePath(TX.psApartmany.quizPath);
   const osa = useMemo(() => {
-    const out: ({ kind: 'sekce'; s: (typeof kreslene)[number] } | { kind: 'prani' })[] = [];
+    const out: ({ kind: 'sekce'; s: (typeof kreslene)[number] } | { kind: 'prani' } | { kind: 'faktura' })[] = [];
     for (const s of kreslene) {
       out.push({ kind: 'sekce', s });
-      if (s.id === 'wifi' && ukazPrani) out.push({ kind: 'prani' });
+      if (s.id === 'wifi') {
+        if (ukazPrani) out.push({ kind: 'prani' });
+        out.push({ kind: 'faktura' });
+      }
     }
     return out;
   }, [kreslene, ukazPrani]);
@@ -827,6 +836,33 @@ export function Guide({
                           onChceOtevrit={setPraniOtevrit}
                           zvyradnitVlakno={praniVlakno}
                         />
+                      </SbalenaSekce>
+                    </div>
+                  </li>,
+                ];
+              }
+
+              if (pol.kind === 'faktura') {
+                return [
+                  <li
+                    key="faktura-hosta"
+                    id="pv-faktura-hosta"
+                    className={`pv-flow__step pv-flow__step--${tone}`}
+                  >
+                    <div className="pv-flow__marker" aria-hidden="true">
+                      <span className="pv-flow__num">{displayNum}</span>
+                    </div>
+                    <div className="pv-flow__card">
+                      <SbalenaSekce
+                        id="faktura-hosta"
+                        rezervace={rezervace}
+                        vychoziOtevreno={false}
+                        nadpis={`${displayNum}. ${textPrani(FAKTURA_NADPIS, lang)}`}
+                        veta={textPrani(FAKTURA_VETA_SBALENA, lang)}
+                        expandLabel={tt(TX.ui.expandSection)}
+                        collapseLabel={tt(TX.ui.collapseSection)}
+                      >
+                        <FakturaHosta token={praniToken} lang={lang} cteni={praniCteni} initial={faktura} />
                       </SbalenaSekce>
                     </div>
                   </li>,

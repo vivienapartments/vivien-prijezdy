@@ -1952,6 +1952,53 @@ a.pv-phone.pv-phone--zari:focus-visible {
   color: inherit;
 }
 
+.pv-prani__form input:not([type='radio']) {
+  width: 100%;
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  border-radius: 10px;
+  padding: 0.55rem 0.65rem;
+  font: inherit;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+}
+
+.pv-prani__form input:disabled {
+  opacity: 0.55;
+}
+
+.pv-faktura__typ {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pv-faktura__typ label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pv-faktura__ares {
+  margin: 0;
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.pv-faktura__akce {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pv-faktura__shrnuti p {
+  margin: 0 0 0.25rem;
+  text-align: left;
+}
+
 .pv-doklady {
   margin: 0 0 1rem;
   margin-left: var(--pv-axis-inset);

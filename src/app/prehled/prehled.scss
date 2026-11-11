@@ -3433,3 +3433,125 @@
   gap: 0.4rem;
   margin-top: 0.45rem;
 }
+
+.ph-faktura__seznam {
+  margin: 0.4rem 0 0.8rem;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-faktura__polozka {
+  margin: 0 0 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.ph-faktura__hlava {
+  margin: 0 0 0.35rem;
+  font-weight: 650;
+}
+
+.ph-faktura__zruseno {
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(224, 122, 122, 0.2);
+  color: #e07a7a;
+  font-size: 0.8rem;
+}
+
+.ph-faktura__pole {
+  margin: 0 0 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-faktura__pole li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.6rem;
+  margin: 0 0 0.25rem;
+}
+
+.ph-faktura__nazev {
+  min-width: 4.5rem;
+  opacity: 0.7;
+}
+
+.ph-faktura__hodnota {
+  flex: 1 1 10rem;
+  overflow-wrap: anywhere;
+}
+
+.ph-faktura__kdo {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.ph-faktura .pv-faktura__form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ph-faktura .pv-faktura__form label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 650;
+}
+
+.ph-faktura .pv-faktura__form input:not([type='radio']),
+.ph-faktura .pv-faktura__form textarea {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid rgba(201, 168, 76, 0.4);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  color: inherit;
+  font: inherit;
+}
+
+.ph-faktura .pv-faktura__typ {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ph-faktura .pv-faktura__typ label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ph-faktura .pv-faktura__akce {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ph-faktura .pv-faktura__akce button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  border-radius: 6px;
+  background: rgba(201, 168, 76, 0.12);
+  color: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.ph-faktura .pv-prani__chyba {
+  color: #e07a7a;
+}
+
+.ph-faktura .pv-prani__muted,
+.ph-faktura .pv-faktura__ares {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}

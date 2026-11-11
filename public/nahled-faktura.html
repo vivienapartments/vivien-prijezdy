@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Náhled – faktura pod Přáním</title>
+  <style>
+    :root {
+      --bg: #1c1712;
+      --card: #241e18;
+      --ink: #e8dfc8;
+      --muted: #cbbba8;
+      --gold: #c9a84c;
+      --gold-dim: rgba(201, 168, 76, 0.35);
+      --line: #3d342a;
+      --danger: #c45c4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 1rem 1rem 2.5rem;
+    }
+    h1 {
+      font-weight: 500;
+      font-size: 1.35rem;
+      margin: 0 0 0.35rem;
+      color: var(--gold);
+    }
+    .lead {
+      font-family: system-ui, sans-serif;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      max-width: 40rem;
+      margin: 0 0 1.25rem;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      align-items: flex-start;
+    }
+    .col { width: min(100%, 22rem); }
+    .tag {
+      font-family: system-ui, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 0.45rem;
+    }
+    .phone {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0.85rem 0.75rem 1rem;
+    }
+    /* Stejná rodina karet jako v ostrém průvodci (sbalené části). */
+    .ticha {
+      border: 1px solid rgba(201, 168, 76, 0.28);
+      border-radius: 14px;
+      padding: 0.7rem 0.8rem;
+      margin-bottom: 0.7rem;
+      background: rgba(255, 255, 255, 0.03);
+      width: 100%;
+      box-sizing: border-box;
+      text-align: left;
+      font: inherit;
+      color: inherit;
+      cursor: default;
+    }
+    /* Přání v ostrém: jen o něco silnější okraj, ne celozlatá výplň. */
+    .ticha.is-prani {
+      border-color: rgba(201, 168, 76, 0.65);
+      background: color-mix(in srgb, #c9a84c 8%, transparent);
+      box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.2);
+    }
+    .ticha strong,
+    .ticha .nadpis {
+      display: block;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 650;
+      font-size: 1rem;
+    }
+    .ticha p,
+    .ticha .vedlejsi {
+      margin: 0.25rem 0 0;
+      font-family: system-ui, sans-serif;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .ticha.is-vyplneno .vedlejsi {
+      color: var(--ink);
+    }
+    /* Celý řádek jako „Časy ke schválení“ (ph-domu-radek__souhrn). */
+    .radek-tlacitko {
+      display: block;
+      width: 100%;
+      margin: 0 0 0.7rem;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid rgba(201, 168, 76, 0.45);
+      border-radius: 6px;
+      background: rgba(201, 168, 76, 0.08);
+      color: var(--gold);
+      font-family: system-ui, sans-serif;
+      font-size: 0.95rem;
+      text-align: left;
+      cursor: default;
+      box-sizing: border-box;
+    }
+    .radek-tlacitko .hlavni {
+      display: block;
+      font-weight: 600;
+    }
+    .radek-tlacitko .vedlejsi {
+      display: block;
+      margin-top: 0.2rem;
+      font-weight: 400;
+      font-size: 0.84rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .radek-tlacitko.is-vyplneno .vedlejsi {
+      color: var(--ink);
+    }
+    .radek-tlacitko.is-akce {
+      border-color: rgba(220, 80, 80, 0.5);
+      background: rgba(220, 80, 80, 0.12);
+      color: #ffb4c0;
+    }
+    .radek-tlacitko.is-akce .vedlejsi {
+      color: #ffc9d0;
+    }
+    .admin {
+      background: #12100e;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 0.85rem 0.75rem 1rem;
+      font-family: system-ui, sans-serif;
+    }
+    .sekce {
+      font-size: 0.78rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0.85rem 0 0.45rem;
+    }
+    .radek {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 0.7rem 0.75rem;
+      margin-bottom: 0.55rem;
+      background: var(--card);
+    }
+    .radek.ceka { border-color: rgba(196, 92, 74, 0.55); }
+    .radek h3 {
+      margin: 0;
+      font-family: Georgia, serif;
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--ink);
+    }
+    .meta {
+      margin: 0.2rem 0 0.45rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .udaje {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+    .udaje li span { color: var(--muted); }
+    .akce {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.6rem;
+    }
+    .akce button {
+      font: inherit;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #1a1612;
+      color: var(--ink);
+      padding: 0.35rem 0.55rem;
+      cursor: default;
+    }
+    .akce button.hotovo {
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+    .note {
+      margin-top: 1.2rem;
+      max-width: 44rem;
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <h1>Faktura v průvodci a v přehledu</h1>
+  <p class="lead">
+    V ostrém průvodci Přání není celozlaté. Je to sbalená karta jako ostatní,
+    jen jemněji nazlátlá. Faktura bude stejně tichá jako Wi‑Fi.
+    V přehledu řádek „Faktury k vystavení“ jako Časy ke schválení.
+  </p>
+
+  <div class="row">
+    <div class="col">
+      <div class="tag">Průvodce hosta</div>
+      <div class="phone">
+        <div class="ticha">
+          <strong>Wi‑Fi</strong>
+          <p>Síť a heslo po zvolení způsobu příjezdu.</p>
+        </div>
+        <div class="ticha is-prani">
+          <strong>Přání</strong>
+          <p>Napište nám, co by vám zpříjemnilo pobyt. Ozveme se.</p>
+        </div>
+        <button type="button" class="ticha">
+          <span class="nadpis">Faktura na firmu</span>
+          <span class="vedlejsi">Potřebujete fakturu? Zadejte údaje, vystavíme ji po pobytu.</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="tag">Po vyplnění hostem</div>
+      <div class="phone">
+        <div class="ticha is-prani">
+          <strong>Přání</strong>
+          <p>Napište nám, co by vám zpříjemnilo pobyt. Ozveme se.</p>
+        </div>
+        <button type="button" class="ticha is-vyplneno">
+          <span class="nadpis">Faktura na firmu</span>
+          <span class="vedlejsi">Firma Novák s.r.o., IČO 12345678 · Upravit</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="tag">Přehled · Faktury</div>
+      <div class="admin">
+        <button type="button" class="radek-tlacitko is-akce">
+          Faktury k vystavení · 2 ▸
+        </button>
+        <div class="sekce">Čekají na vystavení</div>
+        <div class="radek ceka">
+          <h3>Roba · V3</h3>
+          <p class="meta">Odjezd včera · zadal host</p>
+          <ul class="udaje">
+            <li><span>Firma:</span> Roba Travel s.r.o.</li>
+            <li><span>IČO:</span> 87654321</li>
+            <li><span>E-mail:</span> ucty@roba.example</li>
+          </ul>
+          <div class="akce">
+            <button type="button">WhatsApp doplnit</button>
+            <button type="button" class="hotovo">Hotovo</button>
+          </div>
+        </div>
+        <div class="radek ceka">
+          <h3>Novák · V1</h3>
+          <p class="meta">Odjezd dnes · zadal host</p>
+          <ul class="udaje">
+            <li><span>Firma:</span> Novák s.r.o.</li>
+            <li><span>IČO:</span> 12345678</li>
+            <li><span>Adresa:</span> Nádražní 1, České Budějovice</li>
+          </ul>
+          <div class="akce">
+            <button type="button" class="hotovo">Hotovo</button>
+          </div>
+        </div>
+        <div class="sekce">Po odjezdu (ještě bydlí)</div>
+        <div class="radek">
+          <h3>Hala · V2</h3>
+          <p class="meta">Odjezd za 6 dní · údaje už máme, připomeneme v den odjezdu</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="note">
+    Soubor je jen náhled: <code>public/nahled-faktura.html</code>.
+    Ostrý kód ještě nestavíme, dokud neřeknete ano.
+  </p>
+</body>
+</html>

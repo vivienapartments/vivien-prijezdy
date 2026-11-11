@@ -882,3 +882,10 @@ export function odkazWhatsAppPrehled(wa: string, zprava: string, userAgent: stri
   const fallback = encodeURIComponent(web);
   return `intent://send/?phone=${phone}&text=${text}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;S.browser_fallback_url=${fallback};end`;
 }
+
+/** Doplnění údajů na fakturu. Jen otevře WhatsApp, nic se neposílá samo. {co} = seznam chybějících údajů. */
+export const FAKTURA_WHATSAPP_DOPLNIT = 'Dobrý den, u faktury nám ještě chybí: {co}. Doplňte to v průvodci.';
+
+export function zpravaFakturaDoplnit(co: string[]): string {
+  return FAKTURA_WHATSAPP_DOPLNIT.replaceAll('{co}', co.join(', '));
+}

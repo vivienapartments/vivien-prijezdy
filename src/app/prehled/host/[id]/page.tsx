@@ -78,6 +78,7 @@ export default async function PruvodceHostaPage({ params, searchParams }: Props)
             cas: rec.casOdjezdu,
             rucni: Boolean(rec.rucniZnacky?.some((z) => z.pole === 'casOdjezdu')),
           }}
+          faktura={rec.faktura}
         />
       </div>
     </>

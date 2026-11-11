@@ -49,6 +49,8 @@ import {
   jeKdoPrani,
 } from '@/lib/prani';
 import { odkazPraniVPruvodci, textWhatsAppPraniOdpoved } from '@/lib/prani-texty';
+import { dotazAres, sestavFakturu, type FakturaVstup } from '@/lib/faktura';
+import { FAKTURA_MAJITEL } from '@/lib/faktura-texty';
 import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { prehledPrihlasen } from '@/lib/prehled-session';
@@ -121,6 +123,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     iDalsimu?: boolean;
     vlakno?: string;
     id?: string;
+    ico?: string;
+    faktura?: FakturaVstup;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -203,6 +207,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prani-otevrit' &&
       akce !== 'prani-nacti' &&
       akce !== 'prani-whatsapp' &&
+      akce !== 'faktura-ulozit' &&
+      akce !== 'faktura-hotovo' &&
+      akce !== 'faktura-vratit' &&
+      akce !== 'faktura-smazat' &&
+      akce !== 'faktura-ares' &&
+      akce !== 'faktura-whatsapp' &&
       akce !== 'poznamka-uklid' &&
       akce !== 'checkin-neni' &&
       akce !== 'mena')
@@ -1059,6 +1069,51 @@ export async function POST(request: Request): Promise<NextResponse> {
       { ok: true, vlakna: Object.values(data.vlakna), zpravy: data.zpravy },
       { headers: noStore },
     );
+  }
+
+  if (akce === 'faktura-ares') {
+    const ares = await dotazAres(body?.ico || '');
+    return NextResponse.json({ ok: true, ares }, { headers: noStore });
+  }
+
+  if (akce === 'faktura-ulozit') {
+    const vstup: FakturaVstup = body?.faktura && typeof body.faktura === 'object' ? body.faktura : {};
+    if (vstup.typ !== 'zahranici' && vstup.ico) {
+      const ares = await dotazAres(vstup.ico);
+      if (ares.ok) {
+        vstup.nazev = vstup.nazev || ares.nazev;
+        vstup.adresa = vstup.adresa || ares.adresa;
+        vstup.dic = vstup.dic || ares.dic;
+      }
+    }
+    const ted = new Date().toISOString();
+    const sestava = sestavFakturu(vstup, 'majitel', ted, rec.faktura);
+    if (!sestava.ok) {
+      return chyba(400, sestava.duvod === 'chybi_ico' ? 'IČO není platné.' : 'Vyplňte název, adresu a zemi.');
+    }
+    const faktura = { ...sestava.faktura, hotovo: rec.faktura?.hotovo ?? null };
+    await store.setRezervace(id, pridej(rec, FAKTURA_MAJITEL.historie_majitel, { faktura }));
+    return NextResponse.json({ ok: true, faktura }, { headers: noStore });
+  }
+
+  if (akce === 'faktura-hotovo' || akce === 'faktura-vratit' || akce === 'faktura-smazat') {
+    if (!rec.faktura) return chyba(404, 'Faktura není zadaná.');
+    if (akce === 'faktura-smazat') {
+      await store.setRezervace(id, pridej(rec, 'Údaje na fakturu smazány', { faktura: null }));
+      return NextResponse.json({ ok: true, faktura: null }, { headers: noStore });
+    }
+    const hotovo = akce === 'faktura-hotovo' ? new Date().toISOString() : null;
+    const faktura = { ...rec.faktura, hotovo };
+    await store.setRezervace(
+      id,
+      pridej(rec, hotovo ? FAKTURA_MAJITEL.historie_hotovo : 'Faktura vrácena mezi nevyřízené', { faktura }),
+    );
+    return NextResponse.json({ ok: true, faktura }, { headers: noStore });
+  }
+
+  if (akce === 'faktura-whatsapp') {
+    await store.setRezervace(id, pridej(rec, 'WhatsApp: Doplnění údajů na fakturu'));
+    return NextResponse.json({ ok: true }, { headers: noStore });
   }
 
   if (akce === 'prani-whatsapp') {

@@ -23,6 +23,7 @@ import { popisekCasu, priplatekCasu, soucetVyjezdu } from './priplatek-prijezd';
 import { nazevDluhu, polozkyVsechny, polozkyZRezervace, textRozpisu, type DruhDluhu } from './odjezd';
 import { casPrevzetiText } from './zalozky';
 import { doplnStaleHosty, type StalyHostInfo } from './staly-host';
+import type { FakturaUdaje } from './faktura';
 
 export const STARY_ZAZNAM = 'starý záznam';
 
@@ -153,6 +154,8 @@ export type PrehledRadek = {
   checkinNeniPotreba: boolean;
   /** Zobrazení plateb. null = Kč. */
   mena: 'CZK' | 'EUR' | null;
+  /** Údaje na firemní fakturu. */
+  faktura: FakturaUdaje | null;
   /** Stejný host z minulých karet (počítá se v paměti). */
   stalyHost?: StalyHostInfo | null;
 };
@@ -897,6 +900,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     poznamkaUklid: rec.poznamkaUklid || null,
     checkinNeniPotreba: rec.checkinNeniPotreba === true,
     mena: rec.mena === 'EUR' || rec.mena === 'CZK' ? rec.mena : null,
+    faktura: rec.faktura ?? null,
   };
 }
 

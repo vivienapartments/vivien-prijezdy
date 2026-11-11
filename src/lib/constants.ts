@@ -10,6 +10,10 @@ export const ODJEZD_KROK_MIN = 15;
 export const HODINA_RAMCEKU_ODJEZDU = 12;
 /** Push se seznamem zítřejších odjezdů. */
 export const HODINA_DOTAZU_ODJEZDU = 18;
+/** Ranní připomínka nevystavených faktur po odjezdu. */
+export const HODINA_FAKTURY_RANO = 9;
+/** Faktury hostů, kteří dnes odjíždějí. */
+export const HODINA_FAKTURY_ODJEZD = 12;
 /** Push den po příjezdu: dotaz, jestli je vše v pořádku. */
 export const HODINA_DOTAZU_POHODY = 11;
 /** Připomínka, když dotaz ještě neodešel. */

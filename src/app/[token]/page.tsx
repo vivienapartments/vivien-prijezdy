@@ -101,6 +101,7 @@ export default async function TokenPage({ params }: Props) {
         }
         okno={okno}
         zpravyOdNas={zpravyOdNasZRezervace(rec)}
+        faktura={rec?.faktura ?? null}
       />
     </>
   );
