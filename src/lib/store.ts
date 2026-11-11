@@ -3,6 +3,7 @@ import path from 'path';
 import type { Duvod } from './chyby';
 import { UCHOVAT_KARTU_MESICU } from './constants';
 import type { PoplatekStav } from './poplatek';
+import { nactiZadostPozdni, type ZadostPozdniPrijezd } from './zadost-pozni-prijezd';
 import {
   maOtevrenaVlakna,
   nactiVlaknoPrani,
@@ -161,6 +162,8 @@ export type RezervaceRecord = {
   zadostPrijezd: ZadostOkna | null;
   /** Žádost o pozdější odjezd. Platí až po potvrzení majitele. */
   zadostOdjezd: ZadostOkna | null;
+  /** Žádost o pozdní příjezd (po 20:00). Oddělené od dřívějšího příjezdu. */
+  zadostPozdniPrijezd: ZadostPozdniPrijezd | null;
   /** Telefon z e-mailu o nové rezervaci. Check-in ho nepřepisuje. */
   telefonRezervace: string | null;
   telefonRezervaceWa: string | null;
@@ -726,6 +729,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
           : null,
     zadostPrijezd: nactiZadost(r.zadostPrijezd),
     zadostOdjezd: nactiZadost(r.zadostOdjezd),
+    zadostPozdniPrijezd: nactiZadostPozdni(r.zadostPozdniPrijezd),
     casZadalHost: r.casZadalHost === true,
     zpusobPrijezdu: r.zpusobPrijezdu === 'auto' || r.zpusobPrijezdu === 'pesky' ? r.zpusobPrijezdu : null,
     telefonBrana: typeof r.telefonBrana === 'string' && r.telefonBrana ? r.telefonBrana : null,
@@ -864,6 +868,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     uklizenoKdo: null,
     zadostPrijezd: null,
     zadostOdjezd: null,
+    zadostPozdniPrijezd: null,
     pruvodceOdemcen: null,
     hostUlozeni: [],
     rucniZnacky: [],

@@ -27,7 +27,9 @@ export function zpravyOdNasZRezervace(rec: RezervaceRecord | null | undefined): 
   if (!rec) return [];
   const out: ZpravaOdNasData[] = [];
 
-  if (rec.potvrzeniPrijezdu === 'osobne' && rec.casPrijezdu) {
+  // Dokud pozdní příjezd čeká na schválení, netvrdíme, že je čas potvrzený.
+  const pozniCeka = rec.zadostPozdniPrijezd?.stav === 'ceka';
+  if (rec.potvrzeniPrijezdu === 'osobne' && rec.casPrijezdu && !pozniCeka) {
     const cas = textCasu(rec.casPrijezdu);
     out.push({
       id: 'cas',

@@ -25,6 +25,12 @@ import {
   urovenZRezervace,
   type VysledekUlozeni,
 } from './vstup-pruvodce';
+import {
+  jeCasJenIndividualni,
+  podaniZadostiPozdni,
+  vyzadujeZadostPozdni,
+  zrusZadostPozdniPriBezplatnem,
+} from './zadost-pozni-prijezd';
 
 function jazykSouhlasu(raw: string | undefined): string {
   return raw && (GUIDE_LANGS as readonly string[]).includes(raw) ? raw : 'cs';
@@ -189,10 +195,18 @@ export async function ulozVstupHosta(
       await spalit();
       return { ok: false, duvod: 'cas' };
     }
+    // Stejný čas znovu: žádné další upozornění ani historie.
+    if (rec.casOdjezdu === cas && !maRucni(rec, 'casOdjezdu')) {
+      return { ok: true, cas, uroven: urovenZRezervace(rec) };
+    }
     if (maRucni(rec, 'casOdjezdu') && rec.casOdjezdu && rec.casOdjezdu !== cas) {
       const zapis = poznamenej(rec, 'Host zadal jiný odjezd, ruční čas zůstal', {});
       await store.setRezervace(id, zapis);
       await ohlas(store, id, `${popisHosta(rec)} napsal odjezd ${zobrazCas(cas)}, váš čas zůstává`, 'cas-odjezdu');
+      return { ok: true, cas: rec.casOdjezdu, uroven: urovenZRezervace(rec) };
+    }
+    // Ruční čas už je stejný jako hostův pokus: nic neposílat.
+    if (maRucni(rec, 'casOdjezdu') && rec.casOdjezdu === cas) {
       return { ok: true, cas: rec.casOdjezdu, uroven: urovenZRezervace(rec) };
     }
     const bylo = rec.casOdjezdu ? zobrazCas(rec.casOdjezdu) : 'žádný';
@@ -244,6 +258,10 @@ export async function ulozVstupHosta(
       }
       telefonBrana = tel.ulozeny;
     }
+    if (jeCasJenIndividualni(cas)) {
+      await spalit();
+      return { ok: false, duvod: 'cas' };
+    }
     if (jeCasDrive(cas)) {
       const v = zadostPrijezdu(rec, await vsechny(), cas, 'pruvodce', new Date());
       if (!v) {
@@ -259,12 +277,18 @@ export async function ulozVstupHosta(
         telefonBrana,
         spz,
         spzPujcene: pujcene,
+        zadostPozdniPrijezd: null,
         hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20),
         historie: souhlas.veta ? [...v.rec.historie, { cas: casUlozeni, co: souhlas.veta }].slice(-40) : v.rec.historie,
       };
       await store.setRezervace(id, zapis);
-      if (v.push) await ohlas(store, id, v.push, 'zadost');
-      return { ok: true, cas: zapis.casPrijezdu || undefined, uroven: urovenZRezervace(zapis) };
+      if (!v.bezeZmeny && v.push) await ohlas(store, id, v.push, 'zadost');
+      // Hostovi v průvodci ukazujeme čas z žádosti, dokud čeká na schválení.
+      return {
+        ok: true,
+        cas: zapis.zadostPrijezd?.cas || zapis.casPrijezdu || undefined,
+        uroven: urovenZRezervace(zapis),
+      };
     }
     const novy = popisekCasu(cas);
     const souhlas = doplnSouhlas(rec, true, telo.jazyk);
@@ -274,13 +298,15 @@ export async function ulozVstupHosta(
       : (rec.navrhy || []).filter((n) => n.pole !== 'casPrijezdu');
     const zmenaTelefonu = Boolean(rec.telefonBrana && telefonBrana && rec.telefonBrana !== telefonBrana);
     const uprava = rucniCas ? null : poZmeneCasuPrijezdu(rec, cas, new Date());
+    const pozdni = !rucniCas && vyzadujeZadostPozdni(cas) ? podaniZadostiPozdni(rec, cas) : null;
+    const bezplatny = !rucniCas && !pozdni ? zrusZadostPozdniPriBezplatnem(rec, cas) : null;
     const zapis = poznamenej(
       rec,
       rucniCas
         ? 'Host zadal jiný čas, ruční čas zůstal'
-        : uprava?.historie || `Příjezd ${popisekCasu(rec.casPrijezdu || 'žádný')} → ${novy}`,
+        : pozdni?.historie || uprava?.historie || `Příjezd ${popisekCasu(rec.casPrijezdu || 'žádný')} → ${novy}`,
       {
-        casPrijezdu: rucniCas ? rec.casPrijezdu : cas,
+        casPrijezdu: rucniCas ? rec.casPrijezdu : pozdni?.patch.casPrijezdu ?? cas,
         casZadalHost: rucniCas ? rec.casZadalHost : true,
         zpusobPrijezdu: zpusob,
         telefonBrana,
@@ -290,6 +316,7 @@ export async function ulozVstupHosta(
         zpravaBranaOdeslana: zmenaTelefonu ? null : rec.zpravaBranaOdeslana,
         zpravaBranaPrectena: zmenaTelefonu ? null : rec.zpravaBranaPrectena,
         ...(uprava?.patch || { zadostPrijezd: null }),
+        ...(pozdni?.patch || bezplatny || {}),
         navrhy,
         ...souhlas.patch,
       },
@@ -300,7 +327,10 @@ export async function ulozVstupHosta(
       const dilky: string[] = [];
       let telegram: TelegramDruh = 'cas-prijezdu';
       if (rucniCas) dilky.push(`host napsal ${novy}, váš čas zůstává`);
-      else if (uprava?.push) {
+      else if (pozdni?.push) {
+        dilky.push(pozdni.push.replace(/^[^:]+:\s*/, ''));
+        telegram = 'zadost';
+      } else if (uprava?.push) {
         const host = popisHosta(rec);
         dilky.push(uprava.push.startsWith(host) ? uprava.push.slice(host.length).replace(/^:\s*/, '') : uprava.push);
         telegram = 'zadost';

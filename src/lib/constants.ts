@@ -27,11 +27,15 @@ export const UCHOVAT_KARTU_MESICU = 24;
 /** Kolik minut před známým odjezdem přijde upozornění. */
 export const PREDSTIH_ODJEZDU_MIN = 30;
 
-/** Příplatek za příjezd. Od 20:00, pak 100 Kč za každou započatou půlhodinu, do 23:00. */
+/**
+ * Příplatek za pozdní příjezd (veřejná sazba).
+ * Do 20:00 včetně 0 Kč. 20:01–20:30 = 100 Kč. 20:31–21:00 = 200 Kč.
+ * Po 21:00 jen individuální výjimka hostitele (bez automatické sazby).
+ */
 export const PRIPLATEK_OD = 20 * 60;
 export const PRIPLATEK_KROK_MIN = 30;
 export const PRIPLATEK_KC = 100;
-export const PRIPLATEK_DO = 23 * 60;
+export const PRIPLATEK_DO = 21 * 60;
 
 /** Dřívější příjezd a pozdější odjezd. 75 Kč za každou započatou půlhodinu, jen po potvrzení. */
 export const OKNO_KC = 75;

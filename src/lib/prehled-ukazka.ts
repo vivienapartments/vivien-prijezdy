@@ -411,7 +411,9 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     accessPin: '0000',
     poplatek: 'ne',
     stav: 'odeslano',
-    casPrijezdu: '16:00',
+    // Oficiální čas zůstává 14:00, žádost o 12:00 čeká na schválení.
+    casPrijezdu: '14:00',
+    casZadalHost: true,
     zadostPrijezd: {
       cas: '12:00',
       kc: 300,
@@ -422,11 +424,13 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
       upozorneno: false,
     },
     zpusobPrijezdu: 'auto',
+    souhlasPravidel: { kdy: '2026-10-15T08:00:00.000Z', jazyk: 'de', verze: verzeAktualni() },
     // Bez údajů k bráně → dlaždice „Údaje chybí“ → WhatsApp.
     telefonBrana: null,
     spz: null,
     telefon: '+420777000146',
     telefonWa: '420777000146',
+    otevrenoPocet: 2,
     zdroj: 'Airbnb',
   };
 
@@ -445,7 +449,19 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     vytvoreno: '2026-09-20',
     poplatek: 'ne',
     stav: 'odeslano',
-    casPrijezdu: '21:00',
+    casPrijezdu: '20:30',
+    casZadalHost: true,
+    zpusobPrijezdu: 'pesky',
+    souhlasPravidel: { kdy: '2026-10-14T18:00:00.000Z', jazyk: 'cs', verze: verzeAktualni() },
+    zadostPozdniPrijezd: {
+      cas: '20:30',
+      kc: 100,
+      stav: 'ceka',
+      kdy: '2026-10-14T18:05:00.000Z',
+      zprava: null,
+      drziPotvrzeni: null,
+    },
+    otevrenoPocet: 2,
     zdroj: 'Booking',
   };
 

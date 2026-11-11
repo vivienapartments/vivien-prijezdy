@@ -194,6 +194,8 @@ describe('okno pobytu', () => {
       });
       expect(text?.veta).toContain('12:00');
       expect(text?.veta).not.toContain('{cas}');
+      expect(text?.kratce).toContain('12:00');
+      expect(text?.kratce).toBeTruthy();
     }
     expect(kodyProHosta(false, 'V1', '1234', 'cs')).toBeNull();
     expect(odkazSekce('https://example.test/pruvodce')).toContain('#cas-prijezdu');

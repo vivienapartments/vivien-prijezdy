@@ -39,7 +39,7 @@ import { denPraha } from '@/lib/brana';
 import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import { pruvodceRozbalen, urovenPruvodce, type UrovenPruvodce } from '@/lib/vstup-pruvodce';
 import * as VT from '@/lib/vstup-texty';
-import { textStavu, type OknoPohled } from '@/lib/okno-pobytu';
+import { stavPrijezduProPruvodce, textStavu, type OknoPohled } from '@/lib/okno-pobytu';
 import { ukazatDokladyRamecek } from '@/lib/doklady-texty';
 import { DokladyRamecek } from './DokladyRamecek';
 import { OdjezdRamecek } from './OdjezdRamecek';
@@ -740,7 +740,7 @@ export function Guide({
               hodnoty={hodnoty}
               predvyplneny={vstup?.predvyplneny ?? ''}
               nejdrive={okno?.slotyPrijezd[0]}
-              stavZadosti={textStavu(lang, 'prijezd', okno?.zadostPrijezd ?? null)}
+              stavZadosti={stavPrijezduProPruvodce(lang, okno)}
               onUlozeno={(next) => {
                 if (vstup) onVstup?.(next);
                 else setLokalne(next);
@@ -768,7 +768,7 @@ export function Guide({
               hodnoty={hodnoty}
               predvyplneny={vstup?.predvyplneny ?? ''}
               nejdrive={okno?.slotyPrijezd[0]}
-              stavZadosti={textStavu(lang, 'prijezd', okno?.zadostPrijezd ?? null)}
+              stavZadosti={stavPrijezduProPruvodce(lang, okno)}
               onUlozeno={(next) => {
                 if (vstup) onVstup?.(next);
                 else setLokalne(next);

@@ -17,6 +17,7 @@ import {
   telefonProBranu,
   urovenPruvodce,
   urovenZRezervace,
+  vstupZRezervace,
 } from './vstup-pruvodce';
 import { ulozVstupHosta } from './vstup-ulozit';
 
@@ -93,12 +94,12 @@ describe('průvodce se otevře až po údajích', () => {
     expect(text).toContain('přijet znovu');
     expect(text).toContain('Rozumím pravidlům příjezdu a souhlasím s nimi.');
     expect(text).toContain('20:30 · +100 Kč');
-    expect(text).toContain('23:00 · +600 Kč');
+    expect(text).toContain('21:00 · +200 Kč');
+    expect(text).not.toContain('23:00 · +600 Kč');
     expect(text).toContain('Dřívější příjezd (potvrdíme)');
     expect(text).toContain('Běžný příjezd');
+    // Text pravidel o sazbě se mění po schválení majitele (zatím ještě stará věta v pravidla-verze).
     expect(text).toContain('platíte <span class="pv-nedel">100 Kč</span> za každou započatou půlhodinu');
-    expect(text).toContain('Po <span class="pv-nedel">23:00</span> jen po domluvě.');
-    expect(text).not.toContain('do 21:00');
     expect(text).toContain('Vaše vstupní PINy');
     expect(text).toContain('Tady budou vaše PINy.');
     expect(text).toContain('Uložit a pokračovat k PINům');
@@ -356,6 +357,26 @@ describe('průvodce se otevře až po údajích', () => {
     const konec = await store.getRezervace(id);
     expect(konec?.souhlasPravidel).toBeNull();
     expect(konec?.historie.some((h) => h.co === 'Host zrušil souhlas s pravidly')).toBe(true);
+  });
+
+  it('čekající dřívější příjezd ukáže v průvodci čas z žádosti', () => {
+    const id = '120260029';
+    const rec = {
+      ...prazdnaRezervace(id, '2026-10-14T00:00:00.000Z'),
+      casPrijezdu: '14:00',
+      casZadalHost: true,
+      zpusobPrijezdu: 'pesky' as const,
+      zadostPrijezd: {
+        cas: '11:30',
+        kc: 375,
+        stav: 'ceka' as const,
+        kdy: '2026-10-14T08:00:00.000Z',
+        od: 'pruvodce' as const,
+        hned: true,
+        upozorneno: true,
+      },
+    };
+    expect(vstupZRezervace(rec).cas).toBe('11:30');
   });
 
   it('bez času, způsobu nebo souhlasu se neodemkne a PINy nejsou v HTML', async () => {

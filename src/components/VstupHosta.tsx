@@ -94,7 +94,7 @@ function renderPravidlo(raw: string, tucnaPrvni = false) {
   );
 }
 
-function moznostiCasu(lang: GuideLang, drive: string[], po23: string) {
+function moznostiCasu(lang: GuideLang, drive: string[]) {
   const bezne = CASY_VYBERU.filter((h) => !priplatekProCas(h));
   const pozdni = CASY_VYBERU.filter((h) => priplatekProCas(h));
   return (
@@ -115,17 +115,18 @@ function moznostiCasu(lang: GuideLang, drive: string[], po23: string) {
           </option>
         ))}
       </optgroup>
-      <optgroup label={skupinaPozdni(lang)}>
-        {pozdni.map((hodina) => {
-          const kc = priplatekProCas(hodina);
-          return (
-            <option key={hodina} value={hodina}>
-              {kc ? `${hodina} · +${kc} Kč` : hodina}
-            </option>
-          );
-        })}
-        <option value={CAS_PO_23}>{po23}</option>
-      </optgroup>
+      {pozdni.length ? (
+        <optgroup label={skupinaPozdni(lang)}>
+          {pozdni.map((hodina) => {
+            const kc = priplatekProCas(hodina);
+            return (
+              <option key={hodina} value={hodina}>
+                {kc ? `${hodina} · +${kc} Kč` : hodina}
+              </option>
+            );
+          })}
+        </optgroup>
+      ) : null}
     </>
   );
 }
@@ -290,8 +291,12 @@ export function VstupHosta({
           ? `${hodnoty.cas} · ${tt(VT.vstupPriplatek)} ${priplatekProCas(hodnoty.cas)} Kč`
           : hodnoty.cas;
 
+  const zpusobAPravidla = `${hodnoty.zpusob === 'pesky' ? tt(VT.vstupPeskyKratce) : tt(VT.vstupAutemKratce)} · ${tt(VT.vstupPravidlaOk)}`;
+  // Stav žádosti (čas + čeká / potvrzeno) nahradí běžný „Příjezd HH:MM“.
   const radek = sJednotkou(
-    `${tt(VT.vstupRadek)} ${casText} · ${hodnoty.zpusob === 'pesky' ? tt(VT.vstupPeskyKratce) : tt(VT.vstupAutemKratce)} · ${tt(VT.vstupPravidlaOk)}`,
+    stavZadosti?.kratce
+      ? `${stavZadosti.kratce} · ${zpusobAPravidla}`
+      : `${tt(VT.vstupRadek)} ${casText} · ${zpusobAPravidla}`,
   );
 
   return (
@@ -302,17 +307,20 @@ export function VstupHosta({
         </p>
       ) : null}
       {hotovo ? (
-        <p className="pv-vstup pv-vstup--radek" lang={lang}>
-          {radek}
-          {cteni ? null : (
-            <>
-              {' · '}
-              <button type="button" className="pv-vstup__zmenit" onClick={() => setUprava(true)}>
-                {tt(VT.vstupZmenit)}
-              </button>
-            </>
-          )}
-        </p>
+        <div className="pv-vstup pv-vstup--radek" lang={lang}>
+          <p>
+            {radek}
+            {cteni ? null : (
+              <>
+                {' · '}
+                <button type="button" className="pv-vstup__zmenit" onClick={() => setUprava(true)}>
+                  {tt(VT.vstupZmenit)}
+                </button>
+              </>
+            )}
+          </p>
+          {stavZadosti?.veta ? <p className="pv-vstup__stav">{stavZadosti.veta}</p> : null}
+        </div>
       ) : (
         <section className="pv-vstup" id="pv-vstup" lang={lang}>
           <h2>{tt(VT.vstupNadpis)}</h2>
@@ -327,7 +335,7 @@ export function VstupHosta({
             <label>
               {tt(VT.vstupCasPopisek)}
               <select id="cenik-prijezd" value={cas || '14:00'} onChange={(e) => setCas(e.target.value)} disabled={cteni}>
-                {moznostiCasu(lang, driveSloty, tt(VT.vstupPo23))}
+                {moznostiCasu(lang, driveSloty)}
               </select>
             </label>
             {jeCasDrive(cas) ? <p className="pv-vstup__stav">{poznamkaDrive(lang)}</p> : null}

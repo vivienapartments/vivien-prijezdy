@@ -44,10 +44,13 @@ export function NahledClient({ secrets, searchParams }: Props) {
     pujcene,
     souhlas: one(searchParams.souhlas) === '1',
   };
+  // Demo žádostí: ?zadost=drive (dřívější) nebo ?zadost=pozni (po 20:00).
+  const zadostDruh = one(searchParams.zadost);
+  const casZadosti = hodnoty.cas || (zadostDruh === 'pozni' ? '20:30' : '11:30');
   const vstup = {
     token: null,
     uroven: urovenPruvodce({
-      cas: hodnoty.cas,
+      cas: hodnoty.cas || (zadostDruh ? casZadosti : null),
       zpusob: hodnoty.zpusob,
       telefonBrana: telefon || null,
       spz: spz || null,
@@ -55,7 +58,12 @@ export function NahledClient({ secrets, searchParams }: Props) {
       souhlas: hodnoty.souhlas,
       odemceno: one(searchParams.odemceno) === '1',
     }),
-    hodnoty,
+    hodnoty: {
+      ...hodnoty,
+      cas: hodnoty.cas || (zadostDruh ? casZadosti : null),
+      zpusob: hodnoty.zpusob || (zadostDruh ? 'pesky' : null),
+      souhlas: hodnoty.souhlas || Boolean(zadostDruh),
+    },
     predvyplneny: '+420777111222',
   };
 
@@ -74,6 +82,7 @@ export function NahledClient({ secrets, searchParams }: Props) {
     if (accessPin) params.set('pin', accessPin);
     if (one(searchParams.tvar)) params.set('tvar', one(searchParams.tvar) || '');
     if (one(searchParams.odemceno) === '1') params.set('odemceno', '1');
+    if (zadostDruh) params.set('zadost', zadostDruh);
     router.replace(`/nahled?${params.toString()}`, { scroll: false });
   };
 
@@ -120,20 +129,64 @@ export function NahledClient({ secrets, searchParams }: Props) {
           : null
       }
       okno={
-        one(searchParams.pripraveno) === '1'
+        zadostDruh === 'drive'
           ? {
-              zeleny: true,
+              zeleny: false,
               sekcePrijezd: false,
               sekceOdjezd: false,
-              slotyZelene: ['12:00', '12:30', '13:00', '13:30'],
+              slotyZelene: [],
               slotyPrijezd: casyDrive('11:00'),
               slotyOdjezd: [],
               nejpozdeji: '14:00',
-              zadostPrijezd: null,
+              zadostPrijezd: {
+                cas: casZadosti,
+                kc: 375,
+                stav: 'ceka',
+                kdy: new Date().toISOString(),
+                od: 'pruvodce',
+                hned: true,
+                upozorneno: true,
+              },
               zadostOdjezd: null,
-              stavApartmanu: { barva: 'zeleny', rozbalit: true },
+              zadostPozdniPrijezd: null,
+              stavApartmanu: { barva: 'zlaty', rozbalit: true },
             }
-          : null
+          : zadostDruh === 'pozni'
+            ? {
+                zeleny: false,
+                sekcePrijezd: false,
+                sekceOdjezd: false,
+                slotyZelene: [],
+                slotyPrijezd: casyDrive('11:00'),
+                slotyOdjezd: [],
+                nejpozdeji: '14:00',
+                zadostPrijezd: null,
+                zadostOdjezd: null,
+                zadostPozdniPrijezd: {
+                  cas: casZadosti,
+                  kc: casZadosti <= '20:30' ? 100 : 200,
+                  stav: 'ceka',
+                  kdy: new Date().toISOString(),
+                  zprava: null,
+                  drziPotvrzeni: null,
+                },
+                stavApartmanu: { barva: 'zlaty', rozbalit: true },
+              }
+            : one(searchParams.pripraveno) === '1'
+              ? {
+                  zeleny: true,
+                  sekcePrijezd: false,
+                  sekceOdjezd: false,
+                  slotyZelene: ['12:00', '12:30', '13:00', '13:30'],
+                  slotyPrijezd: casyDrive('11:00'),
+                  slotyOdjezd: [],
+                  nejpozdeji: '14:00',
+                  zadostPrijezd: null,
+                  zadostOdjezd: null,
+                  zadostPozdniPrijezd: null,
+                  stavApartmanu: { barva: 'zeleny', rozbalit: true },
+                }
+              : null
       }
     />
   );

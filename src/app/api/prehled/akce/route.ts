@@ -32,6 +32,11 @@ import {
   poZmeneCasuPrijezdu,
   predmetPripraveno,
 } from '@/lib/okno-pobytu';
+import {
+  nastavIndividualniPozdni,
+  odmitniZadostPozdni,
+  potvrdZadostPozdni,
+} from '@/lib/zadost-pozni-prijezd';
 import { upozorniMajitele, upozorniUklid } from '@/lib/upozorneni';
 import { polozkyZRezervace, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
 import { upravitPlatbuDruhu, vratPlatbu, zaplatCastku, zaplatDruhy } from '@/lib/platby-hosta';
@@ -162,6 +167,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'nelze-prijezd' &&
       akce !== 'potvrdit-odjezd' &&
       akce !== 'nelze-odjezd' &&
+      akce !== 'potvrdit-pozni-prijezd' &&
+      akce !== 'nelze-pozni-prijezd' &&
+      akce !== 'individualni-pozni-prijezd' &&
       akce !== 'pripraveno-whatsapp' &&
       akce !== 'zaplaceno' &&
       akce !== 'poplatek' &&
@@ -455,6 +463,46 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
+  if (akce === 'potvrdit-pozni-prijezd') {
+    const vysledek = potvrdZadostPozdni(rec);
+    if (!vysledek) return chyba(400, 'Žádost o pozdní příjezd teď nejde potvrdit.');
+    const cas = new Date().toISOString();
+    await store.setRezervace(id, {
+      ...rec,
+      ...vysledek.patch,
+      historie: [...rec.historie, { cas, co: vysledek.historie }].slice(-40),
+    });
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
+  if (akce === 'nelze-pozni-prijezd') {
+    const zprava = String(body?.zprava ?? '').trim();
+    if (!zprava) return chyba(400, 'Napište hostovi, proč to nejde nebo jaký čas nabízíte.');
+    const vysledek = odmitniZadostPozdni(rec, zprava);
+    if (!vysledek) return chyba(400, 'Žádost o pozdní příjezd teď nejde odmítnout.');
+    const cas = new Date().toISOString();
+    await store.setRezervace(id, {
+      ...rec,
+      ...vysledek.patch,
+      historie: [...rec.historie, { cas, co: vysledek.historie }].slice(-40),
+    });
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
+  if (akce === 'individualni-pozni-prijezd') {
+    const casHosta = String(body?.cas ?? '').trim();
+    const kc = Math.round(Number(String(body?.kc ?? '').trim().replace(',', '.')));
+    const vysledek = nastavIndividualniPozdni(rec, casHosta, kc);
+    if (!vysledek) return chyba(400, 'Zadejte platný čas a částku v Kč (i 0).');
+    const ted = new Date().toISOString();
+    await store.setRezervace(id, {
+      ...rec,
+      ...vysledek.patch,
+      historie: [...rec.historie, { cas: ted, co: vysledek.historie }].slice(-40),
+    });
+    return NextResponse.json({ ok: true, cas: casHosta, kc }, { headers: noStore });
   }
 
   if (akce === 'pripraveno-whatsapp') {

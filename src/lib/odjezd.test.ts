@@ -169,6 +169,34 @@ describe('odjezd', () => {
     expect(hosteNaDen(naDen, '2026-10-17').map((r) => r.apartman)).toEqual(['V1', 'V2', 'V3', 'V5', null]);
   });
 
+  it('stejný čas odjezdu znovu neuloží ani neupozorní', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'odjezd-'));
+    const store = new FileProcessStore(path.join(dir, 'store.json'));
+    const id = '120260037';
+    const prijezd = '2026-11-16';
+    const odjezd = '2026-11-17';
+    await store.setRezervace(
+      id,
+      host({ rezervace: id, apartman: 'V3', jmeno: 'Jan Novák', prijezd, odjezd, jazyk: 'cs' }),
+    );
+    const token = createToken({ r: id, a: 'V3', p: prijezd, d: odjezd, l: 'cs' }, SECRET);
+    const prvni = await ulozVstupHosta(store, token, { akce: 'odjezd', cas: '10:00' });
+    expect(prvni.ok).toBe(true);
+    const poPrvnim = await store.getRezervace(id);
+    expect(poPrvnim?.casOdjezdu).toBe('10:00');
+    const hist = poPrvnim!.historie.length;
+    const znovu = await ulozVstupHosta(store, token, { akce: 'odjezd', cas: '10:00' });
+    expect(znovu.ok).toBe(true);
+    const poStejnem = await store.getRezervace(id);
+    expect(poStejnem?.casOdjezdu).toBe('10:00');
+    expect(poStejnem?.historie.length).toBe(hist);
+    const jiny = await ulozVstupHosta(store, token, { akce: 'odjezd', cas: '09:00' });
+    expect(jiny.ok).toBe(true);
+    const poJinem = await store.getRezervace(id);
+    expect(poJinem?.casOdjezdu).toBe('09:00');
+    expect(poJinem!.historie.length).toBeGreaterThan(hist);
+  });
+
   it('ruční čas odjezdu host v průvodci nepřepíše', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'odjezd-'));
     const store = new FileProcessStore(path.join(dir, 'store.json'));

@@ -14,6 +14,8 @@ import {
 import { maRucni } from './rucni-pole';
 import type { RezervaceRecord, ZadostOkna } from './store';
 import { GUIDE_LANGS, type GuideLang } from './types';
+import type { ZadostPozdniPrijezd } from './zadost-pozni-prijezd';
+import { textSbalenehoRadkuPozdni } from './zadost-pozni-prijezd';
 
 export type HostOkna = {
   rezervace: string;
@@ -820,9 +822,23 @@ export function textStavu(
       veta: dopln(druh === 'prijezd' ? t.potvrzenoPrijezd : t.potvrzenoOdjezd, zadost.cas, zadost.kc),
     };
   }
-  if (druh === 'odjezd') return { kratce: '', veta: dopln(t.cekaOdjezd, zadost.cas, zadost.kc) };
-  if (!zadost.hned) return { kratce: '', veta: dopln(t.cekaPripraveny, zadost.cas, zadost.kc) };
-  return { kratce: '', veta: dopln(t.cekaPrijezd, zadost.cas, zadost.kc) };
+  // Čeká na schválení: v krátkém řádku i požadovaný čas.
+  if (druh === 'odjezd') {
+    return {
+      kratce: `${zobrazCas(zadost.cas)} · ${t.stavCeka}`,
+      veta: dopln(t.cekaOdjezd, zadost.cas, zadost.kc),
+    };
+  }
+  if (!zadost.hned) {
+    return {
+      kratce: `${zobrazCas(zadost.cas)} · ${t.stavCeka}`,
+      veta: dopln(t.cekaPripraveny, zadost.cas, zadost.kc),
+    };
+  }
+  return {
+    kratce: `${zobrazCas(zadost.cas)} · ${t.stavCeka}`,
+    veta: dopln(t.cekaPrijezd, zadost.cas, zadost.kc),
+  };
 }
 
 export function textCekaniUklid(lang: GuideLang | null | undefined): string {
@@ -845,6 +861,7 @@ export type OknoPohled = {
   nejpozdeji: string;
   zadostPrijezd: ZadostOkna | null;
   zadostOdjezd: ZadostOkna | null;
+  zadostPozdniPrijezd: ZadostPozdniPrijezd | null;
   /** Před předáním. Po předání null. */
   stavApartmanu: StavApartmanuPohled | null;
 };
@@ -900,8 +917,25 @@ export function oknoProHosta(rec: RezervaceRecord, zaznamy: RezervaceRecord[], n
     nejpozdeji,
     zadostPrijezd: rec.zadostPrijezd,
     zadostOdjezd: rec.zadostOdjezd,
+    zadostPozdniPrijezd: rec.zadostPozdniPrijezd,
     stavApartmanu: stavApartmanuProHosta(rec, zaznamy, now),
   };
+}
+
+/** Stav žádosti o příjezd pro rámeček v průvodci (dřívější nebo pozdní). */
+export function stavPrijezduProPruvodce(
+  lang: GuideLang | null | undefined,
+  okno: Pick<OknoPohled, 'zadostPrijezd' | 'zadostPozdniPrijezd'> | null | undefined,
+): TextStavu | null {
+  const drive = textStavu(lang, 'prijezd', okno?.zadostPrijezd ?? null);
+  if (drive) return drive;
+  const pozni = okno?.zadostPozdniPrijezd;
+  if (!pozni) return null;
+  const kratce = textSbalenehoRadkuPozdni(pozni);
+  if (!kratce) return null;
+  if (pozni.stav === 'ceka') return { kratce, veta: '' };
+  if (pozni.stav === 'nelze') return { kratce: '', veta: pozni.zprava || kratce };
+  return { kratce: '', veta: kratce };
 }
 
 /**

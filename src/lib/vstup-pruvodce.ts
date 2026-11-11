@@ -14,8 +14,11 @@ function casyOdDo(odMin: number, doMin: number, krok: number): string[] {
   return out;
 }
 
-/** Půlhodiny od 14:00 do 23:00. Po 20:00 je u času příplatek. */
+/** Půlhodiny od 14:00 do 21:00. Po 20:00 je u času příplatek a žádost o potvrzení. */
 export const CASY_VYBERU = casyOdDo(14 * 60, PRIPLATEK_DO, PRIPLATEK_KROK_MIN);
+
+/** Interní / individuální časy hostitele až do 23:00. Host je ve výběru nevidí. */
+export const CASY_INDIVIDUALNI = casyOdDo(PRIPLATEK_DO + PRIPLATEK_KROK_MIN, 23 * 60, PRIPLATEK_KROK_MIN);
 
 /** Volba „Po 20:00“. V přehledu se ukáže jako pozdní příjezd. */
 export const CAS_PO_20 = 'po20';
@@ -114,8 +117,15 @@ export function urovenPruvodce(v: VstupHosta): UrovenPruvodce {
 }
 
 export function vstupZRezervace(rec: RezervaceRecord | null): VstupHosta {
+  // Dřívější příjezd čeká na schválení: v průvodci ukazujeme čas z žádosti, ne oficiálních 14:00.
+  const casZadosti =
+    rec?.zadostPrijezd && (rec.zadostPrijezd.stav === 'ceka' || rec.zadostPrijezd.stav === 'potvrzeno')
+      ? rec.zadostPrijezd.cas
+      : null;
+  const casUlozeny =
+    rec?.casPrijezdu && jeCasHosta(rec.casPrijezdu) ? rec.casPrijezdu : rec?.casPrijezdu || null;
   return {
-    cas: rec?.casPrijezdu && jeCasHosta(rec.casPrijezdu) ? rec.casPrijezdu : rec?.casPrijezdu || null,
+    cas: casZadosti || casUlozeny,
     zpusob: rec?.zpusobPrijezdu === 'auto' || rec?.zpusobPrijezdu === 'pesky' ? rec.zpusobPrijezdu : null,
     telefonBrana: rec?.telefonBrana || null,
     spz: rec?.spz || null,

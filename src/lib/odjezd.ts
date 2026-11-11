@@ -147,8 +147,10 @@ export function polozkyDluhu(v: VstupDluhu): PolozkaDluhu[] {
     const kc = castkaPoplatku(v.noci, v.osob);
     if (kc) ven.push({ druh: 'poplatek', kc });
   }
-  if (typeof v.priplatekRucni === 'number' && v.priplatekRucni > 0) {
-    ven.push({ druh: 'prijezd', kc: Math.round(v.priplatekRucni) });
+  // null = automat. 0 = ručně bez příplatku. Jiná nezáporná částka = ruční výše.
+  if (typeof v.priplatekRucni === 'number' && Number.isFinite(v.priplatekRucni) && v.priplatekRucni >= 0) {
+    const kc = Math.round(v.priplatekRucni);
+    if (kc > 0) ven.push({ druh: 'prijezd', kc });
   } else {
     const zdroj = casZIso(v.naMiste) || casZIso(v.predano) || (jeHodina(v.casPrijezdu) ? v.casPrijezdu : null);
     const kc = zdroj ? priplatekProCas(zdroj) : null;

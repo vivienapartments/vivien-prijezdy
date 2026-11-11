@@ -39,7 +39,11 @@ function minutyCasu(cas: string): number | null {
   return Number(m[1]) * 60 + Number(m[2]);
 }
 
-/** 0 do 20:00 včetně. Pak 100 Kč za každou započatou půlhodinu. Po 23:00 jen po domluvě. */
+/**
+ * 0 do 20:00 včetně.
+ * 100 Kč do 20:30 včetně, 200 Kč do 21:00 včetně.
+ * Po 21:00 (a po23) jen individuální domluva.
+ */
 export function priplatekCasu(cas: string | null | undefined): PriplatekCasu {
   const text = (cas || '').trim();
   if (!text) return { stav: 'neznamo' };

@@ -90,6 +90,7 @@ export type PrehledRadek = {
   uklizenoKdo: 'miluska' | 'nikol' | 'pravoslav' | null;
   zadostPrijezd: RezervaceRecord['zadostPrijezd'];
   zadostOdjezd: RezervaceRecord['zadostOdjezd'];
+  zadostPozdniPrijezd: RezervaceRecord['zadostPozdniPrijezd'];
   /** Rozbitý záznam z úložiště. V seznamu je jen červená věta, karta se neskládá. */
   nelzeNacist?: boolean;
   vytvorenoText: string;
@@ -857,6 +858,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     uklizenoKdo: rec.uklizenoKdo,
     zadostPrijezd: rec.zadostPrijezd,
     zadostOdjezd: rec.zadostOdjezd,
+    zadostPozdniPrijezd: rec.zadostPozdniPrijezd,
     vytvorenoText: chybi(rec.vytvoreno ? czDenRok(rec.vytvoreno) : '', stary),
     odkaz: null,
     zpravy,
