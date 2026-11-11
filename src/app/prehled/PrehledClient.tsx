@@ -1946,6 +1946,60 @@ export function PrehledClient({
     return { ok: true, hodnota: json.odjezd };
   }
 
+  async function ulozDenPrijezdu(
+    row: PrehledRadek,
+    hodnota: string,
+  ): Promise<{ ok: boolean; hodnota?: string }> {
+    const prijezd = hodnota.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(prijezd)) return { ok: false };
+    if (ukazka) {
+      setRadky((prev) =>
+        prev.map((r) =>
+          r.rezervace === row.rezervace
+            ? {
+                ...r,
+                prijezd,
+                termin: terminText(prijezd, r.odjezd),
+                pobytText: pobytText(r.noci, r.osob),
+              }
+            : r,
+        ),
+      );
+      return { ok: true, hodnota: prijezd };
+    }
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'den-prijezdu', prijezd }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      prijezd?: string;
+      noci?: number | null;
+      error?: string;
+    } | null;
+    if (!res.ok || !json?.ok || !json.prijezd) {
+      if (json?.error) setHlaska(json.error);
+      return { ok: false };
+    }
+    const noci = json.noci ?? null;
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              prijezd: json.prijezd!,
+              noci,
+              termin: terminText(json.prijezd!, r.odjezd),
+              pobytText: pobytText(noci, r.osob),
+              poplatekText: textPoplatku(r.poplatek, noci, r.osob),
+            }
+          : r,
+      ),
+    );
+    return { ok: true, hodnota: json.prijezd };
+  }
+
   async function ulozPin(row: PrehledRadek, hodnota: string): Promise<{ ok: boolean; hodnota?: string }> {
     const pin = hodnota.trim();
     if (!pin) return { ok: false };
@@ -4015,6 +4069,13 @@ export function PrehledClient({
                   onToggle={() => prepni('zmeny')}
                 >
                   <PoleSUlozenim
+                    key={`${row.rezervace}-den-prijezdu:${row.prijezd || ''}`}
+                    label="Den příjezdu"
+                    hodnota={row.prijezd || ''}
+                    vstup={{ type: 'date' }}
+                    onUloz={(text) => ulozDenPrijezdu(row, text)}
+                  />
+                  <PoleSUlozenim
                     key={`${row.rezervace}-den-odjezdu:${row.odjezd || ''}`}
                     label="Den odjezdu"
                     hodnota={row.odjezd || ''}
@@ -4096,10 +4157,11 @@ export function PrehledClient({
                     </div>
                   ) : null}
                   <p className="ph-hlaska">
-                    Den odjezdu drží průvodce. PIN se ukáže v průvodci (na Klice ručně). Domluvená
-                    částka i „Host už zaplatil“ jdou do Plateb. Bez nového e-mailu, Better Hotel to
-                    nepřepíše. „Bez check-inu“ vypne červené čekání na online check-in. Individuální
-                    příjezd po 21:00 sem patří, na kartě nahoře ho neukazujeme.
+                    Den příjezdu a odjezdu drží kartu i kontrolu obsazenosti. PIN se ukáže v průvodci
+                    (na Klice ručně). Domluvená částka i „Host už zaplatil“ jdou do Plateb. Bez
+                    nového e-mailu hostovi. Co tu uložíte ručně, Better Hotel nepřepíše. „Bez
+                    check-inu“ vypne červené čekání na online check-in. Individuální příjezd po
+                    21:00 sem patří, na kartě nahoře ho neukazujeme.
                   </p>
                 </DetailSekce>
                 <DetailSekce

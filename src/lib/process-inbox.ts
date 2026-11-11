@@ -595,7 +595,21 @@ function udajeInterni(u: InterniUdaje, stav: RezervaceStav, prev?: RezervaceReco
   if (veta && stav === 'bez_checkinu') {
     data.duvody = [duvod('neuplne', `Čeká na online check-in. ${veta}`)];
   }
-  return vynechRucni(prev, data, 'rezervace');
+  const out = vynechRucni(prev, data, 'rezervace');
+  // Modifikace: termín z BH vždy přepíše kartu (i když byl dřív ruční).
+  if (u.druh === 'zmena') {
+    if (u.prijezd) out.prijezd = u.prijezd;
+    if (u.odjezd) out.odjezd = u.odjezd;
+    if (u.noci) out.noci = u.noci;
+    else if (u.prijezd && u.odjezd) {
+      const noci = nightsBetween(u.prijezd, u.odjezd);
+      if (noci) out.noci = noci;
+    }
+    if (out.navrhy?.length) {
+      out.navrhy = out.navrhy.filter((n) => n.pole !== 'prijezd' && n.pole !== 'odjezd' && n.pole !== 'noci');
+    }
+  }
+  return out;
 }
 
 function historieInterni(u: InterniUdaje, stav: RezervaceStav, odeslano: boolean): string {

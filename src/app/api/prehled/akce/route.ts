@@ -103,6 +103,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     jazyk?: string;
     pin?: string;
     cas?: string;
+    kc?: string | number;
     url?: string;
     cislo?: string;
     ktery?: string;
@@ -149,6 +150,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'cas' &&
       akce !== 'cas-odjezdu' &&
       akce !== 'den-odjezdu' &&
+      akce !== 'den-prijezdu' &&
       akce !== 'pin' &&
       akce !== 'dohoda' &&
       akce !== 'uz-zaplaceno' &&
@@ -751,6 +753,26 @@ export async function POST(request: Request): Promise<NextResponse> {
     await store.setRezervace(id, dalsi);
     return NextResponse.json(
       { ok: true, odjezd, noci, termin: `${rec.prijezd} – ${odjezd}` },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'den-prijezdu') {
+    const prijezd = (body?.prijezd || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(prijezd)) return chyba(400, 'Datum je ve špatném tvaru.');
+    if (!rec.odjezd) return chyba(400, 'Nejdřív doplňte den odjezdu.');
+    const noci = nightsBetween(prijezd, rec.odjezd);
+    if (noci == null) return chyba(400, 'Příjezd musí být před odjezdem.');
+    const bylo = rec.prijezd || 'žádný';
+    const dalsi = zapisMajitele(
+      rec,
+      ['prijezd', 'noci'],
+      { prijezd, noci },
+      bylo === prijezd ? '' : `Den příjezdu ${bylo} → ${prijezd}`,
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json(
+      { ok: true, prijezd, noci, termin: `${prijezd} – ${rec.odjezd}` },
       { headers: noStore },
     );
   }

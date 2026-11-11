@@ -439,6 +439,51 @@ Original-Message-ID: <x>
     expect(poRezervaci?.navrhy.some((n) => n.pole === 'telefonRezervace')).toBe(true);
   });
 
+  it('modifikace přepíše termín i když byl ruční', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const { prazdnaRezervace } = await import('./store');
+    const { zapisMajitele } = await import('./rucni-pole');
+    const store = tmpStore();
+    const id = '100000010';
+    const zaklad = zapisMajitele(
+      {
+        ...prazdnaRezervace(id, '2026-10-14T08:00:00.000Z'),
+        stav: 'odeslano',
+        apartman: 'V1',
+        prijezd: '2026-11-20',
+        odjezd: '2026-11-25',
+        noci: 5,
+        osob: 2,
+        jazyk: 'cs',
+        jmeno: 'Jana Malá',
+        emailHosta: 'jana.mala@example.com',
+        accessPin: '1234',
+      },
+      ['prijezd', 'odjezd', 'noci'],
+      {},
+      'Termín uložen',
+    );
+    await store.setRezervace(id, zaklad);
+    const item = await processOneMail(
+      interni({
+        messageId: 'modifikace-termin@test',
+        subject: `Vivien Apartmens Character and Atmosphere | Modifikace rezervace - #${id}`,
+        text: TELO.replaceAll('100000001', id)
+          .replace('20.11.2026', '20.11.2026')
+          .replace('22.11.2026', '22.11.2026'),
+      }),
+      store,
+    );
+    expect(item.status).toBe('odeslano');
+    const po = await store.getRezervace(id);
+    expect(po?.prijezd).toBe('2026-11-20');
+    expect(po?.odjezd).toBe('2026-11-22');
+    expect(po?.noci).toBe(2);
+    expect(po?.navrhy.some((n) => n.pole === 'prijezd' || n.pole === 'odjezd' || n.pole === 'noci')).toBe(false);
+    expect(po?.historie.some((h) => h.co.startsWith('Rezervace se změnila'))).toBe(true);
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+  });
+
   it('zrušení zastaví odeslání průvodce', async () => {
     const { processOneMail } = await import('./process-inbox');
     const store = tmpStore();
