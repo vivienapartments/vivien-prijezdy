@@ -31,19 +31,20 @@ export const GUIDE_LANGS: GuideLang[] = [
 ];
 export const APT_IDS: AptId[] = ['V1', 'V2', 'V3', 'V4', 'V5'];
 
+/** Názvy pro majitele v přehledu (česky, bez cizího písma). */
 export const LANG_LABELS: Record<GuideLang, string> = {
   cs: 'Čeština',
-  en: 'English',
-  de: 'Deutsch',
-  pl: 'Polski',
-  uk: 'Українська',
-  'zh-Hant': '繁體中文',
-  es: 'Español',
-  fr: 'Français',
-  it: 'Italiano',
-  pt: 'Português',
-  sv: 'Svenska',
-  hu: 'Magyar',
+  en: 'Angličtina',
+  de: 'Němčina',
+  pl: 'Polština',
+  uk: 'Ukrajinština',
+  'zh-Hant': 'Čínština (tradiční)',
+  es: 'Španělština',
+  fr: 'Francouzština',
+  it: 'Italština',
+  pt: 'Portugalština',
+  sv: 'Švédština',
+  hu: 'Maďarština',
 };
 
 export interface AptRecord {

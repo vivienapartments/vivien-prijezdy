@@ -4,7 +4,9 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   jePlatneIco,
   normalizujIco,
+  normalizujIcoZahranici,
   shrnutiFaktury,
+  vychoziTypFaktury,
   type AresVysledek,
   type FakturaTyp,
   type FakturaUdaje,
@@ -30,15 +32,28 @@ type FormularProps = {
   email?: string;
   /** Náhled. Nic se nehledá ani neukládá. */
   cteni?: boolean;
+  /** Když majitel vyplňuje v přehledu česky, ale výchozí typ bere z jazyka hosta. */
+  vychoziTyp?: FakturaTyp;
   ares: (ico: string) => Promise<AresVysledek | null>;
   onUlozit: (vstup: FakturaVstup) => Promise<VysledekUlozeni>;
   onZrusit?: () => void;
 };
 
 /** Formulář na fakturu. Používá ho host v průvodci i majitel v přehledu. */
-export function FakturaFormular({ lang, initial, email = '', cteni = false, ares, onUlozit, onZrusit }: FormularProps) {
+export function FakturaFormular({
+  lang,
+  initial,
+  email = '',
+  cteni = false,
+  vychoziTyp,
+  ares,
+  onUlozit,
+  onZrusit,
+}: FormularProps) {
   const tt = (tab: Texty) => textFaktura(tab, lang);
-  const [typ, setTyp] = useState<FakturaTyp>(initial?.typ ?? (lang === 'cs' ? 'cz' : 'zahranici'));
+  const [typ, setTyp] = useState<FakturaTyp>(
+    initial?.typ ?? vychoziTyp ?? vychoziTypFaktury(lang),
+  );
   const [ico, setIco] = useState(initial?.ico ?? '');
   const [nazev, setNazev] = useState(initial?.nazev ?? '');
   const [adresa, setAdresa] = useState(initial?.adresa ?? '');
@@ -102,7 +117,7 @@ export function FakturaFormular({ lang, initial, email = '', cteni = false, ares
     try {
       const chyba = await onUlozit({
         typ,
-        ico: typ === 'cz' ? icoCisla : '',
+        ico: typ === 'cz' ? icoCisla : normalizujIcoZahranici(ico),
         nazev,
         adresa,
         zeme: typ === 'zahranici' ? zeme : '',
@@ -128,22 +143,25 @@ export function FakturaFormular({ lang, initial, email = '', cteni = false, ares
   const rucne = typ === 'zahranici' || stavAres === 'ne';
 
   return (
-    <div className="pv-prani__form pv-faktura__form">
-      <fieldset className="pv-faktura__typ" disabled={cteni}>
-        <label>
-          <input type="radio" name="faktura-typ" checked={typ === 'cz'} onChange={() => setTyp('cz')} />
+    <div className="pv-prani__form pv-faktura__form" style={{ hyphens: 'manual' }}>
+      <div className="pv-faktura__typ" role="group">
+        <button
+          type="button"
+          className={`pv-faktura__typ-btn${typ === 'cz' ? ' is-on' : ''}`}
+          disabled={cteni}
+          onClick={() => setTyp('cz')}
+        >
           {tt(FT.FAKTURA_TYP_CZ)}
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="faktura-typ"
-            checked={typ === 'zahranici'}
-            onChange={() => setTyp('zahranici')}
-          />
+        </button>
+        <button
+          type="button"
+          className={`pv-faktura__typ-btn${typ === 'zahranici' ? ' is-on' : ''}`}
+          disabled={cteni}
+          onClick={() => setTyp('zahranici')}
+        >
           {tt(FT.FAKTURA_TYP_ZAHRANICI)}
-        </label>
-      </fieldset>
+        </button>
+      </div>
 
       {typ === 'cz' ? (
         <>
@@ -207,6 +225,17 @@ export function FakturaFormular({ lang, initial, email = '', cteni = false, ares
               value={zeme}
               disabled={cteni}
               onChange={(e) => setZeme(e.target.value)}
+            />
+          </label>
+          <label>
+            {tt(FT.FAKTURA_ICO_ZAHRANICI)}
+            <input
+              type="text"
+              autoComplete="off"
+              maxLength={30}
+              value={ico}
+              disabled={cteni}
+              onChange={(e) => setIco(e.target.value)}
             />
           </label>
           <label>
@@ -350,7 +379,11 @@ export function FakturaHosta({ token, lang, cteni = false, initial = null }: Pro
   ) : null;
 
   return (
-    <div className={`pv-prani pv-prani--v-ose pv-faktura${jenCteni ? ' pv-prani--cteni' : ''}`} lang={lang}>
+    <div
+      className={`pv-prani pv-prani--v-ose pv-faktura${jenCteni ? ' pv-prani--cteni' : ''}`}
+      lang={lang}
+      style={{ hyphens: 'manual' }}
+    >
       {faktura?.hotovo ? (
         <>
           <p className="pv-prani__uvod">{tt(FT.FAKTURA_VYRIZENO)}</p>
@@ -369,18 +402,15 @@ export function FakturaHosta({ token, lang, cteni = false, initial = null }: Pro
           ) : null}
         </>
       ) : (
-        <>
-          <p className="pv-prani__uvod">{tt(FT.FAKTURA_VETA_SBALENA)}</p>
-          <FakturaFormular
-            lang={lang}
-            initial={faktura}
-            email={email}
-            cteni={jenCteni}
-            ares={ares}
-            onUlozit={ulozit}
-            onZrusit={faktura ? () => setUprava(false) : undefined}
-          />
-        </>
+        <FakturaFormular
+          lang={lang}
+          initial={faktura}
+          email={email}
+          cteni={jenCteni}
+          ares={ares}
+          onUlozit={ulozit}
+          onZrusit={faktura ? () => setUprava(false) : undefined}
+        />
       )}
     </div>
   );

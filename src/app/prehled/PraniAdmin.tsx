@@ -3,8 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
+import { textZminujeFakturu } from '@/lib/faktura';
+import { FAKTURA_MAJITEL, FAKTURA_PRANI_NAPOVEDA, FAKTURA_SLOVA } from '@/lib/faktura-texty';
 import type { KdoPrani, VlaknoPrani, ZpravaPrani } from '@/lib/prani';
 import type { PraniRadekPrehled } from '@/lib/prani';
+import type { GuideLang } from '@/lib/types';
 function casKratky(iso: string): string {
   try {
     return new Intl.DateTimeFormat('cs-CZ', {
@@ -88,6 +91,8 @@ export function PraniDetail({
   ukazka,
   wa,
   userAgent = '',
+  jazyk = 'cs',
+  fakturaZadana = false,
 }: {
   rezervace: string;
   kdo: KdoPrani;
@@ -95,6 +100,8 @@ export function PraniDetail({
   ukazka?: boolean;
   wa?: string | null;
   userAgent?: string;
+  jazyk?: GuideLang;
+  fakturaZadana?: boolean;
 }) {
   const router = useRouter();
   const [vlakna, setVlakna] = useState<VlaknoPrani[]>([]);
@@ -203,6 +210,10 @@ export function PraniDetail({
         const stav =
           v.stav === 'nove' ? 'Nové' : v.stav === 'precteno' ? 'Přečtené' : 'Vyřízené';
         const waBox = waPoOdpovedi?.vlakno === v.id ? waPoOdpovedi : null;
+        const fakturaVeVlakne =
+          !fakturaZadana &&
+          zs.some((z) => z.autor === 'host' && textZminujeFakturu(z.text, FAKTURA_SLOVA));
+        const napovedaFaktury = FAKTURA_PRANI_NAPOVEDA[jazyk] || FAKTURA_PRANI_NAPOVEDA.en;
         return (
           <div key={v.id} className="ph-prani-detail__vlakno" id={`ph-prani-${v.id}`}>
             <button type="button" className="ph-prani-detail__hlava" onClick={() => setOtevrene(open ? null : v.id)}>
@@ -264,6 +275,29 @@ export function PraniDetail({
                       >
                         Odeslat odpověď
                       </button>
+                      {fakturaVeVlakne ? (
+                        <button
+                          type="button"
+                          disabled={cekam}
+                          onClick={() => {
+                            void (async () => {
+                              await akce(
+                                {
+                                  akce: 'prani-odpoved',
+                                  vlakno: v.id,
+                                  id: noveId(),
+                                  text: napovedaFaktury,
+                                  kdo,
+                                },
+                                true,
+                              );
+                              await akce({ akce: 'prani-vyrizeno', vlakno: v.id, kdo });
+                            })();
+                          }}
+                        >
+                          {FAKTURA_MAJITEL.prani_tlacitko}
+                        </button>
+                      ) : null}
                       {v.stav === 'nove' ? (
                         <button
                           type="button"

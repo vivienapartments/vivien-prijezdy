@@ -1,19 +1,84 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FakturaFormular, type VysledekUlozeni } from '@/components/FakturaHosta';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import {
   coChybiNaFakture,
   fakturyKeVystaveni,
   fakturyPozdeji,
+  sestavZpravuFaktury,
+  vychoziTypFaktury,
   type AresVysledek,
   type FakturaUdaje,
   type FakturaVstup,
 } from '@/lib/faktura';
-import { FAKTURA_MAJITEL } from '@/lib/faktura-texty';
+import {
+  FAKTURA_MAJITEL,
+  FAKTURA_ZPRAVA_BEZ_PRUVODCE,
+  FAKTURA_ZPRAVA_HOSTOVI,
+} from '@/lib/faktura-texty';
 import type { PrehledRadek } from '@/lib/prehled';
+import { LANG_LABELS, type GuideLang } from '@/lib/types';
 import { zpravaFakturaDoplnit } from '@/lib/whatsapp-zprava';
+
+function jazykZpravy(row: PrehledRadek): GuideLang {
+  return (row.jazyk as GuideLang) || 'cs';
+}
+
+function zpravaProHosta(row: PrehledRadek, checkinUrl?: string | null) {
+  const lang = jazykZpravy(row);
+  return sestavZpravuFaktury(
+    FAKTURA_ZPRAVA_HOSTOVI[lang] || FAKTURA_ZPRAVA_HOSTOVI.en,
+    FAKTURA_ZPRAVA_BEZ_PRUVODCE[lang] || FAKTURA_ZPRAVA_BEZ_PRUVODCE.en,
+    row.odkaz,
+    checkinUrl ?? row.checkinUrl,
+  );
+}
+
+/** Tlačítka „Zpráva o faktuře“ + WhatsApp na kartě. */
+export function FakturaZpravaTlacitka({
+  row,
+  checkinUrl,
+  userAgent,
+  onHlaska,
+}: {
+  row: PrehledRadek;
+  checkinUrl?: string | null;
+  userAgent: string;
+  onHlaska: (text: string) => void;
+}) {
+  const lang = jazykZpravy(row);
+  const vysledek = zpravaProHosta(row, checkinUrl);
+  const wa = row.telefonWa || row.jinyTelefonWa;
+
+  function kopiruj() {
+    if (!vysledek.ok) {
+      onHlaska(FAKTURA_MAJITEL.chybi_checkin_odkaz);
+      return;
+    }
+    void navigator.clipboard.writeText(vysledek.text).then(
+      () => onHlaska(FAKTURA_MAJITEL.zkopirovano),
+      () => onHlaska(vysledek.text),
+    );
+  }
+
+  return (
+    <div className="ph-faktura__zprava">
+      <p className="ph-faktura__jazyk">Jazyk zprávy: {LANG_LABELS[lang]}</p>
+      <span className="ph-odjezdy__akce">
+        <button type="button" className="ph-kopie" onClick={kopiruj}>
+          {FAKTURA_MAJITEL.tlacitko_zprava}
+        </button>
+        {vysledek.ok && wa ? (
+          <TlacitkoWhatsApp wa={wa} zprava={vysledek.text} userAgent={userAgent}>
+            {FAKTURA_MAJITEL.tlacitko_whatsapp}
+          </TlacitkoWhatsApp>
+        ) : null}
+      </span>
+    </div>
+  );
+}
 
 type ZmenaFaktury = (rezervace: string, faktura: FakturaUdaje | null) => void;
 
@@ -43,7 +108,7 @@ async function posliAkci(rezervace: string, akce: string, extra: Record<string, 
 function pole(f: FakturaUdaje): { nazev: string; hodnota: string }[] {
   return [
     { nazev: 'Název', hodnota: f.nazev || '' },
-    { nazev: 'IČO', hodnota: f.ico || '' },
+    { nazev: f.typ === 'zahranici' ? 'Registrační číslo' : 'IČO', hodnota: f.ico || '' },
     { nazev: 'DIČ', hodnota: f.dic || '' },
     { nazev: 'Adresa', hodnota: f.adresa || '' },
     { nazev: 'Země', hodnota: f.zeme || '' },
@@ -150,12 +215,22 @@ export function FakturyDomu({
   radky,
   dnes,
   onOtevriKartu,
+  vychoziOtevreno = false,
   ...spolecne
-}: Spolecne & { radky: PrehledRadek[]; dnes: string; onOtevriKartu: (rezervace: string) => void }) {
-  const [otevreno, setOtevreno] = useState(false);
+}: Spolecne & {
+  radky: PrehledRadek[];
+  dnes: string;
+  onOtevriKartu: (rezervace: string) => void;
+  vychoziOtevreno?: boolean;
+}) {
+  const [otevreno, setOtevreno] = useState(vychoziOtevreno);
   const [pozdejiOtevreno, setPozdejiOtevreno] = useState(false);
   const keVystaveni = fakturyKeVystaveni(radky, dnes);
   const pozdeji = fakturyPozdeji(radky, dnes);
+
+  useEffect(() => {
+    if (vychoziOtevreno) setOtevreno(true);
+  }, [vychoziOtevreno]);
 
   return (
     <>
@@ -217,9 +292,17 @@ export function FakturyDomu({
   );
 }
 
-/** Štítek na kartě hosta. Jen když faktura čeká. */
-export function FakturaStitek({ faktura, onClick }: { faktura: FakturaUdaje | null; onClick: () => void }) {
-  if (!faktura || faktura.hotovo) return null;
+/** Štítek na kartě hosta. Jen když faktura čeká. U zrušené rezervace ne. */
+export function FakturaStitek({
+  faktura,
+  zruseno = false,
+  onClick,
+}: {
+  faktura: FakturaUdaje | null;
+  zruseno?: boolean;
+  onClick: () => void;
+}) {
+  if (zruseno || !faktura || faktura.hotovo) return null;
   return (
     <button type="button" className="ph-prani-stitek" onClick={onClick}>
       {FAKTURA_MAJITEL.stitek_karty}
@@ -228,11 +311,16 @@ export function FakturaStitek({ faktura, onClick }: { faktura: FakturaUdaje | nu
 }
 
 /** Sekce Faktura v detailu karty. Majitel tu údaje zadá nebo upraví. */
-export function FakturaDetail({ row, ...spolecne }: Spolecne & { row: PrehledRadek }) {
-  const { ukazka, onZmena, onHlaska } = spolecne;
+export function FakturaDetail({
+  row,
+  checkinUrl,
+  ...spolecne
+}: Spolecne & { row: PrehledRadek; checkinUrl?: string | null }) {
+  const { ukazka, userAgent, onZmena, onHlaska } = spolecne;
   const [uprava, setUprava] = useState(false);
   const [cekam, setCekam] = useState(false);
   const faktura = row.faktura;
+  const hostJazyk = jazykZpravy(row);
 
   async function ares(ico: string): Promise<AresVysledek | null> {
     if (ukazka) return null;
@@ -284,11 +372,18 @@ export function FakturaDetail({ row, ...spolecne }: Spolecne & { row: PrehledRad
   if (uprava || !faktura) {
     return (
       <div className="ph-faktura">
+        <FakturaZpravaTlacitka
+          row={row}
+          checkinUrl={checkinUrl}
+          userAgent={userAgent}
+          onHlaska={onHlaska}
+        />
         {uprava ? (
           <FakturaFormular
             lang="cs"
             initial={faktura}
             email={row.email.includes('@') ? row.email : ''}
+            vychoziTyp={vychoziTypFaktury(hostJazyk)}
             ares={ares}
             onUlozit={ulozit}
             onZrusit={() => setUprava(false)}
@@ -304,6 +399,12 @@ export function FakturaDetail({ row, ...spolecne }: Spolecne & { row: PrehledRad
 
   return (
     <div className="ph-faktura">
+      <FakturaZpravaTlacitka
+        row={row}
+        checkinUrl={checkinUrl}
+        userAgent={userAgent}
+        onHlaska={onHlaska}
+      />
       <FakturaObsah row={row} faktura={faktura} {...spolecne} />
       <span className="ph-odjezdy__akce">
         {faktura.hotovo ? null : (

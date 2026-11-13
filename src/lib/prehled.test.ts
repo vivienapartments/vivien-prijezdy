@@ -592,6 +592,28 @@ describe('tlačítka v přehledu', () => {
     expect(s.plan.map((h) => h.jmeno)).toEqual(['Dřív', 'Pozdě']);
   });
 
+  it('souhrn dne nepočítá zrušené rezervace', () => {
+    const ok = radekZRezervace({
+      ...prazdnaRezervace('ok', '2026-10-01T00:00:00.000Z'),
+      prijezd: '2026-10-11',
+      odjezd: '2026-10-12',
+      jmeno: 'Platný',
+      casPrijezdu: '14:00',
+      stav: 'odeslano',
+    });
+    const zrus = radekZRezervace({
+      ...prazdnaRezervace('z', '2026-10-01T00:00:00.000Z'),
+      prijezd: '2026-10-11',
+      odjezd: '2026-10-12',
+      jmeno: 'Joachim Born',
+      casPrijezdu: null,
+      stav: 'zruseno',
+    });
+    const s = souhrnDne([ok, zrus], '2026-10-11');
+    expect(s.pocet).toBe(1);
+    expect(s.plan.map((h) => h.jmeno)).toEqual(['Platný']);
+  });
+
   it('výběr dnů: stítky, ↓↑⌀ a barevné tečky', () => {
     expect(dnyVyberu('2026-10-29')).toEqual([
       '2026-10-29',

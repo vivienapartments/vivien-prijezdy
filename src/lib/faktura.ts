@@ -28,12 +28,25 @@ type RecFaktury = {
 
 const MAX_POLE = 200;
 const MAX_POZNAMKA = 500;
+const MAX_ICO_ZAHRANICI = 30;
 
 export function normalizujIco(raw: string): string {
   return String(raw || '')
     .replace(/\s+/g, '')
     .replace(/\D/g, '')
     .slice(0, 8);
+}
+
+/** Registrační číslo zahraniční firmy (bez kontrolního součtu). */
+export function normalizujIcoZahranici(raw: string): string {
+  return String(raw || '')
+    .trim()
+    .slice(0, MAX_ICO_ZAHRANICI);
+}
+
+/** Výchozí typ firmy podle jazyka průvodce. */
+export function vychoziTypFaktury(lang: string | null | undefined): FakturaTyp {
+  return lang === 'cs' ? 'cz' : 'zahranici';
 }
 
 /** Kontrolní součet českého IČO (8 číslic). */
@@ -91,7 +104,7 @@ export function sestavFakturu(
   prev: FakturaUdaje | null,
 ): { ok: true; faktura: FakturaUdaje } | { ok: false; duvod: 'chybi_ico' | 'chybi_udaje' } {
   const typ: FakturaTyp = vstup.typ === 'zahranici' ? 'zahranici' : 'cz';
-  const ico = normalizujIco(vstup.ico || '');
+  const ico = typ === 'cz' ? normalizujIco(vstup.ico || '') : normalizujIcoZahranici(vstup.ico || '');
   const nazev = orez(vstup.nazev, MAX_POLE);
   const adresa = orez(vstup.adresa, MAX_POLE);
   const zeme = orez(vstup.zeme, MAX_POLE);
@@ -170,8 +183,12 @@ export function fakturaCeka(rec: Pick<RecFaktury, 'faktura'>): boolean {
   return Boolean(rec.faktura && !rec.faktura.hotovo);
 }
 
-/** Odjezd dnes nebo dřív. */
-export function fakturaKeVystaveni(rec: Pick<RecFaktury, 'faktura' | 'odjezd'>, dnes: string): boolean {
+/** Odjezd dnes nebo dřív. Zrušené se v přehledu neukazují (záznam v úložišti zůstane). */
+export function fakturaKeVystaveni(
+  rec: Pick<RecFaktury, 'faktura' | 'odjezd' | 'stav'>,
+  dnes: string,
+): boolean {
+  if (rec.stav === 'zruseno') return false;
   if (!fakturaCeka(rec) || !rec.odjezd) return false;
   return rec.odjezd <= dnes;
 }
@@ -243,4 +260,34 @@ export function coChybiNaFakture(f: FakturaUdaje | null | undefined): string[] {
   if (f.typ === 'zahranici' && !f.zeme) out.push('země');
   if (!f.email) out.push('e-mail');
   return out;
+}
+
+export type ZpravaFakturyVysledek =
+  | { ok: true; text: string; druh: 'pruvodce' | 'checkin' }
+  | { ok: false; duvod: 'chybi_checkin_odkaz' };
+
+/** Sestaví zprávu o faktuře: s průvodcem, nebo s check-inem, nebo chyba. */
+export function sestavZpravuFaktury(
+  sablonaPruvodce: string,
+  sablonaCheckin: string,
+  odkazPruvodce: string | null | undefined,
+  checkinUrl: string | null | undefined,
+): ZpravaFakturyVysledek {
+  const pruvodce = String(odkazPruvodce || '').trim();
+  if (pruvodce) {
+    const odkaz = pruvodce.includes('#') ? pruvodce : `${pruvodce}#faktura`;
+    return { ok: true, text: sablonaPruvodce.replace(/\{odkaz\}/g, odkaz), druh: 'pruvodce' };
+  }
+  const checkin = String(checkinUrl || '').trim();
+  if (checkin) {
+    return { ok: true, text: sablonaCheckin.replace(/\{odkaz\}/g, checkin), druh: 'checkin' };
+  }
+  return { ok: false, duvod: 'chybi_checkin_odkaz' };
+}
+
+/** Text přání / zprávy zmiňuje fakturu (bez ohledu na velikost písmen). */
+export function textZminujeFakturu(text: string, slova: readonly string[]): boolean {
+  const t = String(text || '').toLowerCase();
+  if (!t) return false;
+  return slova.some((s) => t.includes(String(s).toLowerCase()));
 }

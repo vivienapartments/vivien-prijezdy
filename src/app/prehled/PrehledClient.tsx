@@ -261,16 +261,22 @@ function idZUpozorneniUrl(url: string): string | null {
 }
 
 function zalozkaZUpozorneniUrl(url: string): Zalozka | null {
-  const m = (url || '').match(/[?&]zalozka=(prijezdy|dnes|dluhy|hledat)\b/);
+  const m = (url || '').match(/[?&]zalozka=(prijezdy|dnes|dluhy|hledat|faktury)\b/);
   if (!m) return null;
-  if (m[1] === 'dnes') return 'prijezdy';
+  if (m[1] === 'dnes' || m[1] === 'faktury') return 'prijezdy';
   return m[1] as Zalozka;
+}
+
+function urlMaFaktury(url: string): boolean {
+  return /[?&]zalozka=faktury\b/.test(url || '') || /#faktury(?:-pozdeji)?\b/.test(url || '');
 }
 
 /** Kotva sekce (pohoda, odjezdy-zitra), ne číslo rezervace. */
 function kotvaZUpozorneniUrl(url: string): string | null {
   const hash = (url || '').split('#')[1]?.split(/[?&]/)[0]?.trim() || '';
-  if (hash === 'pohoda' || hash === 'brana' || hash.startsWith('odjezdy')) return hash;
+  if (hash === 'pohoda' || hash === 'brana' || hash === 'faktury' || hash.startsWith('odjezdy')) {
+    return hash;
+  }
   return null;
 }
 
@@ -449,6 +455,7 @@ export function PrehledClient({
   const [zitraOtevreno, setZitraOtevreno] = useState(false);
   const [casySchvaleniOtevreno, setCasySchvaleniOtevreno] = useState(false);
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
+  const [fakturyFocus, setFakturyFocus] = useState(false);
   const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
   const [videne, setVidene] = useState<Record<string, Record<string, string>> | null>(null);
   const [vybrana, setVybrana] = useState<string | null>(null);
@@ -736,14 +743,35 @@ export function PrehledClient({
       return;
     }
 
+    if (kotva === 'faktury' || urlMaFaktury(url)) {
+      setPohledDomu(true);
+      otevriZalozku('prijezdy');
+      setFakturyFocus(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          try {
+            document.getElementById('faktury')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } catch {
+            /* scroll */
+          }
+        });
+      });
+      return;
+    }
+
     const z = zalozkaZUpozorneniUrl(url);
     if (z) {
       setPohledDomu(true);
       otevriZalozku(z);
+      if (urlMaFaktury(url)) setFakturyFocus(true);
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           try {
-            window.scrollTo(0, 0);
+            if (urlMaFaktury(url)) {
+              document.getElementById('faktury')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+              window.scrollTo(0, 0);
+            }
           } catch {
             /* scroll */
           }
@@ -770,6 +798,19 @@ export function PrehledClient({
       }
       if (id === 'odjezdy-zitra' || id.startsWith('odjezdy')) {
         otevriZitraOdjezdy();
+        return;
+      }
+      if (id === 'faktury' || id === 'faktury-pozdeji') {
+        setPohledDomu(true);
+        setZalozka('prijezdy');
+        setFakturyFocus(true);
+        requestAnimationFrame(() => {
+          try {
+            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } catch {
+            /* scroll */
+          }
+        });
         return;
       }
       if (id === 'brana') return;
@@ -3361,7 +3402,11 @@ export function PrehledClient({
                   onClick={() => otevriPrani(row.rezervace)}
                 />
               ) : null}
-              <FakturaStitek faktura={row.faktura} onClick={() => otevriFakturu(row.rezervace)} />
+              <FakturaStitek
+                faktura={row.faktura}
+                zruseno={row.stav === 'zruseno'}
+                onClick={() => otevriFakturu(row.rezervace)}
+              />
               {kontaktNahoreBlok}
               <div className="ph-nova-dlazdice">
                 {predanoKdy ? (
@@ -4385,17 +4430,28 @@ export function PrehledClient({
                     ukazka={ukazka}
                     wa={row.telefonWa || row.jinyTelefonWa}
                     userAgent={userAgent}
+                    jazyk={jazykRadku(row)}
+                    fakturaZadana={Boolean(row.faktura)}
                   />
                 </DetailSekce>
 
                 <DetailSekce
                   nazev="Faktura"
-                  drobek={row.faktura ? (row.faktura.hotovo ? 'vyřízeno' : 'čeká na vystavení') : null}
+                  drobek={
+                    row.faktura
+                      ? row.stav === 'zruseno'
+                        ? 'zrušeno'
+                        : row.faktura.hotovo
+                          ? 'vyřízeno'
+                          : 'čeká na vystavení'
+                      : null
+                  }
                   otevreno={jeOtevrena('faktura')}
                   onToggle={() => prepni('faktura')}
                 >
                   <FakturaDetail
                     row={row}
+                    checkinUrl={odkazy[row.rezervace] ?? row.checkinUrl}
                     ukazka={ukazka}
                     userAgent={userAgent}
                     onZmena={zmenFakturu}
@@ -5020,6 +5076,7 @@ export function PrehledClient({
           onZmena={zmenFakturu}
           onHlaska={setHlaska}
           onOtevriKartu={otevriKartu}
+          vychoziOtevreno={fakturyFocus}
         />
       ) : null}
       {pohledDomu && zalozka === 'prijezdy' && hostePohoda.length ? (

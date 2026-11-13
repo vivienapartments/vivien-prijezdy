@@ -152,7 +152,7 @@ describe('načtení přehledu 16. 10. 2026', () => {
     expect(tela).toEqual(['SCAN']);
   });
 
-  it('před 7:30 ranní přehled nesahá do úložiště a před 11:00 se nečte běh odjezdů', async () => {
+  it('před 7:30 ranní přehled nesahá do úložiště a před 9:00 se nečte běh odjezdů', async () => {
     const store = {
       async listRezervace() {
         throw new Error('seznam');
@@ -170,6 +170,7 @@ describe('načtení přehledu 16. 10. 2026', () => {
         throw new Error('beh');
       },
     } as unknown as ProcessStore;
-    expect(await upozorniOdjezdy(dopoledne, casVPraze('2026-10-16', 10, 0), async () => 'nic')).toBe(0);
+    // Beh (faktury) se čte od 9:00. V 8:00 ještě ne.
+    expect(await upozorniOdjezdy(dopoledne, casVPraze('2026-10-16', 8, 0), async () => 'nic')).toBe(0);
   });
 });

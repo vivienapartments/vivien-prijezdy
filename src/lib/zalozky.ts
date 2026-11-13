@@ -181,7 +181,7 @@ export function vychoziZalozka(
   zUrl: string | null,
 ): Zalozka {
   /** Stará záložka Dnešek → Domů (příjezdy). */
-  if (zUrl === 'dnes') return 'prijezdy';
+  if (zUrl === 'dnes' || zUrl === 'faktury') return 'prijezdy';
   if (zUrl === 'prijezdy' || zUrl === 'dluhy' || zUrl === 'hledat') return zUrl;
   if (ulozena && ulozena.den === dnes) {
     if (ulozena.zalozka === 'dnes') return 'prijezdy';

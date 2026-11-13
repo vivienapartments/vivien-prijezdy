@@ -1035,7 +1035,8 @@ export type DenSouhrn = {
 };
 
 export function souhrnDne(rows: PrehledRadek[], den: string, casy: Record<string, string | null> = {}): DenSouhrn {
-  const list = rows.filter((r) => r.prijezd === den);
+  // Zrušené v plánu a počtech ne. Záznam zůstane v úložišti / Hledat.
+  const list = rows.filter((r) => r.prijezd === den && r.stav !== 'zruseno' && !r.nelzeNacist);
   const plan = list
     .map((r) => ({
       rezervace: r.rezervace,

@@ -835,6 +835,13 @@ export function Guide({
                           cteni={praniCteni}
                           onChceOtevrit={setPraniOtevrit}
                           zvyradnitVlakno={praniVlakno}
+                          onOtevriFakturu={() => {
+                            try {
+                              window.location.hash = 'faktura';
+                            } catch {
+                              /* hash */
+                            }
+                          }}
                         />
                       </SbalenaSekce>
                     </div>
@@ -857,6 +864,7 @@ export function Guide({
                         id="faktura-hosta"
                         rezervace={rezervace}
                         vychoziOtevreno={false}
+                        aliasIds={['faktura']}
                         nadpis={`${displayNum}. ${textPrani(FAKTURA_NADPIS, lang)}`}
                         veta={textPrani(FAKTURA_VETA_SBALENA, lang)}
                         expandLabel={tt(TX.ui.expandSection)}

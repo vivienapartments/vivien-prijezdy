@@ -125,7 +125,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       await upozorniMajitele(
         store,
         textTelegramFaktury(sablona, { ...dalsi, faktura: sestava.faktura }),
-        `/prehled#${rez}`,
+        `/prehled?zalozka=faktury#${rez}`,
         { telegram: 'faktura' },
       );
     } catch {

@@ -1969,17 +1969,41 @@ a.pv-phone.pv-phone--zari:focus-visible {
 .pv-faktura__typ {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 1.1rem;
-  margin: 0;
+  gap: 0.45rem;
+  margin: 0 0 0.35rem;
   padding: 0;
   border: 0;
 }
 
-.pv-faktura__typ label {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.4rem;
+.pv-faktura__typ-btn {
+  flex: 1 1 8rem;
+  min-height: 2.4rem;
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 168, 76, 0.55);
+  background: rgba(0, 0, 0, 0.28);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pv-faktura__typ-btn.is-on {
+  background: #c9a84c;
+  border-color: #c9a84c;
+  color: #1c1712;
+  font-weight: 600;
+}
+
+.pv-faktura__typ-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.pv-faktura__form,
+.pv-faktura__form p,
+.pv-faktura__form label {
+  hyphens: manual;
 }
 
 .pv-faktura__ares {

@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { VlaknoProHosta } from '@/lib/prani';
+import { textZminujeFakturu } from '@/lib/faktura';
+import {
+  FAKTURA_PRANI_NAPOVEDA,
+  FAKTURA_PRANI_OTEVRIT,
+  FAKTURA_SLOVA,
+} from '@/lib/faktura-texty';
 import {
   PRANI_CHYBA,
   PRANI_DOSTUPNOST,
@@ -35,6 +41,8 @@ type Props = {
   onChceOtevrit?: (otevrit: boolean) => void;
   /** Po zavření okna s odpovědí nechat tuhle konverzaci rozbalenou. */
   zvyradnitVlakno?: string | null;
+  /** Host píše o fakturu → otevřít dlaždici faktury. */
+  onOtevriFakturu?: () => void;
 };
 
 type Stav = {
@@ -265,10 +273,13 @@ export function PraniHosta({
   cteni = false,
   onChceOtevrit,
   zvyradnitVlakno = null,
+  onOtevriFakturu,
 }: Props) {
   const tt = (tab: Parameters<typeof textPrani>[0]) => textPrani(tab, lang);
+  const ttF = (tab: Record<GuideLang, string>) => tab[lang] || tab.en;
   const [stav, setStav] = useState<Stav | null>(null);
   const [text, setText] = useState('');
+  const fakturaVTextu = textZminujeFakturu(text, FAKTURA_SLOVA);
   const [odesilam, setOdesilam] = useState(false);
   const [hlaska, setHlaska] = useState('');
   const [otevrene, setOtevrene] = useState<string | null>(null);
@@ -562,6 +573,20 @@ export function PraniHosta({
             onChange={(e) => setText(e.target.value)}
           />
         </label>
+        {fakturaVTextu && onOtevriFakturu ? (
+          <div className="pv-prani__faktura-tip">
+            <p className="pv-prani__muted">{ttF(FAKTURA_PRANI_NAPOVEDA)}</p>
+            <button
+              type="button"
+              onClick={() => {
+                onChceOtevrit?.(false);
+                onOtevriFakturu();
+              }}
+            >
+              {ttF(FAKTURA_PRANI_OTEVRIT)}
+            </button>
+          </div>
+        ) : null}
         <button type="button" disabled={!muzeForm || odesilam || !text.trim()} onClick={() => void odesliNove()}>
           {odesilam ? tt(PRANI_ODESILAM) : tt(PRANI_ODESLAT)}
         </button>

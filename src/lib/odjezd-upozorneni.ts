@@ -74,7 +74,7 @@ async function upozorniFaktury(
       dalsi = { ...dalsi, fakturyPoledne: dnes };
     } else {
       const text = FAKTURA_MAJITEL.telegram_den_odjezdu.replace('{seznam}', seznamFakturProTelegram(dnesni));
-      const jak = await posli(store, text, '/prehled', { telegram: 'faktura' });
+      const jak = await posli(store, text, '/prehled?zalozka=faktury', { telegram: 'faktura' });
       if (jak !== 'nic') {
         dalsi = { ...dalsi, fakturyPoledne: dnes };
         pocet += 1;
@@ -88,7 +88,7 @@ async function upozorniFaktury(
       dalsi = { ...dalsi, fakturyRano: dnes };
     } else {
       const text = FAKTURA_MAJITEL.telegram_pripominka.replace('{seznam}', seznamFakturProTelegram(stare));
-      const jak = await posli(store, text, '/prehled', { telegram: 'faktura' });
+      const jak = await posli(store, text, '/prehled?zalozka=faktury', { telegram: 'faktura' });
       if (jak !== 'nic') {
         dalsi = { ...dalsi, fakturyRano: dnes };
         pocet += 1;

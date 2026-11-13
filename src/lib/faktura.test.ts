@@ -6,8 +6,19 @@ import {
   fakturyVyrizene,
   jePlatneIco,
   normalizujIco,
+  normalizujIcoZahranici,
+  sestavFakturu,
+  sestavZpravuFaktury,
+  textZminujeFakturu,
+  vychoziTypFaktury,
   type FakturaUdaje,
 } from './faktura';
+import {
+  FAKTURA_SLOVA,
+  FAKTURA_ZPRAVA_BEZ_PRUVODCE,
+  FAKTURA_ZPRAVA_HOSTOVI,
+} from './faktura-texty';
+import { GUIDE_LANGS } from './types';
 
 const DNES = '2026-11-11';
 
@@ -55,6 +66,11 @@ describe('faktury k vystavení', () => {
     expect(fakturyPozdeji([rec('Z', '2026-11-20', faktura(), 'zruseno')], DNES)).toEqual([]);
   });
 
+  it('zrušená rezervace zmizí i z faktur k vystavení', () => {
+    expect(fakturyKeVystaveni([rec('Z', '2026-11-09', faktura(), 'zruseno')], DNES)).toEqual([]);
+    expect(fakturyKeVystaveni([rec('Z', DNES, faktura(), 'zruseno')], DNES)).toEqual([]);
+  });
+
   it('hotová faktura zmizí ze seznamů a je mezi vyřízenými', () => {
     expect(fakturyKeVystaveni(list, DNES).some((r) => r.rezervace === 'E')).toBe(false);
     expect(fakturyPozdeji(list, DNES).some((r) => r.rezervace === 'E')).toBe(false);
@@ -85,5 +101,70 @@ describe('co chybí na faktuře', () => {
 
   it('zahraniční firmě chybí i země', () => {
     expect(coChybiNaFakture(faktura({ typ: 'zahranici', nazev: 'X', adresa: 'Y', email: 'a@b.cz' }))).toEqual(['země']);
+  });
+});
+
+describe('zahraniční IČO a zpráva', () => {
+  it('registrační číslo ořízne na 30 znaků bez kontrolního součtu', () => {
+    expect(normalizujIcoZahranici('  SK123  ')).toBe('SK123');
+    expect(normalizujIcoZahranici('x'.repeat(40)).length).toBe(30);
+  });
+
+  it('sestaví zahraniční fakturu s registračním číslem', () => {
+    const v = sestavFakturu(
+      {
+        typ: 'zahranici',
+        ico: 'SK2020123456',
+        nazev: 'Firma',
+        adresa: 'Bratislava',
+        zeme: 'Slovensko',
+      },
+      'host',
+      '2026-11-13T10:00:00.000Z',
+      null,
+    );
+    expect(v.ok).toBe(true);
+    if (v.ok) expect(v.faktura.ico).toBe('SK2020123456');
+  });
+
+  it('výchozí typ podle jazyka', () => {
+    expect(vychoziTypFaktury('cs')).toBe('cz');
+    expect(vychoziTypFaktury('sk')).toBe('zahranici');
+    expect(vychoziTypFaktury('de')).toBe('zahranici');
+  });
+
+  it('zpráva s průvodcem má kotvu #faktura', () => {
+    const v = sestavZpravuFaktury(
+      'Odkaz: {odkaz}',
+      'Check-in: {odkaz}',
+      'https://example.com/abc',
+      'https://checkin.example',
+    );
+    expect(v).toEqual({ ok: true, druh: 'pruvodce', text: 'Odkaz: https://example.com/abc#faktura' });
+  });
+
+  it('bez průvodce použije check-in', () => {
+    const v = sestavZpravuFaktury('A {odkaz}', 'B {odkaz}', null, 'https://checkin.example');
+    expect(v).toEqual({ ok: true, druh: 'checkin', text: 'B https://checkin.example' });
+  });
+
+  it('bez odkazů hlásí chybějící check-in', () => {
+    expect(sestavZpravuFaktury('A {odkaz}', 'B {odkaz}', null, null)).toEqual({
+      ok: false,
+      duvod: 'chybi_checkin_odkaz',
+    });
+  });
+
+  it('text pozná slovo faktura', () => {
+    expect(textZminujeFakturu('Potřebuji fakturu prosím', FAKTURA_SLOVA)).toBe(true);
+    expect(textZminujeFakturu('Need an INVOICE', FAKTURA_SLOVA)).toBe(true);
+    expect(textZminujeFakturu('Dobrý den', FAKTURA_SLOVA)).toBe(false);
+  });
+
+  it('všechny jazyky mají {odkaz} ve zprávách', () => {
+    for (const lang of GUIDE_LANGS) {
+      expect(FAKTURA_ZPRAVA_HOSTOVI[lang]).toContain('{odkaz}');
+      expect(FAKTURA_ZPRAVA_BEZ_PRUVODCE[lang]).toContain('{odkaz}');
+    }
   });
 });
