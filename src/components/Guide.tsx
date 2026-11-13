@@ -553,6 +553,27 @@ export function Guide({
     return out;
   }, [kreslene, ukazPrani]);
   const kontaktIndex = osa.findIndex((p) => p.kind === 'sekce' && p.s.id === 'kontakt');
+  /** Bez vyplněných kroků není Faktura v ose. Ukázat ji nad vstupem, ať funguje #faktura. */
+  const fakturaPredKroky = kreslene.length === 0;
+
+  const renderFakturaDlazdice = (sCislem: number | null) => (
+    <SbalenaSekce
+      id="faktura-hosta"
+      rezervace={rezervace}
+      vychoziOtevreno={false}
+      aliasIds={['faktura']}
+      nadpis={
+        sCislem == null
+          ? textPrani(FAKTURA_NADPIS, lang)
+          : `${sCislem}. ${textPrani(FAKTURA_NADPIS, lang)}`
+      }
+      veta={textPrani(FAKTURA_VETA_SBALENA, lang)}
+      expandLabel={tt(TX.ui.expandSection)}
+      collapseLabel={tt(TX.ui.collapseSection)}
+    >
+      <FakturaHosta token={praniToken} lang={lang} cteni={praniCteni} initial={faktura} />
+    </SbalenaSekce>
+  );
 
   const renderTipsSection = (num: number) => (
     <li
@@ -713,6 +734,11 @@ export function Guide({
         }) ? (
           <DokladyRamecek lang={lang} narodnost={narodnost} />
         ) : null}
+        {fakturaPredKroky ? (
+          <div id="pv-faktura-hosta" className="pv-faktura-pred" lang={lang}>
+            {renderFakturaDlazdice(null)}
+          </div>
+        ) : null}
         {ubytovan || ziveKody ? (
           <>
             <OdjezdRamecek
@@ -859,20 +885,7 @@ export function Guide({
                     <div className="pv-flow__marker" aria-hidden="true">
                       <span className="pv-flow__num">{displayNum}</span>
                     </div>
-                    <div className="pv-flow__card">
-                      <SbalenaSekce
-                        id="faktura-hosta"
-                        rezervace={rezervace}
-                        vychoziOtevreno={false}
-                        aliasIds={['faktura']}
-                        nadpis={`${displayNum}. ${textPrani(FAKTURA_NADPIS, lang)}`}
-                        veta={textPrani(FAKTURA_VETA_SBALENA, lang)}
-                        expandLabel={tt(TX.ui.expandSection)}
-                        collapseLabel={tt(TX.ui.collapseSection)}
-                      >
-                        <FakturaHosta token={praniToken} lang={lang} cteni={praniCteni} initial={faktura} />
-                      </SbalenaSekce>
-                    </div>
+                    <div className="pv-flow__card">{renderFakturaDlazdice(displayNum)}</div>
                   </li>,
                 ];
               }

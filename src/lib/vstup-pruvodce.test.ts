@@ -78,6 +78,24 @@ function html(
 }
 
 describe('průvodce se otevře až po údajích', () => {
+  it('bez kroků je Faktura nad vstupem (kotva #faktura)', () => {
+    const text = html('nic', false);
+    expect(text).toContain('id="pv-faktura-hosta"');
+    expect(text).toContain('pv-faktura-pred');
+    expect(text).toContain('Faktura na firmu');
+    expect(text.indexOf('id="pv-faktura-hosta"')).toBeLessThan(text.indexOf('id="pv-vstup"'));
+    expect(text.split('id="pv-faktura-hosta"').length - 1).toBe(1);
+  });
+
+  it('s kroky je Faktura jen jednou v ose pod WiFi', () => {
+    const text = html('pesky', false);
+    expect(text).toContain('id="pv-wifi"');
+    expect(text).toContain('id="pv-faktura-hosta"');
+    expect(text).not.toContain('pv-faktura-pred');
+    expect(text.split('id="pv-faktura-hosta"').length - 1).toBe(1);
+    expect(text.indexOf('id="pv-wifi"')).toBeLessThan(text.indexOf('id="pv-faktura-hosta"'));
+  });
+
   it('bez času nejsou v HTML další kroky', () => {
     const text = html('nic', false);
     expect(text).toContain('Bez času příjezdu se neubytujete');

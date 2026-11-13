@@ -2023,6 +2023,15 @@ a.pv-phone.pv-phone--zari:focus-visible {
   text-align: left;
 }
 
+.pv-faktura-pred {
+  margin: 0 0 1rem;
+  margin-left: var(--pv-axis-inset);
+  padding: 0.7rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  background: rgba(0, 0, 0, 0.18);
+}
+
 .pv-doklady {
   margin: 0 0 1rem;
   margin-left: var(--pv-axis-inset);
