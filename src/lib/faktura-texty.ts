@@ -15,6 +15,7 @@ export const FAKTURA_NADPIS: T = {
   'it': "Fattura per azienda",
   'pt': "Fatura para empresa",
   'hu': "Számla cégre",
+  'da': "Faktura til virksomhed",
 };
 
 export const FAKTURA_VETA_SBALENA: T = {
@@ -30,6 +31,7 @@ export const FAKTURA_VETA_SBALENA: T = {
   'it': "Vi serve una fattura? Inserite i dati, la emetteremo dopo il vostro soggiorno.",
   'pt': "Precisam de fatura? Indiquem os dados e emitimo-la após a vossa estadia.",
   'hu': "Számlára van szükségük? Adják meg az adatokat, és a tartózkodás után kiállítjuk.",
+  'da': "Har I brug for en faktura? Angiv jeres oplysninger, så udsteder vi den efter opholdet.",
 };
 
 export const FAKTURA_TYP_CZ: T = {
@@ -45,6 +47,7 @@ export const FAKTURA_TYP_CZ: T = {
   'it': "Azienda in Repubblica Ceca",
   'pt': "Empresa na República Checa",
   'hu': "Cseh cég",
+  'da': "Tjekkisk virksomhed",
 };
 
 export const FAKTURA_TYP_ZAHRANICI: T = {
@@ -60,6 +63,7 @@ export const FAKTURA_TYP_ZAHRANICI: T = {
   'it': "Azienda fuori dalla Repubblica Ceca",
   'pt': "Empresa fora da República Checa",
   'hu': "Csehországon kívüli cég",
+  'da': "Virksomhed uden for Tjekkiet",
 };
 
 export const FAKTURA_ICO: T = {
@@ -75,6 +79,7 @@ export const FAKTURA_ICO: T = {
   'it': "Numero azienda (IČO)",
   'pt': "Número da empresa (IČO)",
   'hu': "Cégazonosító (IČO)",
+  'da': "Virksomhedsnummer (IČO)",
 };
 
 export const FAKTURA_ICO_NAPOVEDA: T = {
@@ -90,6 +95,7 @@ export const FAKTURA_ICO_NAPOVEDA: T = {
   'it': "Completeremo nome e indirizzo dal registro delle imprese ceco.",
   'pt': "O nome e a morada são preenchidos a partir do registo comercial checo.",
   'hu': "A nevet és a címet a cseh cégnyilvántartásból töltjük ki.",
+  'da': "Navn og adresse udfylder vi fra det tjekkiske erhvervsregister.",
 };
 
 export const FAKTURA_ARES_NALEZENO: T = {
@@ -105,6 +111,7 @@ export const FAKTURA_ARES_NALEZENO: T = {
   'it': "Abbiamo trovato:",
   'pt': "Encontrámos:",
   'hu': "Ezt találtuk:",
+  'da': "Vi fandt:",
 };
 
 export const FAKTURA_ARES_NENALEZENO: T = {
@@ -120,6 +127,7 @@ export const FAKTURA_ARES_NENALEZENO: T = {
   'it': "Non abbiamo trovato questo numero. Controllatelo o inserite i dati manualmente.",
   'pt': "Não encontrámos este número. Verifiquem-no ou preencham os dados manualmente.",
   'hu': "Ezt a számot nem találtuk. Ellenőrizzék, vagy töltsék ki az adatokat kézzel.",
+  'da': "Vi kunne ikke finde dette nummer. Tjek det eller udfyld oplysningerne manuelt.",
 };
 
 export const FAKTURA_NAZEV: T = {
@@ -135,6 +143,7 @@ export const FAKTURA_NAZEV: T = {
   'it': "Ragione sociale",
   'pt': "Nome da empresa",
   'hu': "Cégnév",
+  'da': "Firmanavn",
 };
 
 export const FAKTURA_ADRESA: T = {
@@ -150,6 +159,7 @@ export const FAKTURA_ADRESA: T = {
   'it': "Indirizzo (via, città, CAP)",
   'pt': "Morada (rua, cidade, código postal)",
   'hu': "Cím (utca, város, irányítószám)",
+  'da': "Adresse (gade, by, postnummer)",
 };
 
 export const FAKTURA_ZEME: T = {
@@ -165,6 +175,7 @@ export const FAKTURA_ZEME: T = {
   'it': "Paese",
   'pt': "País",
   'hu': "Ország",
+  'da': "Land",
 };
 
 export const FAKTURA_DIC: T = {
@@ -180,6 +191,7 @@ export const FAKTURA_DIC: T = {
   'it': "Partita IVA / VAT ID (se l'avete)",
   'pt': "NIF / VAT ID (se tiverem)",
   'hu': "Adószám / VAT ID (ha van)",
+  'da': "Momsnummer (hvis I har et)",
 };
 
 export const FAKTURA_EMAIL: T = {
@@ -195,6 +207,7 @@ export const FAKTURA_EMAIL: T = {
   'it': "E-mail per l'invio della fattura",
   'pt': "E-mail para envio da fatura",
   'hu': "E-mail cím a számlához",
+  'da': "E-mail til fakturaen",
 };
 
 export const FAKTURA_POZNAMKA: T = {
@@ -210,6 +223,7 @@ export const FAKTURA_POZNAMKA: T = {
   'it': "Nota in fattura (ad es. nome del dipendente, numero d'ordine)",
   'pt': "Nota na fatura (p. ex. nome do colaborador, número de encomenda)",
   'hu': "Megjegyzés a számlára (pl. munkatárs neve, rendelésszám)",
+  'da': "Note til fakturaen (f.eks. medarbejderens navn, ordrenummer)",
 };
 
 export const FAKTURA_ODESLAT: T = {
@@ -225,6 +239,7 @@ export const FAKTURA_ODESLAT: T = {
   'it': "Invia i dati",
   'pt': "Enviar dados",
   'hu': "Adatok elküldése",
+  'da': "Send oplysninger",
 };
 
 export const FAKTURA_ULOZENO: T = {
@@ -240,6 +255,7 @@ export const FAKTURA_ULOZENO: T = {
   'it': "Grazie. Emetteremo la fattura al termine del soggiorno e ve la invieremo via e-mail.",
   'pt': "Obrigado. Emitiremos a fatura após a estadia e enviá-la-emos por e-mail.",
   'hu': "Köszönjük. A számlát a tartózkodás után állítjuk ki, és e-mailben elküldjük.",
+  'da': "Tak. Vi udsteder fakturaen efter opholdet og sender den til jer på e-mail.",
 };
 
 export const FAKTURA_UPRAVIT: T = {
@@ -255,6 +271,7 @@ export const FAKTURA_UPRAVIT: T = {
   'it': "Modifica i dati",
   'pt': "Editar dados",
   'hu': "Adatok módosítása",
+  'da': "Rediger oplysninger",
 };
 
 export const FAKTURA_CHYBA: T = {
@@ -270,6 +287,7 @@ export const FAKTURA_CHYBA: T = {
   'it': "Non è stato possibile salvare i dati. Riprovate.",
   'pt': "Não foi possível guardar os dados. Tentem novamente.",
   'hu': "Az adatokat nem sikerült menteni. Kérjük, próbálják újra.",
+  'da': "Vi kunne ikke gemme jeres oplysninger. Prøv igen.",
 };
 
 export const FAKTURA_CHYBI_ICO: T = {
@@ -285,6 +303,7 @@ export const FAKTURA_CHYBI_ICO: T = {
   'it': "Inserite un IČO valido (8 cifre).",
   'pt': "Indiquem um IČO válido (8 dígitos).",
   'hu': "Kérjük, adjanak meg érvényes IČO-t (8 számjegy).",
+  'da': "Angiv et gyldigt virksomhedsnummer (8 cifre).",
 };
 
 export const FAKTURA_CHYBI_UDAJE: T = {
@@ -300,6 +319,7 @@ export const FAKTURA_CHYBI_UDAJE: T = {
   'it': "Inserite ragione sociale, indirizzo e paese.",
   'pt': "Preencham o nome da empresa, a morada e o país.",
   'hu': "Kérjük, adják meg a cégnevet, a címet és az országot.",
+  'da': "Udfyld firmanavn, adresse og land.",
 };
 
 export const FAKTURA_VYRIZENO: T = {
@@ -315,6 +335,7 @@ export const FAKTURA_VYRIZENO: T = {
   'it': "La fattura è stata emessa e inviata al vostro indirizzo e-mail.",
   'pt': "A fatura foi emitida e enviada para o vosso e-mail.",
   'hu': "A számlát kiállítottuk és elküldtük az e-mail címükre.",
+  'da': "Jeres faktura er udstedt og sendt til jeres e-mail.",
 };
 
 export const FAKTURA_ICO_ZAHRANICI: T = {
@@ -330,6 +351,7 @@ export const FAKTURA_ICO_ZAHRANICI: T = {
   'it': "Numero di registrazione dell'azienda (se l'avete)",
   'pt': "Número de registo da empresa (se tiverem)",
   'hu': "Cégjegyzékszám (ha van)",
+  'da': "Virksomhedens registreringsnummer (hvis I har et)",
 };
 
 export const FAKTURA_PRANI_NAPOVEDA: T = {
@@ -345,6 +367,7 @@ export const FAKTURA_PRANI_NAPOVEDA: T = {
   'it': "Vi serve una fattura? Inserite i dati nella sezione Fattura per azienda.",
   'pt': "Precisam de fatura? Indiquem os dados na secção Fatura para empresa.",
   'hu': "Számlára van szükségük? Adják meg az adatokat a Számla cégre résznél.",
+  'da': "Har I brug for en faktura? Angiv jeres oplysninger i afsnittet Faktura til virksomhed.",
 };
 
 export const FAKTURA_PRANI_OTEVRIT: T = {
@@ -360,6 +383,7 @@ export const FAKTURA_PRANI_OTEVRIT: T = {
   'it': "Apri fattura",
   'pt': "Abrir fatura",
   'hu': "Számla megnyitása",
+  'da': "Åbn faktura",
 };
 
 export const FAKTURA_MAJITEL = {
@@ -399,6 +423,7 @@ export const FAKTURA_ZPRAVA_HOSTOVI: T = {
   'it': "Buongiorno,\n\nvi chiediamo gentilmente di inserire la richiesta di fattura direttamente nella vostra guida personale all'arrivo, nella sezione «Fattura per azienda»:\n{odkaz}\n\nPer le aziende ceche basta il numero IČO, il resto lo completiamo noi.\n\nPer i nostri ospiti abbiamo creato un sistema tutto nostro che ci aiuta a organizzare con ordine tutte le richieste. Alcune ci arrivano molto prima del soggiorno, perciò per noi è importante averle tutte registrate in un unico posto.\n\nUna volta inserita la richiesta nella guida, il sistema la registra automaticamente e ce la ricorda regolarmente. Così siamo certi di non dimenticare la vostra fattura e di prepararla in tempo.\n\nGrazie per la collaborazione e buona giornata.\n\nNikol e la famiglia VIVIEN",
   'pt': "Bom dia,\n\npedimos-vos que registem o pedido de fatura diretamente no vosso guia pessoal de chegada, na secção «Fatura para empresa»:\n{odkaz}\n\nPara empresas checas basta o número IČO; o resto completamos nós.\n\nCriámos para os nossos hóspedes um sistema próprio que nos ajuda a organizar todos os pedidos com clareza. Alguns chegam-nos muito antes da estadia, por isso é importante para nós tê-los todos registados num só lugar.\n\nDepois de registarem o pedido no guia, o sistema regista-o automaticamente e lembra-nos regularmente de o tratar. Assim temos a certeza de que não esquecemos a vossa fatura e a preparamos a tempo.\n\nObrigado pela colaboração e tenham um bom dia.\n\nNikol e a família VIVIEN",
   'hu': "Jó napot kívánunk!\n\nKérjük, hogy a számlakérést közvetlenül a személyes érkezési útmutatójukban, a „Számla cégre” résznél adják meg:\n{odkaz}\n\nCseh cég esetén elég a cégazonosító (IČO), a többit mi töltjük ki.\n\nVendégeink számára saját rendszert hoztunk létre, amely segít átláthatóan kezelni az összes kérést. Némelyiket már jóval a tartózkodás előtt megkapjuk, ezért fontos számunkra, hogy mind egy helyen legyen nyilvántartva.\n\nMiután a kérést megadták az útmutatóban, a rendszer automatikusan rögzíti, és rendszeresen emlékeztet minket a teljesítésére. Így biztosak lehetünk benne, hogy nem feledkezünk meg a számlájukról, és időben elkészítjük.\n\nKöszönjük az együttműködést, és kellemes napot kívánunk!\n\nNikol és a VIVIEN család",
+  'da': "Hej,\n\nvi vil gerne bede jer om at sende jeres anmodning om en faktura direkte i jeres personlige ankomstguide, i afsnittet »Faktura til virksomhed«:\n{odkaz}\n\nFor tjekkiske virksomheder er virksomhedsnummeret (IČO) nok, resten udfylder vi selv.\n\nVi har lavet vores eget system til vores gæster, som hjælper os med at holde orden i alle henvendelser. Nogle kommer til os længe før selve opholdet, og derfor er det vigtigt for os at have dem samlet ét sted.\n\nNår I har sendt anmodningen i guiden, registrerer systemet den automatisk og minder os jævnligt om den, indtil den er klaret. Så kan vi være sikre på, at vi ikke glemmer jeres faktura og har den klar til tiden.\n\nTak for samarbejdet, og hav en god dag.\n\nNikol og familien VIVIEN",
 };
 
 export const FAKTURA_ZPRAVA_BEZ_PRUVODCE: T = {
@@ -414,6 +439,7 @@ export const FAKTURA_ZPRAVA_BEZ_PRUVODCE: T = {
   'it': "Buongiorno, emetteremo volentieri la fattura. Per prima cosa compilate il check-in online: {odkaz}\nSubito dopo riceverete la vostra guida personale all'arrivo, dove nella sezione «Fattura per azienda» potrete inserire i dati di fatturazione. Il nostro sistema li registra e ce li ricorda, così non dimenticheremo la vostra fattura.\nGrazie e buona giornata.\nNikol e la famiglia VIVIEN",
   'pt': "Bom dia, teremos todo o gosto em emitir a fatura. Primeiro, preencham por favor o check-in online: {odkaz}\nLogo a seguir receberão o vosso guia pessoal de chegada, onde poderão indicar os dados de faturação na secção «Fatura para empresa». O nosso sistema regista-os e lembra-nos de os tratar, para não esquecermos a vossa fatura.\nObrigado e tenham um bom dia.\nNikol e a família VIVIEN",
   'hu': "Jó napot kívánunk! Szívesen kiállítjuk a számlát. Kérjük, először töltsék ki az online bejelentkezést: {odkaz}\nEzután rögtön megkapják a személyes érkezési útmutatót, ahol a „Számla cégre” résznél megadhatják a számlázási adatokat. Rendszerünk rögzíti őket és emlékeztet minket, így nem feledkezünk meg a számlájukról.\nKöszönjük, és kellemes napot kívánunk!\nNikol és a VIVIEN család",
+  'da': "Hej, vi udsteder gerne en faktura. Gennemfør først online check-in: {odkaz}\nLige derefter får I jeres personlige ankomstguide, hvor I kan angive jeres faktureringsoplysninger i afsnittet »Faktura til virksomhed«. Vores system registrerer dem og minder os om at tage os af dem, så vi ikke glemmer jeres faktura.\nTak, og hav en god dag.\nNikol og familien VIVIEN",
 };
 
 export const FAKTURA_SLOVA = [

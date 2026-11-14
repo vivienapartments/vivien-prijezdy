@@ -18,6 +18,7 @@ export const ZPRAVA_CHECKIN_1: Record<GuideLang, string> = {
   it: "Buongiorno,\n\ngrazie per aver scelto VIVIEN Apartments per il vostro soggiorno.\n\nPrima dell’arrivo vi chiediamo di completare due brevi passaggi.\n\n1. Check-in online\nInserite prima i dati di tutte le persone ospitate:\n\n{odkaz}\n\n2. Guida all’arrivo\nDopo il check-in riceverete automaticamente la vostra guida personale. Al suo interno:\n\n- scegliete il modo di arrivo,\n- indicate l’orario di arrivo previsto,\n- confermate le regole della casa.\n\nCompilati questi dati, si apre la guida adattata al vostro arrivo, con navigazione, indicazioni per il parcheggio e altre informazioni importanti. Più avanti troverete anche i codici PIN di accesso.\n\nCon questi dati possiamo preparare tutto per tempo, attivare se serve il cancello del parcheggio e darvi il benvenuto di persona senza attese inutili.\n\nSe vi serve qualcosa, siamo lieti di aiutare.\n\nNon vediamo l’ora di incontrarvi.",
   pt: "Olá,\n\nobrigado por terem escolhido o VIVIEN Apartments para a vossa estadia.\n\nAntes da chegada, pedimos que concluam dois passos curtos.\n\n1. Check-in online\nPreencham primeiro os dados de todas as pessoas alojadas:\n\n{odkaz}\n\n2. Guia de chegada\nApós o check-in, recebem automaticamente o vosso guia pessoal. Nele:\n\n- escolham a forma de chegada,\n- indiquem a hora prevista de chegada,\n- confirmem as regras da casa.\n\nCom estes dados, abre-se o guia adaptado à vossa chegada, com navegação, indicações de estacionamento e outras informações importantes. Mais tarde também encontram aí os códigos PIN de acesso.\n\nCom estes dados podemos preparar tudo a tempo, ativar se for preciso o portão do estacionamento e receber-vos pessoalmente sem espera desnecessária.\n\nSe precisarem de alguma coisa, temos gosto em ajudar.\n\nEstamos ansiosos pela vossa visita.",
   hu: "Jó napot,\n\nközszönjük, hogy a VIVIEN Apartments-et választották tartózkodásukhoz.\n\nÉrkezés előtt két rövid lépést kérünk.\n\n1. Online bejelentkezés\nElőször töltsék ki az összes szállásoló vendég adatait:\n\n{odkaz}\n\n2. Érkezési útmutató\nA bejelentkezés után automatikusan megkapják a személyes útmutatót. Abban:\n\n- válasszák ki az érkezés módját,\n- adják meg a várható érkezési időt,\n- fogadják el a házirendet.\n\nEzek után megnyílik az érkezésükhöz igazított útmutató, navigációval, parkolási tudnivalókkal és más fontos információkkal. Később ott találják a belépő PIN-kódokat is.\n\nEzekkel az adatokkal időben felkészülhetünk, szükség esetén aktiválhatjuk a parkolókaput, és személyesen köszönthetjük önöket felesleges várakozás nélkül.\n\nHa bármire szükségük van, szívesen segítünk.\n\nÖrömmel várjuk önöket.",
+  da: "Hej,\n\ntak, fordi I har valgt VIVIEN Apartments til jeres ophold.\n\nFør ankomsten skal I gennemføre to korte trin.\n\n1. Online check-in\nUdfyld først oplysningerne om alle, der bor sammen med jer:\n\n{odkaz}\n\n2. Ankomstguide\nLige efter check-in får I automatisk jeres personlige guide. I den skal I\n\n- vælge, hvordan I kommer,\n- angive jeres forventede ankomsttidspunkt,\n- bekræfte husreglerne.\n\nNår oplysningerne er udfyldt, ser I en guide tilpasset jeres ankomst med vejvisning, anvisninger til parkering og andre vigtige oplysninger. Senere finder I også PIN-koderne til adgangen der.\n\nMed disse oplysninger kan vi forberede alt i god tid, aktivere parkeringsporten, hvis det er nødvendigt, og tage personligt imod jer uden unødig ventetid.\n\nHvis I har brug for noget, hjælper vi gerne.\n\nVi glæder os til at se jer.",
 };
 
 /** A2 · chybí check-in, 2. stupeň (ostřejší). */
@@ -34,6 +35,7 @@ export const ZPRAVA_CHECKIN_2: Record<GuideLang, string> = {
   it: "Buongiorno, non abbiamo ancora il vostro check-in online. Senza di esso non possiamo inviarvi la guida con i codici PIN né ospitarvi. Completatelo il prima possibile, per favore. {odkaz}\n\nSubito dopo il check-in riceverete la guida all’arrivo. Apritela e indicate l’orario e il modo di arrivo. Solo allora sarà tutto pronto.",
   pt: "Olá, ainda não temos o vosso check-in online. Sem ele não podemos enviar-vos o guia com os códigos PIN e não vos poderemos alojar. Concluam-no o mais depressa possível. {odkaz}\n\nLogo após o check-in recebem o guia de chegada. Abram-no e indiquem a hora de chegada e como vêm. Só então fica tudo tratado.",
   hu: "Jó napot, az online bejelentkezésük még mindig nincs meg. Enélkül nem tudjuk elküldeni a PIN-kódos útmutatót, és nem tudjuk önöket elszállásolni. Kérjük, töltsék ki minél előbb. {odkaz}\n\nA bejelentkezés után rögtön megkapják az érkezési útmutatót. Kérjük, nyissák meg, és adják meg benne az érkezés idejét és módját. Csak ezután van minden kész.",
+  da: "Hej, vi har stadig ikke jeres online check-in. Uden det kan vi ikke sende jer guiden med PIN-koderne, og vi kan ikke tage imod jer. Gennemfør det så hurtigt som muligt. {odkaz}\n\nLige efter check-in får I jeres ankomstguide. Åbn den og udfyld jeres ankomsttidspunkt og hvordan I kommer. Først da er alt klaret.",
 };
 
 /** A3 · chybí check-in, 3. stupeň (den před / den příjezdu, důrazný). */
@@ -50,6 +52,7 @@ export const ZPRAVA_CHECKIN_3: Record<GuideLang, string> = {
   it: "Buongiorno, senza il check-in online completato non possiamo ospitarvi. Se non lo completate prima dell’arrivo, non potremo consegnarvi l’appartamento. Completatelo subito, per favore. {odkaz}\n\nSubito dopo il check-in riceverete la guida all’arrivo. Apritela e indicate l’orario e il modo di arrivo. Solo allora sarà tutto pronto.",
   pt: "Olá, sem o check-in online concluído não podemos alojar-vos. Se não estiver concluído antes da chegada, não poderemos entregar o apartamento. Concluam-no já. {odkaz}\n\nLogo após o check-in recebem o guia de chegada. Abram-no e indiquem a hora de chegada e como vêm. Só então fica tudo tratado.",
   hu: "Jó napot, kitöltött online bejelentkezés nélkül nem tudjuk önöket elszállásolni. Ha érkezés előtt nem töltik ki, nem tudjuk átadni az apartmant. Kérjük, töltsék ki azonnal. {odkaz}\n\nA bejelentkezés után rögtön megkapják az érkezési útmutatót. Kérjük, nyissák meg, és adják meg benne az érkezés idejét és módját. Csak ezután van minden kész.",
+  da: "Hej, uden gennemført online check-in kan vi ikke tage imod jer. Hvis det ikke er gennemført før jeres ankomst, kan vi ikke overdrage lejligheden. Gennemfør det med det samme. {odkaz}\n\nLige efter check-in får I jeres ankomstguide. Åbn den og udfyld jeres ankomsttidspunkt og hvordan I kommer. Først da er alt klaret.",
 };
 
 /** B1 · check-in hotový, průvodce nedokončený. Varianta 2 (schválil majitel 8. 11. 2026). PINy až po osobním předání. */
@@ -66,6 +69,7 @@ export const ZPRAVA_PRUVODCE_1: Record<GuideLang, string> = {
   it: "Buongiorno, grazie, il check-in online è completato. Aprite ora la guida, indicate l’orario di arrivo, se venite in auto o a piedi, e confermate le regole. Senza questo non vedrete navigazione, parcheggio né le altre indicazioni di arrivo. I codici PIN li attiviamo solo alla consegna di persona.",
   pt: "Olá, obrigado, o check-in online está concluído. Abram agora o guia, indiquem a hora de chegada, se vêm de carro ou a pé, e confirmem as regras. Sem isso não verão a navegação, o estacionamento nem as outras indicações de chegada. Os códigos PIN só ativamos na entrega pessoal.",
   hu: "Jó napot, köszönjük, az online bejelentkezés kész. Nyissák meg az útmutatót, adják meg az érkezés idejét, hogy autóval vagy gyalog jönnek, és fogadják el a házirendet. Enélkül nem látják a navigációt, a parkolást és a többi érkezési tudnivalót. A PIN-kódokat csak a személyes átadáskor aktiváljuk.",
+  da: "Hej, tak, jeres online check-in er gennemført. Åbn nu guiden, udfyld jeres ankomsttidspunkt, om I kommer i bil eller til fods, og bekræft husreglerne. Uden det ser I hverken vejvisningen, parkeringen eller de øvrige anvisninger til ankomsten. PIN-koderne aktiverer vi først ved den personlige overdragelse.",
 };
 
 /** B2 · průvodce, 2. stupeň. */
@@ -82,6 +86,7 @@ export const ZPRAVA_PRUVODCE_2: Record<GuideLang, string> = {
   it: "Buongiorno, nella guida all’arrivo ci mancano ancora l’orario e il modo di arrivo e la conferma delle regole. Senza questi dati non sappiamo quando aspettarvi e non possiamo rendervi disponibili i codici PIN. Aprite la guida e completatela il prima possibile, per favore.",
   pt: "Olá, no vosso guia de chegada ainda faltam a hora de chegada, a forma como vêm e a confirmação das regras da casa. Sem isto não sabemos quando vos esperar e não podemos disponibilizar-vos os códigos PIN de entrada. Abram o guia e completem-no o mais depressa possível.",
   hu: "Jó napot, az érkezési útmutatóban még mindig hiányzik az érkezés ideje és módja, valamint a házirend elfogadása. Enélkül nem tudjuk, mikor várjuk önöket, és nem tudjuk elérhetővé tenni a PIN-kódokat. Kérjük, nyissák meg az útmutatót, és pótolják minél előbb.",
+  da: "Hej, i jeres ankomstguide mangler stadig jeres ankomsttidspunkt, hvordan I kommer, og bekræftelsen af husreglerne. Uden det ved vi ikke, hvornår vi skal vente jer, og vi kan ikke gøre PIN-koderne til indgangen tilgængelige for jer. Åbn guiden og udfyld den så hurtigt som muligt.",
 };
 
 /** B3 · průvodce, den příjezdu. */
@@ -98,6 +103,7 @@ export const ZPRAVA_PRUVODCE_3: Record<GuideLang, string> = {
   it: "Buongiorno, arrivate oggi e nella guida mancano ancora l’orario e il modo di arrivo e la conferma delle regole. Senza questi dati oggi non possiamo ospitarvi né consegnarvi l’appartamento e, se arrivate in auto, non potrete parcheggiare. Se non li completate, potrebbe finire come mancata presentazione (no-show). Aprite la guida e completateli subito.",
   pt: "Olá, chegam hoje e no vosso guia ainda faltam a hora de chegada, a forma como vêm e a confirmação das regras da casa. Sem estes dados não vos podemos alojar hoje nem entregar o apartamento e, se vierem de carro, não poderão estacionar. Se não estiverem completos, pode acabar numa não comparência. Abram o guia e completem-no já.",
   hu: "Jó napot, ma érkeznek, és az útmutatóban még mindig hiányzik az érkezés ideje és módja, valamint a házirend elfogadása. Ezek nélkül ma nem tudjuk önöket elszállásolni, sem átadni az apartmant, és ha autóval jönnek, nem tudnak parkolni. Ha nem pótolják, ez meg nem jelenésként (no-show) végződhet. Nyissák meg az útmutatót, és pótolják azonnal.",
+  da: "Hej, I kommer i dag, og i jeres guide mangler stadig jeres ankomsttidspunkt, hvordan I kommer, og bekræftelsen af husreglerne. Uden disse oplysninger kan vi ikke tage imod jer i dag eller overdrage lejligheden, og hvis I kommer i bil, kan I ikke parkere. Hvis de ikke udfyldes, kan det ende som udeblivelse. Åbn guiden og udfyld dem med det samme.",
 };
 
 /** E · den příjezdu, čas známe (nahrazuje DEN_CAS). */
@@ -114,6 +120,7 @@ export const ZPRAVA_DEN_CAS: Record<GuideLang, string> = {
   it: "Buongiorno, oggi vi aspettiamo verso le {čas}. A quell’ora saremo alla casa e vi aspetteremo 10 minuti. Se ci scrivete circa 15 minuti prima che siete vicini, saremo pronti proprio per il vostro arrivo. Se l’orario cambia durante il viaggio, modificatelo nella guida o scriveteci.",
   pt: "Olá, esperamos por vocês hoje por volta das {čas}. Estaremos na casa a essa hora e esperamos 10 minutos. Se nos escreverem cerca de 15 minutos antes a avisar que estão perto, estaremos prontos exatamente para a vossa chegada. Se a hora mudar pelo caminho, atualizem-na no guia ou escrevam-nos.",
   hu: "Jó napot, ma {čas} körül várjuk önöket. Akkor a háznál leszünk, és 10 percet várunk. Ha nagyjából 15 perccel előtte megírják, hogy közel vannak, pontosan az érkezésükre készen leszünk. Ha útközben változik az idő, módosítsák az útmutatóban, vagy írjanak nekünk.",
+  da: "Hej, vi venter jer i dag omkring {čas}. På det tidspunkt er vi ved huset og venter på jer i 10 minutter. Hvis I skriver til os omkring 15 minutter før, at I er tæt på, står vi klar lige til jeres ankomst. Hvis tidspunktet ændrer sig undervejs, så ret det i guiden eller skriv til os.",
 };
 
 /** F1 · autem, chybí telefon k bráně a SPZ. Pevný text (vždy obojí), schválil majitel 30. 10. */
@@ -130,6 +137,7 @@ export const ZPRAVA_BRANA_1: Record<GuideLang, string> = {
   it: "Buongiorno, arrivate in auto, aggiungete ancora nella guida il numero di telefono con cui aprirete il cancello e la targa dell’auto. Dobbiamo registrare questi dati al cancello in anticipo, altrimenti non potrete parcheggiare. Grazie.",
   pt: "Olá, vêm de carro, por isso acrescentem ainda no guia o número de telefone que vão usar para abrir o portão e a matrícula do carro. Temos de registar estes dados no portão com antecedência, caso contrário não podem estacionar. Obrigado.",
   hu: "Jó napot, autóval érkeznek, kérjük, pótolják még az útmutatóban a telefonszámot, amelyről a kaput nyitni fogják, és az autó rendszámát. Az adatokat előre regisztrálnunk kell a kapunál, különben nem tudnak parkolni. Köszönjük.",
+  da: "Hej, I kommer i bil, så tilføj stadig i guiden det telefonnummer, I åbner porten med, og jeres bils nummerplade. Vi skal registrere oplysningerne ved porten på forhånd, ellers kan I ikke parkere. Tak.",
 };
 
 /** F2 · brána, 2. stupeň. */
@@ -146,6 +154,7 @@ export const ZPRAVA_BRANA_2: Record<GuideLang, string> = {
   it: "Buongiorno, ci mancano ancora il numero di telefono per il cancello e la targa dell’auto. Senza registrazione il cancello non vi farà entrare e non possiamo garantirvi un posto auto. Aggiungeteli nella guida il prima possibile, per favore.",
   pt: "Olá, ainda nos faltam o número de telefone para o portão e a matrícula do carro. Sem registo o portão não vos deixa entrar e não podemos garantir-vos lugar de estacionamento. Acrescentem-nos no guia o mais depressa possível.",
   hu: "Jó napot, még mindig hiányzik a kapuhoz tartozó telefonszám és az autó rendszáma. Regisztráció nélkül a kapu nem engedi be önöket, és nem tudunk parkolóhelyet biztosítani. Kérjük, pótolják az útmutatóban minél előbb.",
+  da: "Hej, vi mangler stadig telefonnummeret til porten og jeres bils nummerplade. Uden registrering lukker porten jer ikke ind, og vi kan ikke sikre jer en parkeringsplads. Tilføj dem i guiden så hurtigt som muligt.",
 };
 
 /** F3 · brána, den příjezdu. */
@@ -162,6 +171,7 @@ export const ZPRAVA_BRANA_3: Record<GuideLang, string> = {
   it: "Buongiorno, arrivate oggi e ci mancano ancora il numero di telefono per il cancello e la targa dell’auto. Senza questi dati il cancello del parcheggio non vi farà entrare e non potremo darvi un posto auto. Dovrete quindi parcheggiare altrove a vostre spese. Aggiungeteli subito nella guida, per favore.",
   pt: "Olá, chegam hoje e ainda nos faltam o número de telefone para o portão e a matrícula do carro. Sem eles o portão do parque de estacionamento não vos deixa entrar e não poderemos dar-vos lugar. Teriam então de estacionar noutro local por vossa conta. Acrescentem-nos no guia já.",
   hu: "Jó napot, ma érkeznek, és még mindig hiányzik a kapuhoz tartozó telefonszám és az autó rendszáma. Ezek nélkül a parkoló kapuja nem engedi be önöket, és nem tudunk parkolóhelyet adni. Ilyenkor máshol kell parkolniuk, saját költségen. Kérjük, pótolják azonnal az útmutatóban.",
+  da: "Hej, I kommer i dag, og vi mangler stadig telefonnummeret til porten og jeres bils nummerplade. Uden dem lukker parkeringsporten jer ikke ind, og vi kan ikke give jer en parkeringsplads. I skal så parkere et andet sted for egen regning. Tilføj dem i guiden med det samme.",
 };
 
 /** J · dotaz na odjezd (nahrazuje text „a“ v odjezd.ts). */
@@ -178,6 +188,7 @@ export const ZPRAVA_ODJEZD: Record<GuideLang, string> = {
   it: "Buongiorno, domani è il giorno della partenza. Scegliete nella guida a che ora partirete, così potremo salutarvi di persona e riprendere l’appartamento. Se nella guida non funziona, scriveteci l’orario qui. Il check-out normale è entro le 10:00, più tardi solo previo accordo.",
   pt: "Olá, a vossa saída é amanhã. Escolham no guia a que horas saem, para nos despedirmos pessoalmente e recebermos o apartamento. Se não funcionar no guia, escrevam-nos aqui a hora. O check-out habitual é até às 10:00, mais tarde só por acordo.",
   hu: "Jó napot, holnap lesz a távozás. Kérjük, válasszák ki az útmutatóban, hánykor indulnak, hogy személyesen elköszönhessünk és átvehessük az apartmant. Ha az útmutatóban nem megy, írják meg nekünk itt az időpontot. A szokásos távozás 10:00-ig, később csak megbeszélés szerint.",
+  da: "Hej, I rejser i morgen. Vælg i guiden, hvornår I tager af sted, så vi kan sige farvel personligt og overtage lejligheden. Hvis det ikke virker i guiden, så skriv bare tidspunktet til os her. Almindelig check-out er senest 10:00, senere kun efter aftale.",
 };
 
 export const BRANA_TELEFON: Record<GuideLang, string> = {
@@ -193,6 +204,7 @@ export const BRANA_TELEFON: Record<GuideLang, string> = {
   it: "il numero di telefono con cui aprirete il cancello",
   pt: "o número de telefone que vão usar para abrir o portão",
   hu: "a telefonszámot, amelyről a kaput nyitják",
+  da: "det telefonnummer, I åbner porten med",
 };
 
 export const BRANA_SPZ: Record<GuideLang, string> = {
@@ -208,6 +220,7 @@ export const BRANA_SPZ: Record<GuideLang, string> = {
   it: "la targa dell’auto",
   pt: "a vossa matrícula",
   hu: "az autó rendszámát",
+  da: "jeres nummerplade",
 };
 
 export const BRANA_A: Record<GuideLang, string> = {
@@ -223,6 +236,7 @@ export const BRANA_A: Record<GuideLang, string> = {
   it: "e",
   pt: "e",
   hu: "és",
+  da: "og",
 };
 /** {odkaz} bez známé URL: jedna univerzální věta pro všechny zdroje (schválil majitel 30. 10.). */
 export const ODKAZ_UNIVERZALNI: Record<GuideLang, string> = {
@@ -238,6 +252,7 @@ export const ODKAZ_UNIVERZALNI: Record<GuideLang, string> = {
   it: "Il link vi è arrivato via e-mail o nei messaggi del sito o dell’app dove avete prenotato.",
   pt: "Receberam o link por e-mail ou nas mensagens do site ou da aplicação onde fizeram a reserva.",
   hu: "A linket e-mailben vagy üzenetben kapták meg azon az oldalon vagy alkalmazásban, ahol foglaltak.",
+  da: "I fik linket på e-mail eller i jeres beskeder på det website eller den app, hvor I bookede.",
 };
 /** A4 · Poslední výzva u check-inu (po 3. stupni, den před / den příjezdu). {odkaz} jako u A1–A3, {telefon} = stávající TELEFON. Schválil majitel 30. 10. */
 export const ZPRAVA_CHECKIN_NEDOJEZD: Record<GuideLang, string> = {
@@ -253,4 +268,5 @@ export const ZPRAVA_CHECKIN_NEDOJEZD: Record<GuideLang, string> = {
   it: "Buongiorno, non abbiamo ancora il vostro check-in online e non rispondete ai nostri messaggi. Se non lo completate e non arrivate entro le 20:00, considereremo la prenotazione come mancata presentazione (no-show) e il soggiorno andrà perso. {odkaz}\n\nSubito dopo il check-in riceverete la guida all’arrivo. Apritela e indicate l’orario e il modo di arrivo. Senza questo non possiamo ospitarvi e, se arrivate in auto, nemmeno garantirvi il parcheggio.\n\nScriveteci subito al {telefon}. Grazie.",
   pt: "Olá, ainda não temos o vosso check-in online e não respondem às nossas mensagens. Se não estiver concluído e não chegarem até às 20:00, consideramos a reserva uma não comparência e a estadia perde-se. {odkaz}\n\nLogo após o check-in recebem o guia de chegada. Abram-no e indiquem a hora de chegada e como vêm. Sem isto não vos podemos alojar e, se vierem de carro, também não podemos tratar do estacionamento.\n\nEscrevam-nos já para {telefon}. Obrigado.",
   hu: "Jó napot, az online bejelentkezésük még mindig nincs meg, és nem válaszolnak az üzeneteinkre. Ha nem töltik ki, és 20:00-ig nem érkeznek meg, a foglalást meg nem jelenésnek (no-show) tekintjük, és a szállás elvész. {odkaz}\n\nA bejelentkezés után rögtön megkapják az érkezési útmutatót. Nyissák meg, és adják meg benne az érkezés idejét és módját. Enélkül nem tudjuk önöket elszállásolni, és ha autóval jönnek, parkolást sem tudunk biztosítani.\n\nKérjük, írjanak nekünk azonnal a {telefon} számra. Köszönjük.",
+  da: "Hej, vi har stadig ikke jeres online check-in, og I svarer ikke på vores beskeder. Hvis det ikke er gennemført, og I ikke er ankommet senest 20:00, behandler vi bookingen som udeblivelse, og opholdet fortabes. {odkaz}\n\nLige efter check-in får I jeres ankomstguide. Åbn den og udfyld jeres ankomsttidspunkt og hvordan I kommer. Uden det kan vi ikke tage imod jer, og hvis I kommer i bil, kan vi heller ikke ordne parkeringen.\n\nSkriv til os med det samme på {telefon}. Tak.",
 };

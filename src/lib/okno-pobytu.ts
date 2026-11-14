@@ -487,6 +487,41 @@ const VETY: Record<GuideLang, Vety> = {
     stavNelze: 'Nem megy',
     predmet: 'VIVIEN · A lakás kész',
   },
+  da: {
+    cekaPrijezd: 'We have your request for an earlier arrival at {cas}. We will confirm it as soon as we can.',
+    cekaOdjezd: 'We have your request for a later departure at {cas}. We will confirm it as soon as we can.',
+    cekaPripraveny: 'We have your earlier arrival at {cas}. We will confirm it once the apartment is ready.',
+    cekaUklid: 'We have your request. We will confirm it on arrival day, once the apartment is cleaned.',
+    potvrzenoPrijezd: 'Done, we look forward to seeing you at {cas}. We will settle the {kc} Kč surcharge at handover.',
+    potvrzenoOdjezd: 'Done, departure at {cas} is confirmed. We will settle the {kc} Kč surcharge when we take over the apartment.',
+    kratcePrijezd: 'Earlier arrival at {cas} confirmed',
+    kratceOdjezd: 'Later departure at {cas} confirmed',
+    nelzePrijezd: 'This time it is not possible. We look forward to seeing you from 14:00.',
+    nelzeOdjezd: 'This time it is not possible. Please leave the apartment by 10:00.',
+    zeleny: 'Your apartment is already ready. If you would like to arrive earlier, choose a time. We charge 75 Kč for every half hour before 14:00.',
+    pozadat: 'Request',
+    sekce: 'Earlier arrival and later departure',
+    cenik: 'We charge 75 Kč for every started half hour. Arrival is possible from 11:00 at the earliest, departure until 14:00 at the latest. It applies only after we confirm it.',
+    emailVeta: 'Would you like to arrive earlier or leave later? Order it here. We charge 75 Kč for every half hour.',
+    emailTlacitko: 'I want to arrive earlier / leave later',
+    odjezdNabidka: 'Would you like to leave later? Choose a time in the guide. We charge 75 Kč for every half hour after 10:00, until 14:00 at the latest.',
+    pripravenoUvod:
+      'Hello, we have good news for you. Your apartment is already cleaned and ready. If you would like to arrive earlier than 14:00, just change your arrival time in the guide. You will find the earlier times right at the top:',
+    tlacitkoDrive: 'I want to arrive earlier',
+    tesime: 'We look forward to seeing you.',
+    podpis: 'Nikol and the VIVIEN family',
+    popisekDrive: '{cas} · earlier arrival +{kc} Kč (we will confirm)',
+    popisekOdjezd: '{cas} · later departure +{kc} Kč (we will confirm)',
+    nesedi: 'The reservation number or the surname does not match.',
+    zatim: 'We cannot see your reservation yet. Please try again in a few minutes, or write to us at',
+    blok: 'Please try again in an hour.',
+    odeslat: 'Send request',
+    zrusit: 'Cancel request',
+    stavCeka: 'Waiting for confirmation',
+    stavPotvrzeno: 'Confirmed',
+    stavNelze: 'Not possible',
+    predmet: 'VIVIEN · The apartment is ready',
+  },
 };
 
 function jazyk(lang: GuideLang | null | undefined): GuideLang {
@@ -512,6 +547,7 @@ const SKUPINA_DRIVE: Record<GuideLang, string> = {
   pt: 'Chegada mais cedo (vamos confirmar)',
   sv: 'Tidigare ankomst (vi bekräftar)',
   hu: 'Korábbi érkezés (megerősítjük)',
+  da: 'Tidligere ankomst (vi bekræfter)',
 };
 
 const SKUPINA_BEZNY: Record<GuideLang, string> = {
@@ -527,6 +563,7 @@ const SKUPINA_BEZNY: Record<GuideLang, string> = {
   pt: 'Chegada habitual',
   sv: 'Vanlig ankomst',
   hu: 'Szokásos érkezés',
+  da: 'Almindelig ankomst',
 };
 
 const SKUPINA_POZDNI: Record<GuideLang, string> = {
@@ -542,6 +579,7 @@ const SKUPINA_POZDNI: Record<GuideLang, string> = {
   pt: 'Chegada tardia',
   sv: 'Sen ankomst',
   hu: 'Késői érkezés',
+  da: 'Sen ankomst',
 };
 
 const SKUPINA_ODJEZD: Record<GuideLang, string> = {
@@ -557,6 +595,7 @@ const SKUPINA_ODJEZD: Record<GuideLang, string> = {
   pt: 'Saída habitual',
   sv: 'Vanlig avresa',
   hu: 'Szokásos elutazás',
+  da: 'Almindelig afrejse',
 };
 
 const SKUPINA_POZDE: Record<GuideLang, string> = {
@@ -572,6 +611,7 @@ const SKUPINA_POZDE: Record<GuideLang, string> = {
   pt: 'Saída mais tarde (vamos confirmar)',
   sv: 'Senare avresa (vi bekräftar)',
   hu: 'Későbbi távozás (megerősítjük)',
+  da: 'Senere afrejse (vi bekræfter)',
 };
 
 const POZNAMKA_DRIVE: Record<GuideLang, string> = {
@@ -587,6 +627,7 @@ const POZNAMKA_DRIVE: Record<GuideLang, string> = {
   pt: 'Confirmamos a chegada mais cedo assim que o apartamento estiver pronto.',
   sv: 'Vi bekräftar tidigare ankomst när lägenheten är klar.',
   hu: 'A korábbi érkezést akkor erősítjük meg, amint a lakás készen áll.',
+  da: 'Vi bekræfter den tidligere ankomst, når lejligheden er klar.',
 };
 
 export function skupinaDrive(lang: GuideLang | null | undefined): string {

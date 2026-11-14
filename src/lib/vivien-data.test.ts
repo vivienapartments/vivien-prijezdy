@@ -151,10 +151,19 @@ KONEC`,
     expect(langFromNarodnost('ESP')).toBe('es');
     expect(langFromNarodnost('Spain')).toBe('es');
     expect(langFromNarodnost('España')).toBe('es');
+    expect(langFromNarodnost('DNK')).toBe('da');
+    expect(langFromNarodnost('DK')).toBe('da');
+    expect(langFromNarodnost('Denmark')).toBe('da');
+    expect(langFromNarodnost('Danmark')).toBe('da');
   });
 
   it('španělský průvodce není anglický text', () => {
     expect(t(casPrijezduNadpis, 'es')).toBe('Díganos a qué hora llegan');
     expect(t(kodyCekaji, 'es')).not.toBe(t(kodyCekaji, 'en'));
+  });
+
+  it('dánský průvodce není anglický text', () => {
+    expect(t(casPrijezduNadpis, 'da')).not.toBe(t(casPrijezduNadpis, 'en'));
+    expect(t(kodyCekaji, 'da')).not.toBe(t(kodyCekaji, 'en'));
   });
 });

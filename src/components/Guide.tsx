@@ -537,7 +537,9 @@ export function Guide({
     const p = path.startsWith('/') ? path : `/${path}`;
     if (lang === 'cs') return `https://vivienapartments.cz${p}`;
     if (lang === 'zh-Hant') return `https://vivienapartments.cz/zh${p}`;
-    if (lang === 'sv' || lang === 'hu' || lang === 'pt') return `https://vivienapartments.cz/en${p}`;
+    if (lang === 'sv' || lang === 'hu' || lang === 'pt' || lang === 'da') {
+      return `https://vivienapartments.cz/en${p}`;
+    }
     return `https://vivienapartments.cz/${lang}${p}`;
   };
   const quizUrl = sitePath(TX.psApartmany.quizPath);
@@ -706,6 +708,7 @@ export function Guide({
                 <option value="uk">Українська</option>
                 <option value="zh-Hant">繁體中文</option>
                 <option value="sv">Svenska</option>
+                <option value="da">Dansk</option>
                 <option value="hu">Magyar</option>
                 <option value="es">Español</option>
                 <option value="pt">Português</option>

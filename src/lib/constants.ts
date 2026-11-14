@@ -82,6 +82,7 @@ export function odkazRezervaceWeb(lang: string): string {
     fr: 'en',
     it: 'en',
     pt: 'en',
+    da: 'en',
   };
   const kod = mapa[lang] || 'en';
   return `https://www.vivienapartments.cz/${kod}/rezervace`;

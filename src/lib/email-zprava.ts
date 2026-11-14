@@ -24,6 +24,7 @@ const PRIJEZD: Record<GuideLang, string> = {
   pt: 'VIVIEN · A vossa chegada {datum}',
   sv: 'VIVIEN · Er ankomst {datum}',
   hu: 'VIVIEN · Az érkezésük {datum}',
+  da: 'VIVIEN · Jeres ankomst {datum}',
 };
 
 const CHECKIN: Record<GuideLang, string> = {
@@ -39,6 +40,7 @@ const CHECKIN: Record<GuideLang, string> = {
   pt: 'VIVIEN · Check-in online {datum}',
   sv: 'VIVIEN · Online-incheckning {datum}',
   hu: 'VIVIEN · Online bejelentkezés {datum}',
+  da: 'VIVIEN · Online check-in {datum}',
 };
 
 const PRUVODCE: Record<GuideLang, string> = {
@@ -54,6 +56,7 @@ const PRUVODCE: Record<GuideLang, string> = {
   pt: 'VIVIEN · O vosso guia {datum}',
   sv: 'VIVIEN · Er guide {datum}',
   hu: 'VIVIEN · Az útmutatójuk {datum}',
+  da: 'VIVIEN · Jeres guide {datum}',
 };
 
 const BRANA: Record<GuideLang, string> = {
@@ -69,6 +72,7 @@ const BRANA: Record<GuideLang, string> = {
   pt: 'VIVIEN · Dados do portão {datum}',
   sv: 'VIVIEN · Uppgifter till bommen {datum}',
   hu: 'VIVIEN · A sorompó adatai {datum}',
+  da: 'VIVIEN · Oplysninger til porten {datum}',
 };
 
 export function datumPobytu(ymd: string | null): string {
