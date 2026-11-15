@@ -8,6 +8,7 @@ import { nactiDokument, ukazkovaBrana } from '@/lib/brana';
 import { branaJePripravena, zajistiVychoziBranu } from '@/lib/brana-akce';
 import { dnesVPraze, posunDen } from '@/lib/prehled';
 import { radkyNovychPrani, stitkyPraniKarty } from '@/lib/prani';
+import { migracePoplatkuAirbnbJednou } from '@/lib/oprava-poplatku-airbnb';
 import { migracePoplatkuBookingJednou } from '@/lib/oprava-poplatku-booking';
 import { migracePredaniJednou } from '@/lib/predani';
 import { prehledPrihlasen } from '@/lib/prehled-session';
@@ -66,6 +67,11 @@ export default async function PrehledPage({ searchParams }: Props) {
       await migracePoplatkuBookingJednou(store, now.toISOString());
     } catch {
       // Přehled se otevře i když se poplatky Booking nepodařilo doopravit.
+    }
+    try {
+      await migracePoplatkuAirbnbJednou(store, now.toISOString());
+    } catch {
+      // Přehled se otevře i když se poplatky Airbnb nepodařilo doopravit.
     }
     try {
       branaDoc = await zajistiVychoziBranu(store);

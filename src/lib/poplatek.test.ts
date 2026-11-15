@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   POPLATEK_BOOKING_OD_REZ,
+  kandidatOpravyPoplatkuAirbnb,
   kandidatOpravyPoplatkuBooking,
   poplatekProRezervaci,
   poplatekZData,
@@ -20,8 +21,8 @@ describe('městský poplatek podle data a Bookingu', () => {
     expect(poplatekZData('2026-10-04')).toBe('ne');
   });
 
-  it('od 5. 10. 2026 VIVIEN vybírá u Airbnb a přímé', () => {
-    expect(poplatekProRezervaci({ vytvoreno: '2026-10-05', zdroj: 'Airbnb', rezervace: '120260700' })).toBe('ano');
+  it('od 5. 10. 2026 VIVIEN vybírá u přímé; Airbnb nevybírá', () => {
+    expect(poplatekProRezervaci({ vytvoreno: '2026-10-05', zdroj: 'Airbnb', rezervace: '120260700' })).toBe('ne');
     expect(poplatekProRezervaci({ vytvoreno: '2026-11-09', zdroj: 'přímá', rezervace: '120260800' })).toBe('ano');
     expect(poplatekZData('2026-10-05')).toBe('ano');
   });
@@ -42,10 +43,11 @@ describe('městský poplatek podle data a Bookingu', () => {
     expect(POPLATEK_BOOKING_OD_REZ).toBe(120260625);
   });
 
-  it('Airbnb s číslem nad hranicí Booking dál vybírá od 5. 10.', () => {
+  it('Airbnb nevybírá ani s číslem ani bez data', () => {
     expect(
       poplatekProRezervaci({ vytvoreno: '2026-11-09', zdroj: 'Airbnb', rezervace: '120260624' }),
-    ).toBe('ano');
+    ).toBe('ne');
+    expect(poplatekProRezervaci({ vytvoreno: null, zdroj: 'Airbnb' })).toBe('ne');
   });
 
   it('Booking bez čísla a bez data je neznamo; s datem před 5. 10. je ne', () => {
@@ -56,8 +58,9 @@ describe('městský poplatek podle data a Bookingu', () => {
     expect(poplatekProRezervaci({ vytvoreno: '2026-10-04', zdroj: 'Booking.com', rezervace: null })).toBe('ne');
   });
 
-  it('bez data a bez Bookingu je neznamo', () => {
-    expect(poplatekProRezervaci({ vytvoreno: null, zdroj: 'Airbnb' })).toBe('neznamo');
+  it('bez data u přímé je neznamo; Airbnb je ne', () => {
+    expect(poplatekProRezervaci({ vytvoreno: null, zdroj: 'přímá' })).toBe('neznamo');
+    expect(poplatekProRezervaci({ vytvoreno: null, zdroj: 'Airbnb' })).toBe('ne');
     expect(poplatekZData(null)).toBe('neznamo');
     expect(poplatekZData('(DATE)')).toBe('neznamo');
   });
@@ -73,8 +76,9 @@ describe('městský poplatek podle data a Bookingu', () => {
     expect(
       ukazatPoplatekVCene('ne', { zdroj: 'Booking.com', rezervace: '120260623', vytvoreno: '2026-10-04' }),
     ).toBe(false);
-    expect(ukazatPoplatekVCene('ne', { zdroj: 'Airbnb', vytvoreno: '2026-10-04' })).toBe(false);
+    expect(ukazatPoplatekVCene('ne', { zdroj: 'Airbnb', vytvoreno: '2026-10-04' })).toBe(true);
     expect(ukazatPoplatekVCene('ne', { zdroj: 'Airbnb', vytvoreno: '2026-11-09' })).toBe(true);
+    expect(ukazatPoplatekVCene('ne', { zdroj: 'Airbnb', vytvoreno: null })).toBe(true);
     expect(ukazatPoplatekVCene('ano')).toBe(false);
     expect(ukazatPoplatekVCene('neznamo')).toBe(false);
   });
@@ -153,6 +157,30 @@ describe('městský poplatek podle data a Bookingu', () => {
       kandidatOpravyPoplatkuBooking({
         rezervace: '120260700',
         zdroj: 'Airbnb',
+        poplatek: 'ano',
+      }),
+    ).toBe(false);
+  });
+
+  it('kandidát opravy: Airbnb s ano nebo neznamo', () => {
+    expect(
+      kandidatOpravyPoplatkuAirbnb({
+        rezervace: '120260700',
+        zdroj: 'Airbnb',
+        poplatek: 'ano',
+      }),
+    ).toBe(true);
+    expect(
+      kandidatOpravyPoplatkuAirbnb({
+        rezervace: '120260700',
+        zdroj: 'Airbnb',
+        poplatek: 'ne',
+      }),
+    ).toBe(false);
+    expect(
+      kandidatOpravyPoplatkuAirbnb({
+        rezervace: '120260625',
+        zdroj: 'Booking.com',
         poplatek: 'ano',
       }),
     ).toBe(false);

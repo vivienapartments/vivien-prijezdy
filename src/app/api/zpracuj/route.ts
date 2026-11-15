@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cistaChyba } from '@/lib/cista-chyba';
 import { runInboxProcessing, vypisPotvrzeni } from '@/lib/process-inbox';
+import { migracePoplatkuAirbnbJednou } from '@/lib/oprava-poplatku-airbnb';
 import { migracePoplatkuBookingJednou } from '@/lib/oprava-poplatku-booking';
 import { createProcessStore, pocetPrikazu, prevedPlatbyJednou, prodluzKartyJednou, type ProcessStore } from '@/lib/store';
 import { upozorniBranu } from '@/lib/brana-upozorneni';
@@ -62,6 +63,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (opraveno != null) console.log(`Poplatky Booking opraveny: ${opraveno}`);
   } catch {
     console.error('Oprava poplatku Booking selhala');
+  }
+  try {
+    const opravenoAirbnb = await migracePoplatkuAirbnbJednou(store);
+    if (opravenoAirbnb != null) console.log(`Poplatky Airbnb opraveny: ${opravenoAirbnb}`);
+  } catch {
+    console.error('Oprava poplatku Airbnb selhala');
   }
   try {
     const summary = await runInboxProcessing({ store });

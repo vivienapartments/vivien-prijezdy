@@ -34,6 +34,10 @@ export function jeZdrojBooking(zdroj: string | null | undefined): boolean {
   return /booking/i.test((zdroj || '').trim());
 }
 
+export function jeZdrojAirbnb(zdroj: string | null | undefined): boolean {
+  return /airbnb/i.test((zdroj || '').trim());
+}
+
 /** Číslo rezervace BH jen z číslic. */
 export function cisloRezervaceBh(rezervace: string | null | undefined): number | null {
   const n = Number(String(rezervace || '').replace(/\D/g, ''));
@@ -56,6 +60,9 @@ export function poplatekProRezervaci(v: PoplatekVstup): PoplatekStav {
   const booking = jeZdrojBooking(v.zdroj);
   const cislo = cisloRezervaceBh(v.rezervace);
 
+  // Airbnb: městský poplatek vybírá Airbnb, VIVIEN od hosta nic.
+  if (jeZdrojAirbnb(v.zdroj)) return 'ne';
+
   // Booking od Bennett včetně: nevybírat, i bez data vzniku.
   if (booking && cislo != null && cislo >= POPLATEK_BOOKING_OD_REZ) return 'ne';
 
@@ -71,7 +78,7 @@ export function poplatekProRezervaci(v: PoplatekVstup): PoplatekStav {
     return 'ano';
   }
 
-  // Airbnb, přímá a ostatní: dosavadní režim od 5. 10.
+  // Přímá a ostatní: VIVIEN vybírá.
   return 'ano';
 }
 
@@ -114,7 +121,7 @@ export function ukazatPoplatek(stav: PoplatekStav | null | undefined): boolean {
 
 /**
  * Box „již v ceně rezervace“ hostovi.
- * Jen u `ne`, a jen když to odpovídá podmínkám (Booking od Bennett,
+ * Jen u `ne`, a jen když to odpovídá podmínkám (Airbnb, Booking od Bennett,
  * nebo ruční / jiný kanál po 5. 10.). Před 5. 10. hostovi nic netvrdíme.
  * Bez kontextu rezervace box neukazujeme. Neznamo hostovi nic.
  */
@@ -124,6 +131,7 @@ export function ukazatPoplatekVCene(
 ): boolean {
   if (stav !== 'ne') return false;
   if (!v) return false;
+  if (jeZdrojAirbnb(v.zdroj)) return true;
   if (jeZdrojBooking(v.zdroj)) {
     const n = cisloRezervaceBh(v.rezervace);
     if (n != null && n >= POPLATEK_BOOKING_OD_REZ) return true;
@@ -156,5 +164,17 @@ export function kandidatOpravyPoplatkuBooking(rec: {
   if (!jeZdrojBooking(rec.zdroj)) return false;
   const n = cisloRezervaceBh(rec.rezervace);
   if (n == null || n < POPLATEK_BOOKING_OD_REZ) return false;
+  return rec.poplatek === 'ano' || rec.poplatek === 'neznamo';
+}
+
+/** Kandidát na korekci uloženého automatického „ano“ / „neznamo“ u Airbnb. */
+export function kandidatOpravyPoplatkuAirbnb(rec: {
+  rezervace: string;
+  zdroj: string | null;
+  poplatek: PoplatekStav;
+  stav?: string | null;
+}): boolean {
+  if (rec.stav === 'zruseno') return false;
+  if (!jeZdrojAirbnb(rec.zdroj)) return false;
   return rec.poplatek === 'ano' || rec.poplatek === 'neznamo';
 }

@@ -1,5 +1,5 @@
 import { posunDen } from './brana';
-import { odkazPripraveno, textPripraveno, vetaOdjezduNavic } from './okno-pobytu';
+import { odkazPripraveno, textPripraveno } from './okno-pobytu';
 import { ukazatDotazOdjezdu, zpravaOdjezdu, type PolozkaDluhu } from './odjezd';
 import { textPohody, ukazatPohodu } from './pohoda';
 import type { GuideLang } from './types';
@@ -779,7 +779,7 @@ export function zpravyMenu(opts: {
     brana2: zpravaBrany(opts.lang, 2),
     brana3: zpravaBrany(opts.lang, 3),
     nedojezd: zpravaNedojezdu(opts.lang),
-    odjezd: `${zpravaOdjezdu(opts.lang, opts.dluh || [], opts.pruvodce)}\n\n${vetaOdjezduNavic(opts.lang)}${opts.pruvodce ? `\n${opts.pruvodce.split('#')[0]}#pozdejsi` : ''}`,
+    odjezd: `${zpravaOdjezdu(opts.lang, opts.dluh || [], opts.pruvodce)}${opts.pruvodce ? `\n\n${opts.pruvodce.split('#')[0]}#pozdejsi` : ''}`,
     pohoda: textPohody(opts.lang),
     pripraveno: textPripraveno(opts.lang, opts.pruvodce ? odkazPripraveno(opts.pruvodce) : ''),
   };
