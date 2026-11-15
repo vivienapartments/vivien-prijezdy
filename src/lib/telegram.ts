@@ -1,5 +1,5 @@
 /**
- * Provozní budíček do Telegramu (hlavně Android).
+ * Provozní budíček do Telegramu (majitel + Nikol / účet Vivien Apartments).
  * Env: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (více chatů oddělených čárkou).
  */
 
