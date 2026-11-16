@@ -197,6 +197,7 @@ function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partia
   poloz('narodnost', ins.narodnost);
   poloz('emailHosta', ins.email);
   poloz('accessPin', ins.accessPin);
+  poloz('adresaHosta', ins.adresaHosta);
   if (ins.vytvoreno) poloz('vytvoreno', ins.vytvoreno);
   if (ins.zdroj) poloz('zdroj', ins.zdroj);
   const zdrojPoplatku = ins.zdroj || prev?.zdroj;
@@ -591,6 +592,8 @@ function udajeInterni(u: InterniUdaje, stav: RezervaceStav, prev?: RezervaceReco
     });
   }
   if (u.checkinUrl) data.checkinUrl = u.checkinUrl;
+  if (u.cenaPobytu != null) data.cenaPobytu = u.cenaPobytu;
+  if (u.cenaMena && !prev?.mena) data.mena = u.cenaMena;
   const veta = vetaChybi(u.chybi);
   if (veta && stav === 'bez_checkinu') {
     data.duvody = [duvod('neuplne', `Čeká na online check-in. ${veta}`)];

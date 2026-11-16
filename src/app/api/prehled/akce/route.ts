@@ -10,6 +10,15 @@ import { denPraha } from '@/lib/brana';
 import { isoPrahaZCasu } from '@/lib/prehled';
 import { CASY_VYBERU } from '@/lib/vstup-pruvodce';
 import { posliEmailZpravy, predmetZpravy } from '@/lib/email-zprava';
+import { posliEmailDokladu } from '@/lib/email-doklad';
+import {
+  textDokladuHostovi,
+  urlDokladu,
+  vytvorDokladToken,
+  zakladUrlZEnv,
+} from '@/lib/doklad-odkaz';
+import { sestavHtmlDokladu } from '@/lib/doklad-sestav';
+import type { JazykDokladu, OdberatelDokladu, TypDokladu } from '@/lib/faktura-doklad';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
 import {
@@ -213,6 +222,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'faktura-smazat' &&
       akce !== 'faktura-ares' &&
       akce !== 'faktura-whatsapp' &&
+      akce !== 'faktura-doklad-email' &&
+      akce !== 'faktura-doklad-whatsapp' &&
+      akce !== 'cena-pobytu' &&
       akce !== 'poznamka-uklid' &&
       akce !== 'checkin-neni' &&
       akce !== 'mena')
@@ -254,6 +266,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     const dalsi = pridej(rec, mena === 'EUR' ? 'Platby v eurech' : 'Platby v korunách', { mena });
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, mena }, { headers: noStore });
+  }
+
+  if (akce === 'cena-pobytu') {
+    const surovy = typeof body?.castka === 'string' || typeof body?.castka === 'number' ? String(body.castka) : '';
+    const castka = Math.round(Number(surovy.replace(/\s+/g, '').replace(',', '.')) * 100) / 100;
+    if (!Number.isFinite(castka) || castka <= 0) return chyba(400, 'Zadejte částku pobytu.');
+    const dalsi = zapisMajitele(rec, 'cenaPobytu', { cenaPobytu: castka }, `Cena pobytu ${castka}`);
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, cenaPobytu: dalsi.cenaPobytu }, { headers: noStore });
   }
 
   if (akce === 'poznamka-uklid') {
@@ -1114,6 +1135,66 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'faktura-whatsapp') {
     await store.setRezervace(id, pridej(rec, 'WhatsApp: Doplnění údajů na fakturu'));
     return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
+  if (akce === 'faktura-doklad-email' || akce === 'faktura-doklad-whatsapp') {
+    const typ: TypDokladu = body?.typ === 'zalohova' ? 'zalohova' : 'faktura';
+    const odberatel: OdberatelDokladu = body?.odberatel === 'host' ? 'host' : 'firma';
+    const lang: JazykDokladu = body?.lang === 'en' ? 'en' : 'cs';
+    const castkaRaw =
+      typeof body?.castka === 'string' || typeof body?.castka === 'number' ? String(body.castka) : '';
+    const castkaN = Math.round(Number(castkaRaw.replace(/\s+/g, '').replace(',', '.')) * 100) / 100;
+    const castka = Number.isFinite(castkaN) && castkaN > 0 ? castkaN : undefined;
+    const emailFirma = rec.faktura?.email?.trim() || '';
+    const emailHost = rec.emailHosta?.trim() || '';
+    const na =
+      odberatel === 'host' ? emailHost || emailFirma : emailFirma || emailHost;
+    if (akce === 'faktura-doklad-email' && !na) {
+      return chyba(400, 'Chybí e-mail odběratele. Doplňte ho u firmy nebo u hosta.');
+    }
+    const token = vytvorDokladToken({
+      r: rec.rezervace,
+      typ,
+      odberatel,
+      lang,
+      castka,
+    });
+    const base =
+      (typeof body?.origin === 'string' && body.origin.startsWith('http')
+        ? body.origin.replace(/\/$/, '')
+        : '') || zakladUrlZEnv();
+    const odkaz = urlDokladu(base, token);
+    const texty = textDokladuHostovi(lang, typ, odkaz);
+    if (akce === 'faktura-doklad-whatsapp') {
+      await store.setRezervace(id, pridej(rec, 'WhatsApp: Odkaz na doklad'));
+      return NextResponse.json({ ok: true, zpravaWa: texty.wa, odkaz }, { headers: noStore });
+    }
+    const html = await sestavHtmlDokladu(rec, {
+      typ,
+      lang,
+      odberatel,
+      castka,
+      vystaveno: typeof body?.vystaveno === 'string' ? body.vystaveno : undefined,
+      splatnost: typeof body?.splatnost === 'string' ? body.splatnost : undefined,
+      logoUrl: `${base}/pruvodce/va-logo-faktura.png`,
+    });
+    const soubor =
+      typ === 'zalohova'
+        ? `zalohova-${rec.rezervace}.html`
+        : `doklad-${rec.rezervace}.html`;
+    try {
+      await posliEmailDokladu({
+        to: na,
+        subject: texty.predmet,
+        text: texty.text,
+        htmlDokladu: html,
+        filename: soubor,
+      });
+    } catch (e) {
+      return chyba(500, e instanceof Error ? e.message : 'E-mail se nepodařilo odeslat.');
+    }
+    await store.setRezervace(id, pridej(rec, `E-mail: Doklad odeslán na ${na}`));
+    return NextResponse.json({ ok: true, email: na, odkaz }, { headers: noStore });
   }
 
   if (akce === 'prani-whatsapp') {

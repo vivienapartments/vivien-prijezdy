@@ -154,6 +154,10 @@ export type PrehledRadek = {
   checkinNeniPotreba: boolean;
   /** Zobrazení plateb. null = Kč. */
   mena: 'CZK' | 'EUR' | null;
+  /** Celková cena pobytu z Better Hotelu. */
+  cenaPobytu: number | null;
+  /** Adresa hosta z check-inu. */
+  adresaHosta: string | null;
   /** Údaje na firemní fakturu. */
   faktura: FakturaUdaje | null;
   /** Stejný host z minulých karet (počítá se v paměti). */
@@ -900,6 +904,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     poznamkaUklid: rec.poznamkaUklid || null,
     checkinNeniPotreba: rec.checkinNeniPotreba === true,
     mena: rec.mena === 'EUR' || rec.mena === 'CZK' ? rec.mena : null,
+    cenaPobytu: rec.cenaPobytu ?? null,
+    adresaHosta: rec.adresaHosta ?? null,
     faktura: rec.faktura ?? null,
   };
 }

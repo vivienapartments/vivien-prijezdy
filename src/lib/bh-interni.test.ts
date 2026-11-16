@@ -22,6 +22,8 @@ const TELO = [
   'jana.mala@example.com',
   'Telefon',
   '777 123 456',
+  'Celková cena',
+  '4 569,85 Kč',
   'Rezervované pokoje',
   'Jemná harmonie (Gentle Harmony) - počet hostů: 2',
 ].join('\n');
@@ -86,6 +88,8 @@ describe('čtení nové rezervace', () => {
     expect(u?.telefonWa).toBe('420777123456');
     expect(u?.zdroj).toBe('Booking');
     expect(u?.vytvoreno).toBe('2026-10-06');
+    expect(u?.cenaPobytu).toBe(4569.85);
+    expect(u?.cenaMena).toBe('CZK');
     expect(u?.chybi).toEqual([]);
   });
 

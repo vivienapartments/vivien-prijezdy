@@ -81,15 +81,26 @@ export function FakturaZpravaTlacitka({
 }
 
 type ZmenaFaktury = (rezervace: string, faktura: FakturaUdaje | null) => void;
+type ZmenaCeny = (rezervace: string, cenaPobytu: number) => void;
 
 type Spolecne = {
   ukazka: boolean;
   userAgent: string;
   onZmena: ZmenaFaktury;
+  onCenaPobytu?: ZmenaCeny;
   onHlaska: (text: string) => void;
 };
 
-type OdpovedAkce = { ok?: boolean; error?: string; faktura?: FakturaUdaje | null; ares?: AresVysledek };
+type OdpovedAkce = {
+  ok?: boolean;
+  error?: string;
+  faktura?: FakturaUdaje | null;
+  ares?: AresVysledek;
+  cenaPobytu?: number | null;
+  zpravaWa?: string;
+  email?: string;
+  odkaz?: string;
+};
 
 async function posliAkci(rezervace: string, akce: string, extra: Record<string, unknown> = {}): Promise<OdpovedAkce> {
   try {
@@ -103,6 +114,36 @@ async function posliAkci(rezervace: string, akce: string, extra: Record<string, 
   } catch {
     return { ok: false, error: 'Nepodařilo se uložit.' };
   }
+}
+
+function dnesIso(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function odkazDokladu(
+  row: PrehledRadek,
+  lang: 'cs' | 'en',
+  castka: string,
+  typ: 'zalohova' | 'faktura',
+  vystaveno: string,
+  splatnost: string,
+  odberatel: 'firma' | 'host',
+): string {
+  const q = new URLSearchParams({ rezervace: row.rezervace, lang, typ, odberatel });
+  const cista = castka.trim().replace(/\s+/g, '').replace(',', '.');
+  if (cista) q.set('castka', cista);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(vystaveno)) q.set('vystaveno', vystaveno);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(splatnost)) q.set('splatnost', splatnost);
+  return `/api/prehled/faktura-doklad?${q.toString()}`;
+}
+
+function parsujCastku(raw: string): number | null {
+  const n = Math.round(Number(raw.trim().replace(/\s+/g, '').replace(',', '.')) * 100) / 100;
+  return Number.isFinite(n) && n > 0 ? n : null;
 }
 
 function pole(f: FakturaUdaje): { nazev: string; hodnota: string }[] {
@@ -125,10 +166,69 @@ function kopiruj(nazev: string, hodnota: string, onHlaska: (text: string) => voi
 }
 
 /** Údaje z faktury s tlačítky Kopírovat a akcemi majitele. */
-function FakturaObsah({ row, faktura, ukazka, userAgent, onZmena, onHlaska }: Spolecne & { row: PrehledRadek; faktura: FakturaUdaje }) {
+function FakturaObsah({
+  row,
+  faktura,
+  ukazka,
+  userAgent,
+  onZmena,
+  onCenaPobytu,
+  onHlaska,
+}: Spolecne & { row: PrehledRadek; faktura: FakturaUdaje }) {
   const [cekam, setCekam] = useState(false);
+  const [cena, setCena] = useState(row.cenaPobytu != null ? String(row.cenaPobytu) : '');
+  const [castkaFirma, setCastkaFirma] = useState(row.cenaPobytu != null ? String(row.cenaPobytu) : '');
+  const [castkaHost, setCastkaHost] = useState('');
+  const [odberatel, setOdberatel] = useState<'firma' | 'host'>('firma');
+  const [typ, setTyp] = useState<'zalohova' | 'faktura'>('faktura');
+  const [vystaveno, setVystaveno] = useState(row.odjezd || dnesIso());
+  const [splatnost, setSplatnost] = useState(row.odjezd || dnesIso());
   const chybi = coChybiNaFakture(faktura);
   const wa = row.telefonWa || row.jinyTelefonWa;
+  const langDokladu = row.jazyk === 'cs' ? 'cs' : 'en';
+  const celkemPobytu = parsujCastku(cena) ?? row.cenaPobytu ?? null;
+
+  useEffect(() => {
+    const c = row.cenaPobytu != null ? String(row.cenaPobytu) : '';
+    setCena(c);
+    setCastkaFirma(c);
+    setCastkaHost('');
+    setOdberatel('firma');
+  }, [row.cenaPobytu, row.rezervace]);
+
+  function zmenCastkuFirma(raw: string) {
+    setCastkaFirma(raw);
+    const dil = parsujCastku(raw);
+    if (celkemPobytu == null || dil == null) {
+      setCastkaHost('');
+      return;
+    }
+    const zbytek = Math.round((celkemPobytu - dil) * 100) / 100;
+    setCastkaHost(zbytek > 0 ? String(zbytek) : '');
+  }
+
+  function zmenCastkuHost(raw: string) {
+    setCastkaHost(raw);
+    const dil = parsujCastku(raw);
+    if (celkemPobytu == null || dil == null) {
+      setCastkaFirma(celkemPobytu != null ? String(celkemPobytu) : '');
+      return;
+    }
+    const zbytek = Math.round((celkemPobytu - dil) * 100) / 100;
+    setCastkaFirma(zbytek >= 0 ? String(zbytek) : '');
+  }
+
+  function zvolTyp(dalsi: 'zalohova' | 'faktura') {
+    setTyp(dalsi);
+    if (dalsi === 'zalohova') {
+      setVystaveno(dnesIso());
+      setSplatnost(row.prijezd || dnesIso());
+    } else {
+      const den = row.odjezd || dnesIso();
+      setVystaveno(den);
+      setSplatnost(den);
+    }
+  }
 
   async function akce(nazev: 'faktura-hotovo' | 'faktura-vratit') {
     if (cekam) return;
@@ -146,6 +246,98 @@ function FakturaObsah({ row, faktura, ukazka, userAgent, onZmena, onHlaska }: Sp
     onZmena(row.rezervace, json.faktura);
   }
 
+  async function ulozCenu() {
+    const castka = Math.round(Number(cena.trim().replace(/\s+/g, '').replace(',', '.')) * 100) / 100;
+    if (!Number.isFinite(castka) || castka <= 0) {
+      onHlaska('Zadejte částku pobytu.');
+      return;
+    }
+    if (ukazka) {
+      onCenaPobytu?.(row.rezervace, castka);
+      onHlaska('Cena pobytu je uložená.');
+      return;
+    }
+    setCekam(true);
+    const json = await posliAkci(row.rezervace, 'cena-pobytu', { castka });
+    setCekam(false);
+    if (!json.ok || json.cenaPobytu == null) {
+      onHlaska(json.error || 'Nepodařilo se uložit cenu.');
+      return;
+    }
+    onCenaPobytu?.(row.rezervace, json.cenaPobytu);
+    onHlaska('Cena pobytu je uložená.');
+  }
+
+  function castkaProDoklad(): string {
+    return odberatel === 'host' ? castkaHost || cena : castkaFirma || cena;
+  }
+
+  function otevriDoklad(lang: 'cs' | 'en') {
+    if (ukazka) {
+      onHlaska('Náhled dokladu je v ostrém přehledu u rezervace.');
+      return;
+    }
+    window.open(
+      odkazDokladu(row, lang, castkaProDoklad(), typ, vystaveno, splatnost, odberatel),
+      '_blank',
+      'noopener,noreferrer',
+    );
+  }
+
+  function teloDokladu() {
+    return {
+      typ,
+      odberatel,
+      lang: langDokladu,
+      castka: castkaProDoklad(),
+      vystaveno,
+      splatnost,
+      origin: window.location.origin,
+    };
+  }
+
+  async function posliDokladEmailem() {
+    if (cekam) return;
+    if (ukazka) {
+      onHlaska('Ostrý e-mail jde jen z přehledu u rezervace.');
+      return;
+    }
+    setCekam(true);
+    const json = await posliAkci(row.rezervace, 'faktura-doklad-email', teloDokladu());
+    setCekam(false);
+    if (!json.ok) {
+      onHlaska(json.error || FAKTURA_MAJITEL.doklad_chybi_email);
+      return;
+    }
+    onHlaska(
+      json.email
+        ? `${FAKTURA_MAJITEL.doklad_email_ok} (${json.email})`
+        : FAKTURA_MAJITEL.doklad_email_ok,
+    );
+  }
+
+  async function posliDokladWhatsApp() {
+    if (cekam) return;
+    if (ukazka) {
+      onHlaska('WhatsApp s dokladem jde jen z přehledu u rezervace.');
+      return;
+    }
+    if (!wa) {
+      onHlaska(FAKTURA_MAJITEL.doklad_chybi_telefon);
+      return;
+    }
+    setCekam(true);
+    const json = await posliAkci(row.rezervace, 'faktura-doklad-whatsapp', teloDokladu());
+    setCekam(false);
+    if (!json.ok || !json.zpravaWa) {
+      onHlaska(json.error || 'Nepodařilo se připravit zprávu.');
+      return;
+    }
+    const url = `https://wa.me/${wa}?text=${encodeURIComponent(json.zpravaWa)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+    onHlaska(FAKTURA_MAJITEL.doklad_wa_ok);
+  }
+
   return (
     <>
       <ul className="ph-faktura__pole">
@@ -158,31 +350,166 @@ function FakturaObsah({ row, faktura, ukazka, userAgent, onZmena, onHlaska }: Sp
             </button>
           </li>
         ))}
+        <li>
+          <span className="ph-faktura__nazev">Cena pobytu</span>
+          <span className="ph-faktura__hodnota">
+            <input
+              className="ph-input"
+              inputMode="decimal"
+              value={cena}
+              onChange={(e) => setCena(e.target.value)}
+              placeholder={row.mena === 'EUR' ? 'např. 180' : 'např. 4569.85'}
+              aria-label="Cena pobytu"
+            />
+          </span>
+          <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void ulozCenu()}>
+            Uložit cenu
+          </button>
+        </li>
+        <li>
+          <span className="ph-faktura__nazev">Typ dokladu</span>
+          <span className="ph-faktura__hodnota ph-faktura__volby">
+            <button
+              type="button"
+              className={typ === 'faktura' ? 'ph-ulozit' : 'ph-kopie'}
+              onClick={() => zvolTyp('faktura')}
+            >
+              Po odjezdu
+            </button>
+            <button
+              type="button"
+              className={typ === 'zalohova' ? 'ph-ulozit' : 'ph-kopie'}
+              onClick={() => zvolTyp('zalohova')}
+            >
+              Zálohová
+            </button>
+          </span>
+        </li>
+        <li>
+          <span className="ph-faktura__nazev">Odběratel</span>
+          <span className="ph-faktura__hodnota ph-faktura__volby">
+            <button
+              type="button"
+              className={odberatel === 'firma' ? 'ph-ulozit' : 'ph-kopie'}
+              onClick={() => setOdberatel('firma')}
+            >
+              Firma
+            </button>
+            <button
+              type="button"
+              className={odberatel === 'host' ? 'ph-ulozit' : 'ph-kopie'}
+              onClick={() => setOdberatel('host')}
+            >
+              Host
+            </button>
+          </span>
+        </li>
+        <li>
+          <span className="ph-faktura__nazev">Částka firma</span>
+          <span className="ph-faktura__hodnota">
+            <input
+              className="ph-input"
+              inputMode="decimal"
+              value={castkaFirma}
+              onChange={(e) => zmenCastkuFirma(e.target.value)}
+              placeholder="část pro firmu"
+              aria-label="Částka pro firmu"
+            />
+          </span>
+        </li>
+        <li>
+          <span className="ph-faktura__nazev">Částka host</span>
+          <span className="ph-faktura__hodnota">
+            <input
+              className="ph-input"
+              inputMode="decimal"
+              value={castkaHost}
+              onChange={(e) => zmenCastkuHost(e.target.value)}
+              placeholder="zbytek pro hosta"
+              aria-label="Částka pro hosta"
+            />
+          </span>
+        </li>
+        <li>
+          <span className="ph-faktura__nazev">Vystaveno</span>
+          <span className="ph-faktura__hodnota">
+            <input
+              type="date"
+              className="ph-input"
+              value={vystaveno}
+              onChange={(e) => setVystaveno(e.target.value)}
+              aria-label="Datum vystavení"
+            />
+          </span>
+        </li>
+        <li>
+          <span className="ph-faktura__nazev">Splatnost</span>
+          <span className="ph-faktura__hodnota">
+            <input
+              type="date"
+              className="ph-input"
+              value={splatnost}
+              onChange={(e) => setSplatnost(e.target.value)}
+              aria-label="Datum splatnosti"
+            />
+          </span>
+          <button type="button" className="ph-ulozit" onClick={() => otevriDoklad(langDokladu)}>
+            OK · náhled
+          </button>
+        </li>
       </ul>
-      <p className="ph-faktura__kdo">{faktura.zadal === 'majitel' ? 'Zadal majitel' : 'Zadal host'}</p>
-      <span className="ph-odjezdy__akce">
-        {faktura.hotovo ? (
-          <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void akce('faktura-vratit')}>
-            {FAKTURA_MAJITEL.tlacitko_vratit}
+      <p className="ph-faktura__kdo">
+        {faktura.zadal === 'majitel' ? 'Zadal majitel' : 'Zadal host'}
+        {typ === 'zalohova'
+          ? ' · zálohová má platební QR'
+          : ' · po odjezdu uhrazeno, odkaz + QR na rezervaci'}
+        {odberatel === 'host' ? ' · odběratel host' : ' · odběratel firma'}
+      </p>
+      <div className="ph-faktura__akce">
+        <div className="ph-faktura__radek">
+          <button type="button" className="ph-ulozit" onClick={() => otevriDoklad(langDokladu)}>
+            Náhled dokladu
           </button>
-        ) : (
-          <button type="button" className="ph-ulozit" disabled={cekam} onClick={() => void akce('faktura-hotovo')}>
-            {FAKTURA_MAJITEL.tlacitko_hotovo}
+          <button type="button" className="ph-kopie" onClick={() => otevriDoklad(langDokladu === 'cs' ? 'en' : 'cs')}>
+            {langDokladu === 'cs' ? 'Náhled anglicky' : 'Náhled česky'}
           </button>
-        )}
-        {chybi.length && !faktura.hotovo ? (
-          <TlacitkoWhatsApp
-            wa={wa}
-            zprava={zpravaFakturaDoplnit(chybi)}
-            userAgent={userAgent}
-            onPredOtevrenim={async () => {
-              if (!ukazka) await posliAkci(row.rezervace, 'faktura-whatsapp');
-            }}
-          >
-            Doplnit údaje
-          </TlacitkoWhatsApp>
-        ) : null}
-      </span>
+        </div>
+        <div className="ph-faktura__radek">
+          <button type="button" className="ph-ulozit" disabled={cekam} onClick={() => void posliDokladEmailem()}>
+            {FAKTURA_MAJITEL.tlacitko_doklad_email}
+          </button>
+          <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void posliDokladWhatsApp()}>
+            {FAKTURA_MAJITEL.tlacitko_doklad_whatsapp}
+          </button>
+        </div>
+        <div
+          className={
+            chybi.length && !faktura.hotovo ? 'ph-faktura__radek' : 'ph-faktura__radek ph-faktura__radek--jedna'
+          }
+        >
+          {faktura.hotovo ? (
+            <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void akce('faktura-vratit')}>
+              {FAKTURA_MAJITEL.tlacitko_vratit}
+            </button>
+          ) : (
+            <button type="button" className="ph-ulozit" disabled={cekam} onClick={() => void akce('faktura-hotovo')}>
+              {FAKTURA_MAJITEL.tlacitko_hotovo}
+            </button>
+          )}
+          {chybi.length && !faktura.hotovo ? (
+            <TlacitkoWhatsApp
+              wa={wa}
+              zprava={zpravaFakturaDoplnit(chybi)}
+              userAgent={userAgent}
+              onPredOtevrenim={async () => {
+                if (!ukazka) await posliAkci(row.rezervace, 'faktura-whatsapp');
+              }}
+            >
+              Doplnit údaje
+            </TlacitkoWhatsApp>
+          ) : null}
+        </div>
+      </div>
     </>
   );
 }

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Doklad 120260042</title>
+<style>
+  :root {
+    --ink: #2a241c;
+    --muted: #6a5f52;
+    --line: #e8dfd2;
+    --gold: #b08d57;
+    --paper: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #f5f5f5;
+    color: var(--ink);
+    font: 15px/1.45 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 2;
+    display: flex; gap: 12px; align-items: center; justify-content: space-between;
+    padding: 12px 16px;
+    background: #fff;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar button, .bar a {
+    appearance: none; border: 1px solid var(--gold); cursor: pointer;
+    background: #fff; color: var(--ink);
+    font: inherit; font-weight: 600;
+    padding: 10px 16px; border-radius: 999px;
+    text-decoration: none;
+  }
+  .sheet {
+    max-width: 820px;
+    margin: 24px auto 48px;
+    background: var(--paper);
+    padding: 40px 44px;
+    border: 1px solid var(--line);
+  }
+  header {
+    display: grid;
+    grid-template-columns: 88px 1fr auto;
+    gap: 18px;
+    align-items: center;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--gold);
+  }
+  .logo {
+    width: 88px; height: 88px; border-radius: 50%;
+    object-fit: cover; background: #fff;
+    border: 1px solid var(--gold);
+  }
+  .brand { font-family: Georgia, "Times New Roman", serif; font-size: 28px; letter-spacing: .02em; color: var(--ink); }
+  .brand small { display: block; margin-top: 4px; color: var(--muted); font: 13px/1.4 "Segoe UI", sans-serif; }
+  .meta { text-align: right; font-size: 14px; color: var(--muted); }
+  .meta strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 8px; }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin: 28px 0;
+  }
+  .box {
+    background: #fff;
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .box h2 {
+    margin: 0 0 10px;
+    font: 600 12px/1 "Segoe UI", sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .box p { margin: 0 0 4px; }
+  .pobyt {
+    margin: 0 0 22px;
+    padding: 14px 16px;
+    border: 1px solid var(--gold);
+    background: #fff;
+    border-radius: 10px;
+  }
+  .pobyt strong { display: block; margin-bottom: 4px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 18px;
+    border: 1px solid var(--gold);
+  }
+  th, td {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+    background: #fff;
+  }
+  th {
+    font-size: 12px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink);
+    font-weight: 600;
+    background: #fff;
+    border-bottom: 1px solid var(--gold);
+  }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  td.warn { color: #8a3b2b; }
+  .sum {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 22px;
+  }
+  .sum-castka {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 28px;
+    min-width: 320px;
+    background: #fff;
+    color: var(--ink);
+    border: 1px solid var(--gold);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .sum-castka .sum-stav {
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .sum-castka .sum-castka-cislo {
+    white-space: nowrap;
+    text-align: right;
+  }
+  .pay {
+    margin-top: 8px;
+    padding: 20px 22px 22px;
+  }
+  .pay h2 {
+    margin: 0 0 16px;
+    font: 600 12px/1 "Segoe UI", sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .pay-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 148px;
+    gap: 24px;
+    align-items: center;
+  }
+  .pay-dl {
+    margin: 0;
+    display: grid;
+    gap: 8px;
+  }
+  .pay-dl > div {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  .pay-dl dt {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .pay-dl dd {
+    margin: 0;
+    font-weight: 600;
+  }
+  .pay-qr {
+    text-align: center;
+  }
+  .pay-qr img {
+    width: 132px;
+    height: 132px;
+    display: block;
+    margin: 0 auto 8px;
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    background: #fff;
+  }
+  .pay-qr strong {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .pay-qr span {
+    display: block;
+    margin: 6px 0 0;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .pay-after {
+    margin: 28px 4px 12px;
+    padding: 18px 4px 4px;
+    border-top: 1px solid var(--line);
+    max-width: 42em;
+  }
+  .promo-pod {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.5;
+    font-weight: 400;
+  }
+  .promo-url {
+    margin: 8px 0 0;
+  }
+  .promo-url a {
+    display: inline-block;
+    color: var(--ink);
+    font-weight: 400;
+    font-size: 14px;
+    text-decoration: underline;
+    text-decoration-color: var(--gold);
+    text-underline-offset: 3px;
+    white-space: nowrap;
+  }
+  .note { margin-top: 16px; color: var(--muted); font-size: 14px; }
+  @media print {
+    body { background: #fff; }
+    .bar { display: none; }
+    .sheet {
+      margin: 0; box-shadow: none; max-width: none; padding: 0;
+      border: 0;
+    }
+    .pay-grid { grid-template-columns: minmax(0, 1fr) 148px; }
+    .logo, .pay-qr img { border-color: #999; }
+    .box, .pobyt, .sum-castka, table { border-color: #999; }
+    th { border-bottom-color: #999; }
+  }
+  @media (max-width: 700px) {
+    .sheet { margin: 0; padding: 22px 16px 40px; }
+    header, .grid { grid-template-columns: 1fr; }
+    .meta { text-align: left; }
+  }
+</style>
+</head>
+<body>
+  <div class="bar">
+    <div>Doklad 120260042</div>
+    <button type="button" onclick="window.print()">Tisk / uložit PDF</button>
+  </div>
+  <article class="sheet">
+    <header>
+      <img class="logo" src="/pruvodce/va-logo-faktura.png" alt="VIVIEN"/>
+      <div>
+        <div class="brand">VIVIEN Apartments
+          <small>Nádražní 108/43, 370 01 České Budějovice</small>
+        </div>
+      </div>
+      <div class="meta">
+        <strong>Doklad 120260042</strong>
+        <div>Vystaveno: 10. 11. 2026</div>
+        <div>Splatnost: 10. 11. 2026</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <section class="box">
+        <h2>Dodavatel</h2>
+        <p><strong>Nikola Tomková</strong></p>
+        <p>Reinerova 47</p>
+        <p>370 06 České Budějovice</p>
+        <p>Česká republika</p>
+        <p>IČO: 04304438</p>
+        <p>Nejsme plátci DPH</p>
+        <p><a href="mailto:info@vivienapartments.cz">info@vivienapartments.cz</a></p>
+        <p><a href="tel:+420604692573" style="white-space:nowrap">+420 604 692 573</a></p>
+      </section>
+      <section class="box">
+        <h2>Odběratel</h2>
+        <p>NR biz s.r.o.</p><p>Lehotskeho 1, Bratislava 811 06</p><p>Slovakia</p><p>IČO: 50749153</p><p>firma@example.com</p>
+      </section>
+    </div>
+
+    <section class="pobyt">
+      <strong>Pobyt</strong>
+      <div>7. 11. 2026 – 10. 11. 2026 · 3×</div>
+      <div>Apartmán: Jemna harmonie</div>
+      <div>Host: Norbert Racz</div>
+    </section>
+
+    <h2 style="margin:0 0 8px;font:600 12px/1 Segoe UI,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)">Položky</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Název</th>
+          <th class="num">Počet</th>
+          <th class="num">Cena</th>
+          <th class="num">Celkem</th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td>Ubytovací služby</td>
+      <td class="num">1</td>
+      <td class="num">4 569,85 Kč</td>
+      <td class="num">4 569,85 Kč</td>
+    </tr><tr>
+      <td>Poplatek z pobytu</td>
+      <td class="num">3</td>
+      <td class="num">50,00 Kč</td>
+      <td class="num">150,00 Kč</td>
+    </tr></tbody>
+    </table>
+
+    <div class="sum">
+      <div class="sum-castka">
+        <span class="sum-stav">Doklad je uhrazený.</span>
+        <span class="sum-castka-cislo">4 719,85 Kč</span>
+      </div>
+    </div>
+
+    <section class="pay box">
+      <h2>Platební údaje</h2>
+      <div class="pay-grid">
+        <dl class="pay-dl">
+          <div><dt>Forma úhrady</dt><dd>Převodem</dd></div>
+          <div><dt>Variabilní symbol</dt><dd style="white-space:nowrap">120260042</dd></div>
+          <div><dt>Číslo účtu</dt><dd style="white-space:nowrap">2103497397 / 2010</dd></div>
+          <div><dt>IBAN</dt><dd style="white-space:nowrap">CZ04 2010 0000 0021 0349 7397</dd></div>
+          <div><dt>SWIFT / BIC</dt><dd style="white-space:nowrap">FIOBCZPPXXX</dd></div>
+        </dl>
+        <div class="pay-qr">
+          <img src="data:image/png;base64,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" alt="QR na rezervaci"/>
+          <strong>QR na rezervaci</strong>
+        </div>
+      </div>
+    </section>
+    <div class="pay-after">
+        <p class="promo-pod">Budete znovu v Českých Budějovicích? Novou rezervaci uděláte na našem webu.</p>
+        <p class="promo-url"><a href="https://www.vivienapartments.cz/cs/rezervace" target="_blank" rel="noopener">www.vivienapartments.cz/cs/rezervace</a></p>
+        
+      </div>
+  </article>
+</body>
+</html>

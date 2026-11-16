@@ -1,4 +1,5 @@
 import { nightsBetween, parseCzechDate } from './dates';
+import { parsujCenuBh, type MenaFaktury } from './faktura-doklad';
 import { normalizujTelefon } from './telefon';
 import type { AptId } from './types';
 import { aptFromCzechName } from './vivien-data';
@@ -22,6 +23,10 @@ export type InterniUdaje = {
   zdroj: string | null;
   vytvoreno: string | null;
   checkinUrl: string | null;
+  /** Celková cena z BH. null = v mailu nebyla. */
+  cenaPobytu: number | null;
+  /** Měna z řádku celkové ceny. */
+  cenaMena: MenaFaktury | null;
   /** Co se nepodařilo přečíst. Bez osobních údajů. */
   chybi: string[];
 };
@@ -208,6 +213,7 @@ export function parsujInterni(subject: string, html = '', text = ''): InterniUda
   const jmeno = jmenoZKlienta(hodnota(lines, 'klient'));
   const email = emailZ(hodnota(lines, 'email'));
   const telefon = telefonZ(hodnota(lines, 'telefon'));
+  const cena = parsujCenuBh(hodnota(lines, 'celková cena'));
   const chybi: string[] = [];
   if (!pokojUdaj.apartman) chybi.push('apartmán');
   if (!prijezd) chybi.push('příjezd');
@@ -233,6 +239,8 @@ export function parsujInterni(subject: string, html = '', text = ''): InterniUda
     zdroj: zdrojZAgentury(hodnota(lines, 'agentura')),
     vytvoreno: datum(hodnota(lines, 'zarezervováno')),
     checkinUrl: checkinOdkaz(html, text),
+    cenaPobytu: cena?.castka ?? null,
+    cenaMena: cena?.mena ?? null,
     chybi,
   };
 }

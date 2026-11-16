@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { t } from './i18n';
 import { casPrijezduNadpis, kodyCekaji } from './texts';
-import { inspectVivienMail, jmenoProPrehled, langFromNarodnost, parseVivienData } from './vivien-data';
+import {
+  cleanGuestAddress,
+  inspectVivienMail,
+  jmenoProPrehled,
+  langFromNarodnost,
+  parseVivienData,
+} from './vivien-data';
 
 const SAMPLE = `
 (RES_URL)
@@ -74,6 +80,19 @@ KONEC`;
     const bez = SAMPLE.replace('ACCESS_PIN: 1234\n', '');
     const r = parseVivienData(bez);
     expect(r.ok).toBe(false);
+  });
+
+  it('uloží GUEST_FULL_ADDRESS a prázdný merge field zahodí', () => {
+    expect(cleanGuestAddress('(GUEST_FULL_ADDRESS)')).toBeNull();
+    const s = SAMPLE.replace(
+      'ACCESS_PIN: 1234\n',
+      'ACCESS_PIN: 1234\nGUEST_FULL_ADDRESS: Nádražní 1, 370 01 České Budějovice\n',
+    );
+    const r = parseVivienData(s);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.adresaHosta).toBe('Nádražní 1, 370 01 České Budějovice');
+    expect(inspectVivienMail(s).adresaHosta).toBe('Nádražní 1, 370 01 České Budějovice');
   });
 
   it('jméno do tabulky je z GUEST_NAME, jinak příjmení z oslovení', () => {

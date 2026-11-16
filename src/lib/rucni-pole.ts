@@ -43,6 +43,8 @@ const VSECHNA: RucniPole[] = [
   'poplatek',
   'accessPin',
   'poznamkaUklid',
+  'cenaPobytu',
+  'adresaHosta',
 ];
 
 export function jeRucniPole(klic: string): klic is RucniPole {

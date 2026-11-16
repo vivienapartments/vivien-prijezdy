@@ -24,6 +24,8 @@ export type VivienData = {
   telefon: string | null;
   telefonWa: string | null;
   telefonPuvodni: string | null;
+  /** GUEST_FULL_ADDRESS z BH. null = v mailu nebyl. */
+  adresaHosta: string | null;
   klic: string | null;
   /** PIN apartmánu z BH (ACCESS_PIN), mění se podle pobytu. */
   accessPin: string | null;
@@ -230,6 +232,7 @@ export function parseVivienData(raw: string): ParseResult {
       jmeno,
       zdroj: cistyZdroj(f.ZDROJ),
       ...telefonZPoli(f.GUEST_PHONE, narodnost),
+      adresaHosta: cleanGuestAddress(f.GUEST_FULL_ADDRESS || f.GUEST_ADDRESS || ''),
       klic: f.KLIC?.trim() || null,
       accessPin,
     },
@@ -255,6 +258,16 @@ export function cleanGuestFirstName(raw: string): string | null {
   // max 40 znaků, bez e-mailu / čísla rezervace
   if (s.length > 40 || /@|\d{5,}/.test(s)) return null;
   return s;
+}
+
+/** Adresa hosta z BH; prázdný / nevyplněný merge field → null. */
+export function cleanGuestAddress(raw: string): string | null {
+  const s = raw.trim().replace(/\s+/g, ' ');
+  if (!s) return null;
+  if (/^\([A-Z0-9_ ]+\)$/i.test(s)) return null;
+  if (/^\(?\s*GUEST_?FULL_?ADDRESS\s*\)?$/i.test(s)) return null;
+  if (s === '—' || s === '-' || s === '–') return null;
+  return s.slice(0, 300);
 }
 
 /** Jméno jen do tabulky. Do pozdravu nepatří. */
@@ -299,6 +312,8 @@ export type MailInspection = {
   telefon: string | null;
   telefonWa: string | null;
   telefonPuvodni: string | null;
+  /** GUEST_FULL_ADDRESS z BH. */
+  adresaHosta: string | null;
   zdroj: string | null;
   duvody: Duvod[];
 };
@@ -349,6 +364,7 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
       telefon: null,
       telefonWa: null,
       telefonPuvodni: null,
+      adresaHosta: null,
       zdroj: null,
       duvody,
     };
@@ -421,6 +437,7 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
     accessPin,
     vytvoreno,
     ...telefonZPoli(f.GUEST_PHONE, narodnost),
+    adresaHosta: cleanGuestAddress(f.GUEST_FULL_ADDRESS || f.GUEST_ADDRESS || ''),
     zdroj: cistyZdroj(f.ZDROJ),
     duvody,
   };

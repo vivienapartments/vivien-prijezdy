@@ -613,6 +613,10 @@ export function PrehledClient({
     setRadky((prev) => prev.map((r) => (r.rezervace === rezervace ? { ...r, faktura } : r)));
   }
 
+  function zmenCenuPobytu(rezervace: string, cenaPobytu: number) {
+    setRadky((prev) => prev.map((r) => (r.rezervace === rezervace ? { ...r, cenaPobytu } : r)));
+  }
+
   function otevriFakturu(rezervace: string) {
     otevriKartu(rezervace);
     setDetailSekce((prev) => {
@@ -4455,6 +4459,7 @@ export function PrehledClient({
                     ukazka={ukazka}
                     userAgent={userAgent}
                     onZmena={zmenFakturu}
+                    onCenaPobytu={zmenCenuPobytu}
                     onHlaska={setHlaska}
                   />
                 </DetailSekce>
@@ -5074,6 +5079,7 @@ export function PrehledClient({
           ukazka={ukazka}
           userAgent={userAgent}
           onZmena={zmenFakturu}
+          onCenaPobytu={zmenCenuPobytu}
           onHlaska={setHlaska}
           onOtevriKartu={otevriKartu}
           vychoziOtevreno={fakturyFocus}

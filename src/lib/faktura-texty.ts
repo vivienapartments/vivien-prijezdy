@@ -407,7 +407,13 @@ export const FAKTURA_MAJITEL = {
   "zkopirovano": "Zpráva zkopírována",
   "prani_tlacitko": "Poslat odkaz na fakturu",
   "chybi_checkin_odkaz": "Chybí odkaz na check-in. Doplňte ho na kartě.",
-  "tlacitko_whatsapp": "Otevřít WhatsApp"
+  "tlacitko_whatsapp": "Otevřít WhatsApp",
+  "tlacitko_doklad_email": "Poslat doklad e-mailem",
+  "tlacitko_doklad_whatsapp": "Doklad na WhatsApp",
+  "doklad_email_ok": "Doklad je odeslaný e-mailem.",
+  "doklad_wa_ok": "Otevřete WhatsApp se zprávou a odkazem na doklad.",
+  "doklad_chybi_email": "Chybí e-mail odběratele.",
+  "doklad_chybi_telefon": "Chybí telefon pro WhatsApp."
 } as const;
 
 export const FAKTURA_ZPRAVA_HOSTOVI: T = {

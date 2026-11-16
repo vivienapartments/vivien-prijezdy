@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Náhled · Faktura v přehledu</title>
+<style>
+  :root {
+    --bg: #1c1712;
+    --ink: #f3ebe0;
+    --muted: rgba(243, 235, 224, 0.7);
+    --gold: #c9a84c;
+    --line: rgba(255, 255, 255, 0.12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse at top, rgba(201, 168, 76, 0.12), transparent 55%),
+      var(--bg);
+    color: var(--ink);
+    font: 15px/1.45 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  .wrap {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 3rem;
+  }
+  .hint {
+    margin: 0 0 1rem;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+  .karta {
+    border: 1px solid rgba(201, 168, 76, 0.35);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.28);
+    padding: 0.9rem 1rem 1.1rem;
+  }
+  .karta__hlava {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.65rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .karta__jmeno {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.35rem;
+    color: var(--gold);
+  }
+  .karta__meta { color: var(--muted); font-size: 0.9rem; }
+  .blok-nazev {
+    margin: 0 0 0.55rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  .ph-faktura__pole {
+    margin: 0 0 0.55rem;
+    padding: 0;
+    list-style: none;
+  }
+  .ph-faktura__pole li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.65rem;
+    margin: 0 0 0.45rem;
+  }
+  .ph-faktura__nazev {
+    min-width: 6.5rem;
+    color: var(--muted);
+  }
+  .ph-faktura__hodnota { flex: 1 1 12rem; min-width: 0; }
+  .ph-faktura__hodnota:has(input),
+  .ph-faktura__volby {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .ph-faktura__volby {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    margin-top: 0;
+  }
+  .ph-faktura__volby > button {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .ph-input {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid rgba(201, 168, 76, 0.4);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.35);
+    color: var(--ink);
+    font: inherit;
+  }
+  .ph-faktura__akce {
+    display: grid;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+    width: 100%;
+  }
+  .ph-faktura__radek {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.4rem;
+    align-items: stretch;
+  }
+  .ph-faktura__radek--jedna {
+    grid-template-columns: 1fr;
+  }
+  .ph-faktura__radek > button {
+    width: 100%;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+  }
+  .ph-kopie, .ph-ulozit {
+    appearance: none;
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    font: inherit;
+    font-weight: 600;
+    cursor: default;
+  }
+  .ph-kopie {
+    border: 1px solid rgba(201, 168, 76, 0.45);
+    background: transparent;
+    color: var(--ink);
+  }
+  .ph-ulozit {
+    border: 1px solid var(--gold);
+    background: rgba(201, 168, 76, 0.28);
+    color: var(--ink);
+  }
+  .ph-faktura__kdo {
+    margin: 0.2rem 0 0.7rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+  .kroky {
+    margin: 1.1rem 0 0;
+    padding: 0.85rem 0.95rem;
+    border: 1px dashed rgba(201, 168, 76, 0.4);
+    border-radius: 10px;
+    color: var(--muted);
+    font-size: 0.92rem;
+  }
+  .kroky strong { color: var(--ink); font-weight: 600; }
+  .kroky ol { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+  .kroky li { margin: 0.25rem 0; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <p class="hint">Náhled panelu v přehledu. Ostrý přehled je stejný tmavý. Po „nasaď“ to uvidíte u karty hosta.</p>
+
+    <section class="karta">
+      <div class="karta__hlava">
+        <div>
+          <div class="karta__jmeno">Norbert Racz</div>
+          <div class="karta__meta">V2 · 7. 11. – 10. 11. 2026 · #120260042</div>
+        </div>
+        <div class="karta__meta">Faktura</div>
+      </div>
+
+      <h2 class="blok-nazev">Faktura · doklad</h2>
+      <ul class="ph-faktura__pole">
+        <li>
+          <span class="ph-faktura__nazev">Název</span>
+          <span class="ph-faktura__hodnota">NR biz s.r.o.</span>
+          <button type="button" class="ph-kopie">Kopírovat</button>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">IČO</span>
+          <span class="ph-faktura__hodnota">50749153</span>
+          <button type="button" class="ph-kopie">Kopírovat</button>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">Adresa</span>
+          <span class="ph-faktura__hodnota">Lehotskeho 1, Bratislava 811 06</span>
+          <button type="button" class="ph-kopie">Kopírovat</button>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">Cena pobytu</span>
+          <span class="ph-faktura__hodnota"><input class="ph-input" value="4569.85" readonly/></span>
+          <button type="button" class="ph-kopie">Uložit cenu</button>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">Typ dokladu</span>
+          <span class="ph-faktura__hodnota ph-faktura__volby">
+            <button type="button" class="ph-ulozit">Po odjezdu</button>
+            <button type="button" class="ph-kopie">Zálohová</button>
+          </span>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">Odběratel</span>
+          <span class="ph-faktura__hodnota ph-faktura__volby">
+            <button type="button" class="ph-ulozit">Firma</button>
+            <button type="button" class="ph-kopie">Host</button>
+          </span>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">Částka firma</span>
+          <span class="ph-faktura__hodnota"><input class="ph-input" value="4569.85" readonly/></span>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">Částka host</span>
+          <span class="ph-faktura__hodnota"><input class="ph-input" placeholder="zbytek pro hosta" readonly/></span>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">Vystaveno</span>
+          <span class="ph-faktura__hodnota"><input class="ph-input" value="2026-11-10" readonly/></span>
+        </li>
+        <li>
+          <span class="ph-faktura__nazev">Splatnost</span>
+          <span class="ph-faktura__hodnota"><input class="ph-input" value="2026-11-10" readonly/></span>
+          <button type="button" class="ph-ulozit">OK · náhled</button>
+        </li>
+      </ul>
+      <p class="ph-faktura__kdo">Zadal host · po odjezdu uhrazeno, odkaz + QR na rezervaci · odběratel firma</p>
+      <div class="ph-faktura__akce">
+        <div class="ph-faktura__radek">
+          <button type="button" class="ph-ulozit">Náhled dokladu</button>
+          <button type="button" class="ph-kopie">Náhled anglicky</button>
+        </div>
+        <div class="ph-faktura__radek">
+          <button type="button" class="ph-ulozit">Poslat doklad e-mailem</button>
+          <button type="button" class="ph-kopie">Doklad na WhatsApp</button>
+        </div>
+        <div class="ph-faktura__radek ph-faktura__radek--jedna">
+          <button type="button" class="ph-ulozit">Hotovo</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="kroky">
+      <strong>Jak to použijete</strong>
+      <ol>
+        <li>Otevřete kartu hosta v přehledu.</li>
+        <li>V sekci Faktura nastavíte typ, odběratele a částky.</li>
+        <li>Klepnete Náhled dokladu. Otevře se papír, který už znáte.</li>
+        <li>Tisk / uložit PDF. Pak Hotovo.</li>
+      </ol>
+    </div>
+  </div>
+</body>
+</html>

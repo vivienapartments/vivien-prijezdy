@@ -275,6 +275,10 @@ export type RezervaceRecord = {
   checkinNeniPotreba: boolean;
   /** Zobrazení plateb na kartě. Úložiště drží částky v Kč. null = Kč. */
   mena: 'CZK' | 'EUR' | null;
+  /** Celková cena pobytu z Better Hotelu (ne městský poplatek). null = ještě neznáme. */
+  cenaPobytu: number | null;
+  /** Adresa hosta z BH check-inu (GUEST_FULL_ADDRESS). null = ještě neznáme. */
+  adresaHosta: string | null;
   /** Údaje na firemní fakturu. null = host nechce / nezadal. */
   faktura: FakturaUdaje | null;
 };
@@ -301,7 +305,9 @@ export type RucniPole =
   | 'poplatekVybral'
   | 'poplatek'
   | 'accessPin'
-  | 'poznamkaUklid';
+  | 'poznamkaUklid'
+  | 'cenaPobytu'
+  | 'adresaHosta';
 
 export type OdkudNavrh = 'check-in' | 'rezervace' | 'host' | 'potvrzeni';
 
@@ -374,6 +380,8 @@ const RUCNI_KLIC = new Set<RucniPole>([
   'poplatekVybral',
   'accessPin',
   'poznamkaUklid',
+  'cenaPobytu',
+  'adresaHosta',
 ]);
 
 const ODKUD = new Set<OdkudNavrh>(['check-in', 'rezervace', 'host', 'potvrzeni']);
@@ -797,6 +805,14 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       typeof r.poznamkaUklid === 'string' && r.poznamkaUklid.trim() ? r.poznamkaUklid.trim().slice(0, 500) : null,
     checkinNeniPotreba: r.checkinNeniPotreba === true,
     mena: r.mena === 'EUR' || r.mena === 'CZK' ? r.mena : null,
+    cenaPobytu:
+      typeof r.cenaPobytu === 'number' && Number.isFinite(r.cenaPobytu) && r.cenaPobytu > 0
+        ? Math.round(r.cenaPobytu * 100) / 100
+        : null,
+    adresaHosta:
+      typeof r.adresaHosta === 'string' && r.adresaHosta.trim()
+        ? r.adresaHosta.trim().slice(0, 300)
+        : null,
     faktura: nactiFakturu(r.faktura),
   };
 }
@@ -886,6 +902,8 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     poznamkaUklid: null,
     checkinNeniPotreba: false,
     mena: null,
+    cenaPobytu: null,
+    adresaHosta: null,
     faktura: null,
   };
 }
