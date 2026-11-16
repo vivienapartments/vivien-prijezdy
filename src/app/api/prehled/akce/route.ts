@@ -123,7 +123,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     jak?: string;
     druh?: string;
     ids?: string[];
-    castka?: string;
+    castka?: string | number;
     stav?: string;
     zprava?: string;
     presto?: boolean;
@@ -134,6 +134,12 @@ export async function POST(request: Request): Promise<NextResponse> {
     id?: string;
     ico?: string;
     faktura?: FakturaVstup;
+    typ?: string;
+    odberatel?: string;
+    lang?: string;
+    origin?: string;
+    vystaveno?: string;
+    splatnost?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -439,7 +445,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'priplatek') {
-    const surovy = (body?.castka || '').trim();
+    const surovy = String(body?.castka ?? '').trim();
     if (!surovy) {
       const dalsi = zapisMajitele(rec, 'priplatekRucni', { priplatekRucni: null }, 'Příplatek za čas smazán');
       await store.setRezervace(id, dalsi);
