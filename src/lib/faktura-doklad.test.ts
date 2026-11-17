@@ -142,6 +142,37 @@ describe('faktura-doklad', () => {
     expect(htmlHost).not.toContain('Firma s.r.o.');
   });
 
+  it('bezHosta u firmy neuvede jméno hosta', async () => {
+    const rec = {
+      ...prazdnaRezervace('120260042', '2026-11-16T10:00:00.000Z'),
+      jmeno: 'Norbert Racz',
+      prijezd: '2026-11-07',
+      odjezd: '2026-11-10',
+      noci: 3,
+      mena: 'CZK' as const,
+      cenaPobytu: 3000,
+      faktura: {
+        typ: 'cz' as const,
+        nazev: 'Firma s.r.o.',
+        adresa: 'Ulice 1',
+        ico: '27074358',
+        zadal: 'host' as const,
+        kdy: '2026-11-10T12:00:00.000Z',
+      },
+    };
+    const doklad = sestavDokladZRezervace(rec, {
+      typ: 'faktura',
+      lang: 'cs',
+      odberatel: 'firma',
+      bezHosta: true,
+    });
+    expect(doklad.bezHosta).toBe(true);
+    expect(doklad.hostJmeno).toBeNull();
+    const html = await htmlDokladuSQr(doklad);
+    expect(html).toContain('Firma s.r.o.');
+    expect(html).not.toContain('Norbert Racz');
+  });
+
   it('zálohová má QR a splatnost k příjezdu', async () => {
     const rec = {
       ...prazdnaRezervace('120260042', '2026-11-16T10:00:00.000Z'),

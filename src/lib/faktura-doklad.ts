@@ -204,6 +204,8 @@ export type DokladVstup = {
   hostAdresa: string | null;
   /** Kdo je odběratel na tomto dokladu. */
   odberatel: OdberatelDokladu;
+  /** Na žádost firmy: jméno hosta na dokladu vůbec neuvést. */
+  bezHosta: boolean;
   faktura: FakturaUdaje | null;
   /** Částka na tomto dokladu (u půlení jen díl). */
   cenaPobytu: number | null;
@@ -245,6 +247,7 @@ export function sestavDokladZRezervace(
     apartmanNazev?: string;
     cenaPobytu?: number | null;
     odberatel?: OdberatelDokladu;
+    bezHosta?: boolean;
   } = {},
 ): DokladVstup {
   const typ: TypDokladu = opts.typ === 'zalohova' ? 'zalohova' : 'faktura';
@@ -255,6 +258,7 @@ export function sestavDokladZRezervace(
   const splatnost = opts.splatnost || zaklad.splatnost;
   const uhrazeno = opts.uhrazeno !== undefined ? opts.uhrazeno : zaklad.uhrazeno;
   const odberatel: OdberatelDokladu = opts.odberatel === 'host' ? 'host' : 'firma';
+  const bezHosta = odberatel === 'firma' && opts.bezHosta === true;
   const cenaCelkem = rec.cenaPobytu;
   const cenaPobytu = opts.cenaPobytu !== undefined ? opts.cenaPobytu : rec.cenaPobytu;
   const puleno =
@@ -277,10 +281,11 @@ export function sestavDokladZRezervace(
     osob: rec.osob,
     apartman: rec.apartman,
     apartmanNazev: opts.apartmanNazev || rec.apartman || '',
-    hostJmeno: rec.jmeno,
-    hostEmail: rec.emailHosta,
-    hostAdresa: rec.adresaHosta,
+    hostJmeno: bezHosta ? null : rec.jmeno,
+    hostEmail: bezHosta ? null : rec.emailHosta,
+    hostAdresa: bezHosta ? null : rec.adresaHosta,
     odberatel,
+    bezHosta,
     faktura: rec.faktura || null,
     cenaPobytu,
     cenaCelkem,
@@ -727,7 +732,7 @@ export function htmlDokladu(
         ${
           odberatelRadky.length
             ? odberatelRadky.map((r) => `<p>${escapeHtml(r)}</p>`).join('')
-            : `<p>${escapeHtml(d.hostJmeno || '—')}</p>`
+            : `<p>${escapeHtml(d.bezHosta ? '—' : d.hostJmeno || '—')}</p>`
         }
       </section>
     </div>
@@ -736,7 +741,7 @@ export function htmlDokladu(
       <strong>${escapeHtml(t.pobyt)}</strong>
       <div>${escapeHtml(termin || '—')}${d.noci ? ` · ${d.noci}×` : ''}</div>
       <div>${escapeHtml(t.apartman)}: ${escapeHtml(d.apartmanNazev || d.apartman || '—')}</div>
-      ${d.hostJmeno ? `<div>${escapeHtml(t.host)}: ${escapeHtml(d.hostJmeno)}</div>` : ''}
+      ${!d.bezHosta && d.hostJmeno ? `<div>${escapeHtml(t.host)}: ${escapeHtml(d.hostJmeno)}</div>` : ''}
     </section>
 
     <h2 style="margin:0 0 8px;font:600 12px/1 Segoe UI,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)">${escapeHtml(t.polozky)}</h2>

@@ -28,6 +28,7 @@ export async function sestavHtmlDokladu(
     castka?: number;
     vystaveno?: string;
     splatnost?: string;
+    bezHosta?: boolean;
     logoUrl: string;
   },
 ): Promise<string> {
@@ -36,6 +37,7 @@ export async function sestavHtmlDokladu(
     typ: opts.typ,
     lang: opts.lang,
     odberatel: opts.odberatel,
+    bezHosta: opts.bezHosta === true,
     cenaPobytu: opts.castka,
     vystaveno: jeDen(opts.vystaveno),
     splatnost: jeDen(opts.splatnost),

@@ -132,12 +132,14 @@ function odkazDokladu(
   vystaveno: string,
   splatnost: string,
   odberatel: 'firma' | 'host',
+  bezHosta: boolean,
 ): string {
   const q = new URLSearchParams({ rezervace: row.rezervace, lang, typ, odberatel });
   const cista = castka.trim().replace(/\s+/g, '').replace(',', '.');
   if (cista) q.set('castka', cista);
   if (/^\d{4}-\d{2}-\d{2}$/.test(vystaveno)) q.set('vystaveno', vystaveno);
   if (/^\d{4}-\d{2}-\d{2}$/.test(splatnost)) q.set('splatnost', splatnost);
+  if (odberatel === 'firma' && bezHosta) q.set('bezHosta', '1');
   return `/api/prehled/faktura-doklad?${q.toString()}`;
 }
 
@@ -180,6 +182,7 @@ function FakturaObsah({
   const [castkaFirma, setCastkaFirma] = useState(row.cenaPobytu != null ? String(row.cenaPobytu) : '');
   const [castkaHost, setCastkaHost] = useState('');
   const [odberatel, setOdberatel] = useState<'firma' | 'host'>('firma');
+  const [bezHosta, setBezHosta] = useState(false);
   const [typ, setTyp] = useState<'zalohova' | 'faktura'>('faktura');
   const [vystaveno, setVystaveno] = useState(row.odjezd || dnesIso());
   const [splatnost, setSplatnost] = useState(row.odjezd || dnesIso());
@@ -194,7 +197,13 @@ function FakturaObsah({
     setCastkaFirma(c);
     setCastkaHost('');
     setOdberatel('firma');
+    setBezHosta(false);
   }, [row.cenaPobytu, row.rezervace]);
+
+  function zvolOdberatele(kdo: 'firma' | 'host') {
+    setOdberatel(kdo);
+    if (kdo === 'host') setBezHosta(false);
+  }
 
   function zmenCastkuFirma(raw: string) {
     setCastkaFirma(raw);
@@ -278,7 +287,7 @@ function FakturaObsah({
       return;
     }
     window.open(
-      odkazDokladu(row, lang, castkaProDoklad(), typ, vystaveno, splatnost, odberatel),
+      odkazDokladu(row, lang, castkaProDoklad(), typ, vystaveno, splatnost, odberatel, bezHosta),
       '_blank',
       'noopener,noreferrer',
     );
@@ -288,6 +297,7 @@ function FakturaObsah({
     return {
       typ,
       odberatel,
+      bezHosta: odberatel === 'firma' && bezHosta,
       lang: langDokladu,
       castka: castkaProDoklad(),
       vystaveno,
@@ -365,6 +375,11 @@ function FakturaObsah({
           <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void ulozCenu()}>
             Uložit cenu
           </button>
+          {!cena.trim() && row.cenaPobytu == null ? (
+            <span className="ph-faktura__napoveda">
+              Cena přijde z mailu Better Hotelu (řádek Celková cena). U starších rezervací ji doplňte ručně a uložte.
+            </span>
+          ) : null}
         </li>
         <li>
           <span className="ph-faktura__nazev">Typ dokladu</span>
@@ -391,19 +406,40 @@ function FakturaObsah({
             <button
               type="button"
               className={odberatel === 'firma' ? 'ph-ulozit' : 'ph-kopie'}
-              onClick={() => setOdberatel('firma')}
+              onClick={() => zvolOdberatele('firma')}
             >
               Firma
             </button>
             <button
               type="button"
               className={odberatel === 'host' ? 'ph-ulozit' : 'ph-kopie'}
-              onClick={() => setOdberatel('host')}
+              onClick={() => zvolOdberatele('host')}
             >
               Host
             </button>
           </span>
         </li>
+        {odberatel === 'firma' ? (
+          <li>
+            <span className="ph-faktura__nazev">Jméno hosta</span>
+            <span className="ph-faktura__hodnota ph-faktura__volby">
+              <button
+                type="button"
+                className={!bezHosta ? 'ph-ulozit' : 'ph-kopie'}
+                onClick={() => setBezHosta(false)}
+              >
+                Uvést
+              </button>
+              <button
+                type="button"
+                className={bezHosta ? 'ph-ulozit' : 'ph-kopie'}
+                onClick={() => setBezHosta(true)}
+              >
+                Neuvést
+              </button>
+            </span>
+          </li>
+        ) : null}
         <li>
           <span className="ph-faktura__nazev">Částka firma</span>
           <span className="ph-faktura__hodnota">
@@ -464,6 +500,7 @@ function FakturaObsah({
           ? ' · zálohová má platební QR'
           : ' · po odjezdu uhrazeno, odkaz + QR na rezervaci'}
         {odberatel === 'host' ? ' · odběratel host' : ' · odběratel firma'}
+        {odberatel === 'firma' && bezHosta ? ' · bez jména hosta' : ''}
       </p>
       <div className="ph-faktura__akce">
         <div className="ph-faktura__radek">

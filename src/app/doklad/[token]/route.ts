@@ -37,6 +37,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
     lang: over.payload.lang,
     odberatel: over.payload.odberatel,
     castka: over.payload.castka,
+    bezHosta: over.payload.bezHosta === true,
     logoUrl: `${origin}/pruvodce/va-logo-faktura.png`,
   });
 

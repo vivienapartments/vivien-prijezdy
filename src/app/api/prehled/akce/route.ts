@@ -140,6 +140,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     origin?: string;
     vystaveno?: string;
     splatnost?: string;
+    bezHosta?: boolean;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -1146,6 +1147,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'faktura-doklad-email' || akce === 'faktura-doklad-whatsapp') {
     const typ: TypDokladu = body?.typ === 'zalohova' ? 'zalohova' : 'faktura';
     const odberatel: OdberatelDokladu = body?.odberatel === 'host' ? 'host' : 'firma';
+    const bezHosta = odberatel === 'firma' && body?.bezHosta === true;
     const lang: JazykDokladu = body?.lang === 'en' ? 'en' : 'cs';
     const castkaRaw =
       typeof body?.castka === 'string' || typeof body?.castka === 'number' ? String(body.castka) : '';
@@ -1164,6 +1166,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       odberatel,
       lang,
       castka,
+      bezHosta,
     });
     const base =
       (typeof body?.origin === 'string' && body.origin.startsWith('http')
@@ -1180,6 +1183,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       lang,
       odberatel,
       castka,
+      bezHosta,
       vystaveno: typeof body?.vystaveno === 'string' ? body.vystaveno : undefined,
       splatnost: typeof body?.splatnost === 'string' ? body.splatnost : undefined,
       logoUrl: `${base}/pruvodce/va-logo-faktura.png`,

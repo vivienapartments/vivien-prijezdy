@@ -7,6 +7,8 @@ export type DokladOdkazPayload = {
   odberatel: OdberatelDokladu;
   lang: JazykDokladu;
   castka?: number;
+  /** Jen firma, bez jména hosta. */
+  bezHosta?: boolean;
   /** Unix sekundy. */
   exp: number;
 };
@@ -40,6 +42,9 @@ export function vytvorDokladToken(
   };
   if (vstup.castka != null && Number.isFinite(vstup.castka) && vstup.castka > 0) {
     payload.castka = Math.round(vstup.castka * 100) / 100;
+  }
+  if (payload.odberatel === 'firma' && vstup.bezHosta === true) {
+    payload.bezHosta = true;
   }
   if (!payload.r) throw new Error('Chybí rezervace.');
   const json = JSON.stringify(payload);
@@ -86,7 +91,19 @@ export function overDokladToken(
     typeof o.castka === 'number' && Number.isFinite(o.castka) && o.castka > 0
       ? Math.round(o.castka * 100) / 100
       : undefined;
-  return { ok: true, payload: { r, typ, odberatel, lang, exp, ...(castka != null ? { castka } : {}) } };
+  const bezHosta = odberatel === 'firma' && o.bezHosta === true;
+  return {
+    ok: true,
+    payload: {
+      r,
+      typ,
+      odberatel,
+      lang,
+      exp,
+      ...(castka != null ? { castka } : {}),
+      ...(bezHosta ? { bezHosta: true } : {}),
+    },
+  };
 }
 
 export function urlDokladu(base: string, token: string): string {

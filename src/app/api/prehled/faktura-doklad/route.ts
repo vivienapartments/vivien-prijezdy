@@ -54,6 +54,7 @@ export async function GET(req: Request) {
   const typ: TypDokladu = url.searchParams.get('typ') === 'zalohova' ? 'zalohova' : 'faktura';
   const odberatel: OdberatelDokladu =
     url.searchParams.get('odberatel') === 'host' ? 'host' : 'firma';
+  const bezHosta = odberatel === 'firma' && url.searchParams.get('bezHosta') === '1';
   const castkaRaw = url.searchParams.get('castka');
   const cenaOverride =
     castkaRaw != null && castkaRaw !== ''
@@ -72,6 +73,7 @@ export async function GET(req: Request) {
     splatnost: jeDatum(url.searchParams.get('splatnost')),
     cenaPobytu,
     odberatel,
+    bezHosta,
     apartmanNazev: nazevApartmanu(rec.apartman, lang),
     logoUrl: `${origin}/pruvodce/va-logo-faktura.png`,
   });
