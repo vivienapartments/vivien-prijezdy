@@ -149,6 +149,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     bezEmailu?: boolean;
     bezPoznamky?: boolean;
     poznamkaDokladu?: string;
+    poznamka?: string;
     zpusobUhrady?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
