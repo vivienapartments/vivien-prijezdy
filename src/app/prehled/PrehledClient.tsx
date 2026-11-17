@@ -2656,8 +2656,8 @@ export function PrehledClient({
     const kontaktUlozenCas = kontaktUlozenKdy(row) || staly?.kontaktZMinula || null;
     const muzeKontakt = Boolean(wa || row.telefonText || row.jinyTelefonText);
     const kontaktNahore = !kontaktUlozenCas && !staly?.kontaktZMinula && !mimoAkce;
-    /** Nahoře: předání, nebo Vrátit nedojezd. Po předání je Vrátit jen v Detailu. */
-    const predaniNahore = nedojezd || (!odjel && !predanoKdy);
+    /** Nahoře jen Předat. Po předání je Vrátit v Detailu. Nedojezd je ve Změnách. */
+    const predaniNahore = !nedojezd && !odjel && !predanoKdy;
     const tlacitkoKontakt = muzeKontakt ? (
       <UlozitKontakt row={row} onUlozeno={() => oznacKontaktUlozen(row)} />
     ) : null;
@@ -2976,16 +2976,7 @@ export function PrehledClient({
         ) : null}
       </div>
     );
-    const predaniTlacitko = nedojezd ? (
-      <button
-        type="button"
-        className="ph-predano"
-        disabled={cekam !== null}
-        onClick={() => setDotazPredani({ id: row.rezervace, druh: 'vratit-nedojezd' })}
-      >
-        Vrátit nedojezd
-      </button>
-    ) : predanoKdy ? (
+    const predaniTlacitko = predanoKdy ? (
       <button
         type="button"
         className="ph-predano"
@@ -2995,33 +2986,26 @@ export function PrehledClient({
         Vrátit předání
       </button>
     ) : (
-      <div className="ph-nova-rada ph-nova-rada--predani">
-        <button
-          type="button"
-          className="ph-nova-predani"
-          disabled={cekam !== null}
-          onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
-        >
-          Předat apartmán
-        </button>
-        <button
-          type="button"
-          className="ph-predano"
-          disabled={cekam !== null}
-          onClick={() => setDotazPredani({ id: row.rezervace, druh: 'nedojezd' })}
-        >
-          Nedojezd
-        </button>
-      </div>
+      <button
+        type="button"
+        className="ph-nova-predani"
+        disabled={cekam !== null}
+        onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
+      >
+        Předat apartmán
+      </button>
     );
-    const predaniDotaz = dotazPredani?.id === row.rezervace ? (
+    const predaniDotazDruh = dotazPredani?.id === row.rezervace ? dotazPredani.druh : null;
+    const predaniDotazJeNedojezd =
+      predaniDotazDruh === 'nedojezd' || predaniDotazDruh === 'vratit-nedojezd';
+    const predaniDotaz = predaniDotazDruh ? (
       <div className="ph-predano-dotaz">
         <p>
-          {dotazPredani.druh === 'predano'
+          {predaniDotazDruh === 'predano'
             ? 'Opravdu předat apartmán? Hostovi se v průvodci zobrazí vstupní kódy.'
-            : dotazPredani.druh === 'nedojezd'
+            : predaniDotazDruh === 'nedojezd'
               ? 'Označit jako nedojezd? Zmizí z dalších akcí. V dluzích zůstane, jen když něco dluží.'
-              : dotazPredani.druh === 'vratit-nedojezd'
+              : predaniDotazDruh === 'vratit-nedojezd'
                 ? 'Vrátit nedojezd? Host se zase objeví v denních akcích.'
                 : 'Opravdu vrátit předání? Host v průvodci kódy neuvidí.'}
         </p>
@@ -3029,18 +3013,16 @@ export function PrehledClient({
           type="button"
           disabled={cekam !== null}
           onClick={() => {
-            if (dotazPredani.druh === 'nedojezd') void ulozNedojezd(row, true);
-            else if (dotazPredani.druh === 'vratit-nedojezd') void ulozNedojezd(row, false);
-            else void ulozPredani(row, dotazPredani.druh === 'predano');
+            if (predaniDotazDruh === 'nedojezd') void ulozNedojezd(row, true);
+            else if (predaniDotazDruh === 'vratit-nedojezd') void ulozNedojezd(row, false);
+            else void ulozPredani(row, predaniDotazDruh === 'predano');
           }}
         >
-          {dotazPredani.druh === 'predano'
+          {predaniDotazDruh === 'predano'
             ? 'Ano, předat'
-            : dotazPredani.druh === 'nedojezd'
+            : predaniDotazDruh === 'nedojezd'
               ? 'Ano, nedojezd'
-              : dotazPredani.druh === 'vratit-nedojezd'
-                ? 'Ano, vrátit'
-                : 'Ano, vrátit'}
+              : 'Ano, vrátit'}
         </button>
         <button type="button" onClick={() => setDotazPredani(null)}>
           Zrušit
@@ -4074,7 +4056,7 @@ export function PrehledClient({
         {predaniNahore ? (
           <>
             {predaniTlacitko}
-            {predaniDotaz}
+            {!predaniDotazJeNedojezd ? predaniDotaz : null}
           </>
         ) : null}
         {jazykNahore ? <div className="ph-znovu">{jazykSelect}</div> : null}
@@ -4240,7 +4222,27 @@ export function PrehledClient({
                     >
                       {row.checkinNeniPotreba ? 'Bez check-inu · zapnuto' : 'Bez check-inu'}
                     </button>
+                    {nedojezd ? (
+                      <button
+                        type="button"
+                        className="ph-predano is-on"
+                        disabled={cekam !== null}
+                        onClick={() => setDotazPredani({ id: row.rezervace, druh: 'vratit-nedojezd' })}
+                      >
+                        Vrátit nedojezd
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="ph-predano"
+                        disabled={cekam !== null || Boolean(predanoKdy)}
+                        onClick={() => setDotazPredani({ id: row.rezervace, druh: 'nedojezd' })}
+                      >
+                        Nedojezd
+                      </button>
+                    )}
                   </div>
+                  {predaniDotazJeNedojezd ? predaniDotaz : null}
                   {!oknoHotovo[`${row.rezervace}:individualni-pozni-prijezd`] ? (
                     <div className="ph-okno">
                       <p className="ph-hlaska">Individuální příjezd po 21:00 (výjimka)</p>
@@ -4291,8 +4293,9 @@ export function PrehledClient({
                     Den příjezdu a odjezdu drží kartu i kontrolu obsazenosti. PIN se ukáže v průvodci
                     (na Klice ručně). Domluvená částka i „Host už zaplatil“ jdou do Plateb. Bez
                     nového e-mailu hostovi. Co tu uložíte ručně, Better Hotel nepřepíše. „Bez
-                    check-inu“ vypne červené čekání na online check-in. Individuální příjezd po
-                    21:00 sem patří, na kartě nahoře ho neukazujeme.
+                    check-inu“ vypne červené čekání na online check-in. Nedojezd hosta schová
+                    z denních akcí. Individuální příjezd po 21:00 sem patří, na kartě nahoře ho
+                    neukazujeme.
                   </p>
                 </DetailSekce>
                 <DetailSekce
@@ -4421,15 +4424,16 @@ export function PrehledClient({
                   otevreno={jeOtevrena('predani')}
                   onToggle={() => prepni('predani')}
                 >
-                  {predaniNahore ? null : (
+                  {nedojezd ? (
+                    <p className="ph-hlaska">Nedojezd je ve Změnách. Odtud ho jde vrátit.</p>
+                  ) : predaniNahore ? (
+                    <p className="ph-hlaska">Předat apartmán je nahoře na kartě.</p>
+                  ) : (
                     <>
                       {predaniTlacitko}
-                      {predaniDotaz}
+                      {!predaniDotazJeNedojezd ? predaniDotaz : null}
                     </>
                   )}
-                  {predaniNahore ? (
-                    <p className="ph-hlaska">Předat apartmán je nahoře na kartě.</p>
-                  ) : null}
                   {ukazZavady ? zavadyBlok : <p className="ph-hlaska">Zatím bez závad.</p>}
                   <PoznamkaUklidPole
                     key={`${row.rezervace}:${row.poznamkaUklid || ''}`}
