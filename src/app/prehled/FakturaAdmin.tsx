@@ -342,6 +342,33 @@ function FakturaObsah({
     void ulozVolby({ zpusobUhrady: jak });
   }
 
+  async function ulozNeboEditujPoznamku() {
+    if (!editujePoznamku) {
+      setEditujePoznamku(true);
+      return;
+    }
+    const text = poznamka.trim().slice(0, 500);
+    setPoznamka(text);
+    setEditujePoznamku(false);
+    if (ukazka) {
+      onZmena(row.rezervace, {
+        ...faktura,
+        ...(text ? { poznamka: text } : {}),
+        ...(!text ? { poznamka: undefined } : {}),
+      });
+      return;
+    }
+    setCekam(true);
+    const json = await posliAkci(row.rezervace, 'faktura-poznamka', { poznamka: text });
+    setCekam(false);
+    if (!json.ok || !json.faktura) {
+      onHlaska(json.error || 'Poznámka se neuložila.');
+      return;
+    }
+    onZmena(row.rezervace, json.faktura);
+    onHlaska('Poznámka je uložená.');
+  }
+
   async function akce(nazev: 'faktura-hotovo' | 'faktura-vratit') {
     if (cekam) return;
     if (ukazka) {
@@ -631,7 +658,8 @@ function FakturaObsah({
           <button
             type="button"
             className="ph-kopie"
-            onClick={() => setEditujePoznamku((v) => !v)}
+            disabled={cekam}
+            onClick={() => void ulozNeboEditujPoznamku()}
           >
             {editujePoznamku ? 'Hotovo' : 'Upravit'}
           </button>

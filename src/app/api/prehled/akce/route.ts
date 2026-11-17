@@ -234,6 +234,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prani-whatsapp' &&
       akce !== 'faktura-ulozit' &&
       akce !== 'faktura-doklad-volby' &&
+      akce !== 'faktura-poznamka' &&
       akce !== 'faktura-hotovo' &&
       akce !== 'faktura-vratit' &&
       akce !== 'faktura-smazat' &&
@@ -1152,6 +1153,21 @@ export async function POST(request: Request): Promise<NextResponse> {
       upraveno: new Date().toISOString(),
     };
     await store.setRezervace(id, pridej(rec, 'Nastavení dokladu uloženo', { faktura }));
+    return NextResponse.json({ ok: true, faktura }, { headers: noStore });
+  }
+
+  if (akce === 'faktura-poznamka') {
+    if (!rec.faktura) return chyba(404, 'Faktura není zadaná.');
+    const text = String(body?.poznamka ?? '')
+      .trim()
+      .slice(0, 500);
+    const faktura = {
+      ...rec.faktura,
+      ...(text ? { poznamka: text } : { poznamka: undefined }),
+      upraveno: new Date().toISOString(),
+    };
+    if (!text) delete (faktura as { poznamka?: string }).poznamka;
+    await store.setRezervace(id, pridej(rec, 'Poznámka na fakturu upravena', { faktura }));
     return NextResponse.json({ ok: true, faktura }, { headers: noStore });
   }
 
