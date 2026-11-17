@@ -177,6 +177,7 @@ const NAZVY_ZMENY: Partial<Record<keyof RezervaceRecord, string>> = {
   zdroj: 'zdroj',
   telefon: 'telefon',
   poplatek: 'poplatek',
+  cenaPobytu: 'cena pobytu',
 };
 
 /** Check-in zapíše jen pole, která v mailu jsou. Co majitel uložil ručně, zůstane. */
@@ -198,6 +199,8 @@ function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partia
   poloz('emailHosta', ins.email);
   poloz('accessPin', ins.accessPin);
   poloz('adresaHosta', ins.adresaHosta);
+  poloz('cenaPobytu', ins.cenaPobytu);
+  if (ins.cenaMena && !prev?.mena) poloz('mena', ins.cenaMena);
   if (ins.vytvoreno) poloz('vytvoreno', ins.vytvoreno);
   if (ins.zdroj) poloz('zdroj', ins.zdroj);
   const zdrojPoplatku = ins.zdroj || prev?.zdroj;

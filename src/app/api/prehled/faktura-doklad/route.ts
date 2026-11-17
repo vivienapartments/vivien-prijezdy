@@ -55,6 +55,9 @@ export async function GET(req: Request) {
   const odberatel: OdberatelDokladu =
     url.searchParams.get('odberatel') === 'host' ? 'host' : 'firma';
   const bezHosta = odberatel === 'firma' && url.searchParams.get('bezHosta') === '1';
+  const bezEmailu = url.searchParams.get('bezEmailu') === '1';
+  const bezPoznamky = url.searchParams.get('bezPoznamky') === '1';
+  const poznamkaQ = url.searchParams.get('poznamka');
   const castkaRaw = url.searchParams.get('castka');
   const cenaOverride =
     castkaRaw != null && castkaRaw !== ''
@@ -74,6 +77,9 @@ export async function GET(req: Request) {
     cenaPobytu,
     odberatel,
     bezHosta,
+    bezEmailu,
+    bezPoznamky,
+    poznamkaDokladu: bezPoznamky ? null : poznamkaQ != null ? poznamkaQ : undefined,
     apartmanNazev: nazevApartmanu(rec.apartman, lang),
     logoUrl: `${origin}/pruvodce/va-logo-faktura.png`,
   });

@@ -124,6 +124,19 @@ function dnesIso(): string {
   return `${y}-${m}-${day}`;
 }
 
+function plusDny(ymd: string, dny: number): string {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + dny));
+  return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth() + 1).padStart(2, '0')}-${String(dt.getUTCDate()).padStart(2, '0')}`;
+}
+
+/** Záloha: za týden, nejpozději den příjezdu. */
+function splatnostZalohyUi(prijezd: string | null | undefined, dnes: string): string {
+  const tyden = plusDny(dnes, 7);
+  if (prijezd && /^\d{4}-\d{2}-\d{2}$/.test(prijezd) && prijezd < tyden) return prijezd;
+  return tyden;
+}
+
 function odkazDokladu(
   row: PrehledRadek,
   lang: 'cs' | 'en',
@@ -132,14 +145,17 @@ function odkazDokladu(
   vystaveno: string,
   splatnost: string,
   odberatel: 'firma' | 'host',
-  bezHosta: boolean,
+  volby: { bezHosta: boolean; bezEmailu: boolean; bezPoznamky: boolean; poznamka: string },
 ): string {
   const q = new URLSearchParams({ rezervace: row.rezervace, lang, typ, odberatel });
   const cista = castka.trim().replace(/\s+/g, '').replace(',', '.');
   if (cista) q.set('castka', cista);
   if (/^\d{4}-\d{2}-\d{2}$/.test(vystaveno)) q.set('vystaveno', vystaveno);
   if (/^\d{4}-\d{2}-\d{2}$/.test(splatnost)) q.set('splatnost', splatnost);
-  if (odberatel === 'firma' && bezHosta) q.set('bezHosta', '1');
+  if (odberatel === 'firma' && volby.bezHosta) q.set('bezHosta', '1');
+  if (volby.bezEmailu) q.set('bezEmailu', '1');
+  if (volby.bezPoznamky) q.set('bezPoznamky', '1');
+  else if (volby.poznamka.trim()) q.set('poznamka', volby.poznamka.trim());
   return `/api/prehled/faktura-doklad?${q.toString()}`;
 }
 
@@ -155,8 +171,6 @@ function pole(f: FakturaUdaje): { nazev: string; hodnota: string }[] {
     { nazev: 'DIČ', hodnota: f.dic || '' },
     { nazev: 'Adresa', hodnota: f.adresa || '' },
     { nazev: 'Země', hodnota: f.zeme || '' },
-    { nazev: 'E-mail', hodnota: f.email || '' },
-    { nazev: 'Poznámka', hodnota: f.poznamka || '' },
   ].filter((p) => p.hodnota);
 }
 
@@ -183,13 +197,21 @@ function FakturaObsah({
   const [castkaHost, setCastkaHost] = useState('');
   const [odberatel, setOdberatel] = useState<'firma' | 'host'>('firma');
   const [bezHosta, setBezHosta] = useState(false);
+  const [bezEmailu, setBezEmailu] = useState(false);
+  const [bezPoznamky, setBezPoznamky] = useState(false);
+  const [poznamka, setPoznamka] = useState(faktura.poznamka || '');
+  const [editujePoznamku, setEditujePoznamku] = useState(false);
   const [typ, setTyp] = useState<'zalohova' | 'faktura'>('faktura');
-  const [vystaveno, setVystaveno] = useState(row.odjezd || dnesIso());
-  const [splatnost, setSplatnost] = useState(row.odjezd || dnesIso());
+  const [vystaveno, setVystaveno] = useState(dnesIso());
+  const [splatnost, setSplatnost] = useState(dnesIso());
   const chybi = coChybiNaFakture(faktura);
   const wa = row.telefonWa || row.jinyTelefonWa;
   const langDokladu = row.jazyk === 'cs' ? 'cs' : 'en';
   const celkemPobytu = parsujCastku(cena) ?? row.cenaPobytu ?? null;
+  const emailKarty = (faktura.email || '').trim();
+  const emailHosta = (row.email || '').trim();
+  const emailJeHostuv =
+    Boolean(emailKarty && emailHosta && emailKarty.toLowerCase() === emailHosta.toLowerCase());
 
   useEffect(() => {
     const c = row.cenaPobytu != null ? String(row.cenaPobytu) : '';
@@ -198,11 +220,28 @@ function FakturaObsah({
     setCastkaHost('');
     setOdberatel('firma');
     setBezHosta(false);
-  }, [row.cenaPobytu, row.rezervace]);
+    setBezEmailu(false);
+    setBezPoznamky(false);
+    setPoznamka(faktura.poznamka || '');
+    setEditujePoznamku(false);
+    const dnes = dnesIso();
+    setTyp('faktura');
+    setVystaveno(dnes);
+    setSplatnost(dnes);
+  }, [row.cenaPobytu, row.rezervace, faktura.poznamka]);
 
   function zvolOdberatele(kdo: 'firma' | 'host') {
     setOdberatel(kdo);
     if (kdo === 'host') setBezHosta(false);
+  }
+
+  function volbyDokladu() {
+    return {
+      bezHosta,
+      bezEmailu: bezEmailu || (odberatel === 'firma' && emailJeHostuv),
+      bezPoznamky,
+      poznamka,
+    };
   }
 
   function zmenCastkuFirma(raw: string) {
@@ -229,14 +268,9 @@ function FakturaObsah({
 
   function zvolTyp(dalsi: 'zalohova' | 'faktura') {
     setTyp(dalsi);
-    if (dalsi === 'zalohova') {
-      setVystaveno(dnesIso());
-      setSplatnost(row.prijezd || dnesIso());
-    } else {
-      const den = row.odjezd || dnesIso();
-      setVystaveno(den);
-      setSplatnost(den);
-    }
+    const dnes = dnesIso();
+    setVystaveno(dnes);
+    setSplatnost(dalsi === 'zalohova' ? splatnostZalohyUi(row.prijezd, dnes) : dnes);
   }
 
   async function akce(nazev: 'faktura-hotovo' | 'faktura-vratit') {
@@ -287,7 +321,7 @@ function FakturaObsah({
       return;
     }
     window.open(
-      odkazDokladu(row, lang, castkaProDoklad(), typ, vystaveno, splatnost, odberatel, bezHosta),
+      odkazDokladu(row, lang, castkaProDoklad(), typ, vystaveno, splatnost, odberatel, volbyDokladu()),
       '_blank',
       'noopener,noreferrer',
     );
@@ -298,6 +332,9 @@ function FakturaObsah({
       typ,
       odberatel,
       bezHosta: odberatel === 'firma' && bezHosta,
+      bezEmailu: bezEmailu || (odberatel === 'firma' && emailJeHostuv),
+      bezPoznamky,
+      poznamkaDokladu: bezPoznamky ? '' : poznamka,
       lang: langDokladu,
       castka: castkaProDoklad(),
       vystaveno,
@@ -377,7 +414,7 @@ function FakturaObsah({
           </button>
           {!cena.trim() && row.cenaPobytu == null ? (
             <span className="ph-faktura__napoveda">
-              Cena přijde z mailu Better Hotelu (řádek Celková cena). U starších rezervací ji doplňte ručně a uložte.
+              Cena přijde z check-inu (TOTAL_PRICE) nebo z mailu Nová rezervace (Celková cena). U starších karet ji doplňte ručně a uložte.
             </span>
           ) : null}
         </li>
@@ -441,6 +478,71 @@ function FakturaObsah({
           </li>
         ) : null}
         <li>
+          <span className="ph-faktura__nazev">E-mail na dokladu</span>
+          <span className="ph-faktura__hodnota">
+            {emailKarty || (odberatel === 'host' ? emailHosta : '') || '—'}
+            {odberatel === 'firma' && emailJeHostuv ? (
+              <span className="ph-faktura__napoveda">Je to e-mail hosta. Na doklad firmy se nedá.</span>
+            ) : null}
+          </span>
+          <span className="ph-faktura__hodnota ph-faktura__volby">
+            <button
+              type="button"
+              className={!bezEmailu ? 'ph-ulozit' : 'ph-kopie'}
+              onClick={() => setBezEmailu(false)}
+              disabled={odberatel === 'firma' && emailJeHostuv}
+            >
+              Uvést
+            </button>
+            <button
+              type="button"
+              className={bezEmailu || (odberatel === 'firma' && emailJeHostuv) ? 'ph-ulozit' : 'ph-kopie'}
+              onClick={() => setBezEmailu(true)}
+            >
+              Neuvést
+            </button>
+          </span>
+        </li>
+        <li>
+          <span className="ph-faktura__nazev">Poznámka</span>
+          {editujePoznamku ? (
+            <span className="ph-faktura__hodnota">
+              <input
+                className="ph-input"
+                value={poznamka}
+                onChange={(e) => setPoznamka(e.target.value)}
+                placeholder="text na doklad"
+                aria-label="Poznámka na doklad"
+              />
+            </span>
+          ) : (
+            <span className="ph-faktura__hodnota">{poznamka.trim() || '—'}</span>
+          )}
+          <button
+            type="button"
+            className="ph-kopie"
+            onClick={() => setEditujePoznamku((v) => !v)}
+          >
+            {editujePoznamku ? 'Hotovo' : 'Upravit'}
+          </button>
+          <span className="ph-faktura__hodnota ph-faktura__volby">
+            <button
+              type="button"
+              className={!bezPoznamky ? 'ph-ulozit' : 'ph-kopie'}
+              onClick={() => setBezPoznamky(false)}
+            >
+              Na dokladu
+            </button>
+            <button
+              type="button"
+              className={bezPoznamky ? 'ph-ulozit' : 'ph-kopie'}
+              onClick={() => setBezPoznamky(true)}
+            >
+              Neuvést
+            </button>
+          </span>
+        </li>
+        <li>
           <span className="ph-faktura__nazev">Částka firma</span>
           <span className="ph-faktura__hodnota">
             <input
@@ -501,6 +603,8 @@ function FakturaObsah({
           : ' · po odjezdu uhrazeno, odkaz + QR na rezervaci'}
         {odberatel === 'host' ? ' · odběratel host' : ' · odběratel firma'}
         {odberatel === 'firma' && bezHosta ? ' · bez jména hosta' : ''}
+        {bezEmailu || (odberatel === 'firma' && emailJeHostuv) ? ' · bez e-mailu' : ''}
+        {bezPoznamky ? ' · bez poznámky' : ''}
       </p>
       <div className="ph-faktura__akce">
         <div className="ph-faktura__radek">
@@ -513,10 +617,10 @@ function FakturaObsah({
         </div>
         <div className="ph-faktura__radek">
           <button type="button" className="ph-ulozit" disabled={cekam} onClick={() => void posliDokladEmailem()}>
-            {FAKTURA_MAJITEL.tlacitko_doklad_email}
+            E-mailem
           </button>
           <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void posliDokladWhatsApp()}>
-            {FAKTURA_MAJITEL.tlacitko_doklad_whatsapp}
+            WhatsApp
           </button>
         </div>
         <div

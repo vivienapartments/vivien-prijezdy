@@ -4,14 +4,24 @@ import {
   BANKA_EUR,
   bankaProMene,
   cisloDokladu,
+  emailNaDokladu,
   htmlDokladuSQr,
   parsujCenuBh,
   polozkyDokladu,
   sestavDokladZRezervace,
   spdPlatba,
+  splatnostZalohy,
   zbytekCastky,
 } from './faktura-doklad';
 import { prazdnaRezervace } from './store';
+
+describe('splatnostZalohy', () => {
+  it('bere týden, nejpozději den příjezdu', () => {
+    expect(splatnostZalohy('2026-11-20', '2026-11-10')).toBe('2026-11-17');
+    expect(splatnostZalohy('2026-11-12', '2026-11-10')).toBe('2026-11-12');
+    expect(splatnostZalohy(null, '2026-11-10')).toBe('2026-11-17');
+  });
+});
 
 describe('parsujCenuBh', () => {
   it('přečte české i eurové zápisy', () => {
@@ -74,8 +84,8 @@ describe('faktura-doklad', () => {
       apartmanNazev: 'Jemná harmonie',
       logoUrl: '/pruvodce/va-logo-faktura.png',
     });
-    expect(doklad.vystaveno).toBe('2026-11-10');
-    expect(doklad.splatnost).toBe('2026-11-10');
+    expect(doklad.vystaveno).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(doklad.splatnost).toBe(doklad.vystaveno);
     expect(doklad.uhrazeno).toBe(true);
     expect(polozkyDokladu(doklad).map((p) => p.celkem)).toEqual([4569.85, 150]);
 
@@ -171,9 +181,43 @@ describe('faktura-doklad', () => {
     const html = await htmlDokladuSQr(doklad);
     expect(html).toContain('Firma s.r.o.');
     expect(html).not.toContain('Norbert Racz');
+    expect(html).not.toMatch(/·\s*3×/);
   });
 
-  it('zálohová má QR a splatnost k příjezdu', async () => {
+  it('u firmy neuvede e-mail hosta a poznámku jde skrýt', async () => {
+    const rec = {
+      ...prazdnaRezervace('120260042', '2026-11-16T10:00:00.000Z'),
+      emailHosta: 'host@example.com',
+      prijezd: '2026-11-07',
+      odjezd: '2026-11-10',
+      noci: 3,
+      mena: 'CZK' as const,
+      cenaPobytu: 3000,
+      faktura: {
+        typ: 'cz' as const,
+        nazev: 'Firma s.r.o.',
+        adresa: 'Ulice 1',
+        ico: '27074358',
+        email: 'host@example.com',
+        poznamka: 'Interní text',
+        zadal: 'host' as const,
+        kdy: '2026-11-10T12:00:00.000Z',
+      },
+    };
+    const doklad = sestavDokladZRezervace(rec, {
+      typ: 'faktura',
+      lang: 'cs',
+      odberatel: 'firma',
+      bezPoznamky: true,
+    });
+    expect(emailNaDokladu(doklad)).toBe('');
+    expect(doklad.poznamkaDokladu).toBeNull();
+    const html = await htmlDokladuSQr(doklad);
+    expect(html).not.toContain('host@example.com');
+    expect(html).not.toContain('Interní text');
+  });
+
+  it('zálohová má QR a splatnost za týden nejpozději k příjezdu', async () => {
     const rec = {
       ...prazdnaRezervace('120260042', '2026-11-16T10:00:00.000Z'),
       prijezd: '2026-11-20',
@@ -196,7 +240,6 @@ describe('faktura-doklad', () => {
       typ: 'zalohova',
       lang: 'cs',
       vystaveno: '2026-11-16',
-      splatnost: '2026-11-20',
     });
     expect(doklad.uhrazeno).toBe(false);
     expect(doklad.splatnost).toBe('2026-11-20');

@@ -29,6 +29,9 @@ export async function sestavHtmlDokladu(
     vystaveno?: string;
     splatnost?: string;
     bezHosta?: boolean;
+    bezEmailu?: boolean;
+    bezPoznamky?: boolean;
+    poznamkaDokladu?: string | null;
     logoUrl: string;
   },
 ): Promise<string> {
@@ -38,6 +41,9 @@ export async function sestavHtmlDokladu(
     lang: opts.lang,
     odberatel: opts.odberatel,
     bezHosta: opts.bezHosta === true,
+    bezEmailu: opts.bezEmailu === true,
+    bezPoznamky: opts.bezPoznamky === true,
+    poznamkaDokladu: opts.poznamkaDokladu,
     cenaPobytu: opts.castka,
     vystaveno: jeDen(opts.vystaveno),
     splatnost: jeDen(opts.splatnost),

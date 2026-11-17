@@ -141,6 +141,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     vystaveno?: string;
     splatnost?: string;
     bezHosta?: boolean;
+    bezEmailu?: boolean;
+    bezPoznamky?: boolean;
+    poznamkaDokladu?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -1148,6 +1151,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     const typ: TypDokladu = body?.typ === 'zalohova' ? 'zalohova' : 'faktura';
     const odberatel: OdberatelDokladu = body?.odberatel === 'host' ? 'host' : 'firma';
     const bezHosta = odberatel === 'firma' && body?.bezHosta === true;
+    const bezEmailu = body?.bezEmailu === true;
+    const bezPoznamky = body?.bezPoznamky === true;
+    const poznamkaDokladu =
+      typeof body?.poznamkaDokladu === 'string' ? body.poznamkaDokladu : undefined;
     const lang: JazykDokladu = body?.lang === 'en' ? 'en' : 'cs';
     const castkaRaw =
       typeof body?.castka === 'string' || typeof body?.castka === 'number' ? String(body.castka) : '';
@@ -1167,6 +1174,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       lang,
       castka,
       bezHosta,
+      bezEmailu,
+      bezPoznamky,
     });
     const base =
       (typeof body?.origin === 'string' && body.origin.startsWith('http')
@@ -1184,6 +1193,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       odberatel,
       castka,
       bezHosta,
+      bezEmailu,
+      bezPoznamky,
+      poznamkaDokladu: bezPoznamky ? null : poznamkaDokladu,
       vystaveno: typeof body?.vystaveno === 'string' ? body.vystaveno : undefined,
       splatnost: typeof body?.splatnost === 'string' ? body.splatnost : undefined,
       logoUrl: `${base}/pruvodce/va-logo-faktura.png`,

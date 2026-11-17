@@ -1,5 +1,5 @@
 import QRCode from 'qrcode';
-import { denPraha } from './brana';
+import { denPraha, posunDen } from './brana';
 import { castkaPoplatku } from './poplatek';
 import type { FakturaUdaje } from './faktura';
 import type { RezervaceRecord } from './store';
@@ -91,6 +91,17 @@ function escapeHtml(s: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/** E-mail na dokladu. U firmy nikdy e-mail hosta z karty. */
+export function emailNaDokladu(d: Pick<DokladVstup, 'odberatel' | 'bezEmailu' | 'hostEmail' | 'faktura'>): string {
+  if (d.bezEmailu) return '';
+  if (d.odberatel === 'host') return (d.hostEmail || '').trim();
+  const email = (d.faktura?.email || '').trim();
+  if (!email) return '';
+  const host = (d.hostEmail || '').trim().toLowerCase();
+  if (host && email.toLowerCase() === host) return '';
+  return email;
 }
 
 function formatDatum(iso: string | null | undefined, lang: JazykDokladu): string {
@@ -206,6 +217,12 @@ export type DokladVstup = {
   odberatel: OdberatelDokladu;
   /** Na žádost firmy: jméno hosta na dokladu vůbec neuvést. */
   bezHosta: boolean;
+  /** E-mail odběratele na dokladu neuvést. */
+  bezEmailu: boolean;
+  /** Poznámku z karty na dokladu neuvést. */
+  bezPoznamky: boolean;
+  /** Poznámka jen pro tento doklad (jinak z faktury). */
+  poznamkaDokladu: string | null;
   faktura: FakturaUdaje | null;
   /** Částka na tomto dokladu (u půlení jen díl). */
   cenaPobytu: number | null;
@@ -217,6 +234,13 @@ export type DokladVstup = {
   odkazRezervace: string;
 };
 
+/** Splatnost zálohy: za týden, nejpozději den příjezdu. */
+export function splatnostZalohy(prijezd: string | null | undefined, dnes: string): string {
+  const tyden = posunDen(dnes, 7);
+  if (prijezd && /^\d{4}-\d{2}-\d{2}$/.test(prijezd) && prijezd < tyden) return prijezd;
+  return tyden;
+}
+
 /** Výchozí data dokladu podle typu. */
 export function dataDokladu(
   typ: TypDokladu,
@@ -227,12 +251,11 @@ export function dataDokladu(
   if (typ === 'zalohova') {
     return {
       vystaveno: dnes,
-      splatnost: rec.prijezd || dnes,
+      splatnost: splatnostZalohy(rec.prijezd, dnes),
       uhrazeno: false,
     };
   }
-  const den = rec.odjezd || dnes;
-  return { vystaveno: den, splatnost: den, uhrazeno: true };
+  return { vystaveno: dnes, splatnost: dnes, uhrazeno: true };
 }
 
 export function sestavDokladZRezervace(
@@ -248,6 +271,9 @@ export function sestavDokladZRezervace(
     cenaPobytu?: number | null;
     odberatel?: OdberatelDokladu;
     bezHosta?: boolean;
+    bezEmailu?: boolean;
+    bezPoznamky?: boolean;
+    poznamkaDokladu?: string | null;
   } = {},
 ): DokladVstup {
   const typ: TypDokladu = opts.typ === 'zalohova' ? 'zalohova' : 'faktura';
@@ -259,6 +285,10 @@ export function sestavDokladZRezervace(
   const uhrazeno = opts.uhrazeno !== undefined ? opts.uhrazeno : zaklad.uhrazeno;
   const odberatel: OdberatelDokladu = opts.odberatel === 'host' ? 'host' : 'firma';
   const bezHosta = odberatel === 'firma' && opts.bezHosta === true;
+  const bezEmailu = opts.bezEmailu === true;
+  const bezPoznamky = opts.bezPoznamky === true;
+  const poznamkaDokladu =
+    opts.poznamkaDokladu !== undefined ? opts.poznamkaDokladu : rec.faktura?.poznamka || null;
   const cenaCelkem = rec.cenaPobytu;
   const cenaPobytu = opts.cenaPobytu !== undefined ? opts.cenaPobytu : rec.cenaPobytu;
   const puleno =
@@ -282,10 +312,13 @@ export function sestavDokladZRezervace(
     apartman: rec.apartman,
     apartmanNazev: opts.apartmanNazev || rec.apartman || '',
     hostJmeno: bezHosta ? null : rec.jmeno,
-    hostEmail: bezHosta ? null : rec.emailHosta,
+    hostEmail: rec.emailHosta,
     hostAdresa: bezHosta ? null : rec.adresaHosta,
     odberatel,
     bezHosta,
+    bezEmailu,
+    bezPoznamky,
+    poznamkaDokladu: bezPoznamky ? null : poznamkaDokladu,
     faktura: rec.faktura || null,
     cenaPobytu,
     cenaCelkem,
@@ -420,16 +453,17 @@ export function htmlDokladu(
     d.prijezd && d.odjezd
       ? `${formatDatum(d.prijezd, d.lang)} – ${formatDatum(d.odjezd, d.lang)}`
       : '';
+  const emailOdberatele = emailNaDokladu(d);
   const odberatelRadky =
     d.odberatel === 'host'
-      ? [d.hostJmeno || '', d.hostAdresa || '', d.hostEmail || ''].filter(Boolean)
+      ? [d.hostJmeno || '', d.hostAdresa || '', emailOdberatele].filter(Boolean)
       : [
           f?.nazev || '',
           f?.adresa || '',
           [f?.zeme].filter(Boolean).join(''),
           f?.ico ? `${t.ico}: ${f.ico}` : '',
           f?.dic ? `${t.dic}: ${f.dic}` : '',
-          f?.email || '',
+          emailOdberatele,
         ].filter(Boolean);
 
   const radkyPolozek = polozky.length
@@ -464,7 +498,7 @@ export function htmlDokladu(
     margin: 0;
     background: #f5f5f5;
     color: var(--ink);
-    font: 15px/1.45 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font: 13px/1.35 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   }
   .bar {
     position: sticky; top: 0; z-index: 2;
@@ -483,71 +517,78 @@ export function htmlDokladu(
   }
   .sheet {
     max-width: 820px;
-    margin: 24px auto 48px;
+    margin: 16px auto 32px;
     background: var(--paper);
-    padding: 40px 44px;
+    padding: 28px 32px;
     border: 1px solid var(--line);
   }
   header {
     display: grid;
-    grid-template-columns: 88px 1fr auto;
-    gap: 18px;
+    grid-template-columns: 64px 1fr auto;
+    gap: 12px;
     align-items: center;
-    padding-bottom: 22px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--gold);
   }
   .logo {
-    width: 88px; height: 88px; border-radius: 50%;
+    width: 64px; height: 64px; border-radius: 50%;
     object-fit: cover; background: #fff;
     border: 1px solid var(--gold);
   }
-  .brand { font-family: Georgia, "Times New Roman", serif; font-size: 28px; letter-spacing: .02em; color: var(--ink); }
-  .brand small { display: block; margin-top: 4px; color: var(--muted); font: 13px/1.4 "Segoe UI", sans-serif; }
-  .meta { text-align: right; font-size: 14px; color: var(--muted); }
-  .meta strong { display: block; color: var(--ink); font-size: 18px; margin-bottom: 8px; }
+  .brand { font-family: Georgia, "Times New Roman", serif; font-size: 22px; letter-spacing: .02em; color: var(--ink); }
+  .brand small { display: block; margin-top: 2px; color: var(--muted); font: 11px/1.3 "Segoe UI", sans-serif; }
+  .meta { text-align: right; font-size: 12px; color: var(--muted); }
+  .meta strong { display: block; color: var(--ink); font-size: 15px; margin-bottom: 4px; }
   .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 22px;
-    margin: 28px 0;
+    gap: 12px;
+    margin: 14px 0;
   }
   .box {
     background: #fff;
     border: 1px solid var(--gold);
-    border-radius: 10px;
-    padding: 16px 18px;
+    border-radius: 8px;
+    padding: 10px 12px;
   }
   .box h2 {
-    margin: 0 0 10px;
-    font: 600 12px/1 "Segoe UI", sans-serif;
+    margin: 0 0 6px;
+    font: 600 11px/1 "Segoe UI", sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
     color: var(--ink);
   }
-  .box p { margin: 0 0 4px; }
+  .box p { margin: 0 0 2px; }
   .pobyt {
-    margin: 0 0 22px;
-    padding: 14px 16px;
+    margin: 0 0 12px;
+    padding: 8px 12px;
     border: 1px solid var(--gold);
     background: #fff;
-    border-radius: 10px;
+    border-radius: 8px;
   }
-  .pobyt strong { display: block; margin-bottom: 4px; }
+  .pobyt strong { display: block; margin-bottom: 2px; }
+  h2.polozky-nadpis {
+    margin: 0 0 6px;
+    font: 600 11px/1 Segoe UI, sans-serif;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
   table {
     width: 100%;
     border-collapse: collapse;
-    margin: 8px 0 18px;
+    margin: 4px 0 10px;
     border: 1px solid var(--gold);
   }
   th, td {
-    padding: 10px 8px;
+    padding: 6px 6px;
     border-bottom: 1px solid var(--line);
     text-align: left;
     vertical-align: top;
     background: #fff;
   }
   th {
-    font-size: 12px;
+    font-size: 11px;
     letter-spacing: .06em;
     text-transform: uppercase;
     color: var(--ink);
@@ -560,22 +601,22 @@ export function htmlDokladu(
   .sum {
     display: flex;
     justify-content: flex-end;
-    margin-bottom: 22px;
+    margin-bottom: 12px;
   }
   .sum-castka {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 28px;
-    min-width: 320px;
+    gap: 20px;
+    min-width: 280px;
     background: #fff;
     color: var(--ink);
     border: 1px solid var(--gold);
-    border-radius: 10px;
-    padding: 16px 20px;
-    font-size: 16px;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.25;
   }
   .sum-castka .sum-stav {
     color: var(--ink);
@@ -586,38 +627,38 @@ export function htmlDokladu(
     text-align: right;
   }
   .pay {
-    margin-top: 8px;
-    padding: 20px 22px 22px;
+    margin-top: 4px;
+    padding: 8px 0 0;
   }
   .pay h2 {
-    margin: 0 0 16px;
-    font: 600 12px/1 "Segoe UI", sans-serif;
+    margin: 0 0 8px;
+    font: 600 11px/1 "Segoe UI", sans-serif;
     letter-spacing: .08em;
     text-transform: uppercase;
     color: var(--ink);
   }
   .pay-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 148px;
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr) 110px;
+    gap: 14px;
     align-items: center;
   }
   .pay-dl {
     margin: 0;
     display: grid;
-    gap: 8px;
+    gap: 4px;
   }
   .pay-dl > div {
     display: grid;
-    grid-template-columns: 9.5rem 1fr;
-    gap: 8px;
-    padding-bottom: 8px;
+    grid-template-columns: 8.5rem 1fr;
+    gap: 6px;
+    padding-bottom: 4px;
     border-bottom: 1px solid var(--line);
   }
   .pay-dl dt {
     margin: 0;
     color: var(--muted);
-    font-size: 13px;
+    font-size: 12px;
   }
   .pay-dl dd {
     margin: 0;
@@ -627,17 +668,17 @@ export function htmlDokladu(
     text-align: center;
   }
   .pay-qr img {
-    width: 132px;
-    height: 132px;
+    width: 100px;
+    height: 100px;
     display: block;
-    margin: 0 auto 8px;
+    margin: 0 auto 4px;
     border: 1px solid var(--gold);
-    border-radius: 8px;
+    border-radius: 6px;
     background: #fff;
   }
   .pay-qr strong {
     display: block;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 600;
     color: var(--muted);
     letter-spacing: .04em;
@@ -645,51 +686,71 @@ export function htmlDokladu(
   }
   .pay-qr span {
     display: block;
-    margin: 6px 0 0;
-    font-size: 12px;
+    margin: 4px 0 0;
+    font-size: 10px;
     color: var(--muted);
   }
   .pay-after {
-    margin: 28px 4px 12px;
-    padding: 18px 4px 4px;
+    margin: 12px 0 0;
+    padding: 10px 0 0;
     border-top: 1px solid var(--line);
     max-width: 42em;
   }
   .promo-pod {
     margin: 0;
     color: var(--muted);
-    font-size: 14px;
-    line-height: 1.5;
+    font-size: 12px;
+    line-height: 1.4;
     font-weight: 400;
   }
   .promo-url {
-    margin: 8px 0 0;
+    margin: 4px 0 0;
   }
   .promo-url a {
     display: inline-block;
     color: var(--ink);
     font-weight: 400;
-    font-size: 14px;
+    font-size: 12px;
     text-decoration: underline;
     text-decoration-color: var(--gold);
-    text-underline-offset: 3px;
+    text-underline-offset: 2px;
     white-space: nowrap;
   }
-  .note { margin-top: 16px; color: var(--muted); font-size: 14px; }
+  .note { margin-top: 8px; color: var(--muted); font-size: 12px; }
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
   @media print {
-    body { background: #fff; }
-    .bar { display: none; }
-    .sheet {
-      margin: 0; box-shadow: none; max-width: none; padding: 0;
-      border: 0;
+    html, body {
+      background: #fff !important;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
-    .pay-grid { grid-template-columns: minmax(0, 1fr) 148px; }
+    .bar { display: none !important; }
+    .sheet {
+      margin: 0 !important;
+      box-shadow: none !important;
+      max-width: none !important;
+      width: 100% !important;
+      padding: 0 !important;
+      border: 0 !important;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    header, .grid, .pobyt, table, .sum, .pay, .pay-after {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .pay-grid { grid-template-columns: minmax(0, 1fr) 100px; }
     .logo, .pay-qr img { border-color: #999; }
     .box, .pobyt, .sum-castka, table { border-color: #999; }
     th { border-bottom-color: #999; }
   }
   @media (max-width: 700px) {
-    .sheet { margin: 0; padding: 22px 16px 40px; }
+    .sheet { margin: 0; padding: 18px 14px 28px; }
     header, .grid { grid-template-columns: 1fr; }
     .meta { text-align: left; }
   }
@@ -739,12 +800,12 @@ export function htmlDokladu(
 
     <section class="pobyt">
       <strong>${escapeHtml(t.pobyt)}</strong>
-      <div>${escapeHtml(termin || '—')}${d.noci ? ` · ${d.noci}×` : ''}</div>
+      <div>${escapeHtml(termin || '—')}</div>
       <div>${escapeHtml(t.apartman)}: ${escapeHtml(d.apartmanNazev || d.apartman || '—')}</div>
       ${!d.bezHosta && d.hostJmeno ? `<div>${escapeHtml(t.host)}: ${escapeHtml(d.hostJmeno)}</div>` : ''}
     </section>
 
-    <h2 style="margin:0 0 8px;font:600 12px/1 Segoe UI,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)">${escapeHtml(t.polozky)}</h2>
+    <h2 class="polozky-nadpis">${escapeHtml(t.polozky)}</h2>
     <table>
       <thead>
         <tr>
@@ -791,7 +852,7 @@ export function htmlDokladu(
       </div>
     </section>
     ${
-      d.typ === 'faktura' || f?.poznamka
+      d.typ === 'faktura' || d.poznamkaDokladu
         ? `<div class="pay-after">
         ${
           d.typ === 'faktura'
@@ -799,7 +860,7 @@ export function htmlDokladu(
         <p class="promo-url"><a href="${escapeHtml(d.odkazRezervace)}" target="_blank" rel="noopener">${escapeHtml(d.odkazRezervace.replace(/^https?:\/\//, ''))}</a></p>`
             : ''
         }
-        ${f?.poznamka ? `<p class="note">${escapeHtml(t.poznamka)}: ${escapeHtml(f.poznamka)}</p>` : ''}
+        ${d.poznamkaDokladu ? `<p class="note">${escapeHtml(t.poznamka)}: ${escapeHtml(d.poznamkaDokladu)}</p>` : ''}
       </div>`
         : ''
     }

@@ -1,6 +1,7 @@
 import apartmanyJson from '@/data/apartmany.json';
 import { duvod, problemEmailu, type Duvod } from './chyby';
 import { nightsBetween, parseCzechDate } from './dates';
+import { parsujCenuBh, type MenaFaktury } from './faktura-doklad';
 import { parseDatumVytvoreni } from './poplatek';
 import { normalizujTelefon } from './telefon';
 import type { AptId, GuideLang } from './types';
@@ -26,6 +27,10 @@ export type VivienData = {
   telefonPuvodni: string | null;
   /** GUEST_FULL_ADDRESS z BH. null = v mailu nebyl. */
   adresaHosta: string | null;
+  /** TOTAL_PRICE z BH. null = v mailu nebyl. */
+  cenaPobytu: number | null;
+  /** Měna z TOTAL_PRICE. */
+  cenaMena: MenaFaktury | null;
   klic: string | null;
   /** PIN apartmánu z BH (ACCESS_PIN), mění se podle pobytu. */
   accessPin: string | null;
@@ -215,6 +220,7 @@ export function parseVivienData(raw: string): ParseResult {
   const jmeno = cleanGuestFirstName(
     f.GUEST_NAME || f.JMENO || f.FIRSTNAME || f.FIRST_NAME || '',
   );
+  const cena = cenaZTotalPrice(f.TOTAL_PRICE || f.TOTALPRICE || '');
 
   return {
     ok: true,
@@ -233,6 +239,8 @@ export function parseVivienData(raw: string): ParseResult {
       zdroj: cistyZdroj(f.ZDROJ),
       ...telefonZPoli(f.GUEST_PHONE, narodnost),
       adresaHosta: cleanGuestAddress(f.GUEST_FULL_ADDRESS || f.GUEST_ADDRESS || ''),
+      cenaPobytu: cena?.castka ?? null,
+      cenaMena: cena?.mena ?? null,
       klic: f.KLIC?.trim() || null,
       accessPin,
     },
@@ -314,9 +322,24 @@ export type MailInspection = {
   telefonPuvodni: string | null;
   /** GUEST_FULL_ADDRESS z BH. */
   adresaHosta: string | null;
+  /** TOTAL_PRICE z BH. */
+  cenaPobytu: number | null;
+  cenaMena: MenaFaktury | null;
   zdroj: string | null;
   duvody: Duvod[];
 };
+
+/** TOTAL_PRICE z check-inu; prázdný merge field → null. */
+export function cenaZTotalPrice(raw: string | null | undefined): {
+  castka: number;
+  mena: MenaFaktury;
+} | null {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  if (/^\([A-Z0-9_ ]+\)$/i.test(s)) return null;
+  if (/^\(?\s*TOTAL_?PRICE\s*\)?$/i.test(s)) return null;
+  return parsujCenuBh(s);
+}
 
 function cistyZdroj(raw: string | null | undefined): string | null {
   const s = (raw || '').trim();
@@ -365,6 +388,8 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
       telefonWa: null,
       telefonPuvodni: null,
       adresaHosta: null,
+      cenaPobytu: null,
+      cenaMena: null,
       zdroj: null,
       duvody,
     };
@@ -420,6 +445,7 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
   const accessPin = cleanAccessPin(f.ACCESS_PIN || f.ACCESSPIN || '');
   if (!accessPin) duvody.push(duvod('chybi_pin'));
   const vytvoreno = parseDatumVytvoreni(f.DATE);
+  const cena = cenaZTotalPrice(f.TOTAL_PRICE || f.TOTALPRICE || '');
 
   return {
     rezervace,
@@ -438,6 +464,8 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
     vytvoreno,
     ...telefonZPoli(f.GUEST_PHONE, narodnost),
     adresaHosta: cleanGuestAddress(f.GUEST_FULL_ADDRESS || f.GUEST_ADDRESS || ''),
+    cenaPobytu: cena?.castka ?? null,
+    cenaMena: cena?.mena ?? null,
     zdroj: cistyZdroj(f.ZDROJ),
     duvody,
   };

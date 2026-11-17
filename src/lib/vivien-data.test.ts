@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { t } from './i18n';
 import { casPrijezduNadpis, kodyCekaji } from './texts';
 import {
+  cenaZTotalPrice,
   cleanGuestAddress,
   inspectVivienMail,
   jmenoProPrehled,
@@ -93,6 +94,21 @@ KONEC`;
     if (!r.ok) return;
     expect(r.data.adresaHosta).toBe('Nádražní 1, 370 01 České Budějovice');
     expect(inspectVivienMail(s).adresaHosta).toBe('Nádražní 1, 370 01 České Budějovice');
+  });
+
+  it('uloží TOTAL_PRICE jako cenu pobytu', () => {
+    expect(cenaZTotalPrice('(TOTAL_PRICE)')).toBeNull();
+    expect(cenaZTotalPrice('4 569,85 Kč')).toEqual({ castka: 4569.85, mena: 'CZK' });
+    const s = SAMPLE.replace(
+      'ACCESS_PIN: 1234\n',
+      'ACCESS_PIN: 1234\nTOTAL_PRICE: 4 569,85 Kč\n',
+    );
+    const r = parseVivienData(s);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.cenaPobytu).toBe(4569.85);
+    expect(r.data.cenaMena).toBe('CZK');
+    expect(inspectVivienMail(s).cenaPobytu).toBe(4569.85);
   });
 
   it('jméno do tabulky je z GUEST_NAME, jinak příjmení z oslovení', () => {

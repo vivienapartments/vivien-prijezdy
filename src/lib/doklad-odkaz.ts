@@ -9,6 +9,8 @@ export type DokladOdkazPayload = {
   castka?: number;
   /** Jen firma, bez jména hosta. */
   bezHosta?: boolean;
+  bezEmailu?: boolean;
+  bezPoznamky?: boolean;
   /** Unix sekundy. */
   exp: number;
 };
@@ -46,6 +48,8 @@ export function vytvorDokladToken(
   if (payload.odberatel === 'firma' && vstup.bezHosta === true) {
     payload.bezHosta = true;
   }
+  if (vstup.bezEmailu === true) payload.bezEmailu = true;
+  if (vstup.bezPoznamky === true) payload.bezPoznamky = true;
   if (!payload.r) throw new Error('Chybí rezervace.');
   const json = JSON.stringify(payload);
   return `${b64url(json)}.${sign(json)}`;
@@ -92,6 +96,8 @@ export function overDokladToken(
       ? Math.round(o.castka * 100) / 100
       : undefined;
   const bezHosta = odberatel === 'firma' && o.bezHosta === true;
+  const bezEmailu = o.bezEmailu === true;
+  const bezPoznamky = o.bezPoznamky === true;
   return {
     ok: true,
     payload: {
@@ -102,6 +108,8 @@ export function overDokladToken(
       exp,
       ...(castka != null ? { castka } : {}),
       ...(bezHosta ? { bezHosta: true } : {}),
+      ...(bezEmailu ? { bezEmailu: true } : {}),
+      ...(bezPoznamky ? { bezPoznamky: true } : {}),
     },
   };
 }
