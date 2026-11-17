@@ -7,6 +7,12 @@ import type { AptId } from './types';
 
 export type TypDokladu = 'zalohova' | 'faktura';
 export type OdberatelDokladu = 'firma' | 'host';
+export type ZpusobUhrady = 'kartou' | 'prevodem' | 'hotove';
+
+export function normalizujZpusobUhrady(raw: string | null | undefined): ZpusobUhrady {
+  if (raw === 'kartou' || raw === 'hotove') return raw;
+  return 'prevodem';
+}
 
 export const ODKAZ_NOVA_REZERVACE = {
   cs: 'https://www.vivienapartments.cz/cs/rezervace',
@@ -230,6 +236,8 @@ export type DokladVstup = {
   cenaCelkem: number | null;
   /** Poplatek jen když doklad bere celou cenu (bez půlení). */
   poplatekKc: number | null;
+  /** Jak bylo uhrazeno (u dokladu po odjezdu). U zálohy výchozí převod. */
+  zpusobUhrady: ZpusobUhrady;
   logoUrl: string;
   odkazRezervace: string;
 };
@@ -274,6 +282,7 @@ export function sestavDokladZRezervace(
     bezEmailu?: boolean;
     bezPoznamky?: boolean;
     poznamkaDokladu?: string | null;
+    zpusobUhrady?: ZpusobUhrady | string | null;
   } = {},
 ): DokladVstup {
   const typ: TypDokladu = opts.typ === 'zalohova' ? 'zalohova' : 'faktura';
@@ -287,6 +296,7 @@ export function sestavDokladZRezervace(
   const bezHosta = odberatel === 'firma' && opts.bezHosta === true;
   const bezEmailu = opts.bezEmailu === true;
   const bezPoznamky = opts.bezPoznamky === true;
+  const zpusobUhrady = normalizujZpusobUhrady(opts.zpusobUhrady);
   const poznamkaDokladu =
     opts.poznamkaDokladu !== undefined ? opts.poznamkaDokladu : rec.faktura?.poznamka || null;
   const cenaCelkem = rec.cenaPobytu;
@@ -323,6 +333,7 @@ export function sestavDokladZRezervace(
     cenaPobytu,
     cenaCelkem,
     poplatekKc: poplatek,
+    zpusobUhrady,
     logoUrl: opts.logoUrl || '/pruvodce/va-logo-faktura.png',
     odkazRezervace: ODKAZ_NOVA_REZERVACE[lang],
   };
@@ -378,6 +389,8 @@ function texty(lang: JazykDokladu, typ: TypDokladu = 'faktura') {
     platebni: 'Platební údaje',
     forma: 'Forma úhrady',
     prevodem: 'Převodem',
+    kartou: 'Kartou',
+    hotove: 'Hotově',
     vs: 'Variabilní symbol',
     banka: 'Bankovní spojení',
     ucet: 'Číslo účtu',
@@ -418,6 +431,8 @@ function texty(lang: JazykDokladu, typ: TypDokladu = 'faktura') {
     platebni: 'Payment details',
     forma: 'Payment method',
     prevodem: 'Bank transfer',
+    kartou: 'Card',
+    hotove: 'Cash',
     vs: 'Variable symbol',
     banka: 'Bank details',
     ucet: 'Account number',
@@ -479,6 +494,22 @@ export function htmlDokladu(
         .join('')
     : `<tr><td colspan="4" class="warn">${escapeHtml(t.chybiCena)}</td></tr>`;
 
+  const zpusobLabel =
+    d.zpusobUhrady === 'kartou' ? t.kartou : d.zpusobUhrady === 'hotove' ? t.hotove : t.prevodem;
+  const formaText = `${t.forma}: ${zpusobLabel}`;
+  const sumHtml = d.uhrazeno
+    ? `<div class="sum-castka">
+        <span class="sum-zpusob">${escapeHtml(formaText)}</span>
+        <span class="sum-prava">
+          <span class="sum-stav">${escapeHtml(t.uhrazeno)}</span>
+          <span class="sum-castka-cislo">${escapeHtml(formatCastka(soucet, d.mena, d.lang))}</span>
+        </span>
+      </div>`
+    : `<div class="sum-castka" style="max-width:420px;margin-left:auto;width:auto;min-width:280px">
+        <span class="sum-stav">${escapeHtml(t.kUhrade)}</span>
+        <span class="sum-castka-cislo">${escapeHtml(formatCastka(soucet, d.mena, d.lang))}</span>
+      </div>`;
+
   return `<!DOCTYPE html>
 <html lang="${d.lang}">
 <head>
@@ -500,7 +531,6 @@ export function htmlDokladu(
     background: #f5f5f5;
     color: var(--ink);
     font: 13px/1.35 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    overflow-x: hidden;
   }
   .bar {
     position: sticky; top: 0; z-index: 2;
@@ -517,12 +547,21 @@ export function htmlDokladu(
     padding: 10px 16px; border-radius: 999px;
     text-decoration: none;
   }
+  /* Papír je vždy A4 (jako PDF). Na mobilu se jen zmenší, nepřepisuje se. */
+  .stage {
+    width: 100%;
+    overflow: hidden;
+    padding: 16px 0 32px;
+  }
   .sheet {
-    max-width: 820px;
-    margin: 16px auto 32px;
+    --sheet-w: 794px;
+    width: var(--sheet-w);
+    max-width: none;
+    margin: 0 auto;
     background: var(--paper);
     padding: 28px 32px;
     border: 1px solid var(--line);
+    transform-origin: top center;
   }
   header {
     display: grid;
@@ -602,15 +641,15 @@ export function htmlDokladu(
   td.warn { color: #8a3b2b; }
   .sum {
     display: flex;
-    justify-content: flex-end;
+    justify-content: stretch;
     margin-bottom: 12px;
   }
   .sum-castka {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 20px;
-    min-width: 280px;
+    gap: 16px;
+    width: 100%;
     background: #fff;
     color: var(--ink);
     border: 1px solid var(--gold);
@@ -619,6 +658,17 @@ export function htmlDokladu(
     font-size: 14px;
     font-weight: 600;
     line-height: 1.25;
+  }
+  .sum-castka .sum-zpusob {
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .sum-castka .sum-prava {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-left: auto;
+    white-space: nowrap;
   }
   .sum-castka .sum-stav {
     color: var(--ink);
@@ -732,6 +782,11 @@ export function htmlDokladu(
       print-color-adjust: exact;
     }
     .bar { display: none !important; }
+    .stage {
+      padding: 0 !important;
+      overflow: visible !important;
+      height: auto !important;
+    }
     .sheet {
       margin: 0 !important;
       box-shadow: none !important;
@@ -739,6 +794,7 @@ export function htmlDokladu(
       width: 100% !important;
       padding: 0 !important;
       border: 0 !important;
+      transform: none !important;
       page-break-inside: avoid;
       break-inside: avoid;
     }
@@ -751,10 +807,10 @@ export function htmlDokladu(
     .box, .pobyt, .sum-castka, table { border-color: #999; }
     th { border-bottom-color: #999; }
   }
-  @media (max-width: 700px) {
-    body { font-size: 16px; line-height: 1.4; }
+  /* Jen obrazovka: papír se zmenší, rozložení zůstane jako na A4. Tisk tohle nebere. */
+  @media screen and (max-width: 860px) {
     .bar {
-      padding: 14px 16px;
+      padding: 12px 14px;
       gap: 10px;
       flex-wrap: wrap;
     }
@@ -762,37 +818,7 @@ export function htmlDokladu(
       padding: 12px 18px;
       font-size: 15px;
     }
-    .sheet {
-      margin: 0;
-      max-width: none;
-      width: 100%;
-      padding: 20px 16px 40px;
-      border-left: 0;
-      border-right: 0;
-    }
-    header, .grid { grid-template-columns: 1fr; }
-    .meta { text-align: left; font-size: 14px; }
-    .meta strong { font-size: 17px; }
-    .brand { font-size: 24px; }
-    .brand small { font-size: 13px; }
-    .box p, .pobyt, .pay-dl dd, .pay-dl dt { font-size: 15px; }
-    .box h2, h2.polozky-nadpis, .pay h2 { font-size: 12px; }
-    table { font-size: 14px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    th, td { padding: 8px 6px; }
-    td.num, th.num { white-space: normal; }
-    .sum { justify-content: stretch; }
-    .sum-castka {
-      min-width: 0;
-      width: 100%;
-      font-size: 16px;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-    }
-    .pay-grid { grid-template-columns: 1fr; }
-    .pay-dl > div { grid-template-columns: 1fr; gap: 2px; }
-    .pay-qr img { width: 140px; height: 140px; }
-    .promo-url a { white-space: normal; word-break: break-all; }
-    .note, .promo-pod { font-size: 14px; }
+    .stage { padding: 10px 0 24px; }
   }
 </style>
 </head>
@@ -801,6 +827,7 @@ export function htmlDokladu(
     <div>${escapeHtml(t.doklad)} ${escapeHtml(cislo)}</div>
     <button type="button" onclick="window.print()">${escapeHtml(t.tisk)}</button>
   </div>
+  <div class="stage">
   <article class="sheet">
     <header>
       <img class="logo" src="${escapeHtml(d.logoUrl)}" alt="VIVIEN"/>
@@ -859,17 +886,14 @@ export function htmlDokladu(
     </table>
 
     <div class="sum">
-      <div class="sum-castka">
-        <span class="sum-stav">${escapeHtml(d.uhrazeno ? t.uhrazeno : t.kUhrade)}</span>
-        <span class="sum-castka-cislo">${escapeHtml(formatCastka(soucet, d.mena, d.lang))}</span>
-      </div>
+      ${sumHtml}
     </div>
 
     <section class="pay box">
       <h2>${escapeHtml(t.platebni)}</h2>
       <div class="pay-grid">
         <dl class="pay-dl">
-          <div><dt>${escapeHtml(t.forma)}</dt><dd>${escapeHtml(t.prevodem)}</dd></div>
+          <div><dt>${escapeHtml(t.forma)}</dt><dd>${escapeHtml(zpusobLabel)}</dd></div>
           <div><dt>${escapeHtml(t.vs)}</dt><dd style="white-space:nowrap">${escapeHtml(cislo)}</dd></div>
           <div><dt>${escapeHtml(t.ucet)}</dt><dd style="white-space:nowrap">${escapeHtml(banka.cislo)}</dd></div>
           <div><dt>${escapeHtml(t.iban)}</dt><dd style="white-space:nowrap">${escapeHtml(banka.iban)}</dd></div>
@@ -905,6 +929,31 @@ export function htmlDokladu(
         : ''
     }
   </article>
+  </div>
+  <script>
+  (function () {
+    function fit() {
+      var stage = document.querySelector('.stage');
+      var sheet = document.querySelector('.sheet');
+      if (!stage || !sheet) return;
+      sheet.style.transform = 'none';
+      stage.style.height = '';
+      var pad = 16;
+      var avail = Math.max(280, stage.clientWidth - pad);
+      var w = sheet.offsetWidth || 794;
+      var scale = Math.min(1, avail / w);
+      sheet.style.transform = 'scale(' + scale + ')';
+      stage.style.height = Math.ceil(sheet.offsetHeight * scale + 8) + 'px';
+    }
+    fit();
+    window.addEventListener('resize', fit);
+    window.addEventListener('orientationchange', function () { setTimeout(fit, 80); });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    Array.prototype.forEach.call(document.images || [], function (img) {
+      if (!img.complete) img.addEventListener('load', fit);
+    });
+  })();
+  </script>
 </body>
 </html>`;
 }

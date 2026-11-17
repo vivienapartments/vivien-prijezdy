@@ -3,6 +3,7 @@ import apartmanyJson from '@/data/apartmany.json';
 import {
   htmlDokladuSQr,
   jazykDokladu,
+  normalizujZpusobUhrady,
   sestavDokladZRezervace,
   type JazykDokladu,
   type OdberatelDokladu,
@@ -80,6 +81,7 @@ export async function GET(req: Request) {
     bezEmailu,
     bezPoznamky,
     poznamkaDokladu: bezPoznamky ? null : poznamkaQ != null ? poznamkaQ : undefined,
+    zpusobUhrady: typ === 'faktura' ? normalizujZpusobUhrady(url.searchParams.get('zpusob')) : 'prevodem',
     apartmanNazev: nazevApartmanu(rec.apartman, lang),
     logoUrl: `${origin}/pruvodce/va-logo-faktura.png`,
   });

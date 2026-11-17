@@ -1,10 +1,12 @@
 import apartmanyJson from '@/data/apartmany.json';
 import {
   htmlDokladuSQr,
+  normalizujZpusobUhrady,
   sestavDokladZRezervace,
   type JazykDokladu,
   type OdberatelDokladu,
   type TypDokladu,
+  type ZpusobUhrady,
 } from './faktura-doklad';
 import type { RezervaceRecord } from './store';
 import type { AptId } from './types';
@@ -32,6 +34,7 @@ export async function sestavHtmlDokladu(
     bezEmailu?: boolean;
     bezPoznamky?: boolean;
     poznamkaDokladu?: string | null;
+    zpusobUhrady?: ZpusobUhrady | string | null;
     logoUrl: string;
   },
 ): Promise<string> {
@@ -44,6 +47,8 @@ export async function sestavHtmlDokladu(
     bezEmailu: opts.bezEmailu === true,
     bezPoznamky: opts.bezPoznamky === true,
     poznamkaDokladu: opts.poznamkaDokladu,
+    zpusobUhrady:
+      opts.typ === 'faktura' ? normalizujZpusobUhrady(opts.zpusobUhrady) : 'prevodem',
     cenaPobytu: opts.castka,
     vystaveno: jeDen(opts.vystaveno),
     splatnost: jeDen(opts.splatnost),

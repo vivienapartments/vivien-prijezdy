@@ -18,7 +18,12 @@ import {
   zakladUrlZEnv,
 } from '@/lib/doklad-odkaz';
 import { sestavHtmlDokladu } from '@/lib/doklad-sestav';
-import type { JazykDokladu, OdberatelDokladu, TypDokladu } from '@/lib/faktura-doklad';
+import {
+  normalizujZpusobUhrady,
+  type JazykDokladu,
+  type OdberatelDokladu,
+  type TypDokladu,
+} from '@/lib/faktura-doklad';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
 import {
@@ -144,6 +149,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     bezEmailu?: boolean;
     bezPoznamky?: boolean;
     poznamkaDokladu?: string;
+    zpusobUhrady?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -1155,6 +1161,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const bezPoznamky = body?.bezPoznamky === true;
     const poznamkaDokladu =
       typeof body?.poznamkaDokladu === 'string' ? body.poznamkaDokladu : undefined;
+    const zpusobUhrady =
+      typ === 'faktura' ? normalizujZpusobUhrady(String(body?.zpusobUhrady || '')) : 'prevodem';
     const lang: JazykDokladu = body?.lang === 'en' ? 'en' : 'cs';
     const castkaRaw =
       typeof body?.castka === 'string' || typeof body?.castka === 'number' ? String(body.castka) : '';
@@ -1176,6 +1184,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       bezHosta,
       bezEmailu,
       bezPoznamky,
+      zpusobUhrady,
     });
     const base =
       (typeof body?.origin === 'string' && body.origin.startsWith('http')
@@ -1196,6 +1205,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       bezEmailu,
       bezPoznamky,
       poznamkaDokladu: bezPoznamky ? null : poznamkaDokladu,
+      zpusobUhrady,
       vystaveno: typeof body?.vystaveno === 'string' ? body.vystaveno : undefined,
       splatnost: typeof body?.splatnost === 'string' ? body.splatnost : undefined,
       logoUrl: `${base}/pruvodce/va-logo-faktura.png`,

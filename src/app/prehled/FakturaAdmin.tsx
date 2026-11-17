@@ -145,7 +145,13 @@ function odkazDokladu(
   vystaveno: string,
   splatnost: string,
   odberatel: 'firma' | 'host',
-  volby: { bezHosta: boolean; bezEmailu: boolean; bezPoznamky: boolean; poznamka: string },
+  volby: {
+    bezHosta: boolean;
+    bezEmailu: boolean;
+    bezPoznamky: boolean;
+    poznamka: string;
+    zpusobUhrady: 'kartou' | 'prevodem' | 'hotove';
+  },
 ): string {
   const q = new URLSearchParams({ rezervace: row.rezervace, lang, typ, odberatel });
   const cista = castka.trim().replace(/\s+/g, '').replace(',', '.');
@@ -156,6 +162,7 @@ function odkazDokladu(
   if (volby.bezEmailu) q.set('bezEmailu', '1');
   if (volby.bezPoznamky) q.set('bezPoznamky', '1');
   else if (volby.poznamka.trim()) q.set('poznamka', volby.poznamka.trim());
+  if (typ === 'faktura') q.set('zpusob', volby.zpusobUhrady);
   return `/api/prehled/faktura-doklad?${q.toString()}`;
 }
 
@@ -202,6 +209,7 @@ function FakturaObsah({
   const [poznamka, setPoznamka] = useState(faktura.poznamka || '');
   const [editujePoznamku, setEditujePoznamku] = useState(false);
   const [typ, setTyp] = useState<'zalohova' | 'faktura'>('faktura');
+  const [zpusobUhrady, setZpusobUhrady] = useState<'kartou' | 'prevodem' | 'hotove'>('prevodem');
   const [vystaveno, setVystaveno] = useState(dnesIso());
   const [splatnost, setSplatnost] = useState(dnesIso());
   const chybi = coChybiNaFakture(faktura);
@@ -226,6 +234,7 @@ function FakturaObsah({
     setEditujePoznamku(false);
     const dnes = dnesIso();
     setTyp('faktura');
+    setZpusobUhrady('prevodem');
     setVystaveno(dnes);
     setSplatnost(dnes);
   }, [row.cenaPobytu, row.rezervace, faktura.poznamka]);
@@ -241,6 +250,7 @@ function FakturaObsah({
       bezEmailu: bezEmailu || (odberatel === 'firma' && emailJeHostuv),
       bezPoznamky,
       poznamka,
+      zpusobUhrady,
     };
   }
 
@@ -335,6 +345,7 @@ function FakturaObsah({
       bezEmailu: bezEmailu || (odberatel === 'firma' && emailJeHostuv),
       bezPoznamky,
       poznamkaDokladu: bezPoznamky ? '' : poznamka,
+      zpusobUhrady: typ === 'faktura' ? zpusobUhrady : 'prevodem',
       lang: langDokladu,
       castka: castkaProDoklad(),
       vystaveno,
@@ -437,6 +448,34 @@ function FakturaObsah({
             </button>
           </span>
         </li>
+        {typ === 'faktura' ? (
+          <li>
+            <span className="ph-faktura__nazev">Forma úhrady</span>
+            <span className="ph-faktura__hodnota ph-faktura__volby ph-faktura__volby--tri">
+              <button
+                type="button"
+                className={zpusobUhrady === 'kartou' ? 'ph-ulozit' : 'ph-kopie'}
+                onClick={() => setZpusobUhrady('kartou')}
+              >
+                Kartou
+              </button>
+              <button
+                type="button"
+                className={zpusobUhrady === 'prevodem' ? 'ph-ulozit' : 'ph-kopie'}
+                onClick={() => setZpusobUhrady('prevodem')}
+              >
+                Převodem
+              </button>
+              <button
+                type="button"
+                className={zpusobUhrady === 'hotove' ? 'ph-ulozit' : 'ph-kopie'}
+                onClick={() => setZpusobUhrady('hotove')}
+              >
+                Hotově
+              </button>
+            </span>
+          </li>
+        ) : null}
         <li>
           <span className="ph-faktura__nazev">Odběratel</span>
           <span className="ph-faktura__hodnota ph-faktura__volby">

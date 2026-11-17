@@ -1,5 +1,11 @@
 import { createHmac, timingSafeEqual } from 'crypto';
-import type { JazykDokladu, OdberatelDokladu, TypDokladu } from './faktura-doklad';
+import {
+  normalizujZpusobUhrady,
+  type JazykDokladu,
+  type OdberatelDokladu,
+  type TypDokladu,
+  type ZpusobUhrady,
+} from './faktura-doklad';
 
 export type DokladOdkazPayload = {
   r: string;
@@ -11,6 +17,7 @@ export type DokladOdkazPayload = {
   bezHosta?: boolean;
   bezEmailu?: boolean;
   bezPoznamky?: boolean;
+  zpusobUhrady?: ZpusobUhrady;
   /** Unix sekundy. */
   exp: number;
 };
@@ -50,6 +57,9 @@ export function vytvorDokladToken(
   }
   if (vstup.bezEmailu === true) payload.bezEmailu = true;
   if (vstup.bezPoznamky === true) payload.bezPoznamky = true;
+  if (payload.typ === 'faktura' && vstup.zpusobUhrady) {
+    payload.zpusobUhrady = normalizujZpusobUhrady(vstup.zpusobUhrady);
+  }
   if (!payload.r) throw new Error('Chybí rezervace.');
   const json = JSON.stringify(payload);
   return `${b64url(json)}.${sign(json)}`;
@@ -98,6 +108,10 @@ export function overDokladToken(
   const bezHosta = odberatel === 'firma' && o.bezHosta === true;
   const bezEmailu = o.bezEmailu === true;
   const bezPoznamky = o.bezPoznamky === true;
+  const zpusobUhrady =
+    typ === 'faktura' && typeof o.zpusobUhrady === 'string'
+      ? normalizujZpusobUhrady(o.zpusobUhrady)
+      : undefined;
   return {
     ok: true,
     payload: {
@@ -110,6 +124,7 @@ export function overDokladToken(
       ...(bezHosta ? { bezHosta: true } : {}),
       ...(bezEmailu ? { bezEmailu: true } : {}),
       ...(bezPoznamky ? { bezPoznamky: true } : {}),
+      ...(zpusobUhrady ? { zpusobUhrady } : {}),
     },
   };
 }

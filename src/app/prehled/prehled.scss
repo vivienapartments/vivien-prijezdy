@@ -3546,6 +3546,10 @@
   margin-top: 0;
 }
 
+.ph-faktura__volby--tri {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
 .ph-faktura__volby > button {
   width: 100%;
   min-width: 0;

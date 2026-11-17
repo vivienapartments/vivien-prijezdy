@@ -40,6 +40,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ token: string }
     bezHosta: over.payload.bezHosta === true,
     bezEmailu: over.payload.bezEmailu === true,
     bezPoznamky: over.payload.bezPoznamky === true,
+    zpusobUhrady: over.payload.zpusobUhrady,
     logoUrl: `${origin}/pruvodce/va-logo-faktura.png`,
   });
 

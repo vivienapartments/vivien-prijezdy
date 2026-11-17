@@ -97,11 +97,25 @@ describe('faktura-doklad', () => {
     expect(html).toContain('www.vivienapartments.cz/cs/rezervace');
     expect(html).toContain('Budete znovu v Českých Budějovicích? Novou rezervaci uděláte na našem webu.');
     expect(html).toContain('Doklad je uhrazený.');
+    expect(html).toContain('Forma úhrady: Převodem');
+    expect(html).toContain('sum-zpusob');
     expect(html).toContain('sum-stav');
     expect(html).toContain('sum-castka-cislo');
     expect(html).toMatch(/4\s*719,85\s*Kč/);
     expect(html).not.toContain('Celkem k úhradě');
     expect(html).toContain('QR na rezervaci');
+
+    const htmlKartou = await htmlDokladuSQr(
+      sestavDokladZRezervace(rec, {
+        typ: 'faktura',
+        lang: 'cs',
+        zpusobUhrady: 'kartou',
+        apartmanNazev: 'Jemná harmonie',
+        logoUrl: '/pruvodce/va-logo-faktura.png',
+      }),
+    );
+    expect(htmlKartou).toContain('Forma úhrady: Kartou');
+    expect(htmlKartou).not.toContain('Forma úhrady: Převodem');
     expect(html).toContain('pay-after');
     expect(html).toContain('promo-url');
     expect(html).toContain('data:image/png;base64,');
