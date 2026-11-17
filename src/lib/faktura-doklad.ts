@@ -483,7 +483,7 @@ export function htmlDokladu(
 <html lang="${d.lang}">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>${escapeHtml(t.doklad)} ${escapeHtml(cislo)}</title>
 <style>
   :root {
@@ -494,11 +494,13 @@ export function htmlDokladu(
     --paper: #ffffff;
   }
   * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
     margin: 0;
     background: #f5f5f5;
     color: var(--ink);
     font: 13px/1.35 "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    overflow-x: hidden;
   }
   .bar {
     position: sticky; top: 0; z-index: 2;
@@ -750,9 +752,47 @@ export function htmlDokladu(
     th { border-bottom-color: #999; }
   }
   @media (max-width: 700px) {
-    .sheet { margin: 0; padding: 18px 14px 28px; }
+    body { font-size: 16px; line-height: 1.4; }
+    .bar {
+      padding: 14px 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .bar button, .bar a {
+      padding: 12px 18px;
+      font-size: 15px;
+    }
+    .sheet {
+      margin: 0;
+      max-width: none;
+      width: 100%;
+      padding: 20px 16px 40px;
+      border-left: 0;
+      border-right: 0;
+    }
     header, .grid { grid-template-columns: 1fr; }
-    .meta { text-align: left; }
+    .meta { text-align: left; font-size: 14px; }
+    .meta strong { font-size: 17px; }
+    .brand { font-size: 24px; }
+    .brand small { font-size: 13px; }
+    .box p, .pobyt, .pay-dl dd, .pay-dl dt { font-size: 15px; }
+    .box h2, h2.polozky-nadpis, .pay h2 { font-size: 12px; }
+    table { font-size: 14px; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    th, td { padding: 8px 6px; }
+    td.num, th.num { white-space: normal; }
+    .sum { justify-content: stretch; }
+    .sum-castka {
+      min-width: 0;
+      width: 100%;
+      font-size: 16px;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+    }
+    .pay-grid { grid-template-columns: 1fr; }
+    .pay-dl > div { grid-template-columns: 1fr; gap: 2px; }
+    .pay-qr img { width: 140px; height: 140px; }
+    .promo-url a { white-space: normal; word-break: break-all; }
+    .note, .promo-pod { font-size: 14px; }
   }
 </style>
 </head>

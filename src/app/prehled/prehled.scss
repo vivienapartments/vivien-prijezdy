@@ -1325,9 +1325,12 @@
   min-width: 0;
 }
 
+/* Silnější než globální `.ph button` (transparentní zlatý rámeček). */
+.ph button.ph-ulozit,
 .ph-ulozit,
+.ph button.ph-push-vyp,
 .ph-push-vyp {
-  border: 0;
+  border: 1px solid #c4a46a;
   border-radius: 6px;
   background: #c4a46a;
   color: #1c1712;
@@ -1335,6 +1338,12 @@
   font-size: 0.85rem;
   padding: 0.35rem 0.7rem;
   white-space: nowrap;
+}
+
+.ph button.ph-ulozit:disabled,
+.ph-ulozit:disabled {
+  opacity: 0.55;
+  cursor: default;
 }
 
 .ph-ulozeno {
@@ -3441,11 +3450,48 @@
 }
 
 .ph-faktura__polozka {
-  margin: 0 0 0.6rem;
-  padding: 0.55rem 0.7rem;
+  margin: 0 0 0.45rem;
+  padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.ph-faktura__souhrn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ph-faktura__souhrn-text {
+  min-width: 0;
+  font-weight: 650;
+}
+
+.ph-faktura__sipka {
+  flex: 0 0 auto;
+  opacity: 0.7;
+}
+
+.ph-faktura__telo {
+  padding: 0 0.7rem 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ph-faktura__karta {
+  display: inline-block;
+  margin: 0.45rem 0 0.35rem;
 }
 
 .ph-faktura__hlava {

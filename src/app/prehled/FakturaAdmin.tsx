@@ -661,19 +661,35 @@ function FakturaPolozka({
   onOtevriKartu,
   ...spolecne
 }: Spolecne & { row: PrehledRadek; faktura: FakturaUdaje; onOtevriKartu: (rezervace: string) => void }) {
+  const [otevreno, setOtevreno] = useState(false);
   return (
-    <li className="ph-faktura__polozka">
-      <div className="ph-faktura__hlava">
-        <button type="button" className="ph-dnesek__odkaz" onClick={() => onOtevriKartu(row.rezervace)}>
-          {row.jmeno || 'Host'}
-        </button>
-        {' · '}
-        {row.apartman || 'bez apartmánu'}
-        {' · '}
-        {row.termin}
-        {row.stav === 'zruseno' ? <span className="ph-faktura__zruseno">Zrušeno</span> : null}
-      </div>
-      <FakturaObsah row={row} faktura={faktura} {...spolecne} />
+    <li className={`ph-faktura__polozka${otevreno ? ' is-otevreno' : ''}`}>
+      <button
+        type="button"
+        className="ph-faktura__souhrn"
+        aria-expanded={otevreno}
+        onClick={() => setOtevreno((v) => !v)}
+      >
+        <span className="ph-faktura__souhrn-text">
+          <strong>{row.jmeno || 'Host'}</strong>
+          {' · '}
+          {row.apartman || 'bez apartmánu'}
+          {' · '}
+          {row.termin}
+          {row.stav === 'zruseno' ? <span className="ph-faktura__zruseno">Zrušeno</span> : null}
+        </span>
+        <span className="ph-faktura__sipka" aria-hidden="true">
+          {otevreno ? '▴' : '▸'}
+        </span>
+      </button>
+      {otevreno ? (
+        <div className="ph-faktura__telo">
+          <button type="button" className="ph-dnesek__odkaz ph-faktura__karta" onClick={() => onOtevriKartu(row.rezervace)}>
+            Otevřít kartu
+          </button>
+          <FakturaObsah row={row} faktura={faktura} {...spolecne} />
+        </div>
+      ) : null}
     </li>
   );
 }
