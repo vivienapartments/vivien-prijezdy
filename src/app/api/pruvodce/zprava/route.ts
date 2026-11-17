@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic';
 
 const noStore = { 'Cache-Control': 'no-store' };
 
+const IDS = new Set(['cas', 'brana', 'odjezd-prijati', 'odjezd']);
+
 /** Host klepl Pokračovat u zprávy od nás. */
 export async function POST(request: Request): Promise<NextResponse> {
   const body = (await request.json().catch(() => null)) as {
@@ -14,7 +16,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     id?: string;
   } | null;
   const token = typeof body?.token === 'string' ? body.token : '';
-  const id = body?.id === 'cas' || body?.id === 'brana' ? body.id : null;
+  const id = typeof body?.id === 'string' && IDS.has(body.id) ? body.id : null;
   if (!token || !id) {
     return NextResponse.json({ ok: false }, { status: 400, headers: noStore });
   }
@@ -46,7 +48,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       posledniPokus: ted,
       historie: [...rec.historie, { cas: ted, co: 'Host přečetl zprávu k času' }].slice(-40),
     });
-  } else {
+  } else if (id === 'brana') {
     if (rec.zpravaBranaPrectena) {
       return NextResponse.json({ ok: true }, { headers: noStore });
     }
@@ -55,6 +57,26 @@ export async function POST(request: Request): Promise<NextResponse> {
       zpravaBranaPrectena: ted,
       posledniPokus: ted,
       historie: [...rec.historie, { cas: ted, co: 'Host přečetl zprávu k bráně' }].slice(-40),
+    });
+  } else if (id === 'odjezd-prijati') {
+    if (rec.zpravaOdjezdPrijatiPrectena) {
+      return NextResponse.json({ ok: true }, { headers: noStore });
+    }
+    await store.setRezervace(rec.rezervace, {
+      ...rec,
+      zpravaOdjezdPrijatiPrectena: ted,
+      posledniPokus: ted,
+      historie: [...rec.historie, { cas: ted, co: 'Host přečetl hlášku k času odjezdu' }].slice(-40),
+    });
+  } else {
+    if (rec.zpravaOdjezdPrectena) {
+      return NextResponse.json({ ok: true }, { headers: noStore });
+    }
+    await store.setRezervace(rec.rezervace, {
+      ...rec,
+      zpravaOdjezdPrectena: ted,
+      posledniPokus: ted,
+      historie: [...rec.historie, { cas: ted, co: 'Host přečetl zprávu k odjezdu' }].slice(-40),
     });
   }
 

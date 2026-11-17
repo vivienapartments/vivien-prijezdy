@@ -161,5 +161,17 @@ export function smiUlozit(znacky: string[], ted = Date.now()): boolean {
 }
 
 export type VysledekUlozeni =
-  | { ok: true; uroven: UrovenPruvodce; cas?: string }
+  | {
+      ok: true;
+      uroven: UrovenPruvodce;
+      cas?: string;
+      /** Hláška hostovi po uložení času odjezdu (ráno / večer). */
+      zpravaOdjezdu?: {
+        id: 'odjezd-prijati';
+        nova: true;
+        nadpis: string;
+        text: string;
+        sbalenyTitulek: string;
+      };
+    }
   | { ok: false; duvod: 'token' | 'cas' | 'telefon' | 'spz' | 'zpusob' | 'souhlas' | 'limit' | 'chybi' };

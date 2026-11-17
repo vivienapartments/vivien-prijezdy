@@ -40,11 +40,14 @@ describe('okno pobytu', () => {
     expect(cenaDrive('11:00')).toBe(450);
     expect(cenaPozde('10:30')).toBe(75);
     expect(cenaPozde('12:00')).toBe(300);
-    expect(cenaPozde('14:00')).toBe(600);
+    expect(cenaPozde('13:00')).toBe(450);
+    expect(cenaPozde('14:00')).toBeNull();
     expect(priplatekProCas('20:30')).toBe(100);
     expect(priplatekProCas('12:00')).toBeNull();
     expect(jeSlotOdjezdu('10:30')).toBe(false);
     expect(jeSlotOdjezdu('10:00')).toBe(true);
+    expect(jeSlotOdjezdu('09:30')).toBe(true);
+    expect(jeSlotOdjezdu('09:15')).toBe(false);
   });
 
   it('nabízí příjezd až po odjezdu a úklidu', () => {
@@ -61,7 +64,8 @@ describe('okno pobytu', () => {
     expect(casyPozde('13:00')).not.toContain('13:30');
     expect(nejpozdejiPredPrijezdem(null, true)).toBe('11:00');
     expect(casyPozde(nejpozdejiPredPrijezdem(null, true))).toEqual(['10:30', '11:00']);
-    expect(casyPozde(nejpozdejiPredPrijezdem(null, false))).toContain('14:00');
+    expect(casyPozde(nejpozdejiPredPrijezdem(null, false))).toContain('13:00');
+    expect(casyPozde(nejpozdejiPredPrijezdem(null, false))).not.toContain('14:00');
   });
 
   it('bez potvrzení nic nepřipíše a po potvrzení ano', () => {

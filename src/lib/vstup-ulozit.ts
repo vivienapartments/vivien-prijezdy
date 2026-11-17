@@ -8,6 +8,7 @@ import {
   zrusitZadost,
 } from './okno-pobytu';
 import { jeCasOdjezduPovoleny, textHostUlozil, zobrazCas } from './odjezd';
+import { odlozitPushCasuOdjezdu, polePoCasuOdjezdu, zpravaPrijatiOdjezdu } from './odjezd-potvrzeni';
 import { verzeAktualni } from './pravidla-verze';
 import { popisekCasu } from './priplatek-prijezd';
 import { maRucni } from './rucni-pole';
@@ -211,16 +212,28 @@ export async function ulozVstupHosta(
     }
     const bylo = rec.casOdjezdu ? zobrazCas(rec.casOdjezdu) : 'žádný';
     const nove = zobrazCas(cas);
-    const uprava = poZmeneCasuOdjezdu(rec, cas, new Date());
+    const ted = new Date();
+    const uprava = poZmeneCasuOdjezdu(rec, cas, ted);
+    const pushText = uprava?.push || textHostUlozil(rec, cas);
+    const odlozit = !uprava?.push && odlozitPushCasuOdjezdu({ odjezd: rec.odjezd, casOdjezdu: cas }, ted);
     const zapis = poznamenej(rec, uprava?.historie || `Čas odjezdu ${bylo} → ${nove}`, {
       casOdjezdu: cas,
       casOdjezduZadalHost: true,
       ...(uprava?.patch || { zadostOdjezd: null }),
+      ...polePoCasuOdjezdu(cas, rec.casOdjezdu, ted),
+      casOdjezduPushCeka: odlozit ? pushText : null,
     });
     await store.setRezervace(id, zapis);
-    if (uprava?.push) await ohlas(store, id, uprava.push, 'zadost');
-    else await ohlas(store, id, textHostUlozil(rec, cas), 'cas-odjezdu');
-    return { ok: true, cas, uroven: urovenZRezervace(zapis) };
+    if (!odlozit) {
+      if (uprava?.push) await ohlas(store, id, uprava.push, 'zadost');
+      else await ohlas(store, id, pushText, 'cas-odjezdu');
+    }
+    return {
+      ok: true,
+      cas,
+      uroven: urovenZRezervace(zapis),
+      zpravaOdjezdu: { ...zpravaPrijatiOdjezdu(nove, ted, true), id: 'odjezd-prijati', nova: true },
+    };
   }
 
   if (telo.akce === 'dokoncit') {

@@ -53,6 +53,7 @@ import {
 } from '@/lib/zadost-pozni-prijezd';
 import { upozorniMajitele, upozorniUklid } from '@/lib/upozorneni';
 import { polozkyZRezervace, textRozpisu, type DruhDluhu } from '@/lib/odjezd';
+import { polePoCasuOdjezdu } from '@/lib/odjezd-potvrzeni';
 import { upravitPlatbuDruhu, vratPlatbu, zaplatCastku, zaplatDruhy } from '@/lib/platby-hosta';
 import { oznacPrevzeti, vratPrevzeti } from '@/lib/zalozky';
 import {
@@ -211,6 +212,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'brana' &&
       akce !== 'potvrzeni-prijezdu' &&
       akce !== 'zrusit-potvrzeni-prijezdu' &&
+      akce !== 'potvrzeni-odjezdu' &&
+      akce !== 'zrusit-potvrzeni-odjezdu' &&
       akce !== 'odemknout' &&
       akce !== 'email' &&
       akce !== 'whatsapp' &&
@@ -748,6 +751,39 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, potvrzeniPrijezdu: null }, { headers: noStore });
   }
 
+  if (akce === 'potvrzeni-odjezdu') {
+    const druh = body?.druh === 'osobne' || body?.druh === 'telefon' ? body.druh : null;
+    if (!druh) return chyba(400, 'Vyberte Osobně nebo Sami.');
+    if (!rec.casOdjezdu) return chyba(400, 'Nejdřív musí být čas odjezdu.');
+    const ted = new Date().toISOString();
+    const popisek = druh === 'osobne' ? 'Osobně se rozloučíme' : 'Sami · jsme na telefonu';
+    await store.setRezervace(
+      id,
+      pridej(rec, `Potvrzení odjezdu: ${popisek}`, {
+        potvrzeniOdjezdu: druh,
+        potvrzeniOdjezduKdy: ted,
+        zpravaOdjezdPrectena: null,
+        zpravaOdjezdPrijatiPrectena: rec.zpravaOdjezdPrijatiPrectena || ted,
+      }),
+    );
+    return NextResponse.json(
+      { ok: true, potvrzeniOdjezdu: druh, potvrzeniOdjezduKdy: ted },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'zrusit-potvrzeni-odjezdu') {
+    await store.setRezervace(
+      id,
+      pridej(rec, 'Zrušeno potvrzení odjezdu', {
+        potvrzeniOdjezdu: null,
+        potvrzeniOdjezduKdy: null,
+        zpravaOdjezdPrectena: null,
+      }),
+    );
+    return NextResponse.json({ ok: true, potvrzeniOdjezdu: null }, { headers: noStore });
+  }
+
   if (akce === 'odemknout') {
     await store.setRezervace(id, pridej(rec, 'Průvodce odemčen', { pruvodceOdemcen: new Date().toISOString() }));
     return NextResponse.json({ ok: true }, { headers: noStore });
@@ -895,6 +931,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         casOdjezduZadalHost: false,
         zadostOdjezd: null,
         rucniZnacky: bez,
+        ...polePoCasuOdjezdu(null, rec.casOdjezdu),
       });
       if (bylo === 'žádný') dalsi.historie = rec.historie;
       await store.setRezervace(id, dalsi);
@@ -928,6 +965,8 @@ export async function POST(request: Request): Promise<NextResponse> {
               }
             : null,
         }),
+        ...polePoCasuOdjezdu(cas, rec.casOdjezdu, ted),
+        casOdjezduPushCeka: null,
       },
       veta,
     );

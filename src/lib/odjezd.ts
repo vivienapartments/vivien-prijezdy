@@ -117,11 +117,11 @@ export function jeSlotOdjezdu(cas: string): boolean {
   return slotsOdjezdu().includes(cas);
 }
 
-/** Libovolné minuty mezi 6:00 a 14:00 včetně (vlastní čas v průvodci). */
+/** Libovolné minuty mezi 6:00 a 13:00 včetně (vlastní čas v průvodci). */
 export function jeCasOdjezduPovoleny(cas: string): boolean {
   if (!jeHodina(cas)) return false;
   const m = minuty(cas);
-  return m >= minuty(ODJEZD_OD) && m <= minuty('14:00');
+  return m >= minuty(ODJEZD_OD) && m <= minuty('13:00');
 }
 
 function casZIso(iso: string | null): string | null {

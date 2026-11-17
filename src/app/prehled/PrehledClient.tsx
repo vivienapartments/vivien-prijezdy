@@ -464,6 +464,8 @@ export function PrehledClient({
   const [filtrDoplnit, setFiltrDoplnit] = useState<FiltrDoplnit>('vse');
   const [otevriDoplnitSignal, setOtevriDoplnitSignal] = useState(0);
   const [odjeliOtevreno, setOdjeliOtevreno] = useState(false);
+  /** Po výběru Osobně/Sami je blok sbalený. Klepnutí na stav ho znovu rozbalí. */
+  const [potvrzeniRozbal, setPotvrzeniRozbal] = useState<Record<string, boolean>>({});
   const [otevreno, setOtevreno] = useState<string | null>(null);
   const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState<string | null>(null);
@@ -1189,6 +1191,7 @@ export function PrehledClient({
   async function ulozPotvrzeniPrijezdu(row: PrehledRadek, druh: 'osobne' | 'telefon') {
     if (ukazka) {
       const ted = new Date().toISOString();
+      setPotvrzeniRozbal((prev) => ({ ...prev, [`${row.rezervace}:prijezd`]: false }));
       setRadky((prev) =>
         prev.map((r) =>
           r.rezervace === row.rezervace
@@ -1216,6 +1219,7 @@ export function PrehledClient({
       setHlaska(json?.error || 'Potvrzení se neuložilo.');
       return;
     }
+    setPotvrzeniRozbal((prev) => ({ ...prev, [`${row.rezervace}:prijezd`]: false }));
     setRadky((prev) =>
       prev.map((r) =>
         r.rezervace === row.rezervace
@@ -1224,6 +1228,58 @@ export function PrehledClient({
               potvrzeniPrijezdu: json.potvrzeniPrijezdu || druh,
               potvrzeniPrijezduKdy: json.potvrzeniPrijezduKdy || new Date().toISOString(),
               zpravaCasPrectena: null,
+            }
+          : r,
+      ),
+    );
+  }
+
+  async function ulozPotvrzeniOdjezdu(row: PrehledRadek, druh: 'osobne' | 'telefon') {
+    if (ukazka) {
+      const ted = new Date().toISOString();
+      setPotvrzeniRozbal((prev) => ({ ...prev, [`${row.rezervace}:odjezd`]: false }));
+      setRadky((prev) =>
+        prev.map((r) =>
+          r.rezervace === row.rezervace
+            ? {
+                ...r,
+                potvrzeniOdjezdu: druh,
+                potvrzeniOdjezduKdy: ted,
+                zpravaOdjezdPrectena: null,
+                zpravaOdjezdPrijatiPrectena: r.zpravaOdjezdPrijatiPrectena || ted,
+              }
+            : r,
+        ),
+      );
+      return;
+    }
+    setCekam(`${row.rezervace}:potvrzeni-odjezdu`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'potvrzeni-odjezdu', druh }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      potvrzeniOdjezdu?: 'osobne' | 'telefon';
+      potvrzeniOdjezduKdy?: string;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Potvrzení odjezdu se neuložilo.');
+      return;
+    }
+    setPotvrzeniRozbal((prev) => ({ ...prev, [`${row.rezervace}:odjezd`]: false }));
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              potvrzeniOdjezdu: json.potvrzeniOdjezdu || druh,
+              potvrzeniOdjezduKdy: json.potvrzeniOdjezduKdy || new Date().toISOString(),
+              zpravaOdjezdPrectena: null,
             }
           : r,
       ),
@@ -3914,6 +3970,8 @@ export function PrehledClient({
         ) : null}
         {(() => {
           const casOkFaze = Boolean(casAktualni);
+          const odjezdOkFaze =
+            ukazatCasNaKarte(row.odjezd, dnes) && jeHodina(odjezdCas);
           const branaOkFaze = row.zpusobPrijezdu === 'auto' && Boolean(row.branaRegistrovano);
           const branaPripravenaFaze =
             row.zpusobPrijezdu === 'auto' &&
@@ -3921,19 +3979,41 @@ export function PrehledClient({
             Boolean(row.spz || row.spzPujcene) &&
             !branaOkFaze;
           const potvrzeni = row.potvrzeniPrijezdu;
+          const potvrzeniOd = row.potvrzeniOdjezdu;
+          const klicPrijezd = `${row.rezervace}:prijezd`;
+          const klicOdjezd = `${row.rezervace}:odjezd`;
+          const rozbalPrijezd = Boolean(potvrzeniRozbal[klicPrijezd]);
+          const rozbalOdjezd = Boolean(potvrzeniRozbal[klicOdjezd]);
           const ukazFaze =
             !odjel &&
             row.stav !== 'zruseno' &&
-            (casOkFaze || branaPripravenaFaze || branaOkFaze);
+            (casOkFaze || odjezdOkFaze || branaPripravenaFaze || branaOkFaze);
           if (!ukazFaze) return null;
           return (
             <div className="ph-potvrzeni" id={`ph-potvrzeni-${row.rezervace}`}>
               {casOkFaze ? (
-                potvrzeni ? (
+                potvrzeni && !rozbalPrijezd ? (
                   <div className="ph-potvrzeni__blok">
-                    <p className="ph-potvrzeni__nadpis">
+                    <button
+                      type="button"
+                      className="ph-potvrzeni__stav ph-potvrzeni__stav--tlacitko"
+                      disabled={cekam !== null}
+                      onClick={() =>
+                        setPotvrzeniRozbal((prev) => ({ ...prev, [klicPrijezd]: true }))
+                      }
+                    >
                       {potvrzeni === 'osobne' ? 'Osobně ubytujeme' : 'Jsme na telefonu'}
                       {potvrzeni === 'osobne' ? ' · zpráva hostovi' : ''}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="ph-potvrzeni__blok">
+                    <p className="ph-potvrzeni__nadpis">
+                      {potvrzeni
+                        ? potvrzeni === 'osobne'
+                          ? 'Osobně ubytujeme'
+                          : 'Jsme na telefonu'
+                        : `Čas ${casText || casAktualni}. Jak ubytujeme?`}
                     </p>
                     <div className="ph-potvrzeni__akce">
                       <button
@@ -3954,25 +4034,48 @@ export function PrehledClient({
                       </button>
                     </div>
                   </div>
+                )
+              ) : null}
+              {odjezdOkFaze ? (
+                potvrzeniOd && !rozbalOdjezd ? (
+                  <div className="ph-potvrzeni__blok">
+                    <button
+                      type="button"
+                      className="ph-potvrzeni__stav ph-potvrzeni__stav--tlacitko"
+                      disabled={cekam !== null}
+                      onClick={() =>
+                        setPotvrzeniRozbal((prev) => ({ ...prev, [klicOdjezd]: true }))
+                      }
+                    >
+                      {potvrzeniOd === 'osobne' ? 'Osobně se rozloučíme' : 'Sami · jsme na telefonu'}
+                      {potvrzeniOd === 'osobne' ? ' · zpráva hostovi' : ''}
+                    </button>
+                  </div>
                 ) : (
                   <div className="ph-potvrzeni__blok">
                     <p className="ph-potvrzeni__nadpis">
-                      Čas {casText || casAktualni}. Jak ubytujeme?
+                      {potvrzeniOd
+                        ? potvrzeniOd === 'osobne'
+                          ? 'Osobně se rozloučíme'
+                          : 'Sami · jsme na telefonu'
+                        : `Odjezd ${zobrazCas(odjezdCas)}. Jak se rozloučíme?`}
                     </p>
                     <div className="ph-potvrzeni__akce">
                       <button
                         type="button"
+                        className={potvrzeniOd === 'osobne' ? 'is-on' : ''}
                         disabled={cekam !== null}
-                        onClick={() => void ulozPotvrzeniPrijezdu(row, 'osobne')}
+                        onClick={() => void ulozPotvrzeniOdjezdu(row, 'osobne')}
                       >
                         Osobně
                       </button>
                       <button
                         type="button"
+                        className={potvrzeniOd === 'telefon' ? 'is-on' : ''}
                         disabled={cekam !== null}
-                        onClick={() => void ulozPotvrzeniPrijezdu(row, 'telefon')}
+                        onClick={() => void ulozPotvrzeniOdjezdu(row, 'telefon')}
                       >
-                        Na telefonu
+                        Sami
                       </button>
                     </div>
                   </div>

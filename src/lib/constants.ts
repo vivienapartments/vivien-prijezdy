@@ -4,8 +4,8 @@ export const PREDSTIH_PRIJEZDU_MIN = 60;
 /** Běžný odjezd. Host v průvodci volí od 6:00 po půlhodinách až sem. */
 export const CHECKOUT = '10:00';
 export const ODJEZD_OD = '06:00';
-/** Běžný odjezd do 10:00 po čtvrthodinách. Pozdější (placené) zůstává po půlhodinách. */
-export const ODJEZD_KROK_MIN = 15;
+/** Běžný i pozdější odjezd po půlhodinách. */
+export const ODJEZD_KROK_MIN = 30;
 /** Rámeček v průvodci od této hodiny dne před odjezdem. */
 export const HODINA_RAMCEKU_ODJEZDU = 12;
 /** Push se seznamem zítřejších odjezdů. */
@@ -46,7 +46,8 @@ export const OKNO_KC = 75;
 export const PRIJEZD_STANDARD = 14 * 60;
 export const PRIJEZD_NEJDRIV = 11 * 60;
 export const ODJEZD_STANDARD = 10 * 60;
-export const ODJEZD_NEJPOZDEJI = 14 * 60;
+/** Pozdější odjezd nejpozději do 13:00. */
+export const ODJEZD_NEJPOZDEJI = 13 * 60;
 export const UKLID_MIN = 60;
 /** Úklid může začít až tolik minut před uvolněním dalšího apartmánu (čekání v okně). */
 export const UKLID_CEKAT_MIN = 15;

@@ -26,6 +26,14 @@ import * as TX from '@/lib/texts';
 import type { GuideLang } from '@/lib/types';
 import * as VT from '@/lib/vstup-texty';
 
+type ZpravaOdjezduAck = {
+  id: 'odjezd-prijati';
+  nova: true;
+  nadpis: string;
+  text: string;
+  sbalenyTitulek: string;
+};
+
 type Props = {
   lang: GuideLang;
   den: string | null;
@@ -36,6 +44,7 @@ type Props = {
   ubytovan?: boolean;
   nejpozdeji?: string;
   zadostOdjezd?: ZadostOkna | null;
+  onZpravaOdjezdu?: (zprava: ZpravaOdjezduAck) => void;
 };
 
 const VLASTNI = '__vlastni__';
@@ -70,6 +79,7 @@ export function OdjezdRamecek({
   ubytovan = false,
   nejpozdeji = '14:00',
   zadostOdjezd = null,
+  onZpravaOdjezdu,
 }: Props) {
   const bezne = slotsOdjezdu();
   const pozde = casyPozde(nejpozdeji);
@@ -121,7 +131,11 @@ export function OdjezdRamecek({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, akce: 'odjezd', cas: casUlozit }),
     });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; cas?: string } | null;
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      cas?: string;
+      zpravaOdjezdu?: ZpravaOdjezduAck;
+    } | null;
     setCekam(false);
     if (!res.ok || !json?.ok) {
       setChyba(jeVlastni ? tt(VT.odjezdVlastniChyba) : text.poznamka);
@@ -137,6 +151,7 @@ export function OdjezdRamecek({
       setVlastni(hotovo);
     }
     setOtevreno(false);
+    if (json.zpravaOdjezdu) onZpravaOdjezdu?.(json.zpravaOdjezdu);
   }
 
   async function zrusitZadost() {

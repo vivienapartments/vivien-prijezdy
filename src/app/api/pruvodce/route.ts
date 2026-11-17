@@ -34,5 +34,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     const status = vysledek.duvod === 'token' ? 401 : vysledek.duvod === 'limit' ? 429 : 400;
     return NextResponse.json({ ok: false, duvod: vysledek.duvod }, { status, headers: noStore });
   }
-  return NextResponse.json({ ok: true, uroven: vysledek.uroven, cas: vysledek.cas }, { headers: noStore });
+  return NextResponse.json(
+    {
+      ok: true,
+      uroven: vysledek.uroven,
+      cas: vysledek.cas,
+      ...(vysledek.zpravaOdjezdu ? { zpravaOdjezdu: vysledek.zpravaOdjezdu } : {}),
+    },
+    { headers: noStore },
+  );
 }

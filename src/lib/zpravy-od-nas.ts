@@ -1,11 +1,16 @@
 import { aptRecord } from './guide-data';
+import {
+  zpravaPrijatiOdjezdu,
+  zpravaPotvrzeniOdjezdu,
+  type ZpravaOdjezduData,
+} from './odjezd-potvrzeni';
 import type { AptId } from './types';
 import type { RezervaceRecord } from './store';
 
 export type PotvrzeniPrijezdu = 'osobne' | 'telefon';
 
 export type ZpravaOdNasData = {
-  id: 'cas' | 'brana';
+  id: 'cas' | 'brana' | 'odjezd-prijati' | 'odjezd';
   nova: boolean;
   nadpis: string;
   /** Obyčejný text. U brány je telefon a stání zvlášť kvůli odkazu tel:. */
@@ -56,6 +61,23 @@ export function zpravyOdNasZRezervace(rec: RezervaceRecord | null | undefined): 
       telefon: rec.telefonBrana,
       stani,
     });
+  }
+
+  if (rec.casOdjezdu && !rec.potvrzeniOdjezdu) {
+    const prijati: ZpravaOdjezduData = zpravaPrijatiOdjezdu(
+      rec.casOdjezdu,
+      rec.casOdjezduZapsanKdy,
+      !rec.zpravaOdjezdPrijatiPrectena,
+    );
+    out.push(prijati);
+  }
+
+  if (rec.potvrzeniOdjezdu === 'osobne' && rec.casOdjezdu) {
+    const potvrzeni: ZpravaOdjezduData = zpravaPotvrzeniOdjezdu(
+      rec.casOdjezdu,
+      !rec.zpravaOdjezdPrectena,
+    );
+    out.push(potvrzeni);
   }
 
   return out;

@@ -138,6 +138,10 @@ export type PrehledRadek = {
   potvrzeniPrijezdu: 'osobne' | 'telefon' | null;
   potvrzeniPrijezduKdy: string | null;
   zpravaCasPrectena: string | null;
+  potvrzeniOdjezdu: 'osobne' | 'telefon' | null;
+  potvrzeniOdjezduKdy: string | null;
+  zpravaOdjezdPrijatiPrectena: string | null;
+  zpravaOdjezdPrectena: string | null;
   zpravaBranaOdeslana: string | null;
   zpravaBranaPrectena: string | null;
   pruvodceOdemcen: string | null;
@@ -892,6 +896,10 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     potvrzeniPrijezdu: rec.potvrzeniPrijezdu,
     potvrzeniPrijezduKdy: rec.potvrzeniPrijezduKdy,
     zpravaCasPrectena: rec.zpravaCasPrectena,
+    potvrzeniOdjezdu: rec.potvrzeniOdjezdu,
+    potvrzeniOdjezduKdy: rec.potvrzeniOdjezduKdy,
+    zpravaOdjezdPrijatiPrectena: rec.zpravaOdjezdPrijatiPrectena,
+    zpravaOdjezdPrectena: rec.zpravaOdjezdPrectena,
     zpravaBranaOdeslana: rec.zpravaBranaOdeslana,
     zpravaBranaPrectena: rec.zpravaBranaPrectena,
     pruvodceOdemcen: rec.pruvodceOdemcen,

@@ -242,6 +242,21 @@ export type RezervaceRecord = {
   potvrzeniPrijezduKdy: string | null;
   /** Kdy host v průvodci klepl Pokračovat u zprávy k času. */
   zpravaCasPrectena: string | null;
+  /**
+   * Potvrzení osobního rozloučení u odjezdu.
+   * osobne = rozloučíme se osobně, telefon = jsme na telefonu.
+   */
+  potvrzeniOdjezdu: 'osobne' | 'telefon' | null;
+  /** Kdy majitel potvrdil rozloučení. */
+  potvrzeniOdjezduKdy: string | null;
+  /** Kdy se uložil čas odjezdu (kvůli ranní / večerní hlášce). */
+  casOdjezduZapsanKdy: string | null;
+  /** Kdy host přečetl hlášku „čas jsme přijali“. */
+  zpravaOdjezdPrijatiPrectena: string | null;
+  /** Kdy host přečetl zprávu po Osobně. */
+  zpravaOdjezdPrectena: string | null;
+  /** Text pushu majiteli, když čas přišel v noci (22:00–7:30). null = nic nečeká. */
+  casOdjezduPushCeka: string | null;
   /** Kdy se hostovi odeslala zpráva k bráně (po Brána OK). Starší záznamy bez toho zprávu neukážou. */
   zpravaBranaOdeslana: string | null;
   /** Kdy host v průvodci klepl Pokračovat u zprávy k bráně. */
@@ -756,6 +771,32 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     potvrzeniPrijezduKdy:
       typeof r.potvrzeniPrijezduKdy === 'string' && r.potvrzeniPrijezduKdy ? r.potvrzeniPrijezduKdy : null,
     zpravaCasPrectena: typeof r.zpravaCasPrectena === 'string' && r.zpravaCasPrectena ? r.zpravaCasPrectena : null,
+    potvrzeniOdjezdu: r.potvrzeniOdjezdu === 'osobne' || r.potvrzeniOdjezdu === 'telefon' ? r.potvrzeniOdjezdu : null,
+    potvrzeniOdjezduKdy:
+      typeof r.potvrzeniOdjezduKdy === 'string' && r.potvrzeniOdjezduKdy ? r.potvrzeniOdjezduKdy : null,
+    casOdjezduZapsanKdy:
+      typeof r.casOdjezduZapsanKdy === 'string' && r.casOdjezduZapsanKdy ? r.casOdjezduZapsanKdy : null,
+    zpravaOdjezdPrijatiPrectena:
+      typeof r.zpravaOdjezdPrijatiPrectena === 'string' && r.zpravaOdjezdPrijatiPrectena
+        ? r.zpravaOdjezdPrijatiPrectena
+        : null,
+    zpravaOdjezdPrectena:
+      typeof r.zpravaOdjezdPrectena === 'string' && r.zpravaOdjezdPrectena ? r.zpravaOdjezdPrectena : null,
+    casOdjezduPushCeka:
+      typeof r.casOdjezduPushCeka === 'string' && r.casOdjezduPushCeka ? r.casOdjezduPushCeka : null,
+    potvrzeniOdjezdu: r.potvrzeniOdjezdu === 'osobne' || r.potvrzeniOdjezdu === 'telefon' ? r.potvrzeniOdjezdu : null,
+    potvrzeniOdjezduKdy:
+      typeof r.potvrzeniOdjezduKdy === 'string' && r.potvrzeniOdjezduKdy ? r.potvrzeniOdjezduKdy : null,
+    casOdjezduZapsanKdy:
+      typeof r.casOdjezduZapsanKdy === 'string' && r.casOdjezduZapsanKdy ? r.casOdjezduZapsanKdy : null,
+    zpravaOdjezdPrijatiPrectena:
+      typeof r.zpravaOdjezdPrijatiPrectena === 'string' && r.zpravaOdjezdPrijatiPrectena
+        ? r.zpravaOdjezdPrijatiPrectena
+        : null,
+    zpravaOdjezdPrectena:
+      typeof r.zpravaOdjezdPrectena === 'string' && r.zpravaOdjezdPrectena ? r.zpravaOdjezdPrectena : null,
+    casOdjezduPushCeka:
+      typeof r.casOdjezduPushCeka === 'string' && r.casOdjezduPushCeka ? r.casOdjezduPushCeka : null,
     zpravaBranaOdeslana:
       typeof r.zpravaBranaOdeslana === 'string' && r.zpravaBranaOdeslana ? r.zpravaBranaOdeslana : null,
     zpravaBranaPrectena:
@@ -877,6 +918,12 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     potvrzeniPrijezdu: null,
     potvrzeniPrijezduKdy: null,
     zpravaCasPrectena: null,
+    potvrzeniOdjezdu: null,
+    potvrzeniOdjezduKdy: null,
+    casOdjezduZapsanKdy: null,
+    zpravaOdjezdPrijatiPrectena: null,
+    zpravaOdjezdPrectena: null,
+    casOdjezduPushCeka: null,
     zpravaBranaOdeslana: null,
     zpravaBranaPrectena: null,
     branaPushRegistrace: null,

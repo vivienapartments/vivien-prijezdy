@@ -3070,6 +3070,20 @@
   color: #8dcea0;
 }
 
+.ph button.ph-potvrzeni__stav--tlacitko,
+.ph-potvrzeni__stav--tlacitko {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #8dcea0;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  text-align: center;
+  cursor: pointer;
+}
+
 .ph-potvrzeni__akce {
   display: flex;
   flex-wrap: nowrap;

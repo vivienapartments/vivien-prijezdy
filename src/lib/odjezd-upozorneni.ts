@@ -21,11 +21,39 @@ import {
   textPulHodiny,
   textVecer,
 } from './odjezd';
+import { odlozitPushCasuOdjezdu } from './odjezd-potvrzeni';
 import { hosteProPohodu, textPushPohody } from './pohoda';
 import type { OdjezdBeh, ProcessStore, RezervaceRecord } from './store';
 import { odkazKarty } from './prehled-odkaz';
 import { upozorniMajitele, vetaUpozorneni } from './upozorneni';
 import { jePondeli, jeVDnesnichOdjezdech, oznacPrevzeti, textStarychDluhu } from './zalozky';
+
+/** Odložené pushy z noci (22:00–7:30), až skončí tichý režim nebo je odjezd do 2 hodin. */
+async function dorucOdlozenePushyCasuOdjezdu(
+  store: ProcessStore,
+  list: RezervaceRecord[],
+  now: Date,
+  posli: typeof upozorniMajitele,
+): Promise<number> {
+  let pocet = 0;
+  for (const record of list) {
+    if (!record.casOdjezduPushCeka || record.stav === 'zruseno') continue;
+    if (odlozitPushCasuOdjezdu(record, now)) continue;
+    const text = record.casOdjezduPushCeka;
+    const jak = await posli(store, text, odkazKarty(record.rezervace), { telegram: 'cas-odjezdu' });
+    if (jak === 'nic') continue;
+    const cerstvy = (await store.getRezervace(record.rezervace)) || record;
+    if (!cerstvy.casOdjezduPushCeka) continue;
+    const veta = vetaUpozorneni(jak, text);
+    await store.setRezervace(record.rezervace, {
+      ...cerstvy,
+      casOdjezduPushCeka: null,
+      historie: [...cerstvy.historie, { cas: now.toISOString(), co: veta }].slice(-40),
+    });
+    pocet += 1;
+  }
+  return pocet;
+}
 
 /** Jednou denně od 11:00. Použije už načtený seznam. Hostovi odtud nic neodchází. */
 async function upozorniPohodu(
@@ -106,7 +134,7 @@ export async function upozorniOdjezdy(
   posli: typeof upozorniMajitele = upozorniMajitele,
 ): Promise<number> {
   const list = (await store.listRezervace()).map((e) => e.record);
-  let pocet = 0;
+  let pocet = await dorucOdlozenePushyCasuOdjezdu(store, list, now, posli);
   for (const record of list) {
     if (!maUpozornitPul(record, now)) continue;
     const text = textPulHodiny(record, polozkyZRezervace(record));

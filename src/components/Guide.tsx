@@ -754,6 +754,12 @@ export function Guide({
               ubytovan={ubytovan || Boolean(ziveKody)}
               nejpozdeji={okno?.nejpozdeji}
               zadostOdjezd={okno?.zadostOdjezd ?? null}
+              onZpravaOdjezdu={(zprava) => {
+                setZpravyLokal((prev) => {
+                  const bez = prev.filter((z) => z.id !== 'odjezd-prijati' && z.id !== 'odjezd');
+                  return [...bez, zprava];
+                });
+              }}
             />
             {ukazPrani ? (
               <PraniAlert
