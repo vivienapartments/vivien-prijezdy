@@ -1,5 +1,17 @@
 import { casVPraze, denPraha, hodinaPraha, minutaPraha } from './brana';
+import { t } from './i18n';
 import type { RezervaceRecord } from './store';
+import type { GuideLang } from './types';
+import { GUIDE_LANGS } from './types';
+import {
+  ZPRAVA_ODJEZD_OSOBNE_NADPIS,
+  ZPRAVA_ODJEZD_OSOBNE_SBALENA,
+  ZPRAVA_ODJEZD_OSOBNE_TEXT,
+  ZPRAVA_ODJEZD_PRIJATI_DEN,
+  ZPRAVA_ODJEZD_PRIJATI_NADPIS,
+  ZPRAVA_ODJEZD_PRIJATI_RANO,
+  ZPRAVA_ODJEZD_PRIJATI_SBALENA,
+} from './zpravy-od-nas-texty';
 
 export type PotvrzeniOdjezdu = 'osobne' | 'telefon';
 
@@ -10,6 +22,10 @@ export type ZpravaOdjezduData = {
   text: string;
   sbalenyTitulek: string;
 };
+
+function langOk(lang?: GuideLang | null): GuideLang {
+  return lang && GUIDE_LANGS.includes(lang) ? lang : 'en';
+}
 
 /** Minuty od půlnoci v Praze. */
 function minutyPraha(now: Date): number {
@@ -50,18 +66,21 @@ export function odlozitPushCasuOdjezdu(
   return true;
 }
 
-export function textPrijatiCasuOdjezdu(cas: string, kdyZapsano: Date | string | null | undefined): string {
+export function textPrijatiCasuOdjezdu(
+  cas: string,
+  kdyZapsano: Date | string | null | undefined,
+  lang?: GuideLang | null,
+): string {
+  const l = langOk(lang);
   const kdy = typeof kdyZapsano === 'string' ? new Date(kdyZapsano) : kdyZapsano || new Date();
   const platny = Number.isFinite(kdy.getTime()) ? kdy : new Date();
-  if (jeRanniZadaniOdjezdu(platny)) {
-    return `Čas ${cas} jsme přijali. Až budeme vzhůru, potvrdíme rozloučení. Bez potvrzení odjeďte sami.`;
-  }
-  return `Čas ${cas} jsme přijali. Osobní rozloučení vám potvrdíme co nejdříve.`;
+  const mapa = jeRanniZadaniOdjezdu(platny) ? ZPRAVA_ODJEZD_PRIJATI_RANO : ZPRAVA_ODJEZD_PRIJATI_DEN;
+  return t(mapa, l).replaceAll('{{CAS}}', cas);
 }
 
 /** Po klepnutí Osobně (schváleno 17. 11. 2026). */
-export function textPotvrzeniOdjezduOsobne(cas: string): string {
-  return `V ${cas} s vámi počítáme. Přijdeme se osobně rozloučit.`;
+export function textPotvrzeniOdjezduOsobne(cas: string, lang?: GuideLang | null): string {
+  return t(ZPRAVA_ODJEZD_OSOBNE_TEXT, langOk(lang)).replaceAll('{{CAS}}', cas);
 }
 
 export function stitekPotvrzeniOdjezdu(v: PotvrzeniOdjezdu | null | undefined): string {
@@ -102,22 +121,29 @@ export function zpravaPrijatiOdjezdu(
   cas: string,
   kdyZapsano: Date | string | null | undefined,
   nova = true,
+  lang?: GuideLang | null,
 ): ZpravaOdjezduData {
+  const l = langOk(lang);
   return {
     id: 'odjezd-prijati',
     nova,
-    nadpis: 'Čas odjezdu máme',
-    text: textPrijatiCasuOdjezdu(cas, kdyZapsano),
-    sbalenyTitulek: 'Zpráva k času odjezdu',
+    nadpis: t(ZPRAVA_ODJEZD_PRIJATI_NADPIS, l),
+    text: textPrijatiCasuOdjezdu(cas, kdyZapsano, l),
+    sbalenyTitulek: t(ZPRAVA_ODJEZD_PRIJATI_SBALENA, l),
   };
 }
 
-export function zpravaPotvrzeniOdjezdu(cas: string, nova = true): ZpravaOdjezduData {
+export function zpravaPotvrzeniOdjezdu(
+  cas: string,
+  nova = true,
+  lang?: GuideLang | null,
+): ZpravaOdjezduData {
+  const l = langOk(lang);
   return {
     id: 'odjezd',
     nova,
-    nadpis: 'Rozloučení je potvrzené',
-    text: textPotvrzeniOdjezduOsobne(cas),
-    sbalenyTitulek: 'Zpráva k odjezdu',
+    nadpis: t(ZPRAVA_ODJEZD_OSOBNE_NADPIS, l),
+    text: textPotvrzeniOdjezduOsobne(cas, l),
+    sbalenyTitulek: t(ZPRAVA_ODJEZD_OSOBNE_SBALENA, l),
   };
 }

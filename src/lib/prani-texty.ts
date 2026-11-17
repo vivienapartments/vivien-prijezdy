@@ -262,6 +262,54 @@ export const PRANI_POKRACOVAT: T = {
   da: 'Fortsæt',
 };
 
+export const PRANI_VY: T = {
+  cs: 'Vy',
+  en: 'You',
+  de: 'Sie',
+  pl: 'Wy',
+  uk: 'Ви',
+  'zh-Hant': '您',
+  sv: 'Ni',
+  es: 'Usted',
+  fr: 'Vous',
+  it: 'Voi',
+  pt: 'Vós',
+  hu: 'Ön',
+  da: 'I',
+};
+
+export const PRANI_UPRAVENO: T = {
+  cs: 'upraveno',
+  en: 'edited',
+  de: 'bearbeitet',
+  pl: 'edytowano',
+  uk: 'змінено',
+  'zh-Hant': '已修改',
+  sv: 'redigerat',
+  es: 'editado',
+  fr: 'modifié',
+  it: 'modificato',
+  pt: 'editado',
+  hu: 'szerkesztve',
+  da: 'redigeret',
+};
+
+export const PRANI_ZRUSIT: T = {
+  cs: 'Zrušit',
+  en: 'Cancel',
+  de: 'Abbrechen',
+  pl: 'Anuluj',
+  uk: 'Скасувати',
+  'zh-Hant': '取消',
+  sv: 'Avbryt',
+  es: 'Cancelar',
+  fr: 'Annuler',
+  it: 'Annulla',
+  pt: 'Cancelar',
+  hu: 'Mégse',
+  da: 'Annuller',
+};
+
 export const PRANI_OKNO_ZAVRENO: T = {
   cs: 'Na přání už bohužel nestihneme reagovat. Pokud potřebujete něco na ráno, zavolejte nám prosím.',
   en: 'We can no longer respond to wishes in time. If you need something for the morning, please call us.',

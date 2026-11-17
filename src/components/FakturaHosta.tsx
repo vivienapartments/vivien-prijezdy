@@ -280,7 +280,7 @@ export function FakturaFormular({
         </button>
         {onZrusit && !cteni ? (
           <button type="button" onClick={onZrusit}>
-            Zrušit
+            {tt(FT.FAKTURA_ZRUSIT)}
           </button>
         ) : null}
       </div>

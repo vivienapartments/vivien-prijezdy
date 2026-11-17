@@ -25,9 +25,12 @@ import {
   PRANI_RAMECEK_ODPOVED,
   PRANI_SMAZAT,
   PRANI_VAS_DOTAZ,
+  PRANI_UPRAVENO,
   PRANI_UPRAVIT,
   PRANI_UVOD,
+  PRANI_VY,
   PRANI_VYRIZENO,
+  PRANI_ZRUSIT,
   textPrani,
 } from '@/lib/prani-texty';
 import type { GuideLang } from '@/lib/types';
@@ -487,9 +490,9 @@ export function PraniHosta({
                 {v.zpravy.map((z) => (
                   <div key={z.id} className={`pv-prani__bublina pv-prani__bublina--${z.autor}`}>
                     <div className="pv-prani__meta">
-                      {z.autor === 'vivien' ? `${z.jmeno || 'VIVIEN'} · VIVIEN` : 'Vy'}
+                      {z.autor === 'vivien' ? `${z.jmeno || 'VIVIEN'} · VIVIEN` : tt(PRANI_VY)}
                       {z.cas ? ` · ${casKratky(z.cas)}` : ''}
-                      {z.upraveno ? ' · upraveno' : ''}
+                      {z.upraveno ? ` · ${tt(PRANI_UPRAVENO)}` : ''}
                     </div>
                     <p>{z.text}</p>
                     {z.muzeUpravit && stav?.muzePsat && !cteni ? (
@@ -531,7 +534,7 @@ export function PraniHosta({
                         setText('');
                       }}
                     >
-                      Zrušit
+                      {tt(PRANI_ZRUSIT)}
                     </button>
                   </div>
                 ) : stav?.muzePsat && !cteni ? (

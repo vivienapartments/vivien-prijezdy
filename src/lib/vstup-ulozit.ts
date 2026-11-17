@@ -232,7 +232,11 @@ export async function ulozVstupHosta(
       ok: true,
       cas,
       uroven: urovenZRezervace(zapis),
-      zpravaOdjezdu: { ...zpravaPrijatiOdjezdu(nove, ted, true), id: 'odjezd-prijati', nova: true },
+      zpravaOdjezdu: {
+        ...zpravaPrijatiOdjezdu(nove, ted, true, rec.jazyk),
+        id: 'odjezd-prijati' as const,
+        nova: true as const,
+      },
     };
   }
 

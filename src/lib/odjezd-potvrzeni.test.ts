@@ -45,13 +45,17 @@ describe('odjezd-potvrzeni', () => {
   });
 
   it('ranní a denní text', () => {
-    expect(textPrijatiCasuOdjezdu('10:00', praha('2026-11-18', 6, 0))).toContain('Až budeme vzhůru');
-    expect(textPrijatiCasuOdjezdu('10:00', praha('2026-11-18', 18, 0))).toContain('co nejdříve');
+    expect(textPrijatiCasuOdjezdu('10:00', praha('2026-11-18', 6, 0), 'cs')).toContain('Až budeme vzhůru');
+    expect(textPrijatiCasuOdjezdu('10:00', praha('2026-11-18', 18, 0), 'cs')).toContain('co nejdříve');
+    expect(textPrijatiCasuOdjezdu('10:00', praha('2026-11-18', 18, 0), 'pl')).toContain('przyjęliśmy');
   });
 
   it('schválený text po Osobně', () => {
-    expect(textPotvrzeniOdjezduOsobne('10:00')).toBe(
+    expect(textPotvrzeniOdjezduOsobne('10:00', 'cs')).toBe(
       'V 10:00 s vámi počítáme. Přijdeme se osobně rozloučit.',
+    );
+    expect(textPotvrzeniOdjezduOsobne('10:00', 'pl')).toBe(
+      'O 10:00 liczymy na Was. Przyjdziemy się osobiście pożegnać.',
     );
   });
 

@@ -370,6 +370,22 @@ export const FAKTURA_PRANI_NAPOVEDA: T = {
   'da': "Har I brug for en faktura? Angiv jeres oplysninger i afsnittet Faktura til virksomhed.",
 };
 
+export const FAKTURA_ZRUSIT: T = {
+  cs: 'Zrušit',
+  en: 'Cancel',
+  de: 'Abbrechen',
+  pl: 'Anuluj',
+  uk: 'Скасувати',
+  'zh-Hant': '取消',
+  sv: 'Avbryt',
+  es: 'Cancelar',
+  fr: 'Annuler',
+  it: 'Annulla',
+  pt: 'Cancelar',
+  hu: 'Mégse',
+  da: 'Annuller',
+};
+
 export const FAKTURA_PRANI_OTEVRIT: T = {
   'cs': "Otevřít fakturu",
   'en': "Open invoice",

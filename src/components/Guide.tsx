@@ -834,7 +834,7 @@ export function Guide({
         )}
 
         {zpravyLokal.length > 0 ? (
-          <ZpravyOdNas zpravy={zpravyLokal} onPrecteno={prectiZpravuOdNas} />
+          <ZpravyOdNas zpravy={zpravyLokal} onPrecteno={prectiZpravuOdNas} lang={lang} />
         ) : null}
 
         {osa.length ? (

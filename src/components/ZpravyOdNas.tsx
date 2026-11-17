@@ -1,20 +1,34 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { t } from '@/lib/i18n';
+import { plochaSchovat, plochaZobrazit } from '@/lib/plocha-texty';
+import { PRANI_POKRACOVAT } from '@/lib/prani-texty';
+import type { GuideLang } from '@/lib/types';
 import type { ZpravaOdNasData } from '@/lib/zpravy-od-nas';
+import {
+  ZPRAVA_BRANA_NADPIS,
+  ZPRAVA_BRANA_SBALENA,
+  ZPRAVA_BRANA_TEXT,
+  ZPRAVA_CAS_NADPIS,
+  ZPRAVA_CAS_SBALENA,
+  ZPRAVA_CAS_TEXT,
+  ZPRAVA_OD_NAS_KROK,
+} from '@/lib/zpravy-od-nas-texty';
 
 export type ZpravaOdNas = ZpravaOdNasData;
 
 type Props = {
   zpravy: ZpravaOdNas[];
   onPrecteno: (id: ZpravaOdNas['id']) => void;
+  lang: GuideLang;
 };
 
 /**
  * Potvrzení od nás: nejdřív celá zpráva (C2), po Pokračovat sbalený box.
  * Nové jdou jedna po druhé. Už přečtené znovu nepřekáží.
  */
-export function ZpravyOdNas({ zpravy, onPrecteno }: Props) {
+export function ZpravyOdNas({ zpravy, onPrecteno, lang }: Props) {
   const fronta = useMemo(() => zpravy.filter((z) => z.nova), [zpravy]);
   const [aktivniId, setAktivniId] = useState<ZpravaOdNas['id'] | null>(null);
 
@@ -28,25 +42,25 @@ export function ZpravyOdNas({ zpravy, onPrecteno }: Props) {
   return (
     <>
       {prectene.map((z) => (
-        <SbalenaZprava key={z.id} zprava={z} />
+        <SbalenaZprava key={z.id} zprava={z} lang={lang} />
       ))}
 
       {aktivni ? (
         <div className="pv-zprava-overlay" role="dialog" aria-modal="true" aria-labelledby={`pv-zprava-${aktivni.id}`}>
           <div className="pv-zprava-overlay__karta">
-            <p className="pv-zprava-overlay__krok">Zpráva od nás</p>
+            <p className="pv-zprava-overlay__krok">{t(ZPRAVA_OD_NAS_KROK, lang)}</p>
             <h3 className="pv-zprava-overlay__nadpis" id={`pv-zprava-${aktivni.id}`}>
               {aktivni.nadpis}
             </h3>
             <p className="pv-zprava-overlay__text">
-              <TextZpravy zprava={aktivni} />
+              <TextZpravy zprava={aktivni} lang={lang} />
             </p>
             <button
               type="button"
               className="pv-zprava-overlay__btn"
               onClick={() => onPrecteno(aktivni.id)}
             >
-              Pokračovat
+              {t(PRANI_POKRACOVAT, lang)}
             </button>
           </div>
         </div>
@@ -55,7 +69,7 @@ export function ZpravyOdNas({ zpravy, onPrecteno }: Props) {
   );
 }
 
-function SbalenaZprava({ zprava }: { zprava: ZpravaOdNas }) {
+function SbalenaZprava({ zprava, lang }: { zprava: ZpravaOdNas; lang: GuideLang }) {
   const [otevreno, setOtevreno] = useState(false);
   return (
     <div className={`pv-zprava-box${otevreno ? ' is-otevreno' : ''}`}>
@@ -66,14 +80,14 @@ function SbalenaZprava({ zprava }: { zprava: ZpravaOdNas }) {
           className="pv-zprava-box__akce"
           onClick={() => setOtevreno((v) => !v)}
         >
-          {otevreno ? 'Schovat' : 'Zobrazit'}
+          {otevreno ? t(plochaSchovat, lang) : t(plochaZobrazit, lang)}
         </button>
       </div>
       {otevreno ? (
         <div className="pv-zprava-box__telo">
           <p className="pv-zprava-box__nadpis">{zprava.nadpis}</p>
           <p>
-            <TextZpravy zprava={zprava} />
+            <TextZpravy zprava={zprava} lang={lang} />
           </p>
         </div>
       ) : null}
@@ -81,12 +95,15 @@ function SbalenaZprava({ zprava }: { zprava: ZpravaOdNas }) {
   );
 }
 
-function TextZpravy({ zprava }: { zprava: ZpravaOdNas }) {
+function TextZpravy({ zprava, lang }: { zprava: ZpravaOdNas; lang: GuideLang }) {
   if (zprava.id === 'brana' && zprava.telefon) {
+    const raw = t(ZPRAVA_BRANA_TEXT, lang).replaceAll('{{STANI}}', String(zprava.stani ?? ''));
+    const dil = raw.split('{{TELEFON}}');
     return (
       <>
-        Vaše číslo <TelefonVTextu cislo={zprava.telefon} /> je v bráně. Otevřete ji prozvoněním. Stání
-        je č.&nbsp;{zprava.stani}.
+        {dil[0]}
+        <TelefonVTextu cislo={zprava.telefon} />
+        {dil[1] || ''}
       </>
     );
   }
@@ -112,23 +129,25 @@ function formatTelefon(cislo: string): string {
   return cislo;
 }
 
-export function zpravaCasu(cas: string): ZpravaOdNas {
+export function zpravaCasu(cas: string, lang: GuideLang = 'cs'): ZpravaOdNas {
   return {
     id: 'cas',
     nova: true,
-    nadpis: 'Váš příjezd je potvrzený',
-    text: `S vaším příjezdem v ${cas} počítáme. Budeme na vás čekat před domem a osobně vás přivítáme.`,
-    sbalenyTitulek: 'Zpráva k času příjezdu',
+    nadpis: t(ZPRAVA_CAS_NADPIS, lang),
+    text: t(ZPRAVA_CAS_TEXT, lang).replaceAll('{{CAS}}', cas),
+    sbalenyTitulek: t(ZPRAVA_CAS_SBALENA, lang),
   };
 }
 
-export function zpravaBrany(stani: string | number, telefon: string): ZpravaOdNas {
+export function zpravaBrany(stani: string | number, telefon: string, lang: GuideLang = 'cs'): ZpravaOdNas {
   return {
     id: 'brana',
     nova: true,
-    nadpis: 'Brána je připravená',
-    text: `Vaše číslo je v bráně. Otevřete ji prozvoněním. Stání je č. ${stani}.`,
-    sbalenyTitulek: 'Zpráva k parkování',
+    nadpis: t(ZPRAVA_BRANA_NADPIS, lang),
+    text: t(ZPRAVA_BRANA_TEXT, lang)
+      .replaceAll('{{TELEFON}}', telefon)
+      .replaceAll('{{STANI}}', String(stani)),
+    sbalenyTitulek: t(ZPRAVA_BRANA_SBALENA, lang),
     telefon,
     stani,
   };

@@ -1,11 +1,23 @@
 import { aptRecord } from './guide-data';
+import { t } from './i18n';
 import {
   zpravaPrijatiOdjezdu,
   zpravaPotvrzeniOdjezdu,
   type ZpravaOdjezduData,
 } from './odjezd-potvrzeni';
-import type { AptId } from './types';
+import type { AptId, GuideLang } from './types';
+import { GUIDE_LANGS } from './types';
 import type { RezervaceRecord } from './store';
+import {
+  ZPRAVA_BRANA_NADPIS,
+  ZPRAVA_BRANA_SBALENA,
+  ZPRAVA_BRANA_TEXT,
+  ZPRAVA_CAS_NADPIS,
+  ZPRAVA_CAS_SBALENA,
+  ZPRAVA_CAS_TEXT,
+  ZPRAVA_PO_20,
+  ZPRAVA_PO_23,
+} from './zpravy-od-nas-texty';
 
 export type PotvrzeniPrijezdu = 'osobne' | 'telefon';
 
@@ -20,28 +32,38 @@ export type ZpravaOdNasData = {
   stani?: string | number;
 };
 
-function textCasu(cas: string | null): string {
+function jazykZRezervace(rec: RezervaceRecord | null | undefined, lang?: GuideLang | null): GuideLang {
+  if (lang && GUIDE_LANGS.includes(lang)) return lang;
+  if (rec?.jazyk && GUIDE_LANGS.includes(rec.jazyk)) return rec.jazyk;
+  return 'en';
+}
+
+function textCasu(cas: string | null, lang: GuideLang): string {
   if (!cas) return '';
-  if (cas === 'po20') return 'po 20:00';
-  if (cas === 'po23') return 'po 23:00';
+  if (cas === 'po20') return t(ZPRAVA_PO_20, lang);
+  if (cas === 'po23') return t(ZPRAVA_PO_23, lang);
   return cas;
 }
 
 /** Zprávy do průvodce jen když majitel potvrdil (ne u starých Brána OK bez odeslání). */
-export function zpravyOdNasZRezervace(rec: RezervaceRecord | null | undefined): ZpravaOdNasData[] {
+export function zpravyOdNasZRezervace(
+  rec: RezervaceRecord | null | undefined,
+  lang?: GuideLang | null,
+): ZpravaOdNasData[] {
   if (!rec) return [];
+  const l = jazykZRezervace(rec, lang);
   const out: ZpravaOdNasData[] = [];
 
   // Dokud pozdní příjezd čeká na schválení, netvrdíme, že je čas potvrzený.
   const pozniCeka = rec.zadostPozdniPrijezd?.stav === 'ceka';
   if (rec.potvrzeniPrijezdu === 'osobne' && rec.casPrijezdu && !pozniCeka) {
-    const cas = textCasu(rec.casPrijezdu);
+    const cas = textCasu(rec.casPrijezdu, l);
     out.push({
       id: 'cas',
       nova: !rec.zpravaCasPrectena,
-      nadpis: 'Váš příjezd je potvrzený',
-      text: `S vaším příjezdem v ${cas} počítáme. Budeme na vás čekat před domem a osobně vás přivítáme.`,
-      sbalenyTitulek: 'Zpráva k času příjezdu',
+      nadpis: t(ZPRAVA_CAS_NADPIS, l),
+      text: t(ZPRAVA_CAS_TEXT, l).replaceAll('{{CAS}}', cas),
+      sbalenyTitulek: t(ZPRAVA_CAS_SBALENA, l),
     });
   }
 
@@ -55,9 +77,11 @@ export function zpravyOdNasZRezervace(rec: RezervaceRecord | null | undefined): 
     out.push({
       id: 'brana',
       nova: !rec.zpravaBranaPrectena,
-      nadpis: 'Brána je připravená',
-      text: `Vaše číslo je v bráně. Otevřete ji prozvoněním. Stání je č. ${stani}.`,
-      sbalenyTitulek: 'Zpráva k parkování',
+      nadpis: t(ZPRAVA_BRANA_NADPIS, l),
+      text: t(ZPRAVA_BRANA_TEXT, l)
+        .replaceAll('{{TELEFON}}', rec.telefonBrana)
+        .replaceAll('{{STANI}}', String(stani)),
+      sbalenyTitulek: t(ZPRAVA_BRANA_SBALENA, l),
       telefon: rec.telefonBrana,
       stani,
     });
@@ -68,6 +92,7 @@ export function zpravyOdNasZRezervace(rec: RezervaceRecord | null | undefined): 
       rec.casOdjezdu,
       rec.casOdjezduZapsanKdy,
       !rec.zpravaOdjezdPrijatiPrectena,
+      l,
     );
     out.push(prijati);
   }
@@ -76,6 +101,7 @@ export function zpravyOdNasZRezervace(rec: RezervaceRecord | null | undefined): 
     const potvrzeni: ZpravaOdjezduData = zpravaPotvrzeniOdjezdu(
       rec.casOdjezdu,
       !rec.zpravaOdjezdPrectena,
+      l,
     );
     out.push(potvrzeni);
   }

@@ -1,0 +1,260 @@
+import type { LText } from './types';
+
+/** Chrome a těla „Zpráv od nás“ (čas, brána, odjezd). Schválené CS věty + překlady. */
+
+export const ZPRAVA_OD_NAS_KROK: LText = {
+  cs: 'Zpráva od nás',
+  en: 'A message from us',
+  de: 'Nachricht von uns',
+  pl: 'Wiadomość od nas',
+  uk: 'Повідомлення від нас',
+  'zh-Hant': '我們的訊息',
+  sv: 'Meddelande från oss',
+  es: 'Mensaje nuestro',
+  fr: 'Message de notre part',
+  it: 'Messaggio da parte nostra',
+  pt: 'Mensagem nossa',
+  hu: 'Üzenet tőlünk',
+  da: 'Besked fra os',
+};
+
+export const ZPRAVA_CAS_NADPIS: LText = {
+  cs: 'Váš příjezd je potvrzený',
+  en: 'Your arrival is confirmed',
+  de: 'Ihre Ankunft ist bestätigt',
+  pl: 'Wasz przyjazd jest potwierdzony',
+  uk: 'Ваш приїзд підтверджено',
+  'zh-Hant': '您的抵達已確認',
+  sv: 'Er ankomst är bekräftad',
+  es: 'Su llegada está confirmada',
+  fr: 'Votre arrivée est confirmée',
+  it: 'Il vostro arrivo è confermato',
+  pt: 'A vossa chegada está confirmada',
+  hu: 'Érkezésük megerősítve',
+  da: 'Jeres ankomst er bekræftet',
+};
+
+export const ZPRAVA_CAS_TEXT: LText = {
+  cs: 'S vaším příjezdem v {{CAS}} počítáme. Budeme na vás čekat před domem a osobně vás přivítáme.',
+  en: 'We are counting on your arrival at {{CAS}}. We will wait for you in front of the house and welcome you in person.',
+  de: 'Mit Ihrer Ankunft um {{CAS}} rechnen wir. Wir erwarten Sie vor dem Haus und begrüßen Sie persönlich.',
+  pl: 'Liczymy na Wasz przyjazd o {{CAS}}. Poczekamy przed domem i powitamy Was osobiście.',
+  uk: 'Рахуємо на ваш приїзд о {{CAS}}. Чекатимемо перед будинком і особисто вас зустрінемо.',
+  'zh-Hant': '我們會以您 {{CAS}} 抵達為準。我們會在屋前等候並親自迎接您。',
+  sv: 'Vi räknar med er ankomst kl. {{CAS}}. Vi väntar framför huset och välkomnar er personligen.',
+  es: 'Contamos con su llegada a las {{CAS}}. Les esperaremos delante de la casa y les recibiremos en persona.',
+  fr: 'Nous comptons sur votre arrivée à {{CAS}}. Nous vous attendrons devant la maison et vous accueillerons en personne.',
+  it: 'Contiamo sul vostro arrivo alle {{CAS}}. Vi aspetteremo davanti casa e vi accoglieremo di persona.',
+  pt: 'Contamos com a vossa chegada às {{CAS}}. Esperamo-vos à frente da casa e recebemos-vos pessoalmente.',
+  hu: '{{CAS}}-ra számítunk az érkezésükre. A ház előtt várjuk Önöket, és személyesen üdvözöljük.',
+  da: 'Vi regner med jeres ankomst kl. {{CAS}}. Vi venter foran huset og byder jer personligt velkommen.',
+};
+
+export const ZPRAVA_CAS_SBALENA: LText = {
+  cs: 'Zpráva k času příjezdu',
+  en: 'Message about arrival time',
+  de: 'Nachricht zur Ankunftszeit',
+  pl: 'Wiadomość o godzinie przyjazdu',
+  uk: 'Повідомлення про час приїзду',
+  'zh-Hant': '抵達時間訊息',
+  sv: 'Meddelande om ankomsttid',
+  es: 'Mensaje sobre la hora de llegada',
+  fr: 'Message sur l’heure d’arrivée',
+  it: 'Messaggio sull’orario di arrivo',
+  pt: 'Mensagem sobre a hora de chegada',
+  hu: 'Üzenet az érkezés idejéről',
+  da: 'Besked om ankomsttid',
+};
+
+export const ZPRAVA_BRANA_NADPIS: LText = {
+  cs: 'Brána je připravená',
+  en: 'The gate is ready',
+  de: 'Das Tor ist vorbereitet',
+  pl: 'Brama jest gotowa',
+  uk: 'Брама готова',
+  'zh-Hant': '閘門已就緒',
+  sv: 'Grindarna är klara',
+  es: 'La barrera está lista',
+  fr: 'La barrière est prête',
+  it: 'Il cancello è pronto',
+  pt: 'O portão está pronto',
+  hu: 'A kapu kész',
+  da: 'Porten er klar',
+};
+
+/** {{TELEFON}} se v UI nahradí klikatelným číslem. */
+export const ZPRAVA_BRANA_TEXT: LText = {
+  cs: 'Vaše číslo {{TELEFON}} je v bráně. Otevřete ji prozvoněním. Stání je č. {{STANI}}.',
+  en: 'Your number {{TELEFON}} is in the gate. Open it with a call. Your space is no. {{STANI}}.',
+  de: 'Ihre Nummer {{TELEFON}} ist im Tor hinterlegt. Öffnen Sie es durch Anrufen. Stellplatz Nr. {{STANI}}.',
+  pl: 'Wasz numer {{TELEFON}} jest w bramie. Otwórzcie ją zwykłym połączeniem. Miejsce parkingowe nr {{STANI}}.',
+  uk: 'Ваш номер {{TELEFON}} уже в брамі. Відкрийте її звичайним дзвінком. Паркомісце № {{STANI}}.',
+  'zh-Hant': '您的號碼 {{TELEFON}} 已登錄閘門。請以電話撥打開啟。車位為第 {{STANI}} 號。',
+  sv: 'Ert nummer {{TELEFON}} finns i grinden. Öppna den med ett vanligt samtal. Platser nr {{STANI}}.',
+  es: 'Su número {{TELEFON}} está en la barrera. Ábranla con una llamada. La plaza es la n.º {{STANI}}.',
+  fr: 'Votre numéro {{TELEFON}} est enregistré pour la barrière. Ouvrez-la en appelant. Place n° {{STANI}}.',
+  it: 'Il vostro numero {{TELEFON}} è nel cancello. Apritelo con una chiamata. Posto n. {{STANI}}.',
+  pt: 'O vosso número {{TELEFON}} está no portão. Abram-no com uma chamada. Lugar n.º {{STANI}}.',
+  hu: 'Az Önök száma {{TELEFON}} a kapuban van. Nyissák meg hívással. A parkolóhely száma {{STANI}}.',
+  da: 'Jeres nummer {{TELEFON}} er i porten. Åbn den med et opkald. Plads nr. {{STANI}}.',
+};
+
+export const ZPRAVA_BRANA_SBALENA: LText = {
+  cs: 'Zpráva k parkování',
+  en: 'Message about parking',
+  de: 'Nachricht zum Parken',
+  pl: 'Wiadomość o parkingu',
+  uk: 'Повідомлення про паркування',
+  'zh-Hant': '停車訊息',
+  sv: 'Meddelande om parkering',
+  es: 'Mensaje sobre el aparcamiento',
+  fr: 'Message sur le stationnement',
+  it: 'Messaggio sul parcheggio',
+  pt: 'Mensagem sobre o estacionamento',
+  hu: 'Üzenet a parkolásról',
+  da: 'Besked om parkering',
+};
+
+export const ZPRAVA_ODJEZD_PRIJATI_NADPIS: LText = {
+  cs: 'Čas odjezdu máme',
+  en: 'We have your departure time',
+  de: 'Ihre Abreisezeit haben wir',
+  pl: 'Mamy godzinę wyjazdu',
+  uk: 'Час виїзду маємо',
+  'zh-Hant': '我們已收到離開時間',
+  sv: 'Vi har er avresetid',
+  es: 'Tenemos su hora de salida',
+  fr: 'Nous avons votre heure de départ',
+  it: 'Abbiamo l’orario di partenza',
+  pt: 'Temos a vossa hora de partida',
+  hu: 'Megvan a távozás ideje',
+  da: 'Vi har jeres afrejsetid',
+};
+
+export const ZPRAVA_ODJEZD_PRIJATI_RANO: LText = {
+  cs: 'Čas {{CAS}} jsme přijali. Až budeme vzhůru, potvrdíme rozloučení. Bez potvrzení odjeďte sami.',
+  en: 'We have received the time {{CAS}}. When we are up, we will confirm the goodbye. Without confirmation, leave on your own.',
+  de: 'Die Zeit {{CAS}} haben wir angenommen. Sobald wir wach sind, bestätigen wir den Abschied. Ohne Bestätigung fahren Sie allein ab.',
+  pl: 'Czas {{CAS}} przyjęliśmy. Gdy wstaniemy, potwierdzimy pożegnanie. Bez potwierdzenia wyjedźcie sami.',
+  uk: 'Час {{CAS}} прийняли. Коли прокинемось, підтвердимо прощання. Без підтвердження виїжджайте самі.',
+  'zh-Hant': '我們已收到時間 {{CAS}}。待我們醒來後會確認道別。若未確認，請自行離開。',
+  sv: 'Tiden {{CAS}} har vi tagit emot. När vi är uppe bekräftar vi avskedet. Utan bekräftelse åker ni själva.',
+  es: 'Hemos recibido la hora {{CAS}}. Cuando estemos despiertos, confirmaremos la despedida. Sin confirmación, salgan solos.',
+  fr: 'Nous avons reçu l’heure {{CAS}}. Quand nous serons levés, nous confirmerons l’au revoir. Sans confirmation, partez seuls.',
+  it: 'Abbiamo ricevuto l’orario {{CAS}}. Quando saremo svegli, confermeremo il saluto. Senza conferma, partite da soli.',
+  pt: 'Recebemos a hora {{CAS}}. Quando estivermos acordados, confirmamos a despedida. Sem confirmação, partam sozinhos.',
+  hu: 'A {{CAS}} időpontot megkaptuk. Amikor felkeltünk, megerősítjük az elköszönést. Megerősítés nélkül egyedül távozzanak.',
+  da: 'Vi har modtaget tiden {{CAS}}. Når vi er vågne, bekræfter vi farvel. Uden bekræftelse kør selv.',
+};
+
+export const ZPRAVA_ODJEZD_PRIJATI_DEN: LText = {
+  cs: 'Čas {{CAS}} jsme přijali. Osobní rozloučení vám potvrdíme co nejdříve.',
+  en: 'We have received the time {{CAS}}. We will confirm a personal goodbye as soon as we can.',
+  de: 'Die Zeit {{CAS}} haben wir angenommen. Den persönlichen Abschied bestätigen wir so bald wie möglich.',
+  pl: 'Czas {{CAS}} przyjęliśmy. Osobiste pożegnanie potwierdzimy jak najszybciej.',
+  uk: 'Час {{CAS}} прийняли. Особисте прощання підтвердимо якнайшвидше.',
+  'zh-Hant': '我們已收到時間 {{CAS}}。我們會盡快確認親自道別。',
+  sv: 'Tiden {{CAS}} har vi tagit emot. Personligt avsked bekräftar vi så snart vi kan.',
+  es: 'Hemos recibido la hora {{CAS}}. Confirmaremos la despedida en persona lo antes posible.',
+  fr: 'Nous avons reçu l’heure {{CAS}}. Nous confirmerons l’au revoir en personne dès que possible.',
+  it: 'Abbiamo ricevuto l’orario {{CAS}}. Confermeremo il saluto di persona al più presto.',
+  pt: 'Recebemos a hora {{CAS}}. Confirmamos a despedida pessoal o mais cedo possível.',
+  hu: 'A {{CAS}} időpontot megkaptuk. A személyes elköszönést amint lehet, megerősítjük.',
+  da: 'Vi har modtaget tiden {{CAS}}. Personligt farvel bekræfter vi så snart vi kan.',
+};
+
+export const ZPRAVA_ODJEZD_PRIJATI_SBALENA: LText = {
+  cs: 'Zpráva k času odjezdu',
+  en: 'Message about departure time',
+  de: 'Nachricht zur Abreisezeit',
+  pl: 'Wiadomość o godzinie wyjazdu',
+  uk: 'Повідомлення про час виїзду',
+  'zh-Hant': '離開時間訊息',
+  sv: 'Meddelande om avresetid',
+  es: 'Mensaje sobre la hora de salida',
+  fr: 'Message sur l’heure de départ',
+  it: 'Messaggio sull’orario di partenza',
+  pt: 'Mensagem sobre a hora de partida',
+  hu: 'Üzenet a távozás idejéről',
+  da: 'Besked om afrejsetid',
+};
+
+export const ZPRAVA_ODJEZD_OSOBNE_NADPIS: LText = {
+  cs: 'Rozloučení je potvrzené',
+  en: 'Goodbye is confirmed',
+  de: 'Abschied ist bestätigt',
+  pl: 'Pożegnanie jest potwierdzone',
+  uk: 'Прощання підтверджено',
+  'zh-Hant': '道別已確認',
+  sv: 'Avskedet är bekräftat',
+  es: 'La despedida está confirmada',
+  fr: 'L’au revoir est confirmé',
+  it: 'Il saluto è confermato',
+  pt: 'A despedida está confirmada',
+  hu: 'Az elköszönés megerősítve',
+  da: 'Farvel er bekræftet',
+};
+
+export const ZPRAVA_ODJEZD_OSOBNE_TEXT: LText = {
+  cs: 'V {{CAS}} s vámi počítáme. Přijdeme se osobně rozloučit.',
+  en: 'We are counting on you at {{CAS}}. We will come to say goodbye in person.',
+  de: 'Um {{CAS}} rechnen wir mit Ihnen. Wir kommen persönlich, um Abschied zu nehmen.',
+  pl: 'O {{CAS}} liczymy na Was. Przyjdziemy się osobiście pożegnać.',
+  uk: 'О {{CAS}} з вами рахуємо. Прийдемо особисто попрощатися.',
+  'zh-Hant': '我們會以 {{CAS}} 為準。我們會親自前來道別。',
+  sv: 'Vi räknar med er kl. {{CAS}}. Vi kommer och tar farväl personligen.',
+  es: 'Contamos con ustedes a las {{CAS}}. Vendremos a despedirnos en persona.',
+  fr: 'Nous comptons sur vous à {{CAS}}. Nous viendrons vous dire au revoir en personne.',
+  it: 'Contiamo su di voi alle {{CAS}}. Verremo a salutarvi di persona.',
+  pt: 'Contamos convosco às {{CAS}}. Vimos despedir-nos pessoalmente.',
+  hu: '{{CAS}}-ra számítunk Önökre. Személyesen megyünk elköszönni.',
+  da: 'Vi regner med jer kl. {{CAS}}. Vi kommer og siger farvel personligt.',
+};
+
+export const ZPRAVA_ODJEZD_OSOBNE_SBALENA: LText = {
+  cs: 'Zpráva k odjezdu',
+  en: 'Message about departure',
+  de: 'Nachricht zur Abreise',
+  pl: 'Wiadomość o wyjeździe',
+  uk: 'Повідомлення про виїзд',
+  'zh-Hant': '離開訊息',
+  sv: 'Meddelande om avresa',
+  es: 'Mensaje sobre la salida',
+  fr: 'Message sur le départ',
+  it: 'Messaggio sulla partenza',
+  pt: 'Mensagem sobre a partida',
+  hu: 'Üzenet a távozásról',
+  da: 'Besked om afrejse',
+};
+
+export const ZPRAVA_PO_20: LText = {
+  cs: 'po 20:00',
+  en: 'after 20:00',
+  de: 'nach 20:00',
+  pl: 'po 20:00',
+  uk: 'після 20:00',
+  'zh-Hant': '20:00 之後',
+  sv: 'efter 20:00',
+  es: 'después de las 20:00',
+  fr: 'après 20:00',
+  it: 'dopo le 20:00',
+  pt: 'depois das 20:00',
+  hu: '20:00 után',
+  da: 'efter 20:00',
+};
+
+export const ZPRAVA_PO_23: LText = {
+  cs: 'po 23:00',
+  en: 'after 23:00',
+  de: 'nach 23:00',
+  pl: 'po 23:00',
+  uk: 'після 23:00',
+  'zh-Hant': '23:00 之後',
+  sv: 'efter 23:00',
+  es: 'después de las 23:00',
+  fr: 'après 23:00',
+  it: 'dopo le 23:00',
+  pt: 'depois das 23:00',
+  hu: '23:00 után',
+  da: 'efter 23:00',
+};

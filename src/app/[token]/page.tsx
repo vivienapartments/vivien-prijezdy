@@ -100,7 +100,7 @@ export default async function TokenPage({ params }: Props) {
             : null
         }
         okno={okno}
-        zpravyOdNas={zpravyOdNasZRezervace(rec)}
+        zpravyOdNas={zpravyOdNasZRezervace(rec, lang)}
         faktura={rec?.faktura ?? null}
       />
     </>
