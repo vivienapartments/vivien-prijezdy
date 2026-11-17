@@ -73,7 +73,7 @@ export function StitkyDoplnit14({
       className="ph-doplnit-stitky"
       data-n={kusy.length}
       role="group"
-      aria-label="Co doplnit na 14 dní"
+      aria-label="Co doplnit"
     >
       {kusy.map((k) => {
         const klid = !k.akce && (k.id === 'bez_checkinu' || k.id === 'bez_pruvodce');
@@ -152,7 +152,7 @@ export function CoDoplnit({
           <OdkazyZeSchrankyTlacitko />
         </div>
         {hlaska ? <p className="ph-co-doplnit__ok">{hlaska}</p> : null}
-        <p className="ph-co-doplnit__prazdne">Všichni hosté na 14 dní mají check-in i telefon ✓</p>
+        <p className="ph-co-doplnit__prazdne">Teď není co doplňovat ✓</p>
       </section>
     );
   }

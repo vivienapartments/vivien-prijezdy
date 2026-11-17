@@ -133,9 +133,10 @@ export function ukazatCheckinNedojezd(opts: {
   prijezd: string | null;
   dnes: string;
   predano?: string;
+  nedojezdKdy?: string | null;
   historie: { co: string; cas?: string }[];
 }): boolean {
-  if (opts.stav === 'zruseno' || opts.predano) return false;
+  if (opts.stav === 'zruseno' || opts.nedojezdKdy || opts.predano) return false;
   if (opts.stav !== 'bez_checkinu' && opts.stav !== 'neodeslano') return false;
   if (!opts.prijezd || !opts.dnes) return false;
   if (opts.dnes !== opts.prijezd && opts.dnes !== posunDen(opts.prijezd, -1)) return false;

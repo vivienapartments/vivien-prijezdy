@@ -127,11 +127,23 @@ export function textPushPohody(pocet: number): string {
 }
 
 export function jeProPohodu(
-  r: { stav: string; predano?: string | null; prijezd?: string | null; odjezd?: string | null },
+  r: {
+    stav: string;
+    predano?: string | null;
+    prijezd?: string | null;
+    odjezd?: string | null;
+    nedojezdKdy?: string | null;
+  },
   dnes: string,
 ): boolean {
   const vcera = posunDen(dnes, -1);
-  return r.stav !== 'zruseno' && Boolean(r.predano) && r.prijezd === vcera && r.odjezd !== dnes;
+  return (
+    r.stav !== 'zruseno' &&
+    !r.nedojezdKdy &&
+    Boolean(r.predano) &&
+    r.prijezd === vcera &&
+    r.odjezd !== dnes
+  );
 }
 
 /** Včera přijeli, jsou předaní, dnes neodjíždějí, nezrušení. */
@@ -145,9 +157,10 @@ export function ukazatPohodu(opts: {
   predano?: string | null;
   prijezd?: string | null;
   odjezd?: string | null;
+  nedojezdKdy?: string | null;
   dnes: string;
 }): boolean {
-  if (opts.stav === 'zruseno' || !opts.predano) return false;
+  if (opts.stav === 'zruseno' || opts.nedojezdKdy || !opts.predano) return false;
   if (!opts.prijezd || opts.prijezd > opts.dnes) return false;
   if (opts.odjezd && opts.odjezd < opts.dnes) return false;
   return true;

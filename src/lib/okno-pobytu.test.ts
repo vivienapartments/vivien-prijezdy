@@ -58,8 +58,10 @@ describe('okno pobytu', () => {
     expect(nejdrivePoOdjezdu(null, false)).toBe('11:00');
   });
 
-  it('pozdní odjezd končí 3 hodiny před dalším příjezdem', () => {
+  it('pozdní odjezd končí 2 hodiny před dalším příjezdem, nejvýš ve 13:00', () => {
+    expect(nejpozdejiPredPrijezdem('15:00', true)).toBe('13:00');
     expect(nejpozdejiPredPrijezdem('16:00', true)).toBe('13:00');
+    expect(casyPozde(nejpozdejiPredPrijezdem('15:00', true))).toContain('13:00');
     expect(casyPozde('13:00')).toContain('13:00');
     expect(casyPozde('13:00')).not.toContain('13:30');
     expect(nejpozdejiPredPrijezdem(null, true)).toBe('11:00');

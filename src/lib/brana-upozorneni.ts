@@ -15,7 +15,7 @@ function hostZ(rec: RezervaceRecord) {
     zpusob: rec.zpusobPrijezdu,
     telefonBrana: rec.telefonBrana,
     branaRegistrovano: rec.branaRegistrovano,
-    zruseno: rec.stav === 'zruseno',
+    zruseno: rec.stav === 'zruseno' || Boolean(rec.nedojezdKdy),
   };
 }
 
@@ -30,7 +30,7 @@ export function maUpozornitRegistraci(rec: RezervaceRecord, sloty: BranaSlot[], 
 /** Jednou ráno v den příjezdu, když parkování ještě není zelené. */
 export function maUpozornitRano(rec: RezervaceRecord, sloty: BranaSlot[], now: Date): boolean {
   if (rec.prevzatoKdy || (rec.odjezd && rec.odjezd < denPraha(now))) return false;
-  if (rec.zpusobPrijezdu !== 'auto' || rec.stav === 'zruseno') return false;
+  if (rec.zpusobPrijezdu !== 'auto' || rec.stav === 'zruseno' || rec.nedojezdKdy) return false;
   if (!rec.prijezd || rec.prijezd !== denPraha(now)) return false;
   if (rec.branaPushRano === rec.prijezd) return false;
   if (hodinaPraha(now) < RANO) return false;

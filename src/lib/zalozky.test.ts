@@ -7,6 +7,7 @@ import { zapisMajitele } from './rucni-pole';
 import {
   casPrevzetiVyprsel,
   hledejHosty,
+  jeBezDalsichAkci,
   jeHostOdjetly,
   jeNove,
   jeVNedoplatcich,
@@ -71,6 +72,15 @@ describe('dnešní odjezdy', () => {
     expect(jeVNedoplatcich({ prijezd: '2026-10-14', odjezd: '2026-10-18', stav: 'odeslano' }, DEN)).toBe(true);
     expect(jeVNedoplatcich({ prijezd: '2026-10-10', odjezd: VCERA, stav: 'odeslano' }, DEN)).toBe(true);
     expect(jeVNedoplatcich({ prijezd: '2026-10-10', odjezd: VCERA, stav: 'zruseno' }, DEN)).toBe(false);
+    expect(jeBezDalsichAkci({ stav: 'odeslano' })).toBe(false);
+    expect(jeBezDalsichAkci({ stav: 'zruseno' })).toBe(true);
+    expect(jeBezDalsichAkci({ stav: 'odeslano', nedojezdKdy: '2026-10-16T20:00:00.000Z' })).toBe(true);
+    expect(
+      jeVNedoplatcich(
+        { prijezd: '2026-10-10', odjezd: VCERA, stav: 'odeslano' },
+        DEN,
+      ),
+    ).toBe(true);
     const poradi = seradNedoplatky(
       [
         { id: 'odjel', prijezd: '2026-10-01', odjezd: '2026-10-04', kc: 100 },

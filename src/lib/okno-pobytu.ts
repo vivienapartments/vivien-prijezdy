@@ -717,7 +717,7 @@ export function nejdrivePoOdjezdu(casOdjezdu: string | null, nekdoOdjizdi: boole
   return casZMinut(Math.max(PRIJEZD_NEJDRIV, zaokr));
 }
 
-/** Nejpozději 3 hodiny před známým příjezdem. Neznámý čas nejvýš do 11:00. */
+/** Nejpozději 2 hodiny před známým příjezdem (strop ODJEZD_NEJPOZDEJI = 13:00). Neznámý čas nejvýš do 11:00. */
 export function nejpozdejiPredPrijezdem(casPrijezdu: string | null, nekdoPrijizdi: boolean): string {
   if (!nekdoPrijizdi) return casZMinut(ODJEZD_NEJPOZDEJI);
   const min = minutyCasu(casPrijezdu);
@@ -776,7 +776,12 @@ export function odjizdiTenDen(hoste: HostOkna[], ja: { rezervace: string; apartm
   if (!ja.apartman || !ja.prijezd) return null;
   return (
     hoste.find(
-      (h) => h.rezervace !== ja.rezervace && h.apartman === ja.apartman && h.odjezd === ja.prijezd && h.stav !== 'zruseno',
+      (h) =>
+        h.rezervace !== ja.rezervace &&
+        h.apartman === ja.apartman &&
+        h.odjezd === ja.prijezd &&
+        h.stav !== 'zruseno' &&
+        !h.nedojezdKdy,
     ) || null
   );
 }
@@ -785,7 +790,12 @@ export function prijizdiTenDen(hoste: HostOkna[], ja: { rezervace: string; apart
   if (!ja.apartman || !ja.odjezd) return null;
   return (
     hoste.find(
-      (h) => h.rezervace !== ja.rezervace && h.apartman === ja.apartman && h.prijezd === ja.odjezd && h.stav !== 'zruseno',
+      (h) =>
+        h.rezervace !== ja.rezervace &&
+        h.apartman === ja.apartman &&
+        h.prijezd === ja.odjezd &&
+        h.stav !== 'zruseno' &&
+        !h.nedojezdKdy,
     ) || null
   );
 }
@@ -1300,6 +1310,7 @@ export function poUklidu(uklizeny: RezervaceRecord, zaznamy: RezervaceRecord[], 
       h.apartman === uklizeny.apartman &&
       h.prijezd === den &&
       h.stav !== 'zruseno' &&
+      !h.nedojezdKdy &&
       !h.predano,
   );
   if (!prijezd) return { nabidka: null, cekajici: null, push: '', odeslanoHostovi: false };
@@ -1449,7 +1460,12 @@ export function vyhodnotObjednavku(
 ): VysledekObjednavky {
   const rec = zaznamy.find((r) => r.rezervace === id.trim());
   if (!rec) return { ok: false, duvod: 'chybi' };
-  if (rec.stav === 'zruseno' || (rec.odjezd && rec.odjezd < dnes) || !sediPrijmeni(rec.jmeno, prijmeni)) {
+  if (
+    rec.stav === 'zruseno' ||
+    rec.nedojezdKdy ||
+    (rec.odjezd && rec.odjezd < dnes) ||
+    !sediPrijmeni(rec.jmeno, prijmeni)
+  ) {
     return { ok: false, duvod: 'nesedi' };
   }
   let pracovni = rec;

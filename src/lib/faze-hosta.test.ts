@@ -41,5 +41,6 @@ describe('fáze hosta', () => {
     expect(fazeHosta(zaklad({ naMiste: true, stav: 'bez_checkinu' })).text).toBe('Host je na místě');
     expect(fazeHosta(zaklad({ predano: '15:42', stav: 'bez_checkinu' })).text).toBe('Předáno 15:42');
     expect(fazeHosta(zaklad({ odjezd: '2026-10-14', predano: '15:42' })).text).toBe('Odjel');
+    expect(fazeHosta(zaklad({ nedojezd: true, otevrenoPocet: 2 })).text).toBe('Nedojezd');
   });
 });

@@ -156,6 +156,8 @@ export type PrehledRadek = {
   poznamkaUklid: string | null;
   /** Online check-in se nečeká. */
   checkinNeniPotreba: boolean;
+  /** Kdy majitel označil nedojezd. */
+  nedojezdKdy: string | null;
   /** Zobrazení plateb. null = Kč. */
   mena: 'CZK' | 'EUR' | null;
   /** Celková cena pobytu z Better Hotelu. */
@@ -752,12 +754,14 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
   const coSeStalo =
     rec.stav === 'zruseno'
       ? 'Rezervace je zrušená.'
-      : vety.join(' ') ||
-        (rec.stav === 'bez_checkinu'
-          ? 'Čeká na online check-in.'
-          : rec.stav === 'odeslano' || rec.stav === 'odeslano_s_vyhradou'
-            ? 'Průvodce odeslán.'
-            : chybi('', stary));
+      : rec.nedojezdKdy
+        ? 'Nedojezd.'
+        : vety.join(' ') ||
+          (rec.stav === 'bez_checkinu'
+            ? 'Čeká na online check-in.'
+            : rec.stav === 'odeslano' || rec.stav === 'odeslano_s_vyhradou'
+              ? 'Průvodce odeslán.'
+              : chybi('', stary));
   const otev = textOtevreni(rec.otevrenoPocet, rec.otevrenoNaposled);
   const telefony = telefonyPrehledu(rec);
   const kroky = chybejiciKroky({
@@ -783,6 +787,8 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     odjezd: rec.odjezd,
     dnes,
     prevzato: casPrevzetiText(rec.prevzatoKdy),
+    nedojezd: Boolean(rec.nedojezdKdy),
+    checkinNeni: rec.checkinNeniPotreba === true,
   });
   const zpravy = zpravyMenu({
     stav: rec.stav,
@@ -803,6 +809,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     casOdjezdu: rec.casOdjezdu,
     dluh: polozkyZRezervace(rec),
     branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
+    checkinNeniPotreba: rec.checkinNeniPotreba === true,
   });
   const poprve = rec.otevrenoPoprve ? casPraha(rec.otevrenoPoprve) : '';
   const naposled = rec.otevrenoNaposled ? casPraha(rec.otevrenoNaposled) : '';
@@ -911,6 +918,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     kontaktUlozenKdy: rec.kontaktUlozenKdy || null,
     poznamkaUklid: rec.poznamkaUklid || null,
     checkinNeniPotreba: rec.checkinNeniPotreba === true,
+    nedojezdKdy: rec.nedojezdKdy || null,
     mena: rec.mena === 'EUR' || rec.mena === 'CZK' ? rec.mena : null,
     cenaPobytu: rec.cenaPobytu ?? null,
     adresaHosta: rec.adresaHosta ?? null,
@@ -1050,7 +1058,9 @@ export type DenSouhrn = {
 
 export function souhrnDne(rows: PrehledRadek[], den: string, casy: Record<string, string | null> = {}): DenSouhrn {
   // Zrušené v plánu a počtech ne. Záznam zůstane v úložišti / Hledat.
-  const list = rows.filter((r) => r.prijezd === den && r.stav !== 'zruseno' && !r.nelzeNacist);
+  const list = rows.filter(
+    (r) => r.prijezd === den && r.stav !== 'zruseno' && !r.nedojezdKdy && !r.nelzeNacist,
+  );
   const plan = list
     .map((r) => ({
       rezervace: r.rezervace,
@@ -1068,7 +1078,7 @@ export function souhrnDne(rows: PrehledRadek[], den: string, casy: Record<string
     pocet: list.length,
     otevrelo: list.filter((r) => (r.otevrenoPocet ?? 0) > 0).length,
     neodeslano: list.filter((r) => r.stav === 'neodeslano').length,
-    bezCheckinu: list.filter((r) => r.stav === 'bez_checkinu').length,
+    bezCheckinu: list.filter((r) => r.stav === 'bez_checkinu' && !r.checkinNeniPotreba).length,
     plan,
   };
 }
@@ -1118,8 +1128,8 @@ export type DenNahled = {
 };
 
 function problemyHostaDne(r: PrehledRadek, casy: Record<string, string | null>): ProblemDne[] {
-  if (r.stav === 'zruseno' || r.nelzeNacist) return [];
-  if (r.stav === 'bez_checkinu') return ['checkin'];
+  if (r.stav === 'zruseno' || r.nedojezdKdy || r.nelzeNacist) return [];
+  if (r.stav === 'bez_checkinu' && !r.checkinNeniPotreba) return ['checkin'];
   const out: ProblemDne[] = [];
   const cas = casy[r.rezervace] ?? r.casPrijezdu;
   if (!cas) out.push('cas');
@@ -1148,7 +1158,7 @@ export function zavaznostProblemuPrijezdu(
 export function volneApartmanyNoc(rows: PrehledRadek[], den: string): number {
   const obsazene = new Set<string>();
   for (const r of rows) {
-    if (r.stav === 'zruseno' || r.nelzeNacist || !r.apartman) continue;
+    if (r.stav === 'zruseno' || r.nedojezdKdy || r.nelzeNacist || !r.apartman) continue;
     if (!r.prijezd || !r.odjezd) continue;
     if (r.prijezd <= den && den < r.odjezd) obsazene.add(r.apartman);
   }
@@ -1162,8 +1172,12 @@ export function nahledDne(
   dnes: string,
   casy: Record<string, string | null> = {},
 ): DenNahled {
-  const prijezdy = rows.filter((r) => r.prijezd === den && r.stav !== 'zruseno' && !r.nelzeNacist);
-  const odjezdy = rows.filter((r) => r.odjezd === den && r.stav !== 'zruseno' && !r.nelzeNacist);
+  const prijezdy = rows.filter(
+    (r) => r.prijezd === den && r.stav !== 'zruseno' && !r.nedojezdKdy && !r.nelzeNacist,
+  );
+  const odjezdy = rows.filter(
+    (r) => r.odjezd === den && r.stav !== 'zruseno' && !r.nedojezdKdy && !r.nelzeNacist,
+  );
   const set = new Set<ProblemDne>();
   for (const r of prijezdy) {
     for (const p of problemyHostaDne(r, casy)) set.add(p);

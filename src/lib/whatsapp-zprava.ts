@@ -673,8 +673,10 @@ export function ukazatNedojezd(opts: {
   chybi?: string[];
   predano?: string;
   naMiste?: boolean;
+  nedojezdKdy?: string | null;
+  checkinNeniPotreba?: boolean;
 }): boolean {
-  if (opts.stav === 'zruseno' || opts.predano || opts.naMiste) return false;
+  if (opts.stav === 'zruseno' || opts.nedojezdKdy || opts.predano || opts.naMiste) return false;
   if (!opts.prijezd || !opts.dnes) return false;
   if (opts.dnes !== opts.prijezd && opts.dnes !== posunDen(opts.prijezd, -1)) return false;
   const maCas = Boolean(opts.casPrijezdu && /^([01]\d|2[0-3]):[0-5]\d$/.test(opts.casPrijezdu));
@@ -682,7 +684,7 @@ export function ukazatNedojezd(opts: {
     opts.otevrenoPocet == null ||
     opts.otevrenoPocet === 0 ||
     Boolean(opts.chybi && opts.chybi.length > 0) ||
-    opts.stav === 'bez_checkinu' ||
+    (opts.stav === 'bez_checkinu' && opts.checkinNeniPotreba !== true) ||
     opts.stav === 'neodeslano';
   return !maCas || nereaguje;
 }
@@ -702,6 +704,7 @@ export function hlavniZprava(opts: {
   predano?: string;
   odjezd?: string | null;
   historie?: { co: string }[];
+  checkinNeniPotreba?: boolean;
 }): DruhZpravy {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const faze = fazeHosta({
@@ -717,6 +720,7 @@ export function hlavniZprava(opts: {
     predano: opts.predano || '',
     odjezd: opts.odjezd ?? null,
     dnes: opts.dnes,
+    checkinNeni: opts.checkinNeniPotreba === true,
   });
   if (faze.id === 1) return 'checkin';
   if (faze.id === 2) return 'neotevrel';
@@ -754,6 +758,7 @@ export function zpravyMenu(opts: {
   pripraveno?: boolean;
   historie?: { co: string; cas?: string }[];
   narodnost?: string | null;
+  checkinNeniPotreba?: boolean;
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const historie = opts.historie || [];
@@ -763,7 +768,6 @@ export function zpravyMenu(opts: {
   const denPrijezdu = Boolean(opts.prijezd && opts.dnes === opts.prijezd);
   const checkinStupen = stupenCheckinu(pocetCheckinPripoinek(historie), denPredNeboDen);
   const branaStupen = stupenBrany(pocetBranaPripoinek(historie), denPredNeboDen);
-
   const texty: Record<DruhZpravy, string> = {
     checkin: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl, 1),
     checkin2: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl, 2),
@@ -784,12 +788,20 @@ export function zpravyMenu(opts: {
     pripraveno: textPripraveno(opts.lang, opts.pruvodce ? odkazPripraveno(opts.pruvodce) : ''),
   };
   const videt = PORADI.filter((id) => {
+    /** Přímý host: výzvy k online check-inu v menu nejsou. */
+    if (
+      opts.checkinNeniPotreba &&
+      (id === 'checkin' || id === 'checkin2' || id === 'checkin3' || id === 'checkinNedojezd')
+    ) {
+      return false;
+    }
     if (id === 'checkinNedojezd') {
       return ukazatCheckinNedojezd({
         stav: opts.stav,
         prijezd: opts.prijezd,
         dnes: opts.dnes,
         predano: opts.predano,
+        checkinNeniPotreba: opts.checkinNeniPotreba,
         historie,
       });
     }
@@ -856,13 +868,14 @@ export function vychoziZprava(
   const stupenBr =
     branaStupen ?? stupenBrany(pocetBranaPripoinek(historie), denPredNeboDen);
 
-  if (opts.stav === 'bez_checkinu' || opts.stav === 'neodeslano') {
+  const cekaCheckin = opts.stav === 'bez_checkinu' && opts.checkinNeniPotreba !== true;
+  if (cekaCheckin || opts.stav === 'neodeslano') {
     if (videt.includes('checkinNedojezd')) return 'checkinNedojezd';
     const id = idCheckinuZeStupne(stupenCi);
     if (videt.includes(id)) return id;
   }
 
-  if (!pruvodceHotovo && opts.stav !== 'bez_checkinu' && opts.stav !== 'neodeslano') {
+  if (!pruvodceHotovo && opts.stav !== 'neodeslano' && !cekaCheckin) {
     const denPrijezdu = Boolean(opts.prijezd && opts.dnes === opts.prijezd);
     const pocet = pocetCasovychPripoinek(historie);
     if (!denPrijezdu && !otevren && pocet === 0 && videt.includes('neotevrel')) {

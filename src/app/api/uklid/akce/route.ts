@@ -78,6 +78,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         h.apartman === rec.apartman &&
         h.prijezd === dnes &&
         h.stav !== 'zruseno' &&
+        !h.nedojezdKdy &&
         !h.predano,
     );
     const apt = rec.apartman || 'Apartmán';
@@ -142,6 +143,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         h.apartman === rec.apartman &&
         h.prijezd === den &&
         h.stav !== 'zruseno' &&
+        !h.nedojezdKdy &&
         !h.predano,
     );
     if (!prijizdi) return chyba(400, 'Dnes nepřijíždí další host.');

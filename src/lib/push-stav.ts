@@ -198,14 +198,15 @@ export async function nactiLokalniOdberZeSw(
 export function nadpisPushSekce(opts: {
   sparovano: boolean;
   nazev: string;
-  /** false = ještě se načítá, ať nebliká „nedostává“. */
+  /** false = ještě se načítá. */
   nacteno?: boolean;
 }): { text: string; varovani: boolean } {
   if (opts.nacteno === false) {
-    return { text: '⚙ Telefon a upozornění · kontroluji…', varovani: false };
+    return { text: '⚙ Telefon a upozornění', varovani: false };
   }
+  /** Bez párování nekřičí. Majitel má Telegram, Nikol si sekci rozbalí, když potřebuje push. */
   if (!opts.sparovano) {
-    return { text: '⚙ Telefon a upozornění · tento telefon upozornění nedostává', varovani: true };
+    return { text: '⚙ Telefon a upozornění', varovani: false };
   }
   const kdo = opts.nazev.trim() || 'bez jména';
   return { text: `⚙ Telefon a upozornění · ${kdo} ✓`, varovani: false };

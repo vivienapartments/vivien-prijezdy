@@ -249,6 +249,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'cena-pobytu' &&
       akce !== 'poznamka-uklid' &&
       akce !== 'checkin-neni' &&
+      akce !== 'nedojezd' &&
+      akce !== 'zrusit-nedojezd' &&
       akce !== 'mena')
   ) {
     return chyba(400, 'Neznámá akce.');
@@ -274,13 +276,51 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (akce === 'checkin-neni') {
     const zapnout = body?.stav !== 'ne';
+    const patch: Partial<typeof rec> = { checkinNeniPotreba: zapnout };
+    /** Přímý host: pryč z „čeká check-in“. Když už má průvodce, stav odesláno. */
+    if (zapnout && rec.stav === 'bez_checkinu') {
+      const uzPruvodce =
+        Boolean(rec.odeslaneMessageId) ||
+        (rec.otevrenoPocet ?? 0) > 0 ||
+        rec.historie.some((h) => /odesláno|Odesláno/i.test(h.co));
+      patch.stav = uzPruvodce
+        ? rec.duvody.some((d) => jeVyhrada(d.kod))
+          ? 'odeslano_s_vyhradou'
+          : 'odeslano'
+        : 'neodeslano';
+    } else if (!zapnout && rec.checkinNeniPotreba) {
+      patch.stav = 'bez_checkinu';
+    }
     const dalsi = pridej(
       rec,
       zapnout ? 'Check-in se nečeká' : 'Check-in se zase čeká',
-      { checkinNeniPotreba: zapnout },
+      patch,
     );
     await store.setRezervace(id, dalsi);
-    return NextResponse.json({ ok: true, checkinNeniPotreba: zapnout }, { headers: noStore });
+    return NextResponse.json(
+      { ok: true, checkinNeniPotreba: zapnout, stav: dalsi.stav },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'nedojezd') {
+    if (rec.nedojezdKdy) {
+      return NextResponse.json({ ok: true, nedojezdKdy: rec.nedojezdKdy }, { headers: noStore });
+    }
+    if (rec.predano) return chyba(400, 'U předaného hosta nedojezd nejde.');
+    const kdy = new Date().toISOString();
+    const dalsi = pridej(rec, 'Nedojezd', { nedojezdKdy: kdy, casOdjezduPushCeka: null });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, nedojezdKdy: kdy }, { headers: noStore });
+  }
+
+  if (akce === 'zrusit-nedojezd') {
+    if (!rec.nedojezdKdy) {
+      return NextResponse.json({ ok: true, nedojezdKdy: null }, { headers: noStore });
+    }
+    const dalsi = pridej(rec, 'Nedojezd zrušen', { nedojezdKdy: null });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, nedojezdKdy: null }, { headers: noStore });
   }
 
   if (akce === 'mena') {

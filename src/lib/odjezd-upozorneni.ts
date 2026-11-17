@@ -37,7 +37,7 @@ async function dorucOdlozenePushyCasuOdjezdu(
 ): Promise<number> {
   let pocet = 0;
   for (const record of list) {
-    if (!record.casOdjezduPushCeka || record.stav === 'zruseno') continue;
+    if (!record.casOdjezduPushCeka || record.stav === 'zruseno' || record.nedojezdKdy) continue;
     if (odlozitPushCasuOdjezdu(record, now)) continue;
     const text = record.casOdjezduPushCeka;
     const jak = await posli(store, text, odkazKarty(record.rezervace), { telegram: 'cas-odjezdu' });

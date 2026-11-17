@@ -30,6 +30,7 @@ function radek(partial: Partial<PrehledRadek> & { rezervace: string }): PrehledR
     zdroj: partial.zdroj ?? 'Booking',
     zdrojText: partial.zdrojText ?? 'Booking',
     historie: partial.historie ?? [],
+    checkinNeniPotreba: partial.checkinNeniPotreba === true,
   } as PrehledRadek;
 }
 
@@ -92,6 +93,69 @@ describe('Co doplnit', () => {
     });
     expect(hosteCoDoplnitFiltr([r], dnes, 'vse').map((h) => h.rezervace)).toEqual([]);
     expect(hosteCoDoplnitFiltr([r], dnes, 'bez_checkinu').map((h) => h.rezervace)).toEqual(['x']);
+  });
+
+  it('přímý host s Bez check-inu a průvodcem už v check-inu není', () => {
+    const flidr = radek({
+      rezervace: 'flidr',
+      stav: 'bez_checkinu',
+      checkinNeniPotreba: true,
+      otevrenoPocet: 2,
+      casPrijezdu: '16:00',
+      zpusobPrijezdu: 'pesky',
+      souhlas: true,
+      telefonText: '+420 604 111 222',
+      telefonWa: '420604111222',
+    });
+    expect(hosteCoDoplnitFiltr([flidr], dnes, 'bez_checkinu')).toEqual([]);
+    expect(hosteCoDoplnitFiltr([flidr], dnes, 'bez_pruvodce')).toEqual([]);
+    expect(poctyStitkuDoplnit([flidr], dnes).bez_checkinu).toBe(0);
+    expect(poctyStitkuDoplnit([flidr], dnes).checkinNaRade).toBe(false);
+  });
+
+  it('po 1. výzvě check-in znovu až 3 dny před, průvodce až 2 dny před', () => {
+    const checkinDaleko = radek({
+      rezervace: 'c-daleko',
+      stav: 'bez_checkinu',
+      prijezd: '2026-11-10',
+      historie: [{ co: 'WhatsApp: Check-in · 1. stupeň', cas: '2026-10-28T10:00:00.000Z' }],
+      telefonText: '+420 1',
+      telefonWa: '4201',
+    });
+    const checkinBlizko = radek({
+      rezervace: 'c-blizko',
+      stav: 'bez_checkinu',
+      prijezd: '2026-11-02',
+      historie: [{ co: 'WhatsApp: Check-in · 1. stupeň', cas: '2026-10-28T10:00:00.000Z' }],
+      telefonText: '+420 2',
+      telefonWa: '4202',
+    });
+    const pruvodceDaleko = radek({
+      rezervace: 'p-daleko',
+      stav: 'odeslano',
+      prijezd: '2026-11-05',
+      otevrenoPocet: 0,
+      historie: [{ co: 'WhatsApp: Průvodce · 1. stupeň (čas)', cas: '2026-10-28T10:00:00.000Z' }],
+      telefonText: '+420 3',
+      telefonWa: '4203',
+    });
+    const pruvodceBlizko = radek({
+      rezervace: 'p-blizko',
+      stav: 'odeslano',
+      prijezd: '2026-11-01',
+      otevrenoPocet: 0,
+      historie: [{ co: 'WhatsApp: Průvodce · 1. stupeň (čas)', cas: '2026-10-28T10:00:00.000Z' }],
+      telefonText: '+420 4',
+      telefonWa: '4204',
+    });
+    expect(hosteCoDoplnitFiltr([checkinDaleko], dnes, 'bez_checkinu')).toEqual([]);
+    expect(hosteCoDoplnitFiltr([checkinBlizko], dnes, 'bez_checkinu').map((r) => r.rezervace)).toEqual([
+      'c-blizko',
+    ]);
+    expect(hosteCoDoplnitFiltr([pruvodceDaleko], dnes, 'bez_pruvodce')).toEqual([]);
+    expect(hosteCoDoplnitFiltr([pruvodceBlizko], dnes, 'bez_pruvodce').map((r) => r.rezervace)).toEqual([
+      'p-blizko',
+    ]);
   });
 
   it('počty štítků: předaní a zrušení nikde, průvodce podle kroků', () => {

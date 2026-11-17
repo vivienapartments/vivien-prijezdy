@@ -54,13 +54,13 @@ describe('push-stav', () => {
 
   it('nadpis sekce', () => {
     expect(nadpisPushSekce({ sparovano: false, nazev: 'Pravoslav', nacteno: false })).toEqual({
-      text: '⚙ Telefon a upozornění · kontroluji…',
+      text: '⚙ Telefon a upozornění',
       varovani: false,
     });
-    expect(nadpisPushSekce({ sparovano: false, nazev: 'Pravoslav' }).varovani).toBe(true);
-    expect(nadpisPushSekce({ sparovano: false, nazev: 'Pravoslav' }).text).toMatch(
-      /nedostává/,
-    );
+    expect(nadpisPushSekce({ sparovano: false, nazev: 'Pravoslav' })).toEqual({
+      text: '⚙ Telefon a upozornění',
+      varovani: false,
+    });
     expect(nadpisPushSekce({ sparovano: true, nazev: 'Pravoslav' }).text).toBe(
       '⚙ Telefon a upozornění · Pravoslav ✓',
     );

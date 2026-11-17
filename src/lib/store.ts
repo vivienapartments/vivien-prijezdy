@@ -288,6 +288,8 @@ export type RezervaceRecord = {
    * V přehledu pak check-in nesvítí červeně.
    */
   checkinNeniPotreba: boolean;
+  /** Kdy majitel označil nedojezd (no-show). null = host ještě platí v akcích. */
+  nedojezdKdy: string | null;
   /** Zobrazení plateb na kartě. Úložiště drží částky v Kč. null = Kč. */
   mena: 'CZK' | 'EUR' | null;
   /** Celková cena pobytu z Better Hotelu (ne městský poplatek). null = ještě neznáme. */
@@ -832,6 +834,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     poznamkaUklid:
       typeof r.poznamkaUklid === 'string' && r.poznamkaUklid.trim() ? r.poznamkaUklid.trim().slice(0, 500) : null,
     checkinNeniPotreba: r.checkinNeniPotreba === true,
+    nedojezdKdy: typeof r.nedojezdKdy === 'string' && r.nedojezdKdy ? r.nedojezdKdy : null,
     mena: r.mena === 'EUR' || r.mena === 'CZK' ? r.mena : null,
     cenaPobytu:
       typeof r.cenaPobytu === 'number' && Number.isFinite(r.cenaPobytu) && r.cenaPobytu > 0
@@ -935,6 +938,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     kontaktUlozenKdy: null,
     poznamkaUklid: null,
     checkinNeniPotreba: false,
+    nedojezdKdy: null,
     mena: null,
     cenaPobytu: null,
     adresaHosta: null,

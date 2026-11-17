@@ -54,6 +54,8 @@ export type VstupDluhu = {
   priplatekPozde?: number | null;
   /** Druhy, které už mají vlastní záznam platby. Prázdné + zaplaceno = starší „vše“. */
   zaplacene?: DruhDluhu[];
+  /** Nedojezd: jen domluvená částka, ne poplatky za pobyt. */
+  nedojezdKdy?: string | null;
 };
 
 const PORADI_APT: Record<string, number> = { V1: 1, V2: 2, V3: 3, V4: 4, V5: 5 };
@@ -143,6 +145,20 @@ function casZIso(iso: string | null): string | null {
 /** Nezaplacené položky. Staré zaplaceno bez seznamu plateb kryje vše, co teď na kartě je. */
 export function polozkyDluhu(v: VstupDluhu): PolozkaDluhu[] {
   if (v.stav === 'zruseno') return [];
+  /** Nedojezd: jen domluvená částka (pobytové poplatky u no-show ne). */
+  if (v.nedojezdKdy) {
+    const ven: PolozkaDluhu[] = [];
+    if (typeof v.dohodaKc === 'number' && Number.isFinite(v.dohodaKc) && v.dohodaKc > 0) {
+      ven.push({
+        druh: 'dohoda',
+        kc: Math.round(v.dohodaKc),
+        popis: (v.dohodaPoznamka || '').trim() || undefined,
+      });
+    }
+    const zap = new Set(v.zaplacene || []);
+    if (v.zaplaceno && zap.size === 0) return [];
+    return ven.filter((p) => !zap.has(p.druh));
+  }
   const ven: PolozkaDluhu[] = [];
   if (v.poplatek === 'ano') {
     const kc = castkaPoplatku(v.noci, v.osob);
@@ -189,6 +205,7 @@ function vstupDluhu(rec: RezervaceRecord, zaplacene: DruhDluhu[] | null): VstupD
     priplatekDrive: platnyPriplatekDrive(rec),
     priplatekPozde: castkaPozdejsihoOdjezdu(rec),
     zaplacene: zaplacene || undefined,
+    nedojezdKdy: rec.nedojezdKdy,
   };
 }
 
@@ -382,8 +399,9 @@ export function ukazatDotazOdjezdu(opts: {
   casOdjezdu?: string | null;
   /** Po předání: dotaz jde celý zbývající pobyt (jako rámeček v průvodci). */
   predano?: string | boolean | null;
+  nedojezdKdy?: string | null;
 }): boolean {
-  if (opts.stav === 'zruseno') return false;
+  if (opts.stav === 'zruseno' || opts.nedojezdKdy) return false;
   if (!opts.odjezd) return false;
   if (jeHodina(opts.casOdjezdu)) return false;
   if (opts.dnes > opts.odjezd) return false;
@@ -597,7 +615,7 @@ export function seradOdjezdy<T extends { apartman: AptId | null; jmeno?: string 
 }
 
 function odjizdi(rec: RezervaceRecord, den: string): boolean {
-  return rec.stav !== 'zruseno' && rec.odjezd === den;
+  return rec.stav !== 'zruseno' && !rec.nedojezdKdy && rec.odjezd === den;
 }
 
 export function hosteNaDen(list: RezervaceRecord[], den: string): RezervaceRecord[] {
@@ -619,7 +637,7 @@ export function klicOdjezdu(rec: Pick<RezervaceRecord, 'odjezd' | 'casOdjezdu'>)
 }
 
 export function maUpozornitPul(rec: RezervaceRecord, now = new Date()): boolean {
-  if (rec.stav === 'zruseno' || rec.prevzatoKdy) return false;
+  if (rec.stav === 'zruseno' || rec.nedojezdKdy || rec.prevzatoKdy) return false;
   if (rec.odjezd && rec.odjezd < denPraha(now)) return false;
   const klic = klicOdjezdu(rec);
   if (!klic || !rec.odjezd || !jeHodina(rec.casOdjezdu)) return false;

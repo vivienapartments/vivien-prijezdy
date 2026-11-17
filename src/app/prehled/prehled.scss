@@ -1,4 +1,4 @@
-.ph {
+﻿.ph {
   max-width: 96rem;
   margin: 0 auto;
   /* iPhone PWA: Domů / Zpět pod čočkou a Dynamic Island */
@@ -1629,21 +1629,16 @@
 }
 
 .ph-push {
-  margin-top: 1.6rem;
-  border-top: 1px solid rgba(245, 239, 227, 0.12);
-  padding-top: 0.6rem;
+  margin-top: 1.2rem;
+  border-top: 1px solid rgba(245, 239, 227, 0.08);
+  padding-top: 0.35rem;
 }
 
 .ph-push__souhrn {
   cursor: pointer;
-  color: rgba(245, 239, 227, 0.75);
-  font-size: 0.95rem;
+  color: rgba(245, 239, 227, 0.45);
+  font-size: 0.85rem;
   list-style: none;
-}
-
-.ph-push__souhrn.is-varovani {
-  color: #ffb4c0;
-  font-weight: 600;
 }
 
 .ph-push__diag {
@@ -2136,95 +2131,6 @@
   margin: 0;
 }
 
-.ph-upozorneni-seznam {
-  margin: 0.75rem 0 0.25rem;
-  padding: 0.75rem 0.85rem;
-  border: 1px solid rgba(201, 168, 76, 0.35);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.22);
-}
-
-.ph-upozorneni-seznam__hlava {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.45rem;
-}
-
-.ph-upozorneni-seznam__hlava h2 {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--color-gold);
-}
-
-.ph-upozorneni-seznam ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.ph-upozorneni-seznam__polozka {
-  display: flex;
-  align-items: stretch;
-  gap: 0.35rem;
-}
-
-.ph-upozorneni-seznam__radek {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15rem;
-  min-width: 0;
-  padding: 0.45rem 0.55rem;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  color: inherit;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
-
-.ph-upozorneni-seznam__hotovo {
-  flex: 0 0 auto;
-  align-self: center;
-  min-height: 44px;
-  padding: 0 0.7rem;
-  border: 1px solid rgba(201, 168, 76, 0.4);
-  border-radius: 6px;
-  background: rgba(201, 168, 76, 0.1);
-  color: var(--color-gold);
-  font: inherit;
-  font-size: 0.88rem;
-  cursor: pointer;
-}
-
-.ph-upozorneni-seznam__radek:not(.is-bez-odkazu):active,
-.ph-upozorneni-seznam__radek:not(.is-bez-odkazu):hover {
-  border-color: rgba(201, 168, 76, 0.45);
-  background: rgba(201, 168, 76, 0.12);
-}
-
-.ph-upozorneni-seznam__radek.is-bez-odkazu {
-  cursor: default;
-  opacity: 0.85;
-}
-
-.ph-upozorneni-seznam__cas {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.ph-upozorneni-seznam__hint {
-  font-size: 0.8rem;
-  color: var(--color-gold);
-}
 
 .ph-prani-seznam {
   margin: 0.75rem 0 0.25rem;
@@ -3045,6 +2951,14 @@
   box-sizing: border-box;
 }
 
+/** Po rozhodnutí jen úzké řádky, bez zlatého rámečku. */
+.ph-potvrzeni--sbaleno {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  gap: 0.2rem;
+}
+
 .ph-potvrzeni__blok {
   display: flex;
   flex-direction: column;
@@ -3070,18 +2984,37 @@
   color: #8dcea0;
 }
 
-.ph button.ph-potvrzeni__stav--tlacitko,
-.ph-potvrzeni__stav--tlacitko {
-  display: block;
-  padding: 0;
+.ph-potvrzeni__stav--tichy {
+  padding: 0.15rem 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--pv-text) 55%, transparent);
+}
+
+.ph button.ph-potvrzeni__radek,
+.ph-potvrzeni__radek {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.35rem 0.15rem;
   border: 0;
+  border-radius: 0;
   background: transparent;
-  color: #8dcea0;
+  color: color-mix(in srgb, var(--pv-text) 62%, transparent);
   font: inherit;
-  font-size: 0.88rem;
-  font-weight: 650;
-  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 550;
+  line-height: 1.3;
+  text-align: left;
   cursor: pointer;
+}
+
+.ph-potvrzeni__radek span:last-child {
+  flex: 0 0 auto;
+  opacity: 0.7;
 }
 
 .ph-potvrzeni__akce {

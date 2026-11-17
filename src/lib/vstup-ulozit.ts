@@ -121,7 +121,7 @@ export async function ulozVstupHosta(
   ) {
     return { ok: false, duvod: 'token' };
   }
-  if (!rec || rec.stav === 'zruseno') return { ok: false, duvod: 'chybi' };
+  if (!rec || rec.stav === 'zruseno' || rec.nedojezdKdy) return { ok: false, duvod: 'chybi' };
   if (!smiUlozit(rec.hostUlozeni || [])) return { ok: false, duvod: 'limit' };
 
   const spalit = async () => {

@@ -11,6 +11,8 @@ export type HostOdjezdu = {
   casOdjezdu: string | null;
   prevzatoKdy: string | null;
   stav: string;
+  /** Kdy majitel označil nedojezd. null = host ještě platí. */
+  nedojezdKdy?: string | null;
 };
 
 export type HostHledani = {
@@ -60,14 +62,19 @@ export function casPrevzetiVyprsel(casOdjezdu: string | null, dnes: string, now:
   return hodina > PREVZETI_NEZNAMY_HODINA || (hodina === PREVZETI_NEZNAMY_HODINA && minutaPraha(now) >= 0);
 }
 
+/** Zrušený nebo nedojezd: žádné další akce (příjezdy, odjezdy, upozornění). Dluhy zvlášť. */
+export function jeBezDalsichAkci(h: { stav: string; nedojezdKdy?: string | null }): boolean {
+  return h.stav === 'zruseno' || Boolean(h.nedojezdKdy);
+}
+
 export function jeVDnesnichOdjezdech(h: HostOdjezdu, dnes: string, now: Date): boolean {
-  if (h.stav === 'zruseno' || h.prevzatoKdy) return false;
+  if (jeBezDalsichAkci(h) || h.prevzatoKdy) return false;
   if (h.odjezd !== dnes) return false;
   return !casPrevzetiVyprsel(h.casOdjezdu, dnes, now);
 }
 
 export function jeHostOdjetly(h: HostOdjezdu, dnes: string, now: Date): boolean {
-  if (h.stav === 'zruseno') return false;
+  if (jeBezDalsichAkci(h)) return false;
   if (h.prevzatoKdy) return true;
   if (h.odjezd && h.odjezd < dnes) return true;
   if (h.odjezd === dnes && casPrevzetiVyprsel(h.casOdjezdu, dnes, now)) return true;

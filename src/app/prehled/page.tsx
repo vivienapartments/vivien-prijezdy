@@ -83,7 +83,6 @@ export default async function PrehledPage({ searchParams }: Props) {
   }
   const rows = ukazka ? ukazkoveRadky(now) : await buildPrehledSOdkazy(store, now);
   const posledniBehCas = ukazka ? now.toISOString() : (await store.getBeh())?.cas ?? null;
-  const upozorneniSeznam = ukazka ? [] : await store.listUpozorneni();
   const otevrenaPrani = ukazka ? [] : await store.listOtevrenaPrani();
   const metaPrani = new Map(
     rows.map((r) => [r.rezervace, { apartman: r.apartman, jmeno: r.jmeno }]),
@@ -105,7 +104,6 @@ export default async function PrehledPage({ searchParams }: Props) {
       zitra={posunDen(dnes, 1)}
       chybiWifi={chybejiciWifi()}
       posledniBehCas={posledniBehCas}
-      upozorneniSeznam={upozorneniSeznam}
       praniRadky={praniRadky}
       praniStitky={praniStitky}
       ukazka={ukazka}

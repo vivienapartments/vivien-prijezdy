@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
@@ -68,11 +68,12 @@ import type { FakturaUdaje } from '@/lib/faktura';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import { poctyStitkuDoplnit, type FiltrDoplnit } from '@/lib/co-doplnit';
 import type { PraniRadekPrehled, PraniStitekKarty } from '@/lib/prani';
-import type { JakPlatby, PlatbaPolozky, UpozorneniZaznam } from '@/lib/store';
+import type { JakPlatby, PlatbaPolozky } from '@/lib/store';
 import {
   casPrevzetiText,
   formatCastka,
   formatKc,
+  jeBezDalsichAkci,
   jeHostOdjetly,
   jeNove,
   jeVNedoplatcich,
@@ -225,61 +226,6 @@ const STAVY: { id: '' | Stav; text: string }[] = [
   { id: 'zruseno', text: 'Zrušeno' },
 ];
 
-/** Skrytá upozornění po jedné (klíče cas:text). */
-const KLIC_UPOZORNENI_SKRYTE = 'vivien-upozorneni-skryte';
-
-function klicUpozorneniPolozky(u: { cas: string; text: string }): string {
-  return `${u.cas}:${u.text}`;
-}
-
-function nactiSkrytaUpozorneni(): string[] {
-  try {
-    const raw = localStorage.getItem(KLIC_UPOZORNENI_SKRYTE);
-    if (!raw) return [];
-    const data = JSON.parse(raw) as unknown;
-    return Array.isArray(data) ? data.filter((x): x is string => typeof x === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
-function ulozSkrytaUpozorneni(klice: string[]) {
-  try {
-    localStorage.setItem(KLIC_UPOZORNENI_SKRYTE, JSON.stringify(klice));
-  } catch {
-    /* paměť */
-  }
-}
-
-/** Číslo rezervace z odkazu upozornění (`/prehled#12026…`). */
-function idZUpozorneniUrl(url: string): string | null {
-  const raw = (url || '').trim();
-  if (!raw) return null;
-  const hash = (raw.split('#')[1] || '').split(/[?&]/)[0].trim();
-  if (!hash || hash === 'pohoda' || hash === 'brana' || hash.startsWith('odjezdy')) return null;
-  return hash;
-}
-
-function zalozkaZUpozorneniUrl(url: string): Zalozka | null {
-  const m = (url || '').match(/[?&]zalozka=(prijezdy|dnes|dluhy|hledat|faktury)\b/);
-  if (!m) return null;
-  if (m[1] === 'dnes' || m[1] === 'faktury') return 'prijezdy';
-  return m[1] as Zalozka;
-}
-
-function urlMaFaktury(url: string): boolean {
-  return /[?&]zalozka=faktury\b/.test(url || '') || /#faktury(?:-pozdeji)?\b/.test(url || '');
-}
-
-/** Kotva sekce (pohoda, odjezdy-zitra), ne číslo rezervace. */
-function kotvaZUpozorneniUrl(url: string): string | null {
-  const hash = (url || '').split('#')[1]?.split(/[?&]/)[0]?.trim() || '';
-  if (hash === 'pohoda' || hash === 'brana' || hash === 'faktury' || hash.startsWith('odjezdy')) {
-    return hash;
-  }
-  return null;
-}
-
 type ZpetKam = { zalozka: Zalozka; y: number };
 
 type Props = {
@@ -289,8 +235,6 @@ type Props = {
   chybiWifi: string[];
   /** ISO času posledního běhu automatu. Pro varování nahoře. */
   posledniBehCas?: string | null;
-  /** Soupis upozornění z Upstash (jednou při otevření). */
-  upozorneniSeznam?: UpozorneniZaznam[];
   /** Nepřečtená přání pro rámeček Domů. */
   praniRadky?: PraniRadekPrehled[];
   /** Štítky přání na kartách. */
@@ -426,7 +370,6 @@ export function PrehledClient({
   zitra,
   chybiWifi,
   posledniBehCas = null,
-  upozorneniSeznam = [],
   praniRadky: praniRadkyVstup = [],
   praniStitky: praniStitkyVstup = {},
   ukazka = false,
@@ -443,13 +386,12 @@ export function PrehledClient({
   const [rozbalene, setRozbalene] = useState<Record<string, boolean>>({});
   const [stav, setStav] = useState<'' | Stav>('');
   const [zpetKam, setZpetKam] = useState<ZpetKam | null>(null);
-  const [skrytaUpozorneni, setSkrytaUpozorneni] = useState<string[]>([]);
   const [praniRadky, setPraniRadky] = useState(praniRadkyVstup);
   const [praniStitky, setPraniStitky] = useState(praniStitkyVstup);
   const [praniFocus, setPraniFocus] = useState<Record<string, string>>({});
   /** Vybraný den nahoře (YYYY-MM-DD). Jen v paměti stránky, výchozí dnes. */
   const [vybranyDen, setVybranyDen] = useState(dnes);
-  /** Domů = provoz (upozornění, záložky, hledat). Den = jen karty vybraného dne. */
+  /** Domů = provoz (záložky, hledat). Den = jen karty vybraného dne. */
   const [pohledDomu, setPohledDomu] = useState(true);
   const [pohodaOtevreno, setPohodaOtevreno] = useState(false);
   const [zitraOtevreno, setZitraOtevreno] = useState(false);
@@ -496,7 +438,10 @@ export function PrehledClient({
   const [predani, setPredani] = useState<Record<string, string | null>>({});
   const [naMisteStav, setNaMisteStav] = useState<Record<string, string | null>>({});
   const [priplatekStav, setPriplatekStav] = useState<Record<string, number | null>>({});
-  const [dotazPredani, setDotazPredani] = useState<{ id: string; druh: 'predano' | 'vratit' } | null>(null);
+  const [dotazPredani, setDotazPredani] = useState<{
+    id: string;
+    druh: 'predano' | 'vratit' | 'nedojezd' | 'vratit-nedojezd';
+  } | null>(null);
   const [dotazZavady, setDotazZavady] = useState<string | null>(null);
   const [textZavad, setTextZavad] = useState('');
   const [zavadyStav, setZavadyStav] = useState<Record<string, PrehledRadek['zavadyPredani']>>({});
@@ -533,19 +478,6 @@ export function PrehledClient({
     setSloty(nactiBranu(brana));
     setBranaOk(branaPotvrzena);
   }, [rows, brana, branaPotvrzena]);
-
-  useEffect(() => {
-    setSkrytaUpozorneni(nactiSkrytaUpozorneni());
-  }, []);
-
-  function skryjUpozorneni(klic: string) {
-    setSkrytaUpozorneni((prev) => {
-      if (prev.includes(klic)) return prev;
-      const next = [...prev, klic];
-      ulozSkrytaUpozorneni(next);
-      return next;
-    });
-  }
 
   function rozbalDetailKarty(cislo: string) {
     setRozbalene((prev) => ({ ...prev, [cislo]: true }));
@@ -701,91 +633,6 @@ export function PrehledClient({
     if (ukol === 'potvrzeni') {
       scrollPoOtevreni(`ph-potvrzeni-${id}`);
     }
-  }
-
-  function otevriZUpozorneni(url: string, text = '') {
-    const id = idZUpozorneniUrl(url);
-    if (id) {
-      if (!radky.some((r) => r.rezervace === id && !r.nelzeNacist)) {
-        setHlaska(`Kartu ${id} teď v přehledu nevidím. Zkuste Hledat.`);
-        otevriZalozku('hledat');
-        setHledatDotaz(id);
-        return;
-      }
-      const prani = praniZUrl(url);
-      if (prani) {
-        otevriPrani(id, prani);
-        return;
-      }
-      otevriKartu(id);
-      const zprava = zpravaZUpozorneniUrl(url);
-      if (zprava) {
-        setVolba((prev) => ({ ...prev, [id]: zprava }));
-        setPanelZpravy((prev) => ({ ...prev, [id]: true }));
-      }
-      otevriUkolNaKarte(id, ukolZUpozorneniUrl(url));
-      return;
-    }
-    let kotva = kotvaZUpozorneniUrl(url);
-    /** Stará upozornění „Zítra odjíždí…“ měla jen záložku Dnešek bez kotvy. */
-    if (!kotva && /odjíždí|dotaz na odjezd/i.test(text)) kotva = 'odjezdy-zitra';
-    if (!kotva && /v pořádku/i.test(text)) kotva = 'pohoda';
-
-    if (kotva === 'odjezdy-zitra' || (kotva && kotva.startsWith('odjezdy'))) {
-      const zitraYmd = posunDen(dnes, 1);
-      const zitrejsi = radky.filter(
-        (r) => !r.nelzeNacist && r.stav !== 'zruseno' && r.odjezd === zitraYmd,
-      );
-      if (zitrejsi.length === 1) {
-        otevriKartu(zitrejsi[0].rezervace);
-        return;
-      }
-      otevriZitraOdjezdy();
-      return;
-    }
-
-    if (kotva === 'pohoda') {
-      otevriPohodu();
-      return;
-    }
-
-    if (kotva === 'faktury' || urlMaFaktury(url)) {
-      setPohledDomu(true);
-      otevriZalozku('prijezdy');
-      setFakturyFocus(true);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          try {
-            document.getElementById('faktury')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          } catch {
-            /* scroll */
-          }
-        });
-      });
-      return;
-    }
-
-    const z = zalozkaZUpozorneniUrl(url);
-    if (z) {
-      setPohledDomu(true);
-      otevriZalozku(z);
-      if (urlMaFaktury(url)) setFakturyFocus(true);
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          try {
-            if (urlMaFaktury(url)) {
-              document.getElementById('faktury')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            } else {
-              window.scrollTo(0, 0);
-            }
-          } catch {
-            /* scroll */
-          }
-        });
-      });
-      return;
-    }
-    setHlaska('U toho upozornění není odkaz na hosta.');
   }
 
   useEffect(() => {
@@ -1146,6 +993,7 @@ export function PrehledClient({
       ok?: boolean;
       error?: string;
       checkinNeniPotreba?: boolean;
+      stav?: PrehledRadek['stav'];
     } | null;
     setCekam(null);
     if (!res.ok || !json?.ok) {
@@ -1155,8 +1003,51 @@ export function PrehledClient({
     setRadky((prev) =>
       prev.map((r) =>
         r.rezervace === row.rezervace
-          ? { ...r, checkinNeniPotreba: json.checkinNeniPotreba === true }
+          ? {
+              ...r,
+              checkinNeniPotreba: json.checkinNeniPotreba === true,
+              ...(json.stav ? { stav: json.stav } : {}),
+            }
           : r,
+      ),
+    );
+  }
+
+  async function ulozNedojezd(row: PrehledRadek, zapnout: boolean) {
+    setDotazPredani(null);
+    if (ukazka) {
+      setRadky((prev) =>
+        prev.map((r) =>
+          r.rezervace === row.rezervace
+            ? { ...r, nedojezdKdy: zapnout ? new Date().toISOString() : null }
+            : r,
+        ),
+      );
+      return;
+    }
+    setCekam(`${row.rezervace}:nedojezd`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce: zapnout ? 'nedojezd' : 'zrusit-nedojezd',
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      nedojezdKdy?: string | null;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Neuložilo se.');
+      return;
+    }
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace ? { ...r, nedojezdKdy: json.nedojezdKdy || null } : r,
       ),
     );
   }
@@ -1586,7 +1477,7 @@ export function PrehledClient({
     return radky.filter((row) => {
       if (row.nelzeNacist) return false;
       if (row.prijezd !== vybranyDen) return false;
-      if (row.stav === 'zruseno' && stav !== 'zruseno') return false;
+      if (jeBezDalsichAkci(row) && stav !== 'zruseno') return false;
       if (stav && row.stav !== stav) return false;
       return true;
     });
@@ -1665,6 +1556,7 @@ export function PrehledClient({
       casOdjezdu: casOdjezduRadku(row),
       prevzatoKdy: row.prevzatoKdy || null,
       stav: row.stav,
+      nedojezdKdy: row.nedojezdKdy || null,
     };
   }
 
@@ -1686,7 +1578,12 @@ export function PrehledClient({
     if (z === 'prijezdy') {
       return otisk(
         radky
-          .filter((r) => r.prijezd === dnes && r.stav !== 'zruseno' && !jeHostOdjetly(hostOdjezdu(r), dnes, ted))
+          .filter(
+            (r) =>
+              r.prijezd === dnes &&
+              !jeBezDalsichAkci(r) &&
+              !jeHostOdjetly(hostOdjezdu(r), dnes, ted),
+          )
           .map((r) => ({ id: r.rezervace, kc: 0 })),
       );
     }
@@ -2746,27 +2643,31 @@ export function PrehledClient({
         zpusob: row.zpusobPrijezdu,
         telefonBrana: row.telefonBrana,
         branaRegistrovano: row.branaRegistrovano,
-        zruseno: row.stav === 'zruseno',
+        zruseno: row.stav === 'zruseno' || Boolean(row.nedojezdKdy),
       },
       sloty,
       new Date(),
     ).akce;
+    const nedojezd = Boolean(row.nedojezdKdy);
     const odjel = jeHostOdjetly(hostOdjezdu(row), dnes, new Date());
-    const fazeText = odjel && row.stav !== 'zruseno' && !row.fazeText.startsWith('Odjel') && row.fazeText !== 'Zrušeno'
-      ? `Odjel ${casPrevzetiText(row.prevzatoKdy) || ''}`.trim()
-      : row.fazeText;
+    const mimoAkce = odjel || nedojezd;
+    const fazeText = nedojezd
+      ? 'Nedojezd'
+      : odjel && row.stav !== 'zruseno' && !row.fazeText.startsWith('Odjel') && row.fazeText !== 'Zrušeno'
+        ? `Odjel ${casPrevzetiText(row.prevzatoKdy) || ''}`.trim()
+        : row.fazeText;
     const cekajici = cekajiciUkon({
       predano: Boolean(predanoKdy),
       naMiste: Boolean(naMisteKdy),
       denPrijezdu: row.prijezd === dnes,
       parkovani: parkAkce,
-      odjel,
+      odjel: mimoAkce,
     });
     const casAktualni = Object.prototype.hasOwnProperty.call(casy, row.rezervace)
       ? casy[row.rezervace].trim() || null
       : row.casPrijezdu;
     const zpravyNahore =
-      !odjel &&
+      !mimoAkce &&
       (row.stav === 'bez_checkinu' ||
         (row.otevrenoPocet ?? 0) === 0 ||
         !row.rozbalen ||
@@ -2778,9 +2679,9 @@ export function PrehledClient({
     const staly = row.stalyHost || null;
     const kontaktUlozenCas = kontaktUlozenKdy(row) || staly?.kontaktZMinula || null;
     const muzeKontakt = Boolean(wa || row.telefonText || row.jinyTelefonText);
-    const kontaktNahore = !kontaktUlozenCas && !staly?.kontaktZMinula && !odjel;
-    /** Na kartě, dokud není předáno. Po předání je Vrátit jen v Detailu. */
-    const predaniNahore = !odjel && !predanoKdy;
+    const kontaktNahore = !kontaktUlozenCas && !staly?.kontaktZMinula && !mimoAkce;
+    /** Nahoře: předání, nebo Vrátit nedojezd. Po předání je Vrátit jen v Detailu. */
+    const predaniNahore = nedojezd || (!odjel && !predanoKdy);
     const tlacitkoKontakt = muzeKontakt ? (
       <UlozitKontakt row={row} onUlozeno={() => oznacKontaktUlozen(row)} />
     ) : null;
@@ -2876,13 +2777,14 @@ export function PrehledClient({
     const emailHosta = row.email.includes('@') ? row.email : '';
     const zpravyHosta = zpravyRadku(row);
     const maMenuZprav = zpravyHosta.length > 0;
-    const muzePoslat = nabidnoutOdeslani(row.stav);
+    const muzePoslat = nabidnoutOdeslani(row.stav) && !nedojezd;
     const jazykText = LANG_LABELS[jazykRadku(row)];
     const uzMelPruvodce = Boolean(dotazPredOdeslanimZnovu(row.stav));
     const dotazZnovuText = uzMelPruvodce
       ? `${dotazPredOdeslanimZnovu(row.stav)} Jazyk: ${jazykText}.`
       : `Poslat průvodce v jazyce ${jazykText}? Host dostane e-mail.`;
-    const ukazBlokOdeslani = muzePoslat || row.stav === 'bez_checkinu' || maMenuZprav;
+    const ukazBlokOdeslani =
+      !nedojezd && (muzePoslat || row.stav === 'bez_checkinu' || maMenuZprav);
     const jazykSelect = (
       <label>
         Jazyk
@@ -3098,7 +3000,16 @@ export function PrehledClient({
         ) : null}
       </div>
     );
-    const predaniTlacitko = predanoKdy ? (
+    const predaniTlacitko = nedojezd ? (
+      <button
+        type="button"
+        className="ph-predano"
+        disabled={cekam !== null}
+        onClick={() => setDotazPredani({ id: row.rezervace, druh: 'vratit-nedojezd' })}
+      >
+        Vrátit nedojezd
+      </button>
+    ) : predanoKdy ? (
       <button
         type="button"
         className="ph-predano"
@@ -3108,24 +3019,52 @@ export function PrehledClient({
         Vrátit předání
       </button>
     ) : (
-      <button
-        type="button"
-        className="ph-nova-predani"
-        disabled={cekam !== null}
-        onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
-      >
-        Předat apartmán
-      </button>
+      <div className="ph-nova-rada ph-nova-rada--predani">
+        <button
+          type="button"
+          className="ph-nova-predani"
+          disabled={cekam !== null}
+          onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
+        >
+          Předat apartmán
+        </button>
+        <button
+          type="button"
+          className="ph-predano"
+          disabled={cekam !== null}
+          onClick={() => setDotazPredani({ id: row.rezervace, druh: 'nedojezd' })}
+        >
+          Nedojezd
+        </button>
+      </div>
     );
     const predaniDotaz = dotazPredani?.id === row.rezervace ? (
       <div className="ph-predano-dotaz">
         <p>
           {dotazPredani.druh === 'predano'
             ? 'Opravdu předat apartmán? Hostovi se v průvodci zobrazí vstupní kódy.'
-            : 'Opravdu vrátit předání? Host v průvodci kódy neuvidí.'}
+            : dotazPredani.druh === 'nedojezd'
+              ? 'Označit jako nedojezd? Zmizí z dalších akcí. V dluzích zůstane, jen když něco dluží.'
+              : dotazPredani.druh === 'vratit-nedojezd'
+                ? 'Vrátit nedojezd? Host se zase objeví v denních akcích.'
+                : 'Opravdu vrátit předání? Host v průvodci kódy neuvidí.'}
         </p>
-        <button type="button" disabled={cekam !== null} onClick={() => ulozPredani(row, dotazPredani.druh === 'predano')}>
-          {dotazPredani.druh === 'predano' ? 'Ano, předat' : 'Ano, vrátit'}
+        <button
+          type="button"
+          disabled={cekam !== null}
+          onClick={() => {
+            if (dotazPredani.druh === 'nedojezd') void ulozNedojezd(row, true);
+            else if (dotazPredani.druh === 'vratit-nedojezd') void ulozNedojezd(row, false);
+            else void ulozPredani(row, dotazPredani.druh === 'predano');
+          }}
+        >
+          {dotazPredani.druh === 'predano'
+            ? 'Ano, předat'
+            : dotazPredani.druh === 'nedojezd'
+              ? 'Ano, nedojezd'
+              : dotazPredani.druh === 'vratit-nedojezd'
+                ? 'Ano, vrátit'
+                : 'Ano, vrátit'}
         </button>
         <button type="button" onClick={() => setDotazPredani(null)}>
           Zrušit
@@ -3413,6 +3352,7 @@ export function PrehledClient({
           /** Jen krátký štítek. Dlouhý text fáze (čas, brána, průvodce) je v dlaždicích. */
           const pillText = (() => {
             if (row.stav === 'zruseno') return 'Zrušeno';
+            if (nedojezd) return 'Nedojezd';
             if (odjel || fazeText.startsWith('Odjel')) {
               const casOdjel = casPrevzetiText(row.prevzatoKdy);
               return casOdjel ? `Odjel ${casOdjel}` : 'Odjel';
@@ -3433,7 +3373,10 @@ export function PrehledClient({
           const pillTon =
             pillText === 'Připraven' || pillText.startsWith('Předáno')
               ? 'ok'
-              : pillText === 'Odjel' || pillText.startsWith('Odjel') || pillText === 'Zrušeno'
+              : pillText === 'Odjel' ||
+                  pillText.startsWith('Odjel') ||
+                  pillText === 'Zrušeno' ||
+                  pillText === 'Nedojezd'
                 ? 'seda'
                 : 'wait';
           const osobText =
@@ -3469,7 +3412,7 @@ export function PrehledClient({
               />
               {kontaktNahoreBlok}
               <div className="ph-nova-dlazdice">
-                {predanoKdy ? (
+                {nedojezd ? null : predanoKdy ? (
                   <button
                     type="button"
                     className={`ph-nova-tile${
@@ -3984,37 +3927,72 @@ export function PrehledClient({
           const klicOdjezd = `${row.rezervace}:odjezd`;
           const rozbalPrijezd = Boolean(potvrzeniRozbal[klicPrijezd]);
           const rozbalOdjezd = Boolean(potvrzeniRozbal[klicOdjezd]);
+          const cekaPrijezd = casOkFaze && !potvrzeni;
+          const cekaOdjezd = odjezdOkFaze && !potvrzeniOd;
+          const cekaBrana = branaPripravenaFaze;
+          const jenHotovo =
+            !cekaPrijezd &&
+            !cekaOdjezd &&
+            !cekaBrana &&
+            !rozbalPrijezd &&
+            !rozbalOdjezd &&
+            (Boolean(potvrzeni) || Boolean(potvrzeniOd) || branaOkFaze);
           const ukazFaze =
-            !odjel &&
+            !mimoAkce &&
             row.stav !== 'zruseno' &&
             (casOkFaze || odjezdOkFaze || branaPripravenaFaze || branaOkFaze);
           if (!ukazFaze) return null;
+          const stitekPrijezdu =
+            potvrzeni === 'osobne'
+              ? 'Osobně ubytujeme · zpráva hostovi'
+              : potvrzeni === 'telefon'
+                ? 'Jsme na telefonu'
+                : '';
+          const stitekOdjezdu =
+            potvrzeniOd === 'osobne'
+              ? 'Osobně se rozloučíme · zpráva hostovi'
+              : potvrzeniOd === 'telefon'
+                ? 'Sami · jsme na telefonu'
+                : '';
           return (
-            <div className="ph-potvrzeni" id={`ph-potvrzeni-${row.rezervace}`}>
+            <div
+              className={`ph-potvrzeni${jenHotovo ? ' ph-potvrzeni--sbaleno' : ''}`}
+              id={`ph-potvrzeni-${row.rezervace}`}
+            >
               {casOkFaze ? (
                 potvrzeni && !rozbalPrijezd ? (
-                  <div className="ph-potvrzeni__blok">
-                    <button
-                      type="button"
-                      className="ph-potvrzeni__stav ph-potvrzeni__stav--tlacitko"
-                      disabled={cekam !== null}
-                      onClick={() =>
-                        setPotvrzeniRozbal((prev) => ({ ...prev, [klicPrijezd]: true }))
-                      }
-                    >
-                      {potvrzeni === 'osobne' ? 'Osobně ubytujeme' : 'Jsme na telefonu'}
-                      {potvrzeni === 'osobne' ? ' · zpráva hostovi' : ''}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="ph-potvrzeni__radek"
+                    disabled={cekam !== null}
+                    aria-expanded={false}
+                    onClick={() =>
+                      setPotvrzeniRozbal((prev) => ({ ...prev, [klicPrijezd]: true }))
+                    }
+                  >
+                    <span>{stitekPrijezdu}</span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
                 ) : (
                   <div className="ph-potvrzeni__blok">
-                    <p className="ph-potvrzeni__nadpis">
-                      {potvrzeni
-                        ? potvrzeni === 'osobne'
-                          ? 'Osobně ubytujeme'
-                          : 'Jsme na telefonu'
-                        : `Čas ${casText || casAktualni}. Jak ubytujeme?`}
-                    </p>
+                    {potvrzeni ? (
+                      <button
+                        type="button"
+                        className="ph-potvrzeni__radek"
+                        disabled={cekam !== null}
+                        aria-expanded={true}
+                        onClick={() =>
+                          setPotvrzeniRozbal((prev) => ({ ...prev, [klicPrijezd]: false }))
+                        }
+                      >
+                        <span>{stitekPrijezdu}</span>
+                        <span aria-hidden="true">▴</span>
+                      </button>
+                    ) : (
+                      <p className="ph-potvrzeni__nadpis">
+                        Čas {casText || casAktualni}. Jak ubytujeme?
+                      </p>
+                    )}
                     <div className="ph-potvrzeni__akce">
                       <button
                         type="button"
@@ -4038,28 +4016,38 @@ export function PrehledClient({
               ) : null}
               {odjezdOkFaze ? (
                 potvrzeniOd && !rozbalOdjezd ? (
-                  <div className="ph-potvrzeni__blok">
-                    <button
-                      type="button"
-                      className="ph-potvrzeni__stav ph-potvrzeni__stav--tlacitko"
-                      disabled={cekam !== null}
-                      onClick={() =>
-                        setPotvrzeniRozbal((prev) => ({ ...prev, [klicOdjezd]: true }))
-                      }
-                    >
-                      {potvrzeniOd === 'osobne' ? 'Osobně se rozloučíme' : 'Sami · jsme na telefonu'}
-                      {potvrzeniOd === 'osobne' ? ' · zpráva hostovi' : ''}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    className="ph-potvrzeni__radek"
+                    disabled={cekam !== null}
+                    aria-expanded={false}
+                    onClick={() =>
+                      setPotvrzeniRozbal((prev) => ({ ...prev, [klicOdjezd]: true }))
+                    }
+                  >
+                    <span>{stitekOdjezdu}</span>
+                    <span aria-hidden="true">▾</span>
+                  </button>
                 ) : (
                   <div className="ph-potvrzeni__blok">
-                    <p className="ph-potvrzeni__nadpis">
-                      {potvrzeniOd
-                        ? potvrzeniOd === 'osobne'
-                          ? 'Osobně se rozloučíme'
-                          : 'Sami · jsme na telefonu'
-                        : `Odjezd ${zobrazCas(odjezdCas)}. Jak se rozloučíme?`}
-                    </p>
+                    {potvrzeniOd ? (
+                      <button
+                        type="button"
+                        className="ph-potvrzeni__radek"
+                        disabled={cekam !== null}
+                        aria-expanded={true}
+                        onClick={() =>
+                          setPotvrzeniRozbal((prev) => ({ ...prev, [klicOdjezd]: false }))
+                        }
+                      >
+                        <span>{stitekOdjezdu}</span>
+                        <span aria-hidden="true">▴</span>
+                      </button>
+                    ) : (
+                      <p className="ph-potvrzeni__nadpis">
+                        Odjezd {zobrazCas(odjezdCas)}. Jak se rozloučíme?
+                      </p>
+                    )}
                     <div className="ph-potvrzeni__akce">
                       <button
                         type="button"
@@ -4096,13 +4084,11 @@ export function PrehledClient({
                 </div>
               ) : null}
               {branaOkFaze ? (
-                <div className="ph-potvrzeni__blok">
-                  <p className="ph-potvrzeni__stav">
-                    Brána OK
-                    {row.zpravaBranaOdeslana ? ' · zpráva hostovi' : ''}
-                    {row.telefonBrana ? ` · ${row.telefonBrana}` : ''}
-                  </p>
-                </div>
+                <p className="ph-potvrzeni__stav ph-potvrzeni__stav--tichy">
+                  Brána OK
+                  {row.zpravaBranaOdeslana ? ' · zpráva hostovi' : ''}
+                  {row.telefonBrana ? ` · ${row.telefonBrana}` : ''}
+                </p>
               ) : null}
             </div>
           );
@@ -4885,7 +4871,9 @@ export function PrehledClient({
   });
   const odjeli = viditelne.filter((row) => jeHostOdjetly(hostOdjezdu(row), dnes, ted));
   const pocty: Record<Zalozka, number> = {
-    prijezdy: radky.filter((r) => r.prijezd === dnes && r.stav !== 'zruseno' && !jeHostOdjetly(hostOdjezdu(r), dnes, ted)).length,
+    prijezdy: radky.filter(
+      (r) => r.prijezd === dnes && !jeBezDalsichAkci(r) && !jeHostOdjetly(hostOdjezdu(r), dnes, ted),
+    ).length,
     dluhy: radky.filter((r) => patriDoDluhu(r)).length,
     hledat: 0,
   };
@@ -4895,7 +4883,7 @@ export function PrehledClient({
     hledat: false,
   };
   const hostePohoda = seradOdjezdy(radky.filter((r) => jeProPohodu(r, dnes)));
-  const hosteZitraOdjezd = seradOdjezdy(radky.filter((r) => r.stav !== 'zruseno' && r.odjezd === zitra));
+  const hosteZitraOdjezd = seradOdjezdy(radky.filter((r) => !jeBezDalsichAkci(r) && r.odjezd === zitra));
   const zitraVyrizeno = hosteZitraOdjezd.filter(
     (r) => jeHodina(casOdjezduRadku(r)) || Boolean(r.odjezdDotaz),
   ).length;
@@ -4912,7 +4900,7 @@ export function PrehledClient({
   };
   const casyKeSchvaleni: CasKeSchvaleni[] = [];
   for (const row of radky) {
-    if (row.stav === 'zruseno' || row.nelzeNacist) continue;
+    if (jeBezDalsichAkci(row) || row.nelzeNacist) continue;
     if (row.zadostPrijezd?.stav === 'ceka') {
       casyKeSchvaleni.push({
         row,
@@ -5067,56 +5055,6 @@ export function PrehledClient({
           onPrecteno={prectenoPraniRadek}
         />
       ) : null}
-      {pohledDomu
-        ? (() => {
-            const skryta = new Set(skrytaUpozorneni);
-            const nova = upozorneniSeznam.filter((u) => !skryta.has(klicUpozorneniPolozky(u)));
-            if (!nova.length) return null;
-            return (
-              <div className="ph-upozorneni-seznam">
-                <div className="ph-upozorneni-seznam__hlava">
-                  <h2>Nová upozornění ({nova.length})</h2>
-                </div>
-                <ul>
-                  {nova.map((u) => {
-                    const klic = klicUpozorneniPolozky(u);
-                    const id = idZUpozorneniUrl(u.url);
-                    const kotva = kotvaZUpozorneniUrl(u.url);
-                    const maCil = Boolean(id || kotva || zalozkaZUpozorneniUrl(u.url));
-                    return (
-                      <li key={klic} className="ph-upozorneni-seznam__polozka">
-                        <button
-                          type="button"
-                          className={maCil ? 'ph-upozorneni-seznam__radek' : 'ph-upozorneni-seznam__radek is-bez-odkazu'}
-                          onClick={() => otevriZUpozorneni(u.url, u.text)}
-                        >
-                          <span className="ph-upozorneni-seznam__cas">{casPraha(u.cas) || u.cas}</span>
-                          <span>{u.text}</span>
-                          {id ? (
-                            <span className="ph-upozorneni-seznam__hint">Otevřít kartu ▸</span>
-                          ) : kotva === 'odjezdy-zitra' || /odjíždí|dotaz na odjezd/i.test(u.text) ? (
-                            <span className="ph-upozorneni-seznam__hint">Zítřejší odjezdy ▸</span>
-                          ) : maCil ? (
-                            <span className="ph-upozorneni-seznam__hint">Otevřít ▸</span>
-                          ) : null}
-                        </button>
-                        <button
-                          type="button"
-                          className="ph-upozorneni-seznam__hotovo"
-                          aria-label="Skrýt toto upozornění"
-                          onClick={() => skryjUpozorneni(klic)}
-                        >
-                          Hotovo
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })()
-        : null}
-
       {pohledDomu ? (
         <RadaZalozek
           zalozka={zalozka}
@@ -6334,7 +6272,7 @@ function Upozorneni() {
 
   const nazevTelefonu = nactiNazevPush();
   const totoZapnute = jeSparovano(endpointTeto, zarizeni);
-  const rozbalit = pushNacteno && (!totoZapnute || !nazevTelefonu);
+  /** Nikdy nerozbalovat samo. Majitel má Telegram, Nikol si otevře, až potřebuje. */
   const nadpis = nadpisPushSekce({
     sparovano: totoZapnute,
     nazev: nazevTelefonu,
@@ -6371,10 +6309,8 @@ function Upozorneni() {
   }
 
   return (
-    <details className="ph-push" {...(rozbalit ? { open: true } : {})}>
-      <summary className={`ph-push__souhrn${nadpis.varovani ? ' is-varovani' : ''}`}>
-        {nadpis.text}
-      </summary>
+    <details className="ph-push">
+      <summary className="ph-push__souhrn">{nadpis.text}</summary>
       <div className="ph-push__telo">
         <p className="ph-dnesek__akce">
           Tento telefon: {nazevTelefonu || 'neuvedeno'}

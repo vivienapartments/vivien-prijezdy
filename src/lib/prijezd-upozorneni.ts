@@ -22,7 +22,13 @@ export function klicPrijezdu(rec: Pick<RezervaceRecord, 'prijezd' | 'casPrijezdu
 }
 
 function uzJeTu(rec: RezervaceRecord, now: Date): boolean {
-  return rec.stav === 'zruseno' || Boolean(rec.naMiste) || Boolean(rec.predano) || uzOdjel(rec, denPraha(now));
+  return (
+    rec.stav === 'zruseno' ||
+    Boolean(rec.nedojezdKdy) ||
+    Boolean(rec.naMiste) ||
+    Boolean(rec.predano) ||
+    uzOdjel(rec, denPraha(now))
+  );
 }
 
 /** Jednou, v okně hodinu před časem příjezdu, dokud host není na místě ani předaný. */

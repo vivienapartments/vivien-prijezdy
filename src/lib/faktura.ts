@@ -216,20 +216,20 @@ export function fakturaCeka(rec: Pick<RecFaktury, 'faktura'>): boolean {
 
 /** Odjezd dnes nebo dřív. Zrušené se v přehledu neukazují (záznam v úložišti zůstane). */
 export function fakturaKeVystaveni(
-  rec: Pick<RecFaktury, 'faktura' | 'odjezd' | 'stav'>,
+  rec: Pick<RecFaktury, 'faktura' | 'odjezd' | 'stav'> & { nedojezdKdy?: string | null },
   dnes: string,
 ): boolean {
-  if (rec.stav === 'zruseno') return false;
+  if (rec.stav === 'zruseno' || rec.nedojezdKdy) return false;
   if (!fakturaCeka(rec) || !rec.odjezd) return false;
   return rec.odjezd <= dnes;
 }
 
 export function fakturaPozdeji(
-  rec: Pick<RecFaktury, 'faktura' | 'odjezd' | 'stav'>,
+  rec: Pick<RecFaktury, 'faktura' | 'odjezd' | 'stav'> & { nedojezdKdy?: string | null },
   dnes: string,
 ): boolean {
   if (!fakturaCeka(rec) || !rec.odjezd) return false;
-  if (rec.stav === 'zruseno') return false;
+  if (rec.stav === 'zruseno' || rec.nedojezdKdy) return false;
   return rec.odjezd > dnes;
 }
 
