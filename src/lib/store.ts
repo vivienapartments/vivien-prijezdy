@@ -784,19 +784,6 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       typeof r.zpravaOdjezdPrectena === 'string' && r.zpravaOdjezdPrectena ? r.zpravaOdjezdPrectena : null,
     casOdjezduPushCeka:
       typeof r.casOdjezduPushCeka === 'string' && r.casOdjezduPushCeka ? r.casOdjezduPushCeka : null,
-    potvrzeniOdjezdu: r.potvrzeniOdjezdu === 'osobne' || r.potvrzeniOdjezdu === 'telefon' ? r.potvrzeniOdjezdu : null,
-    potvrzeniOdjezduKdy:
-      typeof r.potvrzeniOdjezduKdy === 'string' && r.potvrzeniOdjezduKdy ? r.potvrzeniOdjezduKdy : null,
-    casOdjezduZapsanKdy:
-      typeof r.casOdjezduZapsanKdy === 'string' && r.casOdjezduZapsanKdy ? r.casOdjezduZapsanKdy : null,
-    zpravaOdjezdPrijatiPrectena:
-      typeof r.zpravaOdjezdPrijatiPrectena === 'string' && r.zpravaOdjezdPrijatiPrectena
-        ? r.zpravaOdjezdPrijatiPrectena
-        : null,
-    zpravaOdjezdPrectena:
-      typeof r.zpravaOdjezdPrectena === 'string' && r.zpravaOdjezdPrectena ? r.zpravaOdjezdPrectena : null,
-    casOdjezduPushCeka:
-      typeof r.casOdjezduPushCeka === 'string' && r.casOdjezduPushCeka ? r.casOdjezduPushCeka : null,
     zpravaBranaOdeslana:
       typeof r.zpravaBranaOdeslana === 'string' && r.zpravaBranaOdeslana ? r.zpravaBranaOdeslana : null,
     zpravaBranaPrectena:
