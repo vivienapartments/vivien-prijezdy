@@ -2,6 +2,16 @@ import { denPraha, posunDen } from './brana';
 
 export type FakturaTyp = 'cz' | 'zahranici';
 
+/** Volby dokladu v přehledu (zůstávají na kartě). */
+export type FakturaDokladVolby = {
+  typDokladu: 'zalohova' | 'faktura';
+  zpusobUhrady: 'kartou' | 'prevodem' | 'hotove';
+  odberatel: 'firma' | 'host';
+  bezHosta: boolean;
+  bezEmailu: boolean;
+  bezPoznamky: boolean;
+};
+
 export type FakturaUdaje = {
   typ: FakturaTyp;
   ico?: string;
@@ -15,7 +25,25 @@ export type FakturaUdaje = {
   kdy: string;
   upraveno?: string;
   hotovo?: string | null;
+  dokladVolby?: FakturaDokladVolby;
 };
+
+export function nactiDokladVolby(raw: unknown): FakturaDokladVolby | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  const typDokladu = r.typDokladu === 'zalohova' ? 'zalohova' : 'faktura';
+  const zpusobUhrady =
+    r.zpusobUhrady === 'kartou' || r.zpusobUhrady === 'hotove' ? r.zpusobUhrady : 'prevodem';
+  const odberatel = r.odberatel === 'host' ? 'host' : 'firma';
+  return {
+    typDokladu,
+    zpusobUhrady,
+    odberatel,
+    bezHosta: r.bezHosta === true,
+    bezEmailu: r.bezEmailu === true,
+    bezPoznamky: r.bezPoznamky === true,
+  };
+}
 
 type RecFaktury = {
   rezervace: string;
@@ -70,6 +98,7 @@ export function nactiFakturu(raw: unknown): FakturaUdaje | null {
   if (r.typ !== 'cz' && r.typ !== 'zahranici') return null;
   if (r.zadal !== 'host' && r.zadal !== 'majitel') return null;
   if (typeof r.kdy !== 'string' || !r.kdy) return null;
+  const dokladVolby = nactiDokladVolby(r.dokladVolby);
   return {
     typ: r.typ,
     ico: typeof r.ico === 'string' && r.ico ? r.ico : undefined,
@@ -83,6 +112,7 @@ export function nactiFakturu(raw: unknown): FakturaUdaje | null {
     kdy: r.kdy,
     upraveno: typeof r.upraveno === 'string' && r.upraveno ? r.upraveno : undefined,
     hotovo: typeof r.hotovo === 'string' && r.hotovo ? r.hotovo : r.hotovo === null ? null : undefined,
+    ...(dokladVolby ? { dokladVolby } : {}),
   };
 }
 
@@ -133,6 +163,7 @@ export function sestavFakturu(
       kdy: prev?.kdy || ted,
       upraveno: prev ? ted : undefined,
       hotovo: null,
+      ...(prev?.dokladVolby ? { dokladVolby: prev.dokladVolby } : {}),
     },
   };
 }

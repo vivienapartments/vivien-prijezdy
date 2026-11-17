@@ -10,6 +10,7 @@ import {
   sestavZpravuFaktury,
   vychoziTypFaktury,
   type AresVysledek,
+  type FakturaDokladVolby,
   type FakturaUdaje,
   type FakturaVstup,
 } from '@/lib/faktura';
@@ -208,8 +209,11 @@ function FakturaObsah({
   const [bezPoznamky, setBezPoznamky] = useState(false);
   const [poznamka, setPoznamka] = useState(faktura.poznamka || '');
   const [editujePoznamku, setEditujePoznamku] = useState(false);
-  const [typ, setTyp] = useState<'zalohova' | 'faktura'>('faktura');
-  const [zpusobUhrady, setZpusobUhrady] = useState<'kartou' | 'prevodem' | 'hotove'>('prevodem');
+  const v = faktura.dokladVolby;
+  const [typ, setTyp] = useState<'zalohova' | 'faktura'>(v?.typDokladu || 'faktura');
+  const [zpusobUhrady, setZpusobUhrady] = useState<'kartou' | 'prevodem' | 'hotove'>(
+    v?.zpusobUhrady || 'prevodem',
+  );
   const [vystaveno, setVystaveno] = useState(dnesIso());
   const [splatnost, setSplatnost] = useState(dnesIso());
   const chybi = coChybiNaFakture(faktura);
@@ -223,25 +227,74 @@ function FakturaObsah({
 
   useEffect(() => {
     const c = row.cenaPobytu != null ? String(row.cenaPobytu) : '';
+    const volby = faktura.dokladVolby;
     setCena(c);
     setCastkaFirma(c);
     setCastkaHost('');
-    setOdberatel('firma');
-    setBezHosta(false);
-    setBezEmailu(false);
-    setBezPoznamky(false);
+    setOdberatel(volby?.odberatel || 'firma');
+    setBezHosta(volby?.bezHosta === true);
+    setBezEmailu(volby?.bezEmailu === true);
+    setBezPoznamky(volby?.bezPoznamky === true);
     setPoznamka(faktura.poznamka || '');
     setEditujePoznamku(false);
     const dnes = dnesIso();
-    setTyp('faktura');
-    setZpusobUhrady('prevodem');
+    const typDokladu = volby?.typDokladu || 'faktura';
+    setTyp(typDokladu);
+    setZpusobUhrady(volby?.zpusobUhrady || 'prevodem');
     setVystaveno(dnes);
-    setSplatnost(dnes);
-  }, [row.cenaPobytu, row.rezervace, faktura.poznamka]);
+    setSplatnost(typDokladu === 'zalohova' ? splatnostZalohyUi(row.prijezd, dnes) : dnes);
+    // Jen při přepnutí hosta. Uložení voleb nesmí mazat částky.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row.rezervace]);
+
+  useEffect(() => {
+    const c = row.cenaPobytu != null ? String(row.cenaPobytu) : '';
+    setCena(c);
+    setCastkaFirma(c);
+  }, [row.cenaPobytu, row.rezervace]);
+
+  useEffect(() => {
+    setPoznamka(faktura.poznamka || '');
+  }, [faktura.poznamka, row.rezervace]);
+
+  function aktualniVolby(
+    prepis: Partial<FakturaDokladVolby> = {},
+  ): FakturaDokladVolby {
+    return {
+      typDokladu: prepis.typDokladu ?? typ,
+      zpusobUhrady: prepis.zpusobUhrady ?? zpusobUhrady,
+      odberatel: prepis.odberatel ?? odberatel,
+      bezHosta: prepis.bezHosta ?? bezHosta,
+      bezEmailu: prepis.bezEmailu ?? bezEmailu,
+      bezPoznamky: prepis.bezPoznamky ?? bezPoznamky,
+    };
+  }
+
+  async function ulozVolby(prepis: Partial<FakturaDokladVolby> = {}) {
+    const dokladVolby = aktualniVolby(prepis);
+    if (ukazka) {
+      onZmena(row.rezervace, { ...faktura, dokladVolby });
+      return;
+    }
+    const json = await posliAkci(row.rezervace, 'faktura-doklad-volby', {
+      typ: dokladVolby.typDokladu,
+      zpusobUhrady: dokladVolby.zpusobUhrady,
+      odberatel: dokladVolby.odberatel,
+      bezHosta: dokladVolby.bezHosta,
+      bezEmailu: dokladVolby.bezEmailu,
+      bezPoznamky: dokladVolby.bezPoznamky,
+    });
+    if (!json.ok || !json.faktura) {
+      onHlaska(json.error || 'Nastavení dokladu se neuložilo.');
+      return;
+    }
+    onZmena(row.rezervace, json.faktura);
+  }
 
   function zvolOdberatele(kdo: 'firma' | 'host') {
     setOdberatel(kdo);
     if (kdo === 'host') setBezHosta(false);
+    void ulozVolby({ odberatel: kdo, bezHosta: kdo === 'host' ? false : bezHosta });
   }
 
   function volbyDokladu() {
@@ -281,6 +334,12 @@ function FakturaObsah({
     const dnes = dnesIso();
     setVystaveno(dnes);
     setSplatnost(dalsi === 'zalohova' ? splatnostZalohyUi(row.prijezd, dnes) : dnes);
+    void ulozVolby({ typDokladu: dalsi });
+  }
+
+  function zvolZpusob(jak: 'kartou' | 'prevodem' | 'hotove') {
+    setZpusobUhrady(jak);
+    void ulozVolby({ zpusobUhrady: jak });
   }
 
   async function akce(nazev: 'faktura-hotovo' | 'faktura-vratit') {
@@ -455,21 +514,21 @@ function FakturaObsah({
               <button
                 type="button"
                 className={zpusobUhrady === 'kartou' ? 'ph-ulozit' : 'ph-kopie'}
-                onClick={() => setZpusobUhrady('kartou')}
+                onClick={() => zvolZpusob('kartou')}
               >
                 Kartou
               </button>
               <button
                 type="button"
                 className={zpusobUhrady === 'prevodem' ? 'ph-ulozit' : 'ph-kopie'}
-                onClick={() => setZpusobUhrady('prevodem')}
+                onClick={() => zvolZpusob('prevodem')}
               >
                 Převodem
               </button>
               <button
                 type="button"
                 className={zpusobUhrady === 'hotove' ? 'ph-ulozit' : 'ph-kopie'}
-                onClick={() => setZpusobUhrady('hotove')}
+                onClick={() => zvolZpusob('hotove')}
               >
                 Hotově
               </button>
@@ -502,14 +561,20 @@ function FakturaObsah({
               <button
                 type="button"
                 className={!bezHosta ? 'ph-ulozit' : 'ph-kopie'}
-                onClick={() => setBezHosta(false)}
+                onClick={() => {
+                  setBezHosta(false);
+                  void ulozVolby({ bezHosta: false });
+                }}
               >
                 Uvést
               </button>
               <button
                 type="button"
                 className={bezHosta ? 'ph-ulozit' : 'ph-kopie'}
-                onClick={() => setBezHosta(true)}
+                onClick={() => {
+                  setBezHosta(true);
+                  void ulozVolby({ bezHosta: true });
+                }}
               >
                 Neuvést
               </button>
@@ -528,7 +593,10 @@ function FakturaObsah({
             <button
               type="button"
               className={!bezEmailu ? 'ph-ulozit' : 'ph-kopie'}
-              onClick={() => setBezEmailu(false)}
+              onClick={() => {
+                setBezEmailu(false);
+                void ulozVolby({ bezEmailu: false });
+              }}
               disabled={odberatel === 'firma' && emailJeHostuv}
             >
               Uvést
@@ -536,7 +604,10 @@ function FakturaObsah({
             <button
               type="button"
               className={bezEmailu || (odberatel === 'firma' && emailJeHostuv) ? 'ph-ulozit' : 'ph-kopie'}
-              onClick={() => setBezEmailu(true)}
+              onClick={() => {
+                setBezEmailu(true);
+                void ulozVolby({ bezEmailu: true });
+              }}
             >
               Neuvést
             </button>
@@ -568,14 +639,20 @@ function FakturaObsah({
             <button
               type="button"
               className={!bezPoznamky ? 'ph-ulozit' : 'ph-kopie'}
-              onClick={() => setBezPoznamky(false)}
+              onClick={() => {
+                setBezPoznamky(false);
+                void ulozVolby({ bezPoznamky: false });
+              }}
             >
               Na dokladu
             </button>
             <button
               type="button"
               className={bezPoznamky ? 'ph-ulozit' : 'ph-kopie'}
-              onClick={() => setBezPoznamky(true)}
+              onClick={() => {
+                setBezPoznamky(true);
+                void ulozVolby({ bezPoznamky: true });
+              }}
             >
               Neuvést
             </button>

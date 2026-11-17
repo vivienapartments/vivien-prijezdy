@@ -547,21 +547,13 @@ export function htmlDokladu(
     padding: 10px 16px; border-radius: 999px;
     text-decoration: none;
   }
-  /* Papír je vždy A4 (jako PDF). Na mobilu se jen zmenší, nepřepisuje se. */
-  .stage {
-    width: 100%;
-    overflow: hidden;
-    padding: 16px 0 32px;
-  }
   .sheet {
-    --sheet-w: 794px;
-    width: var(--sheet-w);
-    max-width: none;
-    margin: 0 auto;
+    max-width: 820px;
+    width: 100%;
+    margin: 16px auto 32px;
     background: var(--paper);
     padding: 28px 32px;
     border: 1px solid var(--line);
-    transform-origin: top center;
   }
   header {
     display: grid;
@@ -648,8 +640,11 @@ export function htmlDokladu(
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    gap: 16px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     background: #fff;
     color: var(--ink);
     border: 1px solid var(--gold);
@@ -666,9 +661,9 @@ export function htmlDokladu(
   .sum-castka .sum-prava {
     display: flex;
     align-items: baseline;
-    gap: 16px;
+    gap: 12px 16px;
+    flex-wrap: wrap;
     margin-left: auto;
-    white-space: nowrap;
   }
   .sum-castka .sum-stav {
     color: var(--ink);
@@ -782,11 +777,6 @@ export function htmlDokladu(
       print-color-adjust: exact;
     }
     .bar { display: none !important; }
-    .stage {
-      padding: 0 !important;
-      overflow: visible !important;
-      height: auto !important;
-    }
     .sheet {
       margin: 0 !important;
       box-shadow: none !important;
@@ -794,7 +784,6 @@ export function htmlDokladu(
       width: 100% !important;
       padding: 0 !important;
       border: 0 !important;
-      transform: none !important;
       page-break-inside: avoid;
       break-inside: avoid;
     }
@@ -802,13 +791,17 @@ export function htmlDokladu(
       page-break-inside: avoid;
       break-inside: avoid;
     }
+    .sum-castka {
+      flex-wrap: nowrap;
+      font-size: 12px;
+      gap: 10px;
+    }
     .pay-grid { grid-template-columns: minmax(0, 1fr) 100px; }
     .logo, .pay-qr img { border-color: #999; }
     .box, .pobyt, .sum-castka, table { border-color: #999; }
     th { border-bottom-color: #999; }
   }
-  /* Jen obrazovka: papír se zmenší, rozložení zůstane jako na A4. Tisk tohle nebere. */
-  @media screen and (max-width: 860px) {
+  @media screen and (max-width: 700px) {
     .bar {
       padding: 12px 14px;
       gap: 10px;
@@ -818,7 +811,8 @@ export function htmlDokladu(
       padding: 12px 18px;
       font-size: 15px;
     }
-    .stage { padding: 10px 0 24px; }
+    .sheet { margin: 0; padding: 18px 14px 28px; border-left: 0; border-right: 0; }
+    /* Rozložení zůstává jako na papíře (2 kolonky), jen užší okraje. */
   }
 </style>
 </head>
@@ -827,7 +821,6 @@ export function htmlDokladu(
     <div>${escapeHtml(t.doklad)} ${escapeHtml(cislo)}</div>
     <button type="button" onclick="window.print()">${escapeHtml(t.tisk)}</button>
   </div>
-  <div class="stage">
   <article class="sheet">
     <header>
       <img class="logo" src="${escapeHtml(d.logoUrl)}" alt="VIVIEN"/>
@@ -929,31 +922,6 @@ export function htmlDokladu(
         : ''
     }
   </article>
-  </div>
-  <script>
-  (function () {
-    function fit() {
-      var stage = document.querySelector('.stage');
-      var sheet = document.querySelector('.sheet');
-      if (!stage || !sheet) return;
-      sheet.style.transform = 'none';
-      stage.style.height = '';
-      var pad = 16;
-      var avail = Math.max(280, stage.clientWidth - pad);
-      var w = sheet.offsetWidth || 794;
-      var scale = Math.min(1, avail / w);
-      sheet.style.transform = 'scale(' + scale + ')';
-      stage.style.height = Math.ceil(sheet.offsetHeight * scale + 8) + 'px';
-    }
-    fit();
-    window.addEventListener('resize', fit);
-    window.addEventListener('orientationchange', function () { setTimeout(fit, 80); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
-    Array.prototype.forEach.call(document.images || [], function (img) {
-      if (!img.complete) img.addEventListener('load', fit);
-    });
-  })();
-  </script>
 </body>
 </html>`;
 }

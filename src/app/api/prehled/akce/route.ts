@@ -233,6 +233,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prani-nacti' &&
       akce !== 'prani-whatsapp' &&
       akce !== 'faktura-ulozit' &&
+      akce !== 'faktura-doklad-volby' &&
       akce !== 'faktura-hotovo' &&
       akce !== 'faktura-vratit' &&
       akce !== 'faktura-smazat' &&
@@ -1130,6 +1131,27 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     const faktura = { ...sestava.faktura, hotovo: rec.faktura?.hotovo ?? null };
     await store.setRezervace(id, pridej(rec, FAKTURA_MAJITEL.historie_majitel, { faktura }));
+    return NextResponse.json({ ok: true, faktura }, { headers: noStore });
+  }
+
+  if (akce === 'faktura-doklad-volby') {
+    if (!rec.faktura) return chyba(404, 'Faktura není zadaná.');
+    const typDokladu = body?.typ === 'zalohova' ? 'zalohova' : 'faktura';
+    const odberatel = body?.odberatel === 'host' ? 'host' : 'firma';
+    const dokladVolby = {
+      typDokladu: typDokladu as 'zalohova' | 'faktura',
+      zpusobUhrady: normalizujZpusobUhrady(String(body?.zpusobUhrady || '')),
+      odberatel: odberatel as 'firma' | 'host',
+      bezHosta: odberatel === 'firma' && body?.bezHosta === true,
+      bezEmailu: body?.bezEmailu === true,
+      bezPoznamky: body?.bezPoznamky === true,
+    };
+    const faktura = {
+      ...rec.faktura,
+      dokladVolby,
+      upraveno: new Date().toISOString(),
+    };
+    await store.setRezervace(id, pridej(rec, 'Nastavení dokladu uloženo', { faktura }));
     return NextResponse.json({ ok: true, faktura }, { headers: noStore });
   }
 
