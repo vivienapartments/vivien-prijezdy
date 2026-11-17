@@ -759,6 +759,7 @@ export function zpravyMenu(opts: {
   historie?: { co: string; cas?: string }[];
   narodnost?: string | null;
   checkinNeniPotreba?: boolean;
+  nedojezdKdy?: string | null;
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const historie = opts.historie || [];
@@ -801,7 +802,7 @@ export function zpravyMenu(opts: {
         prijezd: opts.prijezd,
         dnes: opts.dnes,
         predano: opts.predano,
-        checkinNeniPotreba: opts.checkinNeniPotreba,
+        nedojezdKdy: opts.nedojezdKdy,
         historie,
       });
     }

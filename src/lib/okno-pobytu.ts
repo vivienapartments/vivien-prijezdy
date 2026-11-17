@@ -23,6 +23,7 @@ export type HostOkna = {
   prijezd: string | null;
   odjezd: string | null;
   stav: string;
+  nedojezdKdy: string | null;
   casOdjezdu: string | null;
   casPrijezdu: string | null;
   uklizenoKdy: string | null;
@@ -811,6 +812,7 @@ function hostZ(rec: RezervaceRecord): HostOkna {
     prijezd: rec.prijezd,
     odjezd: rec.odjezd,
     stav: rec.stav,
+    nedojezdKdy: rec.nedojezdKdy || null,
     casOdjezdu: rec.casOdjezdu,
     casPrijezdu: rec.casPrijezdu,
     uklizenoKdy: rec.uklizenoKdy,
