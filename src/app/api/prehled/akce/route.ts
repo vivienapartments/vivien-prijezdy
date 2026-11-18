@@ -64,7 +64,14 @@ import {
   jeKdoPrani,
 } from '@/lib/prani';
 import { odkazPraniVPruvodci, textWhatsAppPraniOdpoved } from '@/lib/prani-texty';
-import { dotazAres, sestavFakturu, type FakturaVstup } from '@/lib/faktura';
+import {
+  dotazAres,
+  fakturaProNovyPobyt,
+  maUdajeFirmy,
+  nactiFakturu,
+  sestavFakturu,
+  type FakturaVstup,
+} from '@/lib/faktura';
 import { FAKTURA_MAJITEL } from '@/lib/faktura-texty';
 import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
@@ -237,6 +244,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'prani-nacti' &&
       akce !== 'prani-whatsapp' &&
       akce !== 'faktura-ulozit' &&
+      akce !== 'faktura-prebirat' &&
       akce !== 'faktura-doklad-volby' &&
       akce !== 'faktura-poznamka' &&
       akce !== 'faktura-hotovo' &&
@@ -1211,8 +1219,41 @@ export async function POST(request: Request): Promise<NextResponse> {
       return chyba(400, sestava.duvod === 'chybi_ico' ? 'IČO není platné.' : 'Vyplňte název, adresu a zemi.');
     }
     const faktura = { ...sestava.faktura, hotovo: rec.faktura?.hotovo ?? null };
-    await store.setRezervace(id, pridej(rec, FAKTURA_MAJITEL.historie_majitel, { faktura }));
-    return NextResponse.json({ ok: true, faktura }, { headers: noStore });
+    await store.setRezervace(
+      id,
+      pridej(rec, FAKTURA_MAJITEL.historie_majitel, { faktura, fakturaNeprebirat: false }),
+    );
+    return NextResponse.json({ ok: true, faktura, fakturaNeprebirat: false }, { headers: noStore });
+  }
+
+  if (akce === 'faktura-prebirat') {
+    if (rec.faktura && maUdajeFirmy(rec.faktura)) {
+      return NextResponse.json(
+        { ok: true, faktura: rec.faktura, fakturaNeprebirat: false },
+        { headers: noStore },
+      );
+    }
+    const ted = new Date().toISOString();
+    const surovy =
+      body?.faktura && typeof body.faktura === 'object'
+        ? (body.faktura as Record<string, unknown>)
+        : null;
+    const zeVstupu = surovy
+      ? nactiFakturu({
+          ...surovy,
+          zadal: 'majitel',
+          kdy: typeof surovy.kdy === 'string' && surovy.kdy ? surovy.kdy : ted,
+        })
+      : null;
+    if (!zeVstupu || !maUdajeFirmy(zeVstupu)) {
+      return chyba(400, 'Z minulého pobytu není firma k přilepení.');
+    }
+    const faktura = fakturaProNovyPobyt(zeVstupu, ted);
+    await store.setRezervace(
+      id,
+      pridej(rec, 'Firma z minulého pobytu', { faktura, fakturaNeprebirat: false }),
+    );
+    return NextResponse.json({ ok: true, faktura, fakturaNeprebirat: false }, { headers: noStore });
   }
 
   if (akce === 'faktura-doklad-volby') {
@@ -1254,8 +1295,11 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'faktura-hotovo' || akce === 'faktura-vratit' || akce === 'faktura-smazat') {
     if (!rec.faktura) return chyba(404, 'Faktura není zadaná.');
     if (akce === 'faktura-smazat') {
-      await store.setRezervace(id, pridej(rec, 'Údaje na fakturu smazány', { faktura: null }));
-      return NextResponse.json({ ok: true, faktura: null }, { headers: noStore });
+      await store.setRezervace(
+        id,
+        pridej(rec, 'Firma odepnutá', { faktura: null, fakturaNeprebirat: true }),
+      );
+      return NextResponse.json({ ok: true, faktura: null, fakturaNeprebirat: true }, { headers: noStore });
     }
     const hotovo = akce === 'faktura-hotovo' ? new Date().toISOString() : null;
     const faktura = { ...rec.faktura, hotovo };

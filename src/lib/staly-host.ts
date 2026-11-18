@@ -1,3 +1,4 @@
+import { maUdajeFirmy, type FakturaUdaje } from './faktura';
 import { normalizujTelefon } from './telefon';
 import type { PrehledRadek } from './prehled';
 
@@ -20,6 +21,8 @@ export type StalyHostInfo = {
   emailZMinula: string | null;
   /** ISO z dřívější karty, když tam už byl kontakt uložen. */
   kontaktZMinula: string | null;
+  /** Firma z posledního pobytu (IČO, e-mail účetní…). null = zatím žádná. */
+  fakturaZMinula: FakturaUdaje | null;
 };
 
 function jeRelayEmail(email: string): boolean {
@@ -120,10 +123,12 @@ export function stalyHostPro(radek: PrehledRadek, vsechny: PrehledRadek[]): Stal
   let telefonZMinula: string | null = null;
   let emailZMinula: string | null = null;
   let kontaktZMinula: string | null = null;
+  let fakturaZMinula: FakturaUdaje | null = null;
   for (const d of drivejsiKarty) {
     if (!telefonZMinula && d.telefonText) telefonZMinula = d.telefonText;
     if (!emailZMinula && normalizujEmail(d.email)) emailZMinula = d.email;
     if (!kontaktZMinula && d.kontaktUlozenKdy) kontaktZMinula = d.kontaktUlozenKdy;
+    if (!fakturaZMinula && maUdajeFirmy(d.faktura)) fakturaZMinula = d.faktura;
   }
 
   if (!predchozi.length && poradi <= 1) return null;
@@ -137,6 +142,7 @@ export function stalyHostPro(radek: PrehledRadek, vsechny: PrehledRadek[]): Stal
     telefonZMinula: !radek.telefonText ? telefonZMinula : null,
     emailZMinula: !normalizujEmail(radek.email) ? emailZMinula : null,
     kontaktZMinula: !radek.kontaktUlozenKdy ? kontaktZMinula : null,
+    fakturaZMinula,
   };
 }
 

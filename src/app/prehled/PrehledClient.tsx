@@ -64,7 +64,7 @@ import { CoDoplnit, StitkyDoplnit14 } from './CoDoplnit';
 import { Dnesek } from './Dnesek';
 import { FakturaDetail, FakturaStitek, FakturyDomu } from './FakturaAdmin';
 import { PraniDetail, PraniRamecekDomu, PraniStitek } from './PraniAdmin';
-import type { FakturaUdaje } from '@/lib/faktura';
+import { fakturaProNovyPobyt, type FakturaUdaje } from '@/lib/faktura';
 import { Hledani, Nedoplatky, RadaZalozek } from './ZalozkyPrehledu';
 import { poctyStitkuDoplnit, type FiltrDoplnit } from '@/lib/co-doplnit';
 import type { PraniRadekPrehled, PraniStitekKarty } from '@/lib/prani';
@@ -519,8 +519,22 @@ export function PrehledClient({
     return m ? decodeURIComponent(m[1]) : null;
   }
 
-  function zmenFakturu(rezervace: string, faktura: FakturaUdaje | null) {
-    setRadky((prev) => prev.map((r) => (r.rezervace === rezervace ? { ...r, faktura } : r)));
+  function zmenFakturu(
+    rezervace: string,
+    faktura: FakturaUdaje | null,
+    opts?: { fakturaNeprebirat?: boolean },
+  ) {
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === rezervace
+          ? {
+              ...r,
+              faktura,
+              ...(opts?.fakturaNeprebirat != null ? { fakturaNeprebirat: opts.fakturaNeprebirat } : {}),
+            }
+          : r,
+      ),
+    );
   }
 
   function zmenCenuPobytu(rezervace: string, cenaPobytu: number) {
@@ -706,6 +720,53 @@ export function PrehledClient({
       window.clearInterval(id);
     };
   }, [router, ukazka]);
+
+  /** Stálý host: firmu z minulého pobytu přilepí samo (IČO, e-mail účetní…). */
+  const firmaPrebirani = useRef(new Set<string>());
+  useEffect(() => {
+    const kandidati = radky.filter(
+      (r) =>
+        !r.nelzeNacist &&
+        !r.faktura &&
+        !r.fakturaNeprebirat &&
+        r.stalyHost?.fakturaZMinula &&
+        !firmaPrebirani.current.has(r.rezervace),
+    );
+    if (!kandidati.length) return;
+    for (const r of kandidati) {
+      firmaPrebirani.current.add(r.rezervace);
+      const zMinula = r.stalyHost!.fakturaZMinula!;
+      if (ukazka) {
+        zmenFakturu(r.rezervace, fakturaProNovyPobyt(zMinula, new Date().toISOString()), {
+          fakturaNeprebirat: false,
+        });
+        continue;
+      }
+      void fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rezervace: r.rezervace,
+          akce: 'faktura-prebirat',
+          faktura: zMinula,
+        }),
+      })
+        .then(async (res) => {
+          const json = (await res.json().catch(() => null)) as {
+            ok?: boolean;
+            faktura?: FakturaUdaje | null;
+          } | null;
+          if (res.ok && json?.ok && json.faktura) {
+            zmenFakturu(r.rezervace, json.faktura, { fakturaNeprebirat: false });
+          } else {
+            firmaPrebirani.current.delete(r.rezervace);
+          }
+        })
+        .catch(() => {
+          firmaPrebirani.current.delete(r.rezervace);
+        });
+    }
+  }, [radky, ukazka]);
 
   function maJazykRadku(row: PrehledRadek): boolean {
     if (jazyky[row.rezervace]) return true;

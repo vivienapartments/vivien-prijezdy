@@ -5,9 +5,12 @@ import { FakturaFormular, type VysledekUlozeni } from '@/components/FakturaHosta
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import {
   coChybiNaFakture,
+  fakturaProNovyPobyt,
   fakturyKeVystaveni,
   fakturyPozdeji,
+  maUdajeFirmy,
   sestavZpravuFaktury,
+  shrnutiFaktury,
   vychoziTypFaktury,
   type AresVysledek,
   type FakturaDokladVolby,
@@ -81,7 +84,11 @@ export function FakturaZpravaTlacitka({
   );
 }
 
-type ZmenaFaktury = (rezervace: string, faktura: FakturaUdaje | null) => void;
+type ZmenaFaktury = (
+  rezervace: string,
+  faktura: FakturaUdaje | null,
+  opts?: { fakturaNeprebirat?: boolean },
+) => void;
 type ZmenaCeny = (rezervace: string, cenaPobytu: number) => void;
 
 type Spolecne = {
@@ -96,6 +103,7 @@ type OdpovedAkce = {
   ok?: boolean;
   error?: string;
   faktura?: FakturaUdaje | null;
+  fakturaNeprebirat?: boolean;
   ares?: AresVysledek;
   cenaPobytu?: number | null;
   zpravaWa?: string;
@@ -958,44 +966,81 @@ export function FakturaDetail({
 
   async function ulozit(vstup: FakturaVstup): Promise<VysledekUlozeni> {
     if (ukazka) {
-      onZmena(row.rezervace, {
-        typ: vstup.typ === 'zahranici' ? 'zahranici' : 'cz',
-        ico: vstup.ico || undefined,
-        nazev: vstup.nazev || undefined,
-        adresa: vstup.adresa || undefined,
-        zeme: vstup.zeme || undefined,
-        dic: vstup.dic || undefined,
-        email: vstup.email || undefined,
-        poznamka: vstup.poznamka || undefined,
-        zadal: 'majitel',
-        kdy: new Date().toISOString(),
-        hotovo: faktura?.hotovo ?? null,
-      });
+      onZmena(
+        row.rezervace,
+        {
+          typ: vstup.typ === 'zahranici' ? 'zahranici' : 'cz',
+          ico: vstup.ico || undefined,
+          nazev: vstup.nazev || undefined,
+          adresa: vstup.adresa || undefined,
+          zeme: vstup.zeme || undefined,
+          dic: vstup.dic || undefined,
+          email: vstup.email || undefined,
+          poznamka: vstup.poznamka || undefined,
+          zadal: 'majitel',
+          kdy: new Date().toISOString(),
+          hotovo: faktura?.hotovo ?? null,
+          dokladVolby: {
+            typDokladu: 'faktura',
+            zpusobUhrady: 'prevodem',
+            odberatel: 'firma',
+            bezHosta: false,
+            bezEmailu: false,
+            bezPoznamky: false,
+          },
+        },
+        { fakturaNeprebirat: false },
+      );
       setUprava(false);
       return null;
     }
     const json = await posliAkci(row.rezervace, 'faktura-ulozit', { faktura: vstup });
     if (!json.ok || !json.faktura) return { duvod: 'chyba', text: json.error };
-    onZmena(row.rezervace, json.faktura);
+    onZmena(row.rezervace, json.faktura, { fakturaNeprebirat: false });
     setUprava(false);
     return null;
   }
 
-  async function smazat() {
-    if (cekam || !window.confirm('Smazat údaje na fakturu?')) return;
+  async function odepnout() {
+    if (cekam || !window.confirm('Odepínat firmu z této karty? Doklad půjde znovu až po novém uložení.')) {
+      return;
+    }
     if (ukazka) {
-      onZmena(row.rezervace, null);
+      onZmena(row.rezervace, null, { fakturaNeprebirat: true });
       return;
     }
     setCekam(true);
     const json = await posliAkci(row.rezervace, 'faktura-smazat');
     setCekam(false);
     if (!json.ok) {
-      onHlaska(json.error || 'Nepodařilo se smazat.');
+      onHlaska(json.error || 'Nepodařilo se odepínat.');
       return;
     }
-    onZmena(row.rezervace, null);
+    onZmena(row.rezervace, null, { fakturaNeprebirat: true });
   }
+
+  async function pripnoutZMinula() {
+    const zMinula = row.stalyHost?.fakturaZMinula;
+    if (!zMinula || cekam) return;
+    if (ukazka) {
+      onZmena(row.rezervace, fakturaProNovyPobyt(zMinula, new Date().toISOString()), {
+        fakturaNeprebirat: false,
+      });
+      onHlaska('Firma z minulého pobytu je připnutá.');
+      return;
+    }
+    setCekam(true);
+    const json = await posliAkci(row.rezervace, 'faktura-prebirat', { faktura: zMinula });
+    setCekam(false);
+    if (!json.ok || !json.faktura) {
+      onHlaska(json.error || 'Nepodařilo se připnout firmu.');
+      return;
+    }
+    onZmena(row.rezervace, json.faktura, { fakturaNeprebirat: false });
+    onHlaska('Firma z minulého pobytu je připnutá.');
+  }
+
+  const firmaZMinula = row.stalyHost?.fakturaZMinula || null;
 
   if (uprava || !faktura) {
     return (
@@ -1006,6 +1051,12 @@ export function FakturaDetail({
           userAgent={userAgent}
           onHlaska={onHlaska}
         />
+        {!faktura && row.fakturaNeprebirat && firmaZMinula ? (
+          <p className="ph-hlaska">
+            Firma je na této kartě odepnutá
+            {shrnutiFaktury(firmaZMinula) ? ` (${shrnutiFaktury(firmaZMinula)})` : ''}.
+          </p>
+        ) : null}
         {uprava ? (
           <FakturaFormular
             lang="cs"
@@ -1017,9 +1068,16 @@ export function FakturaDetail({
             onZrusit={() => setUprava(false)}
           />
         ) : (
-          <button type="button" className="ph-ulozit" onClick={() => setUprava(true)}>
-            {FAKTURA_MAJITEL.karta_tlacitko}
-          </button>
+          <span className="ph-odjezdy__akce">
+            <button type="button" className="ph-ulozit" onClick={() => setUprava(true)}>
+              {FAKTURA_MAJITEL.karta_tlacitko}
+            </button>
+            {!faktura && row.fakturaNeprebirat && firmaZMinula ? (
+              <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void pripnoutZMinula()}>
+                Připínat firmu z minulosti
+              </button>
+            ) : null}
+          </span>
         )}
       </div>
     );
@@ -1033,6 +1091,11 @@ export function FakturaDetail({
         userAgent={userAgent}
         onHlaska={onHlaska}
       />
+      {maUdajeFirmy(faktura) ? (
+        <p className="ph-hlaska">
+          Firma je na kartě. Doklad standardně na firmu (účetní e-mail u údajů). Jde přepnout na hosta.
+        </p>
+      ) : null}
       <FakturaObsah row={row} faktura={faktura} {...spolecne} />
       <span className="ph-odjezdy__akce">
         {faktura.hotovo ? null : (
@@ -1040,8 +1103,8 @@ export function FakturaDetail({
             Upravit
           </button>
         )}
-        <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void smazat()}>
-          Smazat údaje
+        <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void odepnout()}>
+          Odepínat firmu
         </button>
       </span>
     </div>

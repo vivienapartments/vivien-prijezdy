@@ -298,6 +298,11 @@ export type RezervaceRecord = {
   adresaHosta: string | null;
   /** Údaje na firemní fakturu. null = host nechce / nezadal. */
   faktura: FakturaUdaje | null;
+  /**
+   * Majitel firmu na této kartě odepínal.
+   * Z minulého pobytu se znovu sama nepřilepí (dokud ji znovu neuloží).
+   */
+  fakturaNeprebirat: boolean;
 };
 
 export type RucniPole =
@@ -845,6 +850,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
         ? r.adresaHosta.trim().slice(0, 300)
         : null,
     faktura: nactiFakturu(r.faktura),
+    fakturaNeprebirat: r.fakturaNeprebirat === true,
   };
 }
 
@@ -943,6 +949,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     cenaPobytu: null,
     adresaHosta: null,
     faktura: null,
+    fakturaNeprebirat: false,
   };
 }
 

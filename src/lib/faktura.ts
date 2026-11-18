@@ -116,6 +116,52 @@ export function nactiFakturu(raw: unknown): FakturaUdaje | null {
   };
 }
 
+/** Je na faktuře firma (IČO nebo název), ne jen prázdný záznam. */
+export function maUdajeFirmy(f: FakturaUdaje | null | undefined): boolean {
+  if (!f) return false;
+  return Boolean((f.ico || '').trim() || (f.nazev || '').trim());
+}
+
+/** Pole firmy pro uložení na novou kartu (bez hotovo). */
+export function vstupFirmyZFaktury(f: FakturaUdaje): FakturaVstup {
+  return {
+    typ: f.typ,
+    ...(f.ico ? { ico: f.ico } : {}),
+    ...(f.nazev ? { nazev: f.nazev } : {}),
+    ...(f.adresa ? { adresa: f.adresa } : {}),
+    ...(f.zeme ? { zeme: f.zeme } : {}),
+    ...(f.dic ? { dic: f.dic } : {}),
+    ...(f.email ? { email: f.email } : {}),
+    ...(f.poznamka ? { poznamka: f.poznamka } : {}),
+  };
+}
+
+/** Stálý host: stejná firma na nový pobyt, doklad znovu otevřený, odběratel firma. */
+export function fakturaProNovyPobyt(prev: FakturaUdaje, ted: string): FakturaUdaje {
+  const dokladVolby: FakturaDokladVolby = {
+    typDokladu: 'faktura',
+    zpusobUhrady: prev.dokladVolby?.zpusobUhrady || 'prevodem',
+    odberatel: 'firma',
+    bezHosta: prev.dokladVolby?.bezHosta === true,
+    bezEmailu: prev.dokladVolby?.bezEmailu === true,
+    bezPoznamky: prev.dokladVolby?.bezPoznamky === true,
+  };
+  return {
+    typ: prev.typ,
+    ...(prev.ico ? { ico: prev.ico } : {}),
+    ...(prev.nazev ? { nazev: prev.nazev } : {}),
+    ...(prev.adresa ? { adresa: prev.adresa } : {}),
+    ...(prev.zeme ? { zeme: prev.zeme } : {}),
+    ...(prev.dic ? { dic: prev.dic } : {}),
+    ...(prev.email ? { email: prev.email } : {}),
+    ...(prev.poznamka ? { poznamka: prev.poznamka } : {}),
+    zadal: 'majitel',
+    kdy: ted,
+    hotovo: null,
+    dokladVolby,
+  };
+}
+
 export type FakturaVstup = {
   typ?: string;
   ico?: string;

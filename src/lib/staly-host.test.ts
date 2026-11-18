@@ -103,6 +103,36 @@ describe('stálý host', () => {
     expect(info?.kontaktZMinula).toBe('2026-03-02T10:00:00.000Z');
   });
 
+  it('přenese firmu (IČO a e-mail účetní) z minulého pobytu', () => {
+    const stary = {
+      ...karta({
+        id: '1',
+        telefon: '+420604111222',
+        prijezd: '2026-03-01',
+        odjezd: '2026-03-03',
+      }),
+      faktura: {
+        typ: 'cz' as const,
+        ico: '27082440',
+        nazev: 'Firma s.r.o.',
+        email: 'ucetni@firma.cz',
+        zadal: 'majitel' as const,
+        kdy: '2026-03-02T10:00:00.000Z',
+        hotovo: '2026-03-04T10:00:00.000Z',
+      },
+    };
+    const novy = karta({
+      id: '2',
+      telefon: '+420604111222',
+      prijezd: '2026-10-01',
+      odjezd: '2026-10-03',
+    });
+    const info = stalyHostPro(novy, [stary, novy]);
+    expect(info?.fakturaZMinula?.ico).toBe('27082440');
+    expect(info?.fakturaZMinula?.email).toBe('ucetni@firma.cz');
+    expect(info?.fakturaZMinula?.nazev).toBe('Firma s.r.o.');
+  });
+
   it('doplnStaleHosty nepadá na prázdném seznamu', () => {
     expect(doplnStaleHosty([])).toEqual([]);
   });

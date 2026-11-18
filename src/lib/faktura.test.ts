@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   coChybiNaFakture,
+  fakturaProNovyPobyt,
   fakturyKeVystaveni,
   fakturyPozdeji,
   fakturyVyrizene,
   jePlatneIco,
+  maUdajeFirmy,
   normalizujIco,
   normalizujIcoZahranici,
   sestavFakturu,
@@ -166,5 +168,30 @@ describe('zahraniční IČO a zpráva', () => {
       expect(FAKTURA_ZPRAVA_HOSTOVI[lang]).toContain('{odkaz}');
       expect(FAKTURA_ZPRAVA_BEZ_PRUVODCE[lang]).toContain('{odkaz}');
     }
+  });
+});
+
+describe('firma na nový pobyt', () => {
+  it('přenese IČO a e-mail účetní, doklad znovu otevře na firmu', () => {
+    const stara = faktura({
+      nazev: 'Firma s.r.o.',
+      email: 'ucetni@firma.cz',
+      hotovo: '2026-11-02T10:00:00.000Z',
+      dokladVolby: {
+        typDokladu: 'zalohova',
+        zpusobUhrady: 'kartou',
+        odberatel: 'host',
+        bezHosta: false,
+        bezEmailu: false,
+        bezPoznamky: false,
+      },
+    });
+    expect(maUdajeFirmy(stara)).toBe(true);
+    const nova = fakturaProNovyPobyt(stara, '2026-12-01T08:00:00.000Z');
+    expect(nova.ico).toBe('27082440');
+    expect(nova.email).toBe('ucetni@firma.cz');
+    expect(nova.hotovo).toBeNull();
+    expect(nova.dokladVolby?.odberatel).toBe('firma');
+    expect(nova.zadal).toBe('majitel');
   });
 });

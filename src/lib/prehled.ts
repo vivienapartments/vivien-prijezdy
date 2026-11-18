@@ -166,6 +166,8 @@ export type PrehledRadek = {
   adresaHosta: string | null;
   /** Údaje na firemní fakturu. */
   faktura: FakturaUdaje | null;
+  /** Firma z minulosti se na této kartě nemá sama přilepit. */
+  fakturaNeprebirat: boolean;
   /** Stejný host z minulých karet (počítá se v paměti). */
   stalyHost?: StalyHostInfo | null;
 };
@@ -923,6 +925,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     cenaPobytu: rec.cenaPobytu ?? null,
     adresaHosta: rec.adresaHosta ?? null,
     faktura: rec.faktura ?? null,
+    fakturaNeprebirat: rec.fakturaNeprebirat === true,
   };
 }
 
