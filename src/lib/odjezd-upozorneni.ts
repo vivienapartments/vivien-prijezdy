@@ -22,6 +22,7 @@ import {
   textVecer,
 } from './odjezd';
 import { odlozitPushCasuOdjezdu } from './odjezd-potvrzeni';
+import { najdiVyberyProdlouzeni } from './odjezd-souhlas';
 import { hosteProPohodu, textPushPohody } from './pohoda';
 import type { OdjezdBeh, ProcessStore, RezervaceRecord } from './store';
 import { odkazKarty } from './prehled-odkaz';
@@ -135,6 +136,23 @@ export async function upozorniOdjezdy(
 ): Promise<number> {
   const list = (await store.listRezervace()).map((e) => e.record);
   let pocet = await dorucOdlozenePushyCasuOdjezdu(store, list, now, posli);
+
+  for (const upoz of najdiVyberyProdlouzeni(list, now)) {
+    const jak = await posli(store, upoz.text, odkazKarty(upoz.kdo.rezervace), {
+      telegram: 'cas-odjezdu',
+    });
+    if (jak === 'nic') continue;
+    const cerstvy = (await store.getRezervace(upoz.kdo.rezervace)) || upoz.kdo;
+    if (cerstvy.prodlouzeniVyberPush === upoz.klic) continue;
+    const veta = vetaUpozorneni(jak, upoz.text);
+    await store.setRezervace(upoz.kdo.rezervace, {
+      ...cerstvy,
+      prodlouzeniVyberPush: upoz.klic,
+      historie: [...cerstvy.historie, { cas: now.toISOString(), co: veta }].slice(-40),
+    });
+    pocet += 1;
+  }
+
   for (const record of list) {
     if (!maUpozornitPul(record, now)) continue;
     const text = textPulHodiny(record, polozkyZRezervace(record));

@@ -9,6 +9,12 @@ import type { AptId, GuideLang } from './types';
 import { GUIDE_LANGS } from './types';
 import type { RezervaceRecord } from './store';
 import {
+  ODJEZD_CEKA_NADPIS,
+  ODJEZD_CEKA_SBALENA,
+  jeOdjezdKanal,
+  textCekaOdjezdu,
+} from './odjezd-souhlas';
+import {
   ZPRAVA_BRANA_NADPIS,
   ZPRAVA_BRANA_SBALENA,
   ZPRAVA_BRANA_TEXT,
@@ -22,7 +28,7 @@ import {
 export type PotvrzeniPrijezdu = 'osobne' | 'telefon';
 
 export type ZpravaOdNasData = {
-  id: 'cas' | 'brana' | 'odjezd-prijati' | 'odjezd';
+  id: 'cas' | 'brana' | 'odjezd-prijati' | 'odjezd' | 'odjezd-ceka';
   nova: boolean;
   nadpis: string;
   /** Obyčejný text. U brány je telefon a stání zvlášť kvůli odkazu tel:. */
@@ -84,6 +90,16 @@ export function zpravyOdNasZRezervace(
       sbalenyTitulek: t(ZPRAVA_BRANA_SBALENA, l),
       telefon: rec.telefonBrana,
       stani,
+    });
+  }
+
+  if (rec.zadostOdjezd?.stav === 'ceka' && jeOdjezdKanal(rec.zadostOdjezd.kanal)) {
+    out.push({
+      id: 'odjezd-ceka',
+      nova: !rec.zpravaOdjezdCekaPrectena,
+      nadpis: t(ODJEZD_CEKA_NADPIS, l),
+      text: textCekaOdjezdu(rec.zadostOdjezd.cas, rec.zadostOdjezd.kc, rec.zadostOdjezd.kanal, l),
+      sbalenyTitulek: t(ODJEZD_CEKA_SBALENA, l),
     });
   }
 

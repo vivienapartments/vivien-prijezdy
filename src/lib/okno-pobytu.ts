@@ -834,8 +834,24 @@ function poznamka(rec: RezervaceRecord, co: string, patch: Partial<RezervaceReco
   };
 }
 
-export function novaZadost(cas: string, kc: number, od: ZadostOkna['od'], hned: boolean, now: Date): ZadostOkna {
-  return { cas, kc, stav: 'ceka', kdy: now.toISOString(), od, hned, upozorneno: false };
+export function novaZadost(
+  cas: string,
+  kc: number,
+  od: ZadostOkna['od'],
+  hned: boolean,
+  now: Date,
+  kanal?: ZadostOkna['kanal'],
+): ZadostOkna {
+  return {
+    cas,
+    kc,
+    stav: 'ceka',
+    kdy: now.toISOString(),
+    od,
+    hned,
+    upozorneno: false,
+    ...(kanal ? { kanal } : {}),
+  };
 }
 
 export function textPushePrijezdu(popis: string, cas: string, kc: number, hned: boolean): string {
@@ -1177,8 +1193,13 @@ export function zadostOdjezdu(
   cas: string,
   od: ZadostOkna['od'],
   now: Date,
+  kanal?: ZadostOkna['kanal'],
 ): { rec: RezervaceRecord; push: string; bezeZmeny?: boolean } | null {
-  if (rec.zadostOdjezd?.stav === 'ceka' && rec.zadostOdjezd.cas === cas) {
+  if (
+    rec.zadostOdjezd?.stav === 'ceka' &&
+    rec.zadostOdjezd.cas === cas &&
+    (!kanal || rec.zadostOdjezd.kanal === kanal)
+  ) {
     return { rec, push: '', bezeZmeny: true };
   }
   const kc = cenaPozde(cas);
@@ -1194,13 +1215,18 @@ export function zadostOdjezdu(
     if (!uprava) return { rec, push: '', bezeZmeny: true };
     const drzi = uprava.patch.zadostOdjezd?.drziPotvrzeni;
     const rucni = maRucni(rec, 'casOdjezdu');
+    const patchZadost = uprava.patch.zadostOdjezd
+      ? { ...uprava.patch.zadostOdjezd, ...(kanal ? { kanal } : {}) }
+      : uprava.patch.zadostOdjezd;
     const dalsi = poznamka(
       rec,
       uprava.historie,
       {
         ...uprava.patch,
+        zadostOdjezd: patchZadost ?? null,
         casOdjezdu: drzi ? (rucni ? rec.casOdjezdu : drzi.cas) : rucni ? rec.casOdjezdu : cas,
         casOdjezduZadalHost: rucni ? rec.casOdjezduZadalHost : true,
+        zpravaOdjezdCekaPrectena: null,
       },
       now,
     );
@@ -1208,7 +1234,15 @@ export function zadostOdjezdu(
   }
 
   const vetaHistorie = od === 'objednat' ? 'Žádost přes stránku Objednat' : `Žádost o pozdější odjezd ve ${zobrazCas(cas)}`;
-  const dalsi = poznamka(rec, vetaHistorie, { zadostOdjezd: novaZadost(cas, kc, od, !dalsiHost, now) }, now);
+  const dalsi = poznamka(
+    rec,
+    vetaHistorie,
+    {
+      zadostOdjezd: novaZadost(cas, kc, od, !dalsiHost, now, kanal),
+      zpravaOdjezdCekaPrectena: null,
+    },
+    now,
+  );
   return { rec: dalsi, push: textPusheOdjezdu(popisHostaKratce(rec), cas, kc) };
 }
 

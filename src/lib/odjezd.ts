@@ -415,12 +415,21 @@ export function ukazatCasNaKarte(odjezd: string | null, dnes: string): boolean {
   return dnes === odjezd || dnes === posunDen(odjezd, -1);
 }
 
-/** Rámeček odjezdu. Po předání (ubytován) po celý pobyt. Jinak od poledne den před odjezdem. */
-export function ukazatRamecekOdjezdu(odjezd: string | null, now = new Date(), ubytovan = false): boolean {
+/**
+ * Rámeček odjezdu.
+ * Po odemčení průvodce / předání po celý pobyt.
+ * Jinak od poledne den před odjezdem (starší chování).
+ */
+export function ukazatRamecekOdjezdu(
+  odjezd: string | null,
+  now = new Date(),
+  ubytovan = false,
+  odemceno = false,
+): boolean {
   if (!odjezd) return false;
   const dnes = denPraha(now);
   if (dnes > odjezd) return false;
-  if (ubytovan) return true;
+  if (ubytovan || odemceno) return true;
   if (dnes === odjezd) return true;
   return dnes === posunDen(odjezd, -1) && hodinaPraha(now) >= HODINA_RAMCEKU_ODJEZDU;
 }

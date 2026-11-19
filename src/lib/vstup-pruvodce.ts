@@ -165,6 +165,9 @@ export type VysledekUlozeni =
       ok: true;
       uroven: UrovenPruvodce;
       cas?: string;
+      /** Pozdější odjezd čeká na schválení. */
+      zadostCeka?: boolean;
+      kanal?: 'whatsapp' | 'pruvodce' | 'sms';
       /** Hláška hostovi po uložení času odjezdu (ráno / večer). */
       zpravaOdjezdu?: {
         id: 'odjezd-prijati';
@@ -174,4 +177,7 @@ export type VysledekUlozeni =
         sbalenyTitulek: string;
       };
     }
-  | { ok: false; duvod: 'token' | 'cas' | 'telefon' | 'spz' | 'zpusob' | 'souhlas' | 'limit' | 'chybi' };
+  | {
+      ok: false;
+      duvod: 'token' | 'cas' | 'telefon' | 'spz' | 'zpusob' | 'souhlas' | 'limit' | 'chybi' | 'kanal';
+    };

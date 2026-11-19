@@ -86,6 +86,8 @@ export type RezervaceStav =
 
 export type HistorieAkce = { cas: string; co: string };
 
+export type OdjezdKanal = 'whatsapp' | 'pruvodce' | 'sms';
+
 export type ZadostOkna = {
   cas: string;
   kc: number;
@@ -101,6 +103,8 @@ export type ZadostOkna = {
    * dokud majitel novou žádost nepotvrdí.
    */
   drziPotvrzeni?: { cas: string; kc: number } | null;
+  /** Jak host chce dostat potvrzení pozdějšího odjezdu. */
+  kanal?: OdjezdKanal | null;
 };
 
 export type ObjednatPokus = { od: number; pocet: number };
@@ -160,6 +164,10 @@ export type RezervaceRecord = {
   pohodaDotaz: string | null;
   /** Den a čas odjezdu, na který už odešlo upozornění půl hodiny předem. */
   odjezdPushPul: string | null;
+  /** Klíč převzetí jiného bytu, u kterého už odešla upomínka vybrat prodloužení. */
+  prodlouzeniVyberPush: string | null;
+  /** Kdy host přečetl zprávu „čeká na schválení“ u pozdějšího odjezdu. */
+  zpravaOdjezdCekaPrectena: string | null;
   /** Kdy byl úklid tohoto odjezdu označen. null = ještě ne. */
   uklizenoKdy: string | null;
   /** Kdo úklid označil. */
@@ -677,6 +685,9 @@ function nactiZadost(raw: unknown): ZadostOkna | null {
       drziPotvrzeni = { cas: d.cas, kc: Math.round(d.kc) };
     }
   }
+  const kanalRaw = (z as { kanal?: unknown }).kanal;
+  const kanal =
+    kanalRaw === 'whatsapp' || kanalRaw === 'pruvodce' || kanalRaw === 'sms' ? kanalRaw : null;
   return {
     cas: z.cas,
     kc: Math.round(z.kc),
@@ -686,6 +697,7 @@ function nactiZadost(raw: unknown): ZadostOkna | null {
     hned: z.hned === true,
     upozorneno: z.upozorneno === true,
     ...(drziPotvrzeni ? { drziPotvrzeni } : {}),
+    ...(kanal ? { kanal } : {}),
   };
 }
 
@@ -758,6 +770,12 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     odjezdDotaz: typeof r.odjezdDotaz === 'string' && r.odjezdDotaz ? r.odjezdDotaz : null,
     pohodaDotaz: typeof r.pohodaDotaz === 'string' && r.pohodaDotaz ? r.pohodaDotaz : null,
     odjezdPushPul: typeof r.odjezdPushPul === 'string' && r.odjezdPushPul ? r.odjezdPushPul : null,
+    prodlouzeniVyberPush:
+      typeof r.prodlouzeniVyberPush === 'string' && r.prodlouzeniVyberPush ? r.prodlouzeniVyberPush : null,
+    zpravaOdjezdCekaPrectena:
+      typeof r.zpravaOdjezdCekaPrectena === 'string' && r.zpravaOdjezdCekaPrectena
+        ? r.zpravaOdjezdCekaPrectena
+        : null,
     uklizenoKdy: typeof r.uklizenoKdy === 'string' && r.uklizenoKdy ? r.uklizenoKdy : null,
     uklizenoKdo:
       r.uklizenoKdo === 'nikol'
@@ -932,6 +950,8 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     odjezdDotaz: null,
     pohodaDotaz: null,
     odjezdPushPul: null,
+    prodlouzeniVyberPush: null,
+    zpravaOdjezdCekaPrectena: null,
     uklizenoKdy: null,
     uklizenoKdo: null,
     zadostPrijezd: null,

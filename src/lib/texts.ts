@@ -375,8 +375,8 @@ export const poplatekVCene: LText = {
 };
 
 export const odjezdTextL: LText = {
-  cs: 'Check-out je do 10:00. Čas odjezdu si vyberte v průvodci během pobytu, nejlépe co nejdřív. Apartmán s vámi krátce projdeme a osobně ho převezmeme.',
-  en: 'Check-out is by 10:00. Choose your departure time in the guide during your stay, the sooner the better. We will walk through the apartment with you briefly and take it over in person.',
+  cs: 'Check-out je do 10:00. Čas odjezdu si vyberte níže, ideálně co nejdřív. Apartmán s vámi krátce projdeme a osobně ho převezmeme.',
+  en: 'Check-out is by 10:00. Choose your departure time below, the sooner the better. We will walk through the apartment with you briefly and take it over in person.',
   de: 'Check-out ist bis 10:00. Wählen Sie Ihre Abreisezeit während des Aufenthalts im Guide, am besten so früh wie möglich. Wir gehen die Wohnung kurz mit Ihnen durch und übernehmen sie persönlich.',
   pl: 'Check-out jest do 10:00. Godzinę wyjazdu wybierzcie w przewodniku w trakcie pobytu, najlepiej jak najwcześniej. Krótko przejdziemy z Wami apartament i odbierzemy go osobiście.',
   uk: 'Check-out до 10:00. Час виїзду оберіть у путівнику під час перебування, найкраще якомога раніше. Коротко пройдемо з вами апартаменти й особисто їх приймемо.',
@@ -1322,69 +1322,101 @@ export const ui = {
   } as LText,
 };
 
-/** Přechodová stránka po odjezdu. Text podle schváleného návrhu majitele 8. 11. 2026. */
+/** Přechodová stránka po odjezdu. Schváleno majitelem 19. 11. 2026 (dopis na rozloučenou, rezervace až pod podpisem). */
 export const expiredNadpis: LText = {
-  cs: 'Děkujeme, že jste byli našimi hosty.',
-  en: 'Thank you for being our guests.',
-  de: 'Danke, dass Sie unsere Gäste waren.',
-  pl: 'Dziękujemy, że byliście naszymi gośćmi.',
-  uk: 'Дякуємо, що були нашими гостями.',
-  'zh-Hant': '感謝您成為我們的客人。',
-  sv: 'Tack för att ni var våra gäster.',
-  es: 'Gracias por ser nuestros huéspedes.',
-  hu: 'Köszönjük, hogy a vendégeink voltak.',
-  da: 'Tak, fordi I var vores gæster.',
-  fr: 'Merci d’avoir été nos hôtes.',
-  it: 'Grazie per essere stati nostri ospiti.',
-  pt: 'Obrigado por terem sido nossos hóspedes.',
+  cs: 'Děkujeme za návštěvu.',
+  en: 'Thank you for your visit.',
+  de: 'Danke für Ihren Besuch.',
+  pl: 'Dziękujemy za wizytę.',
+  uk: 'Дякуємо за візит.',
+  'zh-Hant': '感謝您的光臨。',
+  sv: 'Tack för ert besök.',
+  es: 'Gracias por su visita.',
+  hu: 'Köszönjük a látogatást.',
+  da: 'Tak for besøget.',
+  fr: 'Merci de votre visite.',
+  it: 'Grazie della visita.',
+  pt: 'Obrigado pela vossa visita.',
 };
 
-export const expiredVeta1: LText = {
-  cs: 'Váš pobyt skončil a příjezdový průvodce již není aktivní.',
-  en: 'Your stay has ended and the arrival guide is no longer active.',
-  de: 'Ihr Aufenthalt ist beendet und der Anreiseführer ist nicht mehr aktiv.',
-  pl: 'Wasza wizyta się zakończyła i przewodnik przyjazdu nie jest już aktywny.',
-  uk: 'Ваше перебування завершилось, і путівник до приїзду вже неактивний.',
-  'zh-Hant': '您的住宿已結束，抵達指南已不再有效。',
-  sv: 'Er vistelse är avslutad och ankomstguiden är inte längre aktiv.',
-  es: 'Su estancia ha terminado y la guía de llegada ya no está activa.',
-  hu: 'Tartózkodásuk véget ért, és az érkezési útmutató már nem aktív.',
-  da: 'Jeres ophold er slut, og ankomstguiden er ikke længere aktiv.',
-  fr: 'Votre séjour est terminé et le guide d’arrivée n’est plus actif.',
-  it: 'Il soggiorno è terminato e la guida all’arrivo non è più attiva.',
-  pt: 'A vossa estadia terminou e o guia de chegada já não está ativo.',
+export const expiredDopis: LText = {
+  cs: 'Byli jsme rádi, že jsme vás mohli poznat a postarat se o vás. Doufáme, že vám pobyt udělal radost. Kdykoli se budete chtít vrátit, u nás vás vždy rádi uvidíme.',
+  en: 'We were glad to meet you and to look after you. We hope you enjoyed your stay. Whenever you would like to come back, you will always be welcome here.',
+  de: 'Wir haben uns gefreut, Sie kennenzulernen und für Sie da zu sein. Wir hoffen, Ihr Aufenthalt hat Ihnen Freude gemacht. Wann immer Sie wiederkommen möchten, sind Sie bei uns herzlich willkommen.',
+  pl: 'Cieszyliśmy się, że mogliśmy Was poznać i o Was zadbać. Mamy nadzieję, że pobyt sprawił Wam radość. Kiedy tylko zechcecie wrócić, zawsze chętnie Was u nas zobaczymy.',
+  uk: 'Ми були раді познайомитися з вами й подбати про вас. Сподіваємося, що перебування принесло вам радість. Коли б ви не захотіли повернутися, ми завжди будемо раді вас бачити.',
+  'zh-Hant': '很高興認識您，也很高興能照顧您。希望這次住宿讓您感到愉快。無論何時想再回來，我們都很歡迎您。',
+  sv: 'Vi var glada att få träffa er och ta hand om er. Vi hoppas att ni trivdes under vistelsen. När ni än vill komma tillbaka är ni alltid välkomna hos oss.',
+  es: 'Nos alegró conocerles y cuidar de ustedes. Esperamos que hayan disfrutado de su estancia. Siempre que quieran volver, estaremos encantados de recibirles.',
+  hu: 'Örültünk, hogy megismerhettük Önöket, és gondoskodhattunk Önökről. Reméljük, hogy jól érezték magukat nálunk. Bármikor szívesen látjuk Önöket újra.',
+  da: 'Vi var glade for at møde jer og tage os af jer. Vi håber, I har nydt opholdet. Når I har lyst til at komme igen, er I altid velkomne hos os.',
+  fr: 'Nous avons été heureux de vous rencontrer et de prendre soin de vous. Nous espérons que vous avez apprécié votre séjour. Chaque fois que vous souhaiterez revenir, vous serez les bienvenus.',
+  it: 'Siamo stati felici di conoscervi e di prenderci cura di voi. Speriamo che il soggiorno vi sia piaciuto. Ogni volta che vorrete tornare, sarete sempre i benvenuti.',
+  pt: 'Ficámos contentes por vos conhecer e cuidar de vocês. Esperamos que tenham gostado da estadia. Sempre que quiserem voltar, serão sempre bem-vindos.',
 };
 
-export const expiredVeta2: LText = {
-  cs: 'Budeme rádi, když se k nám někdy vrátíte.',
-  en: 'We will be glad if you come back to us sometime.',
-  de: 'Wir freuen uns, wenn Sie uns irgendwann wieder besuchen.',
-  pl: 'Będziemy zadowoleni, jeśli kiedyś do nas wrócicie.',
-  uk: 'Будемо раді, якщо колись до нас повернетесь.',
-  'zh-Hant': '若您日後再回來，我們會很高興。',
-  sv: 'Vi blir glada om ni kommer tillbaka till oss någon gång.',
-  es: 'Nos alegrará que vuelvan algún día.',
-  hu: 'Örülünk, ha egyszer visszatérnek hozzánk.',
-  da: 'Vi bliver glade, hvis I engang vender tilbage til os.',
-  fr: 'Nous serons heureux de vous revoir un jour.',
-  it: 'Saremo felici se tornerete da noi qualche volta.',
-  pt: 'Ficamos felizes se voltarem ter connosco algum dia.',
+export const expiredPodpis: LText = {
+  cs: 'Nikol a rodina VIVIEN',
+  en: 'Nikol & the VIVIEN family',
+  de: 'Nikol und Familie VIVIEN',
+  pl: 'Nikol i rodzina VIVIEN',
+  uk: 'Nikol і родина VIVIEN',
+  'zh-Hant': 'Nikol 與 VIVIEN 全家',
+  sv: 'Nikol och familjen VIVIEN',
+  es: 'Nikol y la familia VIVIEN',
+  hu: 'Nikol és a VIVIEN család',
+  da: 'Nikol og familien VIVIEN',
+  fr: 'Nikol et la famille VIVIEN',
+  it: 'Nikol e la famiglia VIVIEN',
+  pt: 'Nikol & a família VIVIEN',
+};
+
+export const expiredMost: LText = {
+  cs: 'Až budete plánovat další cestu, termín si vyberete tady.',
+  en: 'When you plan your next trip, you can choose your dates here.',
+  de: 'Wenn Sie Ihre nächste Reise planen, können Sie hier Ihren Termin wählen.',
+  pl: 'Gdy będziecie planować kolejną podróż, termin wybierzecie tutaj.',
+  uk: 'Коли плануватимете наступну поїздку, дату можна обрати тут.',
+  'zh-Hant': '規劃下一趟旅程時，可以在這裡選擇日期。',
+  sv: 'När ni planerar nästa resa kan ni välja datum här.',
+  es: 'Cuando planeen su próximo viaje, pueden elegir las fechas aquí.',
+  hu: 'Ha a következő utazásukat tervezik, itt választhatnak időpontot.',
+  da: 'Når I planlægger jeres næste rejse, kan I vælge datoer her.',
+  fr: 'Pour votre prochain voyage, vous pourrez choisir vos dates ici.',
+  it: 'Quando pianificherete il prossimo viaggio, potrete scegliere le date qui.',
+  pt: 'Quando planearem a próxima viagem, podem escolher as datas aqui.',
 };
 
 export const expiredCta: LText = {
-  cs: 'Rezervovat další pobyt',
-  en: 'Book another stay',
-  de: 'Weiteren Aufenthalt buchen',
-  pl: 'Zarezerwujcie kolejny pobyt',
-  uk: 'Забронювати наступне перебування',
-  'zh-Hant': '再訂一次住宿',
-  sv: 'Boka en ny vistelse',
-  es: 'Reservar otra estancia',
-  hu: 'Újabb tartózkodás foglalása',
-  da: 'Book et nyt ophold',
-  fr: 'Réserver un autre séjour',
-  it: 'Prenotare un altro soggiorno',
-  pt: 'Reservar outra estadia',
+  cs: 'Rezervovat pobyt',
+  en: 'Book a stay',
+  de: 'Aufenthalt buchen',
+  pl: 'Zarezerwujcie pobyt',
+  uk: 'Забронювати перебування',
+  'zh-Hant': '預訂住宿',
+  sv: 'Boka en vistelse',
+  es: 'Reservar una estancia',
+  hu: 'Szállás foglalása',
+  da: 'Book et ophold',
+  fr: 'Réserver un séjour',
+  it: 'Prenotare un soggiorno',
+  pt: 'Reservar uma estadia',
+};
+
+export const expiredPoznamka: LText = {
+  cs: 'Příjezdový průvodce už není aktivní.',
+  en: 'The arrival guide is no longer active.',
+  de: 'Der Anreiseführer ist nicht mehr aktiv.',
+  pl: 'Przewodnik przyjazdu nie jest już aktywny.',
+  uk: 'Путівник до приїзду вже неактивний.',
+  'zh-Hant': '抵達指南已不再有效。',
+  sv: 'Ankomstguiden är inte längre aktiv.',
+  es: 'La guía de llegada ya no está activa.',
+  hu: 'Az érkezési útmutató már nem aktív.',
+  da: 'Ankomstguiden er ikke længere aktiv.',
+  fr: 'Le guide d’arrivée n’est plus actif.',
+  it: 'La guida all’arrivo non è più attiva.',
+  pt: 'O guia de chegada já não está ativo.',
 };
 
 export const expiredHelp: LText = {
@@ -1421,6 +1453,9 @@ export const expiredZavolat: LText = {
 
 /** Starý nadpis (testy / záloha). */
 export const expiredTexts: LText = expiredNadpis;
+/** Staré názvy ponechané kvůli případným dalším importům. */
+export const expiredVeta1: LText = expiredPoznamka;
+export const expiredVeta2: LText = expiredDopis;
 
 export const SECTION_NAV: Record<string, LText> = {
   'zadost-o-parkovani': {

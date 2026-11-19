@@ -29,6 +29,7 @@ import {
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { ukolZUpozorneniUrl, zpravaZUpozorneniUrl, type UkolUpozorneni } from '@/lib/prehled-odkaz';
+import { textSchvaleniOdjezduOdeslat } from '@/lib/odjezd-souhlas';
 import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import {
@@ -1820,6 +1821,26 @@ export function PrehledClient({
       return;
     }
     setDotazPrestoPrijezd(null);
+    if (akce === 'potvrdit-odjezd') {
+      const json = (await res.json().catch(() => null)) as {
+        odjezdSchvaleno?: {
+          cas: string;
+          kc: number;
+          kanal: 'whatsapp' | 'pruvodce' | 'sms' | null;
+          jazyk: GuideLang | null;
+          telefonWa: string | null;
+          telefon: string | null;
+        } | null;
+      } | null;
+      const schv = json?.odjezdSchvaleno;
+      if (schv?.kanal === 'whatsapp' && schv.telefonWa) {
+        const text = textSchvaleniOdjezduOdeslat(schv.cas, schv.kc, schv.jazyk);
+        window.open(odkazWhatsAppPrehled(schv.telefonWa, text, navigator.userAgent), '_blank');
+      } else if (schv?.kanal === 'sms' && schv.telefon) {
+        const text = textSchvaleniOdjezduOdeslat(schv.cas, schv.kc, schv.jazyk);
+        window.location.href = smsOdkaz(schv.telefon, text, jeIos(navigator.userAgent));
+      }
+    }
     window.location.reload();
   }
 

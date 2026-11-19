@@ -30,6 +30,8 @@ export const PREVZETI_NEZNAMY_HODINA = 12;
 export const UCHOVAT_KARTU_MESICU = 24;
 /** Kolik minut před známým odjezdem přijde upozornění. */
 export const PREDSTIH_ODJEZDU_MIN = 30;
+/** Kolik minut před převzetím jiného bytu připomenout výběr prodloužení. */
+export const PREDSTIH_VYBER_PRODLOUZENI_MIN = 10;
 
 /**
  * Příplatek za pozdní příjezd (veřejná sazba).

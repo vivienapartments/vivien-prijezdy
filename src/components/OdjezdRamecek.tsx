@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { denPraha } from '@/lib/brana';
-import { CHECKOUT } from '@/lib/constants';
+import { CHECKOUT, OKNO_KC } from '@/lib/constants';
 import { t } from '@/lib/i18n';
 import {
   casyPozde,
+  jeCasPozde,
   optionPozde,
   posunDen,
   skupinaOdjezd,
@@ -13,6 +14,16 @@ import {
   textStavu,
   vety,
 } from '@/lib/okno-pobytu';
+import {
+  ODJEZD_CEKA_NADPIS,
+  ODJEZD_KANAL_OTAZKA,
+  ODJEZD_KANAL_STITKY,
+  ODJEZD_SOUHLAS_NADPIS,
+  type OdjezdKanal,
+  rozpisPozde,
+  textCekaOdjezdu,
+  textSouhlasuOdjezdu,
+} from '@/lib/odjezd-souhlas';
 import {
   jeCasOdjezduPovoleny,
   jeHodina,
@@ -27,7 +38,7 @@ import type { GuideLang } from '@/lib/types';
 import * as VT from '@/lib/vstup-texty';
 
 type ZpravaOdjezduAck = {
-  id: 'odjezd-prijati';
+  id: 'odjezd-prijati' | 'odjezd-ceka';
   nova: true;
   nadpis: string;
   text: string;
@@ -42,12 +53,15 @@ type Props = {
   token: string | null;
   cteni: boolean;
   ubytovan?: boolean;
+  /** Průvodce odemčený (kroky hotové), i před předáním. */
+  odemceno?: boolean;
   nejpozdeji?: string;
   zadostOdjezd?: ZadostOkna | null;
   onZpravaOdjezdu?: (zprava: ZpravaOdjezduAck) => void;
 };
 
 const VLASTNI = '__vlastni__';
+const KANALY: OdjezdKanal[] = ['whatsapp', 'pruvodce', 'sms'];
 
 function klicVidel(token: string | null, den: string | null): string {
   return `pv-odjezd-videl:${token || den || 'x'}`;
@@ -77,6 +91,7 @@ export function OdjezdRamecek({
   token,
   cteni,
   ubytovan = false,
+  odemceno = false,
   nejpozdeji = '14:00',
   zadostOdjezd = null,
   onZpravaOdjezdu,
@@ -95,12 +110,14 @@ export function OdjezdRamecek({
   const [vlastni, setVlastni] = useState(() => (jeHodina(cas) && !vSeznamu(cas) ? cas : ''));
   const [cekam, setCekam] = useState(false);
   const [chyba, setChyba] = useState('');
+  const [souhlasCas, setSouhlasCas] = useState<string | null>(null);
+  const [kanal, setKanal] = useState<OdjezdKanal | null>(null);
 
   useEffect(() => {
     oznacVidel(klic);
   }, [klic]);
 
-  if (!ukazatRamecekOdjezdu(den, new Date(), ubytovan)) return null;
+  if (!ukazatRamecekOdjezdu(den, new Date(), ubytovan, odemceno)) return null;
 
   const text = TEXT_ODJEZDU[lang] || TEXT_ODJEZDU.en;
   const tt = (x: Parameters<typeof t>[0]) => t(x, lang);
@@ -112,16 +129,14 @@ export function OdjezdRamecek({
   const stav = textStavu(lang, 'odjezd', zadostOdjezd);
   const casNaRadku = zadostOdjezd?.cas || ulozeny || CHECKOUT;
   const jeVlastni = vyber === VLASTNI;
+  const rozpis = souhlasCas ? rozpisPozde(souhlasCas) : null;
 
-  async function ulozit() {
-    const casUlozit = jeVlastni ? vlastni.trim() : vyber;
-    if (!jeCasOdjezduPovoleny(casUlozit)) {
-      setChyba(tt(VT.odjezdVlastniChyba));
-      return;
-    }
+  async function ulozitHotovy(casUlozit: string, kanalVolba: OdjezdKanal | null) {
     if (cteni || !token) {
       setUlozeny(casUlozit);
       setOtevreno(false);
+      setSouhlasCas(null);
+      setKanal(null);
       return;
     }
     setCekam(true);
@@ -129,11 +144,18 @@ export function OdjezdRamecek({
     const res = await fetch('/api/pruvodce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, akce: 'odjezd', cas: casUlozit }),
+      body: JSON.stringify({
+        token,
+        akce: 'odjezd',
+        cas: casUlozit,
+        ...(kanalVolba ? { kanal: kanalVolba } : {}),
+      }),
     });
     const json = (await res.json().catch(() => null)) as {
       ok?: boolean;
       cas?: string;
+      zadostCeka?: boolean;
+      kanal?: OdjezdKanal;
       zpravaOdjezdu?: ZpravaOdjezduAck;
     } | null;
     setCekam(false);
@@ -151,7 +173,47 @@ export function OdjezdRamecek({
       setVlastni(hotovo);
     }
     setOtevreno(false);
-    if (json.zpravaOdjezdu) onZpravaOdjezdu?.(json.zpravaOdjezdu);
+    setSouhlasCas(null);
+    setKanal(null);
+    if (json.zadostCeka && json.kanal) {
+      onZpravaOdjezdu?.({
+        id: 'odjezd-ceka',
+        nova: true,
+        nadpis: t(ODJEZD_CEKA_NADPIS, lang),
+        text: textCekaOdjezdu(hotovo, rozpisPozde(hotovo)?.kc || 0, json.kanal, lang),
+        sbalenyTitulek: t(ODJEZD_CEKA_NADPIS, lang),
+      });
+    } else if (json.zpravaOdjezdu) {
+      onZpravaOdjezdu?.(json.zpravaOdjezdu);
+    }
+  }
+
+  async function ulozit() {
+    const casUlozit = jeVlastni ? vlastni.trim() : vyber;
+    if (!jeCasOdjezduPovoleny(casUlozit) && !jeCasPozde(casUlozit)) {
+      setChyba(tt(VT.odjezdVlastniChyba));
+      return;
+    }
+    if (jeCasPozde(casUlozit)) {
+      if (!jeCasOdjezduPovoleny(casUlozit) && !rozpisPozde(casUlozit)) {
+        setChyba(tt(VT.odjezdVlastniChyba));
+        return;
+      }
+      setSouhlasCas(casUlozit);
+      setKanal(null);
+      setChyba('');
+      return;
+    }
+    if (!jeCasOdjezduPovoleny(casUlozit)) {
+      setChyba(tt(VT.odjezdVlastniChyba));
+      return;
+    }
+    await ulozitHotovy(casUlozit, null);
+  }
+
+  async function potvrditSouhlas() {
+    if (!souhlasCas || !kanal) return;
+    await ulozitHotovy(souhlasCas, kanal);
   }
 
   async function zrusitZadost() {
@@ -171,98 +233,151 @@ export function OdjezdRamecek({
   }
 
   return (
-    <details
-      className="pv-sbal pv-odjezd"
-      lang={lang}
-      open={otevreno}
-      onToggle={(e) => {
-        if (zamceno) {
-          (e.target as HTMLDetailsElement).open = false;
-          return;
-        }
-        setOtevreno((e.target as HTMLDetailsElement).open);
-      }}
-    >
-      <summary>
-        <span className="pv-sbal__text">
-          <span className="pv-sbal__nadpis">
-            {stav?.kratce
-              ? stav.kratce
-              : `${text.radek} ${zobrazCas(casNaRadku)}${zamceno ? '' : ` · ${text.zmenit}`}`}
-          </span>
-          {stav?.veta && !otevreno ? <span className="pv-sbal__veta">{stav.veta}</span> : null}
-        </span>
-        {zamceno ? null : (
-          <span className="pv-sbal__btn" aria-hidden="true">
-            <span className="pv-sbal__btn-open">
-              {tt(TX.ui.expandSection)} ▾
+    <>
+      <details
+        className="pv-sbal pv-odjezd"
+        lang={lang}
+        open={otevreno}
+        onToggle={(e) => {
+          if (zamceno) {
+            (e.target as HTMLDetailsElement).open = false;
+            return;
+          }
+          setOtevreno((e.target as HTMLDetailsElement).open);
+        }}
+      >
+        <summary>
+          <span className="pv-sbal__text">
+            <span className="pv-sbal__nadpis">
+              {stav?.kratce
+                ? stav.kratce
+                : `${text.radek} ${zobrazCas(casNaRadku)}${zamceno ? '' : ` · ${text.zmenit}`}`}
             </span>
-            <span className="pv-sbal__btn-close">
-              {tt(TX.ui.collapseSection)} ▴
-            </span>
+            {stav?.veta && !otevreno ? <span className="pv-sbal__veta">{stav.veta}</span> : null}
           </span>
-        )}
-      </summary>
-      <h2 className="pv-odjezd__nadpis-sbal">{nadpis}</h2>
-      {stav?.veta ? <p>{stav.veta}</p> : null}
-      {zadostOdjezd?.stav === 'ceka' ? (
-        <button type="button" disabled={cekam} onClick={() => void zrusitZadost()}>
-          {tOkno.zrusit}
-        </button>
-      ) : (
-        <>
-          <label>
-            <select
-              value={vyber}
-              onChange={(e) => {
-                setVyber(e.target.value);
-                setChyba('');
-              }}
-              disabled={cteni || zamceno}
-            >
-              <optgroup label={skupinaOdjezd(lang)}>
-                {bezne.map((slot) => (
-                  <option key={slot} value={slot}>
-                    {zobrazCas(slot)}
-                  </option>
-                ))}
-              </optgroup>
-              {pozde.length ? (
-                <optgroup label={skupinaPozde(lang)}>
-                  {pozde.map((slot) => (
-                    <option key={slot} value={slot}>
-                      {optionPozde(slot)}
-                    </option>
-                  ))}
-                </optgroup>
-              ) : null}
-              <option value={VLASTNI}>{tt(VT.odjezdJinyCas)}</option>
-            </select>
-          </label>
-          {jeVlastni ? (
-            <label className="pv-odjezd__vlastni">
-              {tt(VT.odjezdVlastniPopisek)}
-              <input
-                type="time"
-                min="06:00"
-                max="14:00"
-                step={60}
-                value={vlastni}
+          {zamceno ? null : (
+            <span className="pv-sbal__btn" aria-hidden="true">
+              <span className="pv-sbal__btn-open">
+                {tt(TX.ui.expandSection)} ▾
+              </span>
+              <span className="pv-sbal__btn-close">
+                {tt(TX.ui.collapseSection)} ▴
+              </span>
+            </span>
+          )}
+        </summary>
+        <h2 className="pv-odjezd__nadpis-sbal">{nadpis}</h2>
+        {stav?.veta ? <p>{stav.veta}</p> : null}
+        {zadostOdjezd?.stav === 'ceka' ? (
+          <button type="button" disabled={cekam} onClick={() => void zrusitZadost()}>
+            {tOkno.zrusit}
+          </button>
+        ) : (
+          <>
+            <label>
+              <select
+                value={vyber}
                 onChange={(e) => {
-                  setVlastni(e.target.value);
+                  setVyber(e.target.value);
                   setChyba('');
                 }}
                 disabled={cteni || zamceno}
-              />
+              >
+                <optgroup label={skupinaOdjezd(lang)}>
+                  {bezne.map((slot) => (
+                    <option key={slot} value={slot}>
+                      {zobrazCas(slot)}
+                    </option>
+                  ))}
+                </optgroup>
+                {pozde.length ? (
+                  <optgroup label={skupinaPozde(lang)}>
+                    {pozde.map((slot) => (
+                      <option key={slot} value={slot}>
+                        {optionPozde(slot)}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
+                <option value={VLASTNI}>{tt(VT.odjezdJinyCas)}</option>
+              </select>
             </label>
-          ) : null}
-          <p className="pv-odjezd__poznamka">{text.poznamka}</p>
-          <button type="button" disabled={cekam || zamceno} onClick={() => void ulozit()}>
-            {text.ulozit}
-          </button>
-        </>
-      )}
-      {chyba ? <p className="pv-odjezd__poznamka">{chyba}</p> : null}
-    </details>
+            {jeVlastni ? (
+              <label className="pv-odjezd__vlastni">
+                {tt(VT.odjezdVlastniPopisek)}
+                <input
+                  type="time"
+                  min="06:00"
+                  max="14:00"
+                  step={60}
+                  value={vlastni}
+                  onChange={(e) => {
+                    setVlastni(e.target.value);
+                    setChyba('');
+                  }}
+                  disabled={cteni || zamceno}
+                />
+              </label>
+            ) : null}
+            <p className="pv-odjezd__poznamka">{text.poznamka}</p>
+            <button type="button" disabled={cekam || zamceno} onClick={() => void ulozit()}>
+              {text.ulozit}
+            </button>
+          </>
+        )}
+        {chyba ? <p className="pv-odjezd__poznamka">{chyba}</p> : null}
+      </details>
+
+      {souhlasCas && rozpis ? (
+        <div className="pv-zprava-overlay" role="dialog" aria-modal="true">
+          <div className="pv-zprava-overlay__karta pv-zprava-overlay__karta--prani">
+            <h3 className="pv-zprava-overlay__nadpis">{tt(ODJEZD_SOUHLAS_NADPIS)}</h3>
+            <p className="pv-zprava-overlay__text">
+              {textSouhlasuOdjezdu(souhlasCas, rozpis.kc, lang)}
+            </p>
+            <p className="pv-odjezd__castka">
+              {zobrazCas(souhlasCas)} · +{rozpis.kc} Kč
+              <span>
+                {rozpis.pulhodin} × 30 min · {OKNO_KC} Kč
+              </span>
+            </p>
+            <p className="pv-zprava-overlay__text">{tt(ODJEZD_KANAL_OTAZKA)}</p>
+            <div className="pv-odjezd__kanaly">
+              {KANALY.map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  className={kanal === k ? 'pv-odjezd__kanal pv-odjezd__kanal--ano' : 'pv-odjezd__kanal'}
+                  onClick={() => setKanal(k)}
+                >
+                  {tt(ODJEZD_KANAL_STITKY[k])}
+                </button>
+              ))}
+            </div>
+            <div className="pv-zprava-overlay__akce">
+              <button
+                type="button"
+                className="pv-zprava-overlay__btn"
+                disabled={cekam}
+                onClick={() => {
+                  setSouhlasCas(null);
+                  setKanal(null);
+                }}
+              >
+                Ne
+              </button>
+              <button
+                type="button"
+                className="pv-zprava-overlay__btn pv-zprava-overlay__btn--ano"
+                disabled={cekam || !kanal}
+                onClick={() => void potvrditSouhlas()}
+              >
+                Ano
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

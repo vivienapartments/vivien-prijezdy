@@ -565,6 +565,26 @@ export async function POST(request: Request): Promise<NextResponse> {
       return chyba(400, 'Teď to nejde potvrdit.');
     }
     await store.setRezervace(id, dalsi);
+    if (akce === 'potvrdit-odjezd') {
+      const z = dalsi.zadostOdjezd;
+      const kanal = z?.kanal === 'whatsapp' || z?.kanal === 'sms' || z?.kanal === 'pruvodce' ? z.kanal : null;
+      return NextResponse.json(
+        {
+          ok: true,
+          odjezdSchvaleno: z
+            ? {
+                cas: z.cas,
+                kc: z.kc,
+                kanal,
+                jazyk: dalsi.jazyk,
+                telefonWa: dalsi.telefonWa,
+                telefon: dalsi.telefon || dalsi.telefonBrana,
+              }
+            : null,
+        },
+        { headers: noStore },
+      );
+    }
     return NextResponse.json({ ok: true }, { headers: noStore });
   }
 

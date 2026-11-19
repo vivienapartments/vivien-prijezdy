@@ -752,11 +752,14 @@ export function Guide({
               token={vstup?.cteni ? null : (vstup?.token ?? null)}
               cteni={Boolean(vstup?.cteni) || !vstup?.token}
               ubytovan={ubytovan || Boolean(ziveKody)}
+              odemceno
               nejpozdeji={okno?.nejpozdeji}
               zadostOdjezd={okno?.zadostOdjezd ?? null}
               onZpravaOdjezdu={(zprava) => {
                 setZpravyLokal((prev) => {
-                  const bez = prev.filter((z) => z.id !== 'odjezd-prijati' && z.id !== 'odjezd');
+                  const bez = prev.filter(
+                    (z) => z.id !== 'odjezd-prijati' && z.id !== 'odjezd' && z.id !== 'odjezd-ceka',
+                  );
                   return [...bez, zprava];
                 });
               }}
@@ -1240,6 +1243,30 @@ export function Guide({
                           </h2>
                         </div>
                         <p>{tt(TX.odjezdTextL)}</p>
+                        {!ubytovan && !ziveKody && krokyHotove ? (
+                          <OdjezdRamecek
+                            lang={lang}
+                            den={odjezd?.den ?? null}
+                            cas={odjezd?.cas ?? null}
+                            rucni={Boolean(odjezd?.rucni)}
+                            token={vstup?.cteni ? null : (vstup?.token ?? null)}
+                            cteni={Boolean(vstup?.cteni) || !vstup?.token}
+                            odemceno
+                            nejpozdeji={okno?.nejpozdeji}
+                            zadostOdjezd={okno?.zadostOdjezd ?? null}
+                            onZpravaOdjezdu={(zprava) => {
+                              setZpravyLokal((prev) => {
+                                const bez = prev.filter(
+                                  (z) =>
+                                    z.id !== 'odjezd-prijati' &&
+                                    z.id !== 'odjezd' &&
+                                    z.id !== 'odjezd-ceka',
+                                );
+                                return [...bez, zprava];
+                              });
+                            }}
+                          />
+                        ) : null}
                       </>
                     ) : (
                       <>

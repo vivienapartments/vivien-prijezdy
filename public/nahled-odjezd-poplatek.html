@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Náhled – odjezd, souhlas a upomínka</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #1c1712;
+      --ink: #f5efe3;
+      --muted: #cbbba8;
+      --gold: #c9a84c;
+      --gold-soft: #b89a6a;
+      --line: #3d342a;
+      --font-display: "Cormorant Garamond", Georgia, serif;
+      --font-body: "DM Sans", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      background: #12100e;
+      color: var(--ink);
+      padding: 1rem 0.75rem 3rem;
+    }
+    .intro {
+      max-width: 42rem;
+      margin: 0 auto 1.25rem;
+      padding: 0 0.35rem;
+    }
+    .intro h1 {
+      margin: 0 0 0.35rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.55rem;
+      color: var(--gold);
+    }
+    .intro p {
+      margin: 0 0 0.45rem;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+    }
+    .grid {
+      display: grid;
+      gap: 1.75rem;
+      max-width: 42rem;
+      margin: 0 auto;
+    }
+    @media (min-width: 900px) {
+      .grid { grid-template-columns: 1fr 1fr; max-width: 56rem; }
+    }
+    .blok h2 {
+      margin: 0 0 0.45rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--gold);
+    }
+    .blok .popis {
+      margin: 0 0 0.75rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+    .phone {
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      overflow: hidden;
+      position: relative;
+      min-height: 420px;
+    }
+    .phone--admin { min-height: 280px; }
+    .fake-guide {
+      padding: 1rem 1rem 5.5rem;
+      opacity: 0.45;
+    }
+    .fake-guide .bar {
+      height: 10px;
+      border-radius: 6px;
+      background: #2a241c;
+      margin-bottom: 0.55rem;
+    }
+    .fake-guide .bar.w60 { width: 60%; }
+    .fake-guide .bar.w80 { width: 80%; }
+    .fake-guide .card {
+      margin-top: 0.9rem;
+      padding: 0.85rem;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #221c16;
+    }
+    .fake-guide .card strong {
+      display: block;
+      color: var(--gold);
+      font-size: 0.85rem;
+      margin-bottom: 0.35rem;
+    }
+    .fake-guide .card p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 8, 6, 0.72);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0.85rem;
+    }
+    .dialog {
+      width: 100%;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #241e17;
+      padding: 1.1rem 1rem 1rem;
+    }
+    .dialog h3 {
+      margin: 0 0 0.65rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.25rem;
+      color: var(--ink);
+      line-height: 1.25;
+    }
+    .dialog p {
+      margin: 0 0 0.55rem;
+      color: color-mix(in srgb, var(--ink) 82%, transparent);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      text-align: justify;
+      hyphens: auto;
+    }
+    .dialog .castka {
+      margin: 0.75rem 0 1rem;
+      padding: 0.7rem 0.8rem;
+      border-radius: 10px;
+      border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+      background: color-mix(in srgb, var(--gold) 12%, transparent);
+      color: var(--gold);
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    .btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.6rem;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: default;
+    }
+    .btn--ano {
+      background: var(--gold-soft);
+      color: #1a1510;
+      border-color: transparent;
+    }
+    .btn--ne {
+      background: transparent;
+      color: var(--ink);
+    }
+    .zprava {
+      margin: 1rem;
+      padding: 0.95rem 1rem;
+      border-radius: 12px;
+      border-left: 3px solid var(--gold);
+      background: #221c16;
+      border: 1px solid var(--line);
+      border-left-width: 3px;
+      border-left-color: var(--gold);
+    }
+    .zprava .stitek {
+      margin: 0 0 0.35rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .zprava h3 {
+      margin: 0 0 0.4rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    .zprava p {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      color: color-mix(in srgb, var(--ink) 80%, transparent);
+      text-align: justify;
+      hyphens: auto;
+    }
+    .admin {
+      padding: 1rem;
+    }
+    .admin .chip {
+      display: inline-block;
+      margin-bottom: 0.65rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, #c45c3a 25%, transparent);
+      color: #f0b8a4;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .admin h3 {
+      margin: 0 0 0.4rem;
+      font-size: 1.05rem;
+      color: var(--ink);
+    }
+    .admin p {
+      margin: 0 0 0.75rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+    .admin .radek {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 10px;
+      background: #2a241c;
+      border: 1px solid var(--line);
+      font-size: 0.88rem;
+    }
+    .admin .radek strong { color: var(--gold); }
+    .varianty {
+      max-width: 42rem;
+      margin: 2rem auto 0;
+      padding: 0 0.35rem;
+    }
+    .varianty h2 {
+      margin: 0 0 0.75rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.25rem;
+      color: var(--gold);
+    }
+    .var {
+      margin-bottom: 1rem;
+      padding: 0.9rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #1a1612;
+    }
+    .var .tag {
+      display: inline-block;
+      margin-bottom: 0.4rem;
+      color: var(--gold);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+    .var p {
+      margin: 0 0 0.4rem;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+    .var .en {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="intro">
+    <h1>Náhled: pozdní odjezd</h1>
+    <p>1) Host potvrdí čas a poplatek a zvolí kanál (WhatsApp / průvodce / SMS). Bez volby dál nejde. 2) Zpráva „čeká na schválení“ řekne, kudy přijde potvrzení. 3) Vám 10&nbsp;min před jiným převzetím upomínka vybrat peníze.</p>
+  </div>
+
+  <div class="grid">
+    <section class="blok">
+      <h2>1. Host · souhlas + jak dostane potvrzení</h2>
+      <p class="popis">Nejdřív Ano/Ne. Pak povinná volba kanálu. Bez ní nepokračuje. Ne u poplatku = zpět do editace času.</p>
+      <div class="phone" style="min-height:520px">
+        <div class="fake-guide">
+          <div class="bar w60"></div>
+          <div class="bar w80"></div>
+          <div class="card">
+            <strong>Odjezd</strong>
+            <p>Check-out do 10:00. Vybraný čas 12:00 · pozdější odjezd.</p>
+          </div>
+        </div>
+        <div class="overlay">
+          <div class="dialog">
+            <h3>Potvrzení odjezdu</h3>
+            <p>Souhlasíte se změnou času odjezdu na 12:00 a s poplatkem 300&nbsp;Kč?</p>
+            <div class="castka">12:00 · +300 Kč<br /><span style="font-weight:500;font-size:0.8rem;opacity:.85">4 × 30 min po 10:00 · 75 Kč</span></div>
+            <p style="margin:0 0 0.45rem;font-size:0.82rem;color:var(--muted)">Jak vám máme napsat, až to schválíme?</p>
+            <div class="btns" style="grid-template-columns:1fr;gap:0.4rem;margin-bottom:0.75rem">
+              <div class="btn btn--ano" style="border-radius:10px">WhatsApp</div>
+              <div class="btn btn--ne" style="border-radius:10px">V průvodci</div>
+              <div class="btn btn--ne" style="border-radius:10px">SMS</div>
+            </div>
+            <div class="btns">
+              <div class="btn btn--ne">Ne</div>
+              <div class="btn btn--ano" style="opacity:0.45">Ano</div>
+            </div>
+            <p style="margin:0.55rem 0 0;font-size:0.75rem;color:var(--muted);text-align:center">Ano jde až po volbě kanálu</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="blok">
+      <h2>2. Host · čeká na schválení</h2>
+      <p class="popis">Text podle zvoleného kanálu. Příklad: zvolil WhatsApp.</p>
+      <div class="phone">
+        <div class="fake-guide" style="opacity:1;padding-bottom:1rem">
+          <div class="bar w60"></div>
+          <div class="zprava">
+            <p class="stitek">Zpráva od nás</p>
+            <h3>Čeká na schválení</h3>
+            <p>Čas odjezdu 12:00 a poplatek 300&nbsp;Kč jsme přijali. Až ověříme, že je to možné, napíšeme vám na WhatsApp.</p>
+          </div>
+          <div class="card">
+            <strong>Odjezd · 12:00</strong>
+            <p>Pozdější odjezd +300 Kč (potvrdíme) · WhatsApp</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="blok">
+      <h2>3. Vy · upomínka 10 min před jiným převzetím</h2>
+      <p class="popis">Příklad: v 10:50 jdete přebírat V3. Host ve V2 má prodloužení do 12:00 a ještě nezaplatil.</p>
+      <div class="phone phone--admin">
+        <div class="admin">
+          <span class="chip">Za 10 min · převzetí V3</span>
+          <h3>Vyberte prodloužení u Novák · V2</h3>
+          <p>Jdete přebírat V3. U Nováka (V2) je odjezd 12:00 · +300&nbsp;Kč ještě nezaplaceno. Zajděte k němu teď a vyberte platbu, než prodloužení použije.</p>
+          <div class="radek">
+            <span>V2 · Novák</span>
+            <strong>300 Kč</strong>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="blok">
+      <h2>4. Vy · po schválení</h2>
+      <p class="popis">V průvodci zpráva vždy. Když host zvolil WhatsApp nebo SMS, otevře se okno s hotovou zprávou k odeslání.</p>
+      <div class="phone phone--admin">
+        <div class="admin">
+          <span class="chip" style="background:color-mix(in srgb, var(--gold) 22%, transparent);color:var(--gold)">Schváleno · WhatsApp</span>
+          <h3>Odjezd 12:00 · +300 Kč</h3>
+          <p>Host zvolil WhatsApp. Otevře se chat s textem potvrzení. Vy jen odešlete.</p>
+          <div class="btns" style="grid-template-columns:1fr">
+            <div class="btn btn--ano">Otevřít WhatsApp s potvrzením</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="varianty">
+    <h2>Bod 2 · text podle kanálu</h2>
+
+    <div class="var">
+      <span class="tag">WhatsApp</span>
+      <p>Čas odjezdu 12:00 a poplatek 300&nbsp;Kč jsme přijali. Až ověříme, že je to možné, napíšeme vám na WhatsApp.</p>
+    </div>
+
+    <div class="var">
+      <span class="tag">Průvodce</span>
+      <p>Čas odjezdu 12:00 a poplatek 300&nbsp;Kč jsme přijali. Až ověříme, že je to možné, napíšeme vám sem do průvodce.</p>
+    </div>
+
+    <div class="var">
+      <span class="tag">SMS</span>
+      <p>Čas odjezdu 12:00 a poplatek 300&nbsp;Kč jsme přijali. Až ověříme, že je to možné, pošleme vám SMS.</p>
+    </div>
+  </div>
+</body>
+</html>

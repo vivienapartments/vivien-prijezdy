@@ -2,10 +2,12 @@ import { NIKOL_PHONE, odkazRezervaceWeb } from '@/lib/constants';
 import { t, toTelHref } from '@/lib/i18n';
 import {
   expiredCta,
+  expiredDopis,
   expiredHelp,
+  expiredMost,
   expiredNadpis,
-  expiredVeta1,
-  expiredVeta2,
+  expiredPodpis,
+  expiredPoznamka,
   expiredZavolat,
 } from '@/lib/texts';
 import type { GuideLang } from '@/lib/types';
@@ -31,8 +33,10 @@ export function Expired({ lang = 'cs' }: { lang?: GuideLang }) {
             alt="VIVIEN Apartments"
           />
           <h1>{t(expiredNadpis, lang)}</h1>
-          <p>{t(expiredVeta1, lang)}</p>
-          <p>{t(expiredVeta2, lang)}</p>
+          <p className="pv-expired__dopis">{t(expiredDopis, lang)}</p>
+          <p className="pv-expired__podpis">{t(expiredPodpis, lang)}</p>
+          <hr className="pv-expired__oddel" aria-hidden="true" />
+          <p className="pv-expired__most">{t(expiredMost, lang)}</p>
           <a
             className="pv-expired__cta"
             href={odkazRezervaceWeb(lang)}
@@ -48,6 +52,7 @@ export function Expired({ lang = 'cs' }: { lang?: GuideLang }) {
           <a className="pv-expired__tel" href={toTelHref(NIKOL_PHONE)}>
             {t(expiredZavolat, lang)} · {tel}
           </a>
+          <p className="pv-expired__poznamka">{t(expiredPoznamka, lang)}</p>
           <div className="pv-expired__znacka" aria-label="VIVIEN Apartments">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

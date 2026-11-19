@@ -105,6 +105,7 @@ export async function ulozVstupHosta(
     casOdjezd?: string;
     zrusit?: string;
     od?: string;
+    kanal?: string;
   },
 ): Promise<VysledekUlozeni> {
   let overeni;
@@ -178,7 +179,14 @@ export async function ulozVstupHosta(
   if (telo.akce === 'odjezd') {
     const cas = (telo.cas || '').trim();
     if (jeCasPozde(cas)) {
-      const v = zadostOdjezdu(rec, await vsechny(), cas, 'pruvodce', new Date());
+      const kanalRaw = typeof telo.kanal === 'string' ? telo.kanal : null;
+      const kanal =
+        kanalRaw === 'whatsapp' || kanalRaw === 'pruvodce' || kanalRaw === 'sms' ? kanalRaw : null;
+      if (!kanal) {
+        await spalit();
+        return { ok: false, duvod: 'kanal' };
+      }
+      const v = zadostOdjezdu(rec, await vsechny(), cas, 'pruvodce', new Date(), kanal);
       if (!v) {
         await spalit();
         return { ok: false, duvod: 'cas' };
@@ -190,7 +198,13 @@ export async function ulozVstupHosta(
       const zapis = { ...v.rec, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
       await store.setRezervace(id, zapis);
       if (v.push) await ohlas(store, id, v.push, 'zadost');
-      return { ok: true, cas: v.rec.zadostOdjezd?.cas || cas, uroven: urovenZRezervace(zapis) };
+      return {
+        ok: true,
+        cas: v.rec.zadostOdjezd?.cas || cas,
+        uroven: urovenZRezervace(zapis),
+        zadostCeka: true,
+        kanal,
+      };
     }
     if (!jeCasOdjezduPovoleny(cas)) {
       await spalit();
@@ -356,11 +370,7 @@ export async function ulozVstupHosta(
         dilky.push(`zaregistrujte v bráně ${textTelefonu(telefonBrana)}`);
         telegram = 'brana';
       }
-      if (spz && spz !== rec.spz) {
-        const textSpz = spz.length > 4 ? `${spz.slice(0, -4)} ${spz.slice(-4)}` : spz;
-        dilky.push(`SPZ ${textSpz}`);
-        if (telegram === 'cas-prijezdu') telegram = 'brana';
-      }
+      /** SPZ se do Telegramu / push neposílá (zbytečné). Zůstane na kartě. */
       if (dilky.length) await ohlas(store, id, `${popisHosta(rec)}: ${dilky.join(' · ')}`, telegram);
     }
     return { ok: true, uroven: urovenZRezervace(await store.getRezervace(id)) };
@@ -447,7 +457,6 @@ export async function ulozVstupHosta(
     }
     const zmenaTelefonu = Boolean(rec.telefonBrana && rec.telefonBrana !== tel.ulozeny);
     const novyTelefon = !rec.telefonBrana || zmenaTelefonu;
-    const novaSpz = Boolean(spz && spz !== rec.spz);
     await store.setRezervace(
       id,
       poznamenej(rec, zmenaTelefonu ? 'Host změnil telefon pro bránu' : 'Host doplnil údaje k bráně', {
@@ -460,14 +469,14 @@ export async function ulozVstupHosta(
         zpravaBranaPrectena: zmenaTelefonu ? null : rec.zpravaBranaPrectena,
       }),
     );
-    if (novyTelefon || (novaSpz && spz)) {
-      const dilky: string[] = [];
-      if (novyTelefon) dilky.push(`zaregistrujte v bráně ${textTelefonu(tel.ulozeny)}`);
-      if (novaSpz && spz) {
-        const textSpz = spz.length > 4 ? `${spz.slice(0, -4)} ${spz.slice(-4)}` : spz;
-        dilky.push(`SPZ ${textSpz}`);
-      }
-      await ohlas(store, id, `${popisHosta(rec)}: ${dilky.join(' · ')}`, 'brana');
+    /** Jen telefon k bráně. Samotná SPZ se nehlásí. */
+    if (novyTelefon) {
+      await ohlas(
+        store,
+        id,
+        `${popisHosta(rec)}: zaregistrujte v bráně ${textTelefonu(tel.ulozeny)}`,
+        'brana',
+      );
     }
     return {
       ok: true,

@@ -2332,6 +2332,72 @@ a.pv-phone.pv-phone--zari:focus-visible {
   flex: 0 0 auto;
 }
 
+.pv-zprava-overlay__akce {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.pv-zprava-overlay__btn--ano {
+  background: #b89a6a;
+}
+
+.pv-zprava-overlay__akce .pv-zprava-overlay__btn:not(.pv-zprava-overlay__btn--ano) {
+  background: transparent;
+  border: 1px solid #3d342a;
+  color: #f5efe3;
+}
+
+.pv-odjezd__castka {
+  margin: 0.65rem 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #c9a84c 45%, transparent);
+  background: color-mix(in srgb, #c9a84c 12%, transparent);
+  color: #c9a84c;
+  font-weight: 650;
+  text-align: center;
+  line-height: 1.35;
+
+  span {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    opacity: 0.85;
+  }
+}
+
+.pv-odjezd__kanaly {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.35rem 0 0.25rem;
+}
+
+.pv-odjezd__kanal {
+  min-height: 2.45rem;
+  border-radius: 10px;
+  border: 1px solid #3d342a;
+  background: transparent;
+  color: #f5efe3;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pv-odjezd__kanal--ano {
+  background: #b89a6a;
+  border-color: transparent;
+  color: #1a1510;
+}
+
+.pv-odjezd__kanal:disabled,
+.pv-zprava-overlay__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 .pv-zprava-box {
   margin: 0 0 0.75rem;
   margin-left: var(--pv-axis-inset);
@@ -2628,13 +2694,14 @@ a.pv-phone.pv-phone--zari:focus-visible {
   justify-content: center;
   gap: 0.35rem;
   width: 100%;
-  margin: 1rem 0 0.9rem;
-  padding: 0.8rem 1rem;
+  margin: 0.7rem 0 1.1rem;
+  padding: 0.65rem 1rem;
   border-radius: 12px;
-  background: #b89a6a;
-  color: #1a1510;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 60%, transparent);
+  background: transparent;
+  color: var(--color-gold);
   text-decoration: none;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .pv-expired__sipka {
@@ -2687,6 +2754,39 @@ a.pv-phone.pv-phone--zari:focus-visible {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--color-gold) 72%, #f5efe3);
+}
+
+/* Dopis na rozlouceni po odjezdu (19. 11. 2026) */
+.pv-expired__telo > p.pv-expired__dopis {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.pv-expired__telo > p.pv-expired__podpis {
+  margin: 1rem 0 0;
+  font-style: italic;
+  color: var(--color-gold);
+  font-size: 1rem;
+}
+
+.pv-expired__oddel {
+  width: 48px;
+  height: 1px;
+  margin: 1.3rem auto 1rem;
+  border: 0;
+  background: var(--pv-line, #3d342a);
+}
+
+.pv-expired__telo > p.pv-expired__most {
+  margin: 0;
+  font-size: 0.88rem;
+  color: color-mix(in srgb, var(--color-dark) 60%, transparent);
+}
+
+.pv-expired__telo > p.pv-expired__poznamka {
+  margin: 1.1rem 0 0;
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--color-dark) 45%, transparent);
 }
 
 /* Rychlý p?ístup z plochy telefonu */
