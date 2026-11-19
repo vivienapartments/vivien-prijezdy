@@ -38,22 +38,27 @@ describe('okno pobytu', () => {
     expect(cenaDrive('13:30')).toBe(75);
     expect(cenaDrive('12:00')).toBe(300);
     expect(cenaDrive('11:00')).toBe(450);
+    expect(cenaPozde('10:15')).toBe(75);
     expect(cenaPozde('10:30')).toBe(75);
+    expect(cenaPozde('10:45')).toBe(150);
     expect(cenaPozde('12:00')).toBe(300);
     expect(cenaPozde('13:00')).toBe(450);
     expect(cenaPozde('14:00')).toBeNull();
+    expect(cenaDrive('13:45')).toBe(75);
+    expect(priplatekProCas('20:15')).toBe(100);
     expect(priplatekProCas('20:30')).toBe(100);
+    expect(priplatekProCas('20:45')).toBe(200);
     expect(priplatekProCas('12:00')).toBeNull();
     expect(jeSlotOdjezdu('10:30')).toBe(false);
     expect(jeSlotOdjezdu('10:00')).toBe(true);
     expect(jeSlotOdjezdu('09:30')).toBe(true);
-    expect(jeSlotOdjezdu('09:15')).toBe(false);
+    expect(jeSlotOdjezdu('09:15')).toBe(true);
   });
 
   it('nabízí příjezd až po odjezdu a úklidu', () => {
     expect(nejdrivePoOdjezdu('09:30', true)).toBe('11:00');
     expect(casyDrive(nejdrivePoOdjezdu('10:00', true))[0]).toBe('11:30');
-    expect(casyDrive(nejdrivePoOdjezdu('12:00', true))).toEqual(['13:30']);
+    expect(casyDrive(nejdrivePoOdjezdu('12:00', true))).toEqual(['13:30', '13:45']);
     expect(nejdrivePoOdjezdu(null, true)).toBe('11:00');
     expect(nejdrivePoOdjezdu(null, false)).toBe('11:00');
   });
@@ -63,9 +68,15 @@ describe('okno pobytu', () => {
     expect(nejpozdejiPredPrijezdem('16:00', true)).toBe('13:00');
     expect(casyPozde(nejpozdejiPredPrijezdem('15:00', true))).toContain('13:00');
     expect(casyPozde('13:00')).toContain('13:00');
+    expect(casyPozde('13:00')).toContain('12:45');
     expect(casyPozde('13:00')).not.toContain('13:30');
     expect(nejpozdejiPredPrijezdem(null, true)).toBe('11:00');
-    expect(casyPozde(nejpozdejiPredPrijezdem(null, true))).toEqual(['10:30', '11:00']);
+    expect(casyPozde(nejpozdejiPredPrijezdem(null, true))).toEqual([
+      '10:15',
+      '10:30',
+      '10:45',
+      '11:00',
+    ]);
     expect(casyPozde(nejpozdejiPredPrijezdem(null, false))).toContain('13:00');
     expect(casyPozde(nejpozdejiPredPrijezdem(null, false))).not.toContain('14:00');
   });

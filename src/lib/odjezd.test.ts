@@ -417,8 +417,8 @@ describe('odjezd', () => {
     expect(jeSlotOdjezdu('10:00')).toBe(true);
     expect(jeSlotOdjezdu('08:00')).toBe(true);
     expect(jeSlotOdjezdu('08:30')).toBe(true);
-    expect(jeSlotOdjezdu('08:15')).toBe(false);
-    expect(jeSlotOdjezdu('08:45')).toBe(false);
+    expect(jeSlotOdjezdu('08:15')).toBe(true);
+    expect(jeSlotOdjezdu('08:45')).toBe(true);
     expect(jeSlotOdjezdu('10:30')).toBe(false);
     const dnes = denPraha(new Date());
     const html = renderToStaticMarkup(

@@ -1,11 +1,13 @@
 /** Kolik minut před časem příjezdu přijde upozornění majiteli a Nikol. */
 export const PREDSTIH_PRIJEZDU_MIN = 60;
 
-/** Běžný odjezd. Host v průvodci volí od 6:00 po půlhodinách až sem. */
+/** Běžný odjezd. Host v průvodci volí od 6:00 po čtvrt hodinách až sem. */
 export const CHECKOUT = '10:00';
 export const ODJEZD_OD = '06:00';
-/** Běžný i pozdější odjezd po půlhodinách. */
-export const ODJEZD_KROK_MIN = 30;
+/** Výběr času (příjezd i odjezd) po čtvrt hodinách. Sazba zůstává za započatou půlhodinu. */
+export const CAS_SLOT_MIN = 15;
+/** Běžný i pozdější odjezd po čtvrt hodinách. */
+export const ODJEZD_KROK_MIN = CAS_SLOT_MIN;
 /** Rámeček v průvodci od této hodiny dne před odjezdem. */
 export const HODINA_RAMCEKU_ODJEZDU = 12;
 /** Push se seznamem zítřejších odjezdů. */
@@ -35,16 +37,19 @@ export const PREDSTIH_VYBER_PRODLOUZENI_MIN = 10;
 
 /**
  * Příplatek za pozdní příjezd (veřejná sazba).
- * Do 20:00 včetně 0 Kč. 20:01–20:30 = 100 Kč. 20:31–21:00 = 200 Kč.
+ * Do 20:00 včetně 0 Kč. Každá započatá půlhodina = 100 Kč (20:15 i 20:30 = 100 Kč).
  * Po 21:00 jen individuální výjimka hostitele (bez automatické sazby).
  */
 export const PRIPLATEK_OD = 20 * 60;
+/** Sazba po půlhodinách. Výběr času je po CAS_SLOT_MIN. */
 export const PRIPLATEK_KROK_MIN = 30;
 export const PRIPLATEK_KC = 100;
 export const PRIPLATEK_DO = 21 * 60;
 
 /** Dřívější příjezd a pozdější odjezd. 75 Kč za každou započatou půlhodinu, jen po potvrzení. */
 export const OKNO_KC = 75;
+/** Krok sazby u okna (dřívější / pozdější). */
+export const OKNO_KROK_MIN = 30;
 export const PRIJEZD_STANDARD = 14 * 60;
 export const PRIJEZD_NEJDRIV = 11 * 60;
 export const ODJEZD_STANDARD = 10 * 60;

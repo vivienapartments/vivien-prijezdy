@@ -149,7 +149,7 @@ export function NahledClient({ secrets, searchParams }: Props) {
               },
               zadostOdjezd: null,
               zadostPozdniPrijezd: null,
-              stavApartmanu: { barva: 'zlaty', rozbalit: true },
+              stavApartmanu: { barva: 'zlaty', rozbalit: false },
             }
           : zadostDruh === 'pozni'
             ? {
@@ -170,7 +170,7 @@ export function NahledClient({ secrets, searchParams }: Props) {
                   zprava: null,
                   drziPotvrzeni: null,
                 },
-                stavApartmanu: { barva: 'zlaty', rozbalit: true },
+                stavApartmanu: { barva: 'zlaty', rozbalit: false },
               }
             : one(searchParams.pripraveno) === '1'
               ? {
@@ -186,7 +186,19 @@ export function NahledClient({ secrets, searchParams }: Props) {
                   zadostPozdniPrijezd: null,
                   stavApartmanu: { barva: 'zeleny', rozbalit: true },
                 }
-              : null
+              : {
+                  zeleny: false,
+                  sekcePrijezd: false,
+                  sekceOdjezd: false,
+                  slotyZelene: [],
+                  slotyPrijezd: casyDrive('11:00'),
+                  slotyOdjezd: [],
+                  nejpozdeji: '14:00',
+                  zadostPrijezd: null,
+                  zadostOdjezd: null,
+                  zadostPozdniPrijezd: null,
+                  stavApartmanu: { barva: 'zlaty', rozbalit: false },
+                }
       }
     />
   );

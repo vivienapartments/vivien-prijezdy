@@ -867,21 +867,21 @@ export const vstupViteji: LText = {
   pt: 'Estamos à vossa espera.',
 };
 
-/** Prompt 45 · stav apartmánu A1 (zlatý řádek, schváleno majitelem 24. 10. 2026). */
+/** Prompt 45 · zlatý řádek (varianta B, schváleno majitelem 19. 11. 2026). */
 export const stavPripravujeme: LText = {
-  cs: "Váš apartmán pro vás ještě připravujeme",
-  en: "We are still preparing your apartment",
-  de: "Wir bereiten Ihr Apartment noch für Sie vor",
-  pl: "Wciąż przygotowujemy dla Was apartament",
-  uk: "Ми ще готуємо для вас апартаменти",
-  'zh-Hant': "我們仍在為您準備公寓",
-  sv: "Vi förbereder fortfarande er lägenhet",
-  es: "Todavía estamos preparando su apartamento",
-  hu: "Az apartmant még előkészítjük önöknek",
-  da: "Vi gør stadig jeres lejlighed klar",
-  fr: "Nous préparons encore votre appartement",
-  it: "Stiamo ancora preparando il vostro appartamento",
-  pt: "Ainda estamos a preparar o vosso apartamento",
+  cs: "Stav úklidu apartmánu uvidíte tady v den příjezdu.",
+  en: "You'll see the apartment cleaning status here on your arrival day.",
+  de: "Den Reinigungsstand Ihres Apartments sehen Sie hier am Anreisetag.",
+  pl: "Stan sprzątania apartamentu zobaczycie tu w dniu przyjazdu.",
+  uk: "Стан прибирання апартаментів побачите тут у день приїзду.",
+  'zh-Hant': "抵達當天您會在這裡看到公寓清潔狀態。",
+  sv: "Här ser ni städstatus för lägenheten på ankomstdagen.",
+  es: "El estado de limpieza del apartamento lo verán aquí el día de llegada.",
+  hu: "Az apartman takarítási állapotát az érkezés napján itt fogják látni.",
+  da: "Her ser I lejlighedens rengøringsstatus på ankomstdagen.",
+  fr: "Vous verrez ici l’état du ménage de l’appartement le jour de votre arrivée.",
+  it: "Lo stato di pulizia dell’appartamento lo vedrete qui il giorno dell’arrivo.",
+  pt: "O estado da limpeza do apartamento vêem-no aqui no dia da chegada.",
 };
 
 /** Prompt 45 · A2 po rozbalení. */

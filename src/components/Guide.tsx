@@ -40,6 +40,8 @@ import type { AptId, GuideLang, Prijezd, StayFacts } from '@/lib/types';
 import { pruvodceRozbalen, urovenPruvodce, type UrovenPruvodce } from '@/lib/vstup-pruvodce';
 import * as VT from '@/lib/vstup-texty';
 import { stavPrijezduProPruvodce, textStavu, type OknoPohled } from '@/lib/okno-pobytu';
+import { jeOdjezdKanal, textCekaOdjezdu } from '@/lib/odjezd-souhlas';
+import type { ZadostOkna } from '@/lib/store';
 import { ukazatDokladyRamecek } from '@/lib/doklady-texty';
 import { DokladyRamecek } from './DokladyRamecek';
 import { OdjezdRamecek } from './OdjezdRamecek';
@@ -380,6 +382,8 @@ export function Guide({
   const [praniOtevrit, setPraniOtevrit] = useState(false);
   const [praniVlakno, setPraniVlakno] = useState<string | null>(null);
   const [zpravyLokal, setZpravyLokal] = useState<ZpravaOdNas[]>(zpravyOdNas);
+  /** Náhled bez API: žádost o odjezd z OdjezdRamecek, ať je i nahoře u příjezdu. */
+  const [odjezdZadostLokal, setOdjezdZadostLokal] = useState<ZadostOkna | null>(null);
   const hodnoty = vstup?.hodnoty ?? lokalne ?? { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false };
   const ubytovan = Boolean(vstup?.ubytovan);
   const odDnePrijezdu = Boolean(prijezdDen && /^\d{4}-\d{2}-\d{2}$/.test(prijezdDen) && dnesDen >= prijezdDen);
@@ -389,6 +393,23 @@ export function Guide({
   const praniCteni = Boolean(vstup?.cteni) || showDevBar;
   /** Po předání / od dne příjezdu jsou všechny části výchozí sbalené. */
   const vseSbalene = ubytovan || Boolean(ziveKody) || odDnePrijezdu;
+  const zadostOdjezduEfektivni = okno?.zadostOdjezd || odjezdZadostLokal;
+  const stavOdjezduZaklad = textStavu(lang, 'odjezd', zadostOdjezduEfektivni);
+  const stavOdjezdu =
+    stavOdjezduZaklad &&
+    zadostOdjezduEfektivni?.stav === 'ceka' &&
+    zadostOdjezduEfektivni.kanal &&
+    jeOdjezdKanal(zadostOdjezduEfektivni.kanal)
+      ? {
+          ...stavOdjezduZaklad,
+          veta: textCekaOdjezdu(
+            zadostOdjezduEfektivni.cas,
+            zadostOdjezduEfektivni.kc,
+            zadostOdjezduEfektivni.kanal,
+            lang,
+          ),
+        }
+      : stavOdjezduZaklad;
   const krokyHotove = pruvodceRozbalen({
     cas: hodnoty.cas,
     zpusob: hodnoty.zpusob,
@@ -754,12 +775,14 @@ export function Guide({
               ubytovan={ubytovan || Boolean(ziveKody)}
               odemceno
               nejpozdeji={okno?.nejpozdeji}
-              zadostOdjezd={okno?.zadostOdjezd ?? null}
+              zadostOdjezd={zadostOdjezduEfektivni}
+              onZadostOdjezdu={setOdjezdZadostLokal}
               onZpravaOdjezdu={(zprava) => {
                 setZpravyLokal((prev) => {
                   const bez = prev.filter(
                     (z) => z.id !== 'odjezd-prijati' && z.id !== 'odjezd' && z.id !== 'odjezd-ceka',
                   );
+                  if (!zprava.text) return bez;
                   return [...bez, zprava];
                 });
               }}
@@ -788,6 +811,7 @@ export function Guide({
               predvyplneny={vstup?.predvyplneny ?? ''}
               nejdrive={okno?.slotyPrijezd[0]}
               stavZadosti={stavPrijezduProPruvodce(lang, okno)}
+              stavOdjezdu={stavOdjezdu}
               onUlozeno={(next) => {
                 if (vstup) onVstup?.(next);
                 else setLokalne(next);
@@ -816,6 +840,7 @@ export function Guide({
               predvyplneny={vstup?.predvyplneny ?? ''}
               nejdrive={okno?.slotyPrijezd[0]}
               stavZadosti={stavPrijezduProPruvodce(lang, okno)}
+              stavOdjezdu={stavOdjezdu}
               onUlozeno={(next) => {
                 if (vstup) onVstup?.(next);
                 else setLokalne(next);
@@ -1250,10 +1275,12 @@ export function Guide({
                             cas={odjezd?.cas ?? null}
                             rucni={Boolean(odjezd?.rucni)}
                             token={vstup?.cteni ? null : (vstup?.token ?? null)}
-                            cteni={Boolean(vstup?.cteni) || !vstup?.token}
+                            /** Náhled bez tokenu: výběr musí jít vyzkoušet (uložení jen lokálně). */
+                            cteni={Boolean(vstup?.cteni)}
                             odemceno
                             nejpozdeji={okno?.nejpozdeji}
-                            zadostOdjezd={okno?.zadostOdjezd ?? null}
+                            zadostOdjezd={zadostOdjezduEfektivni}
+                            onZadostOdjezdu={setOdjezdZadostLokal}
                             onZpravaOdjezdu={(zprava) => {
                               setZpravyLokal((prev) => {
                                 const bez = prev.filter(
@@ -1262,6 +1289,7 @@ export function Guide({
                                     z.id !== 'odjezd' &&
                                     z.id !== 'odjezd-ceka',
                                 );
+                                if (!zprava.text) return bez;
                                 return [...bez, zprava];
                               });
                             }}

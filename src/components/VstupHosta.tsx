@@ -46,6 +46,8 @@ type Props = {
   /** Nejdřívější nabízený čas. Výchozí je 11:00. */
   nejdrive?: string;
   stavZadosti?: TextStavu | null;
+  /** Pozdější odjezd čeká / potvrzeno. Pod řádkem příjezdu. */
+  stavOdjezdu?: TextStavu | null;
 };
 
 function sJednotkou(text: string) {
@@ -170,6 +172,7 @@ export function VstupHosta({
   onUlozeno,
   nejdrive = '11:00',
   stavZadosti = null,
+  stavOdjezdu = null,
 }: Props) {
   const tt = (map: Parameters<typeof t>[0]) => t(map, lang);
   const [uprava, setUprava] = useState(false);
@@ -320,6 +323,8 @@ export function VstupHosta({
             )}
           </p>
           {stavZadosti?.veta ? <p className="pv-vstup__stav">{stavZadosti.veta}</p> : null}
+          {stavOdjezdu?.kratce ? <p className="pv-vstup__stav">{stavOdjezdu.kratce}</p> : null}
+          {stavOdjezdu?.veta ? <p className="pv-vstup__stav">{stavOdjezdu.veta}</p> : null}
         </div>
       ) : (
         <section className="pv-vstup" id="pv-vstup" lang={lang}>

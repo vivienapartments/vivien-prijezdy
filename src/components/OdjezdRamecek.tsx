@@ -19,6 +19,7 @@ import {
   ODJEZD_KANAL_OTAZKA,
   ODJEZD_KANAL_STITKY,
   ODJEZD_SOUHLAS_NADPIS,
+  jeOdjezdKanal,
   type OdjezdKanal,
   rozpisPozde,
   textCekaOdjezdu,
@@ -59,6 +60,8 @@ type Props = {
   nejpozdeji?: string;
   zadostOdjezd?: ZadostOkna | null;
   onZpravaOdjezdu?: (zprava: ZpravaOdjezduAck) => void;
+  /** Náhled / lokální žádost: ať se stav ukáže i nahoře u příjezdu. */
+  onZadostOdjezdu?: (zadost: ZadostOkna | null) => void;
 };
 
 const VLASTNI = '__vlastni__';
@@ -96,6 +99,7 @@ export function OdjezdRamecek({
   nejpozdeji = '14:00',
   zadostOdjezd = null,
   onZpravaOdjezdu,
+  onZadostOdjezdu,
 }: Props) {
   const bezne = slotsOdjezdu();
   const pozde = casyPozde(nejpozdeji);
@@ -113,6 +117,8 @@ export function OdjezdRamecek({
   const [chyba, setChyba] = useState('');
   const [souhlasCas, setSouhlasCas] = useState<string | null>(null);
   const [kanal, setKanal] = useState<OdjezdKanal | null>(null);
+  /** Náhled bez tokenu: simulace žádosti, ať je vidět „čeká na schválení“. */
+  const [lokalniZadost, setLokalniZadost] = useState<ZadostOkna | null>(null);
 
   useEffect(() => {
     oznacVidel(klic);
@@ -127,14 +133,67 @@ export function OdjezdRamecek({
   const nadpis =
     den === dnes ? text.nadpisDnes : den === posunDen(dnes, 1) ? text.nadpisZitra : text.nadpisJindy;
   const zamceno = rucni && Boolean(ulozeny);
-  const stav = textStavu(lang, 'odjezd', zadostOdjezd);
-  const casNaRadku = zadostOdjezd?.cas || ulozeny || CHECKOUT;
+  const efektivniZadost = zadostOdjezd || lokalniZadost;
+  const stavZaklad = textStavu(lang, 'odjezd', efektivniZadost);
+  const stav =
+    stavZaklad &&
+    efektivniZadost?.stav === 'ceka' &&
+    efektivniZadost.kanal &&
+    jeOdjezdKanal(efektivniZadost.kanal)
+      ? {
+          ...stavZaklad,
+          veta: textCekaOdjezdu(
+            efektivniZadost.cas,
+            efektivniZadost.kc,
+            efektivniZadost.kanal,
+            lang,
+          ),
+        }
+      : stavZaklad;
+  const casNaRadku = efektivniZadost?.cas || ulozeny || CHECKOUT;
   const jeVlastni = vyber === VLASTNI;
   const rozpis = souhlasCas ? rozpisPozde(souhlasCas) : null;
+
+  function ohlasCeka(casUlozit: string, kanalVolba: OdjezdKanal) {
+    const kc = rozpisPozde(casUlozit)?.kc || 0;
+    onZpravaOdjezdu?.({
+      id: 'odjezd-ceka',
+      nova: true,
+      nadpis: t(ODJEZD_CEKA_NADPIS, lang),
+      text: textCekaOdjezdu(casUlozit, kc, kanalVolba, lang),
+      sbalenyTitulek: t(ODJEZD_CEKA_NADPIS, lang),
+    });
+  }
 
   async function ulozitHotovy(casUlozit: string, kanalVolba: OdjezdKanal | null) {
     if (cteni || !token) {
       setUlozeny(casUlozit);
+      if (vSeznamu(casUlozit)) {
+        setVyber(casUlozit);
+        setVlastni('');
+      } else {
+        setVyber(VLASTNI);
+        setVlastni(casUlozit);
+      }
+      if (kanalVolba && rozpisPozde(casUlozit)) {
+        const kc = rozpisPozde(casUlozit)!.kc;
+        const zadost: ZadostOkna = {
+          cas: casUlozit,
+          kc,
+          stav: 'ceka',
+          kdy: new Date().toISOString(),
+          od: 'pruvodce',
+          hned: true,
+          upozorneno: false,
+          kanal: kanalVolba,
+        };
+        setLokalniZadost(zadost);
+        onZadostOdjezdu?.(zadost);
+        ohlasCeka(casUlozit, kanalVolba);
+      } else {
+        setLokalniZadost(null);
+        onZadostOdjezdu?.(null);
+      }
       setOtevreno(false);
       setSouhlasCas(null);
       setKanal(null);
@@ -177,13 +236,7 @@ export function OdjezdRamecek({
     setSouhlasCas(null);
     setKanal(null);
     if (json.zadostCeka && json.kanal) {
-      onZpravaOdjezdu?.({
-        id: 'odjezd-ceka',
-        nova: true,
-        nadpis: t(ODJEZD_CEKA_NADPIS, lang),
-        text: textCekaOdjezdu(hotovo, rozpisPozde(hotovo)?.kc || 0, json.kanal, lang),
-        sbalenyTitulek: t(ODJEZD_CEKA_NADPIS, lang),
-      });
+      ohlasCeka(hotovo, json.kanal);
     } else if (json.zpravaOdjezdu) {
       onZpravaOdjezdu?.(json.zpravaOdjezdu);
     }
@@ -218,6 +271,21 @@ export function OdjezdRamecek({
   }
 
   async function zrusitZadost() {
+    if (lokalniZadost && !token) {
+      setLokalniZadost(null);
+      onZadostOdjezdu?.(null);
+      setUlozeny('');
+      setVyber(CHECKOUT);
+      setOtevreno(true);
+      onZpravaOdjezdu?.({
+        id: 'odjezd-ceka',
+        nova: true,
+        nadpis: '',
+        text: '',
+        sbalenyTitulek: '',
+      });
+      return;
+    }
     if (cteni || !token) return;
     setCekam(true);
     try {
@@ -269,7 +337,7 @@ export function OdjezdRamecek({
         </summary>
         <h2 className="pv-odjezd__nadpis-sbal">{nadpis}</h2>
         {stav?.veta ? <p>{stav.veta}</p> : null}
-        {zadostOdjezd?.stav === 'ceka' ? (
+        {efektivniZadost?.stav === 'ceka' ? (
           <button type="button" disabled={cekam} onClick={() => void zrusitZadost()}>
             {tOkno.zrusit}
           </button>
@@ -310,7 +378,7 @@ export function OdjezdRamecek({
                   type="time"
                   min="06:00"
                   max="14:00"
-                  step={60}
+                  step={900}
                   value={vlastni}
                   onChange={(e) => {
                     setVlastni(e.target.value);
@@ -339,7 +407,7 @@ export function OdjezdRamecek({
             <p className="pv-odjezd__castka">
               {zobrazCas(souhlasCas)} · +{rozpis.kc} Kč
               <span>
-                {rozpis.pulhodin} × 30 min · {OKNO_KC} Kč
+                {rozpis.pulhodin} × {OKNO_KC} Kč
               </span>
             </p>
             <p className="pv-zprava-overlay__text">{tt(ODJEZD_KANAL_OTAZKA)}</p>

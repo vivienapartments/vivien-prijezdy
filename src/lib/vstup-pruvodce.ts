@@ -1,4 +1,4 @@
-import { PRIPLATEK_DO, PRIPLATEK_KROK_MIN } from './constants';
+import { CAS_SLOT_MIN, PRIPLATEK_DO } from './constants';
 import { jeCasDrive } from './okno-pobytu';
 import { CAS_PO_23, jeCasSPriplatkem } from './priplatek-prijezd';
 import { normalizujTelefon } from './telefon';
@@ -14,11 +14,11 @@ function casyOdDo(odMin: number, doMin: number, krok: number): string[] {
   return out;
 }
 
-/** Půlhodiny od 14:00 do 21:00. Po 20:00 je u času příplatek a žádost o potvrzení. */
-export const CASY_VYBERU = casyOdDo(14 * 60, PRIPLATEK_DO, PRIPLATEK_KROK_MIN);
+/** Čtvrt hodiny od 14:00 do 21:00. Po 20:00 je u času příplatek a žádost o potvrzení. */
+export const CASY_VYBERU = casyOdDo(14 * 60, PRIPLATEK_DO, CAS_SLOT_MIN);
 
 /** Interní / individuální časy hostitele až do 23:00. Host je ve výběru nevidí. */
-export const CASY_INDIVIDUALNI = casyOdDo(PRIPLATEK_DO + PRIPLATEK_KROK_MIN, 23 * 60, PRIPLATEK_KROK_MIN);
+export const CASY_INDIVIDUALNI = casyOdDo(PRIPLATEK_DO + CAS_SLOT_MIN, 23 * 60, CAS_SLOT_MIN);
 
 /** Volba „Po 20:00“. V přehledu se ukáže jako pozdní příjezd. */
 export const CAS_PO_20 = 'po20';

@@ -1,4 +1,5 @@
 import {
+  CAS_SLOT_MIN,
   MEZERA_PO_ODJEZDU_MIN,
   MEZERA_PRED_PRIJEZDEM_MIN,
   OBJEDNAT_POKUSU,
@@ -6,6 +7,7 @@ import {
   ODJEZD_NEJPOZDEJI,
   ODJEZD_STANDARD,
   OKNO_KC,
+  OKNO_KROK_MIN,
   PRIJEZD_NEJDRIV,
   PRIJEZD_STANDARD,
   PRIPRAVENO_PRED_MIN,
@@ -684,13 +686,13 @@ export function zobrazCas(cas: string): string {
 export function cenaDrive(cas: string | null | undefined): number | null {
   const min = minutyCasu(cas);
   if (min == null || min < PRIJEZD_NEJDRIV || min >= PRIJEZD_STANDARD) return null;
-  return Math.ceil((PRIJEZD_STANDARD - min) / 30) * OKNO_KC;
+  return Math.ceil((PRIJEZD_STANDARD - min) / OKNO_KROK_MIN) * OKNO_KC;
 }
 
 export function cenaPozde(cas: string | null | undefined): number | null {
   const min = minutyCasu(cas);
   if (min == null || min <= ODJEZD_STANDARD || min > ODJEZD_NEJPOZDEJI) return null;
-  return Math.ceil((min - ODJEZD_STANDARD) / 30) * OKNO_KC;
+  return Math.ceil((min - ODJEZD_STANDARD) / OKNO_KROK_MIN) * OKNO_KC;
 }
 
 export function jeCasDrive(cas: string | null | undefined): boolean {
@@ -714,7 +716,7 @@ export function nejdrivePoOdjezdu(casOdjezdu: string | null, nekdoOdjizdi: boole
   if (!nekdoOdjizdi) return casZMinut(PRIJEZD_NEJDRIV);
   const min = minutyCasu(casOdjezdu);
   if (min == null) return casZMinut(PRIJEZD_NEJDRIV);
-  const zaokr = Math.ceil((min + MEZERA_PO_ODJEZDU_MIN + UKLID_MIN) / 30) * 30;
+  const zaokr = Math.ceil((min + MEZERA_PO_ODJEZDU_MIN + UKLID_MIN) / CAS_SLOT_MIN) * CAS_SLOT_MIN;
   return casZMinut(Math.max(PRIJEZD_NEJDRIV, zaokr));
 }
 
@@ -723,14 +725,14 @@ export function nejpozdejiPredPrijezdem(casPrijezdu: string | null, nekdoPrijizd
   if (!nekdoPrijizdi) return casZMinut(ODJEZD_NEJPOZDEJI);
   const min = minutyCasu(casPrijezdu);
   if (min == null) return casZMinut(ODJEZD_KDYZ_CAS_NEZNAMY);
-  const zaokr = Math.floor((min - MEZERA_PRED_PRIJEZDEM_MIN) / 30) * 30;
+  const zaokr = Math.floor((min - MEZERA_PRED_PRIJEZDEM_MIN) / CAS_SLOT_MIN) * CAS_SLOT_MIN;
   return casZMinut(Math.min(ODJEZD_NEJPOZDEJI, Math.max(ODJEZD_STANDARD, zaokr)));
 }
 
 export function casyDrive(nejdrive: string): string[] {
   const od = Math.max(PRIJEZD_NEJDRIV, minutyCasu(nejdrive) ?? PRIJEZD_NEJDRIV);
   const ven: string[] = [];
-  for (let m = od; m < PRIJEZD_STANDARD; m += 30) {
+  for (let m = od; m < PRIJEZD_STANDARD; m += CAS_SLOT_MIN) {
     const cas = casZMinut(m);
     if (cenaDrive(cas)) ven.push(cas);
   }
@@ -740,7 +742,7 @@ export function casyDrive(nejdrive: string): string[] {
 export function casyPozde(nejpozdeji: string): string[] {
   const konec = Math.min(ODJEZD_NEJPOZDEJI, minutyCasu(nejpozdeji) ?? ODJEZD_NEJPOZDEJI);
   const ven: string[] = [];
-  for (let m = ODJEZD_STANDARD + 30; m <= konec; m += 30) {
+  for (let m = ODJEZD_STANDARD + CAS_SLOT_MIN; m <= konec; m += CAS_SLOT_MIN) {
     const cas = casZMinut(m);
     if (cenaPozde(cas)) ven.push(cas);
   }
@@ -766,10 +768,10 @@ export function posunDen(den: string, dny: number): string {
   return new Date(Date.UTC(y, m - 1, d + dny)).toISOString().slice(0, 10);
 }
 
-/** Od teď, zaokrouhleno na půlhodinu nahoru, nejdřív za 30 minut. */
+/** Od teď, zaokrouhleno na čtvrt hodiny nahoru, nejdřív za PRIPRAVENO_PRED_MIN. */
 export function nejdriveOdTed(now: Date): string {
   const { hodina, minuta } = praha(now);
-  const zaokr = Math.ceil((hodina * 60 + minuta + PRIPRAVENO_PRED_MIN) / 30) * 30;
+  const zaokr = Math.ceil((hodina * 60 + minuta + PRIPRAVENO_PRED_MIN) / CAS_SLOT_MIN) * CAS_SLOT_MIN;
   return casZMinut(zaokr);
 }
 
@@ -958,7 +960,8 @@ export function stavApartmanuProHosta(
     const potvrzeno = rec.zadostPrijezd?.stav === 'potvrzeno';
     return { barva: 'zeleny', rozbalit: !po14 && !potvrzeno };
   }
-  return { barva: 'zlaty', rozbalit: true };
+  /** Jen stručný řádek. Rozbalení o dřívějším příjezdu až po zeleném stavu. */
+  return { barva: 'zlaty', rozbalit: false };
 }
 
 export function oknoProHosta(rec: RezervaceRecord, zaznamy: RezervaceRecord[], now: Date, otevreno: boolean): OknoPohled {
@@ -1003,7 +1006,8 @@ export function stavPrijezduProPruvodce(
   const kratce = textSbalenehoRadkuPozdni(pozni, lang);
   if (!kratce) return null;
   if (pozni.stav === 'ceka') {
-    return { kratce, veta: textCekaPozdni(pozni.cas, pozni.kc, lang) };
+    /** Jen jedna věta (ne krátký řádek i dlouhý text se stejným časem). */
+    return { kratce: textCekaPozdni(pozni.cas, pozni.kc, lang), veta: '' };
   }
   if (pozni.stav === 'nelze') return { kratce: '', veta: pozni.zprava || kratce };
   return { kratce: '', veta: kratce };
