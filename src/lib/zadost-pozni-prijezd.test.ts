@@ -23,7 +23,10 @@ describe('žádost o pozdní příjezd', () => {
     expect(v?.bezeZmeny).toBeFalsy();
     expect(v?.patch.zadostPozdniPrijezd).toMatchObject({ cas: '20:30', kc: 100, stav: 'ceka' });
     expect(v?.patch.casPrijezdu).toBe('20:30');
-    expect(textSbalenehoRadkuPozdni(v?.patch.zadostPozdniPrijezd)).toBe('Příjezd 20:30 · zatím nepotvrzeno');
+    expect(textSbalenehoRadkuPozdni(v?.patch.zadostPozdniPrijezd, 'cs')).toBe(
+      'Příjezd 20:30 · zatím nepotvrzeno',
+    );
+    expect(textSbalenehoRadkuPozdni(v?.patch.zadostPozdniPrijezd, 'de')).toContain('noch nicht bestätigt');
   });
 
   it('změna potvrzeného času drží staré potvrzení', () => {
@@ -52,6 +55,7 @@ describe('žádost o pozdní příjezd', () => {
   it('potvrzení a odmítnutí s vlastní zprávou', () => {
     const ceka = {
       ...prazdnaRezervace('1', '2026-11-01T00:00:00.000Z'),
+      jazyk: 'cs' as const,
       zadostPozdniPrijezd: {
         cas: '20:45',
         kc: 200,

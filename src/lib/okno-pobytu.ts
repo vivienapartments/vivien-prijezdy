@@ -15,7 +15,7 @@ import { maRucni } from './rucni-pole';
 import type { RezervaceRecord, ZadostOkna } from './store';
 import { GUIDE_LANGS, type GuideLang } from './types';
 import type { ZadostPozdniPrijezd } from './zadost-pozni-prijezd';
-import { textSbalenehoRadkuPozdni } from './zadost-pozni-prijezd';
+import { textCekaPozdni, textSbalenehoRadkuPozdni } from './zadost-pozni-prijezd';
 
 export type HostOkna = {
   rezervace: string;
@@ -1000,9 +1000,11 @@ export function stavPrijezduProPruvodce(
   if (drive) return drive;
   const pozni = okno?.zadostPozdniPrijezd;
   if (!pozni) return null;
-  const kratce = textSbalenehoRadkuPozdni(pozni);
+  const kratce = textSbalenehoRadkuPozdni(pozni, lang);
   if (!kratce) return null;
-  if (pozni.stav === 'ceka') return { kratce, veta: '' };
+  if (pozni.stav === 'ceka') {
+    return { kratce, veta: textCekaPozdni(pozni.cas, pozni.kc, lang) };
+  }
   if (pozni.stav === 'nelze') return { kratce: '', veta: pozni.zprava || kratce };
   return { kratce: '', veta: kratce };
 }

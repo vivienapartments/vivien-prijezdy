@@ -1,5 +1,7 @@
+import { t } from './i18n';
 import { priplatekCasu, priplatekProCas } from './priplatek-prijezd';
 import type { RezervaceRecord } from './store';
+import type { GuideLang, LText } from './types';
 
 /** Oddělené od žádosti o dřívější příjezd (`zadostPrijezd`). */
 export type ZadostPozdniPrijezd = {
@@ -15,13 +17,95 @@ export type ZadostPozdniPrijezd = {
   drziPotvrzeni?: { cas: string; kc: number } | null;
 };
 
-export const TEXT_SCHVALENI_CS = 'Příjezd ve {cas} platí. Příplatek {kc} Kč vyrovnáme při předání.';
-export const TEXT_ZMENA_CS = 'Nový čas {cas} jsme přijali. Platí až po našem potvrzení.';
-export const TEXT_VYJIMKA_CS = 'Individuální příjezd ve {cas} platí. Příplatek {kc} Kč vyrovnáme na místě.';
-export const TEXT_SBALENY_CEKA_CS = 'Příjezd {cas} · zatím nepotvrzeno';
+/** Krátký řádek, dokud čeká potvrzení. */
+export const TEXT_SBALENY_CEKA: LText = {
+  cs: 'Příjezd {cas} · zatím nepotvrzeno',
+  en: 'Arrival {cas} · not confirmed yet',
+  de: 'Ankunft {cas} · noch nicht bestätigt',
+  pl: 'Przyjazd {cas} · jeszcze niepotwierdzony',
+  uk: 'Приїзд {cas} · ще не підтверджено',
+  'zh-Hant': '抵達 {cas} · 尚未確認',
+  sv: 'Ankomst {cas} · inte bekräftad ännu',
+  es: 'Llegada {cas} · aún sin confirmar',
+  hu: 'Érkezés {cas} · még nincs megerősítve',
+  da: 'Ankomst {cas} · endnu ikke bekræftet',
+  fr: 'Arrivée {cas} · pas encore confirmée',
+  it: 'Arrivo {cas} · non ancora confermato',
+  pt: 'Chegada {cas} · ainda sem confirmação',
+};
+
+/** Potvrzení hostovi po uložení žádosti (musí být v jazyku průvodce). */
+export const TEXT_CEKA_VETA: LText = {
+  cs: 'Čas {cas} a příplatek {kc} Kč jsme přijali. Platí až po našem potvrzení.',
+  en: 'We have received the time {cas} and the surcharge of {kc} Kč. It applies only after we confirm it.',
+  de: 'Die Zeit {cas} und den Zuschlag von {kc} Kč haben wir erhalten. Sie gelten erst nach unserer Bestätigung.',
+  pl: 'Przyjęliśmy godzinę {cas} i dopłatę {kc} Kč. Obowiązuje dopiero po naszym potwierdzeniu.',
+  uk: 'Час {cas} і доплату {kc} Kč ми прийняли. Діє лише після нашого підтвердження.',
+  'zh-Hant': '我們已收到時間 {cas} 與附加費 {kc} Kč。需經我們確認後才生效。',
+  sv: 'Vi har tagit emot tiden {cas} och tillägget {kc} Kč. Det gäller först efter vår bekräftelse.',
+  es: 'Hemos recibido la hora {cas} y el suplemento de {kc} Kč. Solo vale después de nuestra confirmación.',
+  hu: 'A {cas} időpontot és a {kc} Kč felárat megkaptuk. Csak a megerősítésünk után érvényes.',
+  da: 'Vi har modtaget tidspunktet {cas} og tillægget på {kc} Kč. Det gælder først efter vores bekræftelse.',
+  fr: 'Nous avons bien reçu l’heure {cas} et le supplément de {kc} Kč. Cela ne vaut qu’après notre confirmation.',
+  it: 'Abbiamo ricevuto l’orario {cas} e il supplemento di {kc} Kč. Vale solo dopo la nostra conferma.',
+  pt: 'Recebemos a hora {cas} e o suplemento de {kc} Kč. Só vale depois da nossa confirmação.',
+};
+
+export const TEXT_SCHVALENI: LText = {
+  cs: 'Příjezd ve {cas} platí. Příplatek {kc} Kč vyrovnáme při předání.',
+  en: 'Arrival at {cas} is confirmed. We will settle the {kc} Kč surcharge at handover.',
+  de: 'Die Ankunft um {cas} gilt. Den Zuschlag von {kc} Kč gleichen wir bei der Übergabe aus.',
+  pl: 'Przyjazd o {cas} obowiązuje. Dopłatę {kc} Kč rozliczymy przy przekazaniu.',
+  uk: 'Приїзд о {cas} діє. Доплату {kc} Kč розрахуємо при передачі.',
+  'zh-Hant': '抵達時間 {cas} 已確認。附加費 {kc} Kč 於交屋時結清。',
+  sv: 'Ankomst kl. {cas} gäller. Tillägget {kc} Kč reglerar vi vid överlämningen.',
+  es: 'La llegada a las {cas} queda confirmada. El suplemento de {kc} Kč lo liquidamos en la entrega.',
+  hu: 'A {cas} érkezés érvényes. A {kc} Kč felárat átadáskor rendezzük.',
+  da: 'Ankomst kl. {cas} gælder. Tillægget på {kc} Kč afregner vi ved overdragelsen.',
+  fr: 'L’arrivée à {cas} est confirmée. Nous réglerons le supplément de {kc} Kč à la remise des clés.',
+  it: 'L’arrivo alle {cas} è confermato. Il supplemento di {kc} Kč lo saldiamo alla consegna.',
+  pt: 'A chegada às {cas} está confirmada. O suplemento de {kc} Kč acertamos na entrega.',
+};
+
+export const TEXT_VYJIMKA: LText = {
+  cs: 'Individuální příjezd ve {cas} platí. Příplatek {kc} Kč vyrovnáme na místě.',
+  en: 'Individual arrival at {cas} is confirmed. We will settle the {kc} Kč surcharge on site.',
+  de: 'Individuelle Ankunft um {cas} gilt. Den Zuschlag von {kc} Kč gleichen wir vor Ort aus.',
+  pl: 'Indywidualny przyjazd o {cas} obowiązuje. Dopłatę {kc} Kč rozliczymy na miejscu.',
+  uk: 'Індивідуальний приїзд о {cas} діє. Доплату {kc} Kč розрахуємо на місці.',
+  'zh-Hant': '個別抵達時間 {cas} 已確認。附加費 {kc} Kč 於現場結清。',
+  sv: 'Individuell ankomst kl. {cas} gäller. Tillägget {kc} Kč reglerar vi på plats.',
+  es: 'La llegada individual a las {cas} queda confirmada. El suplemento de {kc} Kč lo liquidamos in situ.',
+  hu: 'Az egyedi {cas} érkezés érvényes. A {kc} Kč felárat a helyszínen rendezzük.',
+  da: 'Individuel ankomst kl. {cas} gælder. Tillægget på {kc} Kč afregner vi på stedet.',
+  fr: 'L’arrivée individuelle à {cas} est confirmée. Nous réglerons le supplément de {kc} Kč sur place.',
+  it: 'L’arrivo individuale alle {cas} è confermato. Il supplemento di {kc} Kč lo saldiamo sul posto.',
+  pt: 'A chegada individual às {cas} está confirmada. O suplemento de {kc} Kč acertamos no local.',
+};
+
+/** @deprecated Použij TEXT_SCHVALENI / textSchvaleniPozdni. */
+export const TEXT_SCHVALENI_CS = TEXT_SCHVALENI.cs;
+/** @deprecated */
+export const TEXT_ZMENA_CS = TEXT_CEKA_VETA.cs;
+/** @deprecated */
+export const TEXT_VYJIMKA_CS = TEXT_VYJIMKA.cs;
+/** @deprecated */
+export const TEXT_SBALENY_CEKA_CS = TEXT_SBALENY_CEKA.cs;
 
 export function doplnSablonu(sablona: string, cas: string, kc: number): string {
   return sablona.replaceAll('{cas}', cas).replaceAll('{kc}', String(kc));
+}
+
+export function textCekaPozdni(cas: string, kc: number, lang?: GuideLang | null): string {
+  return doplnSablonu(t(TEXT_CEKA_VETA, lang || 'en'), cas, kc);
+}
+
+export function textSchvaleniPozdni(cas: string, kc: number, lang?: GuideLang | null): string {
+  return doplnSablonu(t(TEXT_SCHVALENI, lang || 'en'), cas, kc);
+}
+
+export function textVyjimkaPozdni(cas: string, kc: number, lang?: GuideLang | null): string {
+  return doplnSablonu(t(TEXT_VYJIMKA, lang || 'en'), cas, kc);
 }
 
 /** Veřejný výběr hosta po 20:00 do 21:00 včetně = nutná žádost. */
@@ -144,7 +228,7 @@ export function potvrdZadostPozdni(
       casZadalHost: true,
     },
     historie: `Pozdní příjezd ve ${z.cas} potvrzen`,
-    textHostovi: doplnSablonu(TEXT_SCHVALENI_CS, z.cas, z.kc),
+    textHostovi: textSchvaleniPozdni(z.cas, z.kc, rec.jazyk),
   };
 }
 
@@ -200,14 +284,18 @@ export function nastavIndividualniPozdni(
       ...(castka === 0 || castka > 0 ? { priplatekRucni: castka } : {}),
     },
     historie: `Individuální pozdní příjezd ve ${cas}`,
-    textHostovi: doplnSablonu(TEXT_VYJIMKA_CS, cas, castka),
+    textHostovi: textVyjimkaPozdni(cas, castka, rec.jazyk),
   };
 }
 
-export function textSbalenehoRadkuPozdni(z: ZadostPozdniPrijezd | null | undefined): string | null {
+export function textSbalenehoRadkuPozdni(
+  z: ZadostPozdniPrijezd | null | undefined,
+  lang?: GuideLang | null,
+): string | null {
   if (!z) return null;
-  if (z.stav === 'ceka') return doplnSablonu(TEXT_SBALENY_CEKA_CS, z.cas, z.kc);
-  if (z.stav === 'potvrzeno') return doplnSablonu(TEXT_SCHVALENI_CS, z.cas, z.kc);
+  const j = lang || 'cs';
+  if (z.stav === 'ceka') return doplnSablonu(t(TEXT_SBALENY_CEKA, j), z.cas, z.kc);
+  if (z.stav === 'potvrzeno') return textSchvaleniPozdni(z.cas, z.kc, j);
   if (z.stav === 'nelze') return z.zprava || `Příjezd ve ${z.cas} nelze`;
   return null;
 }

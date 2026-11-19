@@ -34,6 +34,22 @@ export const plochaAno: LText = {
   pt: 'Sim',
 };
 
+export const plochaNe: LText = {
+  cs: 'Ne',
+  en: 'No',
+  de: 'Nein',
+  pl: 'Nie',
+  uk: 'Ні',
+  'zh-Hant': '不要',
+  sv: 'Nej',
+  es: 'No',
+  hu: 'Nem',
+  da: 'Nej',
+  fr: 'Non',
+  it: 'No',
+  pt: 'Não',
+};
+
 export const plochaPozdeji: LText = {
   cs: 'Později',
   en: 'Later',

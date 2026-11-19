@@ -329,15 +329,21 @@ export async function ulozVstupHosta(
       : (rec.navrhy || []).filter((n) => n.pole !== 'casPrijezdu');
     const zmenaTelefonu = Boolean(rec.telefonBrana && telefonBrana && rec.telefonBrana !== telefonBrana);
     const uprava = rucniCas ? null : poZmeneCasuPrijezdu(rec, cas, new Date());
-    const pozdni = !rucniCas && vyzadujeZadostPozdni(cas) ? podaniZadostiPozdni(rec, cas) : null;
-    const bezplatny = !rucniCas && !pozdni ? zrusZadostPozdniPriBezplatnem(rec, cas) : null;
+    /** Pozdní příjezd žádáme i při ručním čase majitele (žádost čeká, ruční čas držíme). */
+    const pozdni = vyzadujeZadostPozdni(cas) ? podaniZadostiPozdni(rec, cas) : null;
+    const bezplatny = !pozdni ? zrusZadostPozdniPriBezplatnem(rec, cas) : null;
+    const pozniPatch = pozdni?.patch
+      ? rucniCas
+        ? { ...pozdni.patch, casPrijezdu: rec.casPrijezdu, casZadalHost: rec.casZadalHost }
+        : pozdni.patch
+      : null;
     const zapis = poznamenej(
       rec,
-      rucniCas
+      rucniCas && !pozdni
         ? 'Host zadal jiný čas, ruční čas zůstal'
         : pozdni?.historie || uprava?.historie || `Příjezd ${popisekCasu(rec.casPrijezdu || 'žádný')} → ${novy}`,
       {
-        casPrijezdu: rucniCas ? rec.casPrijezdu : pozdni?.patch.casPrijezdu ?? cas,
+        casPrijezdu: rucniCas ? rec.casPrijezdu : pozniPatch?.casPrijezdu ?? cas,
         casZadalHost: rucniCas ? rec.casZadalHost : true,
         zpusobPrijezdu: zpusob,
         telefonBrana,
@@ -347,7 +353,7 @@ export async function ulozVstupHosta(
         zpravaBranaOdeslana: zmenaTelefonu ? null : rec.zpravaBranaOdeslana,
         zpravaBranaPrectena: zmenaTelefonu ? null : rec.zpravaBranaPrectena,
         ...(uprava?.patch || { zadostPrijezd: null }),
-        ...(pozdni?.patch || bezplatny || {}),
+        ...(pozniPatch || bezplatny || {}),
         navrhy,
         ...souhlas.patch,
       },
@@ -357,11 +363,12 @@ export async function ulozVstupHosta(
     {
       const dilky: string[] = [];
       let telegram: TelegramDruh = 'cas-prijezdu';
-      if (rucniCas) dilky.push(`host napsal ${novy}, váš čas zůstává`);
-      else if (pozdni?.push) {
+      if (pozdni?.push) {
         dilky.push(pozdni.push.replace(/^[^:]+:\s*/, ''));
         telegram = 'zadost';
-      } else if (uprava?.push) {
+        if (rucniCas) dilky.push('váš ruční čas zatím zůstává');
+      } else if (rucniCas) dilky.push(`host napsal ${novy}, váš čas zůstává`);
+      else if (uprava?.push) {
         const host = popisHosta(rec);
         dilky.push(uprava.push.startsWith(host) ? uprava.push.slice(host.length).replace(/^:\s*/, '') : uprava.push);
         telegram = 'zadost';

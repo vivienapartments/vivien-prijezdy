@@ -33,6 +33,7 @@ import {
   zobrazCas,
 } from '@/lib/odjezd';
 import type { ZadostOkna } from '@/lib/store';
+import { plochaAno, plochaNe } from '@/lib/plocha-texty';
 import * as TX from '@/lib/texts';
 import type { GuideLang } from '@/lib/types';
 import * as VT from '@/lib/vstup-texty';
@@ -364,7 +365,7 @@ export function OdjezdRamecek({
                   setKanal(null);
                 }}
               >
-                Ne
+                {tt(plochaNe)}
               </button>
               <button
                 type="button"
@@ -372,7 +373,7 @@ export function OdjezdRamecek({
                 disabled={cekam || !kanal}
                 onClick={() => void potvrditSouhlas()}
               >
-                Ano
+                {tt(plochaAno)}
               </button>
             </div>
           </div>
