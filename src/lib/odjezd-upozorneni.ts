@@ -24,6 +24,7 @@ import {
 import { odlozitPushCasuOdjezdu } from './odjezd-potvrzeni';
 import { najdiVyberyProdlouzeni } from './odjezd-souhlas';
 import { hosteProPohodu, textPushPohody } from './pohoda';
+import { HODINA_PODEKOVANI, hosteCekajiciPodekovani, textPushPodekovani } from './podekovani';
 import type { OdjezdBeh, ProcessStore, RezervaceRecord } from './store';
 import { odkazKarty } from './prehled-odkaz';
 import { upozorniMajitele, vetaUpozorneni } from './upozorneni';
@@ -77,7 +78,28 @@ async function upozorniPohodu(
 }
 
 function klicBehu(beh: OdjezdBeh): string {
-  return `${beh.vecer}|${beh.pripominka}|${beh.pohoda}|${beh.fakturyPoledne}|${beh.fakturyRano}`;
+  return `${beh.vecer}|${beh.pripominka}|${beh.pohoda}|${beh.podekovani}|${beh.fakturyPoledne}|${beh.fakturyRano}`;
+}
+
+/** Jednou denně od 17:00. Hostovi odtud nic neodchází. Ne do Telegramu. */
+async function upozorniPodekovani(
+  store: ProcessStore,
+  list: RezervaceRecord[],
+  now: Date,
+  beh: OdjezdBeh,
+  posli: typeof upozorniMajitele,
+): Promise<{ pocet: number; beh: OdjezdBeh }> {
+  if (hodinaPraha(now) < HODINA_PODEKOVANI) return { pocet: 0, beh };
+  const dnes = denPraha(now);
+  if (beh.podekovani === dnes) return { pocet: 0, beh };
+  const cekaji = hosteCekajiciPodekovani(list, dnes, now);
+  if (!cekaji.length) {
+    return { pocet: 0, beh: { ...beh, podekovani: dnes } };
+  }
+  /** Bez telegram: jen push / e-mail záloha. */
+  const jak = await posli(store, textPushPodekovani(cekaji.length), '/prehled#podekovani');
+  if (jak === 'nic') return { pocet: 0, beh };
+  return { pocet: 1, beh: { ...beh, podekovani: dnes } };
 }
 
 /**
@@ -185,6 +207,9 @@ export async function upozorniOdjezdy(
   const pohoda = await upozorniPohodu(store, list, now, beh, posli);
   beh = pohoda.beh;
   pocet += pohoda.pocet;
+  const podekovani = await upozorniPodekovani(store, list, now, beh, posli);
+  beh = podekovani.beh;
+  pocet += podekovani.pocet;
 
   if (hodina < HODINA_DOTAZU_ODJEZDU) {
     if (klicBehu(beh) !== predBeh) await store.setOdjezdBeh(beh);

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Náhled – Odeslat poděkování</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #1c1712;
+      --ink: #f5efe3;
+      --muted: #cbbba8;
+      --gold: #c9a84c;
+      --line: #3d342a;
+      --font-display: "Cormorant Garamond", Georgia, serif;
+      --font-body: "DM Sans", system-ui, sans-serif;
+      --ok: #3d6b4f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      background: #12100e;
+      color: var(--ink);
+      padding: 1rem 0.75rem 3rem;
+    }
+    .intro {
+      max-width: 42rem;
+      margin: 0 auto 1.25rem;
+      padding: 0 0.35rem;
+    }
+    .intro h1 {
+      margin: 0 0 0.35rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.55rem;
+      color: var(--gold);
+    }
+    .intro p {
+      margin: 0.4rem 0;
+      color: var(--muted);
+      line-height: 1.45;
+      text-align: justify;
+      hyphens: auto;
+    }
+    .phone {
+      max-width: 26rem;
+      margin: 0 auto 1.5rem;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .phone__bar {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .phone__bar.is-akce { color: #f0d9a0; }
+    .radek {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+    .radek.is-hotovo { background: rgba(61, 107, 79, 0.18); }
+    .radek.is-akce { background: rgba(201, 168, 76, 0.08); }
+    .akce {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.65rem;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #2a231c;
+      color: var(--ink);
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+    .btn--wa {
+      background: #1f5c3a;
+      border-color: #2d7a4e;
+    }
+    .btn--ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+    .karta {
+      max-width: 42rem;
+      margin: 0 auto 1.25rem;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+    }
+    .karta h2 {
+      margin: 0 0 0.55rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.25rem;
+      color: var(--gold);
+    }
+    .predmet {
+      font-weight: 600;
+      margin-bottom: 0.65rem;
+    }
+    .zprava {
+      white-space: pre-wrap;
+      line-height: 1.5;
+      text-align: justify;
+      hyphens: auto;
+      color: var(--ink);
+    }
+    .zprava a {
+      color: var(--gold);
+      white-space: nowrap;
+    }
+    .meta {
+      margin-top: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="intro">
+    <h1>Odeslat poděkování</h1>
+    <p>Na Domů po poledni v den odjezdu (a ještě 3 dny). Jen předaní hosté. Denní push v 17:00. Kanál zvolíte až klepnutím (WhatsApp, SMS nebo e-mail).</p>
+  </div>
+
+  <div class="phone" aria-label="Náhled oblasti Domů">
+    <div class="phone__bar is-akce">Odeslat poděkování · 2 ▾</div>
+    <div class="radek is-akce">
+      Petra · V2 · odjezd 18. 11.
+      <div class="akce">
+        <span class="btn btn--wa">WhatsApp</span>
+        <span class="btn">SMS</span>
+        <span class="btn">E-mail</span>
+      </div>
+    </div>
+    <div class="radek is-hotovo">
+      Martin · V4 · odjezd 17. 11. · Poděkování odesláno 17:12 · WhatsApp
+      <div class="akce">
+        <span class="btn btn--wa">WhatsApp</span>
+        <span class="btn">SMS</span>
+        <span class="btn">E-mail</span>
+        <span class="btn btn--ghost">Vrátit</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="karta">
+    <h2>E-mail (čeština)</h2>
+    <div class="predmet">Předmět: VIVIEN · Než odkaz na průvodce skončí</div>
+    <div class="zprava">Dobrý den, doufáme, že jste dojeli v pořádku. Ještě jsme se s vámi chtěli rozloučit. Otevřete si odkaz na průvodce, nechali jsme vám tam pár řádků.
+
+https://priklad.cz/pruvodce</div>
+    <p class="meta">Stejný text jde i na WhatsApp a SMS (pod textem odkaz).</p>
+  </div>
+
+  <div class="karta">
+    <h2>E-mail (angličtina)</h2>
+    <div class="predmet">Subject: VIVIEN · Before the guide link ends</div>
+    <div class="zprava">Hello, we hope you got home safely. We wanted to say goodbye. Open the guide link, we left you a few lines there.
+
+https://priklad.cz/pruvodce</div>
+  </div>
+
+  <div class="karta">
+    <h2>Push majiteli (17:00)</h2>
+    <div class="zprava">Pošlete 2 hostům poděkování.</div>
+    <p class="meta">Otevře /prehled#podekovani. Telegram ne.</p>
+  </div>
+</body>
+</html>

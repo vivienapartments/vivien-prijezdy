@@ -222,10 +222,11 @@ describe('odjezd', () => {
   });
 
   it('věta o nedoplatku je ve zprávě jen když dluh je', () => {
-    const bez = rovne(zpravaOdjezdu('cs', [], 'https://example.com/pruvodce'));
+    const bez = rovne(zpravaOdjezdu('cs', [], 'https://example.com/pruvodce#pozdejsi'));
     expect(bez).not.toContain('vyrovnáme');
     expect(bez).toContain('Běžný odjezd je do 10:00');
-    expect(bez).toContain('Čas můžete zadat i tady: https://example.com/pruvodce');
+    expect(bez).toContain('Čas můžete zadat i tady: https://example.com/pruvodce#pozdejsi');
+    expect((bez.match(/https:\/\//g) || []).length).toBe(1);
     expect(bez.endsWith('Nikol a rodina VIVIEN')).toBe(true);
 
     const jeden = rovne(zpravaOdjezdu('cs', [{ druh: 'poplatek', kc: 400 }], null));

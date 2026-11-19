@@ -852,17 +852,22 @@ export function FakturyDomu({
   dnes,
   onOtevriKartu,
   vychoziOtevreno = false,
+  jen = 'vse',
   ...spolecne
 }: Spolecne & {
   radky: PrehledRadek[];
   dnes: string;
   onOtevriKartu: (rezervace: string) => void;
   vychoziOtevreno?: boolean;
+  /** Nahoře jen k vystavení dnes; dole jen před odjezdem; vse = obojí. */
+  jen?: 'aktualni' | 'pozdeji' | 'vse';
 }) {
   const [otevreno, setOtevreno] = useState(vychoziOtevreno);
   const [pozdejiOtevreno, setPozdejiOtevreno] = useState(false);
   const keVystaveni = fakturyKeVystaveni(radky, dnes);
   const pozdeji = fakturyPozdeji(radky, dnes);
+  const ukazAktualni = jen !== 'pozdeji';
+  const ukazPozdeji = jen !== 'aktualni';
 
   useEffect(() => {
     if (vychoziOtevreno) setOtevreno(true);
@@ -870,7 +875,7 @@ export function FakturyDomu({
 
   return (
     <>
-      {keVystaveni.length ? (
+      {ukazAktualni && keVystaveni.length ? (
         <section id="faktury" className="ph-domu-radek">
           <button
             type="button"
@@ -897,7 +902,7 @@ export function FakturyDomu({
           ) : null}
         </section>
       ) : null}
-      {pozdeji.length ? (
+      {ukazPozdeji && pozdeji.length ? (
         <section id="faktury-pozdeji" className="ph-domu-radek">
           <button
             type="button"

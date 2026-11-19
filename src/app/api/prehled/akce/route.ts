@@ -159,6 +159,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     poznamkaDokladu?: string;
     poznamka?: string;
     zpusobUhrady?: string;
+    kanal?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -194,6 +195,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'uz-zaplaceno' &&
       akce !== 'odjezd-dotaz' &&
       akce !== 'pohoda-dotaz' &&
+      akce !== 'podekovani-odeslat' &&
+      akce !== 'podekovani-vratit' &&
       akce !== 'checkin' &&
       akce !== 'telefon' &&
       akce !== 'predano' &&
@@ -1064,6 +1067,31 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, cas: dalsi.pohodaDotaz }, { headers: noStore });
   }
 
+  if (akce === 'podekovani-odeslat') {
+    const kanalRaw = String(body?.kanal || '').trim();
+    const kanal =
+      kanalRaw === 'whatsapp' || kanalRaw === 'sms' || kanalRaw === 'email' ? kanalRaw : null;
+    if (!kanal) return chyba(400, 'Vyberte kanál.');
+    const ted = new Date().toISOString();
+    const stitek = kanal === 'whatsapp' ? 'WhatsApp' : kanal === 'sms' ? 'SMS' : 'E-mail';
+    const veta = rec.podekovaniKdy
+      ? `Poděkování odesláno znovu · ${stitek}`
+      : `Poděkování odesláno · ${stitek}`;
+    const dalsi = pridej(rec, veta, { podekovaniKdy: ted, podekovaniKanal: kanal });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json(
+      { ok: true, cas: dalsi.podekovaniKdy, kanal: dalsi.podekovaniKanal },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'podekovani-vratit') {
+    if (!rec.podekovaniKdy) return NextResponse.json({ ok: true }, { headers: noStore });
+    const dalsi = pridej(rec, 'Poděkování vráceno', { podekovaniKdy: null, podekovaniKanal: null });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
   if (akce === 'checkin') {
     const vysledek = zkontrolujCheckinOdkaz(body?.url || '');
     if (!vysledek.ok) return chyba(400, 'Odkaz musí začínat https://.');
@@ -1127,6 +1155,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       'nedojezd',
       'odjezd',
       'pohoda',
+      'podekovani',
       'pripraveno',
     ];
     const druh = druhy.find((id) => id === body?.zprava);
@@ -1171,12 +1200,19 @@ export async function POST(request: Request): Promise<NextResponse> {
       narodnost: rec.narodnost,
     }).find((z) => z.id === druh);
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
+    const ted = new Date().toISOString();
     const patch =
       druh === 'odjezd'
-        ? { odjezdDotaz: new Date().toISOString() }
+        ? { odjezdDotaz: ted }
         : druh === 'pohoda'
-          ? { pohodaDotaz: new Date().toISOString() }
-          : {};
+          ? { pohodaDotaz: ted }
+          : druh === 'podekovani'
+            ? {
+                podekovaniKdy: ted,
+                podekovaniKanal:
+                  akce === 'whatsapp' ? ('whatsapp' as const) : akce === 'sms' ? ('sms' as const) : ('email' as const),
+              }
+            : {};
     const sJazykem =
       lang && lang !== rec.jazyk
         ? zapisMajitele(rec, 'jazyk', { jazyk: lang }, `Jazyk → ${LANG_LABELS[lang]}`)
@@ -1191,10 +1227,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     try {
       await posliEmailZpravy({
         to: komu,
-        subject: druh === 'pripraveno' ? predmetPripraveno(lang) : predmetZpravy(druh, lang, druh === 'odjezd' ? rec.odjezd : rec.prijezd),
+        subject:
+          druh === 'pripraveno'
+            ? predmetPripraveno(lang)
+            : predmetZpravy(druh, lang, druh === 'odjezd' || druh === 'podekovani' ? rec.odjezd : rec.prijezd),
         text: zprava.text,
         lang,
-        telefon: druh !== 'odjezd' && druh !== 'pripraveno' && druh !== 'pohoda',
+        telefon: druh !== 'odjezd' && druh !== 'pripraveno' && druh !== 'pohoda' && druh !== 'podekovani',
       });
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');

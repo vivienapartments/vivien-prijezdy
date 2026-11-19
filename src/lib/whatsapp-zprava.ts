@@ -2,6 +2,7 @@ import { posunDen } from './brana';
 import { odkazPripraveno, textPripraveno } from './okno-pobytu';
 import { ukazatDotazOdjezdu, zpravaOdjezdu, type PolozkaDluhu } from './odjezd';
 import { textPohody, ukazatPohodu } from './pohoda';
+import { predvybratPodekovani, textPodekovani, ukazatPodekovani } from './podekovani';
 import type { GuideLang } from './types';
 import type { ChybejiciKrok } from './vstup-pruvodce';
 import { fazeHosta } from './faze-hosta';
@@ -470,6 +471,7 @@ export type DruhZpravy =
   | 'nedojezd'
   | 'odjezd'
   | 'pohoda'
+  | 'podekovani'
   | 'pripraveno';
 
 export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string; vychozi: boolean; vystraha: boolean };
@@ -491,6 +493,7 @@ const PORADI: DruhZpravy[] = [
   'nedojezd',
   'odjezd',
   'pohoda',
+  'podekovani',
   'pripraveno',
 ];
 
@@ -512,6 +515,7 @@ export const NAZEV: Record<DruhZpravy, string> = {
   nedojezd: 'Poslední výzva (nedojezd)',
   odjezd: 'Dotaz na odjezd',
   pohoda: 'Je vše v pořádku?',
+  podekovani: 'Poděkování',
   pripraveno: 'Apartmán je připravený',
 };
 
@@ -784,8 +788,13 @@ export function zpravyMenu(opts: {
     brana2: zpravaBrany(opts.lang, 2),
     brana3: zpravaBrany(opts.lang, 3),
     nedojezd: zpravaNedojezdu(opts.lang),
-    odjezd: `${zpravaOdjezdu(opts.lang, opts.dluh || [], opts.pruvodce)}${opts.pruvodce ? `\n\n${opts.pruvodce.split('#')[0]}#pozdejsi` : ''}`,
+    odjezd: zpravaOdjezdu(
+      opts.lang,
+      opts.dluh || [],
+      opts.pruvodce ? `${opts.pruvodce.split('#')[0]}#pozdejsi` : null,
+    ),
     pohoda: textPohody(opts.lang),
+    podekovani: textPodekovani(opts.lang, opts.pruvodce ? opts.pruvodce.split('#')[0] : null),
     pripraveno: textPripraveno(opts.lang, opts.pruvodce ? odkazPripraveno(opts.pruvodce) : ''),
   };
   const videt = PORADI.filter((id) => {
@@ -822,6 +831,15 @@ export function zpravyMenu(opts: {
         dnes: opts.dnes,
       });
     }
+    if (id === 'podekovani') {
+      return ukazatPodekovani({
+        stav: opts.stav,
+        predano: opts.predano,
+        odjezd: opts.odjezd,
+        nedojezdKdy: opts.nedojezdKdy,
+        dnes: opts.dnes,
+      });
+    }
     if (id === 'odjezd') {
       return ukazatDotazOdjezdu({
         stav: opts.stav,
@@ -851,6 +869,12 @@ export function vychoziZprava(
   branaStupen?: 1 | 2 | 3,
 ): DruhZpravy | null {
   if (opts.predano) {
+    if (
+      predvybratPodekovani({ predano: opts.predano, odjezd: opts.odjezd, dnes: opts.dnes }) &&
+      videt.includes('podekovani')
+    ) {
+      return 'podekovani';
+    }
     const denPo = Boolean(opts.prijezd && opts.dnes === posunDen(opts.prijezd, 1));
     const denPred = Boolean(opts.odjezd && opts.dnes === posunDen(opts.odjezd, -1));
     if (denPo && videt.includes('pohoda')) return 'pohoda';
