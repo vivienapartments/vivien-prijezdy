@@ -25,6 +25,7 @@ import {
   type TypDokladu,
 } from '@/lib/faktura-doklad';
 import { odkazNaPruvodce, posliPruvodce } from '@/lib/posli-pruvodce';
+import { upozorniPoOdeslaniPruvodce } from '@/lib/pruvodce-wa';
 import { oznacUklid, vratUklid } from '@/lib/dnesek';
 import {
   jeKdoZavad,
@@ -1161,6 +1162,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       'checkin3',
       'checkinNedojezd',
       'neotevrel',
+      'pruvodceEmail',
       'nerozbalen',
       'denNerozbalen',
       'pruvodce3',
@@ -1215,6 +1217,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       pripraveno: druh === 'pripraveno',
       historie: rec.historie,
       narodnost: rec.narodnost,
+      krestni: rec.krestni,
     }).find((z) => z.id === druh);
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
     const ted = new Date().toISOString();
@@ -1573,6 +1576,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       ...(rec.stav === 'bez_checkinu' ? { checkinNeniPotreba: true } : {}),
     });
     await store.setRezervace(id, hotovo);
+    await upozorniPoOdeslaniPruvodce(store, hotovo);
     return NextResponse.json({ ok: true }, { headers: noStore });
   } catch {
     // Ruční pokus nemá strop „ze 3“ (ten platí jen u automatu). Majitel může kliknout znovu.

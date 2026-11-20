@@ -14,8 +14,16 @@ import {
   ZPRAVA_PRUVODCE_1,
   ZPRAVA_PRUVODCE_2,
   ZPRAVA_PRUVODCE_3,
+  ZPRAVA_PRUVODCE_EMAIL,
+  ZPRAVA_PRUVODCE_EMAIL_BEZ,
 } from './zpravy-stupne';
-import { zpravaBrany, zpravaCheckinu, zpravaCheckinNedojezdu, zpravaPruvodce3 } from './whatsapp-zprava';
+import {
+  zpravaBrany,
+  zpravaCheckinu,
+  zpravaCheckinNedojezdu,
+  zpravaPruvodce3,
+  zpravaPruvodceEmail,
+} from './whatsapp-zprava';
 
 const TABULKY = [
   ZPRAVA_CHECKIN_1,
@@ -25,6 +33,8 @@ const TABULKY = [
   ZPRAVA_PRUVODCE_1,
   ZPRAVA_PRUVODCE_2,
   ZPRAVA_PRUVODCE_3,
+  ZPRAVA_PRUVODCE_EMAIL,
+  ZPRAVA_PRUVODCE_EMAIL_BEZ,
   ZPRAVA_DEN_CAS,
   ZPRAVA_BRANA_1,
   ZPRAVA_BRANA_2,
@@ -49,6 +59,14 @@ describe('zprávy stupně', () => {
       expect(zpravaCheckinNedojezdu(lang)).not.toContain('{');
       expect(zpravaBrany(lang, 2)).not.toContain('{');
       expect(zpravaPruvodce3(lang, null)).not.toContain('{');
+      expect(zpravaPruvodceEmail(lang, 'https://example.com/p', 'Jana')).not.toContain('{');
+      expect(zpravaPruvodceEmail(lang, 'https://example.com/p', null)).not.toContain('{');
     }
+  });
+
+  it('po e-mailu varianta B s křestním jménem', () => {
+    const t = zpravaPruvodceEmail('cs', 'https://example.com/p', 'Jana');
+    expect(t).toContain('Jana, váš průvodce k příjezdu je připravený');
+    expect(t).toContain('https://example.com/p');
   });
 });

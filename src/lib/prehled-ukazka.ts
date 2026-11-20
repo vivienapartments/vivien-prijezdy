@@ -71,6 +71,32 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     otevrenoPocet: 0,
   };
 
+  /** E-mail s průvodcem právě odešel, ještě nešel WhatsApp. */
+  const poEmailuWa: RezervaceRecord = {
+    ...prazdnaRezervace('9010', '2026-10-11T07:30:00.000Z'),
+    apartman: 'V3',
+    prijezd: zitra,
+    odjezd: posunDen(zitra, 2),
+    noci: 2,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Jana Králová',
+    krestni: 'Jana',
+    narodnost: 'CZE',
+    emailHosta: 'jana.ukazka@example.com',
+    accessPin: '0000',
+    vytvoreno: dnes,
+    poplatek: 'ano',
+    stav: 'odeslano',
+    telefon: '+420604111222',
+    telefonWa: '420604111222',
+    telefonPuvodni: '604 111 222',
+    zdroj: 'Booking',
+    casPrijezdu: null,
+    otevrenoPocet: 0,
+    historie: [{ cas: '2026-10-11T07:31:00.000Z', co: 'Průvodce odeslán' }],
+  };
+
   const ceka: RezervaceRecord = {
     ...prazdnaRezervace('8004', '2026-10-11T05:00:00.000Z'),
     apartman: 'V3',
@@ -519,6 +545,7 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     otevrel,
     bezCasu,
     neotevrel,
+    poEmailuWa,
     bezCasuPozdeji,
     stary,
     odjel,

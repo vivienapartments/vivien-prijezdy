@@ -88,7 +88,11 @@ export function predmetZpravy(id: DruhZpravy, lang: GuideLang | null, prijezd: s
   const tabulka =
     id === 'checkin' || id === 'checkin2' || id === 'checkin3' || id === 'checkinNedojezd'
       ? CHECKIN
-      : id === 'neotevrel' || id === 'nerozbalen' || id === 'denNerozbalen' || id === 'pruvodce3'
+      : id === 'neotevrel' ||
+          id === 'pruvodceEmail' ||
+          id === 'nerozbalen' ||
+          id === 'denNerozbalen' ||
+          id === 'pruvodce3'
         ? PRUVODCE
         : id === 'brana' || id === 'brana2' || id === 'brana3'
           ? BRANA

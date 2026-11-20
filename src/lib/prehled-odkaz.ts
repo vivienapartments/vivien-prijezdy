@@ -5,11 +5,12 @@ export type UkolUpozorneni = 'brana' | 'potvrzeni' | 'doklady' | 'odjezd';
 export function odkazKarty(
   id: string,
   ukol?: UkolUpozorneni | null,
-  opts?: { prani?: string | null },
+  opts?: { prani?: string | null; zprava?: string | null },
 ): string {
   const cislo = encodeURIComponent(id);
   const base = `/prehled#${cislo}`;
   if (opts?.prani) return `${base}?prani=${encodeURIComponent(opts.prani)}`;
+  if (opts?.zprava) return `${base}?zprava=${encodeURIComponent(opts.zprava)}`;
   if (ukol === 'doklady') return `${base}?zprava=doklady`;
   if (ukol === 'brana' || ukol === 'potvrzeni') return `${base}?ukol=${ukol}`;
   /** Odjezd: Domů nahoře, Osobně / Sami bez otevírání karty. */

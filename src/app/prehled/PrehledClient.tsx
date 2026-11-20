@@ -29,6 +29,7 @@ import {
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { ukolZUpozorneniUrl, zpravaZUpozorneniUrl, type UkolUpozorneni } from '@/lib/prehled-odkaz';
+import { cekaWhatsAppPoPruvodci } from '@/lib/pruvodce-wa-stav';
 import { textSchvaleniOdjezduOdeslat } from '@/lib/odjezd-souhlas';
 import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
@@ -2609,6 +2610,7 @@ export function PrehledClient({
       spzPujcene: row.spzPujcene,
       souhlas: Boolean(row.souhlas),
     });
+    const krestni = (row.jmeno || '').trim().split(/\s+/).filter(Boolean)[0] || null;
     return zpravyMenu({
       stav: row.stav,
       lang,
@@ -2631,6 +2633,7 @@ export function PrehledClient({
       pripraveno,
       historie: row.historie,
       narodnost: row.narodnost,
+      krestni,
     });
   }
 
@@ -3834,13 +3837,19 @@ export function PrehledClient({
                   className={`ph-nova-stav${
                     pruvodceOk
                       ? ' ph-nova-stav--ok'
-                      : vyzvaPruvodce.naRade
+                      : cekaWhatsAppPoPruvodci(row.historie) || vyzvaPruvodce.naRade
                         ? ' ph-nova-stav--ne'
                         : ' ph-nova-stav--cek'
                   }`}
                   disabled={pruvodceOk || odjel || !checkinOk}
                   onClick={() => {
                     if (pruvodceOk || odjel || !checkinOk) return;
+                    if (cekaWhatsAppPoPruvodci(row.historie) && (row.otevrenoPocet ?? 0) === 0) {
+                      setVolba((prev) => ({ ...prev, [row.rezervace]: 'pruvodceEmail' }));
+                      setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: 'whatsapp' }));
+                      setPanelZpravy((prev) => ({ ...prev, [row.rezervace]: true }));
+                      return;
+                    }
                     if (!casOk) {
                       setVolba((prev) => ({ ...prev, [row.rezervace]: casZpravaId }));
                       setKanalZpravy((prev) => ({ ...prev, [row.rezervace]: prev[row.rezervace] || 'whatsapp' }));
@@ -3855,18 +3864,30 @@ export function PrehledClient({
                   <span className="ph-nova-stav__popis">
                     {pruvodceOk
                       ? 'Hotovo'
-                      : !casOk
-                        ? 'čeká na čas'
-                        : (row.otevrenoPocet ?? 0) === 0
-                          ? 'neotevřen'
-                          : 'dokončit'}
+                      : cekaWhatsAppPoPruvodci(row.historie) && (row.otevrenoPocet ?? 0) === 0
+                        ? row.telefonWa
+                          ? 'Pošlete WhatsApp'
+                          : 'Doplňte telefon'
+                        : !casOk
+                          ? 'čeká na čas'
+                          : (row.otevrenoPocet ?? 0) === 0
+                            ? 'neotevřen'
+                            : 'dokončit'}
                   </span>
                   {!predanoRadku(row) ? (
                     <span className="ph-nova-stav__otevreni" title={row.otevreniTitle || undefined}>
                       {textOtevreniDlazdice(row)}
                     </span>
                   ) : null}
-                  {!pruvodceOk ? <span className="ph-nova-stav__vyzva">{vyzvaPruvodce.plny}</span> : null}
+                  {!pruvodceOk ? (
+                    <span className="ph-nova-stav__vyzva">
+                      {cekaWhatsAppPoPruvodci(row.historie) && (row.otevrenoPocet ?? 0) === 0
+                        ? row.telefonWa
+                          ? 'Průvodce odešel e-mailem. Pošlete WhatsApp.'
+                          : 'Průvodce odešel e-mailem. Nejdřív doplňte telefon.'
+                        : vyzvaPruvodce.plny}
+                    </span>
+                  ) : null}
                 </button>
               </div>
             </>

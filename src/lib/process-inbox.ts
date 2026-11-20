@@ -24,6 +24,7 @@ import {
   parsujPotvrzeni,
 } from './potvrzeni-rezervace';
 import { posliPruvodce } from './posli-pruvodce';
+import { upozorniPoOdeslaniPruvodce } from './pruvodce-wa';
 import { vynechRucni } from './rucni-pole';
 import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
 import {
@@ -521,6 +522,7 @@ export async function processOneMail(mail: InboxMail, store: ProcessStore): Prom
       vetaDoplneni(zmeny, stav === 'odeslano_s_vyhradou' ? 'Průvodce odeslán s výhradou' : 'Průvodce odeslán'),
     );
     await store.setRezervace(id, rec);
+    await upozorniPoOdeslaniPruvodce(store, rec);
     await store.markMessage({
       messageId: mail.messageId,
       uid: mail.uid,

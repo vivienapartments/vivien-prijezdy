@@ -89,6 +89,42 @@ export const ZPRAVA_PRUVODCE_2: Record<GuideLang, string> = {
   da: "Hej, i jeres ankomstguide mangler stadig jeres ankomsttidspunkt, hvordan I kommer, og bekræftelsen af husreglerne. Uden det ved vi ikke, hvornår vi skal vente jer, og vi kan ikke gøre PIN-koderne til indgangen tilgængelige for jer. Åbn guiden og udfyld den så hurtigt som muligt.",
 };
 
+/**
+ * Po odeslání e-mailu s průvodcem · WhatsApp (varianta B, 20. 11. 2026).
+ * `{jméno}` = křestní. Bez jména použij ZPRAVA_PRUVODCE_EMAIL_BEZ.
+ */
+export const ZPRAVA_PRUVODCE_EMAIL: Record<GuideLang, string> = {
+  cs: '{jméno}, váš průvodce k příjezdu je připravený. Cesta, parkování a další kroky jsou uvnitř.',
+  en: '{jméno}, your arrival guide is ready. Directions, parking and the next steps are inside.',
+  de: '{jméno}, Ihr Anreiseführer ist bereit. Wegbeschreibung, Parken und die nächsten Schritte finden Sie darin.',
+  pl: '{jméno}, Wasz przewodnik do przyjazdu jest gotowy. Droga, parking i kolejne kroki są w środku.',
+  uk: '{jméno}, ваш путівник до приїзду готовий. Маршрут, паркування та наступні кроки всередині.',
+  'zh-Hant': '{jméno}，您的抵達指南已準備好。路線、停車與後續步驟都在裡面。',
+  sv: '{jméno}, er ankomstguide är klar. Vägbeskrivning, parkering och nästa steg finns inuti.',
+  es: '{jméno}, su guía de llegada está lista. El camino, el aparcamiento y los siguientes pasos están dentro.',
+  fr: '{jméno}, votre guide d’arrivée est prêt. Le trajet, le stationnement et les prochaines étapes sont à l’intérieur.',
+  it: '{jméno}, la guida all’arrivo è pronta. Percorso, parcheggio e i passi successivi sono dentro.',
+  pt: '{jméno}, o vosso guia de chegada está pronto. O caminho, o estacionamento e os passos seguintes estão lá dentro.',
+  hu: '{jméno}, az érkezési útmutatójuk kész. Az útvonal, a parkolás és a következő lépések benne vannak.',
+  da: '{jméno}, jeres ankomstguide er klar. Vejbeskrivelse, parkering og de næste trin er inden i.',
+};
+
+export const ZPRAVA_PRUVODCE_EMAIL_BEZ: Record<GuideLang, string> = {
+  cs: 'Váš průvodce k příjezdu je připravený. Cesta, parkování a další kroky jsou uvnitř.',
+  en: 'Your arrival guide is ready. Directions, parking and the next steps are inside.',
+  de: 'Ihr Anreiseführer ist bereit. Wegbeschreibung, Parken und die nächsten Schritte finden Sie darin.',
+  pl: 'Wasz przewodnik do przyjazdu jest gotowy. Droga, parking i kolejne kroki są w środku.',
+  uk: 'Ваш путівник до приїзду готовий. Маршрут, паркування та наступні кроки всередині.',
+  'zh-Hant': '您的抵達指南已準備好。路線、停車與後續步驟都在裡面。',
+  sv: 'Er ankomstguide är klar. Vägbeskrivning, parkering och nästa steg finns inuti.',
+  es: 'Su guía de llegada está lista. El camino, el aparcamiento y los siguientes pasos están dentro.',
+  fr: 'Votre guide d’arrivée est prêt. Le trajet, le stationnement et les prochaines étapes sont à l’intérieur.',
+  it: 'La guida all’arrivo è pronta. Percorso, parcheggio e i passi successivi sono dentro.',
+  pt: 'O vosso guia de chegada está pronto. O caminho, o estacionamento e os passos seguintes estão lá dentro.',
+  hu: 'Az érkezési útmutatójuk kész. Az útvonal, a parkolás és a következő lépések benne vannak.',
+  da: 'Jeres ankomstguide er klar. Vejbeskrivelse, parkering og de næste trin er inden i.',
+};
+
 /** B3 · průvodce, den příjezdu. */
 export const ZPRAVA_PRUVODCE_3: Record<GuideLang, string> = {
   cs: "Dobrý den, dnes máte přijet a v průvodci stále chybí čas a způsob příjezdu a potvrzení pravidel. Bez těchto údajů vás dnes nemůžeme ubytovat ani vám předat apartmán, a pokud přijedete autem, nezaparkujete. Pokud je nedoplníte, může to skončit jako nedojezd (no-show). Otevřete průvodce a doplňte je hned.",

@@ -32,7 +32,10 @@ import {
   ZPRAVA_PRUVODCE_1,
   ZPRAVA_PRUVODCE_2,
   ZPRAVA_PRUVODCE_3,
+  ZPRAVA_PRUVODCE_EMAIL,
+  ZPRAVA_PRUVODCE_EMAIL_BEZ,
 } from './zpravy-stupne';
+import { cekaWhatsAppPoPruvodci } from './pruvodce-wa-stav';
 
 type JazykZpravy =
   | 'cs'
@@ -460,6 +463,7 @@ export type DruhZpravy =
   | 'checkin3'
   | 'checkinNedojezd'
   | 'neotevrel'
+  | 'pruvodceEmail'
   | 'nerozbalen'
   | 'denNerozbalen'
   | 'pruvodce3'
@@ -482,6 +486,7 @@ const PORADI: DruhZpravy[] = [
   'checkin3',
   'checkinNedojezd',
   'neotevrel',
+  'pruvodceEmail',
   'nerozbalen',
   'denNerozbalen',
   'pruvodce3',
@@ -504,6 +509,7 @@ export const NAZEV: Record<DruhZpravy, string> = {
   checkin3: 'Check-in · 3. stupeň',
   checkinNedojezd: 'Poslední výzva · check-in',
   neotevrel: 'Průvodce · 1. stupeň',
+  pruvodceEmail: 'Průvodce · po e-mailu',
   nerozbalen: 'Průvodce · 1. stupeň (čas)',
   denNerozbalen: 'Průvodce · 2. stupeň',
   pruvodce3: 'Průvodce · 3. stupeň',
@@ -632,6 +638,19 @@ export function zpravaCheckinNedojezdu(lang: GuideLang | null, url?: string | nu
 
 export function zpravaHostovi(lang: GuideLang | null, odkaz: string | null, stupen: 1 | 2 | 3 = 1): string {
   return sestav(textPruvodceStupne(lang, stupen), odkaz, lang);
+}
+
+/** Varianta B po odeslání e-mailu. `{jméno}` = křestní. */
+export function zpravaPruvodceEmail(
+  lang: GuideLang | null,
+  odkaz: string | null,
+  krestni?: string | null,
+): string {
+  const jmeno = (krestni || '').trim().split(/\s+/)[0] || '';
+  const text = jmeno
+    ? textHosta(ZPRAVA_PRUVODCE_EMAIL, lang).replaceAll('{jméno}', jmeno)
+    : textHosta(ZPRAVA_PRUVODCE_EMAIL_BEZ, lang);
+  return sestav(text, odkaz, lang);
 }
 
 export function zpravaNerozbalen(lang: GuideLang | null, _chybi: ChybejiciKrok[], odkaz: string | null): string {
@@ -764,6 +783,8 @@ export function zpravyMenu(opts: {
   narodnost?: string | null;
   checkinNeniPotreba?: boolean;
   nedojezdKdy?: string | null;
+  /** Křestní jméno do zprávy po e-mailu. */
+  krestni?: string | null;
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const historie = opts.historie || [];
@@ -773,12 +794,17 @@ export function zpravyMenu(opts: {
   const denPrijezdu = Boolean(opts.prijezd && opts.dnes === opts.prijezd);
   const checkinStupen = stupenCheckinu(pocetCheckinPripoinek(historie), denPredNeboDen);
   const branaStupen = stupenBrany(pocetBranaPripoinek(historie), denPredNeboDen);
+  const poEmailu =
+    cekaWhatsAppPoPruvodci(historie) &&
+    (opts.otevrenoPocet ?? 0) === 0 &&
+    (opts.stav === 'odeslano' || opts.stav === 'odeslano_s_vyhradou');
   const texty: Record<DruhZpravy, string> = {
     checkin: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl, 1),
     checkin2: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl, 2),
     checkin3: zpravaCheckinu(opts.lang, opts.zdroj, opts.checkinUrl, 3),
     checkinNedojezd: zpravaCheckinNedojezdu(opts.lang, opts.checkinUrl),
     neotevrel: zpravaHostovi(opts.lang, opts.pruvodce, 1),
+    pruvodceEmail: zpravaPruvodceEmail(opts.lang, opts.pruvodce, opts.krestni),
     nerozbalen: zpravaNerozbalen(opts.lang, chybi, opts.pruvodce),
     denNerozbalen: zpravaDneNerozbalen(opts.lang, chybi, opts.pruvodce),
     pruvodce3: zpravaPruvodce3(opts.lang, opts.pruvodce),
@@ -810,6 +836,7 @@ export function zpravyMenu(opts: {
     ) {
       return false;
     }
+    if (id === 'pruvodceEmail') return poEmailu;
     if (id === 'checkinNedojezd') {
       return ukazatCheckinNedojezd({
         stav: opts.stav,
@@ -908,6 +935,13 @@ export function vychoziZprava(
   if (!pruvodceHotovo && opts.stav !== 'neodeslano' && !cekaCheckin) {
     const denPrijezdu = Boolean(opts.prijezd && opts.dnes === opts.prijezd);
     const pocet = pocetCasovychPripoinek(historie);
+    if (
+      !otevren &&
+      cekaWhatsAppPoPruvodci(historie) &&
+      videt.includes('pruvodceEmail')
+    ) {
+      return 'pruvodceEmail';
+    }
     if (!denPrijezdu && !otevren && pocet === 0 && videt.includes('neotevrel')) {
       return 'neotevrel';
     }
