@@ -1,6 +1,5 @@
 /**
  * Texty stránky poptávky. Čeština je návrh A (ke schválení majitelem).
- * Ostatní jazyky zatím anglický fallback u věrnosti z tokenu.
  */
 
 import type { GuideLang } from './types';
@@ -11,16 +10,29 @@ export type PoptavkaTexty = {
   firmaRadek: string;
   sleva: string;
   cenaPozdeji: string;
-  termin: string;
+  krokTermin: string;
+  krokZpusob: string;
+  krokApartmany: string;
+  krokKontakt: string;
   prijezd: string;
   odjezd: string;
-  apartmany: string;
-  libovolny: string;
+  dale: string;
+  zpet: string;
+  zpusobDoporucit: string;
+  zpusobDoporucitPopis: string;
+  zpusobVybrat: string;
+  zpusobVybratPopis: string;
+  vyberteApartmany: string;
+  galerieKomplet: string;
+  kvizAtmosfery: string;
+  vybratTento: string;
+  zrusitVyber: string;
+  zavritGalerie: string;
   jmeno: string;
   telefon: string;
   doprava: string;
   auto: string;
-  dodavka: string;
+  pesky: string;
   nevim: string;
   poznamka: string;
   odeslat: string;
@@ -31,26 +43,40 @@ export type PoptavkaTexty = {
   zaloha: string;
   chybaTermin: string;
   chybaKontakt: string;
+  chybaApartman: string;
   chybaObecna: string;
   chybaBlok: string;
 };
 
 const CS: PoptavkaTexty = {
-  nadpis: 'Vyberte termín dalšího pobytu',
-  uvod: 'Pošlete nám poptávku. Do hodiny ověříme volno a ozveme se s cenou.',
+  nadpis: 'Další pobyt u nás',
+  uvod: 'Do hodiny ověříme volno a ozveme se s cenou se slevou 5 %.',
   firmaRadek: 'Poptávka pro {firma}',
   sleva: 'Na této cestě máte slevu 5 %.',
   cenaPozdeji: 'Přesnou cenu dopočítáme po ověření termínu.',
-  termin: 'Termín',
+  krokTermin: '1. Termín',
+  krokZpusob: '2. Jak vybrat apartmán',
+  krokApartmany: '3. Apartmány',
+  krokKontakt: 'Kontakt a odeslání',
   prijezd: 'Příjezd',
   odjezd: 'Odjezd',
-  apartmany: 'Apartmány (můžete víc)',
-  libovolny: 'Je mi to jedno, doporučte',
+  dale: 'Pokračovat',
+  zpet: 'Zpět',
+  zpusobDoporucit: 'Stačí termín, apartmán doporučte',
+  zpusobDoporucitPopis: 'Vyberete jen kdy chcete přijet. My napíšeme, které apartmány jsou volné.',
+  zpusobVybrat: 'Chci si vybrat apartmán',
+  zpusobVybratPopis: 'Uvidíte fotky. Můžete vybrat jeden nebo víc.',
+  vyberteApartmany: 'Klepněte na fotku. Otevře se galerie. Pak apartmán vyberte tlačítkem.',
+  galerieKomplet: 'Galerie komplet',
+  kvizAtmosfery: 'Nevíte, který vybrat? Krátký průvodce doporučením apartmánů',
+  vybratTento: 'Vybrat tento apartmán',
+  zrusitVyber: 'Zrušit výběr',
+  zavritGalerie: 'Zpět k dlaždicím',
   jmeno: 'Jméno',
   telefon: 'Telefon',
-  doprava: 'Doprava (volitelné)',
+  doprava: 'Doprava',
   auto: 'Autem',
-  dodavka: 'Dodávkou',
+  pesky: 'Pěšky',
   nevim: 'Zatím nevím',
   poznamka: 'Poznámka (volitelné)',
   odeslat: 'Odeslat poptávku',
@@ -61,26 +87,40 @@ const CS: PoptavkaTexty = {
   zaloha: 'Když se nedovoláte',
   chybaTermin: 'Zvolte příjezd a odjezd. Odjezd musí být po příjezdu.',
   chybaKontakt: 'Vyplňte jméno a telefon.',
+  chybaApartman: 'Vyberte aspoň jeden apartmán, nebo zvolte doporučení od nás.',
   chybaObecna: 'Poptávku teď nešlo uložit. Zavolejte nebo napište.',
   chybaBlok: 'Příliš mnoho pokusů. Zkuste to později, nebo zavolejte.',
 };
 
 const EN: PoptavkaTexty = {
-  nadpis: 'Choose dates for your next stay',
-  uvod: 'Send us a request. Within an hour we will check availability and reply with the price.',
+  nadpis: 'Your next stay with us',
+  uvod: 'Within an hour we will check availability and reply with the price, including a 5% discount.',
   firmaRadek: 'Request for {firma}',
   sleva: 'On this path you get a 5% discount.',
   cenaPozdeji: 'We will calculate the exact price after we check the dates.',
-  termin: 'Dates',
+  krokTermin: '1. Dates',
+  krokZpusob: '2. How to choose',
+  krokApartmany: '3. Apartments',
+  krokKontakt: 'Contact and send',
   prijezd: 'Arrival',
   odjezd: 'Departure',
-  apartmany: 'Apartments (you may pick more)',
-  libovolny: 'No preference, please recommend',
+  dale: 'Continue',
+  zpet: 'Back',
+  zpusobDoporucit: 'Dates only, we will recommend',
+  zpusobDoporucitPopis: 'Tell us when you want to stay. We will say which apartments are free.',
+  zpusobVybrat: 'I want to choose an apartment',
+  zpusobVybratPopis: 'You will see photos. You can pick one or more.',
+  vyberteApartmany: 'Tap a photo to open the gallery. Then select the apartment.',
+  galerieKomplet: 'Full gallery',
+  kvizAtmosfery: 'Not sure which to pick? Short guide to apartment recommendations',
+  vybratTento: 'Select this apartment',
+  zrusitVyber: 'Remove selection',
+  zavritGalerie: 'Back to tiles',
   jmeno: 'Name',
   telefon: 'Phone',
-  doprava: 'Travel (optional)',
+  doprava: 'Travel',
   auto: 'By car',
-  dodavka: 'By van',
+  pesky: 'On foot',
   nevim: 'Not sure yet',
   poznamka: 'Note (optional)',
   odeslat: 'Send request',
@@ -91,6 +131,7 @@ const EN: PoptavkaTexty = {
   zaloha: 'If you cannot reach her',
   chybaTermin: 'Choose arrival and departure. Departure must be after arrival.',
   chybaKontakt: 'Please fill in name and phone.',
+  chybaApartman: 'Pick at least one apartment, or choose our recommendation.',
   chybaObecna: 'We could not save the request. Please call or write.',
   chybaBlok: 'Too many attempts. Try later, or call us.',
 };

@@ -241,3 +241,148 @@
     display: block;
   }
 }
+
+.pp__krok {
+  margin: 0.85rem 0 0.65rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: 1.2rem;
+  color: #c9a84c;
+  text-align: left;
+}
+
+.pp__volba {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 0.65rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid #3d342a;
+  background: #15110e;
+  color: #e8dfd0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pp__volba strong {
+  color: #f5efe3;
+  font-size: 1rem;
+}
+
+.pp__volba span {
+  color: #cbbba8;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.pp__volba.is-on {
+  border-color: #c9a84c;
+  background: color-mix(in srgb, #c9a84c 12%, #15110e);
+}
+
+.pp__dlazdice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin: 0.5rem 0 0.85rem;
+}
+
+.pp__dlazdice-polozka {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #3d342a;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #15110e;
+  color: #f5efe3;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.pp__dlazdice-polozka img {
+  display: block;
+  width: 100%;
+  height: 7.2rem;
+  object-fit: cover;
+}
+
+.pp__dlazdice-nazev {
+  display: block;
+  padding: 0.45rem 0.5rem 0.55rem;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: #e8dfd0;
+}
+
+.pp__dlazdice-polozka.is-on {
+  border-color: #c9a84c;
+  box-shadow: inset 0 0 0 1px #c9a84c;
+}
+
+.pp__dlazdice-vybrano {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: #c9a84c;
+  color: #1a1510;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: grid;
+  place-items: center;
+}
+
+.pp__kviz {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  text-align: justify;
+  hyphens: auto;
+  color: #cbbba8;
+}
+
+.pp__kviz a {
+  color: #c9a84c;
+  text-decoration: underline;
+}
+
+.pp__lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(8, 6, 4, 0.92);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.pp__lightbox-vnitr {
+  width: min(28rem, 100%);
+  display: grid;
+  gap: 0.65rem;
+}
+
+.pp__lightbox-vnitr > img {
+  width: 100%;
+  max-height: 55dvh;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #1c1712;
+}
+
+.pp__lightbox-ovladani {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #cbbba8;
+  font-size: 0.9rem;
+}

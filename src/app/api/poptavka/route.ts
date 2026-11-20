@@ -113,7 +113,7 @@ export async function POST(req: Request) {
   }
 
   const doprava =
-    body.doprava === 'auto' || body.doprava === 'dodavka' || body.doprava === 'nevim'
+    body.doprava === 'auto' || body.doprava === 'pesky' || body.doprava === 'nevim'
       ? body.doprava
       : null;
 

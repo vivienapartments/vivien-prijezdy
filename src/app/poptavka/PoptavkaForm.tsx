@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { apartmany } from '@/lib/guide-data';
+import { toTelHref } from '@/lib/i18n';
 import {
   odkazSmsPoptavky,
   odkazWaPoptavky,
@@ -11,8 +12,17 @@ import {
   ymdDnesPraha,
   type PoptavkaZdroj,
 } from '@/lib/poptavka';
+import {
+  coverUrl,
+  galerieKompletCoverUrl,
+  galerieKompletUrls,
+  galerieUrls,
+  odkazApartmanyWeb,
+  odkazKvizAtmosfery,
+  POPTAVKA_APARTMANY,
+  webLangKod,
+} from '@/lib/poptavka-apartmany';
 import { poptavkaTexty } from '@/lib/poptavka-texty';
-import { toTelHref } from '@/lib/i18n';
 import type { AptId, GuideLang } from '@/lib/types';
 import './poptavka.scss';
 
@@ -28,21 +38,32 @@ export type PoptavkaVstupni = {
   telefon: string;
 };
 
+type Krok = 'termin' | 'zpusob' | 'apartmany' | 'kontakt';
+type GalerieStav =
+  | { druh: 'apt'; id: AptId; i: number }
+  | { druh: 'komplet'; i: number }
+  | null;
+
 export function PoptavkaForm(props: PoptavkaVstupni) {
   const t = poptavkaTexty(props.lang);
+  const webLang = webLangKod(props.lang);
   const dnes = ymdDnesPraha();
+  const [krok, setKrok] = useState<Krok>('termin');
   const [prijezd, setPrijezd] = useState('');
   const [odjezd, setOdjezd] = useState('');
+  const [zpusob, setZpusob] = useState<'doporucit' | 'vybrat' | null>(null);
   const [apts, setApts] = useState<AptId[]>([]);
-  const [libovolny, setLibovolny] = useState(false);
   const [jmeno, setJmeno] = useState(props.jmeno);
   const [telefon, setTelefon] = useState(props.telefon);
-  const [doprava, setDoprava] = useState<'auto' | 'dodavka' | 'nevim' | ''>('');
+  const [doprava, setDoprava] = useState<'auto' | 'pesky' | 'nevim' | ''>('');
   const [poznamka, setPoznamka] = useState('');
   const [honeypot, setHoneypot] = useState('');
+  const [galerie, setGalerie] = useState<GalerieStav>(null);
   const [cekam, setCekam] = useState(false);
   const [hotovo, setHotovo] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
+
+  const libovolny = zpusob === 'doporucit';
 
   const zprava = useMemo(
     () =>
@@ -69,15 +90,40 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const ios = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
   const sms = odkazSmsPoptavky(zprava, ios);
 
+  const galerieFotky =
+    galerie?.druh === 'apt'
+      ? (() => {
+          const a = POPTAVKA_APARTMANY.find((x) => x.id === galerie.id);
+          return a ? galerieUrls(webLang, a) : [];
+        })()
+      : galerie?.druh === 'komplet'
+        ? galerieKompletUrls(webLang)
+        : [];
+  const galerieIndex = galerie?.i ?? 0;
+
+  function nazevApt(id: AptId): string {
+    const a = apartmany.find((x) => x.id === id);
+    return props.lang === 'cs' ? a?.nazev.cs || id : a?.nazev.en || id;
+  }
+
+  function overTermin(): boolean {
+    if (!prijezd || !odjezd || odjezd <= prijezd) {
+      setChyba(t.chybaTermin);
+      return false;
+    }
+    setChyba(null);
+    return true;
+  }
+
   function toggleApt(id: AptId) {
-    setLibovolny(false);
     setApts((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
   async function odeslat() {
     setChyba(null);
-    if (!prijezd || !odjezd || odjezd <= prijezd) {
-      setChyba(t.chybaTermin);
+    if (!overTermin()) return;
+    if (zpusob === 'vybrat' && !apts.length) {
+      setChyba(t.chybaApartman);
       return;
     }
     if (!jmeno.trim() || !telefon.trim()) {
@@ -141,134 +187,235 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         ) : null}
         <p className="pp__uvod">{t.uvod}</p>
         <p className="pp__sleva">{t.sleva}</p>
-        <p className="pp__cena">{t.cenaPozdeji}</p>
 
         {hotovo ? (
           <p className="pp__dekujeme">{t.dekujeme}</p>
         ) : (
           <>
-            <fieldset>
-              <legend>{t.termin}</legend>
-              <div className="pp__termin">
-                <label>
-                  {t.prijezd}
-                  <input
-                    type="date"
-                    min={dnes}
-                    value={prijezd}
-                    onChange={(e) => setPrijezd(e.target.value)}
-                    required
-                  />
-                </label>
-                <label>
-                  {t.odjezd}
-                  <input
-                    type="date"
-                    min={prijezd || dnes}
-                    value={odjezd}
-                    onChange={(e) => setOdjezd(e.target.value)}
-                    required
-                  />
-                </label>
-              </div>
-            </fieldset>
+            {krok === 'termin' ? (
+              <section>
+                <h2 className="pp__krok">{t.krokTermin}</h2>
+                <div className="pp__termin">
+                  <label>
+                    {t.prijezd}
+                    <input
+                      type="date"
+                      min={dnes}
+                      value={prijezd}
+                      onChange={(e) => setPrijezd(e.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    {t.odjezd}
+                    <input
+                      type="date"
+                      min={prijezd || dnes}
+                      value={odjezd}
+                      onChange={(e) => setOdjezd(e.target.value)}
+                      required
+                    />
+                  </label>
+                </div>
+                {chyba ? <p className="pp__chyba">{chyba}</p> : null}
+                <button
+                  type="button"
+                  className="pp__btn pp__btn--hlavni"
+                  onClick={() => {
+                    if (overTermin()) setKrok('zpusob');
+                  }}
+                >
+                  {t.dale}
+                </button>
+              </section>
+            ) : null}
 
-            <fieldset>
-              <legend>{t.apartmany}</legend>
-              <div className="pp__apts">
-                {apartmany.map((a) => {
-                  const on = !libovolny && apts.includes(a.id);
-                  return (
-                    <label key={a.id} className={`pp__apt${on ? ' is-on' : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={on}
-                        onChange={() => toggleApt(a.id)}
-                      />
-                      {props.lang === 'cs' ? a.nazev.cs : a.nazev.en}
-                    </label>
-                  );
-                })}
-                <label className={`pp__apt${libovolny ? ' is-on' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={libovolny}
-                    onChange={() => {
-                      setLibovolny((v) => !v);
-                      if (!libovolny) setApts([]);
-                    }}
-                  />
-                  {t.libovolny}
-                </label>
-              </div>
-            </fieldset>
+            {krok === 'zpusob' ? (
+              <section>
+                <h2 className="pp__krok">{t.krokZpusob}</h2>
+                <button
+                  type="button"
+                  className={`pp__volba${zpusob === 'doporucit' ? ' is-on' : ''}`}
+                  onClick={() => {
+                    setZpusob('doporucit');
+                    setApts([]);
+                    setKrok('kontakt');
+                  }}
+                >
+                  <strong>{t.zpusobDoporucit}</strong>
+                  <span>{t.zpusobDoporucitPopis}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`pp__volba${zpusob === 'vybrat' ? ' is-on' : ''}`}
+                  onClick={() => {
+                    setZpusob('vybrat');
+                    setKrok('apartmany');
+                  }}
+                >
+                  <strong>{t.zpusobVybrat}</strong>
+                  <span>{t.zpusobVybratPopis}</span>
+                </button>
+                <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('termin')}>
+                  {t.zpet}
+                </button>
+              </section>
+            ) : null}
 
-            <label>
-              {t.jmeno}
-              <input
-                type="text"
-                autoComplete="name"
-                value={jmeno}
-                onChange={(e) => setJmeno(e.target.value)}
-                required
-              />
-            </label>
-            <label>
-              {t.telefon}
-              <input
-                type="tel"
-                autoComplete="tel"
-                value={telefon}
-                onChange={(e) => setTelefon(e.target.value)}
-                required
-              />
-            </label>
-
-            <fieldset>
-              <legend>{t.doprava}</legend>
-              <div className="pp__doprava">
-                {(
-                  [
-                    ['auto', t.auto],
-                    ['dodavka', t.dodavka],
-                    ['nevim', t.nevim],
-                  ] as const
-                ).map(([id, label]) => (
+            {krok === 'apartmany' ? (
+              <section>
+                <h2 className="pp__krok">{t.krokApartmany}</h2>
+                <p className="pp__cena">{t.vyberteApartmany}</p>
+                <div className="pp__dlazdice">
+                  {POPTAVKA_APARTMANY.map((a) => {
+                    const on = apts.includes(a.id);
+                    return (
+                      <button
+                        key={a.id}
+                        type="button"
+                        className={`pp__dlazdice-polozka${on ? ' is-on' : ''}`}
+                        onClick={() => setGalerie({ druh: 'apt', id: a.id, i: 0 })}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
+                        <span className="pp__dlazdice-nazev">{nazevApt(a.id)}</span>
+                        {on ? <span className="pp__dlazdice-vybrano">✓</span> : null}
+                      </button>
+                    );
+                  })}
                   <button
-                    key={id}
                     type="button"
-                    className={`pp__chip${doprava === id ? ' is-on' : ''}`}
-                    onClick={() => setDoprava((d) => (d === id ? '' : id))}
+                    className="pp__dlazdice-polozka"
+                    onClick={() => setGalerie({ druh: 'komplet', i: 0 })}
                   >
-                    {label}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={galerieKompletCoverUrl(webLang)} alt="" width={400} height={260} />
+                    <span className="pp__dlazdice-nazev">{t.galerieKomplet}</span>
                   </button>
-                ))}
-              </div>
-            </fieldset>
+                </div>
+                <p className="pp__kviz">
+                  <a href={odkazKvizAtmosfery(webLang)} target="_blank" rel="noopener noreferrer">
+                    {t.kvizAtmosfery}
+                  </a>
+                </p>
+                {chyba ? <p className="pp__chyba">{chyba}</p> : null}
+                <div className="pp__akce">
+                  <button
+                    type="button"
+                    className="pp__btn pp__btn--hlavni"
+                    onClick={() => {
+                      if (!apts.length) {
+                        setChyba(t.chybaApartman);
+                        return;
+                      }
+                      setChyba(null);
+                      setKrok('kontakt');
+                    }}
+                  >
+                    {t.dale}
+                  </button>
+                  <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
+                    {t.zpet}
+                  </button>
+                </div>
+              </section>
+            ) : null}
 
-            <label>
-              {t.poznamka}
-              <textarea value={poznamka} onChange={(e) => setPoznamka(e.target.value)} maxLength={500} />
-            </label>
-
-            <label className="pp__hp" aria-hidden="true">
-              web
-              <input tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} />
-            </label>
-
-            {chyba ? <p className="pp__chyba">{chyba}</p> : null}
-
-            <div className="pp__akce">
-              <button type="button" className="pp__btn pp__btn--hlavni" disabled={cekam} onClick={() => void odeslat()}>
-                {t.odeslat}
-              </button>
-              <a className="pp__btn pp__btn--wa" href={wa} target="_blank" rel="noopener noreferrer">
-                {t.whatsapp}
-              </a>
-              <a className="pp__btn pp__btn--sms pp__sms-only" href={sms}>
-                {t.sms}
-              </a>
-            </div>
+            {krok === 'kontakt' ? (
+              <section>
+                <h2 className="pp__krok">{t.krokKontakt}</h2>
+                <p className="pp__cena">
+                  {prijezd} → {odjezd}
+                  {libovolny
+                    ? ` · ${t.zpusobDoporucit}`
+                    : apts.length
+                      ? ` · ${apts.map(nazevApt).join(', ')}`
+                      : ''}
+                </p>
+                <label>
+                  {t.jmeno}
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    value={jmeno}
+                    onChange={(e) => setJmeno(e.target.value)}
+                    required
+                  />
+                </label>
+                <label>
+                  {t.telefon}
+                  <input
+                    type="tel"
+                    autoComplete="tel"
+                    value={telefon}
+                    onChange={(e) => setTelefon(e.target.value)}
+                    required
+                  />
+                </label>
+                <fieldset>
+                  <legend>{t.doprava}</legend>
+                  <div className="pp__doprava">
+                    {(
+                      [
+                        ['auto', t.auto],
+                        ['pesky', t.pesky],
+                        ['nevim', t.nevim],
+                      ] as const
+                    ).map(([id, label]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        className={`pp__chip${doprava === id ? ' is-on' : ''}`}
+                        onClick={() => setDoprava((d) => (d === id ? '' : id))}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+                <label>
+                  {t.poznamka}
+                  <textarea
+                    value={poznamka}
+                    onChange={(e) => setPoznamka(e.target.value)}
+                    maxLength={500}
+                  />
+                </label>
+                <label className="pp__hp" aria-hidden="true">
+                  web
+                  <input
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                  />
+                </label>
+                {chyba ? <p className="pp__chyba">{chyba}</p> : null}
+                <div className="pp__akce">
+                  <button
+                    type="button"
+                    className="pp__btn pp__btn--hlavni"
+                    disabled={cekam}
+                    onClick={() => void odeslat()}
+                  >
+                    {t.odeslat}
+                  </button>
+                  <a className="pp__btn pp__btn--wa" href={wa} target="_blank" rel="noopener noreferrer">
+                    {t.whatsapp}
+                  </a>
+                  <a className="pp__btn pp__btn--sms pp__sms-only" href={sms}>
+                    {t.sms}
+                  </a>
+                  <button
+                    type="button"
+                    className="pp__btn pp__btn--sms"
+                    onClick={() => setKrok(zpusob === 'vybrat' ? 'apartmany' : 'zpusob')}
+                  >
+                    {t.zpet}
+                  </button>
+                </div>
+              </section>
+            ) : null}
           </>
         )}
 
@@ -282,6 +429,69 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           </a>
         </p>
       </div>
+
+      {galerie && galerieFotky.length ? (
+        <div className="pp__lightbox" role="dialog" aria-modal="true">
+          <div className="pp__lightbox-vnitr">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={galerieFotky[Math.min(galerieIndex, galerieFotky.length - 1)]}
+              alt=""
+            />
+            <div className="pp__lightbox-ovladani">
+              <button
+                type="button"
+                className="pp__chip"
+                disabled={galerieIndex <= 0}
+                onClick={() =>
+                  setGalerie((g) => (g ? { ...g, i: Math.max(0, g.i - 1) } : g))
+                }
+              >
+                ←
+              </button>
+              <span>
+                {galerieIndex + 1} / {galerieFotky.length}
+              </span>
+              <button
+                type="button"
+                className="pp__chip"
+                disabled={galerieIndex >= galerieFotky.length - 1}
+                onClick={() =>
+                  setGalerie((g) =>
+                    g ? { ...g, i: Math.min(galerieFotky.length - 1, g.i + 1) } : g,
+                  )
+                }
+              >
+                →
+              </button>
+            </div>
+            {galerie.druh === 'apt' ? (
+              <button
+                type="button"
+                className="pp__btn pp__btn--hlavni"
+                onClick={() => {
+                  toggleApt(galerie.id);
+                  setGalerie(null);
+                }}
+              >
+                {apts.includes(galerie.id) ? t.zrusitVyber : t.vybratTento}
+              </button>
+            ) : (
+              <a
+                className="pp__btn pp__btn--wa"
+                href={odkazApartmanyWeb(webLang)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t.galerieKomplet}
+              </a>
+            )}
+            <button type="button" className="pp__btn pp__btn--sms" onClick={() => setGalerie(null)}>
+              {t.zavritGalerie}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

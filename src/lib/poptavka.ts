@@ -26,7 +26,7 @@ export type PoptavkaZaznam = {
   odjezd: string;
   apartmany: AptId[];
   libovolnyApartman: boolean;
-  doprava: 'auto' | 'dodavka' | 'nevim' | null;
+  doprava: 'auto' | 'pesky' | 'nevim' | null;
   poznamka: string;
   jazyk: GuideLang;
   stav: 'nova' | 'hotovo';
@@ -148,7 +148,7 @@ export function sestavZpravuPoptavky(v: PoptavkaVstup): string {
   const noci = nociMezi(v.prijezd, v.odjezd);
   const termin = `${formatDatumCs(v.prijezd)}–${formatDatumCs(v.odjezd)}${noci ? ` (${noci} noci)` : ''}`;
   const doprava =
-    v.doprava === 'auto' ? 'přijede autem' : v.doprava === 'dodavka' ? 'přijede dodávkou' : '';
+    v.doprava === 'auto' ? 'přijede autem' : v.doprava === 'pesky' ? 'přijede pěšky' : '';
   const radky = [
     `Dobrý den, ${kdo}.`,
     `Poptávka ubytování: ${aptText}, ${termin}.`,
@@ -203,7 +203,7 @@ export function nactiPoptavkySeznam(raw: unknown): PoptavkaZaznam[] {
         ? r.zdroj
         : 'obecna';
     const doprava =
-      r.doprava === 'auto' || r.doprava === 'dodavka' || r.doprava === 'nevim' ? r.doprava : null;
+      r.doprava === 'auto' || r.doprava === 'pesky' || r.doprava === 'nevim' ? r.doprava : null;
     out.push({
       id,
       cas,

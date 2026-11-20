@@ -33,12 +33,12 @@ describe('poptavka', () => {
       odjezd: '2026-12-02',
       apartmany: ['V2'],
       libovolnyApartman: false,
-      doprava: 'dodavka',
+      doprava: 'pesky',
     });
     expect(text).toContain('RACCOON');
     expect(text).toContain('Zlatá rovnováha');
     expect(text).toContain(`${POPTAVKA_SLEVA_PCT} %`);
     expect(text).toContain('dopočítáme');
-    expect(text).toContain('dodávkou');
+    expect(text).toContain('pěšky');
   });
 });
