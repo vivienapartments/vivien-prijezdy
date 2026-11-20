@@ -66,6 +66,17 @@ import {
   textPodekovani,
   type PodekovaniKanal,
 } from '@/lib/podekovani';
+import {
+  cekaShrnuti,
+  hosteProShrnuti,
+  odkazSmsShrnuti,
+  otiskShrnuti,
+  stitekShrnutiKanalu,
+  textShrnuti,
+  zmenaPoShrnuti,
+  type ShrnutiKanal,
+  type ShrnutiVstup,
+} from '@/lib/shrnuti';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
@@ -381,6 +392,8 @@ export function PrehledClient({
   const [pohodaOtevreno, setPohodaOtevreno] = useState(false);
   const [podekovaniOtevreno, setPodekovaniOtevreno] = useState(false);
   const [dotazPodekovani, setDotazPodekovani] = useState<string | null>(null);
+  const [shrnutiOtevreno, setShrnutiOtevreno] = useState(false);
+  const [dotazShrnuti, setDotazShrnuti] = useState<string | null>(null);
   const [zitraOtevreno, setZitraOtevreno] = useState(false);
   const [casySchvaleniOtevreno, setCasySchvaleniOtevreno] = useState(false);
   const [odjezdySchvaleniOtevreno, setOdjezdySchvaleniOtevreno] = useState(true);
@@ -475,7 +488,14 @@ export function PrehledClient({
 
   function otevriKartu(id: string) {
     const cislo = id.trim();
-    if (!cislo || cislo === 'pohoda' || cislo.startsWith('odjezdy')) return;
+    if (
+      !cislo ||
+      cislo === 'pohoda' ||
+      cislo === 'podekovani' ||
+      cislo === 'vse-pripraveno' ||
+      cislo.startsWith('odjezdy')
+    )
+      return;
     setZpetKam((prev) => {
       if (zalozka === 'hledat' && vybrana === cislo) return prev;
       try {
@@ -674,6 +694,10 @@ export function PrehledClient({
       }
       if (id === 'podekovani') {
         otevriPodekovani();
+        return;
+      }
+      if (id === 'vse-pripraveno') {
+        otevriShrnuti();
         return;
       }
       if (id === 'odsouhlasit-odjezdy') {
@@ -1628,6 +1652,42 @@ export function PrehledClient({
     });
   }
 
+  function otevriShrnuti() {
+    setPohledDomu(true);
+    setShrnutiOtevreno(true);
+    otevriZalozku('prijezdy');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        try {
+          document.getElementById('vse-pripraveno')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch {
+          /* scroll */
+        }
+      });
+    });
+  }
+
+  function shrnutiVstupRadku(row: PrehledRadek): ShrnutiVstup {
+    return {
+      stav: row.stav,
+      nedojezdKdy: row.nedojezdKdy,
+      predano: row.predano,
+      prijezd: row.prijezd,
+      checkinNeniPotreba: row.checkinNeniPotreba,
+      casPrijezdu: row.casPrijezdu,
+      zpusobPrijezdu: row.zpusobPrijezdu,
+      souhlasPravidel: row.souhlas,
+      zadostPrijezd: row.zadostPrijezd,
+      zadostPozdniPrijezd: row.zadostPozdniPrijezd,
+      telefonBrana: row.telefonBrana,
+      branaRegistrovano: row.branaRegistrovano,
+      apartman: row.apartman as ShrnutiVstup['apartman'],
+      shrnutiKdy: row.shrnutiKdy,
+      shrnutiOtisk: row.shrnutiOtisk,
+      jazyk: jazykRadku(row),
+    };
+  }
+
   function otevriZitraOdjezdy() {
     setPohledDomu(true);
     setZitraOtevreno(true);
@@ -1770,7 +1830,8 @@ export function PrehledClient({
       setDotazOdjezd(null);
       setDotazPohoda(null);
       setDotazPodekovani(null);
-      if (zprava === 'odjezd' || zprava === 'pohoda' || zprava === 'podekovani') {
+      setDotazShrnuti(null);
+      if (zprava === 'odjezd' || zprava === 'pohoda' || zprava === 'podekovani' || zprava === 'shrnuti') {
         const ted = new Date().toISOString();
         setRadky((prev) =>
           prev.map((r) =>
@@ -1781,6 +1842,9 @@ export function PrehledClient({
                   pohodaDotaz: zprava === 'pohoda' ? ted : r.pohodaDotaz,
                   podekovaniKdy: zprava === 'podekovani' ? ted : r.podekovaniKdy,
                   podekovaniKanal: zprava === 'podekovani' ? 'email' : r.podekovaniKanal,
+                  shrnutiKdy: zprava === 'shrnuti' ? ted : r.shrnutiKdy,
+                  shrnutiKanal: zprava === 'shrnuti' ? 'email' : r.shrnutiKanal,
+                  shrnutiOtisk: zprava === 'shrnuti' ? otiskShrnuti(r) : r.shrnutiOtisk,
                 }
               : r,
           ),
@@ -1805,6 +1869,7 @@ export function PrehledClient({
     setDotazEmail(null);
     setDotazPohoda(null);
     setDotazPodekovani(null);
+    setDotazShrnuti(null);
     const nazev = json.nazev || 'zpráva';
     const ted = new Date().toISOString();
     setRadky((prev) =>
@@ -1816,6 +1881,9 @@ export function PrehledClient({
               pohodaDotaz: zprava === 'pohoda' ? ted : r.pohodaDotaz,
               podekovaniKdy: zprava === 'podekovani' ? ted : r.podekovaniKdy,
               podekovaniKanal: zprava === 'podekovani' ? 'email' : r.podekovaniKanal,
+              shrnutiKdy: zprava === 'shrnuti' ? ted : r.shrnutiKdy,
+              shrnutiKanal: zprava === 'shrnuti' ? 'email' : r.shrnutiKanal,
+              shrnutiOtisk: zprava === 'shrnuti' ? otiskShrnuti(r) : r.shrnutiOtisk,
               historie: [...r.historie, { cas: ted, co: `E-mailem: ${nazev}` }].slice(-40),
             }
           : r,
@@ -2471,6 +2539,70 @@ export function PrehledClient({
     );
   }
 
+  async function oznacShrnuti(row: PrehledRadek, kanal: ShrnutiKanal | 'rucne') {
+    const ted = new Date().toISOString();
+    const stitek = kanal === 'rucne' ? 'ručně' : stitekShrnutiKanalu(kanal);
+    const co = row.shrnutiKdy
+      ? `Shrnutí odesláno znovu · ${stitek}`
+      : `Shrnutí odesláno · ${stitek}`;
+    if (!ukazka) {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rezervace: row.rezervace,
+          akce: kanal === 'rucne' ? 'shrnuti-rucne' : 'shrnuti-odeslat',
+          ...(kanal === 'rucne' ? {} : { kanal }),
+        }),
+      });
+      if (!res.ok) {
+        setHlaska('Shrnutí se nepodařilo označit.');
+        return;
+      }
+    }
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              shrnutiKdy: ted,
+              shrnutiKanal: kanal === 'rucne' ? null : kanal,
+              shrnutiOtisk: otiskShrnuti(r),
+              historie: [...r.historie, { cas: ted, co }].slice(-40),
+            }
+          : r,
+      ),
+    );
+  }
+
+  async function vratShrnuti(row: PrehledRadek) {
+    if (!ukazka) {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: row.rezervace, akce: 'shrnuti-vratit' }),
+      });
+      if (!res.ok) {
+        setHlaska('Vrácení se nepovedlo.');
+        return;
+      }
+    }
+    const ted = new Date().toISOString();
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? {
+              ...r,
+              shrnutiKdy: null,
+              shrnutiKanal: null,
+              shrnutiOtisk: null,
+              historie: [...r.historie, { cas: ted, co: 'Shrnutí vráceno' }].slice(-40),
+            }
+          : r,
+      ),
+    );
+  }
+
   async function oznacKanal(
     row: PrehledRadek,
     kanal: 'whatsapp' | 'sms',
@@ -2506,6 +2638,10 @@ export function PrehledClient({
               ...r,
               odjezdDotaz: zprava === 'odjezd' ? ted : r.odjezdDotaz,
               pohodaDotaz: zprava === 'pohoda' ? ted : r.pohodaDotaz,
+              shrnutiKdy: zprava === 'shrnuti' ? ted : r.shrnutiKdy,
+              shrnutiKanal:
+                zprava === 'shrnuti' ? (kanal === 'whatsapp' ? 'whatsapp' : 'sms') : r.shrnutiKanal,
+              shrnutiOtisk: zprava === 'shrnuti' ? otiskShrnuti(r) : r.shrnutiOtisk,
               historie: [...r.historie, { cas: ted, co: `${prefix}: ${nazev}` }].slice(-40),
             }
           : r,
@@ -2634,6 +2770,15 @@ export function PrehledClient({
       historie: row.historie,
       narodnost: row.narodnost,
       krestni,
+      telefonBrana: row.telefonBrana,
+      apartman: row.apartman,
+      shrnutiKdy: row.shrnutiKdy,
+      shrnutiOtisk: row.shrnutiOtisk,
+      branaRegistrovano: row.branaRegistrovano,
+      nedojezdKdy: row.nedojezdKdy,
+      checkinNeniPotreba: row.checkinNeniPotreba === true,
+      zadostPrijezd: row.zadostPrijezd,
+      zadostPozdniPrijezd: row.zadostPozdniPrijezd,
     });
   }
 
@@ -3627,6 +3772,13 @@ export function PrehledClient({
                 zruseno={row.stav === 'zruseno'}
                 onClick={() => otevriFakturu(row.rezervace)}
               />
+              {row.shrnutiKdy ? (
+                <p className="ph-staly">
+                  {zmenaPoShrnuti(shrnutiVstupRadku(row), dnes)
+                    ? 'Změna po odeslání shrnutí'
+                    : 'Shrnutí ✓'}
+                </p>
+              ) : null}
               {kontaktNahoreBlok}
               <div className="ph-nova-dlazdice">
                 {nedojezd ? null : predanoKdy ? (
@@ -5166,6 +5318,10 @@ export function PrehledClient({
   };
   const hostePohoda = seradOdjezdy(radky.filter((r) => jeProPohodu(r, dnes)));
   const hostePodekovaniSeznam = hosteProPodekovani(radky, dnes, ted);
+  const hosteShrnutiSeznam = hosteProShrnuti(
+    radky.map((r) => ({ ...r, ...shrnutiVstupRadku(r) })),
+    dnes,
+  );
   const hosteZitraOdjezd = seradOdjezdy(radky.filter((r) => !jeBezDalsichAkci(r) && r.odjezd === zitra));
   const zitraVyrizeno = hosteZitraOdjezd.filter(
     (r) => jeHodina(casOdjezduRadku(r)) || Boolean(r.odjezdDotaz),
@@ -5175,6 +5331,7 @@ export function PrehledClient({
   );
   const pohodaCekaAkce = hostePohoda.some((r) => !r.pohodaDotaz);
   const podekovaniCekaAkce = hostePodekovaniSeznam.some((r) => !r.podekovaniKdy);
+  const shrnutiCekaAkce = hosteShrnutiSeznam.some((r) => cekaShrnuti(shrnutiVstupRadku(r), dnes));
   type CasKeSchvaleni = {
     row: PrehledRadek;
     druh: 'drive' | 'pozni';
@@ -5580,6 +5737,119 @@ export function PrehledClient({
                           Ano
                         </button>
                         <button type="button" onClick={() => setDotazPohoda(null)}>
+                          Zrušit
+                        </button>
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+      {pohledDomu && zalozka === 'prijezdy' && hosteShrnutiSeznam.length && shrnutiCekaAkce ? (
+        <section id="vse-pripraveno" className="ph-domu-radek">
+          <button
+            type="button"
+            className="ph-domu-radek__souhrn is-akce"
+            aria-expanded={shrnutiOtevreno}
+            onClick={() => setShrnutiOtevreno((v) => !v)}
+          >
+            Vše připraveno · {hosteShrnutiSeznam.filter((r) => cekaShrnuti(shrnutiVstupRadku(r), dnes)).length}{' '}
+            {shrnutiOtevreno ? '▴' : '▸'}
+          </button>
+          {shrnutiOtevreno ? (
+            <ul className="ph-odjezdy ph-odjezdy--vnorene">
+              {hosteShrnutiSeznam.map((row) => {
+                const vstup = shrnutiVstupRadku(row);
+                const ceka = cekaShrnuti(vstup, dnes);
+                const zmena = zmenaPoShrnuti(vstup, dnes);
+                const odeslano = row.shrnutiKdy && !ceka ? hodinaPraha(row.shrnutiKdy) : '';
+                const kanalStitek = stitekShrnutiKanalu(row.shrnutiKanal);
+                const text =
+                  zpravyRadku(row).find((z) => z.id === 'shrnuti')?.text ||
+                  textShrnuti(
+                    {
+                      casPrijezdu: row.casPrijezdu,
+                      zpusobPrijezdu: row.zpusobPrijezdu,
+                      telefonBrana: row.telefonBrana,
+                      apartman: row.apartman,
+                      jazyk: jazykRadku(row),
+                    },
+                    jazykRadku(row),
+                    row.odkaz,
+                  );
+                const wa = row.telefonWa;
+                const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
+                const email = row.email.includes('@') ? row.email : '';
+                const prijezdText = row.prijezd
+                  ? `${Number(row.prijezd.slice(8, 10))}. ${Number(row.prijezd.slice(5, 7))}.`
+                  : '';
+                return (
+                  <li key={row.rezervace} className={ceka ? 'is-akce' : 'is-hotovo'}>
+                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
+                      {row.jmeno || 'Host'}
+                    </button>
+                    {' · '}
+                    {row.apartman || 'bez apartmánu'}
+                    {prijezdText ? ` · příjezd ${prijezdText}` : null}
+                    {zmena ? <span>{' · Změna po odeslání'}</span> : null}
+                    {odeslano ? (
+                      <span>{` · Shrnutí odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
+                    ) : null}
+                    <span className="ph-odjezdy__akce">
+                      {wa ? (
+                        <TlacitkoWhatsApp
+                          wa={wa}
+                          zprava={text}
+                          userAgent={userAgent}
+                          onPredOtevrenim={() => oznacShrnuti(row, 'whatsapp')}
+                        >
+                          WhatsApp
+                        </TlacitkoWhatsApp>
+                      ) : null}
+                      {telefonSms ? (
+                        <a
+                          className="ph-wa"
+                          href={odkazSmsShrnuti(telefonSms, text, jeIos(userAgent))}
+                          onClick={() => void oznacShrnuti(row, 'sms')}
+                        >
+                          SMS
+                        </a>
+                      ) : null}
+                      {email ? (
+                        <button type="button" className="ph-wa" onClick={() => setDotazShrnuti(row.rezervace)}>
+                          E-mail
+                        </button>
+                      ) : null}
+                      {ceka ? (
+                        <button type="button" className="ph-kopie" onClick={() => void oznacShrnuti(row, 'rucne')}>
+                          Odesláno ručně
+                        </button>
+                      ) : null}
+                      {row.shrnutiKdy ? (
+                        <button type="button" className="ph-kopie" onClick={() => void vratShrnuti(row)}>
+                          Vrátit
+                        </button>
+                      ) : null}
+                    </span>
+                    {dotazShrnuti === row.rezervace ? (
+                      <div className="ph-predano-dotaz">
+                        <p>
+                          Poslat e-mail na <span className="ph-tel">{email}</span>
+                          {row.shrnutiKdy ? ' znovu' : ''}?
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDotazShrnuti(null);
+                            void posliEmail(row, 'shrnuti');
+                          }}
+                        >
+                          Ano
+                        </button>
+                        <button type="button" onClick={() => setDotazShrnuti(null)}>
                           Zrušit
                         </button>
                       </div>
@@ -6005,6 +6275,102 @@ export function PrehledClient({
                           Ano
                         </button>
                         <button type="button" onClick={() => setDotazPohoda(null)}>
+                          Zrušit
+                        </button>
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+      {pohledDomu && zalozka === 'prijezdy' && hosteShrnutiSeznam.length && !shrnutiCekaAkce ? (
+        <section id="vse-pripraveno" className="ph-domu-radek">
+          <button
+            type="button"
+            className="ph-domu-radek__souhrn"
+            aria-expanded={shrnutiOtevreno}
+            onClick={() => setShrnutiOtevreno((v) => !v)}
+          >
+            Vše připraveno · {hosteShrnutiSeznam.length} {shrnutiOtevreno ? '▴' : '▸'}
+          </button>
+          {shrnutiOtevreno ? (
+            <ul className="ph-odjezdy ph-odjezdy--vnorene">
+              {hosteShrnutiSeznam.map((row) => {
+                const odeslano = row.shrnutiKdy ? hodinaPraha(row.shrnutiKdy) : '';
+                const kanalStitek = stitekShrnutiKanalu(row.shrnutiKanal);
+                const text =
+                  zpravyRadku(row).find((z) => z.id === 'shrnuti')?.text ||
+                  textShrnuti(
+                    {
+                      casPrijezdu: row.casPrijezdu,
+                      zpusobPrijezdu: row.zpusobPrijezdu,
+                      telefonBrana: row.telefonBrana,
+                      apartman: row.apartman,
+                      jazyk: jazykRadku(row),
+                    },
+                    jazykRadku(row),
+                    row.odkaz,
+                  );
+                const wa = row.telefonWa;
+                const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
+                const email = row.email.includes('@') ? row.email : '';
+                return (
+                  <li key={row.rezervace} className="is-hotovo">
+                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
+                      {row.jmeno || 'Host'}
+                    </button>
+                    {' · '}
+                    {row.apartman || 'bez apartmánu'}
+                    {odeslano ? (
+                      <span>{` · Shrnutí odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
+                    ) : null}
+                    <span className="ph-odjezdy__akce">
+                      {wa ? (
+                        <TlacitkoWhatsApp
+                          wa={wa}
+                          zprava={text}
+                          userAgent={userAgent}
+                          onPredOtevrenim={() => oznacShrnuti(row, 'whatsapp')}
+                        >
+                          WhatsApp
+                        </TlacitkoWhatsApp>
+                      ) : null}
+                      {telefonSms ? (
+                        <a
+                          className="ph-wa"
+                          href={odkazSmsShrnuti(telefonSms, text, jeIos(userAgent))}
+                          onClick={() => void oznacShrnuti(row, 'sms')}
+                        >
+                          SMS
+                        </a>
+                      ) : null}
+                      {email ? (
+                        <button type="button" className="ph-wa" onClick={() => setDotazShrnuti(row.rezervace)}>
+                          E-mail
+                        </button>
+                      ) : null}
+                      <button type="button" className="ph-kopie" onClick={() => void vratShrnuti(row)}>
+                        Vrátit
+                      </button>
+                    </span>
+                    {dotazShrnuti === row.rezervace ? (
+                      <div className="ph-predano-dotaz">
+                        <p>
+                          Poslat e-mail na <span className="ph-tel">{email}</span> znovu?
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDotazShrnuti(null);
+                            void posliEmail(row, 'shrnuti');
+                          }}
+                        >
+                          Ano
+                        </button>
+                        <button type="button" onClick={() => setDotazShrnuti(null)}>
                           Zrušit
                         </button>
                       </div>

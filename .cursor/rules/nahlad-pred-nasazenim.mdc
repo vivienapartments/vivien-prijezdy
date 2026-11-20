@@ -24,5 +24,10 @@ Na to **vždy** připrav viditelný náhled a krátký návod (kam kliknout, co 
 Když má majitel něco vyzkoušet **na mobilu** (náhled, ověření opravy, Domů, karta), **pošli odkaz do Telegramu** (provozní chaty z `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` v `.env.local`).  
 **Nedávej odkaz jen do chatu v Cursoru.** Na počítači ho do mobilu nepřeloží. V chatu stačí napsat „posláno do Telegramu“ a co má klepnout.
 
+### Odkazy, které na telefonu fungují
+- Jen **ostrá HTTPS adresa** `https://vivien-prijezdy-six.vercel.app/…`. Nikdy `localhost`, `127.0.0.1` ani `192.168.…`.
+- Cesty `/nahled…` na ostrém webu **nefungují** (middleware je schová). Pro zkoušku na telefonu dej HTML pod `/zkouska/…` (např. `/zkouska/pruvodce-wa.html`), nasaď, a teprve pak pošli odkaz do Telegramu.
+- Když ještě není nasaď, pošli do Telegramu **obrázek** (screenshot) nebo celý text zprávy, ne mrtvý lokální odkaz.
+
 ## Po opravě chyby z provozu
 Nejdřív oprava + test. Pak pošli do Telegramu odkaz, jak ověřit. Hostovi „zkus znovu“ až po nasazení.

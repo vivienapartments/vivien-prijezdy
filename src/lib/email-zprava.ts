@@ -4,6 +4,7 @@ import type { GuideLang } from './types';
 import { PREDMET_ODJEZDU } from './odjezd';
 import { PREDMET_POHODY } from './pohoda';
 import { predmetPodekovani } from './podekovani';
+import { predmetShrnuti } from './shrnuti';
 import type { DruhZpravy } from './whatsapp-zprava';
 
 const TELEFON = PARKING_OWNER_PHONE;
@@ -85,6 +86,7 @@ export function datumPobytu(ymd: string | null): string {
 export function predmetZpravy(id: DruhZpravy, lang: GuideLang | null, prijezd: string | null): string {
   if (id === 'pohoda') return PREDMET_POHODY[jazyk(lang)];
   if (id === 'podekovani') return predmetPodekovani(lang);
+  if (id === 'shrnuti') return predmetShrnuti(lang);
   const tabulka =
     id === 'checkin' || id === 'checkin2' || id === 'checkin3' || id === 'checkinNedojezd'
       ? CHECKIN

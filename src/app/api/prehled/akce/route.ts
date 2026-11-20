@@ -198,6 +198,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'pohoda-dotaz' &&
       akce !== 'podekovani-odeslat' &&
       akce !== 'podekovani-vratit' &&
+      akce !== 'shrnuti-odeslat' &&
+      akce !== 'shrnuti-vratit' &&
+      akce !== 'shrnuti-rucne' &&
       akce !== 'checkin' &&
       akce !== 'telefon' &&
       akce !== 'predano' &&
@@ -1110,6 +1113,48 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true }, { headers: noStore });
   }
 
+  if (akce === 'shrnuti-odeslat' || akce === 'shrnuti-rucne') {
+    const { otiskShrnuti } = await import('@/lib/shrnuti');
+    const kanalRaw = String(body?.kanal || '').trim();
+    const kanal =
+      akce === 'shrnuti-rucne'
+        ? null
+        : kanalRaw === 'whatsapp' || kanalRaw === 'sms' || kanalRaw === 'email'
+          ? kanalRaw
+          : null;
+    if (akce === 'shrnuti-odeslat' && !kanal) return chyba(400, 'Vyberte kanál.');
+    const ted = new Date().toISOString();
+    const stitek =
+      kanal === 'whatsapp' ? 'WhatsApp' : kanal === 'sms' ? 'SMS' : kanal === 'email' ? 'E-mail' : 'ručně';
+    const veta = rec.shrnutiKdy
+      ? `Shrnutí odesláno znovu · ${stitek}`
+      : `Shrnutí odesláno · ${stitek}`;
+    const dalsi = pridej(rec, veta, {
+      shrnutiKdy: ted,
+      shrnutiKanal: kanal,
+      shrnutiOtisk: otiskShrnuti(rec),
+      zpravaShrnutiPrectena: null,
+      shrnutiUpozorneno: rec.shrnutiUpozorneno || ted,
+    });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json(
+      { ok: true, cas: dalsi.shrnutiKdy, kanal: dalsi.shrnutiKanal },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'shrnuti-vratit') {
+    if (!rec.shrnutiKdy) return NextResponse.json({ ok: true }, { headers: noStore });
+    const dalsi = pridej(rec, 'Shrnutí vráceno', {
+      shrnutiKdy: null,
+      shrnutiKanal: null,
+      shrnutiOtisk: null,
+      zpravaShrnutiPrectena: null,
+    });
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
   if (akce === 'checkin') {
     const vysledek = zkontrolujCheckinOdkaz(body?.url || '');
     if (!vysledek.ok) return chyba(400, 'Odkaz musí začínat https://.');
@@ -1175,6 +1220,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       'odjezd',
       'pohoda',
       'podekovani',
+      'shrnuti',
       'pripraveno',
     ];
     const druh = druhy.find((id) => id === body?.zprava);
@@ -1195,6 +1241,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     const langBody = body?.jazyk as GuideLang | undefined;
     const lang = langBody && GUIDE_LANGS.includes(langBody) ? langBody : rec.jazyk;
+    const dnesAkce = denPraha(new Date());
     const zprava = zpravyMenu({
       stav: rec.stav,
       lang,
@@ -1204,7 +1251,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       otevrenoPocet: rec.otevrenoPocet,
       casPrijezdu: rec.casPrijezdu,
       prijezd: rec.prijezd,
-      dnes: denPraha(new Date()),
+      dnes: dnesAkce,
       chybi: kroky,
       zpusob: rec.zpusobPrijezdu,
       souhlas: Boolean(rec.souhlasPravidel),
@@ -1218,9 +1265,20 @@ export async function POST(request: Request): Promise<NextResponse> {
       historie: rec.historie,
       narodnost: rec.narodnost,
       krestni: rec.krestni,
+      telefonBrana: rec.telefonBrana,
+      apartman: rec.apartman,
+      shrnutiKdy: rec.shrnutiKdy,
+      shrnutiOtisk: rec.shrnutiOtisk,
+      branaRegistrovano: rec.branaRegistrovano,
+      nedojezdKdy: rec.nedojezdKdy,
+      checkinNeniPotreba: rec.checkinNeniPotreba === true,
+      zadostPrijezd: rec.zadostPrijezd,
+      zadostPozdniPrijezd: rec.zadostPozdniPrijezd,
     }).find((z) => z.id === druh);
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
     const ted = new Date().toISOString();
+    const kanalShrnuti =
+      akce === 'whatsapp' ? ('whatsapp' as const) : akce === 'sms' ? ('sms' as const) : ('email' as const);
     const patch =
       druh === 'odjezd'
         ? { odjezdDotaz: ted }
@@ -1229,10 +1287,17 @@ export async function POST(request: Request): Promise<NextResponse> {
           : druh === 'podekovani'
             ? {
                 podekovaniKdy: ted,
-                podekovaniKanal:
-                  akce === 'whatsapp' ? ('whatsapp' as const) : akce === 'sms' ? ('sms' as const) : ('email' as const),
+                podekovaniKanal: kanalShrnuti,
               }
-            : {};
+            : druh === 'shrnuti'
+              ? {
+                  shrnutiKdy: ted,
+                  shrnutiKanal: kanalShrnuti,
+                  shrnutiOtisk: (await import('@/lib/shrnuti')).otiskShrnuti(rec),
+                  zpravaShrnutiPrectena: null,
+                  shrnutiUpozorneno: rec.shrnutiUpozorneno || ted,
+                }
+              : {};
     const sJazykem =
       lang && lang !== rec.jazyk
         ? zapisMajitele(rec, 'jazyk', { jazyk: lang }, `Jazyk → ${LANG_LABELS[lang]}`)
@@ -1250,10 +1315,19 @@ export async function POST(request: Request): Promise<NextResponse> {
         subject:
           druh === 'pripraveno'
             ? predmetPripraveno(lang)
-            : predmetZpravy(druh, lang, druh === 'odjezd' || druh === 'podekovani' ? rec.odjezd : rec.prijezd),
+            : predmetZpravy(
+                druh,
+                lang,
+                druh === 'odjezd' || druh === 'podekovani' ? rec.odjezd : rec.prijezd,
+              ),
         text: zprava.text,
         lang,
-        telefon: druh !== 'odjezd' && druh !== 'pripraveno' && druh !== 'pohoda' && druh !== 'podekovani',
+        telefon:
+          druh !== 'odjezd' &&
+          druh !== 'pripraveno' &&
+          druh !== 'pohoda' &&
+          druh !== 'podekovani' &&
+          druh !== 'shrnuti',
       });
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');

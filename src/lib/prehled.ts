@@ -160,6 +160,10 @@ export type PrehledRadek = {
   checkinNeniPotreba: boolean;
   /** Kdy majitel označil nedojezd. */
   nedojezdKdy: string | null;
+  /** Shrnutí „Vše je připravené“ odesláno. */
+  shrnutiKdy: string | null;
+  shrnutiKanal: 'whatsapp' | 'sms' | 'email' | null;
+  shrnutiOtisk: string | null;
   /** Zobrazení plateb. null = Kč. */
   mena: 'CZK' | 'EUR' | null;
   /** Celková cena pobytu z Better Hotelu. */
@@ -814,6 +818,14 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     dluh: polozkyZRezervace(rec),
     branaChybi: rec.zpusobPrijezdu === 'auto' && (!rec.telefonBrana || (!rec.spz && !rec.spzPujcene)),
     checkinNeniPotreba: rec.checkinNeniPotreba === true,
+    telefonBrana: rec.telefonBrana,
+    apartman: rec.apartman,
+    shrnutiKdy: rec.shrnutiKdy,
+    shrnutiOtisk: rec.shrnutiOtisk,
+    branaRegistrovano: rec.branaRegistrovano,
+    nedojezdKdy: rec.nedojezdKdy,
+    zadostPrijezd: rec.zadostPrijezd,
+    zadostPozdniPrijezd: rec.zadostPozdniPrijezd,
   });
   const poprve = rec.otevrenoPoprve ? casPraha(rec.otevrenoPoprve) : '';
   const naposled = rec.otevrenoNaposled ? casPraha(rec.otevrenoNaposled) : '';
@@ -870,6 +882,9 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     pohodaDotaz: rec.pohodaDotaz,
     podekovaniKdy: rec.podekovaniKdy,
     podekovaniKanal: rec.podekovaniKanal,
+    shrnutiKdy: rec.shrnutiKdy,
+    shrnutiKanal: rec.shrnutiKanal,
+    shrnutiOtisk: rec.shrnutiOtisk,
     dluhText: textRozpisu(polozkyZRezervace(rec)),
     dluhPolozky: polozkyVsechny(rec).map((p) => ({
       druh: p.druh,

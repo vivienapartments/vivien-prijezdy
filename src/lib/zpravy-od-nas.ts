@@ -14,6 +14,7 @@ import {
   jeOdjezdKanal,
   textCekaOdjezdu,
 } from './odjezd-souhlas';
+import { SHRNUTI_NADPIS, SHRNUTI_SBALENA, textShrnutiZaklad } from './shrnuti';
 import {
   ZPRAVA_BRANA_NADPIS,
   ZPRAVA_BRANA_SBALENA,
@@ -28,7 +29,7 @@ import {
 export type PotvrzeniPrijezdu = 'osobne' | 'telefon';
 
 export type ZpravaOdNasData = {
-  id: 'cas' | 'brana' | 'odjezd-prijati' | 'odjezd' | 'odjezd-ceka';
+  id: 'cas' | 'brana' | 'odjezd-prijati' | 'odjezd' | 'odjezd-ceka' | 'shrnuti';
   nova: boolean;
   nadpis: string;
   /** Obyčejný text. U brány je telefon a stání zvlášť kvůli odkazu tel:. */
@@ -120,6 +121,16 @@ export function zpravyOdNasZRezervace(
       l,
     );
     out.push(potvrzeni);
+  }
+
+  if (rec.shrnutiKdy) {
+    out.push({
+      id: 'shrnuti',
+      nova: !rec.zpravaShrnutiPrectena,
+      nadpis: SHRNUTI_NADPIS[l],
+      text: textShrnutiZaklad(rec, l),
+      sbalenyTitulek: SHRNUTI_SBALENA[l],
+    });
   }
 
   return out;

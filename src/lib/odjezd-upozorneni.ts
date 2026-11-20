@@ -25,6 +25,14 @@ import { odlozitPushCasuOdjezdu } from './odjezd-potvrzeni';
 import { najdiVyberyProdlouzeni } from './odjezd-souhlas';
 import { hosteProPohodu, textPushPohody } from './pohoda';
 import { HODINA_PODEKOVANI, hosteCekajiciPodekovani, textPushPodekovani } from './podekovani';
+import {
+  HODINA_SHRNUTI_RANO,
+  hosteCekajiciShrnuti,
+  jeKomplet,
+  seznamShrnutiProTelegram,
+  textPushShrnutiNove,
+  textPushShrnutiRano,
+} from './shrnuti';
 import type { OdjezdBeh, ProcessStore, RezervaceRecord } from './store';
 import { odkazKarty } from './prehled-odkaz';
 import { upozorniMajitele, vetaUpozorneni } from './upozorneni';
@@ -80,7 +88,56 @@ async function upozorniPohodu(
 }
 
 function klicBehu(beh: OdjezdBeh): string {
-  return `${beh.vecer}|${beh.pripominka}|${beh.pohoda}|${beh.podekovani}|${beh.fakturyPoledne}|${beh.fakturyRano}`;
+  return `${beh.vecer}|${beh.pripominka}|${beh.pohoda}|${beh.podekovani}|${beh.fakturyPoledne}|${beh.fakturyRano}|${beh.shrnutiRano}`;
+}
+
+/** Jednou, když host poprvé splní komplet. Hostovi nic. */
+async function upozorniNoveKomplet(
+  store: ProcessStore,
+  list: RezervaceRecord[],
+  now: Date,
+  posli: typeof upozorniMajitele,
+): Promise<number> {
+  const dnes = denPraha(now);
+  let pocet = 0;
+  for (const record of list) {
+    if (!jeKomplet(record, dnes) || record.shrnutiUpozorneno) continue;
+    const jmeno = (record.jmeno || record.krestni || 'Host').trim();
+    const text = textPushShrnutiNove(jmeno, record.apartman);
+    const jak = await posli(store, text, '/prehled#vse-pripraveno', { telegram: 'shrnuti' });
+    if (jak === 'nic') continue;
+    const cerstvy = (await store.getRezervace(record.rezervace)) || record;
+    if (cerstvy.shrnutiUpozorneno || !jeKomplet(cerstvy, dnes)) continue;
+    const ted = now.toISOString();
+    await store.setRezervace(record.rezervace, {
+      ...cerstvy,
+      shrnutiUpozorneno: ted,
+      historie: [...cerstvy.historie, { cas: ted, co: vetaUpozorneni(jak, text) }].slice(-40),
+    });
+    pocet += 1;
+  }
+  return pocet;
+}
+
+/** Jednou denně od 9:00 souhrn čekajících shrnutí. */
+async function upozorniShrnutiRano(
+  store: ProcessStore,
+  list: RezervaceRecord[],
+  now: Date,
+  beh: OdjezdBeh,
+  posli: typeof upozorniMajitele,
+): Promise<{ pocet: number; beh: OdjezdBeh }> {
+  if (hodinaPraha(now) < HODINA_SHRNUTI_RANO) return { pocet: 0, beh };
+  const dnes = denPraha(now);
+  if (beh.shrnutiRano === dnes) return { pocet: 0, beh };
+  const cekaji = hosteCekajiciShrnuti(list, dnes);
+  if (!cekaji.length) {
+    return { pocet: 0, beh: { ...beh, shrnutiRano: dnes } };
+  }
+  const text = textPushShrnutiRano(seznamShrnutiProTelegram(cekaji));
+  const jak = await posli(store, text, '/prehled#vse-pripraveno', { telegram: 'shrnuti' });
+  if (jak === 'nic') return { pocet: 0, beh };
+  return { pocet: 1, beh: { ...beh, shrnutiRano: dnes } };
 }
 
 /** Jednou denně od 17:00. Hostovi odtud nic neodchází. Ne do Telegramu. */
@@ -196,13 +253,17 @@ export async function upozorniOdjezdy(
 
   pocet += await oznacAutomatickeOdjezdy(store, list, now);
   pocet += await upozorniStareDluhy(store, list, now, posli);
+  pocet += await upozorniNoveKomplet(store, list, now, posli);
 
   const hodina = hodinaPraha(now);
-  /** Beh se čte až od 9:00 (faktury), 11:00 (pohoda) nebo 18:00 (odjezdy). Dřív šetříme Upstash. */
+  /** Beh se čte až od 9:00 (faktury / shrnutí), 11:00 (pohoda) nebo 18:00 (odjezdy). Dřív šetříme Upstash. */
   if (hodina < HODINA_FAKTURY_RANO) return pocet;
 
   let beh = nactiOdjezdBeh(await store.getOdjezdBeh());
   const predBeh = klicBehu(beh);
+  const shrnutiRano = await upozorniShrnutiRano(store, list, now, beh, posli);
+  beh = shrnutiRano.beh;
+  pocet += shrnutiRano.pocet;
   const faktury = await upozorniFaktury(store, list, now, beh, posli);
   beh = faktury.beh;
   pocet += faktury.pocet;

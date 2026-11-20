@@ -668,6 +668,7 @@ export function prazdnyOdjezdBeh(): OdjezdBeh {
     podekovani: null,
     fakturyPoledne: null,
     fakturyRano: null,
+    shrnutiRano: null,
   };
 }
 
@@ -686,6 +687,7 @@ export function nactiOdjezdBeh(raw: unknown): OdjezdBeh {
     podekovani: den(b.podekovani),
     fakturyPoledne: den(b.fakturyPoledne),
     fakturyRano: den(b.fakturyRano),
+    shrnutiRano: den(b.shrnutiRano),
   };
 }
 

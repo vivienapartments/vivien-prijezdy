@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const noStore = { 'Cache-Control': 'no-store' };
 
-const IDS = new Set(['cas', 'brana', 'odjezd-prijati', 'odjezd', 'odjezd-ceka']);
+const IDS = new Set(['cas', 'brana', 'odjezd-prijati', 'odjezd', 'odjezd-ceka', 'shrnuti']);
 
 /** Host klepl Pokračovat u zprávy od nás. */
 export async function POST(request: Request): Promise<NextResponse> {
@@ -79,6 +79,16 @@ export async function POST(request: Request): Promise<NextResponse> {
       historie: [...rec.historie, { cas: ted, co: 'Host přečetl zprávu o čekání na schválení odjezdu' }].slice(
         -40,
       ),
+    });
+  } else if (id === 'shrnuti') {
+    if (rec.zpravaShrnutiPrectena) {
+      return NextResponse.json({ ok: true }, { headers: noStore });
+    }
+    await store.setRezervace(rec.rezervace, {
+      ...rec,
+      zpravaShrnutiPrectena: ted,
+      posledniPokus: ted,
+      historie: [...rec.historie, { cas: ted, co: 'Host přečetl shrnutí' }].slice(-40),
     });
   } else {
     if (rec.zpravaOdjezdPrectena) {

@@ -3,6 +3,7 @@ import { odkazPripraveno, textPripraveno } from './okno-pobytu';
 import { ukazatDotazOdjezdu, zpravaOdjezdu, type PolozkaDluhu } from './odjezd';
 import { textPohody, ukazatPohodu } from './pohoda';
 import { predvybratPodekovani, textPodekovani, ukazatPodekovani } from './podekovani';
+import { cekaShrnuti, textShrnuti, type ShrnutiVstup } from './shrnuti';
 import type { GuideLang } from './types';
 import type { ChybejiciKrok } from './vstup-pruvodce';
 import { fazeHosta } from './faze-hosta';
@@ -476,6 +477,7 @@ export type DruhZpravy =
   | 'odjezd'
   | 'pohoda'
   | 'podekovani'
+  | 'shrnuti'
   | 'pripraveno';
 
 export type ZpravaMenu = { id: DruhZpravy; nazev: string; text: string; vychozi: boolean; vystraha: boolean };
@@ -499,6 +501,7 @@ const PORADI: DruhZpravy[] = [
   'odjezd',
   'pohoda',
   'podekovani',
+  'shrnuti',
   'pripraveno',
 ];
 
@@ -522,6 +525,7 @@ export const NAZEV: Record<DruhZpravy, string> = {
   odjezd: 'Dotaz na odjezd',
   pohoda: 'Je vše v pořádku?',
   podekovani: 'Poděkování',
+  shrnuti: 'Vše je připravené',
   pripraveno: 'Apartmán je připravený',
 };
 
@@ -785,6 +789,13 @@ export function zpravyMenu(opts: {
   nedojezdKdy?: string | null;
   /** Křestní jméno do zprávy po e-mailu. */
   krestni?: string | null;
+  telefonBrana?: string | null;
+  apartman?: string | null;
+  shrnutiKdy?: string | null;
+  shrnutiOtisk?: string | null;
+  branaRegistrovano?: string | null;
+  zadostPrijezd?: ShrnutiVstup['zadostPrijezd'];
+  zadostPozdniPrijezd?: ShrnutiVstup['zadostPozdniPrijezd'];
 }): ZpravaMenu[] {
   const chybi = opts.chybi ?? ['cas', 'zpusob', 'pravidla'];
   const historie = opts.historie || [];
@@ -825,6 +836,17 @@ export function zpravyMenu(opts: {
       opts.pruvodce ? opts.pruvodce.split('#')[0] : null,
       opts.odjezd,
       opts.dnes,
+    ),
+    shrnuti: textShrnuti(
+      {
+        casPrijezdu: opts.casPrijezdu || null,
+        zpusobPrijezdu: opts.zpusob || null,
+        telefonBrana: opts.telefonBrana || null,
+        apartman: (opts.apartman as ShrnutiVstup['apartman']) || null,
+        jazyk: opts.lang,
+      },
+      opts.lang,
+      opts.pruvodce ? opts.pruvodce.split('#')[0] : null,
     ),
     pripraveno: textPripraveno(opts.lang, opts.pruvodce ? odkazPripraveno(opts.pruvodce) : ''),
   };
@@ -871,6 +893,27 @@ export function zpravyMenu(opts: {
         nedojezdKdy: opts.nedojezdKdy,
         dnes: opts.dnes,
       });
+    }
+    if (id === 'shrnuti') {
+      const vstup: ShrnutiVstup = {
+        stav: opts.stav as ShrnutiVstup['stav'],
+        nedojezdKdy: opts.nedojezdKdy || null,
+        predano: opts.predano || null,
+        prijezd: opts.prijezd,
+        checkinNeniPotreba: opts.checkinNeniPotreba === true,
+        casPrijezdu: opts.casPrijezdu,
+        zpusobPrijezdu: opts.zpusob || null,
+        souhlasPravidel: opts.souhlas ? { kdy: 'x', jazyk: 'cs', verze: '1' } : null,
+        zadostPrijezd: opts.zadostPrijezd || null,
+        zadostPozdniPrijezd: opts.zadostPozdniPrijezd || null,
+        telefonBrana: opts.telefonBrana || null,
+        branaRegistrovano: opts.branaRegistrovano || null,
+        apartman: (opts.apartman as ShrnutiVstup['apartman']) || null,
+        shrnutiKdy: opts.shrnutiKdy || null,
+        shrnutiOtisk: opts.shrnutiOtisk || null,
+        jazyk: opts.lang,
+      };
+      return cekaShrnuti(vstup, opts.dnes);
     }
     if (id === 'odjezd') {
       return ukazatDotazOdjezdu({
@@ -955,6 +998,8 @@ export function vychoziZprava(
     const id = idBranyZeStupne(stupenBr);
     if (videt.includes(id)) return id;
   }
+
+  if (videt.includes('shrnuti')) return 'shrnuti';
 
   if (opts.prijezd && opts.dnes === opts.prijezd && opts.casPrijezdu && videt.includes('denCas')) {
     return 'denCas';

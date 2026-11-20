@@ -13,7 +13,8 @@ export type TelegramDruh =
   | 'uklizeno'
   | 'automat'
   | 'zadost'
-  | 'faktura';
+  | 'faktura'
+  | 'shrnuti';
 
 const POVOLENE = new Set<TelegramDruh>([
   'cas-prijezdu',
@@ -26,6 +27,7 @@ const POVOLENE = new Set<TelegramDruh>([
   'automat',
   'zadost',
   'faktura',
+  'shrnuti',
 ]);
 
 function token(): string | null {

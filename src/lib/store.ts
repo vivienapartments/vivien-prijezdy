@@ -67,6 +67,8 @@ export type OdjezdBeh = {
   fakturyPoledne: string | null;
   /** Den, kdy odešla ranní připomínka nevystavených faktur po odjezdu. */
   fakturyRano: string | null;
+  /** Den, kdy odešla ranní připomínka čekajícího shrnutí. */
+  shrnutiRano: string | null;
 };
 
 export type JakPlatby = 'hotove' | 'karta' | 'prevod' | 'cena';
@@ -171,6 +173,16 @@ export type RezervaceRecord = {
   podekovaniKdy: string | null;
   /** Kanál posledního poděkování. */
   podekovaniKanal: 'whatsapp' | 'sms' | 'email' | null;
+  /** Kdy majitel odeslal shrnutí „Vše je připravené“. */
+  shrnutiKdy: string | null;
+  /** Kanál posledního shrnutí. */
+  shrnutiKanal: 'whatsapp' | 'sms' | 'email' | null;
+  /** Otisk času|způsob|telefon při odeslání shrnutí. */
+  shrnutiOtisk: string | null;
+  /** Kdy majiteli odešlo první upozornění, že host je komplet. */
+  shrnutiUpozorneno: string | null;
+  /** Kdy host přečetl shrnutí ve Zprávách od nás. */
+  zpravaShrnutiPrectena: string | null;
   /** Den a čas odjezdu, na který už odešlo upozornění půl hodiny předem. */
   odjezdPushPul: string | null;
   /** Klíč převzetí jiného bytu, u kterého už odešla upomínka vybrat prodloužení. */
@@ -787,6 +799,18 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       r.podekovaniKanal === 'whatsapp' || r.podekovaniKanal === 'sms' || r.podekovaniKanal === 'email'
         ? r.podekovaniKanal
         : null,
+    shrnutiKdy: typeof r.shrnutiKdy === 'string' && r.shrnutiKdy ? r.shrnutiKdy : null,
+    shrnutiKanal:
+      r.shrnutiKanal === 'whatsapp' || r.shrnutiKanal === 'sms' || r.shrnutiKanal === 'email'
+        ? r.shrnutiKanal
+        : null,
+    shrnutiOtisk: typeof r.shrnutiOtisk === 'string' && r.shrnutiOtisk ? r.shrnutiOtisk : null,
+    shrnutiUpozorneno:
+      typeof r.shrnutiUpozorneno === 'string' && r.shrnutiUpozorneno ? r.shrnutiUpozorneno : null,
+    zpravaShrnutiPrectena:
+      typeof r.zpravaShrnutiPrectena === 'string' && r.zpravaShrnutiPrectena
+        ? r.zpravaShrnutiPrectena
+        : null,
     odjezdPushPul: typeof r.odjezdPushPul === 'string' && r.odjezdPushPul ? r.odjezdPushPul : null,
     prodlouzeniVyberPush:
       typeof r.prodlouzeniVyberPush === 'string' && r.prodlouzeniVyberPush ? r.prodlouzeniVyberPush : null,
@@ -969,6 +993,11 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     pohodaDotaz: null,
     podekovaniKdy: null,
     podekovaniKanal: null,
+    shrnutiKdy: null,
+    shrnutiKanal: null,
+    shrnutiOtisk: null,
+    shrnutiUpozorneno: null,
+    zpravaShrnutiPrectena: null,
     odjezdPushPul: null,
     prodlouzeniVyberPush: null,
     zpravaOdjezdCekaPrectena: null,
@@ -1561,6 +1590,7 @@ export class UpstashProcessStore implements ProcessStore {
         podekovani: den(beh.podekovani),
         fakturyPoledne: den(beh.fakturyPoledne),
         fakturyRano: den(beh.fakturyRano),
+        shrnutiRano: den(beh.shrnutiRano),
       };
     } catch {
       return null;
