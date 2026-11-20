@@ -67,7 +67,7 @@ export function navrhKcPriplatkuCasu(cas: string | null | undefined): number | n
   const text = (cas || '').trim();
   if (!text) return null;
   if (text === 'po20' || /^po\s*20/i.test(text)) return null;
-  let min =
+  const min =
     text === 'po23' || text === CAS_PO_23 || /^po\s*23/i.test(text) ? 23 * 60 + 30 : minutyCasu(text);
   if (min == null) return null;
   if (min <= PRIPLATEK_OD) return 0;
