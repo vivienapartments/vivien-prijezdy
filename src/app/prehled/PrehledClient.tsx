@@ -360,6 +360,36 @@ function TelefonNahore({
   );
 }
 
+/** Číslo z minulého pobytu. Majitel klepne Akceptovat (ne Uložit). */
+function TelefonZMinulaNahore({
+  cislo,
+  onAkceptovat,
+}: {
+  cislo: string;
+  onAkceptovat: () => Promise<{ ok: boolean; hodnota?: string }>;
+}) {
+  const [cekam, setCekam] = useState(false);
+  return (
+    <div className="ph-nova-kontakt ph-nova-kontakt--z-minula">
+      <div className="ph-nova-kontakt__z-minula-text">
+        <span className="ph-nova-kontakt__z-minula-popis">Telefon z minulého pobytu</span>
+        <span className="ph-tel">{cislo}</span>
+      </div>
+      <button
+        type="button"
+        className="ph-nova-kontakt__ulozit"
+        disabled={cekam}
+        onClick={() => {
+          setCekam(true);
+          void onAkceptovat().finally(() => setCekam(false));
+        }}
+      >
+        Akceptovat
+      </button>
+    </div>
+  );
+}
+
 export function PrehledClient({
   rows,
   dnes,
@@ -2882,6 +2912,7 @@ export function PrehledClient({
             telefonWa: tel.wa,
             telefonNejisty: tel.nejisty,
             telefonKtery: ktery,
+            stalyHost: r.stalyHost ? { ...r.stalyHost, telefonZMinula: null } : r.stalyHost,
           };
         }),
       );
@@ -2902,7 +2933,15 @@ export function PrehledClient({
     setRadky((prev) =>
       prev.map((r) => {
         if (r.rezervace !== row.rezervace) return r;
-        if (hlavni) return { ...r, telefonText: hotovo, telefonWa: tel.wa, telefonNejisty: tel.nejisty };
+        if (hlavni) {
+          return {
+            ...r,
+            telefonText: hotovo,
+            telefonWa: tel.wa,
+            telefonNejisty: tel.nejisty,
+            stalyHost: r.stalyHost ? { ...r.stalyHost, telefonZMinula: null } : r.stalyHost,
+          };
+        }
         return { ...r, jinyTelefonText: hotovo, jinyTelefonWa: tel.wa, jinyTelefonNejisty: tel.nejisty };
       }),
     );
@@ -3065,14 +3104,23 @@ export function PrehledClient({
     const tlacitkoKontakt = muzeKontakt ? (
       <UlozitKontakt row={row} onUlozeno={() => oznacKontaktUlozen(row)} />
     ) : null;
+    const telefonZMinula = staly?.telefonZMinula || null;
+    const telefonZMinulaBlok =
+      telefonNahore && telefonZMinula ? (
+        <TelefonZMinulaNahore
+          key={`${row.rezervace}-telefon-z-minula`}
+          cislo={telefonZMinula}
+          onAkceptovat={() => ulozTelefon(row, 'rezervace', telefonZMinula)}
+        />
+      ) : null;
     const kontaktNahoreBlok = kontaktNahore ? (
-      telefonNahore ? (
+      telefonNahore && !telefonZMinula ? (
         <TelefonNahore
           key={`${row.rezervace}-telefon-nahore`}
           hodnota={telefonRadku(row)}
           onUloz={(text) => ulozTelefon(row, row.telefonKtery || 'rezervace', text)}
         />
-      ) : (
+      ) : !telefonNahore ? (
         <a
           className="ph-nova-kontakt"
           href={`/api/prehled/vizitka?rezervace=${encodeURIComponent(row.rezervace)}`}
@@ -3080,7 +3128,7 @@ export function PrehledClient({
         >
           Uložit kontakt
         </a>
-      )
+      ) : null
     ) : null;
     const casPole = (
       <PoleSUlozenim
@@ -3779,6 +3827,7 @@ export function PrehledClient({
                     : 'Shrnutí ✓'}
                 </p>
               ) : null}
+              {telefonZMinulaBlok}
               {kontaktNahoreBlok}
               <div className="ph-nova-dlazdice">
                 {nedojezd ? null : predanoKdy ? (
@@ -4196,13 +4245,6 @@ export function PrehledClient({
         {branaZTile[row.rezervace] || cekajici === 'registrace' || cekajici === 'odpoved'
           ? dil.panelBrany
           : null}
-        {staly?.telefonZMinula ? (
-          <p className="ph-dnesek__akce">
-            <button type="button" disabled={cekam !== null} onClick={() => void ulozTelefon(row, 'rezervace', staly.telefonZMinula!)}>
-              Použít telefon z minula: {staly.telefonZMinula}
-            </button>
-          </p>
-        ) : null}
         {staly?.emailZMinula ? (
           <p className="ph-dnesek__akce">
             <button

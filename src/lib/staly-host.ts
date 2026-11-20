@@ -69,13 +69,19 @@ function shodaPevna(a: PrehledRadek, b: PrehledRadek): boolean {
   return false;
 }
 
+/**
+ * Stejné jméno (bez diakritiky).
+ * Národnost: když ji mají obě karty a liší se, není to shoda.
+ * Když na nové kartě z BH ještě chybí, stačí jméno (Booking e-mail se stejně neshodí).
+ */
 function shodaSlaba(a: PrehledRadek, b: PrehledRadek): boolean {
   const ja = normalizujJmeno(a.jmeno);
   const jb = normalizujJmeno(b.jmeno);
   if (!ja || !jb || ja !== jb) return false;
   const na = (a.narodnost || '').trim().toUpperCase();
   const nb = (b.narodnost || '').trim().toUpperCase();
-  return Boolean(na && nb && na === nb);
+  if (na && nb && na !== nb) return false;
+  return true;
 }
 
 function drivejsi(a: PrehledRadek, b: PrehledRadek): boolean {

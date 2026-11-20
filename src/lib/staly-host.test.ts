@@ -136,4 +136,35 @@ describe('stálý host', () => {
   it('doplnStaleHosty nepadá na prázdném seznamu', () => {
     expect(doplnStaleHosty([])).toEqual([]);
   });
+
+  it('podle jména i bez národnosti na nové kartě nabídne telefon', () => {
+    const stary = karta({
+      id: '1',
+      jmeno: 'Veronika Lancová',
+      telefon: '+420777111222',
+      narodnost: 'CZE',
+      prijezd: '2026-11-18',
+      odjezd: '2026-11-19',
+    });
+    const novy = radekZRezervace({
+      ...prazdnaRezervace('2', '2026-01-01T00:00:00.000Z'),
+      jmeno: 'Veronika Lancova',
+      emailHosta: 'xyz@guest.booking.com',
+      narodnost: null,
+      prijezd: '2026-11-25',
+      odjezd: '2026-11-27',
+      apartman: 'V1',
+      stav: 'neodeslano',
+    });
+    const info = stalyHostPro(novy, [stary, novy]);
+    expect(info?.shoda).toBe('slaba');
+    expect(info?.telefonZMinula).toContain('777');
+    expect(textStalehoHosta(info!)).toBe('Možná stálý host');
+  });
+
+  it('stejné jméno a jiná národnost se neshodí', () => {
+    const a = karta({ id: '1', jmeno: 'Jan Novák', narodnost: 'CZE', prijezd: '2026-01-01' });
+    const b = karta({ id: '2', jmeno: 'Jan Novák', narodnost: 'DEU', prijezd: '2026-06-01' });
+    expect(stalyHostPro(b, [a, b])).toBeNull();
+  });
 });

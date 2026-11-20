@@ -3136,6 +3136,38 @@
   white-space: nowrap;
 }
 
+.ph-nova-kontakt--z-minula {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-text);
+  background: #2a4a66;
+  border-color: #5a9fd4;
+}
+
+.ph-nova-kontakt__z-minula-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.ph-nova-kontakt__z-minula-popis {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #b8d4ea;
+}
+
+.ph-nova-kontakt--z-minula .ph-tel {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #e8f4ff;
+  white-space: nowrap;
+}
+
 .ph button.ph-nova-predani {
   display: block;
   width: 100%;
