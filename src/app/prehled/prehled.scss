@@ -572,6 +572,28 @@
     white-space: pre-wrap;
     margin: 0.35rem 0 0;
   }
+
+  .ph-predano-dotaz {
+    flex: 1 1 100%;
+  }
+}
+
+.ph-predano-dotaz--email {
+  border-color: rgba(201, 168, 76, 0.65);
+  background: rgba(201, 168, 76, 0.12);
+}
+
+.ph-predano-dotaz--email p {
+  color: var(--color-text, #f3ebe0);
+}
+
+.ph-domu-hlaska {
+  margin: 0.35rem 0 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  border-radius: 8px;
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--color-gold, #c9a84c);
 }
 
 .ph-soucet {
@@ -2158,6 +2180,16 @@
 
 .ph-odjezdy--vnorene li.is-akce {
   color: #ffb4c0;
+}
+
+.ph-shrnuti-hotove {
+  list-style: none;
+  margin-top: 0.65rem;
+  padding-top: 0.35rem;
+}
+
+.ph-shrnuti-hotove > .ph-domu-radek__souhrn {
+  width: 100%;
 }
 
 .ph-nova-stav__vyzva,

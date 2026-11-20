@@ -162,7 +162,7 @@ export type PrehledRadek = {
   nedojezdKdy: string | null;
   /** Shrnutí „Vše je připravené“ odesláno. */
   shrnutiKdy: string | null;
-  shrnutiKanal: 'whatsapp' | 'sms' | 'email' | null;
+  shrnutiKanal: 'whatsapp' | 'sms' | 'email' | 'neposilat' | null;
   shrnutiOtisk: string | null;
   /** Zobrazení plateb. null = Kč. */
   mena: 'CZK' | 'EUR' | null;

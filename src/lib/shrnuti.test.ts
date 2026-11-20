@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   cekaShrnuti,
+  hosteCekajiciShrnuti,
+  hosteHotoveShrnuti,
   jeKomplet,
   otiskShrnuti,
+  stitekShrnutiKanalu,
   textShrnutiZaklad,
   zmenaPoShrnuti,
 } from './shrnuti';
@@ -101,6 +104,20 @@ describe('shrnuti', () => {
     const zmena = { ...odeslano, casPrijezdu: '17:00' };
     expect(zmenaPoShrnuti(zmena, dnes)).toBe(true);
     expect(cekaShrnuti(zmena, dnes)).toBe(true);
+  });
+
+  it('neposílat je hotové a štítek', () => {
+    const h = host();
+    const neposilat = {
+      ...h,
+      shrnutiKdy: '2026-11-20T12:00:00.000Z',
+      shrnutiKanal: 'neposilat' as const,
+      shrnutiOtisk: otiskShrnuti(h),
+    };
+    expect(cekaShrnuti(neposilat, dnes)).toBe(false);
+    expect(stitekShrnutiKanalu('neposilat')).toBe('neposláno');
+    expect(hosteCekajiciShrnuti([h, neposilat], dnes)).toEqual([h]);
+    expect(hosteHotoveShrnuti([h, neposilat], dnes)).toEqual([neposilat]);
   });
 
   it('text auto a pěšky', () => {

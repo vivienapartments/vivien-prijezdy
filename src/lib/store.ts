@@ -176,7 +176,7 @@ export type RezervaceRecord = {
   /** Kdy majitel odeslal shrnutí „Vše je připravené“. */
   shrnutiKdy: string | null;
   /** Kanál posledního shrnutí. */
-  shrnutiKanal: 'whatsapp' | 'sms' | 'email' | null;
+  shrnutiKanal: 'whatsapp' | 'sms' | 'email' | 'neposilat' | null;
   /** Otisk času|způsob|telefon při odeslání shrnutí. */
   shrnutiOtisk: string | null;
   /** Kdy majiteli odešlo první upozornění, že host je komplet. */
@@ -801,7 +801,10 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
         : null,
     shrnutiKdy: typeof r.shrnutiKdy === 'string' && r.shrnutiKdy ? r.shrnutiKdy : null,
     shrnutiKanal:
-      r.shrnutiKanal === 'whatsapp' || r.shrnutiKanal === 'sms' || r.shrnutiKanal === 'email'
+      r.shrnutiKanal === 'whatsapp' ||
+      r.shrnutiKanal === 'sms' ||
+      r.shrnutiKanal === 'email' ||
+      r.shrnutiKanal === 'neposilat'
         ? r.shrnutiKanal
         : null,
     shrnutiOtisk: typeof r.shrnutiOtisk === 'string' && r.shrnutiOtisk ? r.shrnutiOtisk : null,

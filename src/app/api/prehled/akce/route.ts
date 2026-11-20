@@ -201,6 +201,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'shrnuti-odeslat' &&
       akce !== 'shrnuti-vratit' &&
       akce !== 'shrnuti-rucne' &&
+      akce !== 'shrnuti-neposilat' &&
       akce !== 'checkin' &&
       akce !== 'telefon' &&
       akce !== 'predano' &&
@@ -1113,22 +1114,37 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true }, { headers: noStore });
   }
 
-  if (akce === 'shrnuti-odeslat' || akce === 'shrnuti-rucne') {
+  if (akce === 'shrnuti-odeslat' || akce === 'shrnuti-rucne' || akce === 'shrnuti-neposilat') {
     const { otiskShrnuti } = await import('@/lib/shrnuti');
     const kanalRaw = String(body?.kanal || '').trim();
     const kanal =
-      akce === 'shrnuti-rucne'
-        ? null
-        : kanalRaw === 'whatsapp' || kanalRaw === 'sms' || kanalRaw === 'email'
-          ? kanalRaw
-          : null;
+      akce === 'shrnuti-neposilat'
+        ? 'neposilat'
+        : akce === 'shrnuti-rucne'
+          ? null
+          : kanalRaw === 'whatsapp' || kanalRaw === 'sms' || kanalRaw === 'email'
+            ? kanalRaw
+            : null;
     if (akce === 'shrnuti-odeslat' && !kanal) return chyba(400, 'Vyberte kanál.');
     const ted = new Date().toISOString();
     const stitek =
-      kanal === 'whatsapp' ? 'WhatsApp' : kanal === 'sms' ? 'SMS' : kanal === 'email' ? 'E-mail' : 'ručně';
-    const veta = rec.shrnutiKdy
-      ? `Shrnutí odesláno znovu · ${stitek}`
-      : `Shrnutí odesláno · ${stitek}`;
+      kanal === 'whatsapp'
+        ? 'WhatsApp'
+        : kanal === 'sms'
+          ? 'SMS'
+          : kanal === 'email'
+            ? 'E-mail'
+            : kanal === 'neposilat'
+              ? 'neposláno'
+              : 'ručně';
+    const veta =
+      akce === 'shrnuti-neposilat'
+        ? rec.shrnutiKdy
+          ? 'Shrnutí neposílat (znovu)'
+          : 'Shrnutí neposílat'
+        : rec.shrnutiKdy
+          ? `Shrnutí odesláno znovu · ${stitek}`
+          : `Shrnutí odesláno · ${stitek}`;
     const dalsi = pridej(rec, veta, {
       shrnutiKdy: ted,
       shrnutiKanal: kanal,
@@ -1242,7 +1258,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const langBody = body?.jazyk as GuideLang | undefined;
     const lang = langBody && GUIDE_LANGS.includes(langBody) ? langBody : rec.jazyk;
     const dnesAkce = denPraha(new Date());
-    const zprava = zpravyMenu({
+    let zprava = zpravyMenu({
       stav: rec.stav,
       lang,
       zdroj: rec.zdroj,
@@ -1275,6 +1291,27 @@ export async function POST(request: Request): Promise<NextResponse> {
       zadostPrijezd: rec.zadostPrijezd,
       zadostPozdniPrijezd: rec.zadostPozdniPrijezd,
     }).find((z) => z.id === druh);
+    if (!zprava && druh === 'shrnuti') {
+      const { textShrnuti } = await import('@/lib/shrnuti');
+      const { NAZEV } = await import('@/lib/whatsapp-zprava');
+      zprava = {
+        id: 'shrnuti',
+        nazev: NAZEV.shrnuti,
+        text: textShrnuti(
+          {
+            casPrijezdu: rec.casPrijezdu,
+            zpusobPrijezdu: rec.zpusobPrijezdu,
+            telefonBrana: rec.telefonBrana,
+            apartman: rec.apartman,
+            jazyk: lang,
+          },
+          lang,
+          odkaz,
+        ),
+        vychozi: false,
+        vystraha: false,
+      };
+    }
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
     const ted = new Date().toISOString();
     const kanalShrnuti =

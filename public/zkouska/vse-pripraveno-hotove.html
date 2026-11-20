@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Zkouška · Vše připraveno · Hotové</title>
+  <style>
+    :root {
+      --bg: #1c1712;
+      --gold: #c9a84c;
+      --text: #f3ebe0;
+      --muted: #b7a99a;
+      --card: #2a221c;
+      --akce: #ffb4c0;
+      --akce-bg: rgba(220, 80, 80, 0.12);
+      --akce-border: rgba(220, 80, 80, 0.5);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: radial-gradient(1200px 600px at 50% -10%, #3a2f26, var(--bg));
+      color: var(--text);
+      padding: 1.25rem 1rem 2.5rem;
+      line-height: 1.45;
+    }
+    h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 0 0 0.35rem;
+      color: var(--gold);
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 0 0 1.25rem;
+      text-align: justify;
+      hyphens: auto;
+    }
+    .souhrn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      color: var(--akce);
+      background: var(--akce-bg);
+      border: 1px solid var(--akce-border);
+      border-radius: 10px;
+      padding: 0.7rem 0.85rem;
+      cursor: pointer;
+    }
+    .souhrn--tichy {
+      color: var(--text);
+      background: rgba(245, 239, 227, 0.06);
+      border-color: rgba(245, 239, 227, 0.18);
+      margin-top: 0.65rem;
+    }
+    ul {
+      list-style: none;
+      margin: 0.55rem 0 0;
+      padding: 0;
+    }
+    li {
+      padding: 0.55rem 0.15rem;
+      border-bottom: 1px solid rgba(245, 239, 227, 0.08);
+      font-size: 0.92rem;
+    }
+    li.is-akce { color: var(--akce); }
+    li.is-hotovo { color: var(--muted); }
+    .akce {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.4rem;
+    }
+    .akce button, .akce a {
+      font: inherit;
+      font-size: 0.82rem;
+      color: var(--gold);
+      background: transparent;
+      border: 1px solid rgba(201, 168, 76, 0.45);
+      border-radius: 999px;
+      padding: 0.25rem 0.65rem;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .hint {
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: justify;
+      hyphens: auto;
+    }
+    .hint strong { color: var(--gold); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Vše připraveno · náhled</h1>
+  <p class="lead">
+    Číslo nahoře počítá jen hosty, kterým ještě máte napsat. Po WhatsAppu, SMS, e-mailu, Odesláno ručně nebo Neposílat host zmizí z horního počtu a najdete ho pod šipkou Hotové.
+  </p>
+
+  <button type="button" class="souhrn" id="hlavni" aria-expanded="true">
+    Vše připraveno · 2 ▴
+  </button>
+  <ul id="cekaji">
+    <li class="is-akce">
+      Anna Nováková · V3 · příjezd 22. 11.
+      <span class="akce">
+        <button type="button">WhatsApp</button>
+        <button type="button">SMS</button>
+        <button type="button">E-mail</button>
+        <button type="button">Odesláno ručně</button>
+        <button type="button" data-neposilat>Neposílat</button>
+      </span>
+    </li>
+    <li class="is-akce">
+      Petr Svoboda · V1 · příjezd 23. 11. · Změna po odeslání
+      <span class="akce">
+        <button type="button">WhatsApp</button>
+        <button type="button">SMS</button>
+        <button type="button">Odesláno ručně</button>
+        <button type="button" data-neposilat>Neposílat</button>
+      </span>
+    </li>
+    <li>
+      <button type="button" class="souhrn souhrn--tichy" id="hotove" aria-expanded="false">
+        Hotové · 1 ▸
+      </button>
+      <ul id="hotove-seznam" hidden>
+        <li class="is-hotovo">
+          Marie Dvořáková · V2 · příjezd 21. 11. · Shrnutí odesláno 14:12 · WhatsApp
+          <span class="akce">
+            <button type="button">WhatsApp</button>
+            <button type="button">Vrátit</button>
+          </span>
+        </li>
+      </ul>
+    </li>
+  </ul>
+
+  <p class="hint">
+    V ostrém přehledu Domů to bude stejně. Klepněte Neposílat tady jen jako ukázku (nic se neuloží). Až to vyzkoušíte v přehledu a bude to sedět, napište <strong>nasaď</strong>.
+  </p>
+
+  <script>
+    const hlavni = document.getElementById('hlavni');
+    const cekaji = document.getElementById('cekaji');
+    const hotove = document.getElementById('hotove');
+    const hotoveSeznam = document.getElementById('hotove-seznam');
+    let otevreno = true;
+    let hotoveOtevreno = false;
+    hlavni.addEventListener('click', () => {
+      otevreno = !otevreno;
+      cekaji.hidden = !otevreno;
+      hlavni.textContent = 'Vše připraveno · 2 ' + (otevreno ? '▴' : '▸');
+      hlavni.setAttribute('aria-expanded', String(otevreno));
+    });
+    hotove.addEventListener('click', () => {
+      hotoveOtevreno = !hotoveOtevreno;
+      hotoveSeznam.hidden = !hotoveOtevreno;
+      hotove.textContent = 'Hotové · 1 ' + (hotoveOtevreno ? '▴' : '▸');
+      hotove.setAttribute('aria-expanded', String(hotoveOtevreno));
+    });
+  </script>
+</body>
+</html>

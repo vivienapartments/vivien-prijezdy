@@ -9,7 +9,7 @@ import { GUIDE_LANGS } from './types';
 /** Denní připomínka majiteli (Praha). */
 export const HODINA_SHRNUTI_RANO = 9;
 
-export type ShrnutiKanal = 'whatsapp' | 'sms' | 'email';
+export type ShrnutiKanal = 'whatsapp' | 'sms' | 'email' | 'neposilat';
 
 export type ShrnutiVstup = Pick<
   RezervaceRecord,
@@ -128,6 +128,7 @@ export function stitekShrnutiKanalu(kanal: ShrnutiKanal | null | undefined): str
   if (kanal === 'whatsapp') return 'WhatsApp';
   if (kanal === 'sms') return 'SMS';
   if (kanal === 'email') return 'E-mail';
+  if (kanal === 'neposilat') return 'neposláno';
   return '';
 }
 
@@ -155,6 +156,13 @@ export function hosteCekajiciShrnuti<
   T extends ShrnutiVstup & { prijezd: string | null; apartman: string | null; jmeno?: string | null },
 >(list: T[], dnes: string): T[] {
   return seradShrnuti(list.filter((r) => cekaShrnuti(r, dnes)));
+}
+
+/** Hotové = komplet a už nečeká (odesláno / ručně / neposílat). */
+export function hosteHotoveShrnuti<
+  T extends ShrnutiVstup & { prijezd: string | null; apartman: string | null; jmeno?: string | null },
+>(list: T[], dnes: string): T[] {
+  return seradShrnuti(list.filter((r) => jeKomplet(r, dnes) && !cekaShrnuti(r, dnes)));
 }
 
 /** SMS odkaz: iPhone &body=, Android ?body=. */
