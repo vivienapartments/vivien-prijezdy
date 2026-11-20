@@ -110,7 +110,12 @@ describe('průvodce se otevře až po údajích', () => {
     expect(text).toContain('až hodinu');
     expect(text).toContain('Na domluvený čas pak čekáme');
     expect(text).toContain('přijet znovu');
-    expect(text).toContain('Rozumím pravidlům příjezdu a souhlasím s nimi.');
+    expect(text).toContain('Rozumím pravidlům příjezdu i');
+    expect(text).toContain('všeobecným obchodním podmínkám (VOP)');
+    expect(text).toContain('a souhlasím s nimi.');
+    expect(text).toContain('Pobyt se řídí také');
+    expect(text).toContain('všeobecnými obchodními podmínkami (VOP)');
+    expect(text).toContain('https://vivienapartments.cz/vop');
     expect(text).toContain('20:30 · +100 Kč');
     expect(text).toContain('21:00 · +200 Kč');
     expect(text).not.toContain('23:00 · +600 Kč');

@@ -13,6 +13,8 @@ describe('verze pravidel příjezdu', () => {
     expect(posledni.cs).toContain('přijet znovu');
     expect(posledni.cs).toContain('300 Kč');
     expect(posledni.cs).toContain('100 Kč za každou započatou půlhodinu');
+    expect(posledni.cs).toContain('všeobecnými obchodními podmínkami (VOP)');
+    expect(ARCHIV_PRAVIDEL[ARCHIV_PRAVIDEL.length - 2].cs).not.toContain('všeobecnými obchodními podmínkami (VOP)');
     expect(ARCHIV_PRAVIDEL[2].cs).toContain('příplatek podle skutečného příjezdu');
     expect(ARCHIV_PRAVIDEL[1].cs).toContain('Asi 15 minut');
     expect(ARCHIV_PRAVIDEL[1].cs).toContain('Bez času předem');

@@ -1258,7 +1258,7 @@ export function Guide({
                             <h3>{tt(rule.title)}</h3>
                             {rule.odkaz ? (
                               <p>
-                                {tt(rule.odkaz.pred)}
+                                {tt(rule.odkaz.pred)}{' '}
                                 <a
                                   href={sitePath(rule.odkaz.cesta)}
                                   target="_blank"

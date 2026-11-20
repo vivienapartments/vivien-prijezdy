@@ -96,6 +96,24 @@ function renderPravidlo(raw: string, tucnaPrvni = false) {
   );
 }
 
+function vopUrl(lang: GuideLang): string {
+  const p = '/vop';
+  if (lang === 'cs') return `https://vivienapartments.cz${p}`;
+  if (lang === 'zh-Hant') return `https://vivienapartments.cz/zh${p}`;
+  if (lang === 'sv' || lang === 'hu' || lang === 'pt' || lang === 'da') {
+    return `https://vivienapartments.cz/en${p}`;
+  }
+  return `https://vivienapartments.cz/${lang}${p}`;
+}
+
+function odkazVop(lang: GuideLang, text: string) {
+  return (
+    <a href={vopUrl(lang)} target="_blank" rel="noopener noreferrer">
+      {text}
+    </a>
+  );
+}
+
 function moznostiCasu(lang: GuideLang, drive: string[]) {
   const bezne = CASY_VYBERU.filter((h) => !priplatekProCas(h));
   const pozdni = CASY_VYBERU.filter((h) => priplatekProCas(h));
@@ -335,6 +353,11 @@ export function VstupHosta({
             {VT.vstupPravidla.map((veta, i) => (
               <li key={veta.cs}>{renderPravidlo(tt(veta), i === 1 || i === 2)}</li>
             ))}
+            <li key="vop">
+              {tt(VT.vstupPravidloVop.pred)}{' '}
+              {odkazVop(lang, tt(VT.vstupPravidloVop.odkaz))}
+              {tt(VT.vstupPravidloVop.po)}
+            </li>
           </ol>
           <div className="pv-vstup__pole" id="cas-prijezdu">
             <label>
@@ -422,7 +445,11 @@ export function VstupHosta({
           {pokus && !zpusob ? <p className="pv-vstup__chyba">{tt(VT.vstupChybiZpusob)}</p> : null}
           <label className="pv-vstup__souhlas">
             <input type="checkbox" checked={souhlas} onChange={(e) => setSouhlas(e.target.checked)} disabled={cteni} />
-            <span>{tt(VT.vstupSouhlas)}</span>
+            <span>
+              {tt(VT.vstupSouhlasCasti.pred)}{' '}
+              {odkazVop(lang, tt(VT.vstupSouhlasCasti.odkaz))}{' '}
+              {tt(VT.vstupSouhlasCasti.po)}
+            </span>
           </label>
           {pokus && !souhlas ? <p className="pv-vstup__chyba">{tt(VT.vstupChybiPravidla)}</p> : null}
           {cteni ? null : (
