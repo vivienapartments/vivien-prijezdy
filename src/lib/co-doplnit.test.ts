@@ -31,6 +31,7 @@ function radek(partial: Partial<PrehledRadek> & { rezervace: string }): PrehledR
     zdrojText: partial.zdrojText ?? 'Booking',
     historie: partial.historie ?? [],
     checkinNeniPotreba: partial.checkinNeniPotreba === true,
+    nedojezdKdy: partial.nedojezdKdy ?? null,
   } as PrehledRadek;
 }
 
@@ -44,6 +45,13 @@ describe('Co doplnit', () => {
         radek({ rezervace: '2', stav: 'odeslano', prijezd: '2026-11-02', telefonText: null, telefonWa: null }),
         radek({ rezervace: '3', stav: 'odeslano', prijezd: '2026-11-02', telefonText: '+420 604 111 222', telefonWa: '420604111222' }),
         radek({ rezervace: '4', stav: 'zruseno', prijezd: '2026-10-31', telefonText: null }),
+        radek({
+          rezervace: '4b',
+          stav: 'neodeslano',
+          prijezd: '2026-12-04',
+          telefonText: null,
+          nedojezdKdy: '2026-11-20T03:59:56.052Z',
+        }),
         radek({ rezervace: '5', stav: 'bez_checkinu', prijezd: '2026-11-20' }),
         radek({ rezervace: '6', stav: 'bez_checkinu', prijezd: '2026-10-29' }),
         radek({
@@ -178,6 +186,12 @@ describe('Co doplnit', () => {
         telefonText: null,
       }),
       radek({ rezervace: 'z1', stav: 'zruseno', telefonText: null }),
+      radek({
+        rezervace: 'n1',
+        stav: 'neodeslano',
+        telefonText: null,
+        nedojezdKdy: '2026-11-20T03:59:56.052Z',
+      }),
       radek({
         rezervace: 'pred',
         stav: 'bez_checkinu',

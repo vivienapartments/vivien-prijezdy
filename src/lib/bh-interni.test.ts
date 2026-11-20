@@ -111,6 +111,9 @@ describe('čtení nové rezervace', () => {
     expect(parsujInterni('Vivien Apartmens Character and Atmosphere | Zrušení rezervace - #100000001', '', TELO)?.druh).toBe(
       'zruseni',
     );
+    expect(parsujInterni('Vivien Apartmens Character and Atmosphere | Storno rezervace - #100000001', '', TELO)?.druh).toBe(
+      'zruseni',
+    );
     expect(parsujInterni('Vivien Apartmens Character and Atmosphere | Modifikace rezervace - #100000001', '', TELO)?.druh).toBe(
       'zmena',
     );

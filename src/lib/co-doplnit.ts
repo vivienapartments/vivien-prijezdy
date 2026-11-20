@@ -57,12 +57,12 @@ export function chybiCheckin(
   return !(row.checkinUrl || '').trim();
 }
 
-/** Základ: dnes až +14 dní, nezrušení, nepředaní. */
+/** Základ: dnes až +14 dní, bez zrušených, nedojezdů a předaných. */
 export function vOkneDoplnit(
-  row: Pick<PrehledRadek, 'stav' | 'prijezd' | 'predano'>,
+  row: Pick<PrehledRadek, 'stav' | 'prijezd' | 'predano' | 'nedojezdKdy'>,
   dnes: string,
 ): boolean {
-  if (row.stav === 'zruseno' || row.predano) return false;
+  if (row.stav === 'zruseno' || row.predano || row.nedojezdKdy) return false;
   if (!row.prijezd) return false;
   const max = posunDen(dnes, DOPLNIT_OKNO_DNY);
   return row.prijezd >= dnes && row.prijezd <= max;
@@ -77,7 +77,10 @@ function prijezdDoDnu(prijezd: string, dnes: string, maxDni: number): boolean {
  * 1. výzva hned (v okně 14 dní). Po odeslání klid, znovu až 3 dny před příjezdem.
  */
 export function svitiCheckinDoplnit(
-  row: Pick<PrehledRadek, 'stav' | 'prijezd' | 'predano' | 'checkinNeniPotreba' | 'historie'>,
+  row: Pick<
+    PrehledRadek,
+    'stav' | 'prijezd' | 'predano' | 'nedojezdKdy' | 'checkinNeniPotreba' | 'historie'
+  >,
   dnes: string,
 ): boolean {
   if (!vOkneDoplnit(row, dnes) || !cekaNaCheckin(row) || !row.prijezd) return false;
@@ -96,6 +99,7 @@ export function svitiPruvodceDoplnit(
     | 'stav'
     | 'prijezd'
     | 'predano'
+    | 'nedojezdKdy'
     | 'otevrenoPocet'
     | 'casPrijezdu'
     | 'zpusobPrijezdu'
@@ -120,6 +124,7 @@ export function chybiPruvodce(
     PrehledRadek,
     | 'stav'
     | 'predano'
+    | 'nedojezdKdy'
     | 'otevrenoPocet'
     | 'casPrijezdu'
     | 'zpusobPrijezdu'
@@ -130,7 +135,7 @@ export function chybiPruvodce(
     | 'checkinNeniPotreba'
   >,
 ): boolean {
-  if (row.stav === 'zruseno' || row.predano) return false;
+  if (row.stav === 'zruseno' || row.predano || row.nedojezdKdy) return false;
   /** Ještě čeká online check-in: nejdřív check-in, ne průvodce. */
   if (cekaNaCheckin(row)) return false;
   if ((row.otevrenoPocet ?? 0) === 0) return true;

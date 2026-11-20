@@ -53,13 +53,15 @@ const LABELY = new Set([
 
 /** Předmět interního mailu z Better Hotelu. Check-in (VIVIEN-DATA) sem nepatří. */
 export function jeInterniPredmet(subject: string): boolean {
-  return /\|\s*(nová rezervace|modifikace rezervace|zrušení rezervace)\b/i.test(subject);
+  return /\|\s*(nová rezervace|modifikace rezervace|zrušení rezervace|storno rezervace)\b/i.test(
+    subject,
+  );
 }
 
 export function druhZeSubjectu(subject: string): InterniDruh | null {
   if (/\|\s*nová rezervace\b/i.test(subject)) return 'nova';
   if (/\|\s*modifikace rezervace\b/i.test(subject)) return 'zmena';
-  if (/\|\s*zrušení rezervace\b/i.test(subject)) return 'zruseni';
+  if (/\|\s*(zrušení rezervace|storno rezervace)\b/i.test(subject)) return 'zruseni';
   return null;
 }
 
