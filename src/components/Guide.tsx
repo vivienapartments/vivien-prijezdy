@@ -1256,7 +1256,21 @@ export function Guide({
                         {TX.stayRules.map((rule) => (
                           <article key={rule.title.cs} className="pv-rule">
                             <h3>{tt(rule.title)}</h3>
-                            <p>{tt(rule.text)}</p>
+                            {rule.odkaz ? (
+                              <p>
+                                {tt(rule.odkaz.pred)}
+                                <a
+                                  href={sitePath(rule.odkaz.cesta)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {tt(rule.odkaz.text)}
+                                </a>
+                                {tt(rule.odkaz.po)}
+                              </p>
+                            ) : rule.text ? (
+                              <p>{tt(rule.text)}</p>
+                            ) : null}
                           </article>
                         ))}
                       </>

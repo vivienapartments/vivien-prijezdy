@@ -638,7 +638,15 @@ export const zahradaPravidlaNadpis: LText = {
   pt: 'Informações práticas sobre o jardim',
 };
 
-export const stayRules: { title: LText; text: LText }[] = [
+export type StayRule = {
+  title: LText;
+  /** Prostý text. Když je `odkaz`, text se nepoužije. */
+  text?: LText;
+  /** Věta s odkazem uprostřed (pred + odkaz + po). */
+  odkaz?: { pred: LText; text: LText; po: LText; cesta: string };
+};
+
+export const stayRules: StayRule[] = [
   {
     title: {
       cs: 'Bez kouření',
@@ -797,6 +805,103 @@ export const stayRules: { title: LText; text: LText }[] = [
       fr: "Lors de la remise, nous regardons l’appartement ensemble. Si quelque chose ne va pas, nous le notons et vous l’envoyons par e-mail pour confirmation.",
       it: "Alla consegna guardiamo l’appartamento insieme. Se qualcosa non è in ordine, lo annotiamo e ve lo inviamo via e-mail per conferma.",
       pt: 'Na entrega vemos o apartamento em conjunto. Se algo não estiver em ordem, anotamos e enviamos-vos por e-mail para confirmação.',
+    },
+  },
+  {
+    title: {
+      cs: 'Pouze k ubytování',
+      en: 'Accommodation only',
+      de: 'Nur zum Wohnen',
+      pl: 'Tylko zakwaterowanie',
+      uk: 'Лише для проживання',
+      'zh-Hant': '僅供住宿',
+      sv: 'Endast för boende',
+      es: 'Solo alojamiento',
+      fr: 'Hébergement uniquement',
+      it: 'Solo alloggio',
+      pt: 'Apenas alojamento',
+      hu: 'Csak szállásra',
+      da: 'Kun til ophold',
+    },
+    text: {
+      cs: 'Prostituce a sexuální služby jsou v domě zakázány. Denně můžete přijmout jednu návštěvu, další jen po domluvě s námi.',
+      en: 'Prostitution and sexual services are not permitted in the house. You may receive one visit per day; more only by arrangement with us.',
+      de: 'Prostitution und sexuelle Dienstleistungen sind im Haus verboten. Sie können pro Tag einen Besuch empfangen, weitere nur nach Absprache mit uns.',
+      pl: 'Prostytucja i usługi seksualne są w domu zabronione. Dziennie możecie przyjąć jedną wizytę, kolejne tylko po uzgodnieniu z nami.',
+      uk: 'Проституція та сексуальні послуги в будинку заборонені. На день можна прийняти один візит, інші лише за домовленістю з нами.',
+      'zh-Hant': '屋內禁止賣淫及性服務。每天可接待一次訪客，其他訪客須事先與我們約定。',
+      sv: 'Prostitution och sexuella tjänster är förbjudna i huset. Ni kan ta emot ett besök per dag, fler bara efter överenskommelse med oss.',
+      es: 'La prostitución y los servicios sexuales están prohibidos en la casa. Pueden recibir una visita al día; más solo previo acuerdo con nosotros.',
+      fr: 'La prostitution et les services sexuels sont interdits dans la maison. Vous pouvez recevoir une visite par jour, davantage uniquement après accord avec nous.',
+      it: 'La prostituzione e i servizi sessuali sono vietati nella casa. Potete ricevere una visita al giorno, altre solo previo accordo con noi.',
+      pt: 'A prostituição e os serviços sexuais são proibidos na casa. Podem receber uma visita por dia; mais apenas mediante acordo connosco.',
+      hu: 'A prostitúció és a szexuális szolgáltatások a házban tilosak. Naponta egy látogatást fogadhatnak, többet csak velünk egyeztetve.',
+      da: 'Prostitution og seksuelle ydelser er forbudt i huset. I kan modtage ét besøg om dagen, flere kun efter aftale med os.',
+    },
+  },
+  {
+    title: {
+      cs: 'Obchodní podmínky',
+      en: 'Terms and conditions',
+      de: 'Geschäftsbedingungen',
+      pl: 'Regulamin',
+      uk: 'Умови',
+      'zh-Hant': '條款與條件',
+      sv: 'Villkor',
+      es: 'Condiciones generales',
+      fr: 'Conditions générales',
+      it: 'Condizioni generali',
+      pt: 'Condições gerais',
+      hu: 'Általános szerződési feltételek',
+      da: 'Vilkår',
+    },
+    odkaz: {
+      pred: {
+        cs: 'Pobyt se řídí těmito pravidly a ',
+        en: 'Your stay is governed by these house rules and the ',
+        de: 'Für Ihren Aufenthalt gelten diese Hausregeln und die ',
+        pl: 'Pobyt podlega tym zasadom oraz ',
+        uk: 'Перебування регулюється цими правилами та ',
+        'zh-Hant': '您的住宿受本住宿規則及',
+        sv: 'Vistelsen omfattas av dessa husregler och ',
+        es: 'La estancia se rige por estas normas y por las ',
+        fr: 'Votre séjour est régi par ce règlement et par les ',
+        it: 'Il soggiorno è regolato da queste regole e dalle ',
+        pt: 'A estadia rege-se por estas regras e pelas ',
+        hu: 'A tartózkodásra ezek a házirendek és az ',
+        da: 'Opholdet er omfattet af disse husregler og de ',
+      },
+      text: {
+        cs: 'všeobecnými obchodními podmínkami (VOP)',
+        en: 'General Terms and Conditions',
+        de: 'Allgemeinen Geschäftsbedingungen (AGB)',
+        pl: 'ogólnym warunkom handlowym',
+        uk: 'загальними умовами надання послуг',
+        'zh-Hant': '一般條款與條件',
+        sv: 'de allmänna villkoren',
+        es: 'condiciones generales',
+        fr: 'conditions générales de vente',
+        it: 'condizioni generali',
+        pt: 'condições gerais',
+        hu: 'általános szerződési feltételek (ÁSZF)',
+        da: 'generelle vilkår',
+      },
+      po: {
+        cs: '.',
+        en: '.',
+        de: '.',
+        pl: '.',
+        uk: '.',
+        'zh-Hant': '約束。',
+        sv: '.',
+        es: '.',
+        fr: '.',
+        it: '.',
+        pt: '.',
+        hu: ' vonatkoznak.',
+        da: '.',
+      },
+      cesta: '/vop',
     },
   },
 ];
