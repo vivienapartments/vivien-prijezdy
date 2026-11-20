@@ -794,7 +794,12 @@ export function zpravyMenu(opts: {
       opts.pruvodce ? `${opts.pruvodce.split('#')[0]}#pozdejsi` : null,
     ),
     pohoda: textPohody(opts.lang),
-    podekovani: textPodekovani(opts.lang, opts.pruvodce ? opts.pruvodce.split('#')[0] : null),
+    podekovani: textPodekovani(
+      opts.lang,
+      opts.pruvodce ? opts.pruvodce.split('#')[0] : null,
+      opts.odjezd,
+      opts.dnes,
+    ),
     pripraveno: textPripraveno(opts.lang, opts.pruvodce ? odkazPripraveno(opts.pruvodce) : ''),
   };
   const videt = PORADI.filter((id) => {

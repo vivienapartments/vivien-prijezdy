@@ -6,8 +6,11 @@ import {
   textPushPodekovani,
   textPodekovani,
   ukazatPodekovani,
+  ZPRAVA_PODEKOVANI,
+  ZPRAVA_PODEKOVANI_POZDEJI,
 } from './podekovani';
 import type { RezervaceRecord } from './store';
+import { GUIDE_LANGS } from './types';
 
 function host(partial: Partial<RezervaceRecord>): RezervaceRecord {
   return {
@@ -75,9 +78,30 @@ describe('podekovani', () => {
   });
 
   it('připojí odkaz pod text', () => {
-    const t = textPodekovani('cs', 'https://priklad.cz/abc');
+    const t = textPodekovani('cs', 'https://priklad.cz/abc', '2026-11-19', '2026-11-19');
     expect(t).toContain('Dobrý den');
     expect(t).toContain('\n\nhttps://priklad.cz/abc');
+  });
+
+  it('den odjezdu vs další dny', () => {
+    const den = textPodekovani('cs', null, '2026-11-19', '2026-11-19');
+    const pozdeji = textPodekovani('cs', null, '2026-11-19', '2026-11-20');
+    const treti = textPodekovani('cs', null, '2026-11-17', '2026-11-20');
+    expect(den).toContain('dojeli v pořádku');
+    expect(den).toContain('Moc děkujeme');
+    expect(den).not.toContain('5 %');
+    expect(pozdeji).not.toContain('dojeli');
+    expect(pozdeji).toContain('děkujeme, že jste byli našimi hosty');
+    expect(pozdeji).not.toContain('ještě jednou');
+    expect(pozdeji).not.toContain('5 %');
+    expect(treti).toBe(pozdeji);
+  });
+
+  it('všech 13 jazyků má obě verze', () => {
+    for (const lang of GUIDE_LANGS) {
+      expect(ZPRAVA_PODEKOVANI[lang].length).toBeGreaterThan(20);
+      expect(ZPRAVA_PODEKOVANI_POZDEJI[lang].length).toBeGreaterThan(20);
+    }
   });
 
   it('menu po odjezdu i když už odesláno', () => {

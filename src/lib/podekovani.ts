@@ -11,23 +11,43 @@ export const HODINA_PODEKOVANI = 17;
 export type PodekovaniKanal = 'whatsapp' | 'sms' | 'email';
 
 /**
- * Text zprávy (WhatsApp, SMS, e-mail). Schváleno majitelem 19. 11. 2026.
- * Pod text patří prázdný řádek a odkaz na průvodce.
+ * Zpráva v den odjezdu (WhatsApp, SMS, e-mail).
+ * Schváleno majitelem 20. 11. 2026. Pod text patří prázdný řádek a odkaz.
  */
 export const ZPRAVA_PODEKOVANI: Record<GuideLang, string> = {
-  cs: `Dobrý den, doufáme, že jste dojeli v pořádku. Ještě jsme se s vámi chtěli rozloučit. Otevřete si odkaz na průvodce, nechali jsme vám tam pár řádků.`,
-  en: `Hello, we hope you got home safely. We wanted to say goodbye. Open the guide link, we left you a few lines there.`,
-  de: `Guten Tag, wir hoffen, Sie sind gut nach Hause gekommen. Wir wollten uns noch von Ihnen verabschieden. Öffnen Sie den Link zum Leitfaden, dort haben wir Ihnen ein paar Zeilen hinterlassen.`,
-  pl: `Dzień dobry, mamy nadzieję, że dotarliście szczęśliwie. Chcieliśmy się jeszcze z Wami pożegnać. Otwórzcie link do przewodnika, zostawiliśmy Wam tam kilka słów.`,
-  uk: `Добрий день, сподіваємося, ви добре доїхали. Ми хотіли ще попрощатися з вами. Відкрийте посилання на путівник, ми залишили вам там кілька рядків.`,
-  'zh-Hant': `您好，希望您已平安到家。我們想再跟您道別。請打開指南連結，我們在那裡留了幾句話給您。`,
-  sv: `Hej, vi hoppas att ni har kommit hem väl. Vi ville säga hej då. Öppna länken till guiden, där har vi lämnat några rader till er.`,
-  es: `Buenos días, esperamos que hayan llegado bien. Queríamos despedirnos. Abran el enlace de la guía, allí les hemos dejado unas líneas.`,
-  hu: `Jó napot kívánunk, reméljük, szerencsésen hazaértek. Szerettünk volna még elköszönni. Nyissák meg az útmutató linkjét, hagytunk ott néhány sort.`,
-  da: `Hej, vi håber, I er kommet godt hjem. Vi ville gerne sige farvel. Åbn linket til guiden, der har vi efterladt et par linjer til jer.`,
-  fr: `Bonjour, nous espérons que vous êtes bien rentrés. Nous voulions encore vous dire au revoir. Ouvrez le lien du guide, nous vous y avons laissé quelques lignes.`,
-  it: `Buongiorno, speriamo che siate arrivati a casa bene. Volevamo ancora salutarvi. Aprite il link della guida, vi abbiamo lasciato qualche riga.`,
-  pt: `Bom dia, esperamos que tenham chegado bem. Queríamos ainda despedir-nos. Abram o link do guia, deixámos-vos lá algumas linhas.`,
+  cs: `Dobrý den, doufáme, že jste dojeli v pořádku. Moc děkujeme, že jste byli našimi hosty. V průvodci na vás čeká krátký vzkaz od nás a malý dárek na příští pobyt.`,
+  en: `Hello, we hope you got home safely. Thank you so much for being our guests. In the guide there is a short note from us and a small gift for your next stay.`,
+  de: `Guten Tag, wir hoffen, Sie sind gut nach Hause gekommen. Vielen Dank, dass Sie unsere Gäste waren. Im Leitfaden wartet eine kurze Nachricht von uns und ein kleines Geschenk für Ihren nächsten Aufenthalt.`,
+  pl: `Dzień dobry, mamy nadzieję, że dotarliście szczęśliwie. Bardzo dziękujemy, że byliście naszymi gośćmi. W przewodniku czeka krótka wiadomość od nas i mały prezent na kolejny pobyt.`,
+  uk: `Добрий день, сподіваємося, ви добре доїхали. Дуже дякуємо, що були нашими гостями. У путівнику на вас чекає коротке повідомлення від нас і невеликий подарунок на наступне перебування.`,
+  'zh-Hant': `您好，希望您已平安到家。非常感謝您成為我們的客人。指南裡有我們的一小段話，以及下次入住的小禮物。`,
+  sv: `Hej, vi hoppas att ni har kommit hem väl. Tack så mycket för att ni var våra gäster. I guiden väntar ett kort meddelande från oss och en liten present till nästa vistelse.`,
+  es: `Buenos días, esperamos que hayan llegado bien. Muchas gracias por haber sido nuestros huéspedes. En la guía les espera un breve mensaje nuestro y un pequeño detalle para la próxima estancia.`,
+  hu: `Jó napot kívánunk, reméljük, szerencsésen hazaértek. Nagyon köszönjük, hogy a vendégeink voltak. Az útmutatóban egy rövid üzenet vár Önökre tőlünk, és egy kis ajándék a következő tartózkodáshoz.`,
+  da: `Hej, vi håber, I er kommet godt hjem. Mange tak fordi I var vores gæster. I guiden venter en kort besked fra os og en lille gave til jeres næste ophold.`,
+  fr: `Bonjour, nous espérons que vous êtes bien rentrés. Merci beaucoup d’avoir été nos hôtes. Dans le guide vous attend un court message de notre part et un petit cadeau pour votre prochain séjour.`,
+  it: `Buongiorno, speriamo che siate arrivati a casa bene. Grazie di cuore per essere stati nostri ospiti. Nella guida vi aspetta un breve messaggio da parte nostra e un piccolo regalo per il prossimo soggiorno.`,
+  pt: `Bom dia, esperamos que tenham chegado bem. Muito obrigado por terem sido nossos hóspedes. No guia espera-vos uma breve mensagem nossa e um pequeno presente para a próxima estadia.`,
+};
+
+/**
+ * Zpráva další dny po odjezdu. Schváleno majitelem 20. 11. 2026.
+ * Bez „ještě jednou“. Sleva 5 % jen uvnitř stránky, ne ve zprávě.
+ */
+export const ZPRAVA_PODEKOVANI_POZDEJI: Record<GuideLang, string> = {
+  cs: `Dobrý den, děkujeme, že jste byli našimi hosty. V průvodci na vás čeká krátký vzkaz od nás a malý dárek na příští pobyt.`,
+  en: `Hello, thank you for being our guests. In the guide there is a short note from us and a small gift for your next stay.`,
+  de: `Guten Tag, danke, dass Sie unsere Gäste waren. Im Leitfaden wartet eine kurze Nachricht von uns und ein kleines Geschenk für Ihren nächsten Aufenthalt.`,
+  pl: `Dzień dobry, dziękujemy, że byliście naszymi gośćmi. W przewodniku czeka krótka wiadomość od nas i mały prezent na kolejny pobyt.`,
+  uk: `Добрий день, дякуємо, що були нашими гостями. У путівнику на вас чекає коротке повідомлення від нас і невеликий подарунок на наступне перебування.`,
+  'zh-Hant': `您好，感謝您成為我們的客人。指南裡有我們的一小段話，以及下次入住的小禮物。`,
+  sv: `Hej, tack för att ni var våra gäster. I guiden väntar ett kort meddelande från oss och en liten present till nästa vistelse.`,
+  es: `Buenos días, gracias por haber sido nuestros huéspedes. En la guía les espera un breve mensaje nuestro y un pequeño detalle para la próxima estancia.`,
+  hu: `Jó napot kívánunk, köszönjük, hogy a vendégeink voltak. Az útmutatóban egy rövid üzenet vár Önökre tőlünk, és egy kis ajándék a következő tartózkodáshoz.`,
+  da: `Hej, tak fordi I var vores gæster. I guiden venter en kort besked fra os og en lille gave til jeres næste ophold.`,
+  fr: `Bonjour, merci d’avoir été nos hôtes. Dans le guide vous attend un court message de notre part et un petit cadeau pour votre prochain séjour.`,
+  it: `Buongiorno, grazie per essere stati nostri ospiti. Nella guida vi aspetta un breve messaggio da parte nostra e un piccolo regalo per il prossimo soggiorno.`,
+  pt: `Bom dia, obrigado por terem sido nossos hóspedes. No guia espera-vos uma breve mensagem nossa e um pequeno presente para a próxima estadia.`,
 };
 
 /** Předmět e-mailu. Schváleno 19. 11. 2026: VIVIEN · Než odkaz na průvodce skončí. */
@@ -47,9 +67,16 @@ export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {
   pt: 'VIVIEN · Antes de o link do guia terminar',
 };
 
-export function textPodekovani(lang: GuideLang | null, odkaz: string | null): string {
-  const zaklad =
-    lang && lang in ZPRAVA_PODEKOVANI ? ZPRAVA_PODEKOVANI[lang] : ZPRAVA_PODEKOVANI.en;
+/** `odjezd < dnes` → pozdější verze. Chybí-li odjezd nebo dnes → den odjezdu. */
+export function textPodekovani(
+  lang: GuideLang | null,
+  odkaz: string | null,
+  odjezd?: string | null,
+  dnes?: string | null,
+): string {
+  const pozdeji = Boolean(odjezd && dnes && odjezd < dnes);
+  const mapa = pozdeji ? ZPRAVA_PODEKOVANI_POZDEJI : ZPRAVA_PODEKOVANI;
+  const zaklad = lang && lang in mapa ? mapa[lang] : mapa.en;
   const url = (odkaz || '').trim();
   if (!url) return zaklad;
   return `${zaklad}\n\n${url}`;

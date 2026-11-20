@@ -1371,20 +1371,21 @@ export const expiredPodpis: LText = {
   pt: 'Nikol & a família VIVIEN',
 };
 
+/** Schváleno majitelem 20. 11. 2026: malý dárek za věrnost, sleva 5 %. */
 export const expiredMost: LText = {
-  cs: 'Až budete plánovat další cestu, termín si vyberete tady.',
-  en: 'When you plan your next trip, you can choose your dates here.',
-  de: 'Wenn Sie Ihre nächste Reise planen, können Sie hier Ihren Termin wählen.',
-  pl: 'Gdy będziecie planować kolejną podróż, termin wybierzecie tutaj.',
-  uk: 'Коли плануватимете наступну поїздку, дату можна обрати тут.',
-  'zh-Hant': '規劃下一趟旅程時，可以在這裡選擇日期。',
-  sv: 'När ni planerar nästa resa kan ni välja datum här.',
-  es: 'Cuando planeen su próximo viaje, pueden elegir las fechas aquí.',
-  hu: 'Ha a következő utazásukat tervezik, itt választhatnak időpontot.',
-  da: 'Når I planlægger jeres næste rejse, kan I vælge datoer her.',
-  fr: 'Pour votre prochain voyage, vous pourrez choisir vos dates ici.',
-  it: 'Quando pianificherete il prossimo viaggio, potrete scegliere le date qui.',
-  pt: 'Quando planearem a próxima viagem, podem escolher as datas aqui.',
+  cs: 'Až budete plánovat další pobyt, termín si vyberete tady. Máte od nás malý dárek za věrnost, slevu 5 %.',
+  en: 'When you plan your next stay, you can choose your dates here. You have a small loyalty gift from us, a 5% discount.',
+  de: 'Wenn Sie Ihren nächsten Aufenthalt planen, wählen Sie den Termin hier. Sie haben von uns ein kleines Treuegeschenk, 5 % Rabatt.',
+  pl: 'Gdy będziecie planować kolejny pobyt, termin wybierzecie tutaj. Macie od nas mały prezent za lojalność, zniżkę 5 %.',
+  uk: 'Коли плануватимете наступне перебування, дату можна обрати тут. Від нас маєте невеликий подарунок за вірність, знижку 5 %.',
+  'zh-Hant': '規劃下次入住時，可以在這裡選擇日期。我們送您忠誠小禮物，享 5% 折扣。',
+  sv: 'När ni planerar nästa vistelse kan ni välja datum här. Ni har en liten present för er lojalitet från oss, 5 % rabatt.',
+  es: 'Cuando planeen su próxima estancia, pueden elegir las fechas aquí. Tienen de nosotros un pequeño detalle por su fidelidad, un 5 % de descuento.',
+  hu: 'Ha a következő tartózkodásukat tervezik, itt választhatnak időpontot. Tőlünk egy kis hűségajándék jár, 5 % kedvezmény.',
+  da: 'Når I planlægger jeres næste ophold, kan I vælge datoer her. I har en lille gave for jeres loyalitet fra os, 5 % rabat.',
+  fr: 'Pour votre prochain séjour, vous pourrez choisir vos dates ici. Vous avez de notre part un petit cadeau de fidélité, 5 % de réduction.',
+  it: 'Quando pianificherete il prossimo soggiorno, potrete scegliere le date qui. Da noi avete un piccolo regalo per la fedeltà, lo sconto del 5 %.',
+  pt: 'Quando planearem a próxima estadia, podem escolher as datas aqui. Têm de nós um pequeno presente de fidelidade, 5 % de desconto.',
 };
 
 export const expiredCta: LText = {

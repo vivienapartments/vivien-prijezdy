@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Náhled – zpráva × uvnitř průvodce</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #1c1712;
+      --ink: #f5efe3;
+      --muted: #cbbba8;
+      --gold: #c9a84c;
+      --gold-soft: #b89a6a;
+      --line: #3d342a;
+      --font-display: "Cormorant Garamond", Georgia, serif;
+      --font-body: "DM Sans", system-ui, sans-serif;
+      --foto: url("/fotky-nahled/zahrada-rodina.jpg");
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      background: #12100e;
+      color: var(--ink);
+      padding: 1rem 0.75rem 2.5rem;
+    }
+    .intro {
+      max-width: 46rem;
+      margin: 0 auto 1rem;
+    }
+    .intro h1 {
+      margin: 0 0 0.35rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.45rem;
+      color: var(--gold);
+    }
+    .intro p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.92rem;
+      text-align: justify;
+      hyphens: auto;
+    }
+    .grid {
+      display: grid;
+      gap: 1.25rem;
+      max-width: 46rem;
+      margin: 0 auto;
+    }
+    @media (min-width: 820px) {
+      .grid { grid-template-columns: 1fr 1fr; align-items: start; }
+    }
+    .blok h2 {
+      margin: 0 0 0.55rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .wa {
+      background: #1a2e22;
+      border: 1px solid #2d4a38;
+      border-radius: 14px;
+      padding: 0.95rem 1rem;
+    }
+    .wa .bublina {
+      background: #203528;
+      border-radius: 10px 10px 10px 2px;
+      padding: 0.75rem 0.85rem;
+      white-space: pre-wrap;
+      line-height: 1.45;
+      text-align: justify;
+      hyphens: auto;
+      font-size: 0.92rem;
+    }
+    .wa .bublina a {
+      color: var(--gold);
+      word-break: break-all;
+    }
+    .wa .popis {
+      margin: 0.65rem 0 0;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .phone {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      overflow: hidden;
+    }
+    .foto {
+      height: 160px;
+      background:
+        linear-gradient(to bottom, transparent 35%, var(--bg) 100%),
+        var(--foto) center 32% / cover no-repeat;
+    }
+    .telo {
+      padding: 0.15rem 1.2rem 1.4rem;
+      text-align: center;
+    }
+    .logo {
+      display: block;
+      width: 72px;
+      height: 72px;
+      margin: -2rem auto 0.85rem;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      background: #1c1712;
+      object-fit: cover;
+      box-shadow: 0 0 0 4px var(--bg);
+    }
+    .telo h3 {
+      margin: 0 0 0.75rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 1.55rem;
+      line-height: 1.2;
+    }
+    .dopis, .podpis, .most, .help, .poznamka {
+      margin: 0 0 0.65rem;
+      line-height: 1.45;
+      font-size: 0.92rem;
+      color: color-mix(in srgb, var(--ink) 82%, transparent);
+      text-align: justify;
+      hyphens: auto;
+    }
+    .podpis {
+      text-align: center;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .oddel {
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 0.9rem 0;
+    }
+    .most { text-align: center; color: var(--muted); }
+    .cta {
+      display: inline-block;
+      margin: 0.35rem 0 0.85rem;
+      padding: 0.75rem 1.1rem;
+      border-radius: 999px;
+      background: var(--gold-soft);
+      color: #1a1510;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.92rem;
+    }
+    .help { text-align: center; margin-bottom: 0.25rem; color: var(--muted); font-size: 0.85rem; }
+    .tel {
+      display: inline-block;
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 600;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    .poznamka {
+      text-align: center;
+      font-size: 0.78rem;
+      color: color-mix(in srgb, var(--ink) 45%, transparent);
+    }
+    .znacka {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      margin-top: 0.85rem;
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      color: color-mix(in srgb, var(--ink) 42%, transparent);
+    }
+    .znacka img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div class="intro">
+    <h1>Zpráva × uvnitř průvodce</h1>
+    <p>Vlevo text, který host dostane (varianta A pro starší odjezd). Vpravo to, co uvidí po otevření odkazu (ostrá stránka po odjezdu).</p>
+  </div>
+
+  <div class="grid">
+    <div class="blok">
+      <h2>WhatsApp / SMS / e-mail · A</h2>
+      <div class="wa">
+        <div class="bublina">Dobrý den, děkujeme, že jste byli našimi hosty. V průvodci na vás čeká krátký vzkaz od nás a malý dárek na příští pobyt.
+
+<a href="#">https://priklad.cz/pruvodce</a></div>
+        <p class="popis">Předmět e-mailu: VIVIEN · Než odkaz na průvodce skončí</p>
+      </div>
+    </div>
+
+    <div class="blok">
+      <h2>Uvnitř po klepnutí na odkaz</h2>
+      <div class="phone">
+        <div class="foto" role="img" aria-label="Zahrada VIVIEN"></div>
+        <div class="telo">
+          <img class="logo" src="/pruvodce/va-logo-192.png" width="72" height="72" alt="VIVIEN Apartments" />
+          <h3>Děkujeme za návštěvu.</h3>
+          <p class="dopis">Byli jsme rádi, že jsme vás mohli poznat a postarat se o vás. Doufáme, že vám pobyt udělal radost. Kdykoli se budete chtít vrátit, u nás vás vždy rádi uvidíme.</p>
+          <p class="podpis">Nikol a rodina VIVIEN</p>
+          <hr class="oddel" />
+          <p class="most">Až budete plánovat další pobyt, termín si vyberete tady. Máte od nás malý dárek za věrnost, slevu 5&nbsp;%.</p>
+          <a class="cta" href="https://www.vivienapartments.cz/cs/rezervace" target="_blank" rel="noopener">Rezervovat pobyt ↗</a>
+          <p class="help">Potřebujete s něčím pomoci?</p>
+          <a class="tel" href="tel:+420702153573">Zavolat Nikol · +420&nbsp;702&nbsp;153&nbsp;573</a>
+          <p class="poznamka">Příjezdový průvodce už není aktivní.</p>
+          <div class="znacka">
+            <img src="/pruvodce/va-logo-192.png" width="28" height="28" alt="" />
+            <span>VIVIEN&nbsp;APARTMENTS</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

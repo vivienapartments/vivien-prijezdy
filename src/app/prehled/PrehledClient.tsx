@@ -5381,7 +5381,7 @@ export function PrehledClient({
                 const kanalStitek = stitekPodekovaniKanalu(row.podekovaniKanal);
                 const text =
                   zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
-                  textPodekovani(jazykRadku(row), row.odkaz);
+                  textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
                 const wa = row.telefonWa;
                 const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
                 const email = row.email.includes('@') ? row.email : '';
@@ -5806,7 +5806,7 @@ export function PrehledClient({
                 const kanalStitek = stitekPodekovaniKanalu(row.podekovaniKanal);
                 const text =
                   zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
-                  textPodekovani(jazykRadku(row), row.odkaz);
+                  textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
                 const wa = row.telefonWa;
                 const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
                 const email = row.email.includes('@') ? row.email : '';
