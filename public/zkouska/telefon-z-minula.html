@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Zkouška · Telefon z minulého pobytu</title>
+  <style>
+    :root {
+      --bg: #1c1712;
+      --text: #f3ebe0;
+      --muted: #b7a99a;
+      --gold: #c9a84c;
+      --card: #2a221c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #1c1712;
+      color: var(--text);
+      padding: 1.25rem 1rem 2.5rem;
+      line-height: 1.4;
+    }
+    h1 {
+      font-size: 1.1rem;
+      color: var(--gold);
+      margin: 0 0 0.35rem;
+      font-weight: 650;
+    }
+    .lead {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 0 0 1.25rem;
+    }
+    .karta {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 1rem 1.05rem 1.15rem;
+      max-width: 28rem;
+    }
+    .top {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.45rem;
+    }
+    .jmeno {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 0.25rem;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 0 0 0.55rem;
+    }
+    .staly {
+      color: #c9b89a;
+      font-size: 0.92rem;
+      margin: 0 0 0.85rem;
+    }
+    .staly.is-slaba { color: #d4a574; }
+    .ramecek {
+      display: flex;
+      gap: 0.55rem;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 2.85rem;
+      margin: 0 0 0.75rem;
+      padding: 0.7rem 0.9rem;
+      border-radius: 6px;
+      border: 1px solid #5a9fd4;
+      background: #2a4a66;
+    }
+    .popis {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #b8d4ea;
+      margin-bottom: 0.15rem;
+    }
+    .cislo {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #e8f4ff;
+      white-space: nowrap;
+    }
+    .akceptovat {
+      flex: 0 0 auto;
+      min-height: 2.4rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      border: 1px solid var(--gold);
+      background: transparent;
+      color: var(--gold);
+      font-weight: 650;
+      font-size: 0.95rem;
+    }
+    ol {
+      margin: 1.25rem 0 0;
+      padding-left: 1.2rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 28rem;
+    }
+    ol li { margin: 0.35rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Telefon z minulého pobytu</h1>
+  <p class="lead">Takto to vypadá nahoře na kartě, když host už u vás byl a na nové rezervaci číslo chybí.</p>
+
+  <div class="karta">
+    <div class="top">Příjezd · V1</div>
+    <div class="jmeno">Veronika Lancová</div>
+    <p class="sub">V1 · 2 dospělí · 25.–27. 11.</p>
+    <p class="staly is-slaba">Možná stálý host</p>
+
+    <div class="ramecek">
+      <div>
+        <span class="popis">Telefon z minulého pobytu</span>
+        <span class="cislo">+420&nbsp;777&nbsp;111&nbsp;222</span>
+      </div>
+      <button type="button" class="akceptovat">Akceptovat</button>
+    </div>
+  </div>
+
+  <ol>
+    <li>Otevřete kartu Veroniky v přehledu.</li>
+    <li>Hledejte text Možná stálý host.</li>
+    <li>Klepněte Akceptovat. Pak půjde WhatsApp.</li>
+  </ol>
+</body>
+</html>
