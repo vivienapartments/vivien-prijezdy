@@ -1,4 +1,4 @@
-import { NIKOL_PHONE, odkazRezervaceWeb } from '@/lib/constants';
+import { NIKOL_PHONE } from '@/lib/constants';
 import { t, toTelHref } from '@/lib/i18n';
 import {
   expiredCta,
@@ -13,8 +13,18 @@ import {
 import type { GuideLang } from '@/lib/types';
 import './guide.scss';
 
-export function Expired({ lang = 'cs' }: { lang?: GuideLang }) {
+export function Expired({
+  lang = 'cs',
+  token,
+}: {
+  lang?: GuideLang;
+  /** Podepsaný token průvodce. Bez něj jde obecná poptávka. */
+  token?: string;
+}) {
   const tel = NIKOL_PHONE.replace(/ /g, '\u00a0');
+  const poptavkaHref = token
+    ? `/poptavka?t=${encodeURIComponent(token)}`
+    : '/poptavka';
   return (
     <main className="pv pv-expired">
       <div className="pv-expired__karta">
@@ -37,12 +47,7 @@ export function Expired({ lang = 'cs' }: { lang?: GuideLang }) {
           <p className="pv-expired__podpis">{t(expiredPodpis, lang)}</p>
           <hr className="pv-expired__oddel" aria-hidden="true" />
           <p className="pv-expired__most">{t(expiredMost, lang)}</p>
-          <a
-            className="pv-expired__cta"
-            href={odkazRezervaceWeb(lang)}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <a className="pv-expired__cta" href={poptavkaHref}>
             {t(expiredCta, lang)}
             <span className="pv-expired__sipka" aria-hidden="true">
               ↗

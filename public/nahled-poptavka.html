@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Náhled · Poptávka pobytu · VIVIEN</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; background: #12100e; color: #f5efe3; padding: 1rem; }
+    .intro { max-width: 26rem; margin: 0 auto 1rem; color: #cbbba8; font-size: 0.9rem; line-height: 1.4; }
+    .intro a { color: #c9a84c; }
+    .pp__karta { max-width: 26rem; margin: 0 auto; background: #1c1712; border: 1px solid #3d342a; border-radius: 18px; padding: 1.25rem 1.15rem 1.6rem; }
+    .pp__logo { display: block; width: 56px; height: 56px; margin: 0 auto 0.85rem; border-radius: 50%; border: 2px solid #c9a84c; object-fit: cover; background: #1c1712; }
+    h1 { margin: 0 0 0.65rem; font-family: Georgia, serif; font-weight: 500; font-size: 1.55rem; text-align: center; }
+    .pp__firma { margin: 0 0 0.55rem; color: #c9a84c; text-align: center; }
+    .pp__uvod, .pp__sleva, .pp__cena, .pp__zaloha { margin: 0 0 0.55rem; line-height: 1.45; font-size: 0.95rem; text-align: justify; color: #cbbba8; }
+    .pp__sleva { color: #e8dfd0; }
+    label, legend { display: block; margin: 0.55rem 0 0.35rem; font-size: 0.82rem; color: #c9a84c; }
+    fieldset { border: 0; margin: 0.7rem 0 0; padding: 0; }
+    .pp__termin { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+    input, textarea { width: 100%; box-sizing: border-box; margin: 0 0 0.5rem; padding: 0.65rem 0.7rem; border-radius: 10px; border: 1px solid #3d342a; background: #15110e; color: #f5efe3; font: inherit; font-size: 16px; }
+    .pp__apt { display: flex; gap: 0.55rem; align-items: center; margin: 0 0 0.4rem; padding: 0.55rem 0.65rem; border-radius: 10px; border: 1px solid #3d342a; font-size: 0.92rem; }
+    .pp__apt.is-on { border-color: #c9a84c; background: rgba(201,168,76,0.12); }
+    .pp__apt input { width: auto; margin: 0; }
+    .pp__akce { display: grid; gap: 0.55rem; margin-top: 1rem; }
+    .pp__btn { display: block; width: 100%; box-sizing: border-box; padding: 0.85rem 1rem; border-radius: 999px; border: 0; text-align: center; text-decoration: none; font-weight: 700; font-size: 0.95rem; }
+    .pp__btn--hlavni { background: #b89a6a; color: #1a1510; }
+    .pp__btn--wa { background: rgba(37,211,102,0.22); color: #f5efe3; border: 1px solid rgba(37,211,102,0.45); }
+    .pp__btn--sms { background: transparent; color: #e8dfd0; border: 1px solid #3d342a; }
+    .pp__tel { display: block; margin-top: 0.85rem; text-align: center; color: #c9a84c; text-decoration: none; font-weight: 600; white-space: nowrap; }
+    .note { margin-top: 1rem; font-size: 0.8rem; color: #8a7d6c; text-align: center; }
+  </style>
+</head>
+<body>
+  <p class="intro">
+    Statický náhled vzhledu. Ostrá stránka s odesláním bude
+    <a href="/poptavka?f=raccoon">/poptavka?f=raccoon</a>
+    (firma) a
+    <a href="/poptavka">/poptavka</a>
+    (obecná). Po nasazení na Vercel půjde otevřít z telefonu.
+  </p>
+  <div class="pp__karta">
+    <img class="pp__logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="VIVIEN Apartments" />
+    <h1>Vyberte termín dalšího pobytu</h1>
+    <p class="pp__firma">Poptávka pro RACCOON</p>
+    <p class="pp__uvod">Pošlete nám poptávku. Do hodiny ověříme volno a ozveme se s cenou.</p>
+    <p class="pp__sleva">Na této cestě máte slevu 5&nbsp;%.</p>
+    <p class="pp__cena">Přesnou cenu dopočítáme po ověření termínu.</p>
+    <fieldset>
+      <legend>Termín</legend>
+      <div class="pp__termin">
+        <label>Příjezd<input type="date" value="2026-12-01" /></label>
+        <label>Odjezd<input type="date" value="2026-12-02" /></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Apartmány (můžete víc)</legend>
+      <label class="pp__apt is-on"><input type="checkbox" checked /> Zlatá rovnováha</label>
+      <label class="pp__apt"><input type="checkbox" /> Jemná harmonie</label>
+      <label class="pp__apt"><input type="checkbox" /> Je mi to jedno, doporučte</label>
+    </fieldset>
+    <label>Jméno<input type="text" value="Jan Novák" /></label>
+    <label>Telefon<input type="tel" value="+420 777 123 456" /></label>
+    <div class="pp__akce">
+      <span class="pp__btn pp__btn--hlavni">Odeslat poptávku</span>
+      <span class="pp__btn pp__btn--wa">Napsat na WhatsApp</span>
+      <span class="pp__btn pp__btn--sms">Napsat SMS</span>
+    </div>
+    <a class="pp__tel" href="tel:+420702153573">Zavolat Nikol · +420&nbsp;702&nbsp;153&nbsp;573</a>
+    <p class="pp__zaloha">Když se nedovoláte <a class="pp__tel" href="tel:+420604692573" style="display:inline">+420&nbsp;604&nbsp;692&nbsp;573</a></p>
+    <p class="note">Náhled · tlačítka tady neodesílají</p>
+  </div>
+</body>
+</html>

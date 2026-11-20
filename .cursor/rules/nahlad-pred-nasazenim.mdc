@@ -20,5 +20,9 @@ Majitel chce věci **sám vyzkoušet**, než to uvidí hosté. Nestačí jen tes
 
 Na to **vždy** připrav viditelný náhled a krátký návod (kam kliknout, co má vidět). Dev server po použití ukonči (viz úklid procesů).
 
+## Zkoušení na telefonu (Telegram)
+Když má majitel něco vyzkoušet **na mobilu** (náhled, ověření opravy, Domů, karta), **pošli odkaz do Telegramu** (provozní chaty z `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` v `.env.local`).  
+**Nedávej odkaz jen do chatu v Cursoru.** Na počítači ho do mobilu nepřeloží. V chatu stačí napsat „posláno do Telegramu“ a co má klepnout.
+
 ## Po opravě chyby z provozu
-Nejdřív oprava + test. Pak nabídni majiteli, jak ověřit (vlastní průvodce / karta). Hostovi „zkus znovu“ až po nasazení.
+Nejdřív oprava + test. Pak pošli do Telegramu odkaz, jak ověřit. Hostovi „zkus znovu“ až po nasazení.

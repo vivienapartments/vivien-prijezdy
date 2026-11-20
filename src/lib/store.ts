@@ -16,6 +16,9 @@ import { nactiFakturu } from './faktura';
 import type { VyjezdPolozka } from './priplatek-prijezd';
 import type { AptId, GuideLang } from './types';
 import { prevedZaplaceno } from './platby-hosta';
+import { nactiPoptavkySeznam, type PoptavkaZaznam } from './poptavka';
+
+export type { PoptavkaZaznam };
 
 export type MessageStatus =
   | 'sent'
@@ -392,6 +395,7 @@ type StoreData = {
   /** Přání hosta mimo rez:* (prompt 57A). */
   praniOtevrena?: string[];
   prani?: Record<string, PraniFileSlot>;
+  poptavky?: PoptavkaZaznam[];
 };
 
 const RUCNI_KLIC = new Set<RucniPole>([
@@ -466,6 +470,8 @@ export interface ProcessStore {
   ): Promise<void>;
   smazVlaknoPrani(rez: string, vlaknoId: string, ttl: PraniTtlOpts): Promise<void>;
   listOtevrenaPrani(): Promise<OtevrenaPraniPolozka[]>;
+  listPoptavky(): Promise<PoptavkaZaznam[]>;
+  pridejPoptavku(zaznam: PoptavkaZaznam): Promise<void>;
 }
 
 function ttlPraniSec(ttl: PraniTtlOpts, now = new Date()): number | 'persist' | null {
@@ -524,6 +530,7 @@ function emptyData(): StoreData {
     rezervace: {},
     push: [],
     upozorneni: [],
+    poptavky: [],
     zpracujSelhani: 0,
     zpracujBeh: null,
     brana: null,
@@ -1004,6 +1011,7 @@ export class FileProcessStore implements ProcessStore {
         rezervace: parsed.rezervace || {},
         push: nactiPush(parsed.push),
         upozorneni: nactiUpozorneniSeznam(parsed.upozorneni),
+        poptavky: nactiPoptavkySeznam(parsed.poptavky),
         zpracujSelhani: typeof parsed.zpracujSelhani === 'number' ? parsed.zpracujSelhani : 0,
         zpracujBeh: nactiBeh(parsed.zpracujBeh),
         odjezdBeh: parsed.odjezdBeh ?? null,
@@ -1239,6 +1247,16 @@ export class FileProcessStore implements ProcessStore {
       });
     }
     return out;
+  }
+
+  async listPoptavky(): Promise<PoptavkaZaznam[]> {
+    return nactiPoptavkySeznam(this.read().poptavky);
+  }
+
+  async pridejPoptavku(zaznam: PoptavkaZaznam): Promise<void> {
+    const data = this.read();
+    data.poptavky = nactiPoptavkySeznam([zaznam, ...(data.poptavky || [])]);
+    this.write(data);
   }
 }
 
@@ -1696,6 +1714,21 @@ export class UpstashProcessStore implements ProcessStore {
       out.push({ rezervace, vlakna: Object.values(vlakna), zpravy });
     }
     return out;
+  }
+
+  async listPoptavky(): Promise<PoptavkaZaznam[]> {
+    const v = await this.cmd<string | null>('GET', 'poptavky:seznam');
+    if (!v) return [];
+    try {
+      return nactiPoptavkySeznam(JSON.parse(v));
+    } catch {
+      return [];
+    }
+  }
+
+  async pridejPoptavku(zaznam: PoptavkaZaznam): Promise<void> {
+    const list = await this.listPoptavky();
+    await this.cmd('SET', 'poptavky:seznam', JSON.stringify(nactiPoptavkySeznam([zaznam, ...list])));
   }
 }
 

@@ -1,0 +1,243 @@
+.pp {
+  min-height: 100dvh;
+  margin: 0;
+  padding: 1rem 0.85rem 2.5rem;
+  background: #12100e;
+  color: #f5efe3;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.pp__karta {
+  max-width: 26rem;
+  margin: 0 auto;
+  background: #1c1712;
+  border: 1px solid #3d342a;
+  border-radius: 18px;
+  padding: 1.25rem 1.15rem 1.6rem;
+}
+
+.pp__logo {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 0.85rem;
+  border-radius: 50%;
+  border: 2px solid #c9a84c;
+  object-fit: cover;
+}
+
+.pp h1 {
+  margin: 0 0 0.65rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: 1.55rem;
+  line-height: 1.25;
+  text-align: center;
+  color: #f5efe3;
+}
+
+.pp__uvod,
+.pp__firma,
+.pp__sleva,
+.pp__cena,
+.pp__dekujeme,
+.pp__chyba,
+.pp__zaloha {
+  margin: 0 0 0.55rem;
+  line-height: 1.45;
+  font-size: 0.95rem;
+  text-align: justify;
+  hyphens: auto;
+  color: #cbbba8;
+}
+
+.pp__firma {
+  color: #c9a84c;
+  text-align: center;
+}
+
+.pp__sleva {
+  color: #e8dfd0;
+}
+
+.pp__chyba {
+  color: #e8a0a0;
+}
+
+.pp__dekujeme {
+  color: #e8dfd0;
+  text-align: center;
+  margin-top: 0.75rem;
+}
+
+.pp fieldset {
+  margin: 0.9rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.pp legend,
+.pp label {
+  display: block;
+  margin: 0 0 0.35rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: #c9a84c;
+}
+
+.pp__termin {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.pp input[type='date'],
+.pp input[type='text'],
+.pp input[type='tel'],
+.pp textarea,
+.pp select {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #3d342a;
+  background: #15110e;
+  color: #f5efe3;
+  font: inherit;
+  font-size: 16px;
+}
+
+.pp textarea {
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.pp__apts {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+}
+
+.pp__apt {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid #3d342a;
+  color: #e8dfd0;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.pp__apt input {
+  width: auto;
+  margin: 0;
+}
+
+.pp__apt.is-on {
+  border-color: #c9a84c;
+  background: color-mix(in srgb, #c9a84c 12%, transparent);
+}
+
+.pp__doprava {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem;
+}
+
+.pp__chip {
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid #3d342a;
+  background: transparent;
+  color: #e8dfd0;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.pp__chip.is-on {
+  border-color: #c9a84c;
+  background: #c9a84c;
+  color: #1a1510;
+  font-weight: 600;
+}
+
+.pp__akce {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.pp__btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  border: 0;
+  text-align: center;
+  text-decoration: none;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.pp__btn--hlavni {
+  background: #b89a6a;
+  color: #1a1510;
+}
+
+.pp__btn--wa {
+  background: color-mix(in srgb, #25d366 22%, #1c1712);
+  color: #f5efe3;
+  border: 1px solid color-mix(in srgb, #25d366 45%, #3d342a);
+}
+
+.pp__btn--sms {
+  background: transparent;
+  color: #e8dfd0;
+  border: 1px solid #3d342a;
+}
+
+.pp__btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.pp__tel {
+  display: block;
+  margin-top: 0.85rem;
+  text-align: center;
+  color: #c9a84c;
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pp__tel span {
+  white-space: nowrap;
+}
+
+.pp__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.pp__sms-only {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .pp__sms-only {
+    display: block;
+  }
+}
