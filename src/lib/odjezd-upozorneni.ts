@@ -42,7 +42,9 @@ async function dorucOdlozenePushyCasuOdjezdu(
     if (!record.casOdjezduPushCeka || record.stav === 'zruseno' || record.nedojezdKdy) continue;
     if (odlozitPushCasuOdjezdu(record, now)) continue;
     const text = record.casOdjezduPushCeka;
-    const jak = await posli(store, text, odkazKarty(record.rezervace), { telegram: 'cas-odjezdu' });
+    const jak = await posli(store, text, odkazKarty(record.rezervace, 'odjezd'), {
+      telegram: 'cas-odjezdu',
+    });
     if (jak === 'nic') continue;
     const cerstvy = (await store.getRezervace(record.rezervace)) || record;
     if (!cerstvy.casOdjezduPushCeka) continue;

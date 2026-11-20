@@ -6,6 +6,7 @@ import { htmlEmailuHostovi, predmetZpravy } from '@/lib/email-zprava';
 import { textSouhrnu, zpravaOdjezdu } from '@/lib/odjezd';
 import { sestavDnesek, textRano, textZmenyPoradi, type HostDne } from '@/lib/dnesek';
 import { textCasNeznamy, textHodinuPred } from '@/lib/prijezd-upozorneni';
+import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
 import { zpravaNedojezdu } from '@/lib/whatsapp-zprava';
 import { NahledEmail } from './NahledEmail';
 
@@ -159,16 +160,18 @@ export default async function NahledEmailPage({ searchParams }: Props) {
 
   const logo = readFileSync(path.join(process.cwd(), 'assets', 'email', 'logo.png'));
   const podpis = readFileSync(path.join(process.cwd(), 'assets', 'email', 'logo-podpis.png'));
+  const langRaw = jeden(q.lang) || 'cs';
+  const lang: GuideLang = GUIDE_LANGS.includes(langRaw as GuideLang) ? (langRaw as GuideLang) : 'cs';
   const { html } = buildGuestEmail({
-    lang: 'cs',
+    lang,
     apt: 'V1',
     prijezd: denVPraze(0),
     odjezd: denVPraze(2),
     noci: 2,
     osob: 2,
     osloveni: null,
-    jmeno: 'Anna',
-    narodnost: 'CZE',
+    jmeno: lang === 'de' ? 'Melanie' : 'Anna',
+    narodnost: lang === 'de' ? 'AUT' : 'CZE',
     guideUrl: '#pruvodce',
     intendedTo: 'nahled@example.com',
     logoSrc: `data:image/png;base64,${logo.toString('base64')}`,

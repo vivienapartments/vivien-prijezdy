@@ -127,6 +127,7 @@ describe('upozornění 30 min před příjezdem (doklady)', () => {
     expect(odkazKarty('1', 'doklady')).toBe('/prehled#1?zprava=doklady');
     expect(odkazKarty('1', 'brana')).toBe('/prehled#1?ukol=brana');
     expect(odkazKarty('1', 'potvrzeni')).toBe('/prehled#1?ukol=potvrzeni');
+    expect(odkazKarty('1', 'odjezd')).toBe('/prehled#odsouhlasit-odjezdy');
     expect(ukolZUpozorneniUrl('/prehled#1?ukol=brana')).toBe('brana');
     expect(ukolZUpozorneniUrl('/prehled#1?zprava=doklady')).toBe('doklady');
   });

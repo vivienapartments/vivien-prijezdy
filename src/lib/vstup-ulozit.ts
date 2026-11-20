@@ -71,6 +71,7 @@ function poznamenej(rec: RezervaceRecord, co: string, patch: Partial<RezervaceRe
 function ukolZTelegram(telegram?: TelegramDruh | null): UkolUpozorneni | null {
   if (telegram === 'brana') return 'brana';
   if (telegram === 'cas-prijezdu') return 'potvrzeni';
+  if (telegram === 'cas-odjezdu') return 'odjezd';
   if (telegram === 'doklady') return 'doklady';
   return null;
 }
@@ -197,7 +198,7 @@ export async function ulozVstupHosta(
       const casUlozeni = new Date().toISOString();
       const zapis = { ...v.rec, hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20) };
       await store.setRezervace(id, zapis);
-      if (v.push) await ohlas(store, id, v.push, 'zadost');
+      if (v.push) await ohlas(store, id, v.push, 'cas-odjezdu');
       return {
         ok: true,
         cas: v.rec.zadostOdjezd?.cas || cas,
@@ -239,7 +240,7 @@ export async function ulozVstupHosta(
     });
     await store.setRezervace(id, zapis);
     if (!odlozit) {
-      if (uprava?.push) await ohlas(store, id, uprava.push, 'zadost');
+      if (uprava?.push) await ohlas(store, id, uprava.push, 'cas-odjezdu');
       else await ohlas(store, id, pushText, 'cas-odjezdu');
     }
     return {

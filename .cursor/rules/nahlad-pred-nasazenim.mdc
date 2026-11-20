@@ -1,0 +1,24 @@
+---
+description: Před nasaď vždy náhled, ať majitel vyzkouší
+alwaysApply: true
+---
+
+# Náhled před nasazením (platí vždy)
+
+Majitel chce věci **sám vyzkoušet**, než to uvidí hosté. Nestačí jen testy v konzoli.
+
+## Před „nasaď“
+1. U změn v průvodci / přehledu / e-mailu / zprávách hostovi **vždy nabídni náhled** (lokální stránka, `/nahled…`, HTML ve `public/`, nebo krátký postup „otevři přehled a klepni sem“).
+2. Počkej, až majitel řekne, že to vyzkoušel / souhlasí, **nebo** výslovně „nasaď i bez dalšího zkoušení“.
+3. Nepiš „je to hotové, nasaď“, dokud nemá jak to kliknout očima a rukou.
+
+## Jak majitel požádá (stačí jedna věta)
+- „ukaž náhled“
+- „ať to vyzkouším“
+- „nejdřív vyzkoušíme“
+- „do náhledu“
+
+Na to **vždy** připrav viditelný náhled a krátký návod (kam kliknout, co má vidět). Dev server po použití ukonči (viz úklid procesů).
+
+## Po opravě chyby z provozu
+Nejdřív oprava + test. Pak nabídni majiteli, jak ověřit (vlastní průvodce / karta). Hostovi „zkus znovu“ až po nasazení.

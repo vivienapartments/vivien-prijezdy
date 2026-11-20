@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Cormorant_Garamond, DM_Sans } from 'next/font/google';
 import './globals.css';
 
@@ -18,6 +18,13 @@ export const metadata: Metadata = {
   title: 'VIVIEN · průvodce příjezdem',
   description: 'Osobní průvodce příjezdem pro hosty VIVIEN Apartments.',
   robots: { index: false, follow: false, nocache: true, googleBot: { index: false, follow: false } },
+};
+
+/** Mobil: stránka musí sedět na šířku displeje (Gmail WebView i Safari). */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

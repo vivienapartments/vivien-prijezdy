@@ -20,7 +20,7 @@ export function NahledEmail({ html }: { html: string }) {
     const frame = ram.current;
     const doc = frame?.contentDocument;
     if (!frame || !doc) return false;
-    doc.querySelectorAll('style').forEach((el) => el.remove());
+    /** Nemazat <style> z hlavy. Jinak zmizí mobilní úpravy šířky. */
     const td = doc.querySelector('td[bgcolor]');
     if (!td || td.tagName !== 'TD') return false;
     const bunka = td as HTMLElement;

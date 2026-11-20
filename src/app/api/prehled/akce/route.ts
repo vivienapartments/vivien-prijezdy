@@ -558,7 +558,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const druh = akce.endsWith('prijezd') ? 'prijezd' : 'odjezd';
     const vse = (await store.listRezervace()).map((e) => e.record);
     const presto = body?.presto === true;
-    const dalsi = akce.startsWith('potvrdit')
+    let dalsi = akce.startsWith('potvrdit')
       ? aplikujPotvrzeni(rec, druh, vse, new Date(), presto)
       : aplikujNelze(rec, druh, new Date());
     if (!dalsi) {
@@ -567,6 +567,21 @@ export async function POST(request: Request): Promise<NextResponse> {
       }
       return chyba(400, 'Teď to nejde potvrdit.');
     }
+    /** U odjezdu jde Osobně/Sami hned s potvrzením času (Domů i karta). */
+    const rozlouceni =
+      akce === 'potvrdit-odjezd' && (body?.druh === 'osobne' || body?.druh === 'telefon')
+        ? (body.druh as 'osobne' | 'telefon')
+        : null;
+    if (rozlouceni && dalsi.casOdjezdu) {
+      const ted = new Date().toISOString();
+      const popisek = rozlouceni === 'osobne' ? 'Osobně se rozloučíme' : 'Sami · jsme na telefonu';
+      dalsi = pridej(dalsi, `Potvrzení odjezdu: ${popisek}`, {
+        potvrzeniOdjezdu: rozlouceni,
+        potvrzeniOdjezduKdy: ted,
+        zpravaOdjezdPrectena: null,
+        zpravaOdjezdPrijatiPrectena: dalsi.zpravaOdjezdPrijatiPrectena || ted,
+      });
+    }
     await store.setRezervace(id, dalsi);
     if (akce === 'potvrdit-odjezd') {
       const z = dalsi.zadostOdjezd;
@@ -574,6 +589,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json(
         {
           ok: true,
+          potvrzeniOdjezdu: dalsi.potvrzeniOdjezdu,
+          potvrzeniOdjezduKdy: dalsi.potvrzeniOdjezduKdy,
           odjezdSchvaleno: z
             ? {
                 cas: z.cas,

@@ -382,6 +382,7 @@ export function PrehledClient({
   const [dotazPodekovani, setDotazPodekovani] = useState<string | null>(null);
   const [zitraOtevreno, setZitraOtevreno] = useState(false);
   const [casySchvaleniOtevreno, setCasySchvaleniOtevreno] = useState(false);
+  const [odjezdySchvaleniOtevreno, setOdjezdySchvaleniOtevreno] = useState(true);
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
   const [fakturyFocus, setFakturyFocus] = useState(false);
   const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
@@ -616,8 +617,29 @@ export function PrehledClient({
     }, 180);
   }
 
+  function otevriOdjezdyKeSchvaleni() {
+    setPohledDomu(true);
+    setZalozka('prijezdy');
+    setOdjezdySchvaleniOtevreno(true);
+    setVybrana(null);
+    requestAnimationFrame(() => {
+      try {
+        document.getElementById('odsouhlasit-odjezdy')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      } catch {
+        /* scroll */
+      }
+    });
+  }
+
   function otevriUkolNaKarte(id: string, ukol: UkolUpozorneni | null) {
     if (!ukol) return;
+    if (ukol === 'odjezd') {
+      otevriOdjezdyKeSchvaleni();
+      return;
+    }
     if (ukol === 'doklady') {
       setVolba((prev) => ({ ...prev, [id]: 'doklady' }));
       setPanelZpravy((prev) => ({ ...prev, [id]: true }));
@@ -651,6 +673,10 @@ export function PrehledClient({
       }
       if (id === 'podekovani') {
         otevriPodekovani();
+        return;
+      }
+      if (id === 'odsouhlasit-odjezdy') {
+        otevriOdjezdyKeSchvaleni();
         return;
       }
       if (id === 'odjezdy-zitra' || id.startsWith('odjezdy')) {
@@ -1831,18 +1857,60 @@ export function PrehledClient({
     row: PrehledRadek,
     akce: 'potvrdit-prijezd' | 'nelze-prijezd' | 'potvrdit-odjezd' | 'nelze-odjezd',
     presto = false,
+    rozlouceni?: 'osobne' | 'telefon',
   ) {
     const klic = `${row.rezervace}:${akce}`;
     if (ukazka) {
+      const ted = new Date().toISOString();
       setOknoHotovo((stav) => ({ ...stav, [klic]: true }));
       setDotazPrestoPrijezd(null);
+      if (akce === 'potvrdit-odjezd') {
+        const casZadost = row.zadostOdjezd?.cas || casOdjezduRadku(row);
+        setRadky((prev) =>
+          prev.map((r) =>
+            r.rezervace === row.rezervace
+              ? {
+                  ...r,
+                  zadostOdjezd: r.zadostOdjezd
+                    ? { ...r.zadostOdjezd, stav: 'potvrzeno', kdy: ted, drziPotvrzeni: null }
+                    : r.zadostOdjezd,
+                  casOdjezdu: casZadost || r.casOdjezdu,
+                  ...(rozlouceni
+                    ? {
+                        potvrzeniOdjezdu: rozlouceni,
+                        potvrzeniOdjezduKdy: ted,
+                        zpravaOdjezdPrectena: null,
+                        zpravaOdjezdPrijatiPrectena: r.zpravaOdjezdPrijatiPrectena || ted,
+                      }
+                    : {
+                        potvrzeniOdjezdu: null,
+                        potvrzeniOdjezduKdy: null,
+                      }),
+                }
+              : r,
+          ),
+        );
+      } else if (akce === 'nelze-odjezd' && row.zadostOdjezd) {
+        setRadky((prev) =>
+          prev.map((r) =>
+            r.rezervace === row.rezervace && r.zadostOdjezd
+              ? { ...r, zadostOdjezd: { ...r.zadostOdjezd, stav: 'nelze', kdy: ted } }
+              : r,
+          ),
+        );
+      }
       return;
     }
     setCekam(klic);
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rezervace: row.rezervace, akce, ...(presto ? { presto: true } : {}) }),
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce,
+        ...(presto ? { presto: true } : {}),
+        ...(akce === 'potvrdit-odjezd' && rozlouceni ? { druh: rozlouceni } : {}),
+      }),
     });
     setCekam(null);
     if (res.status === 409 && akce === 'potvrdit-prijezd') {
@@ -1876,6 +1944,20 @@ export function PrehledClient({
       }
     }
     window.location.reload();
+  }
+
+  /** Domů: Osobně / Sami / Nelze bez otevírání karty. */
+  async function schvalOdjezdZDomu(row: PrehledRadek, volba: 'osobne' | 'telefon' | 'nelze') {
+    if (row.zadostOdjezd?.stav === 'ceka') {
+      if (volba === 'nelze') {
+        await oknoAkce(row, 'nelze-odjezd');
+        return;
+      }
+      await oknoAkce(row, 'potvrdit-odjezd', false, volba);
+      return;
+    }
+    if (volba === 'nelze') return;
+    await ulozPotvrzeniOdjezdu(row, volba);
   }
 
   async function potvrdPozniPrijezd(row: PrehledRadek) {
@@ -3969,37 +4051,57 @@ export function PrehledClient({
             })()}
           </p>
         ) : null}
-        {[
-          row.zadostPrijezd?.stav === 'ceka' && !oknoHotovo[`${row.rezervace}:potvrdit-prijezd`] && !oknoHotovo[`${row.rezervace}:nelze-prijezd`]
-            ? { akce: 'prijezd' as const, text: vetaZadosti(row, 'prijezd') }
-            : null,
-          row.zadostOdjezd?.stav === 'ceka' && !oknoHotovo[`${row.rezervace}:potvrdit-odjezd`] && !oknoHotovo[`${row.rezervace}:nelze-odjezd`]
-            ? { akce: 'odjezd' as const, text: vetaZadosti(row, 'odjezd') }
-            : null,
-        ]
-          .filter((polozka): polozka is { akce: 'prijezd' | 'odjezd'; text: string } => Boolean(polozka))
-          .map((polozka) => (
-            <div key={polozka.akce} className="ph-okno">
-              <p>{polozka.text}</p>
-              <button type="button" onClick={() => void oknoAkce(row, polozka.akce === 'prijezd' ? 'potvrdit-prijezd' : 'potvrdit-odjezd')}>
-                Potvrdit
+        {row.zadostPrijezd?.stav === 'ceka' &&
+        !oknoHotovo[`${row.rezervace}:potvrdit-prijezd`] &&
+        !oknoHotovo[`${row.rezervace}:nelze-prijezd`] ? (
+          <div className="ph-okno">
+            <p>{vetaZadosti(row, 'prijezd')}</p>
+            <button type="button" onClick={() => void oknoAkce(row, 'potvrdit-prijezd')}>
+              Potvrdit
+            </button>
+            <button type="button" onClick={() => void oknoAkce(row, 'nelze-prijezd')}>
+              Nelze
+            </button>
+            {dotazPrestoPrijezd === row.rezervace ? (
+              <div className="ph-predano-dotaz">
+                <p>Apartmán ještě není uklizený. Přesto potvrdit?</p>
+                <button type="button" disabled={cekam !== null} onClick={() => void oknoAkce(row, 'potvrdit-prijezd', true)}>
+                  Ano, potvrdit
+                </button>
+                <button type="button" onClick={() => setDotazPrestoPrijezd(null)}>
+                  Zrušit
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+        {row.zadostOdjezd?.stav === 'ceka' &&
+        !oknoHotovo[`${row.rezervace}:potvrdit-odjezd`] &&
+        !oknoHotovo[`${row.rezervace}:nelze-odjezd`] ? (
+          <div className="ph-okno">
+            <p>{vetaZadosti(row, 'odjezd')}</p>
+            <p className="ph-potvrzeni__nadpis">Jak se rozloučíme?</p>
+            <div className="ph-potvrzeni__akce">
+              <button
+                type="button"
+                disabled={cekam !== null}
+                onClick={() => void oknoAkce(row, 'potvrdit-odjezd', false, 'osobne')}
+              >
+                Osobně
               </button>
-              <button type="button" onClick={() => void oknoAkce(row, polozka.akce === 'prijezd' ? 'nelze-prijezd' : 'nelze-odjezd')}>
+              <button
+                type="button"
+                disabled={cekam !== null}
+                onClick={() => void oknoAkce(row, 'potvrdit-odjezd', false, 'telefon')}
+              >
+                Sami
+              </button>
+              <button type="button" disabled={cekam !== null} onClick={() => void oknoAkce(row, 'nelze-odjezd')}>
                 Nelze
               </button>
-              {polozka.akce === 'prijezd' && dotazPrestoPrijezd === row.rezervace ? (
-                <div className="ph-predano-dotaz">
-                  <p>Apartmán ještě není uklizený. Přesto potvrdit?</p>
-                  <button type="button" disabled={cekam !== null} onClick={() => void oknoAkce(row, 'potvrdit-prijezd', true)}>
-                    Ano, potvrdit
-                  </button>
-                  <button type="button" onClick={() => setDotazPrestoPrijezd(null)}>
-                    Zrušit
-                  </button>
-                </div>
-              ) : null}
             </div>
-          ))}
+          </div>
+        ) : null}
         {row.zadostPozdniPrijezd?.stav === 'ceka' &&
         !oknoHotovo[`${row.rezervace}:potvrdit-pozni-prijezd`] &&
         !oknoHotovo[`${row.rezervace}:nelze-pozni-prijezd`] ? (
@@ -5049,7 +5151,7 @@ export function PrehledClient({
   const podekovaniCekaAkce = hostePodekovaniSeznam.some((r) => !r.podekovaniKdy);
   type CasKeSchvaleni = {
     row: PrehledRadek;
-    druh: 'drive' | 'pozni' | 'odjezd';
+    druh: 'drive' | 'pozni';
     popisek: string;
     cas: string;
     kc: number;
@@ -5075,21 +5177,51 @@ export function PrehledClient({
         kc: row.zadostPozdniPrijezd.kc,
       });
     }
-    if (row.zadostOdjezd?.stav === 'ceka') {
-      casyKeSchvaleni.push({
-        row,
-        druh: 'odjezd',
-        popisek: 'pozdější odjezd',
-        cas: row.zadostOdjezd.cas,
-        kc: row.zadostOdjezd.kc,
-      });
-    }
   }
   casyKeSchvaleni.sort((a, b) => {
     const apt = (a.row.apartman || '').localeCompare(b.row.apartman || '', 'cs');
     if (apt) return apt;
     return a.cas.localeCompare(b.cas);
   });
+  type OdjezdKeSchvaleni = {
+    row: PrehledRadek;
+    cas: string;
+    kc: number;
+    pozdejsi: boolean;
+  };
+  const odjezdyKeSchvaleni: OdjezdKeSchvaleni[] = [];
+  for (const row of radky) {
+    if (jeBezDalsichAkci(row) || row.nelzeNacist) continue;
+    if (row.zadostOdjezd?.stav === 'ceka') {
+      if (oknoHotovo[`${row.rezervace}:potvrdit-odjezd`] || oknoHotovo[`${row.rezervace}:nelze-odjezd`]) {
+        continue;
+      }
+      odjezdyKeSchvaleni.push({
+        row,
+        cas: row.zadostOdjezd.cas,
+        kc: row.zadostOdjezd.kc,
+        pozdejsi: true,
+      });
+      continue;
+    }
+    const casOd = casOdjezduRadku(row);
+    if (!casOd || row.potvrzeniOdjezdu) continue;
+    if (!ukazatCasNaKarte(row.odjezd, dnes)) continue;
+    odjezdyKeSchvaleni.push({
+      row,
+      cas: casOd,
+      kc: castkaPozdejsihoOdjezdu({ casOdjezdu: casOd, zadostOdjezd: row.zadostOdjezd }) || 0,
+      pozdejsi: false,
+    });
+  }
+  odjezdyKeSchvaleni.sort((a, b) => {
+    const den = (a.row.odjezd || '').localeCompare(b.row.odjezd || '');
+    if (den) return den;
+    const apt = (a.row.apartman || '').localeCompare(b.row.apartman || '', 'cs');
+    if (apt) return apt;
+    return a.cas.localeCompare(b.cas);
+  });
+  const odjezdySchvaleniCeka = odjezdyKeSchvaleni.length > 0;
   const vybrany = vybrana ? radky.find((r) => r.rezervace === vybrana) : undefined;
 
   /** Samostatný náhled karty: nic jiného, jen ← Zpět a karta. */
@@ -5228,6 +5360,75 @@ export function PrehledClient({
         />
       ) : null}
 
+      {pohledDomu && zalozka === 'prijezdy' && odjezdySchvaleniCeka ? (
+        <section id="odsouhlasit-odjezdy" className="ph-domu-radek">
+          <button
+            type="button"
+            className="ph-domu-radek__souhrn is-akce"
+            aria-expanded={odjezdySchvaleniOtevreno}
+            onClick={() => setOdjezdySchvaleniOtevreno((v) => !v)}
+          >
+            Odsouhlasit časy odjezdů · {odjezdyKeSchvaleni.length}{' '}
+            {odjezdySchvaleniOtevreno ? '▴' : '▸'}
+          </button>
+          {odjezdySchvaleniOtevreno ? (
+            <ul className="ph-odjezdy ph-odjezdy--vnorene">
+              {odjezdyKeSchvaleni.map((polozka) => {
+                const cas = polozka.cas.replace(/^0(\d:)/, '$1');
+                const denOd =
+                  polozka.row.odjezd === dnes
+                    ? 'dnes'
+                    : polozka.row.odjezd === zitra
+                      ? 'zítra'
+                      : polozka.row.odjezd || '';
+                return (
+                  <li key={polozka.row.rezervace} className="is-akce">
+                    <button
+                      type="button"
+                      className="ph-dnesek__odkaz"
+                      onClick={() => otevriKartu(polozka.row.rezervace)}
+                    >
+                      {polozka.row.apartman || '—'} · {polozka.row.jmeno || 'Host'}
+                    </button>
+                    {' · '}
+                    {denOd} {cas}
+                    {polozka.kc ? ` (+${polozka.kc} Kč)` : ''}
+                    {polozka.pozdejsi ? ' · pozdější' : ''}
+                    <span className="ph-odjezdy__akce">
+                      <button
+                        type="button"
+                        className="ph-wa"
+                        disabled={cekam !== null}
+                        onClick={() => void schvalOdjezdZDomu(polozka.row, 'osobne')}
+                      >
+                        Osobně
+                      </button>
+                      <button
+                        type="button"
+                        className="ph-wa"
+                        disabled={cekam !== null}
+                        onClick={() => void schvalOdjezdZDomu(polozka.row, 'telefon')}
+                      >
+                        Sami
+                      </button>
+                      {polozka.pozdejsi ? (
+                        <button
+                          type="button"
+                          className="ph-wa"
+                          disabled={cekam !== null}
+                          onClick={() => void schvalOdjezdZDomu(polozka.row, 'nelze')}
+                        >
+                          Nelze
+                        </button>
+                      ) : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
       {pohledDomu && zalozka === 'prijezdy' && casyKeSchvaleni.length ? (
         <section id="casy-ke-schvaleni" className="ph-domu-radek">
           <button

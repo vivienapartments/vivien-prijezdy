@@ -553,9 +553,9 @@ function ctaHtml(opts: { href: string; label: string; serif: string }): string {
   const label = escapeHtml(opts.label);
   const f = opts.serif;
 
-  return `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;"><tr>
-    <td align="center" style="background:#c9a84c;border-radius:28px;text-align:center;">
-      <a href="${href}" style="display:inline-block;padding:12px 22px;font-family:${f};font-size:15px;line-height:1.25;color:#1c1712;text-decoration:none;font-weight:400;border-radius:28px;text-align:center;white-space:nowrap;">${label}</a>
+  return `<table role="presentation" class="vivien-mail-cta" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;max-width:100%;width:auto;"><tr>
+    <td align="center" style="background:#c9a84c;border-radius:28px;text-align:center;max-width:100%;">
+      <a href="${href}" style="display:inline-block;max-width:100%;box-sizing:border-box;padding:12px 18px;font-family:${f};font-size:15px;line-height:1.3;color:#1c1712;text-decoration:none;font-weight:400;border-radius:28px;text-align:center;white-space:normal;">${label}</a>
     </td>
   </tr></table>`;
 }
@@ -576,14 +576,18 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
   const serif = "Georgia,'Times New Roman',serif";
   const sazba =
     'text-align:justify;text-justify:inter-word;hyphens:auto;-webkit-hyphens:auto;-ms-hyphens:auto;';
+  /** Na mobilu se text smí zlomit. Telefonní čísla mají vlastní řádek s nowrap. */
+  const lom =
+    'overflow-wrap:anywhere;word-break:break-word;word-wrap:break-word;';
+  const sazbaMobil = `${sazba}${lom}`;
 
   const nameCs = apt.nazev.cs;
   const nameEn = apt.nazev.en;
   const nameHtml =
     lang === 'cs'
-      ? `<div style="font-family:${serif};font-size:22px;line-height:1.35;color:#f5efe3;">${escapeHtml(nameCs)}</div>
-         <div style="font-family:${serif};font-size:18px;line-height:1.35;color:#c9a84c;margin-top:4px;">${escapeHtml(nameEn)}</div>`
-      : `<div style="font-family:${serif};font-size:22px;line-height:1.35;color:#f5efe3;">${escapeHtml(nameEn)}</div>`;
+      ? `<div style="font-family:${serif};font-size:22px;line-height:1.35;color:#f5efe3;${lom}">${escapeHtml(nameCs)}</div>
+         <div style="font-family:${serif};font-size:18px;line-height:1.35;color:#c9a84c;margin-top:4px;${lom}">${escapeHtml(nameEn)}</div>`
+      : `<div style="font-family:${serif};font-size:22px;line-height:1.35;color:#f5efe3;${lom}">${escapeHtml(nameEn)}</div>`;
 
   const nameText = lang === 'cs' ? `${nameCs}\n${nameEn}` : nameEn;
   const cta = ctaHtml({
@@ -592,13 +596,13 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
     serif,
   });
   const oknoOdkaz = odkazSekce(input.guideUrl);
-  const oknoRadek = `<tr><td lang="${escapeAttr(lang)}" style="padding:0 0 22px;font-family:${serif};font-size:16px;line-height:1.55;color:#e8dfc8;${sazba}">${escapeHtml(vetaEmailu(lang))}<div style="padding-top:14px;text-align:center;">${ctaHtml({ href: oknoOdkaz, label: tlacitkoEmailu(lang), serif })}</div></td></tr>`;
+  const oknoRadek = `<tr><td lang="${escapeAttr(lang)}" style="padding:0 0 22px;font-family:${serif};font-size:16px;line-height:1.55;color:#e8dfc8;${sazbaMobil}">${escapeHtml(vetaEmailu(lang))}<div style="padding-top:14px;text-align:center;">${ctaHtml({ href: oknoOdkaz, label: tlacitkoEmailu(lang), serif })}</div></td></tr>`;
 
   const pobyt = `<tr>
                   <td style="padding:0 0 22px;">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#2a221c;border-radius:8px;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:100%;background:#2a221c;border-radius:8px;">
                       <tr>
-                        <td style="padding:16px 16px 14px;font-family:${serif};font-size:16px;line-height:1.5;color:#e8dfc8;">
+                        <td style="padding:16px 16px 14px;font-family:${serif};font-size:16px;line-height:1.5;color:#e8dfc8;${lom}">
                           <div style="margin:0 0 10px;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;color:#c9a84c;font-weight:700;">
                             ${escapeHtml(t(stayL, lang))}
                           </div>
@@ -615,13 +619,13 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
   const telo =
     skladbaEmailu() === 'stara'
       ? `<tr><td style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
-                  <div lang="${escapeAttr(lang)}" style="${sazba}">${escapeHtml(t(introBodyL, lang))}</div>
+                  <div lang="${escapeAttr(lang)}" style="${sazbaMobil}">${escapeHtml(t(introBodyL, lang))}</div>
                   <div style="padding-top:26px;"><strong style="color:#f5efe3;font-weight:700;">${escapeHtml(t(introOpenL, lang))}</strong></div>
                 </td></tr>
                 ${pobyt}
                 <tr>
                   <td style="padding:0 0 18px;">
-                    <div lang="${escapeAttr(lang)}" style="padding:12px 14px;background:#2a221c;border:1px solid #c9a84c;border-radius:8px;font-family:${serif};font-size:16px;line-height:1.5;color:#f5efe3;${sazba}">
+                    <div lang="${escapeAttr(lang)}" style="padding:12px 14px;background:#2a221c;border:1px solid #c9a84c;border-radius:8px;font-family:${serif};font-size:16px;line-height:1.5;color:#f5efe3;${sazbaMobil}">
                       ${withPhones(t(casPrijezduL, lang))}
                       <div style="padding-top:12px;text-align:left;">
                         ${msgButton('sms:+420604692573', t(casSmsL, lang), serif)}
@@ -637,14 +641,14 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                 </tr>
                 ${oknoRadek}`
       : `<tr><td style="padding:0 0 18px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
-                  <div lang="${escapeAttr(lang)}" style="${sazba}">${escapeHtml(t(uvodNovaL, lang))}</div>
+                  <div lang="${escapeAttr(lang)}" style="${sazbaMobil}">${escapeHtml(t(uvodNovaL, lang))}</div>
                 </td></tr>
                 <tr>
                   <td style="padding:0 0 18px;">
-                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:separate;border-radius:14px;overflow:hidden;">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:100%;border-collapse:separate;border-radius:14px;overflow:hidden;">
                       <tr>
-                        <td lang="${escapeAttr(lang)}" bgcolor="#f6cfc6" style="background-color:#f6cfc6;background-image:none;border:2px solid #c4554c;border-radius:14px;padding:14px 16px;font-family:${serif};font-size:17px;line-height:1.45;color:#1c1210;font-weight:700;text-align:left;color-scheme:light;">
-                          <span style="color:#1c1210;">${escapeHtml(t(duleziteNovaL, lang))}</span>
+                        <td lang="${escapeAttr(lang)}" bgcolor="#f6cfc6" style="background-color:#f6cfc6;background-image:none;border:2px solid #c4554c;border-radius:14px;padding:14px 16px;font-family:${serif};font-size:17px;line-height:1.45;color:#1c1210;font-weight:700;text-align:left;color-scheme:light;${lom}">
+                          <span style="color:#1c1210;${lom}">${escapeHtml(t(duleziteNovaL, lang))}</span>
                         </td>
                       </tr>
                     </table>
@@ -656,8 +660,8 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   </td>
                 </tr>
                 ${oknoRadek}
-                <tr><td lang="${escapeAttr(lang)}" style="padding:0 0 16px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;${sazba}">${escapeHtml(t(dumNovaL, lang))}</td></tr>
-                <tr><td lang="${escapeAttr(lang)}" style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;${sazba}">${withTimes(escapeHtml(t(checkinNovaL, lang)))}</td></tr>
+                <tr><td lang="${escapeAttr(lang)}" style="padding:0 0 16px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;${sazbaMobil}">${escapeHtml(t(dumNovaL, lang))}</td></tr>
+                <tr><td lang="${escapeAttr(lang)}" style="padding:0 0 22px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;${sazbaMobil}">${withTimes(escapeHtml(t(checkinNovaL, lang)))}</td></tr>
                 ${pobyt}`;
 
   const html = `<!DOCTYPE html>
@@ -665,10 +669,16 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="format-detection" content="telephone=no" />
   <meta name="color-scheme" content="dark" />
   <meta name="supported-color-schemes" content="dark" />
   <title>${escapeHtml(subjectBase)}</title>
   <style>
+    html, body { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    body { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    img { max-width: 100% !important; height: auto !important; border: 0; }
+    table { border-collapse: collapse; }
     td[bgcolor="#f6cfc6"] {
       background-color: #f6cfc6 !important;
       background-image: none !important;
@@ -696,30 +706,44 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
       background-color: #f6cfc6 !important;
       background-image: none !important;
     }
+    /* Gmail/Apple Mail: pevná šířka 560 px jinak na telefonu nutí posouvat do stran. */
+    @media only screen and (max-width: 620px) {
+      .vivien-mail-shell {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .vivien-mail-pad {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+      .vivien-mail-cta a {
+        white-space: normal !important;
+      }
+    }
   </style>
 </head>
-<body style="margin:0;padding:0;background:#1c1712;color:#e8dfc8;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#1c1712;padding:28px 12px;">
+<body style="margin:0;padding:0;background:#1c1712;color:#e8dfc8;width:100%;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#1c1712;width:100%;max-width:100%;border-collapse:collapse;">
     <tr>
-      <td align="center">
-        <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#241e18;border:1px solid #3d342a;border-radius:10px;">
+      <td align="center" style="width:100%;padding:28px 12px;box-sizing:border-box;">
+        <table role="presentation" class="vivien-mail-shell" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#241e18;border:1px solid #3d342a;border-radius:10px;border-collapse:collapse;">
           <tr>
-            <td style="padding:28px 28px 8px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+            <td class="vivien-mail-pad" style="padding:28px 28px 8px;font-family:${serif};font-size:17px;line-height:1.55;color:#e8dfc8;box-sizing:border-box;${lom}">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:100%;">
                 <tr>
                   <td align="center" style="padding:0 0 22px;">
-                    <img src="${escapeAttr(logoSrc)}" width="96" height="96" alt="VIVIEN Apartments" style="display:block;width:96px;height:auto;border:0;" />
+                    <img src="${escapeAttr(logoSrc)}" width="96" height="96" alt="VIVIEN Apartments" style="display:block;width:96px;max-width:100%;height:auto;border:0;" />
                   </td>
                 </tr>
-                <tr><td style="padding:0 0 16px;font-family:${serif};font-size:20px;line-height:1.4;color:#f5efe3;">${escapeHtml(greeting)}</td></tr>
+                <tr><td style="padding:0 0 16px;font-family:${serif};font-size:20px;line-height:1.4;color:#f5efe3;${lom}">${escapeHtml(greeting)}</td></tr>
                 ${telo}
                 <tr>
-                  <td lang="${escapeAttr(lang)}" style="padding:18px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:15px;line-height:1.55;color:#cbbba8;${sazba}">
+                  <td lang="${escapeAttr(lang)}" style="padding:18px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:15px;line-height:1.55;color:#cbbba8;${sazbaMobil}">
                     ${withPhones(t(helpL, lang))}
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:22px 0 0;font-family:${serif};font-size:15px;line-height:1.55;color:#cbbba8;">
+                  <td style="padding:22px 0 0;font-family:${serif};font-size:15px;line-height:1.55;color:#cbbba8;${lom}">
                     <div style="margin:0 0 4px;">${escapeHtml(t(closingL, lang))}</div>
                     <div style="margin:0 0 2px;font-size:17px;color:#f5efe3;"><strong>${escapeHtml(t(familyL, lang))}</strong></div>
                     <div style="margin:0 0 14px;">${telAnchor('+420 702 153 573', false)}</div>
@@ -731,12 +755,12 @@ export function buildGuestEmail(input: GuestEmailInput): { subject: string; html
                   </td>
                 </tr>
                 <tr>
-                  <td lang="${escapeAttr(lang)}" style="padding:22px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;${sazba}">
+                  <td lang="${escapeAttr(lang)}" style="padding:22px 0 0;border-top:1px solid #3d342a;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;${sazbaMobil}">
                     ${webTipHtml(lang)}
                   </td>
                 </tr>
                 <tr>
-                  <td lang="${escapeAttr(lang)}" style="padding:16px 0 0;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;${sazba}">
+                  <td lang="${escapeAttr(lang)}" style="padding:16px 0 0;font-family:${serif};font-size:14px;line-height:1.55;color:#cbbba8;${sazbaMobil}">
                     ${psApartmanyHtml(lang)}
                   </td>
                 </tr>

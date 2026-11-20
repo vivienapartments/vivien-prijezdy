@@ -1,5 +1,5 @@
 /** Úkol na kartě hosta, na který má upozornění skočit. */
-export type UkolUpozorneni = 'brana' | 'potvrzeni' | 'doklady';
+export type UkolUpozorneni = 'brana' | 'potvrzeni' | 'doklady' | 'odjezd';
 
 /** Odkaz do přehledu na konkrétní kartu a volitelný úkol. */
 export function odkazKarty(
@@ -12,6 +12,8 @@ export function odkazKarty(
   if (opts?.prani) return `${base}?prani=${encodeURIComponent(opts.prani)}`;
   if (ukol === 'doklady') return `${base}?zprava=doklady`;
   if (ukol === 'brana' || ukol === 'potvrzeni') return `${base}?ukol=${ukol}`;
+  /** Odjezd: Domů nahoře, Osobně / Sami bez otevírání karty. */
+  if (ukol === 'odjezd') return '/prehled#odsouhlasit-odjezdy';
   return base;
 }
 
@@ -31,10 +33,10 @@ export function zpravaZUpozorneniUrl(url: string): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-/** Z `?ukol=brana` / potvrzeni, nebo zprava=doklady → doklady. */
+/** Z `?ukol=brana` / potvrzeni / odjezd, nebo zprava=doklady → doklady. */
 export function ukolZUpozorneniUrl(url: string): UkolUpozorneni | null {
   const q = queryZUrl(url);
-  const m = q.match(/(?:^|&)ukol=(brana|potvrzeni|doklady)\b/);
+  const m = q.match(/(?:^|&)ukol=(brana|potvrzeni|doklady|odjezd)\b/);
   if (m) return m[1] as UkolUpozorneni;
   if (zpravaZUpozorneniUrl(url) === 'doklady') return 'doklady';
   return null;

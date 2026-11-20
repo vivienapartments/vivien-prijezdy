@@ -329,6 +329,9 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     accessPin: '0000',
     poplatek: 'ne',
     stav: 'odeslano',
+    /** Brzy ráno: typicky Sami. */
+    casOdjezdu: '06:30',
+    casOdjezduZadalHost: true,
     telefon: '+420777000142',
     telefonWa: '420777000142',
     zdroj: 'Airbnb',
@@ -352,6 +355,17 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     telefonWa: '420777000143',
     zdroj: 'Booking',
     predano: '2026-10-12T15:00:00.000Z',
+    /** Pozdější odjezd čeká: Osobně / Sami / Nelze v jednom kroku. */
+    zadostOdjezd: {
+      cas: '11:00',
+      kc: 150,
+      stav: 'ceka',
+      kdy: `${dnes}T07:10:00.000Z`,
+      od: 'pruvodce',
+      hned: true,
+      upozorneno: false,
+      kanal: 'whatsapp',
+    },
   };
   const odjezdV4: RezervaceRecord = {
     ...prazdnaRezervace('9044', '2026-10-14T08:00:00.000Z'),
