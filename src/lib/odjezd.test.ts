@@ -221,6 +221,49 @@ describe('odjezd', () => {
     expect(rec?.historie.some((h) => h.co.includes('ruční čas zůstal'))).toBe(true);
   });
 
+  it('pozdější odjezd 11:00 bez kanálu selže, s whatsapp se uloží před předáním', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'odjezd-'));
+    const store = new FileProcessStore(path.join(dir, 'store.json'));
+    const id = '120260071';
+    const prijezd = '2026-12-20';
+    const odjezd = '2026-12-22';
+    await store.setRezervace(
+      id,
+      host({
+        rezervace: id,
+        apartman: 'V2',
+        jmeno: 'Melanie Lackner',
+        prijezd,
+        odjezd,
+        jazyk: 'de',
+        predano: null,
+        stav: 'odeslano',
+      }),
+    );
+    const token = createToken({ r: id, a: 'V2', p: prijezd, d: odjezd, l: 'de' }, SECRET);
+    const bezKanalu = await ulozVstupHosta(store, token, { akce: 'odjezd', cas: '11:00' });
+    expect(bezKanalu.ok).toBe(false);
+    if (!bezKanalu.ok) expect(bezKanalu.duvod).toBe('kanal');
+    expect((await store.getRezervace(id))?.zadostOdjezd).toBeNull();
+
+    const sKanalem = await ulozVstupHosta(store, token, {
+      akce: 'odjezd',
+      cas: '11:00',
+      kanal: 'whatsapp',
+    });
+    expect(sKanalem.ok).toBe(true);
+    if (sKanalem.ok) {
+      expect(sKanalem.zadostCeka).toBe(true);
+      expect(sKanalem.kanal).toBe('whatsapp');
+      expect(sKanalem.cas).toBe('11:00');
+    }
+    const rec = await store.getRezervace(id);
+    expect(rec?.zadostOdjezd?.stav).toBe('ceka');
+    expect(rec?.zadostOdjezd?.cas).toBe('11:00');
+    expect(rec?.zadostOdjezd?.kanal).toBe('whatsapp');
+    expect(rec?.predano).toBeNull();
+  });
+
   it('věta o nedoplatku je ve zprávě jen když dluh je', () => {
     const bez = rovne(zpravaOdjezdu('cs', [], 'https://example.com/pruvodce#pozdejsi'));
     expect(bez).not.toContain('vyrovnáme');

@@ -35,6 +35,7 @@ import {
 } from '@/lib/odjezd';
 import type { ZadostOkna } from '@/lib/store';
 import { plochaAno, plochaNe } from '@/lib/plocha-texty';
+import { PRANI_LIMIT } from '@/lib/prani-texty';
 import * as TX from '@/lib/texts';
 import type { GuideLang } from '@/lib/types';
 import * as VT from '@/lib/vstup-texty';
@@ -213,6 +214,7 @@ export function OdjezdRamecek({
     });
     const json = (await res.json().catch(() => null)) as {
       ok?: boolean;
+      duvod?: string;
       cas?: string;
       zadostCeka?: boolean;
       kanal?: OdjezdKanal;
@@ -220,7 +222,13 @@ export function OdjezdRamecek({
     } | null;
     setCekam(false);
     if (!res.ok || !json?.ok) {
-      setChyba(jeVlastni ? tt(VT.odjezdVlastniChyba) : text.poznamka);
+      const hlaska =
+        json?.duvod === 'limit' || res.status === 429
+          ? tt(PRANI_LIMIT)
+          : jeVlastni
+            ? tt(VT.odjezdVlastniChyba)
+            : text.poznamka;
+      setChyba(hlaska);
       return;
     }
     const hotovo = jeHodina(json.cas) ? json.cas : casUlozit;
@@ -236,9 +244,24 @@ export function OdjezdRamecek({
     setSouhlasCas(null);
     setKanal(null);
     if (json.zadostCeka && json.kanal) {
+      const kc = rozpisPozde(hotovo)?.kc || 0;
+      const zadost: ZadostOkna = {
+        cas: hotovo,
+        kc,
+        stav: 'ceka',
+        kdy: new Date().toISOString(),
+        od: 'pruvodce',
+        hned: true,
+        upozorneno: false,
+        kanal: json.kanal,
+      };
+      setLokalniZadost(zadost);
+      onZadostOdjezdu?.(zadost);
       ohlasCeka(hotovo, json.kanal);
-    } else if (json.zpravaOdjezdu) {
-      onZpravaOdjezdu?.(json.zpravaOdjezdu);
+    } else {
+      setLokalniZadost(null);
+      onZadostOdjezdu?.(null);
+      if (json.zpravaOdjezdu) onZpravaOdjezdu?.(json.zpravaOdjezdu);
     }
   }
 
@@ -423,6 +446,7 @@ export function OdjezdRamecek({
                 </button>
               ))}
             </div>
+            {chyba ? <p className="pv-zprava-overlay__text">{chyba}</p> : null}
             <div className="pv-zprava-overlay__akce">
               <button
                 type="button"
@@ -431,6 +455,7 @@ export function OdjezdRamecek({
                 onClick={() => {
                   setSouhlasCas(null);
                   setKanal(null);
+                  setChyba('');
                 }}
               >
                 {tt(plochaNe)}
