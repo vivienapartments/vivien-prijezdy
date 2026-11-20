@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cekaPotvrzeniRozlouceni,
   jeRanniZadaniOdjezdu,
   jeTichyRezimOdjezdu,
   odjezdDoDvouHodin,
@@ -64,5 +65,47 @@ describe('odjezd-potvrzeni', () => {
     expect(p.potvrzeniOdjezdu).toBeNull();
     expect(p.zpravaOdjezdPrijatiPrectena).toBeNull();
     expect(p.casOdjezduZapsanKdy).toBeTruthy();
+  });
+
+  it('Osobně/Sami hned po čase, i 14 dní dopředu', () => {
+    expect(
+      cekaPotvrzeniRozlouceni({
+        casOdjezdu: '11:00',
+        potvrzeniOdjezdu: null,
+        zadostOdjezd: {
+          cas: '11:00',
+          kc: 150,
+          stav: 'potvrzeno',
+          kdy: '2026-11-20T05:17:47.467Z',
+          od: 'pruvodce',
+          hned: true,
+          upozorneno: false,
+          kanal: 'whatsapp',
+        },
+      }),
+    ).toBe(true);
+    expect(
+      cekaPotvrzeniRozlouceni({
+        casOdjezdu: '11:00',
+        potvrzeniOdjezdu: 'osobne',
+        zadostOdjezd: null,
+      }),
+    ).toBe(false);
+    expect(
+      cekaPotvrzeniRozlouceni({
+        casOdjezdu: null,
+        potvrzeniOdjezdu: null,
+        zadostOdjezd: {
+          cas: '12:00',
+          kc: 300,
+          stav: 'ceka',
+          kdy: '2026-11-20T05:00:00.000Z',
+          od: 'pruvodce',
+          hned: true,
+          upozorneno: false,
+          kanal: 'pruvodce',
+        },
+      }),
+    ).toBe(true);
   });
 });

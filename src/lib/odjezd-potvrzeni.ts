@@ -1,4 +1,5 @@
 import { casVPraze, denPraha, hodinaPraha, minutaPraha } from './brana';
+import { jeHodina } from './odjezd';
 import { t } from './i18n';
 import type { RezervaceRecord } from './store';
 import type { GuideLang } from './types';
@@ -87,6 +88,18 @@ export function stitekPotvrzeniOdjezdu(v: PotvrzeniOdjezdu | null | undefined): 
   if (v === 'osobne') return 'Osobně se rozloučíme';
   if (v === 'telefon') return 'Sami · jsme na telefonu';
   return 'čeká';
+}
+
+/**
+ * Domů i karta: Osobně / Sami (nebo schválení pozdějšího času),
+ * jakmile je čas odjezdu. Nečeká se na den před odjezdem.
+ */
+export function cekaPotvrzeniRozlouceni(
+  row: Pick<RezervaceRecord, 'casOdjezdu' | 'potvrzeniOdjezdu' | 'zadostOdjezd'>,
+): boolean {
+  if (row.zadostOdjezd?.stav === 'ceka') return true;
+  if (row.potvrzeniOdjezdu) return false;
+  return jeHodina(row.casOdjezdu);
 }
 
 /** Pole po novém / smazaném čase odjezdu (reset potvrzení a hlášek). */

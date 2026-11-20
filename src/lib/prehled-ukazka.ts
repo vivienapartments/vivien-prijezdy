@@ -479,7 +479,62 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     zdroj: 'Booking',
   };
 
-  return [luisa, ceka, otevrel, bezCasu, neotevrel, bezCasuPozdeji, stary, odjel, jelinek, helena, mala, kovar, smith, odjezdV5, odjezdV2, odjezdV1, odjezdV4, prijezdV5, prijezdV2];
+  /** Čas odjezdu už je, ale odjezd za 5 dní → Domů Osobně/Sami hned (jako Melanie). */
+  const odjezdPozdeji: RezervaceRecord = {
+    ...prazdnaRezervace('9048', '2026-10-14T08:00:00.000Z'),
+    apartman: 'V3',
+    prijezd: posunDen(dnes, -1),
+    odjezd: posunDen(dnes, 5),
+    noci: 6,
+    osob: 2,
+    jazyk: 'de',
+    jmeno: 'Melanie Ukazka',
+    krestni: 'Melanie',
+    emailHosta: 'melanie.ukazka@example.com',
+    accessPin: '0000',
+    poplatek: 'ne',
+    stav: 'odeslano',
+    casOdjezdu: '11:00',
+    casOdjezduZadalHost: true,
+    zadostOdjezd: {
+      cas: '11:00',
+      kc: 150,
+      stav: 'potvrzeno',
+      kdy: `${dnes}T05:17:00.000Z`,
+      od: 'pruvodce',
+      hned: true,
+      upozorneno: false,
+      kanal: 'whatsapp',
+    },
+    potvrzeniOdjezdu: null,
+    telefon: '+420777000148',
+    telefonWa: '420777000148',
+    zdroj: 'Booking',
+    predano: `${posunDen(dnes, -1)}T16:00:00.000Z`,
+  };
+
+  return [
+    luisa,
+    ceka,
+    otevrel,
+    bezCasu,
+    neotevrel,
+    bezCasuPozdeji,
+    stary,
+    odjel,
+    jelinek,
+    helena,
+    mala,
+    kovar,
+    smith,
+    odjezdV5,
+    odjezdV2,
+    odjezdV1,
+    odjezdV4,
+    odjezdPozdeji,
+    prijezdV5,
+    prijezdV2,
+  ];
 }
 
 export function ukazkoveRadky(now = new Date()): PrehledRadek[] {
