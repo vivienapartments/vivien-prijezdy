@@ -1,4 +1,4 @@
-import { casVPraze, denPraha, hodinaPraha, minutaPraha } from './brana';
+import { casVPraze, denPraha, hodinaPraha, minutaPraha, posunDen } from './brana';
 import { jeHodina } from './odjezd';
 import { t } from './i18n';
 import type { RezervaceRecord } from './store';
@@ -90,13 +90,19 @@ export function stitekPotvrzeniOdjezdu(v: PotvrzeniOdjezdu | null | undefined): 
   return 'čeká';
 }
 
+/** Odjezd starší než tolik dní už nepatří do Osobně / Sami na Domů. */
+export const ROZLOUCENI_ZPET_DNY = 2;
+
 /**
  * Domů i karta: Osobně / Sami (nebo schválení pozdějšího času),
  * jakmile je čas odjezdu. Nečeká se na den před odjezdem.
+ * Hosté s odjezdem starším než 2 dny se nepočítají (majitel je případně dodělá ručně).
  */
 export function cekaPotvrzeniRozlouceni(
-  row: Pick<RezervaceRecord, 'casOdjezdu' | 'potvrzeniOdjezdu' | 'zadostOdjezd'>,
+  row: Pick<RezervaceRecord, 'casOdjezdu' | 'potvrzeniOdjezdu' | 'zadostOdjezd' | 'odjezd'>,
+  dnes: string,
 ): boolean {
+  if (row.odjezd && row.odjezd < posunDen(dnes, -ROZLOUCENI_ZPET_DNY)) return false;
   if (row.zadostOdjezd?.stav === 'ceka') return true;
   if (row.potvrzeniOdjezdu) return false;
   return jeHodina(row.casOdjezdu);

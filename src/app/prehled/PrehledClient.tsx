@@ -56,7 +56,7 @@ import {
   zpravaOdjezdu,
   type DruhDluhu,
 } from '@/lib/odjezd';
-import { cekaPotvrzeniRozlouceni } from '@/lib/odjezd-potvrzeni';
+import { cekaPotvrzeniRozlouceni, ROZLOUCENI_ZPET_DNY } from '@/lib/odjezd-potvrzeni';
 import { jeProPohodu, textPohody } from '@/lib/pohoda';
 import {
   hosteProPodekovani,
@@ -4142,13 +4142,18 @@ export function PrehledClient({
             ) : null}
           </div>
         ) : null}
-        {jeHodina(odjezdCas) ? (
+        {jeHodina(odjezdCas) &&
+        row.odjezd &&
+        row.odjezd >= posunDen(dnes, -ROZLOUCENI_ZPET_DNY) ? (
           <div className="ph-prijezd-cas">Odjezd {zobrazCas(odjezdCas)}</div>
         ) : null}
         {(() => {
           const casOkFaze = Boolean(casAktualni);
-          /** Osobně/Sami hned po čase, i když odjezd je za 14 dní. */
-          const odjezdOkFaze = jeHodina(odjezdCas);
+          /** Osobně/Sami hned po čase (i dopředu), ne u odjezdu staršího než 2 dny. */
+          const odjezdOkFaze =
+            jeHodina(odjezdCas) &&
+            Boolean(row.odjezd) &&
+            row.odjezd! >= posunDen(dnes, -ROZLOUCENI_ZPET_DNY);
           const branaOkFaze = row.zpusobPrijezdu === 'auto' && Boolean(row.branaRegistrovano);
           const branaPripravenaFaze =
             row.zpusobPrijezdu === 'auto' &&
@@ -5192,7 +5197,7 @@ export function PrehledClient({
   const odjezdyKeSchvaleni: OdjezdKeSchvaleni[] = [];
   for (const row of radky) {
     if (jeBezDalsichAkci(row) || row.nelzeNacist) continue;
-    if (!cekaPotvrzeniRozlouceni(row)) continue;
+    if (!cekaPotvrzeniRozlouceni(row, dnes)) continue;
     if (row.zadostOdjezd?.stav === 'ceka') {
       if (oknoHotovo[`${row.rezervace}:potvrdit-odjezd`] || oknoHotovo[`${row.rezervace}:nelze-odjezd`]) {
         continue;

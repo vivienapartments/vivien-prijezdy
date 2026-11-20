@@ -68,44 +68,83 @@ describe('odjezd-potvrzeni', () => {
   });
 
   it('Osobně/Sami hned po čase, i 14 dní dopředu', () => {
+    const dnes = '2026-11-20';
     expect(
-      cekaPotvrzeniRozlouceni({
-        casOdjezdu: '11:00',
-        potvrzeniOdjezdu: null,
-        zadostOdjezd: {
-          cas: '11:00',
-          kc: 150,
-          stav: 'potvrzeno',
-          kdy: '2026-11-20T05:17:47.467Z',
-          od: 'pruvodce',
-          hned: true,
-          upozorneno: false,
-          kanal: 'whatsapp',
+      cekaPotvrzeniRozlouceni(
+        {
+          odjezd: '2026-11-25',
+          casOdjezdu: '11:00',
+          potvrzeniOdjezdu: null,
+          zadostOdjezd: {
+            cas: '11:00',
+            kc: 150,
+            stav: 'potvrzeno',
+            kdy: '2026-11-20T05:17:47.467Z',
+            od: 'pruvodce',
+            hned: true,
+            upozorneno: false,
+            kanal: 'whatsapp',
+          },
         },
-      }),
+        dnes,
+      ),
     ).toBe(true);
     expect(
-      cekaPotvrzeniRozlouceni({
-        casOdjezdu: '11:00',
-        potvrzeniOdjezdu: 'osobne',
-        zadostOdjezd: null,
-      }),
+      cekaPotvrzeniRozlouceni(
+        {
+          odjezd: '2026-11-20',
+          casOdjezdu: '11:00',
+          potvrzeniOdjezdu: 'osobne',
+          zadostOdjezd: null,
+        },
+        dnes,
+      ),
     ).toBe(false);
     expect(
-      cekaPotvrzeniRozlouceni({
-        casOdjezdu: null,
-        potvrzeniOdjezdu: null,
-        zadostOdjezd: {
-          cas: '12:00',
-          kc: 300,
-          stav: 'ceka',
-          kdy: '2026-11-20T05:00:00.000Z',
-          od: 'pruvodce',
-          hned: true,
-          upozorneno: false,
-          kanal: 'pruvodce',
+      cekaPotvrzeniRozlouceni(
+        {
+          odjezd: '2026-11-22',
+          casOdjezdu: null,
+          potvrzeniOdjezdu: null,
+          zadostOdjezd: {
+            cas: '12:00',
+            kc: 300,
+            stav: 'ceka',
+            kdy: '2026-11-20T05:00:00.000Z',
+            od: 'pruvodce',
+            hned: true,
+            upozorneno: false,
+            kanal: 'pruvodce',
+          },
         },
-      }),
+        dnes,
+      ),
     ).toBe(true);
+  });
+
+  it('odjezd starší než 2 dny nepatří do Osobně/Sami', () => {
+    const dnes = '2026-11-20';
+    expect(
+      cekaPotvrzeniRozlouceni(
+        {
+          odjezd: '2026-11-18',
+          casOdjezdu: '10:00',
+          potvrzeniOdjezdu: null,
+          zadostOdjezd: null,
+        },
+        dnes,
+      ),
+    ).toBe(true);
+    expect(
+      cekaPotvrzeniRozlouceni(
+        {
+          odjezd: '2026-11-17',
+          casOdjezdu: '10:00',
+          potvrzeniOdjezdu: null,
+          zadostOdjezd: null,
+        },
+        dnes,
+      ),
+    ).toBe(false);
   });
 });
