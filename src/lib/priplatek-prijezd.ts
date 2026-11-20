@@ -42,7 +42,8 @@ function minutyCasu(cas: string): number | null {
 /**
  * 0 do 20:00 včetně.
  * 100 Kč do 20:30 včetně, 200 Kč do 21:00 včetně.
- * Po 21:00 (a po23) jen individuální domluva.
+ * Po 21:00 (a po23) jen individuální domluva (v rozpisu).
+ * Kotvu podle stejného vzorce dál počítá navrhKcPriplatkuCasu.
  */
 export function priplatekCasu(cas: string | null | undefined): PriplatekCasu {
   const text = (cas || '').trim();
@@ -57,9 +58,48 @@ export function priplatekCasu(cas: string | null | undefined): PriplatekCasu {
   return { stav: 'castka', kc: kroky * PRIPLATEK_KC };
 }
 
+/**
+ * Kotva ze sazby 100 Kč za započatou půlhodinu po 20:00.
+ * Počítá i po 21:00 (u Předat), ať majitel vidí od čeho jít nahoru/dolů.
+ * „po 23:00“ bere jako 23:30.
+ */
+export function navrhKcPriplatkuCasu(cas: string | null | undefined): number | null {
+  const text = (cas || '').trim();
+  if (!text) return null;
+  if (text === 'po20' || /^po\s*20/i.test(text)) return null;
+  let min =
+    text === 'po23' || text === CAS_PO_23 || /^po\s*23/i.test(text) ? 23 * 60 + 30 : minutyCasu(text);
+  if (min == null) return null;
+  if (min <= PRIPLATEK_OD) return 0;
+  return Math.ceil((min - PRIPLATEK_OD) / PRIPLATEK_KROK_MIN) * PRIPLATEK_KC;
+}
+
 export function priplatekProCas(cas: string): number | null {
   const vysledek = priplatekCasu(cas);
   return vysledek.stav === 'castka' ? vysledek.kc : null;
+}
+
+/**
+ * Má se při klepnutí Předat zeptat na příplatek?
+ * Když už je ruční částka (včetně 0 = odpuštěno), neptat.
+ * Čas: skutečný příjezd (na místě), jinak teď.
+ * kc je vždy kotva ze vzorce (i po 21:00).
+ */
+export function dotazPriplatkuPriPredani(v: {
+  casTed: string | null;
+  casNaMiste: string | null;
+  rucni: number | null;
+}): { ptat: false } | { ptat: true; cas: string; kc: number; stav: 'castka' | 'domluva' } {
+  if (typeof v.rucni === 'number' && Number.isFinite(v.rucni) && v.rucni >= 0) return { ptat: false };
+  const cas = (v.casNaMiste || v.casTed || '').trim();
+  if (!cas) return { ptat: false };
+  const vyp = priplatekCasu(cas);
+  const kotva = navrhKcPriplatkuCasu(cas);
+  if (vyp.stav === 'castka' && vyp.kc > 0) return { ptat: true, cas, kc: vyp.kc, stav: 'castka' };
+  if (vyp.stav === 'domluva' && kotva != null && kotva > 0) {
+    return { ptat: true, cas, kc: kotva, stav: 'domluva' };
+  }
+  return { ptat: false };
 }
 
 export function jeCasSPriplatkem(cas: string): boolean {

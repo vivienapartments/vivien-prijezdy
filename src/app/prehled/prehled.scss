@@ -877,6 +877,60 @@
 
 .ph-predano-dotaz button {
   margin-right: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.ph-predano-dotaz__ctyrka {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+  width: 100%;
+}
+
+.ph-predano-dotaz__ctyrka .ph-potvrzeni__akce {
+  margin: 0;
+}
+
+.ph-predano-dotaz__ctyrka .ph-potvrzeni__akce button {
+  margin: 0 !important;
+  white-space: normal;
+}
+
+.ph-predano-dotaz .ph-predano-dotaz__zrusit {
+  border-color: var(--pv-line) !important;
+  background: transparent !important;
+  color: var(--pv-muted, #c9b8a8) !important;
+}
+
+.ph-predano-dotaz__castka {
+  display: block;
+  margin: 0 0 0.55rem;
+  text-align: start;
+}
+
+.ph-predano-dotaz__castka input {
+  display: block;
+  width: 100%;
+  max-width: none;
+  margin-top: 0.3rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--pv-line);
+  border-radius: 8px;
+  background: #1a1512;
+  color: inherit;
+  font: inherit;
+}
+
+.ph-predano-dotaz__tri {
+  margin: 0;
+}
+
+.ph-predano-dotaz__tri button {
+  margin: 0 !important;
+  white-space: normal;
+  font-size: 0.85rem;
+  line-height: 1.15;
 }
 
 .ph-predano-dotaz textarea {

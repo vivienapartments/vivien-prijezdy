@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Příplatek při Předat · 3 varianty dlaždic</title>
+  <style>
+    :root {
+      --bg: #1a1512;
+      --card: #241e1a;
+      --line: #4a3f36;
+      --gold: #c9a227;
+      --text: #f0e6d8;
+      --muted: #c9b8a8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 1rem 1rem 3rem;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.35;
+    }
+    h1 {
+      font-size: 1.15rem;
+      font-weight: 650;
+      margin: 0 0 0.35rem;
+    }
+    .uvod {
+      margin: 0 0 1.25rem;
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 36rem;
+    }
+    .verze {
+      max-width: 26rem;
+      margin: 0 0 1.5rem;
+      padding: 0.85rem 0.9rem 1rem;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--card);
+    }
+    .verze h2 {
+      margin: 0 0 0.25rem;
+      font-size: 1rem;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .verze .popis {
+      margin: 0 0 0.7rem;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    .dotaz {
+      margin: 0 0 0.55rem;
+      font-size: 0.92rem;
+      text-align: left;
+    }
+    button {
+      font: inherit;
+      color: inherit;
+      cursor: pointer;
+      border: 1px solid var(--gold);
+      border-radius: 8px;
+      background: #1a1512;
+      text-align: center;
+    }
+    button.zrusit {
+      border-color: var(--line);
+      color: var(--muted);
+    }
+
+    /* A · jedna řada, nízké */
+    .a-rada {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 0.35rem;
+    }
+    .a-rada button {
+      min-height: 2.75rem;
+      padding: 0.35rem 0.25rem;
+      font-size: 0.88rem;
+      font-weight: 650;
+      line-height: 1.15;
+    }
+
+    /* B · 2×2 kompaktní */
+    .b-ctyrka {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.4rem;
+    }
+    .b-ctyrka button {
+      min-height: 3.1rem;
+      padding: 0.45rem 0.4rem;
+      font-size: 0.98rem;
+      font-weight: 650;
+      line-height: 1.2;
+    }
+
+    /* C · jako Osobně / Na telefonu (2+2) */
+    .c-rady {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .c-radek {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+    }
+    .c-radek button {
+      min-height: 2.9rem;
+      padding: 0.5rem 0.55rem;
+      font-size: 1rem;
+      font-weight: 650;
+    }
+  </style>
+</head>
+<body>
+  <h1>Příplatek při Předat · 3 varianty</h1>
+  <p class="uvod">
+    Bez čísel 1–3. Menší dlaždice, větší písmo. Vyber A, B nebo C.
+  </p>
+
+  <section class="verze" id="a">
+    <h2>A · jedna řada</h2>
+    <p class="popis">Čtyři nízké dlaždice vedle sebe. Rychlé klepnutí jedním řádkem.</p>
+    <p class="dotaz">Příjezd 21:46 je po 21:00. Podle sazby by to bylo 400&nbsp;Kč (kotva, po domluvě). Co zapsat a předat?</p>
+    <div class="a-rada">
+      <button type="button">Účtovat<br />400&nbsp;Kč</button>
+      <button type="button">Vlastní<br />částka</button>
+      <button type="button">Odpustit<br />0&nbsp;Kč</button>
+      <button type="button" class="zrusit">Zrušit</button>
+    </div>
+  </section>
+
+  <section class="verze" id="b">
+    <h2>B · čtverec 2×2</h2>
+    <p class="popis">Stejné čtvrtiny, ale nižší než teď. Větší nápisy.</p>
+    <p class="dotaz">Příjezd 21:46 je po 21:00. Podle sazby by to bylo 400&nbsp;Kč (kotva, po domluvě). Co zapsat a předat?</p>
+    <div class="b-ctyrka">
+      <button type="button">Účtovat 400&nbsp;Kč</button>
+      <button type="button">Vlastní částka</button>
+      <button type="button">Odpustit 0&nbsp;Kč</button>
+      <button type="button" class="zrusit">Zrušit</button>
+    </div>
+  </section>
+
+  <section class="verze" id="c">
+    <h2>C · dvě řady (jako Osobně)</h2>
+    <p class="popis">Stejný styl jako tlačítka Osobně / Na telefonu. Široké, čitelné.</p>
+    <p class="dotaz">Příjezd 21:46 je po 21:00. Podle sazby by to bylo 400&nbsp;Kč (kotva, po domluvě). Co zapsat a předat?</p>
+    <div class="c-rady">
+      <div class="c-radek">
+        <button type="button">Účtovat 400&nbsp;Kč</button>
+        <button type="button">Vlastní částka</button>
+      </div>
+      <div class="c-radek">
+        <button type="button">Odpustit 0&nbsp;Kč</button>
+        <button type="button" class="zrusit">Zrušit</button>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

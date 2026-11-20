@@ -38,6 +38,7 @@ import {
   popisekCasu,
   novyVyjezd,
   priplatekProCas,
+  dotazPriplatkuPriPredani,
   vratPosledniVyjezd,
   VYJEZD_CASTKA,
   CEKANI_MINUT,
@@ -471,7 +472,12 @@ export function PrehledClient({
   const [priplatekStav, setPriplatekStav] = useState<Record<string, number | null>>({});
   const [dotazPredani, setDotazPredani] = useState<{
     id: string;
-    druh: 'predano' | 'vratit' | 'nedojezd' | 'vratit-nedojezd';
+    druh: 'predano' | 'predano-priplatek' | 'vratit' | 'nedojezd' | 'vratit-nedojezd';
+    cas?: string;
+    navrhKc?: number | null;
+    stavPriplatku?: 'castka' | 'domluva';
+    krok?: 'volba' | 'vlastni';
+    vlastni?: string;
   } | null>(null);
   const [dotazZavady, setDotazZavady] = useState<string | null>(null);
   const [textZavad, setTextZavad] = useState('');
@@ -1081,10 +1087,17 @@ export function PrehledClient({
     setVyjezdy((prev) => ({ ...prev, [row.rezervace]: json.vyjezdy || [] }));
   }
 
-  async function ulozPredani(row: PrehledRadek, zapnout: boolean) {
-    setDotazPredani(null);
+  async function ulozPredani(row: PrehledRadek, zapnout: boolean, priplatekCastka?: number | null) {
+    if (zapnout && typeof priplatekCastka === 'number' && Number.isFinite(priplatekCastka) && priplatekCastka >= 0) {
+      const uloz = await ulozPriplatek(row, String(Math.round(priplatekCastka)));
+      if (!uloz.ok) {
+        setHlaska('Příplatek se neuložil.');
+        return;
+      }
+    }
     if (ukazka) {
       setPredani((prev) => ({ ...prev, [row.rezervace]: zapnout ? new Date().toISOString() : null }));
+      setDotazPredani(null);
       return;
     }
     setCekam(`${row.rezervace}:predani`);
@@ -1101,6 +1114,30 @@ export function PrehledClient({
       return;
     }
     setPredani((prev) => ({ ...prev, [row.rezervace]: json.predano ?? null }));
+    setDotazPredani(null);
+  }
+
+  function otevriDotazPredani(row: PrehledRadek) {
+    const casNaMiste = naMisteRadku(row) ? hodinaPraha(naMisteRadku(row)!) : null;
+    const casTed = hodinaPraha(new Date().toISOString());
+    const dotaz = dotazPriplatkuPriPredani({
+      casTed,
+      casNaMiste,
+      rucni: priplatekRadku(row),
+    });
+    if (!dotaz.ptat) {
+      setDotazPredani({ id: row.rezervace, druh: 'predano' });
+      return;
+    }
+    setDotazPredani({
+      id: row.rezervace,
+      druh: 'predano-priplatek',
+      cas: dotaz.cas,
+      navrhKc: dotaz.kc,
+      stavPriplatku: dotaz.stav,
+      krok: 'volba',
+      vlastni: '',
+    });
   }
 
   async function ulozCheckinNeni(row: PrehledRadek, zapnout: boolean) {
@@ -3442,7 +3479,7 @@ export function PrehledClient({
         type="button"
         className="ph-nova-predani"
         disabled={cekam !== null}
-        onClick={() => setDotazPredani({ id: row.rezervace, druh: 'predano' })}
+        onClick={() => otevriDotazPredani(row)}
       >
         Předat apartmán
       </button>
@@ -3450,7 +3487,108 @@ export function PrehledClient({
     const predaniDotazDruh = dotazPredani?.id === row.rezervace ? dotazPredani.druh : null;
     const predaniDotazJeNedojezd =
       predaniDotazDruh === 'nedojezd' || predaniDotazDruh === 'vratit-nedojezd';
-    const predaniDotaz = predaniDotazDruh ? (
+    const predaniPriplatekDotaz =
+      predaniDotazDruh === 'predano-priplatek' && dotazPredani ? (
+        <div className="ph-predano-dotaz">
+          {dotazPredani.krok === 'vlastni' ? (
+            <>
+              <p>
+                Vlastní příplatek za příjezd{dotazPredani.cas ? ` ${dotazPredani.cas}` : ''}
+                {dotazPredani.navrhKc != null
+                  ? ` (kotva ze sazby ${dotazPredani.navrhKc}\u00A0Kč)`
+                  : ''}
+                . Upravte a předáme apartmán.
+              </p>
+              <label className="ph-predano-dotaz__castka">
+                Částka v Kč
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  autoFocus
+                  placeholder={
+                    dotazPredani.navrhKc != null ? String(dotazPredani.navrhKc) : 'Kč'
+                  }
+                  value={dotazPredani.vlastni || ''}
+                  onFocus={(e) => e.currentTarget.select()}
+                  onChange={(e) =>
+                    setDotazPredani({
+                      ...dotazPredani,
+                      vlastni: e.target.value.replace(/\D/g, '').slice(0, 5),
+                    })
+                  }
+                />
+              </label>
+              <div className="ph-potvrzeni__akce ph-predano-dotaz__tri">
+                <button
+                  type="button"
+                  disabled={cekam !== null || !/^\d{1,5}$/.test((dotazPredani.vlastni || '').trim())}
+                  onClick={() => {
+                    const kc = Number((dotazPredani.vlastni || '').trim());
+                    if (!Number.isFinite(kc) || kc < 0) return;
+                    void ulozPredani(row, true, kc);
+                  }}
+                >
+                  Uložit a předat
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDotazPredani({ ...dotazPredani, krok: 'volba', vlastni: '' })}
+                >
+                  Zpět
+                </button>
+                <button type="button" className="ph-predano-dotaz__zrusit" onClick={() => setDotazPredani(null)}>
+                  Zrušit
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p>
+                {dotazPredani.stavPriplatku === 'domluva'
+                  ? `Příjezd${dotazPredani.cas ? ` ${dotazPredani.cas}` : ''} je po 21:00. Podle sazby by to bylo ${dotazPredani.navrhKc}\u00A0Kč (kotva, po domluvě). Co zapsat a předat?`
+                  : `Příjezd${dotazPredani.cas ? ` ${dotazPredani.cas}` : ''} má příplatek ${dotazPredani.navrhKc}\u00A0Kč. Co zapsat a předat?`}
+              </p>
+              <div className="ph-predano-dotaz__ctyrka" role="group" aria-label="Příplatek při předání">
+                <div className="ph-potvrzeni__akce">
+                  <button
+                    type="button"
+                    disabled={cekam !== null || dotazPredani.navrhKc == null}
+                    onClick={() => {
+                      if (dotazPredani.navrhKc == null) return;
+                      void ulozPredani(row, true, dotazPredani.navrhKc);
+                    }}
+                  >
+                    Účtovat {dotazPredani.navrhKc != null ? `${dotazPredani.navrhKc}\u00A0Kč` : ''}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={cekam !== null}
+                    onClick={() => setDotazPredani({ ...dotazPredani, krok: 'vlastni', vlastni: '' })}
+                  >
+                    Vlastní částka
+                  </button>
+                </div>
+                <div className="ph-potvrzeni__akce">
+                  <button
+                    type="button"
+                    disabled={cekam !== null}
+                    onClick={() => void ulozPredani(row, true, 0)}
+                  >
+                    Odpustit 0&nbsp;Kč
+                  </button>
+                  <button type="button" className="ph-predano-dotaz__zrusit" onClick={() => setDotazPredani(null)}>
+                    Zrušit
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      ) : null;
+    const predaniDotaz = predaniPriplatekDotaz
+      ? predaniPriplatekDotaz
+      : predaniDotazDruh ? (
       <div className="ph-predano-dotaz">
         <p>
           {predaniDotazDruh === 'predano'
