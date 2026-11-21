@@ -276,14 +276,25 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const kartaVypln = !galerie && krok !== 'apartmany' && krok !== 'kontakt';
 
   function ikonaVolby(druh: 'vybrat' | 'doporucit' | 'pruvodce'): ReactNode {
+    const stroke = {
+      fill: 'none' as const,
+      stroke: '#c9a84c',
+      strokeWidth: 1.5,
+      strokeLinecap: 'round' as const,
+      strokeLinejoin: 'round' as const,
+      width: 30,
+      height: 30,
+      viewBox: '0 0 24 24',
+      'aria-hidden': true as const,
+    };
     if (druh === 'vybrat') {
       return (
         <span className="pp__volba-ikona" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22">
-            <path
-              fill="currentColor"
-              d="M4 5h7v7H4V5zm9 0h7v7h-7V5zM4 14h7v5H4v-5zm9 0h7v5h-7v-5z"
-            />
+          <svg {...stroke}>
+            <rect x="7" y="3" width="14" height="12" rx="2" />
+            <path d="M3 7v11a2 2 0 0 0 2 2h12" />
+            <circle cx="12" cy="7.5" r="1.3" />
+            <path d="M21 12l-3.5-3.5L10 15" />
           </svg>
         </span>
       );
@@ -291,22 +302,18 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     if (druh === 'doporucit') {
       return (
         <span className="pp__volba-ikona" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="22" height="22">
-            <path
-              fill="currentColor"
-              d="M12 2a7 7 0 0 0-7 7c0 3.2 2.1 5.9 5 6.7V18H8v2h8v-2h-2v-2.3c2.9-.8 5-3.5 5-6.7a7 7 0 0 0-7-7zm0 2a5 5 0 0 1 5 5c0 2.3-1.6 4.2-3.7 4.8L12 14l-1.3-.2C8.6 13.2 7 11.3 7 9a5 5 0 0 1 5-5z"
-            />
+          <svg {...stroke}>
+            <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" />
+            <path d="M12 8.5l1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3z" />
           </svg>
         </span>
       );
     }
     return (
       <span className="pp__volba-ikona" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="22" height="22">
-          <path
-            fill="currentColor"
-            d="M6 4h9l3 3v13H6V4zm2 2v12h8V8h-3V6H8zm2 4h4v2h-4v-2zm0 4h4v2h-4v-2z"
-          />
+        <svg {...stroke}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M15.5 8.5l-2 5-5 2 2-5z" />
         </svg>
       </span>
     );
@@ -316,7 +323,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     <PoptavkaPlochaRoot lang={props.lang}>
     <main className={`pp${vernost ? ' pp--vernost' : ''}${suchyBeh ? ' pp--zkouska' : ''}`} lang={props.lang}>
       <div
-        className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}`}
+        className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}${krok === 'zpusob' ? ' pp__karta--zpusob' : ''}`}
       >
         {suchyBeh ? <span className="pp__zkouska-stittek">zkouška</span> : null}
         {heroVernost ? (

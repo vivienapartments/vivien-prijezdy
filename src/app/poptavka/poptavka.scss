@@ -645,6 +645,19 @@
   height: clamp(140px, 30vh, 320px);
 }
 
+/* Krok 2: nižší fotka, ať se vejdou 3 volby. Popisy voleb vlevo. */
+.pp__karta--zpusob.pp__karta--vypln .pp__hero,
+.pp__karta--zpusob .pp__hero {
+  height: clamp(110px, 20vh, 200px);
+}
+
+.pp__karta--zpusob .pp__volba span,
+.pp__karta--zpusob .pp__volba-text span {
+  text-align: left;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+
 .pp--vernost .pp__hero::after {
   content: '';
   position: absolute;
