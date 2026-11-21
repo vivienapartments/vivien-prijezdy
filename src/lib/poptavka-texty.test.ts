@@ -47,7 +47,7 @@ const KLICE: (keyof PoptavkaTexty)[] = [
   'whatsapp',
   'sms',
   'dekujeme',
-  'dekujemeSpecha',
+  'dekujemeVolejte',
   'nadpisZpusob',
   'nadpisApartmany',
   'nadpisKontakt',
@@ -75,7 +75,7 @@ describe('poptavkaTexty', () => {
         expect(String(t[k] || '').trim().length, `${lang}.${k}`).toBeGreaterThan(0);
       }
       expect(t.kvizOtazka.trim().length).toBeGreaterThan(0);
-      expect(t.dekujemeSpecha.trim().length).toBeGreaterThan(0);
+      expect(t.dekujemeVolejte.trim().length).toBeGreaterThan(0);
       expect(t.nadpisZpusob.trim().length).toBeGreaterThan(0);
       expect(t.nadpisApartmany.trim().length).toBeGreaterThan(0);
       expect(t.nadpisKontakt.trim().length).toBeGreaterThan(0);
@@ -93,7 +93,7 @@ describe('poptavkaTexty', () => {
     expect(poptavkaTexty('cs', 'obecna').nadpis).toBe('Další pobyt u nás');
     expect(poptavkaTexty('cs', 'firma').sleva).toContain('5');
     expect(poptavkaTexty('en', 'doporucitel').kvizOtazka).toBe('');
-    expect(poptavkaTexty('en', 'obecna').dekujemeSpecha).toBe('');
+    expect(poptavkaTexty('en', 'obecna').dekujemeVolejte).toBe('');
   });
 
   it('formátuje datum podle jazyka', () => {

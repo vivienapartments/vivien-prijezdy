@@ -358,8 +358,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
         {hotovo ? (
           <>
-            <p className="pp__dekujeme">{t.dekujeme}</p>
-            {t.dekujemeSpecha ? <p className="pp__dekujeme-specha">{t.dekujemeSpecha}</p> : null}
+            <p className="pp__dekujeme">
+              {t.dekujeme}
+              {t.dekujemeVolejte ? (
+                <>
+                  {' '}
+                  <span className="pp__dekujeme-volejte">{t.dekujemeVolejte}</span>
+                </>
+              ) : null}
+            </p>
             {vernost ? <PoptavkaPlochaTlacitko sTelefonem /> : null}
           </>
         ) : (

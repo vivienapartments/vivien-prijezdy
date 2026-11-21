@@ -56,8 +56,8 @@ export type PoptavkaTexty = {
   whatsapp: string;
   sms: string;
   dekujeme: string;
-  /** Jen věrnost. U ostatních cest prázdné. */
-  dekujemeSpecha: string;
+  /** Jen věrnost. Zlatá věta „zavolejte“ v jednom odstavci s dekujeme. U ostatních cest prázdné. */
+  dekujemeVolejte: string;
   /** Jen věrnost (PROMPT-76B). U ostatních cest prázdné. */
   nadpisZpusob: string;
   nadpisApartmany: string;
@@ -119,7 +119,7 @@ const CS: PoptavkaTexty = {
   whatsapp: 'WhatsApp',
   sms: 'SMS',
   dekujeme: 'Děkujeme. Do hodiny se ozveme s cenou.',
-  dekujemeSpecha: '',
+  dekujemeVolejte: '',
   nadpisZpusob: '',
   nadpisApartmany: '',
   nadpisKontakt: '',
@@ -179,7 +179,7 @@ const EN: PoptavkaTexty = {
   whatsapp: 'WhatsApp',
   sms: 'SMS',
   dekujeme: 'Thank you. We will reply within an hour with the price.',
-  dekujemeSpecha: '',
+  dekujemeVolejte: '',
   nadpisZpusob: '',
   nadpisApartmany: '',
   nadpisKontakt: '',
