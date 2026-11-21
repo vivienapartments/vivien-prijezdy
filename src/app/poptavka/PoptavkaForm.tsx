@@ -703,10 +703,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       <p className="pp__maly-radek pp__maly-radek--kontakt">
                         <span className="pp__maly-termin">{souhrnTerminu}</span>
                         {souhrnVyberu ? (
-                          <span className="pp__maly-zbytek">
-                            {' · '}
-                            {souhrnVyberu}
-                          </span>
+                          <span className="pp__maly-zbytek">{` · ${souhrnVyberu}`}</span>
                         ) : null}
                       </p>
                     ) : null}
@@ -827,13 +824,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                           disabled={cekam}
                           onClick={() => void odeslat('sms')}
                         >
-                          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                            <path
-                              fill="currentColor"
-                              d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
-                            />
-                          </svg>
-                          <span>{t.sms}</span>
+                          {t.sms}
                         </button>
                       </div>
                     </>
