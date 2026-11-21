@@ -937,6 +937,96 @@
   margin-top: 0;
 }
 
+/* Kontakt věrnosti: jemné uvolnění místa. */
+.pp--vernost .pp__karta--kontakt {
+  padding-bottom: 1.25rem;
+}
+
+.pp--vernost .pp__karta--kontakt input[type='text'],
+.pp--vernost .pp__karta--kontakt input[type='tel'],
+.pp--vernost .pp__karta--kontakt textarea {
+  margin-bottom: 0.45rem;
+  padding: 0.45rem 0.65rem;
+}
+
+.pp--vernost .pp__karta--kontakt label {
+  margin-bottom: 0.25rem;
+}
+
+.pp--vernost .pp__karta--kontakt .pp__akce {
+  margin-top: 1rem;
+  gap: 0.5rem;
+}
+
+.pp--vernost .pp__btn--kanal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: #15110e;
+  color: #e8dfd0;
+  border: 1px solid #3d342a;
+}
+
+.pp--vernost .pp__btn--kanal svg {
+  flex: 0 0 auto;
+  display: block;
+}
+
+.pp--vernost .pp__odkaz-zpet {
+  display: block;
+  width: 100%;
+  margin: 0.1rem 0 0;
+  padding: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: #cbbba8;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.pp--vernost .pp__paticka {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #3d342a;
+}
+
+.pp--vernost .pp__kontakt {
+  gap: 0.25rem;
+}
+
+.pp--vernost .pp__karta--dekujeme {
+  padding-bottom: 1.25rem;
+}
+
+.pp--vernost .pp__karta--dekujeme .pp__paticka {
+  margin-top: 1.5rem;
+}
+
+@media (max-height: 700px) {
+  .pp--vernost .pp__karta--kontakt .pp__akce {
+    margin-top: 0.75rem;
+    gap: 0.4rem;
+  }
+
+  .pp--vernost .pp__paticka,
+  .pp--vernost .pp__karta--dekujeme .pp__paticka {
+    margin-top: 1.1rem;
+    padding-top: 1.1rem;
+  }
+
+  .pp--vernost .pp__karta--kontakt,
+  .pp--vernost .pp__karta--dekujeme {
+    padding-bottom: 1rem;
+  }
+}
+
 .pp--vernost .pp__karta--s-herem .pp__logo {
   margin-top: -32px;
   position: relative;
