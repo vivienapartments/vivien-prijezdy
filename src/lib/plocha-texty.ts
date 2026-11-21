@@ -312,19 +312,19 @@ export const plochaNavodAndroidKroky: LText = {
 };
 
 export const plochaHotovo: LText = {
-  cs: 'Hotovo. Průvodce najdete na ploše telefonu.',
-  en: 'Done. You will find the guide on your phone home screen.',
-  de: 'Fertig. Den Leitfaden finden Sie auf dem Startbildschirm.',
-  pl: 'Gotowe. Instrukcję znajdziecie na ekranie telefonu.',
-  uk: 'Готово. Гід буде на екрані телефону.',
-  'zh-Hant': '完成。指南會出現在手機主畫面。',
-  sv: 'Klart. Guiden finns på telefonens hemskärm.',
-  es: 'Listo. La guía estará en la pantalla del teléfono.',
-  hu: 'Kész. Az útmutató a telefon kezdőképernyőjén lesz.',
-  da: 'Færdig. Guiden ligger på telefonens hjemmeskærm.',
-  fr: 'C’est fait. Le guide est sur l’écran d’accueil du téléphone.',
-  it: 'Fatto. La guida è sulla schermata del telefono.',
-  pt: 'Feito. O guia fica no ecrã do telemóvel.',
+  cs: 'Hotovo. Příště už nemusíte přes mail, najdete nás na ploše telefonu.',
+  en: 'Done. Next time you will not need the email. You will find us on your phone home screen.',
+  de: 'Fertig. Das nächste Mal brauchen Sie keine E-Mail. Sie finden uns auf dem Startbildschirm des Telefons.',
+  pl: 'Gotowe. Następnym razem nie trzeba maila. Znajdziecie nas na ekranie telefonu.',
+  uk: 'Готово. Наступного разу лист не потрібен. Знайдете нас на екрані телефону.',
+  'zh-Hant': '完成。下次不必再找郵件，在手機主畫面就能找到我們。',
+  sv: 'Klart. Nästa gång behövs ingen mejl. Ni hittar oss på telefonens hemskärm.',
+  es: 'Listo. La próxima vez no hace falta el correo. Nos encontrarán en la pantalla del teléfono.',
+  hu: 'Kész. Legközelebb nem kell a levél. A telefon kezdőképernyőjén megtalálnak minket.',
+  da: 'Færdig. Næste gang behøver I ikke e-mailen. I finder os på telefonens hjemmeskærm.',
+  fr: 'C’est fait. La prochaine fois, plus besoin du mail. Vous nous trouvez sur l’écran d’accueil du téléphone.',
+  it: 'Fatto. La prossima volta non serve la mail. Ci trovate sulla schermata del telefono.',
+  pt: 'Feito. Da próxima vez não precisam do e-mail. Encontram-nos no ecrã do telemóvel.',
 };
 
 export const plochaZavrit: LText = {
