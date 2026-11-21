@@ -589,11 +589,60 @@
   padding-top: 0;
 }
 
+/* Krátké kroky: karta vyplní výšku okna. Apartmány / Kontakt třídu --vypln nemají. */
+.pp__karta--vypln {
+  min-height: calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+}
+
+.pp__karta--vypln .pp__telo {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.pp__karta--vypln .pp__paticka {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.pp__karta--vypln .pp__kontakty {
+  margin-top: 0.75rem;
+}
+
+.pp__karta--vypln .pp__logo {
+  width: clamp(56px, 8vh, 88px);
+  height: clamp(56px, 8vh, 88px);
+}
+
+.pp__karta--vypln h1,
+.pp__karta--vypln .pp__nadpis-krok {
+  font-size: clamp(1.45rem, 4.2vh, 2.05rem);
+}
+
+.pp__karta--vypln .pp__uvod,
+.pp__karta--vypln .pp__dekujeme,
+.pp__karta--vypln .pp__dekujeme-specha {
+  font-size: clamp(0.92rem, 2.4vh, 1.12rem);
+}
+
+.pp__karta--vypln.pp__karta--s-herem .pp__logo {
+  margin-top: clamp(-40px, -5vh, -28px);
+}
+
 .pp--vernost .pp__hero {
   height: 160px;
   background-size: cover;
   background-repeat: no-repeat;
   position: relative;
+}
+
+.pp__karta--vypln .pp__hero {
+  flex-shrink: 0;
+  height: clamp(140px, 30vh, 320px);
 }
 
 .pp--vernost .pp__hero::after {
@@ -617,6 +666,15 @@
 
 .pp--vernost .pp__telo {
   padding: 0 0 0.15rem;
+}
+
+.pp__paticka {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.pp__paticka .pp__kontakty {
+  margin-top: 0;
 }
 
 .pp--vernost .pp__karta--s-herem .pp__logo {
