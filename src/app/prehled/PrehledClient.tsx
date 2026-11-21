@@ -2537,7 +2537,11 @@ export function PrehledClient({
   }
 
   async function nactiSchrankuTed() {
-    if (ukazka || nacitamSchranku) return;
+    if (nacitamSchranku) return;
+    if (ukazka) {
+      setHlaska('V ukázce se schránka nečte. Po nasazení to v ostrém přehledu načte maily.');
+      return;
+    }
     setNacitamSchranku(true);
     setHlaska('Čtu schránku…');
     try {
@@ -5828,10 +5832,20 @@ export function PrehledClient({
         </div>
         {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu ? (
           <div className={zalozka === 'prijezdy' || !pohledDomu ? 'ph-den is-on' : 'ph-den'}>
-            <p className="ph-den__nadpis">
-              {nadpisSouhrnuDne(vybranyDen, dnes)}: {vybranySouhrn.pocet} · průvodce otevřelo {vybranySouhrn.otevrelo} ·
-              neodesláno {vybranySouhrn.neodeslano} · bez check-inu: {vybranySouhrn.bezCheckinu}
-            </p>
+            <div className="ph-den__radek">
+              <p className="ph-den__nadpis">
+                {nadpisSouhrnuDne(vybranyDen, dnes)}: {vybranySouhrn.pocet} · průvodce otevřelo {vybranySouhrn.otevrelo} ·
+                neodesláno {vybranySouhrn.neodeslano} · bez check-inu: {vybranySouhrn.bezCheckinu}
+              </p>
+              <button
+                type="button"
+                className="ph-schranka-ted__btn"
+                disabled={nacitamSchranku}
+                onClick={() => void nactiSchrankuTed()}
+              >
+                {nacitamSchranku ? 'Čtu…' : 'Schránka'}
+              </button>
+            </div>
             {vybranySouhrn.plan.length ? (
               <p className="ph-plan">
                 {vybranySouhrn.plan.map((h, i) => (
@@ -5853,25 +5867,23 @@ export function PrehledClient({
               </p>
             ) : null}
           </div>
-        ) : null}
+        ) : (
+          <div className="ph-den__radek ph-den__radek--samo">
+            <button
+              type="button"
+              className="ph-schranka-ted__btn"
+              disabled={nacitamSchranku}
+              onClick={() => void nactiSchrankuTed()}
+            >
+              {nacitamSchranku ? 'Čtu…' : 'Schránka'}
+            </button>
+          </div>
+        )}
         {chybiWifi.length ? (
           <p className="ph-wifi">V nastavení chybí heslo WiFi pro {chybiWifi.join(', ')}.</p>
         ) : null}
       </header>
       {automatVarovani ? <p className="ph-automat">{automatVarovani}</p> : null}
-      {!ukazka ? (
-        <div className="ph-schranka-ted">
-          <button
-            type="button"
-            className="ph-schranka-ted__btn"
-            disabled={nacitamSchranku}
-            onClick={() => void nactiSchrankuTed()}
-          >
-            {nacitamSchranku ? 'Čtu schránku…' : 'Načíst schránku teď'}
-          </button>
-          <p className="ph-schranka-ted__hint">Když přijde e-mail z hotelu, klepněte sem. Nemusíte čekat na automat.</p>
-        </div>
-      ) : null}
       {pohledDomu ? (
         <PraniRamecekDomu
           radky={praniRadky}
