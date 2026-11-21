@@ -362,7 +362,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               {t.dekujeme}
               {t.dekujemeVolejte ? (
                 <>
-                  {' '}
+                  <br />
                   <span className="pp__dekujeme-volejte">{t.dekujemeVolejte}</span>
                 </>
               ) : null}
