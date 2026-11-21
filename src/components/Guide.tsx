@@ -53,6 +53,7 @@ import { ZpravyOdNas, type ZpravaOdNas } from './ZpravyOdNas';
 import { PRANI_NADPIS, PRANI_VETA_SBALENA, textPrani } from '@/lib/prani-texty';
 import type { FakturaUdaje } from '@/lib/faktura';
 import { FAKTURA_NADPIS, FAKTURA_VETA_SBALENA } from '@/lib/faktura-texty';
+import { PridejNaPlochu } from './PridejNaPlochu';
 import './guide.scss';
 
 const ALIAS_K_DOMU = ['pesky-parkoviste-dum'];
@@ -750,6 +751,7 @@ export function Guide({
       ) : null}
 
       <main className="pv">
+        <PridejNaPlochu lang={lang} jenMobil nazev="VIVIEN průvodce" shortNazev="VIVIEN" />
         <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />
         {ukazatDokladyRamecek({
           cas: hodnoty.cas,

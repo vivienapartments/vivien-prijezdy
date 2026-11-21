@@ -11,6 +11,7 @@ import {
   expiredZavolat,
 } from '@/lib/texts';
 import type { GuideLang } from '@/lib/types';
+import { PridejNaPlochu } from './PridejNaPlochu';
 import './guide.scss';
 
 export function Expired({
@@ -58,6 +59,9 @@ export function Expired({
             {t(expiredZavolat, lang)} · {tel}
           </a>
           <p className="pv-expired__poznamka">{t(expiredPoznamka, lang)}</p>
+          <div className="pv-expired__plocha">
+            <PridejNaPlochu lang={lang} jenMobil tichy nazev="VIVIEN průvodce" shortNazev="VIVIEN" />
+          </div>
           <div className="pv-expired__znacka" aria-label="VIVIEN Apartments">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

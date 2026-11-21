@@ -362,9 +362,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             {krok === 'termin' ? (
               <section>
                 {!vernost ? <h2 className="pp__krok">{t.krokTermin}</h2> : null}
-                <div className="pp__plocha-zacatek">
-                  <PoptavkaPlochaTlacitko vyrazne />
-                </div>
                 <div className="pp__termin">
                   <label>
                     {t.prijezd}

@@ -1881,7 +1881,7 @@ a.pv-phone.pv-phone--zari:focus-visible {
   max-width: 92%;
 }
 
-/* Návrh D: host neutrální, na?e odpov?? zlatá. */
+/* Nï¿½vrh D: host neutrï¿½lnï¿½, na?e odpov?? zlatï¿½. */
 .pv-prani__bublina--host {
   margin-left: auto;
   background: rgba(255, 255, 255, 0.08);
@@ -2191,7 +2191,7 @@ a.pv-phone.pv-phone--zari:focus-visible {
     inset 0 0 0 1px color-mix(in srgb, #6d9a6a 28%, transparent);
 }
 
-/* Odpov?? na p?ání: del?í text + mo?nost hned napsat */
+/* Odpov?? na p?ï¿½nï¿½: del?ï¿½ text + mo?nost hned napsat */
 .pv-zprava-overlay__karta--prani {
   height: auto;
   max-height: min(88vh, 34rem);
@@ -2624,7 +2624,7 @@ a.pv-phone.pv-phone--zari:focus-visible {
   cursor: pointer;
 }
 
-/* P?echodová stránka po odjezdu */
+/* P?echodovï¿½ strï¿½nka po odjezdu */
 .pv-expired {
   min-height: 100vh;
   display: flex;
@@ -2789,7 +2789,101 @@ a.pv-phone.pv-phone--zari:focus-visible {
   color: color-mix(in srgb, var(--color-dark) 45%, transparent);
 }
 
-/* Rychlý p?ístup z plochy telefonu */
+.pv-pridej-plochu {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.75rem 0 1rem;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  border: 1px solid #3d342a;
+  background: transparent;
+  color: #e8dfd0;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pv-pridej-plochu--tichy {
+  margin: 0.85rem 0 0.35rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--color-dark, #1c1712) 55%, transparent);
+  border-color: color-mix(in srgb, var(--color-dark, #1c1712) 22%, transparent);
+}
+
+.pv-expired .pv-pridej-plochu--tichy {
+  color: color-mix(in srgb, var(--color-dark) 50%, transparent);
+  border-color: color-mix(in srgb, var(--color-dark) 20%, transparent);
+}
+
+.pv-expired__plocha {
+  margin: 0.35rem 0 0.15rem;
+}
+
+.pv-pridej-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(8, 6, 4, 0.88);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.pv-pridej-karta {
+  width: min(22rem, 100%);
+  background: #1c1712;
+  border: 1px solid #3d342a;
+  border-radius: 18px;
+  padding: 1.15rem 1.1rem 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pv-pridej-nadpis {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: 1.3rem;
+  line-height: 1.25;
+  text-align: center;
+  color: #f5efe3;
+}
+
+.pv-pridej-text {
+  margin: 0;
+  text-align: center;
+  color: #cbbba8;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  hyphens: none;
+}
+
+.pv-pridej-radek {
+  display: block;
+  margin: 0 0 0.35rem;
+}
+
+.pv-pridej-ok {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #b89a6a;
+  color: #1a1510;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* RychlÃ½ pÅ™Ã­stup z plochy telefonu */
 .pv-plocha-dotaz__btns {
   display: flex;
   flex-direction: column;
@@ -2827,7 +2921,7 @@ a.pv-phone.pv-phone--zari:focus-visible {
   margin-top: 0.35rem;
 }
 
-/* Po Pozd?ji: samostatný box nad osou, bez ?ísla. */
+/* Po Pozd?ji: samostatnï¿½ box nad osou, bez ?ï¿½sla. */
 .pv-plocha-box {
   margin: 0 0 0.85rem;
   margin-left: var(--pv-axis-inset, 0);
