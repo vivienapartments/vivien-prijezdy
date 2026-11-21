@@ -530,24 +530,44 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(8, 6, 4, 0.92);
+  background: #0c0a08;
   display: grid;
-  place-items: center;
-  padding: 1rem;
+  place-items: stretch;
+  padding: 0;
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 .pp__lightbox-vnitr {
-  width: min(28rem, 100%);
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: 100dvh;
   display: grid;
-  gap: 0.65rem;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  gap: 0.45rem;
+  padding: 0.65rem 0.85rem 0.85rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.pp__lightbox-nazev {
+  margin: 0;
+  text-align: center;
+  color: #f5efe3;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  line-height: 1.25;
 }
 
 .pp__lightbox-vnitr > img {
   width: 100%;
-  max-height: 55dvh;
+  height: 100%;
+  min-height: 0;
   object-fit: contain;
-  border-radius: 12px;
-  background: #1c1712;
+  border-radius: 0;
+  background: #0c0a08;
 }
 
 .pp__lightbox-ovladani {
@@ -557,4 +577,8 @@
   gap: 0.5rem;
   color: #cbbba8;
   font-size: 0.9rem;
+}
+
+.pp__lightbox .pp__btn {
+  margin: 0;
 }

@@ -16,9 +16,8 @@ import {
 import {
   coverUrl,
   galerieKompletCoverUrl,
-  galerieKompletUrls,
+  galerieKompletPolozky,
   galerieUrls,
-  odkazApartmanyWeb,
   odkazKvizAtmosfery,
   POPTAVKA_APARTMANY,
   webLangKod,
@@ -107,16 +106,25 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const ios = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
   const sms = odkazSmsPoptavky(zprava, ios);
 
+  const galerieKomplet = useMemo(
+    () => (galerie?.druh === 'komplet' ? galerieKompletPolozky(webLang) : []),
+    [galerie?.druh, webLang],
+  );
   const galerieFotky =
     galerie?.druh === 'apt'
       ? (() => {
           const a = POPTAVKA_APARTMANY.find((x) => x.id === galerie.id);
           return a ? galerieUrls(webLang, a) : [];
         })()
-      : galerie?.druh === 'komplet'
-        ? galerieKompletUrls(webLang)
-        : [];
+      : galerieKomplet.map((p) => p.url);
   const galerieIndex = galerie?.i ?? 0;
+  const galerieAptId: AptId | null =
+    galerie?.druh === 'apt'
+      ? galerie.id
+      : galerie?.druh === 'komplet'
+        ? galerieKomplet[Math.min(galerieIndex, Math.max(0, galerieKomplet.length - 1))]?.aptId ??
+          null
+        : null;
 
   function nazevApt(id: AptId): string {
     const a = apartmany.find((x) => x.id === id);
@@ -130,10 +138,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     }
     setChyba(null);
     return true;
-  }
-
-  function toggleApt(id: AptId) {
-    setApts((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
   async function odeslat(kanal: PoptavkaKanal = 'formular') {
@@ -214,6 +218,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   function pokracujSApartmanem(id: AptId) {
     setApts([id]);
+    setGalerie(null);
+    setChyba(null);
     setKrok('kontakt');
   }
 
@@ -618,25 +624,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   </p>
                 ) : null}
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
-                <div className="pp__akce">
-                  <button
-                    type="button"
-                    className="pp__btn pp__btn--hlavni"
-                    onClick={() => {
-                      if (!apts.length) {
-                        setChyba(t.chybaApartman);
-                        return;
-                      }
-                      setChyba(null);
-                      setKrok('kontakt');
-                    }}
-                  >
-                    {t.dale}
-                  </button>
-                  <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
-                    {t.zpet}
-                  </button>
-                </div>
+                <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
+                  {t.zpet}
+                </button>
               </section>
             ) : null}
 
@@ -774,6 +764,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       {galerie && galerieFotky.length ? (
         <div className="pp__lightbox" role="dialog" aria-modal="true">
           <div className="pp__lightbox-vnitr">
+            {galerieAptId ? (
+              <p className="pp__lightbox-nazev">{nazevApt(galerieAptId)}</p>
+            ) : null}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={galerieFotky[Math.min(galerieIndex, galerieFotky.length - 1)]}
@@ -806,29 +799,17 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 →
               </button>
             </div>
-            {galerie.druh === 'apt' ? (
+            {galerieAptId ? (
               <button
                 type="button"
                 className="pp__btn pp__btn--hlavni"
-                onClick={() => {
-                  toggleApt(galerie.id);
-                  setGalerie(null);
-                }}
+                onClick={() => pokracujSApartmanem(galerieAptId)}
               >
-                {apts.includes(galerie.id) ? t.zrusitVyber : t.vybratTento}
+                {t.vybratTento}
               </button>
-            ) : (
-              <a
-                className="pp__btn pp__btn--wa"
-                href={odkazApartmanyWeb(webLang)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t.galerieKomplet}
-              </a>
-            )}
+            ) : null}
             <button type="button" className="pp__btn pp__btn--sms" onClick={() => setGalerie(null)}>
-              {t.zavritGalerie}
+              {t.zpet}
             </button>
           </div>
         </div>
