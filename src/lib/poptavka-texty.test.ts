@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { GUIDE_LANGS } from './types';
-import { formatDatumPoptavky, poptavkaTexty, type PoptavkaTexty } from './poptavka-texty';
+import {
+  formatDatumPoptavky,
+  formatRozsahPoptavky,
+  poptavkaTexty,
+  type PoptavkaTexty,
+} from './poptavka-texty';
 import { POPTAVKA_VERNOST_LANGS } from './poptavka-texty-vernost';
 
 const KLICE: (keyof PoptavkaTexty)[] = [
@@ -99,6 +104,21 @@ describe('poptavkaTexty', () => {
   it('formátuje datum podle jazyka', () => {
     expect(formatDatumPoptavky('2026-12-12', 'cs')).toMatch(/12/);
     expect(formatDatumPoptavky('2026-12-12', 'cs')).toContain('2026');
+  });
+
+  it('zkracuje rozsah termínu (cs)', () => {
+    expect(formatRozsahPoptavky('2026-11-23', '2026-11-28', 'cs')).toBe('23.–28. 11. 2026');
+    expect(formatRozsahPoptavky('2026-11-30', '2026-12-02', 'cs')).toBe('30. 11. – 2. 12. 2026');
+    expect(formatRozsahPoptavky('2026-12-30', '2027-01-02', 'cs')).toBe(
+      '30. 12. 2026 – 2. 1. 2027',
+    );
+  });
+
+  it('rozsah termínu v jiném jazyku přes formatRange', () => {
+    const de = formatRozsahPoptavky('2026-11-23', '2026-11-28', 'de');
+    expect(de).toMatch(/23/);
+    expect(de).toMatch(/28/);
+    expect(de).toContain('2026');
   });
 
   it('GUIDE_LANGS pokrývá věrnostní mapu', () => {

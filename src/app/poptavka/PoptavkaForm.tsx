@@ -22,7 +22,7 @@ import {
   POPTAVKA_APARTMANY,
   webLangKod,
 } from '@/lib/poptavka-apartmany';
-import { formatDatumPoptavky, poptavkaTexty } from '@/lib/poptavka-texty';
+import { formatDatumPoptavky, formatRozsahPoptavky, poptavkaTexty } from '@/lib/poptavka-texty';
 import {
   odpovedHlavni,
   odpovedRozstrel,
@@ -232,7 +232,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const souhrnTerminu =
     prijezd && odjezd
       ? vernost
-        ? `${formatDatumPoptavky(prijezd, props.lang)} – ${formatDatumPoptavky(odjezd, props.lang)}`
+        ? formatRozsahPoptavky(prijezd, odjezd, props.lang)
         : `${formatDatumPoptavky(prijezd, props.lang)} → ${formatDatumPoptavky(odjezd, props.lang)}`
       : '';
 
@@ -827,7 +827,13 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                           disabled={cekam}
                           onClick={() => void odeslat('sms')}
                         >
-                          {t.sms}
+                          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                            <path
+                              fill="currentColor"
+                              d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"
+                            />
+                          </svg>
+                          <span>{t.sms}</span>
                         </button>
                       </div>
                     </>

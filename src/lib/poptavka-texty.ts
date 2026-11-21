@@ -200,21 +200,26 @@ export function poptavkaTexty(lang: GuideLang, zdroj?: PoptavkaZdroj): PoptavkaT
   return lang === 'cs' ? CS : EN;
 }
 
+function poptavkaLocale(lang: GuideLang): string {
+  if (lang === 'zh-Hant') return 'zh-Hant';
+  if (lang === 'cs') return 'cs-CZ';
+  if (lang === 'en') return 'en-GB';
+  return lang;
+}
+
+function ymdNaUtc(ymd: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d));
+}
+
 /** Datum YMD → lokalizovaný zápis (cs: 12. 12. 2026). */
 export function formatDatumPoptavky(ymd: string, lang: GuideLang): string {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return ymd;
+  const dt = ymdNaUtc(ymd);
+  if (!dt) return ymd;
   const [y, m, d] = ymd.split('-').map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  const locale =
-    lang === 'zh-Hant'
-      ? 'zh-Hant'
-      : lang === 'cs'
-        ? 'cs-CZ'
-        : lang === 'en'
-          ? 'en-GB'
-          : lang;
   try {
-    return new Intl.DateTimeFormat(locale, {
+    return new Intl.DateTimeFormat(poptavkaLocale(lang), {
       day: 'numeric',
       month: 'numeric',
       year: 'numeric',
@@ -223,4 +228,40 @@ export function formatDatumPoptavky(ymd: string, lang: GuideLang): string {
   } catch {
     return `${d}. ${m}. ${y}`;
   }
+}
+
+/**
+ * Rozsah příjezd–odjezd pro souhrn (věrnost).
+ * Stejný měsíc zkrátí, jiný měsíc obě data se společným rokem, jiný rok obě celá.
+ * Ostatní jazyky přes Intl formatRange; cs přesně podle zvyku s mezerami.
+ */
+export function formatRozsahPoptavky(od: string, doYmd: string, lang: GuideLang): string {
+  const a = ymdNaUtc(od);
+  const b = ymdNaUtc(doYmd);
+  if (!a || !b) {
+    return `${formatDatumPoptavky(od, lang)} – ${formatDatumPoptavky(doYmd, lang)}`;
+  }
+
+  const [y1, m1, d1] = od.split('-').map(Number);
+  const [y2, m2, d2] = doYmd.split('-').map(Number);
+
+  if (lang === 'cs') {
+    if (y1 === y2 && m1 === m2) return `${d1}.–${d2}. ${m1}. ${y1}`;
+    if (y1 === y2) return `${d1}. ${m1}. – ${d2}. ${m2}. ${y1}`;
+    return `${d1}. ${m1}. ${y1} – ${d2}. ${m2}. ${y2}`;
+  }
+
+  const locale = poptavkaLocale(lang);
+  try {
+    const fmt = new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC',
+    });
+    if (typeof fmt.formatRange === 'function') return fmt.formatRange(a, b);
+  } catch {
+    /* fallback níže */
+  }
+  return `${formatDatumPoptavky(od, lang)} – ${formatDatumPoptavky(doYmd, lang)}`;
 }
