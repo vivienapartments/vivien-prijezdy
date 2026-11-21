@@ -390,6 +390,10 @@
   cursor: wait;
 }
 
+.pp__btn.pp__btn--tlumeny:disabled {
+  cursor: not-allowed;
+}
+
 .pp__tel {
   display: block;
   margin-top: 0.85rem;

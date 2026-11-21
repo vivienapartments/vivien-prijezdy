@@ -234,6 +234,13 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     setKrok('kontakt');
   }
 
+  /** Věrnost na Apartmánech: výběr do seznamu, pak Pokračovat. */
+  function vyberApartmanDoSeznamu(id: AptId) {
+    setApts((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+    setGalerie(null);
+    setChyba(null);
+  }
+
   const telNikol = POPTAVKA_TEL_HOVOR.replace(/ /g, '\u00a0');
   const telZaloha = POPTAVKA_TEL_ZALOHA.replace(/ /g, '\u00a0');
 
@@ -250,16 +257,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       ? apts.map(nazevApt).join(', ')
       : '';
 
-  const malyRadekVernost =
-    vernost && souhrnTerminu
-      ? krok === 'zpusob' || krok === 'pruvodce'
-        ? `${t.malyKrok.replace('{n}', '2')} · ${souhrnTerminu}`
-        : krok === 'apartmany'
-          ? `${t.malyKrok.replace('{n}', '3')} · ${souhrnTerminu}`
-          : krok === 'kontakt'
-            ? `${t.malyPosledni} · ${souhrnTerminu}${souhrnVyberu ? ` · ${souhrnVyberu}` : ''}`
-            : ''
-      : '';
+  const malyRadekVernost = vernost
+    ? krok === 'zpusob' || krok === 'pruvodce'
+      ? t.malyKrok.replace('{n}', '2')
+      : krok === 'apartmany'
+        ? t.malyKrok.replace('{n}', '3')
+        : krok === 'kontakt' && souhrnTerminu
+          ? `${t.malyPosledni} · ${souhrnTerminu}${souhrnVyberu ? ` · ${souhrnVyberu}` : ''}`
+          : ''
+    : '';
 
   /** Věrnost tmavá: 1 zahrada, 2 stropy, konec dům. Apartmány beze změny. */
   const heroVernost = vernost
@@ -280,7 +286,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     !galerie && !hotovo && !kartaTermin && krok !== 'apartmany' && krok !== 'kontakt';
   /** Po odeslání: karta přes okno, fotka vyplní zbylé místo. */
   const kartaDekujeme = Boolean(vernost && hotovo);
-  const skrytPatickuTermin = kartaTermin;
+  /** Věrnost: kontakty jen na Kontakt a Děkujeme. Ostatní cesty beze změny. */
+  const ukazPaticku = !vernost || hotovo || krok === 'kontakt';
 
   function ikonaVolby(druh: 'vybrat' | 'doporucit' | 'pruvodce'): ReactNode {
     const stroke = {
@@ -693,6 +700,20 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   </p>
                 ) : null}
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
+                {vernost ? (
+                  <button
+                    type="button"
+                    className={`pp__btn${apts.length ? ' pp__btn--hlavni' : ' pp__btn--tlumeny'}`}
+                    disabled={!apts.length}
+                    onClick={() => {
+                      if (!apts.length) return;
+                      setChyba(null);
+                      setKrok('kontakt');
+                    }}
+                  >
+                    {t.dale}
+                  </button>
+                ) : null}
                 <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
                   {t.zpet}
                 </button>
@@ -856,7 +877,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           </>
         )}
 
-        {skrytPatickuTermin ? null : (
+        {ukazPaticku ? (
           <div className="pp__paticka">
             {vernost ? null : <PoptavkaPlochaTlacitko />}
             <div className="pp__kontakty">
@@ -870,7 +891,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               </a>
             </div>
           </div>
-        )}
+        ) : null}
         </div>
       </div>
 
@@ -916,7 +937,13 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               <button
                 type="button"
                 className="pp__btn pp__btn--hlavni"
-                onClick={() => pokracujSApartmanem(galerieAptId)}
+                onClick={() => {
+                  if (vernost && galerie.zpetNa === 'apartmany') {
+                    vyberApartmanDoSeznamu(galerieAptId);
+                    return;
+                  }
+                  pokracujSApartmanem(galerieAptId);
+                }}
               >
                 {t.vybratTento}
               </button>
