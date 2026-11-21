@@ -607,25 +607,6 @@
   display: block;
 }
 
-.pp__zkouska-stitkek {
-  position: absolute;
-  top: 0.45rem;
-  right: 0.55rem;
-  z-index: 3;
-  margin: 0;
-  padding: 0.12rem 0.4rem;
-  border-radius: 999px;
-  border: 1px solid #5a4a35;
-  background: color-mix(in srgb, #c9a84c 18%, #1c1712);
-  color: #c9a84c;
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
 .pp__dlazdice {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -234,13 +234,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     setKrok('kontakt');
   }
 
-  /** Věrnost na Apartmánech: výběr do seznamu, pak Pokračovat. */
-  function vyberApartmanDoSeznamu(id: AptId) {
-    setApts((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-    setGalerie(null);
-    setChyba(null);
-  }
-
   const telNikol = POPTAVKA_TEL_HOVOR.replace(/ /g, '\u00a0');
   const telZaloha = POPTAVKA_TEL_ZALOHA.replace(/ /g, '\u00a0');
 
@@ -335,11 +328,10 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   return (
     <PoptavkaPlochaRoot lang={props.lang}>
-    <main className={`pp${vernost ? ' pp--vernost' : ''}${suchyBeh ? ' pp--zkouska' : ''}`} lang={props.lang}>
+    <main className={`pp${vernost ? ' pp--vernost' : ''}`} lang={props.lang}>
       <div
         className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}${kartaTermin ? ' pp__karta--termin' : ''}${kartaDekujeme ? ' pp__karta--dekujeme' : ''}${krok === 'zpusob' ? ' pp__karta--zpusob' : ''}`}
       >
-        {suchyBeh ? <span className="pp__zkouska-stittek">zkouška</span> : null}
         {heroVernost ? (
           <div
             className={`pp__hero${hotovo ? ' pp__hero--dum' : krok === 'zpusob' ? ' pp__hero--stropy' : ' pp__hero--zahrada'}`}
@@ -700,20 +692,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   </p>
                 ) : null}
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
-                {vernost ? (
-                  <button
-                    type="button"
-                    className={`pp__btn${apts.length ? ' pp__btn--hlavni' : ' pp__btn--tlumeny'}`}
-                    disabled={!apts.length}
-                    onClick={() => {
-                      if (!apts.length) return;
-                      setChyba(null);
-                      setKrok('kontakt');
-                    }}
-                  >
-                    {t.dale}
-                  </button>
-                ) : null}
                 <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
                   {t.zpet}
                 </button>
@@ -937,13 +915,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               <button
                 type="button"
                 className="pp__btn pp__btn--hlavni"
-                onClick={() => {
-                  if (vernost && galerie.zpetNa === 'apartmany') {
-                    vyberApartmanDoSeznamu(galerieAptId);
-                    return;
-                  }
-                  pokracujSApartmanem(galerieAptId);
-                }}
+                onClick={() => pokracujSApartmanem(galerieAptId)}
               >
                 {t.vybratTento}
               </button>
