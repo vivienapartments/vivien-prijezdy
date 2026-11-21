@@ -1,19 +1,33 @@
 .pp {
   min-height: 100dvh;
   margin: 0;
-  padding: 1rem 0.85rem 2.5rem;
+  padding: 0;
   background: #12100e;
   color: #f5efe3;
   font-family: 'DM Sans', system-ui, sans-serif;
+  box-sizing: border-box;
 }
 
 .pp__karta {
-  max-width: 26rem;
+  width: 100%;
+  max-width: 28rem;
+  min-height: 100dvh;
   margin: 0 auto;
   background: #1c1712;
-  border: 1px solid #3d342a;
-  border-radius: 18px;
-  padding: 1.25rem 1.15rem 1.6rem;
+  border: 0;
+  border-radius: 0;
+  padding: 1.15rem 1rem 2rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 721px) {
+  .pp__karta {
+    border-left: 1px solid #3d342a;
+    border-right: 1px solid #3d342a;
+    padding: 1.35rem 1.25rem 2.2rem;
+  }
 }
 
 .pp__logo {
@@ -89,6 +103,115 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.65rem;
+}
+
+.pp__termin-pole {
+  display: block;
+  margin: 0 0 0.35rem;
+}
+
+.pp__termin-tlacitko {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.35rem 0 0.75rem;
+  padding: 0.65rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid #3d342a;
+  background: #15110e;
+  color: #f5efe3;
+  font: inherit;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.pp__kalendar {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: #0e0c0a;
+  display: grid;
+  place-items: stretch;
+  min-height: 100dvh;
+  padding: 0;
+}
+
+.pp__kalendar-vnitr {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  min-height: 100dvh;
+  display: grid;
+  align-content: center;
+  gap: 0.85rem;
+  padding: 1.15rem 1rem 1.5rem;
+  box-sizing: border-box;
+  background: #1c1712;
+}
+
+.pp__kalendar-hlavicka {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pp__kalendar-mesic {
+  flex: 1;
+  text-align: center;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.2rem;
+  color: #f5efe3;
+  text-transform: capitalize;
+}
+
+.pp__kalendar-dny {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.pp__kalendar-den-nazev {
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: #c9a84c;
+  padding: 0.25rem 0;
+}
+
+.pp__kalendar-den {
+  aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: #15110e;
+  color: #f5efe3;
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.pp__kalendar-den.is-empty {
+  background: transparent;
+  pointer-events: none;
+}
+
+.pp__kalendar-den.is-off {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pp__kalendar-den.is-on {
+  border-color: #c9a84c;
+  background: color-mix(in srgb, #c9a84c 22%, #15110e);
+  color: #f5efe3;
+  font-weight: 700;
+}
+
+.pp__kalendar-den:not(.is-off):not(.is-empty):active {
+  border-color: #c9a84c;
 }
 
 .pp input[type='date'],
@@ -203,6 +326,12 @@
   background: transparent;
   color: #e8dfd0;
   border: 1px solid #3d342a;
+}
+
+.pp__btn--vedlejsi {
+  padding: 0.65rem 0.9rem;
+  font-size: 0.88rem;
+  font-weight: 600;
 }
 
 .pp__btn:disabled {
@@ -526,24 +655,37 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(8, 6, 4, 0.92);
+  background: #0e0c0a;
   display: grid;
-  place-items: center;
-  padding: 1rem;
+  place-items: stretch;
+  padding: 0;
+  min-height: 100dvh;
 }
 
 .pp__lightbox-vnitr {
-  width: min(28rem, 100%);
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  min-height: 100dvh;
   display: grid;
   gap: 0.65rem;
+  padding: 1rem 1rem 1.5rem;
+  box-sizing: border-box;
+  align-content: center;
 }
 
 .pp__lightbox-vnitr > img {
   width: 100%;
-  max-height: 55dvh;
+  max-height: 70dvh;
   object-fit: contain;
-  border-radius: 12px;
+  border-radius: 0;
   background: #1c1712;
+}
+
+@media (min-width: 721px) {
+  .pp__lightbox-vnitr > img {
+    border-radius: 12px;
+  }
 }
 
 .pp__lightbox-ovladani {
@@ -553,4 +695,152 @@
   gap: 0.5rem;
   color: #cbbba8;
   font-size: 0.9rem;
+}
+
+/* Discover Your Atmosphere uvnitř poptávky */
+.pp__pruvodce {
+  --leading-room-color: #c9a84c;
+}
+
+.pp__pruvodce-progress {
+  height: 3px;
+  width: 100%;
+  overflow: hidden;
+  background: #3d342a;
+  margin: 0 0 0.85rem;
+  border-radius: 999px;
+}
+
+.pp__pruvodce-progress-fill {
+  height: 100%;
+  background: var(--leading-room-color, #c9a84c);
+  border-radius: inherit;
+  transition: width 0.35s ease;
+}
+
+.pp__pruvodce-counter {
+  margin: 0 0 1rem;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c9a84c;
+}
+
+.pp__pruvodce-otazka {
+  margin: 0 0 1.1rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: clamp(1.2rem, 4.2vw, 1.45rem);
+  line-height: 1.35;
+  text-align: center;
+  color: #f5efe3;
+}
+
+.pp__pruvodce-volby {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.pp__pruvodce-eyebrow {
+  margin: 0 0 0.45rem;
+  text-align: center;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c9a84c;
+}
+
+.pp__pruvodce-primary {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1.1rem;
+}
+
+.pp__pruvodce-foto {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 42dvh;
+  object-fit: cover;
+  border-radius: 0;
+  margin: 0 0 0.35rem;
+}
+
+@media (min-width: 721px) {
+  .pp__pruvodce-foto {
+    border-radius: 12px;
+  }
+}
+
+.pp__pruvodce-intro {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-align: justify;
+  hyphens: auto;
+  color: #cbbba8;
+}
+
+.pp__pruvodce-traits {
+  margin: 0 0 0.75rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: #c9a84c;
+}
+
+.pp__pruvodce-alts-nadpis {
+  margin: 0.5rem 0 0.65rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.15rem;
+  text-align: center;
+  color: #f5efe3;
+}
+
+.pp__pruvodce-alts {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.pp__pruvodce-alt {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #3d342a;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #15110e;
+  color: #e8dfd0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pp__pruvodce-alt img {
+  display: block;
+  width: 100%;
+  height: 7.5rem;
+  object-fit: cover;
+}
+
+.pp__pruvodce-alt strong {
+  padding: 0 0.7rem;
+  color: #f5efe3;
+  font-size: 0.95rem;
+}
+
+.pp__pruvodce-alt span {
+  display: block;
+  padding: 0 0.7rem 0.75rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #cbbba8;
+  text-align: justify;
+  hyphens: auto;
 }

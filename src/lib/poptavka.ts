@@ -12,6 +12,8 @@ import { odkazWhatsApp } from './whatsapp-zprava';
 
 export type PoptavkaZdroj = 'vernost' | 'firma' | 'doporucitel' | 'obecna';
 
+export type PoptavkaKanal = 'formular' | 'whatsapp' | 'sms';
+
 export type PoptavkaZaznam = {
   id: string;
   cas: string;
@@ -29,6 +31,8 @@ export type PoptavkaZaznam = {
   doprava: 'auto' | 'pesky' | 'nevim' | null;
   poznamka: string;
   jazyk: GuideLang;
+  /** Jak host pokračoval. Chybí = klasický formulář. */
+  kanal?: PoptavkaKanal | null;
   stav: 'nova' | 'hotovo';
 };
 
@@ -178,7 +182,10 @@ export function textTelegramPoptavky(z: PoptavkaZaznam): string {
       ? z.apartmany.join('+')
       : '?';
   const kdo = z.firmaNazev || z.rezervace || z.doporucitelKod || z.zdroj;
-  return `Poptávka ${kdo}: ${z.jmeno}, ${z.prijezd}→${z.odjezd} (${noci} n.), ${apt}, ${z.telefon}`;
+  const zaklad = `Poptávka ${kdo}: ${z.jmeno}, ${z.prijezd}→${z.odjezd} (${noci} n.), ${apt}, ${z.telefon}`;
+  if (z.kanal === 'whatsapp') return `${zaklad}\nhost pokračuje na WhatsApp`;
+  if (z.kanal === 'sms') return `${zaklad}\nhost pokračuje na SMS`;
+  return zaklad;
 }
 
 export function novyIdPoptavky(now = new Date()): string {
@@ -221,6 +228,8 @@ export function nactiPoptavkySeznam(raw: unknown): PoptavkaZaznam[] {
       doprava,
       poznamka: typeof r.poznamka === 'string' ? r.poznamka.slice(0, 500) : '',
       jazyk: (typeof r.jazyk === 'string' ? r.jazyk : 'cs') as GuideLang,
+      kanal:
+        r.kanal === 'whatsapp' || r.kanal === 'sms' || r.kanal === 'formular' ? r.kanal : null,
       stav: r.stav === 'hotovo' ? 'hotovo' : 'nova',
     });
     if (out.length >= 200) break;

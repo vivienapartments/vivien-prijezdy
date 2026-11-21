@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>Náhled · Pomozte mi vybrat</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0e0c0a;color:#f5efe3;font-family:system-ui,sans-serif}
+.wrap{min-height:100dvh;max-width:28rem;margin:0 auto;padding:1rem 1rem 2rem;background:#1c1712}
+h1{font-family:Georgia,serif;font-weight:500;font-style:italic;font-size:1.35rem;text-align:center;line-height:1.35;margin:0 0 1rem}
+.counter{text-align:center;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#c9a84c;margin:0 0 1rem}
+.bar{height:3px;background:#3d342a;border-radius:99px;margin:0 0 .85rem;overflow:hidden}
+.bar>i{display:block;height:100%;background:#c9a84c;width:0}
+.opt{display:block;width:100%;margin:0 0 .55rem;padding:.85rem .9rem;border:1px solid #3d342a;border-radius:14px;background:#15110e;color:#f5efe3;font:inherit;text-align:left;cursor:pointer}
+.btn{display:block;width:100%;margin:.55rem 0 0;padding:.75rem 1rem;border-radius:999px;border:1px solid #3d342a;background:transparent;color:#e8dfd0;font:inherit;cursor:pointer}
+.btn.gold{background:#b89a6a;color:#1a1510;border:0;font-weight:700}
+.foto{width:100%;max-height:42dvh;object-fit:cover;display:block;margin:0 0 .5rem}
+.intro{font-size:.95rem;line-height:1.45;text-align:justify;color:#cbbba8}
+.traits{text-align:center;color:#c9a84c;font-size:.88rem}
+.eyebrow{text-align:center;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:#c9a84c}
+.alt{display:grid;gap:.35rem;margin:0 0 .65rem;padding:0;border:1px solid #3d342a;border-radius:12px;overflow:hidden;background:#15110e;color:#e8dfd0;text-align:left;font:inherit;cursor:pointer}
+.alt img{width:100%;height:7.5rem;object-fit:cover}
+.alt strong,.alt span{padding:0 .7rem}
+.alt span{display:block;padding-bottom:.75rem;font-size:.82rem;color:#cbbba8}
+.banner{margin:0 0 1rem;padding:.55rem .7rem;background:color-mix(in srgb,#c9a84c 16%,#1c1712);border:1px solid #3d342a;color:#e8dfd0;font-size:.82rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const DATA = {"texts":{"quiz.q1.text":"Co od apartmánu potřebujete hned po příjezdu?","quiz.q1.a":"Zavřít za sebou dveře a mít ticho jen pro sebe.","quiz.q1.b":"Poznat, že jsem si dopřál něco kvalitního.","quiz.q1.c":"Vydechnout a srovnat se po cestě.","quiz.q1.d":"Vejít dovnitř a být něčím překvapen.","quiz.q1.e":"Hned cítit atmosféru místa.","quiz.q2.text":"Máte před sebou volný den bez povinností. Co vás láká nejvíc?","quiz.q2.a":"Vyrazit za kulturou a objevovat zajímavá místa ve městě.","quiz.q2.b":"Dát si pomalé ráno, projít se a nechat den lehce plynout.","quiz.q2.c":"Udělat něco spontánního a vyrazit, kam mě to zrovna táhne.","quiz.q2.d":"Dopřát si dobré jídlo, příjemnou kavárnu a trochu se rozmazlit.","quiz.q2.e":"Zůstat v soukromí, daleko od ruchu města.","quiz.q3.text":"Když vstoupíte do místnosti, čeho si všimnete jako prvního?","quiz.q3.a":"Odvážného kontrastu a neobvyklých detailů.","quiz.q3.b":"Teplých materiálů a pečlivého zpracování.","quiz.q3.c":"Obrazů na stěnách a práce se světlem.","quiz.q3.d":"Tlumených barev a zákoutí, kde se dá schovat.","quiz.q3.e":"Otevřeného prostoru, světlých ploch a ničeho navíc.","quiz.q4.text":"Když se plán na poslední chvíli změní, co je vám nejbližší?","quiz.q4.a":"Beru to jako příležitost zkusit něco, co jsem neplánoval.","quiz.q4.b":"Poohlédnu se po náhradě, která bude stát za to.","quiz.q4.c":"Nejraději se vrátím k něčemu známému a vlastnímu.","quiz.q4.d":"Najdu si náhradní program, třeba koncert nebo výstavu.","quiz.q4.e":"Nevadí mi to, na změny si snadno zvyknu.","quiz.q5.text":"Když se večer vrátíte, co od prostoru potřebujete?","quiz.q5.a":"Aby se v něm chtělo ještě chvíli posedět.","quiz.q5.b":"Aby v něm bylo útulno a mohl jsem úplně vypnout.","quiz.q5.c":"Abych se v něm cítil volně a nic mě neomezovalo.","quiz.q5.d":"Aby mi dodal energii a měl charakter.","quiz.q5.e":"Aby působil teple a pohodlně.","quiz.q6.text":"Až budete odjíždět, za co si chcete pobyt pamatovat?","quiz.q6.a":"Že jsem měl místo, kde mě nikdo nerušil.","quiz.q6.b":"Že měl apartmán výrazný styl.","quiz.q6.c":"Že jsem si opravdu odpočinul a načerpal síly.","quiz.q6.d":"Že to bylo znatelně lepší než běžné ubytování.","quiz.q6.e":"Že to bylo originální a jiné než jinde.","quiz.tie.v1v2.text":"Po náročném týdnu máte večer jen pro sebe. Co vám udělá větší radost?","quiz.tie.v1v2.a":"Klidný večer bez velkého programu, kdy můžu jednoduše vypnout.","quiz.tie.v1v2.b":"Dobré jídlo, příjemné místo a pocit, že jsem si něco dopřál.","quiz.tie.v1v3.text":"Když si chcete opravdu pročistit hlavu, co vám zní přirozeněji?","quiz.tie.v1v3.a":"Klidná procházka nebo pomalé ráno, bez potřeby někam spěchat.","quiz.tie.v1v3.b":"Něco, co mě inspiruje — výstava, hudba, zajímavé místo nebo večerní město.","quiz.tie.v1v4.text":"Dostanete nečekaně několik volných hodin. Co je vám bližší?","quiz.tie.v1v4.a":"Užít si je v klidu a bez velkých plánů.","quiz.tie.v1v4.b":"Chytit šanci a udělat něco, na co bych jinak nepřišel.","quiz.tie.v1v5.text":"Když potřebujete opravdu dobít energii, co vám pomáhá víc?","quiz.tie.v1v5.a":"Trochu se rozhýbat, nadechnout se a nechat hlavu pročistit.","quiz.tie.v1v5.b":"Stáhnout se od všeho kolem a dopřát si klid bez dalších podnětů.","quiz.tie.v2v3.text":"Máte si vybrat jeden výjimečný večer. Co by vás lákalo víc?","quiz.tie.v2v3.a":"Skvělé jídlo, příjemný servis a pocit, že všechno do sebe zapadá.","quiz.tie.v2v3.b":"Místo s výraznou atmosférou, které má svůj příběh a náladu.","quiz.tie.v2v4.text":"Když si chcete udělat radost něčím výjimečným, co vás přitahuje víc?","quiz.tie.v2v4.a":"Kvalita a pohodlí, u kterých je cítit, že jsou promyšlené do detailu.","quiz.tie.v2v4.b":"Něco nečekaného a originálního, co mě opravdu překvapí.","quiz.tie.v2v5.text":"Když máte konečně čas jen pro sebe, co si raději dopřejete?","quiz.tie.v2v5.a":"Něco dobrého, pohodlí a malý pocit odměny.","quiz.tie.v2v5.b":"Ticho, soukromí a možnost na chvíli úplně vypnout okolní svět.","quiz.tie.v3v4.text":"Co vás při objevování nového místa baví víc?","quiz.tie.v3v4.a":"Všímat si detailů a nechat na sebe místo působit.","quiz.tie.v3v4.b":"Narazit na něco nečekaného, výrazného a úplně jiného.","quiz.tie.v3v5.text":"Jak byste nejraději zakončili den v cizím městě?","quiz.tie.v3v5.a":"Ještě vyjít ven, nasát večerní město a nechat den doznět.","quiz.tie.v3v5.b":"Vrátit se do svého klidu a mít večer bez dalších podnětů.","quiz.tie.v4v5.text":"Najednou máte celý večer volný. Co vám zní lákavěji?","quiz.tie.v4v5.a":"Vymyslet něco na poslední chvíli a ještě někam vyrazit.","quiz.tie.v4v5.b":"Využít toho a udělat si klidný večer jen podle sebe.","quiz.result.v1.headline":"Vaše nejsilnější shoda je Jemná harmonie.","quiz.result.v1.body":"Pravděpodobně vám vyhovují místa, která nechávají člověka vydechnout. Nepotřebujete, aby prostor neustále přitahoval pozornost — důležitější je lehkost, klid a pocit, že se v něm můžete rychle uvolnit.","quiz.result.v1.traits":"Klid · lehkost · harmonie · nerušivost","quiz.result.v2.headline":"Vaše nejsilnější shoda je Zlatá rovnováha.","quiz.result.v2.body":"Máte blízko k pohodlí a kvalitě, ale nemusíte kolem sebe mít okázalost. Oceňujete příjemné detaily, teplo a pocit, že jste si během pobytu dopřáli něco trochu navíc.","quiz.result.v2.traits":"Teplo · elegance · komfort · kultivovanost","quiz.result.v3.headline":"Vaše nejsilnější shoda je Večerní elegance.","quiz.result.v3.body":"Prostor pro vás není jen kulisa. Vnímáte atmosféru, světlo, detaily a náladu místa. Pravděpodobně vás baví prostředí, které se během dne mění a večer získává úplně jiný charakter.","quiz.result.v3.traits":"Atmosféra · hloubka · světlo · kreativita","quiz.result.v4.headline":"Vaše nejsilnější shoda je Ušlechtilý kontrast.","quiz.result.v4.body":"Máte blízko k věcem, které nejsou úplně předvídatelné. Originalita, kontrast a výraznější charakter vás spíš přitahují než ruší. Když už někam jedete, nevadí vám, když je i samotné místo součástí zážitku.","quiz.result.v4.traits":"Originalita · energie · kontrast · překvapení","quiz.result.v5.headline":"Vaše nejsilnější shoda je Pohodlí v tlumených tónech.","quiz.result.v5.body":"Pravděpodobně oceníte prostředí, ve kterém můžete na chvíli vypnout okolní svět. Je vám blízký klid, útulnost a trochu intimnější pocit vlastního zázemí.","quiz.result.v5.traits":"Útulnost · soukromí · ztišení · pohodlí","quiz.result.matchLabel":"Nejsilnější shoda","quiz.ui.back":"← Zpět","quiz.result.headline":"Vaše nejbližší atmosféra pobytu…","quiz.result.altsHeading":"Mohly by vám sedět také","quiz.result.cta.viewApartment":"Zobrazit apartmán","quiz.result.cta.reserve":"Rezervovat","quiz.result.cta.viewRecommended":"Zobrazit doporučený apartmán","quiz.result.cta.viewAll":"Prohlédnout všechny","quiz.ui.tieLabel":"Rozstřel"},"main":[{"id":"q1","options":[["A","v5","v2"],["B","v2","v1"],["C","v1","v5"],["D","v4","v3"],["E","v3","v4"]]},{"id":"q2","options":[["A","v3","v4"],["B","v1","v5"],["C","v4","v3"],["D","v2","v1"],["E","v5","v2"]]},{"id":"q3","options":[["A","v4","v3"],["B","v2","v1"],["C","v3","v4"],["D","v5","v2"],["E","v1","v5"]]},{"id":"q4","options":[["A","v4","v3"],["B","v2","v1"],["C","v5","v2"],["D","v3","v4"],["E","v1","v5"]]},{"id":"q5","options":[["A","v3","v4"],["B","v5","v2"],["C","v1","v5"],["D","v4","v3"],["E","v2","v1"]]},{"id":"q6","options":[["A","v5","v2"],["B","v3","v4"],["C","v1","v5"],["D","v2","v1"],["E","v4","v3"]]}],"ties":[["v1-v2","v1","v2"],["v1-v3","v1","v3"],["v1-v4","v1","v4"],["v1-v5","v1","v5"],["v2-v3","v2","v3"],["v2-v4","v2","v4"],["v2-v5","v2","v5"],["v3-v4","v3","v4"],["v3-v5","v3","v5"],["v4-v5","v4","v5"]],"covers":{"v1":"https://www.vivienapartments.cz/cs/images/apartments/pokoj4-5-600.webp","v2":"https://www.vivienapartments.cz/cs/images/apartments/pokoj3-600.webp","v3":"https://www.vivienapartments.cz/cs/images/apartments/pokoj2-600.webp","v4":"https://www.vivienapartments.cz/cs/images/apartments/pokoj4-600.webp","v5":"https://www.vivienapartments.cz/cs/images/apartments/pokoj1-600.webp"},"names":{"v1":"Jemná harmonie","v2":"Zlatá rovnováha","v3":"Večerní elegance","v4":"Ušlechtilý kontrast","v5":"Pohodlí v tlumených tónech"}};
+const TIE_BOOST = 5;
+let mainAnswers = [];
+let tieBoosts = [];
+
+function empty(){return {v1:0,v2:0,v3:0,v4:0,v5:0};}
+function apply(i,key,s,hits){
+  const q=DATA.main[i];
+  const opt=q.options.find(o=>o[0]===key);
+  if(!opt)return;
+  s[opt[1]]+=2; hits[opt[1]]+=1; s[opt[2]]+=1;
+}
+function compute(){
+  const s=empty(), hits=empty();
+  mainAnswers.forEach((k,i)=>apply(i,k,s,hits));
+  tieBoosts.forEach(id=>{s[id]+=TIE_BOOST;});
+  return {s,hits};
+}
+function rank(s,hits){
+  return Object.keys(s).sort((a,b)=>{
+    if(s[b]!==s[a])return s[b]-s[a];
+    if(hits[b]!==hits[a])return hits[b]-hits[a];
+    return a.localeCompare(b);
+  });
+}
+function pairKey(a,b){return [a,b].sort().join('-');}
+function needsTie(s,hits){const r=rank(s,hits);return s[r[0]]===s[r[1]];}
+function tieQ(a,b){return DATA.ties.find(t=>t[0]===pairKey(a,b));}
+function tx(k){return DATA.texts[k]||k;}
+function render(){
+  const app=document.getElementById('app');
+  const {s,hits}=compute();
+  const ranked=rank(s,hits);
+  const mainDone=mainAnswers.length>=6;
+  const tieActive=mainDone && tieBoosts.length<1 && needsTie(s,hits);
+  const showResult=mainDone && !tieActive;
+  let html='<p class="banner">Náhled průvodce „Pomozte mi vybrat“ (Discover 1:1, čeština)</p>';
+  if(showResult){
+    const p=ranked[0], a1=ranked[1], a2=ranked[2];
+    html+=`<p class="eyebrow">${tx('quiz.result.matchLabel')}</p>
+      <img class="foto" src="${DATA.covers[p]}" alt=""/>
+      <h1 style="font-style:normal">${DATA.names[p]}</h1>
+      <p class="intro">${tx('quiz.result.'+p+'.body')}</p>
+      <p class="traits">${tx('quiz.result.'+p+'.traits')}</p>
+      <button class="btn gold" type="button" onclick="alert('V ostré poptávce: předvybraný '+DATA.names[p]+' → kontakt')">Pokračovat s tímto apartmánem</button>
+      <h2 style="text-align:center;font-family:Georgia,serif;font-size:1.15rem">${tx('quiz.result.altsHeading')}</h2>`;
+    for(const id of [a1,a2]){
+      html+=`<button class="alt" type="button" onclick="alert('V ostré poptávce: '+DATA.names[id]+' → kontakt')">
+        <img src="${DATA.covers[id]}" alt=""/><strong>${DATA.names[id]}</strong>
+        <span>${tx('quiz.result.'+id+'.body')}</span></button>`;
+    }
+    html+=`<button class="btn" type="button" onclick="mainAnswers=[];tieBoosts=[];render()">Zkusit znovu</button>`;
+  } else if(tieActive){
+    const tq=tieQ(ranked[0],ranked[1]);
+    const compact=tq[0].replace('-','');
+    html+=`<div class="bar"><i style="width:100%"></i></div>
+      <p class="counter">${tx('quiz.ui.tieLabel')}</p>
+      <h1>${tx('quiz.tie.'+compact+'.text')}</h1>
+      <button class="opt" type="button" onclick="answerTie('A')">${tx('quiz.tie.'+compact+'.a')}</button>
+      <button class="opt" type="button" onclick="answerTie('B')">${tx('quiz.tie.'+compact+'.b')}</button>
+      <button class="btn" type="button" onclick="goBack()">${tx('quiz.ui.back')}</button>`;
+  } else {
+    const i=mainAnswers.length;
+    const q=DATA.main[i];
+    const pct=Math.round(((i+1)/6)*100);
+    html+=`<div class="bar"><i style="width:${pct}%"></i></div>
+      <p class="counter">${i+1} / 6</p>
+      <h1>${tx('quiz.'+q.id+'.text')}</h1>`;
+    for(const [key] of q.options){
+      html+=`<button class="opt" type="button" onclick="answerMain('${key}')">${tx('quiz.'+q.id+'.'+key.toLowerCase())}</button>`;
+    }
+    if(i>0) html+=`<button class="btn" type="button" onclick="goBack()">${tx('quiz.ui.back')}</button>`;
+  }
+  app.innerHTML=html;
+}
+function answerMain(k){mainAnswers=[...mainAnswers,k];render();}
+function answerTie(k){
+  const {s,hits}=compute();
+  const ranked=rank(s,hits);
+  const tq=tieQ(ranked[0],ranked[1]);
+  const boost=k==='A'?tq[1]:tq[2];
+  tieBoosts=[...tieBoosts,boost];
+  render();
+}
+function goBack(){
+  if(tieBoosts.length){tieBoosts=tieBoosts.slice(0,-1);}
+  else if(mainAnswers.length){mainAnswers=mainAnswers.slice(0,-1);}
+  render();
+}
+render();
+</script>
+</body>
+</html>

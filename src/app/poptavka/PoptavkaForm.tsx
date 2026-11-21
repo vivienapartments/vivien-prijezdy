@@ -10,6 +10,7 @@ import {
   POPTAVKA_TEL_ZALOHA,
   sestavZpravuPoptavky,
   ymdDnesPraha,
+  type PoptavkaKanal,
   type PoptavkaZdroj,
 } from '@/lib/poptavka';
 import {
@@ -23,8 +24,18 @@ import {
   webLangKod,
 } from '@/lib/poptavka-apartmany';
 import { formatDatumPoptavky, poptavkaTexty } from '@/lib/poptavka-texty';
-import { pruvodceOtazky, vyhodnotPruvodce } from '@/lib/poptavka-pruvodce';
+import {
+  odpovedHlavni,
+  odpovedRozstrel,
+  prazdnyPruvodceStav,
+  pruvodceText,
+  pruvodceZpet,
+  type PruvodceStav,
+  type QuizAnswerKey,
+  type TieAnswerKey,
+} from '@/lib/poptavka-pruvodce';
 import type { AptId, GuideLang } from '@/lib/types';
+import { TerminPole } from './TerminKalendar';
 import './poptavka.scss';
 
 export type PoptavkaVstupni = {
@@ -65,13 +76,20 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [honeypot, setHoneypot] = useState('');
   const [galerie, setGalerie] = useState<GalerieStav>(null);
   const [cekam, setCekam] = useState(false);
-  const [hotovo, setHotovo] = useState(false);
+  const [hotovo, setHotovo] = useState(() => {
+    try {
+      if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('poptavka-diky') === '1') {
+        sessionStorage.removeItem('poptavka-diky');
+        return true;
+      }
+    } catch {
+      /* ignorovat */
+    }
+    return false;
+  });
   const [chyba, setChyba] = useState<string | null>(null);
-  const [pruvodceI, setPruvodceI] = useState(0);
-  const [pruvodceOdpovedi, setPruvodceOdpovedi] = useState<AptId[][]>([]);
-  const [pruvodceVysledek, setPruvodceVysledek] = useState<AptId | null>(null);
+  const [pruvodce, setPruvodce] = useState<PruvodceStav>(() => prazdnyPruvodceStav(props.lang));
 
-  const otazkyPruvodce = useMemo(() => pruvodceOtazky(props.lang), [props.lang]);
   const libovolny = zpusob === 'doporucit';
   const dopravaOdeslat = vernost ? null : doprava || null;
 
@@ -129,10 +147,10 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     setApts((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
-  async function odeslat() {
+  async function odeslat(kanal: PoptavkaKanal = 'formular') {
     setChyba(null);
     if (!overTermin()) return;
-    if (zpusob === 'vybrat' && !apts.length) {
+    if ((zpusob === 'vybrat' || zpusob === 'pruvodce') && !apts.length && !libovolny) {
       setChyba(t.chybaApartman);
       return;
     }
@@ -141,6 +159,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       return;
     }
     setCekam(true);
+    let ulozOk = false;
     try {
       const res = await fetch('/api/poptavka', {
         method: 'POST',
@@ -159,23 +178,54 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           poznamka,
           lang: props.lang,
           honeypot,
+          kanal,
           zkouska: suchyBeh || undefined,
         }),
       });
       const json = (await res.json()) as { ok?: boolean; duvod?: string };
-      if (!json.ok) {
+      ulozOk = Boolean(json.ok);
+      if (!json.ok && kanal === 'formular') {
         if (json.duvod === 'blok') setChyba(t.chybaBlok);
         else if (json.duvod === 'termin') setChyba(t.chybaTermin);
         else if (json.duvod === 'kontakt') setChyba(t.chybaKontakt);
         else setChyba(t.chybaObecna);
         return;
       }
-      setHotovo(true);
     } catch {
-      setChyba(t.chybaObecna);
+      if (kanal === 'formular') {
+        setChyba(t.chybaObecna);
+        return;
+      }
     } finally {
       setCekam(false);
     }
+
+    if (kanal === 'whatsapp' || kanal === 'sms') {
+      const cil = kanal === 'whatsapp' ? wa : sms;
+      try {
+        sessionStorage.setItem('poptavka-diky', '1');
+      } catch {
+        /* ignorovat */
+      }
+      setHotovo(true);
+      try {
+        window.location.href = cil;
+      } catch {
+        /* ignorovat */
+      }
+      return;
+    }
+
+    if (ulozOk) setHotovo(true);
+  }
+
+  function resetPruvodce() {
+    setPruvodce(prazdnyPruvodceStav(props.lang));
+  }
+
+  function pokracujSApartmanem(id: AptId) {
+    setApts([id]);
+    setKrok('kontakt');
   }
 
   const telNikol = POPTAVKA_TEL_HOVOR.replace(/ /g, '\u00a0');
@@ -307,26 +357,25 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               <section>
                 {!vernost ? <h2 className="pp__krok">{t.krokTermin}</h2> : null}
                 <div className="pp__termin">
-                  <label>
-                    {t.prijezd}
-                    <input
-                      type="date"
-                      min={dnes}
-                      value={prijezd}
-                      onChange={(e) => setPrijezd(e.target.value)}
-                      required
-                    />
-                  </label>
-                  <label>
-                    {t.odjezd}
-                    <input
-                      type="date"
-                      min={prijezd || dnes}
-                      value={odjezd}
-                      onChange={(e) => setOdjezd(e.target.value)}
-                      required
-                    />
-                  </label>
+                  <TerminPole
+                    label={t.prijezd}
+                    value={prijezd}
+                    min={dnes}
+                    lang={props.lang}
+                    zavritLabel={t.zpet}
+                    onChange={(ymd) => {
+                      setPrijezd(ymd);
+                      if (odjezd && odjezd <= ymd) setOdjezd('');
+                    }}
+                  />
+                  <TerminPole
+                    label={t.odjezd}
+                    value={odjezd}
+                    min={prijezd || dnes}
+                    lang={props.lang}
+                    zavritLabel={t.zpet}
+                    onChange={setOdjezd}
+                  />
                 </div>
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
                 <button
@@ -381,9 +430,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       className={`pp__volba pp__volba--ikona${zpusob === 'pruvodce' ? ' is-on' : ''}`}
                       onClick={() => {
                         setZpusob('pruvodce');
-                        setPruvodceI(0);
-                        setPruvodceOdpovedi([]);
-                        setPruvodceVysledek(null);
+                        resetPruvodce();
                         setApts([]);
                         setKrok('pruvodce');
                       }}
@@ -430,68 +477,145 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             ) : null}
 
             {krok === 'pruvodce' ? (
-              <section>
-                {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
-                <h1 className="pp__nadpis-krok">{t.nadpisPruvodce}</h1>
-                {pruvodceVysledek ? (
+              <section
+                className="pp__pruvodce"
+                style={{ ['--leading-room-color' as string]: pruvodce.leadingAccent }}
+              >
+                {pruvodce.phase === 'result' && pruvodce.result ? (
                   <>
-                    <p className="pp__cena" style={{ textAlign: 'center' }}>
-                      {nazevApt(pruvodceVysledek)}
+                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                    <p className="pp__pruvodce-eyebrow">
+                      {pruvodceText(props.lang, 'quiz.result.matchLabel')}
                     </p>
-                    <button
-                      type="button"
-                      className="pp__btn pp__btn--hlavni"
-                      onClick={() => {
-                        setApts([pruvodceVysledek]);
-                        setKrok('kontakt');
-                      }}
-                    >
-                      {t.pruvodceVybrat}
+                    {(() => {
+                      const primary = POPTAVKA_APARTMANY.find((x) => x.id === pruvodce.result!.primary);
+                      const profil = pruvodce.result!.profiles[pruvodce.result!.primary];
+                      return (
+                        <article className="pp__pruvodce-primary">
+                          {primary ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              className="pp__pruvodce-foto"
+                              src={coverUrl(webLang, primary)}
+                              alt=""
+                              width={800}
+                              height={520}
+                            />
+                          ) : null}
+                          <h1 className="pp__nadpis-krok">{nazevApt(pruvodce.result!.primary)}</h1>
+                          <p className="pp__pruvodce-intro">{profil.body}</p>
+                          <p className="pp__pruvodce-traits">{profil.traits}</p>
+                          <button
+                            type="button"
+                            className="pp__btn pp__btn--hlavni"
+                            onClick={() => pokracujSApartmanem(pruvodce.result!.primary)}
+                          >
+                            {t.pruvodceVybrat}
+                          </button>
+                        </article>
+                      );
+                    })()}
+                    <h2 className="pp__pruvodce-alts-nadpis">
+                      {pruvodceText(props.lang, 'quiz.result.altsHeading')}
+                    </h2>
+                    <div className="pp__pruvodce-alts">
+                      {pruvodce.result.alternatives.map((id) => {
+                        const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
+                        const profil = pruvodce.result!.profiles[id];
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className="pp__pruvodce-alt"
+                            onClick={() => pokracujSApartmanem(id)}
+                          >
+                            {a ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
+                            ) : null}
+                            <strong>{nazevApt(id)}</strong>
+                            <span>{profil.body}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button type="button" className="pp__btn pp__btn--sms" onClick={resetPruvodce}>
+                      {t.pruvodceZnovu}
                     </button>
                     <button
                       type="button"
                       className="pp__btn pp__btn--sms"
-                      onClick={() => {
-                        setPruvodceI(0);
-                        setPruvodceOdpovedi([]);
-                        setPruvodceVysledek(null);
-                      }}
+                      onClick={() => setKrok('zpusob')}
                     >
-                      {t.pruvodceZnovu}
+                      {t.zpet}
                     </button>
                   </>
                 ) : (
                   <>
-                    <p className="pp__maly-radek">
-                      {pruvodceI + 1} / {otazkyPruvodce.length}
-                    </p>
-                    <p className="pp__cena" style={{ textAlign: 'center' }}>
-                      {otazkyPruvodce[pruvodceI]?.otazka}
-                    </p>
-                    {otazkyPruvodce[pruvodceI]?.volby.map((v) => (
+                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                    <div className="pp__pruvodce-progress" aria-hidden="true">
+                      <div
+                        className="pp__pruvodce-progress-fill"
+                        style={{ width: `${pruvodce.progressPercent}%` }}
+                      />
+                    </div>
+                    <p className="pp__pruvodce-counter">{pruvodce.questionCounter}</p>
+                    <h1 className="pp__pruvodce-otazka">{pruvodce.question?.text}</h1>
+                    <div className="pp__pruvodce-volby">
+                      {pruvodce.question?.options.map((o) => (
+                        <button
+                          key={o.key}
+                          type="button"
+                          className="pp__volba"
+                          onClick={() => {
+                            if (pruvodce.phase === 'tie') {
+                              setPruvodce(
+                                odpovedRozstrel(
+                                  props.lang,
+                                  pruvodce.mainAnswers,
+                                  pruvodce.tieBoosts,
+                                  o.key as TieAnswerKey,
+                                ),
+                              );
+                            } else {
+                              setPruvodce(
+                                odpovedHlavni(
+                                  props.lang,
+                                  pruvodce.mainAnswers,
+                                  pruvodce.tieBoosts,
+                                  o.key as QuizAnswerKey,
+                                ),
+                              );
+                            }
+                          }}
+                        >
+                          <strong>{o.text}</strong>
+                        </button>
+                      ))}
+                    </div>
+                    {pruvodce.mainAnswers.length > 0 || pruvodce.tieBoosts.length > 0 ? (
                       <button
-                        key={v.text}
                         type="button"
-                        className="pp__volba"
-                        onClick={() => {
-                          const dalsi = [...pruvodceOdpovedi, v.body];
-                          if (pruvodceI + 1 >= otazkyPruvodce.length) {
-                            setPruvodceOdpovedi(dalsi);
-                            setPruvodceVysledek(vyhodnotPruvodce(dalsi));
-                          } else {
-                            setPruvodceOdpovedi(dalsi);
-                            setPruvodceI((i) => i + 1);
-                          }
-                        }}
+                        className="pp__btn pp__btn--sms"
+                        onClick={() =>
+                          setPruvodce(
+                            pruvodceZpet(props.lang, pruvodce.mainAnswers, pruvodce.tieBoosts),
+                          )
+                        }
                       >
-                        <strong>{v.text}</strong>
+                        {pruvodceText(props.lang, 'quiz.ui.back')}
                       </button>
-                    ))}
+                    ) : (
+                      <button
+                        type="button"
+                        className="pp__btn pp__btn--sms"
+                        onClick={() => setKrok('zpusob')}
+                      >
+                        {t.zpet}
+                      </button>
+                    )}
                   </>
                 )}
-                <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
-                  {t.zpet}
-                </button>
               </section>
             ) : null}
 
@@ -645,16 +769,26 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     type="button"
                     className="pp__btn pp__btn--hlavni"
                     disabled={cekam}
-                    onClick={() => void odeslat()}
+                    onClick={() => void odeslat('formular')}
                   >
                     {t.odeslat}
                   </button>
-                  <a className="pp__btn pp__btn--wa" href={wa} target="_blank" rel="noopener noreferrer">
+                  <button
+                    type="button"
+                    className="pp__btn pp__btn--wa pp__btn--vedlejsi"
+                    disabled={cekam}
+                    onClick={() => void odeslat('whatsapp')}
+                  >
                     {t.whatsapp}
-                  </a>
-                  <a className="pp__btn pp__btn--sms pp__sms-only" href={sms}>
+                  </button>
+                  <button
+                    type="button"
+                    className="pp__btn pp__btn--sms pp__btn--vedlejsi pp__sms-only"
+                    disabled={cekam}
+                    onClick={() => void odeslat('sms')}
+                  >
                     {t.sms}
-                  </a>
+                  </button>
                   <button
                     type="button"
                     className="pp__btn pp__btn--sms"

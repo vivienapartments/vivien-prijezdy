@@ -42,6 +42,7 @@ export async function POST(req: Request) {
     lang?: string;
     honeypot?: string;
     zkouska?: boolean | string;
+    kanal?: string;
   } = {};
   try {
     body = (await req.json()) as typeof body;
@@ -120,6 +121,11 @@ export async function POST(req: Request) {
       ? body.doprava
       : null;
 
+  const kanal =
+    body.kanal === 'whatsapp' || body.kanal === 'sms' || body.kanal === 'formular'
+      ? body.kanal
+      : 'formular';
+
   const zaznam: PoptavkaZaznam = {
     id: novyIdPoptavky(),
     cas: new Date().toISOString(),
@@ -137,6 +143,7 @@ export async function POST(req: Request) {
     doprava,
     poznamka: (body.poznamka || '').trim().slice(0, 500),
     jazyk: lang,
+    kanal,
     stav: 'nova',
   };
 

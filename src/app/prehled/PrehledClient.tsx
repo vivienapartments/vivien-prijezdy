@@ -445,6 +445,7 @@ export function PrehledClient({
   const [potvrzeniRozbal, setPotvrzeniRozbal] = useState<Record<string, boolean>>({});
   const [otevreno, setOtevreno] = useState<string | null>(null);
   const [hlaska, setHlaska] = useState('');
+  const [nacitamSchranku, setNacitamSchranku] = useState(false);
   const [cekam, setCekam] = useState<string | null>(null);
   const [oknoHotovo, setOknoHotovo] = useState<Record<string, true>>({});
   /** Text odmítnutí pozdního příjezdu (vlastní zpráva hostiteli). */
@@ -2533,6 +2534,31 @@ export function PrehledClient({
           : r,
       ),
     );
+  }
+
+  async function nactiSchrankuTed() {
+    if (ukazka || nacitamSchranku) return;
+    setNacitamSchranku(true);
+    setHlaska('Čtu schránku…');
+    try {
+      const res = await fetch('/api/prehled/nacti-schranku', { method: 'POST' });
+      const json = (await res.json().catch(() => null)) as
+        | { ok?: boolean; error?: string; scanned?: number; sent?: number; errors?: number }
+        | null;
+      if (!res.ok || !json?.ok) {
+        setHlaska(json?.error || 'Schránku se nepodařilo načíst.');
+        return;
+      }
+      const casti = [`Hotovo. Nových mailů: ${json.scanned ?? 0}`];
+      if (json.sent) casti.push(`odesláno ${json.sent}`);
+      if (json.errors) casti.push(`chyb ${json.errors}`);
+      setHlaska(casti.join(' · '));
+      router.refresh();
+    } catch {
+      setHlaska('Schránku se nepodařilo načíst.');
+    } finally {
+      setNacitamSchranku(false);
+    }
   }
 
   async function oznacPohodu(row: PrehledRadek) {
@@ -5833,6 +5859,19 @@ export function PrehledClient({
         ) : null}
       </header>
       {automatVarovani ? <p className="ph-automat">{automatVarovani}</p> : null}
+      {!ukazka ? (
+        <div className="ph-schranka-ted">
+          <button
+            type="button"
+            className="ph-schranka-ted__btn"
+            disabled={nacitamSchranku}
+            onClick={() => void nactiSchrankuTed()}
+          >
+            {nacitamSchranku ? 'Čtu schránku…' : 'Načíst schránku teď'}
+          </button>
+          <p className="ph-schranka-ted__hint">Když přijde e-mail z hotelu, klepněte sem. Nemusíte čekat na automat.</p>
+        </div>
+      ) : null}
       {pohledDomu ? (
         <PraniRamecekDomu
           radky={praniRadky}
