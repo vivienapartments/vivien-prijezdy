@@ -180,6 +180,7 @@ export const plochaOverlayKrok: LText = {
   pt: 'Uma mensagem nossa',
 };
 
+/** Starší návod Safari. U poptávky na iPhonu používáme plochaIosNedostupne*. */
 export const plochaNavodIosNadpis: LText = {
   cs: 'Na iPhonu to jde takhle',
   en: 'On iPhone it works like this',
@@ -197,8 +198,8 @@ export const plochaNavodIosNadpis: LText = {
 };
 
 export const plochaNavodIosKroky: LText = {
-  cs: '1. Klepněte na Sdílet (čtverec se šipkou nahoru).\n2. Zvolte Na plochu.\n3. Potvrďte Přidat.',
-  en: '1. Tap Share (the square with the arrow up).\n2. Choose Add to Home Screen.\n3. Confirm Add.',
+  cs: '1. Dole v Safari klepněte na Sdílet (čtverec se šipkou nahoru uprostřed lišty).\n2. V nabídce posouvejte dolů. Hledejte „Na plochu“ nebo „Přidat na plochu“.\n3. Klepněte na to a potvrďte Přidat.\nKdyž Sdílet nevidíte, nejste v Safari. V Telegramu klepněte … a Otevřít v Safari.',
+  en: '1. At the bottom of Safari, tap Share (square with the arrow up in the middle of the bar).\n2. Scroll down in the sheet. Look for Add to Home Screen.\n3. Tap it and confirm Add.\nIf you do not see Share, you are not in Safari. In Telegram tap … and Open in Safari.',
   de: '1. Tippen Sie auf Teilen (Quadrat mit Pfeil nach oben).\n2. Wählen Sie Zum Home-Bildschirm.\n3. Bestätigen Sie Hinzufügen.',
   pl: '1. Dotknijcie Udostępnij (kwadrat ze strzałką w górę).\n2. Wybierzcie Na ekran początkowy.\n3. Potwierdźcie Dodaj.',
   uk: '1. Натисніть Поділитися (квадрат зі стрілкою вгору).\n2. Оберіть На початковий екран.\n3. Підтвердіть Додати.',
@@ -210,6 +211,39 @@ export const plochaNavodIosKroky: LText = {
   fr: '1. Touchez Partager (le carré avec la flèche vers le haut).\n2. Choisissez Sur l’écran d’accueil.\n3. Confirmez Ajouter.',
   it: '1. Toccate Condividi (il quadrato con la freccia in su).\n2. Scegliete Aggiungi a Home.\n3. Confermate Aggiungi.',
   pt: '1. Toquem em Partilhar (o quadrado com a seta para cima).\n2. Escolham Adicionar ao ecrã principal.\n3. Confirmem Adicionar.',
+};
+
+/** iPhone: přidání na plochu z odkazu ve zprávě nejde spolehlivě. */
+export const plochaIosNedostupneNadpis: LText = {
+  cs: 'Na iPhonu to teď nejde',
+  en: 'Not available on iPhone right now',
+  de: 'Am iPhone geht das jetzt nicht',
+  pl: 'Na iPhonie to teraz nie działa',
+  uk: 'На iPhone це зараз недоступно',
+  'zh-Hant': '目前 iPhone 無法使用',
+  sv: 'Går inte på iPhone just nu',
+  es: 'En iPhone no está disponible ahora',
+  hu: 'iPhone-on ez most nem elérhető',
+  da: 'Virker ikke på iPhone lige nu',
+  fr: 'Indisponible sur iPhone pour le moment',
+  it: 'Su iPhone non è disponibile ora',
+  pt: 'No iPhone não está disponível agora',
+};
+
+export const plochaIosNedostupneText: LText = {
+  cs: 'Omlouváme se. Apple to z odkazu ve zprávě nebo v mailu nepovoluje. Na Androidu přidání na plochu funguje.',
+  en: 'We are sorry. Apple does not allow this from a link in a message or email. On Android, Add to Home Screen works.',
+  de: 'Es tut uns leid. Apple erlaubt das aus einem Link in einer Nachricht oder E-Mail nicht. Unter Android funktioniert Zum Startbildschirm.',
+  pl: 'Przepraszamy. Apple nie pozwala na to z linku w wiadomości lub mailu. Na Androidzie dodanie na ekran działa.',
+  uk: 'Вибачте. Apple не дозволяє це з посилання в повідомленні чи листі. На Android додавання на екран працює.',
+  'zh-Hant': '抱歉。Apple 不允許從訊息或郵件連結使用此功能。Android 可以加到主畫面。',
+  sv: 'Vi ber om ursäkt. Apple tillåter det inte från en länk i ett meddelande eller mejl. På Android fungerar Lägg till på hemskärmen.',
+  es: 'Lo sentimos. Apple no lo permite desde un enlace en un mensaje o correo. En Android, Añadir a pantalla de inicio funciona.',
+  hu: 'Elnézést. Az Apple üzenetben vagy e-mailben lévő linkről ezt nem engedi. Androidon a kezdőképernyőre helyezés működik.',
+  da: 'Vi beklager. Apple tillader det ikke fra et link i en besked eller mail. På Android virker Føj til hjemmeskærm.',
+  fr: 'Nous sommes désolés. Apple ne le permet pas depuis un lien dans un message ou un e-mail. Sous Android, Ajouter à l’écran d’accueil fonctionne.',
+  it: 'Ci dispiace. Apple non lo consente da un link in un messaggio o in una mail. Su Android, Aggiungi a Home funziona.',
+  pt: 'Pedimos desculpa. A Apple não permite isto a partir de uma ligação numa mensagem ou e-mail. No Android, Adicionar ao ecrã funciona.',
 };
 
 export const plochaNavodAndroidNadpis: LText = {

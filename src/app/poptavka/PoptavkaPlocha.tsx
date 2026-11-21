@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 import { jeIos, jeStandalone } from '@/lib/plocha';
 import {
+  plochaIosNedostupneNadpis,
+  plochaIosNedostupneText,
   plochaNavodAndroidKroky,
   plochaNavodAndroidNadpis,
-  plochaNavodIosKroky,
-  plochaNavodIosNadpis,
   plochaPridej,
   plochaZavrit,
 } from '@/lib/plocha-texty';
@@ -38,10 +38,11 @@ type Props = { lang: GuideLang };
 
 /**
  * Tlačítko Přidat na plochu u poptávky.
- * Android: beforeinstallprompt. iPhone: návod Sdílet → Na plochu.
+ * Android: beforeinstallprompt / návod. iPhone: omluva (Apple to z odkazu nepovoluje).
  */
 export function PoptavkaPlocha({ lang }: Props) {
   const [standalone, setStandalone] = useState(true);
+  const [ios, setIos] = useState(false);
   const [navod, setNavod] = useState(false);
   const [hotovo, setHotovo] = useState(false);
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
@@ -49,6 +50,7 @@ export function PoptavkaPlocha({ lang }: Props) {
 
   useEffect(() => {
     setStandalone(jeStandalone());
+    setIos(jeIos());
     if (jeStandalone()) return;
 
     const start =
@@ -128,6 +130,10 @@ export function PoptavkaPlocha({ lang }: Props) {
   }, []);
 
   async function naPridej() {
+    if (ios || jeIos()) {
+      setNavod(true);
+      return;
+    }
     const evt = deferred.current;
     if (evt) {
       try {
@@ -164,13 +170,19 @@ export function PoptavkaPlocha({ lang }: Props) {
                   {tt(plochaZavrit)}
                 </button>
               </>
+            ) : ios ? (
+              <>
+                <h2 className="pp__plocha-nadpis">{tt(plochaIosNedostupneNadpis)}</h2>
+                <p className="pp__plocha-text">{tt(plochaIosNedostupneText)}</p>
+                <button type="button" className="pp__btn pp__btn--hlavni" onClick={() => setNavod(false)}>
+                  {tt(plochaZavrit)}
+                </button>
+              </>
             ) : (
               <>
-                <h2 className="pp__plocha-nadpis">
-                  {tt(jeIos() ? plochaNavodIosNadpis : plochaNavodAndroidNadpis)}
-                </h2>
+                <h2 className="pp__plocha-nadpis">{tt(plochaNavodAndroidNadpis)}</h2>
                 <p className="pp__plocha-text">
-                  {tt(jeIos() ? plochaNavodIosKroky : plochaNavodAndroidKroky)
+                  {tt(plochaNavodAndroidKroky)
                     .split('\n')
                     .map((radek, i) => (
                       <span key={i} className="pp__plocha-radek">
