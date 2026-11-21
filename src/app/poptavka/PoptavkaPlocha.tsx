@@ -1,6 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { t } from '@/lib/i18n';
 import { jeIos, jeStandalone } from '@/lib/plocha';
 import {
@@ -34,19 +43,27 @@ const hotovoPoptavka: LText = {
   pt: 'Feito. O pedido fica no ecrã do telemóvel.',
 };
 
-type Props = { lang: GuideLang };
+type Ctx = {
+  standalone: boolean;
+  naPridej: () => void;
+  lang: GuideLang;
+};
+
+const PlochaCtx = createContext<Ctx | null>(null);
+
+type RootProps = { lang: GuideLang; children: ReactNode };
 
 /**
- * Tlačítko Přidat na plochu u poptávky.
- * Android: beforeinstallprompt / návod. iPhone: omluva (Apple to z odkazu nepovoluje).
+ * Jednou nastaví manifest. Tlačítko Přidat na plochu může být na začátku i dole.
+ * Android: instalace / návod. iPhone: omluva. Když nejde, host jde dál.
  */
-export function PoptavkaPlocha({ lang }: Props) {
+export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
   const [standalone, setStandalone] = useState(true);
   const [ios, setIos] = useState(false);
   const [navod, setNavod] = useState(false);
   const [hotovo, setHotovo] = useState(false);
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
-  const tt = (map: LText) => t(map, lang);
+  const tt = useCallback((map: LText) => t(map, lang), [lang]);
 
   useEffect(() => {
     setStandalone(jeStandalone());
@@ -129,37 +146,36 @@ export function PoptavkaPlocha({ lang }: Props) {
     };
   }, []);
 
-  async function naPridej() {
-    if (ios || jeIos()) {
-      setNavod(true);
-      return;
-    }
-    const evt = deferred.current;
-    if (evt) {
-      try {
-        await evt.prompt();
-        const volba = await evt.userChoice;
-        deferred.current = null;
-        if (volba.outcome === 'accepted') {
-          setNavod(false);
-          setHotovo(true);
-          return;
-        }
-      } catch {
-        /* systém */
+  const naPridej = useCallback(() => {
+    void (async () => {
+      if (ios || jeIos()) {
+        setNavod(true);
+        return;
       }
-    }
-    setNavod(true);
-  }
+      const evt = deferred.current;
+      if (evt) {
+        try {
+          await evt.prompt();
+          const volba = await evt.userChoice;
+          deferred.current = null;
+          if (volba.outcome === 'accepted') {
+            setNavod(false);
+            setHotovo(true);
+            return;
+          }
+        } catch {
+          /* systém */
+        }
+      }
+      setNavod(true);
+    })();
+  }, [ios]);
 
-  if (standalone) return null;
+  const ctx = useMemo(() => ({ standalone, naPridej, lang }), [standalone, naPridej, lang]);
 
   return (
-    <>
-      <button type="button" className="pp__btn pp__btn--sms pp__btn--mensi" onClick={() => void naPridej()}>
-        {tt(plochaPridej)}
-      </button>
-
+    <PlochaCtx.Provider value={ctx}>
+      {children}
       {navod || hotovo ? (
         <div className="pp__plocha-overlay" role="dialog" aria-modal="true">
           <div className="pp__plocha-karta">
@@ -198,6 +214,22 @@ export function PoptavkaPlocha({ lang }: Props) {
           </div>
         </div>
       ) : null}
-    </>
+    </PlochaCtx.Provider>
+  );
+}
+
+/** Tlačítko. Může být na začátku i dole. */
+export function PoptavkaPlochaTlacitko({ vyrazne = false }: { vyrazne?: boolean }) {
+  const ctx = useContext(PlochaCtx);
+  if (!ctx || ctx.standalone) return null;
+  const popisek = t(plochaPridej, ctx.lang);
+  return (
+    <button
+      type="button"
+      className={vyrazne ? 'pp__btn pp__btn--sms' : 'pp__btn pp__btn--sms pp__btn--mensi'}
+      onClick={ctx.naPridej}
+    >
+      {popisek}
+    </button>
   );
 }

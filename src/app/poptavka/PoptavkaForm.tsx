@@ -34,7 +34,7 @@ import {
   type TieAnswerKey,
 } from '@/lib/poptavka-pruvodce';
 import type { AptId, GuideLang } from '@/lib/types';
-import { PoptavkaPlocha } from './PoptavkaPlocha';
+import { PoptavkaPlochaRoot, PoptavkaPlochaTlacitko } from './PoptavkaPlocha';
 import './poptavka.scss';
 
 export type PoptavkaVstupni = {
@@ -311,6 +311,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   }
 
   return (
+    <PoptavkaPlochaRoot lang={props.lang}>
     <main className={`pp${vernost ? ' pp--vernost' : ''}${suchyBeh ? ' pp--zkouska' : ''}`} lang={props.lang}>
       <div className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}`}>
         {suchyBeh ? <span className="pp__zkouska-stitkek">zkouška</span> : null}
@@ -361,6 +362,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             {krok === 'termin' ? (
               <section>
                 {!vernost ? <h2 className="pp__krok">{t.krokTermin}</h2> : null}
+                <div className="pp__plocha-zacatek">
+                  <PoptavkaPlochaTlacitko vyrazne />
+                </div>
                 <div className="pp__termin">
                   <label>
                     {t.prijezd}
@@ -835,7 +839,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           </>
         )}
 
-        <PoptavkaPlocha lang={props.lang} />
+        <PoptavkaPlochaTlacitko />
 
         <div className="pp__kontakty">
           <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
@@ -904,5 +908,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         </div>
       ) : null}
     </main>
+    </PoptavkaPlochaRoot>
   );
 }
