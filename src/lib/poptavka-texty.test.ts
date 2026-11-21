@@ -43,6 +43,7 @@ const KLICE: (keyof PoptavkaTexty)[] = [
   'nevim',
   'poznamka',
   'odeslat',
+  'neboOdeslatPres',
   'whatsapp',
   'sms',
   'dekujeme',

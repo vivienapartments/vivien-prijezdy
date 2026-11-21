@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode, type FormEvent } from 'react';
 import { apartmany } from '@/lib/guide-data';
 import { toTelHref } from '@/lib/i18n';
 import {
@@ -739,8 +739,20 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 <label>
                   {t.poznamka}
                   <textarea
+                    className="pp__poznamka"
+                    rows={2}
                     value={poznamka}
-                    onChange={(e) => setPoznamka(e.target.value)}
+                    onChange={(e) => {
+                      setPoznamka(e.target.value);
+                      const el = e.currentTarget;
+                      el.style.height = 'auto';
+                      el.style.height = `${el.scrollHeight}px`;
+                    }}
+                    onInput={(e: FormEvent<HTMLTextAreaElement>) => {
+                      const el = e.currentTarget;
+                      el.style.height = 'auto';
+                      el.style.height = `${el.scrollHeight}px`;
+                    }}
                     maxLength={500}
                   />
                 </label>
@@ -763,22 +775,48 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   >
                     {t.odeslat}
                   </button>
-                  <button
-                    type="button"
-                    className="pp__btn pp__btn--wa"
-                    disabled={cekam}
-                    onClick={() => void odeslat('whatsapp')}
-                  >
-                    {t.whatsapp}
-                  </button>
-                  <button
-                    type="button"
-                    className="pp__btn pp__btn--sms pp__sms-only"
-                    disabled={cekam}
-                    onClick={() => void odeslat('sms')}
-                  >
-                    {t.sms}
-                  </button>
+                  {vernost ? (
+                    <>
+                      <p className="pp__nebo-pres">{t.neboOdeslatPres}</p>
+                      <div className="pp__odeslat-pres">
+                        <button
+                          type="button"
+                          className="pp__btn pp__btn--wa pp__btn--mensi"
+                          disabled={cekam}
+                          onClick={() => void odeslat('whatsapp')}
+                        >
+                          {t.whatsapp}
+                        </button>
+                        <button
+                          type="button"
+                          className="pp__btn pp__btn--sms pp__btn--mensi pp__sms-only"
+                          disabled={cekam}
+                          onClick={() => void odeslat('sms')}
+                        >
+                          {t.sms}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="pp__btn pp__btn--wa"
+                        disabled={cekam}
+                        onClick={() => void odeslat('whatsapp')}
+                      >
+                        {t.whatsapp}
+                      </button>
+                      <button
+                        type="button"
+                        className="pp__btn pp__btn--sms pp__sms-only"
+                        disabled={cekam}
+                        onClick={() => void odeslat('sms')}
+                      >
+                        {t.sms}
+                      </button>
+                    </>
+                  )}
                   <button
                     type="button"
                     className="pp__btn pp__btn--sms"
@@ -796,15 +834,16 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           </>
         )}
 
-        <a className="pp__tel" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
-          {t.zavolat} · <span>{telNikol}</span>
-        </a>
-        <p className="pp__zaloha">
-          {t.zaloha}{' '}
-          <a className="pp__tel" href={toTelHref(POPTAVKA_TEL_ZALOHA)} style={{ display: 'inline' }}>
-            <span>{telZaloha}</span>
+        <div className="pp__kontakty">
+          <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
+            <span className="pp__kontakt-popis">{t.zavolat}</span>
+            <span className="pp__kontakt-cislo">{telNikol}</span>
           </a>
-        </p>
+          <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_ZALOHA)}>
+            <span className="pp__kontakt-popis">{t.zaloha}</span>
+            <span className="pp__kontakt-cislo">{telZaloha}</span>
+          </a>
+        </div>
         </div>
       </div>
 

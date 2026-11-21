@@ -51,6 +51,8 @@ export type PoptavkaTexty = {
   nevim: string;
   poznamka: string;
   odeslat: string;
+  /** Řádek nad menšími tlačítky WA/SMS. Zatím cs + en, ostatní → en. */
+  neboOdeslatPres: string;
   whatsapp: string;
   sms: string;
   dekujeme: string;
@@ -113,8 +115,9 @@ const CS: PoptavkaTexty = {
   nevim: 'Zatím nevím',
   poznamka: 'Poznámka (volitelné)',
   odeslat: 'Odeslat poptávku',
-  whatsapp: 'Napsat na WhatsApp',
-  sms: 'Napsat SMS',
+  neboOdeslatPres: 'nebo odeslat přes',
+  whatsapp: 'WhatsApp',
+  sms: 'SMS',
   dekujeme: 'Děkujeme. Do hodiny se ozveme s cenou.',
   dekujemeSpecha: '',
   nadpisZpusob: '',
@@ -172,6 +175,7 @@ const EN: PoptavkaTexty = {
   nevim: 'Not sure yet',
   poznamka: 'Note (optional)',
   odeslat: 'Send request',
+  neboOdeslatPres: 'or send via',
   whatsapp: 'WhatsApp',
   sms: 'SMS',
   dekujeme: 'Thank you. We will reply within an hour with the price.',
