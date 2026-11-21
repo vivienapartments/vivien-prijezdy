@@ -290,6 +290,50 @@
   white-space: nowrap;
 }
 
+.pp__plocha-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(8, 6, 4, 0.88);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.pp__plocha-karta {
+  width: min(22rem, 100%);
+  background: #1c1712;
+  border: 1px solid #3d342a;
+  border-radius: 18px;
+  padding: 1.15rem 1.1rem 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pp__plocha-nadpis {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: 1.35rem;
+  line-height: 1.25;
+  text-align: center;
+  color: #f5efe3;
+}
+
+.pp__plocha-text {
+  margin: 0;
+  text-align: center;
+  color: #cbbba8;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  hyphens: none;
+}
+
+.pp__plocha-radek {
+  display: block;
+  margin: 0 0 0.35rem;
+}
+
 .pp__hp {
   position: absolute;
   left: -9999px;

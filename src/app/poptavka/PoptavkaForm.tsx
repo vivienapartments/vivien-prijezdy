@@ -34,6 +34,7 @@ import {
   type TieAnswerKey,
 } from '@/lib/poptavka-pruvodce';
 import type { AptId, GuideLang } from '@/lib/types';
+import { PoptavkaPlocha } from './PoptavkaPlocha';
 import './poptavka.scss';
 
 export type PoptavkaVstupni = {
@@ -833,6 +834,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             ) : null}
           </>
         )}
+
+        <PoptavkaPlocha lang={props.lang} />
 
         <div className="pp__kontakty">
           <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
