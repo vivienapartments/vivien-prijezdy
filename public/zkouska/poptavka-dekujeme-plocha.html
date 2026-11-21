@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Náhled · Děkujeme + Přidat na plochu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #12100e;
+      color: #f5efe3;
+      font-family: "DM Sans", system-ui, sans-serif;
+      padding: 10px;
+    }
+    .badge {
+      max-width: 26rem;
+      margin: 0 auto 0.65rem;
+      color: #c9a84c;
+      font-size: 0.82rem;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .rady {
+      display: grid;
+      gap: 1.25rem;
+      max-width: 54rem;
+      margin: 0 auto;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .rady { grid-template-columns: 1fr; justify-items: center; }
+    }
+    .sloupec { width: 100%; max-width: 26rem; }
+    .pismeno {
+      margin: 0 0 0.35rem;
+      text-align: center;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.35rem;
+      color: #c9a84c;
+      font-weight: 600;
+    }
+    .popis-sloupce {
+      margin: 0 0 0.55rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #cbbba8;
+      line-height: 1.35;
+    }
+    .karta {
+      max-width: 26rem;
+      margin: 0 auto;
+      min-height: calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      background: #1c1712;
+      border: 1px solid #3d342a;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      padding: 0 1.15rem 1.6rem;
+    }
+    .hero {
+      flex: 1 1 auto;
+      min-height: 120px;
+      max-height: 60vh;
+      margin: 0 -1.15rem;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center 45%;
+      position: relative;
+    }
+    .hero--termin {
+      background-image: linear-gradient(to bottom, transparent 35%, #1c1712 100%),
+        url("/pruvodce/zahrada-po-odjezdu.jpg");
+    }
+    .hero--dekujeme {
+      background-image: linear-gradient(to bottom, transparent 35%, #1c1712 100%),
+        url("/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg");
+    }
+    .telo {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .logo {
+      display: block;
+      width: 56px;
+      height: 56px;
+      margin: -32px auto 0.85rem;
+      border-radius: 50%;
+      border: 2px solid #c9a84c;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      background: #1c1712;
+      box-shadow: 0 0 0 4px #1c1712;
+    }
+    h1 {
+      margin: 0 0 0.65rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.55rem;
+      line-height: 1.25;
+      text-align: center;
+      color: #f5efe3;
+    }
+    .uvod,
+    .dekujeme {
+      margin: 0 0 0.55rem;
+      line-height: 1.45;
+      font-size: 0.95rem;
+      text-align: center;
+      color: #e8dfd0;
+      hyphens: none;
+    }
+    .specha {
+      margin: 0.35rem 0 0;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      text-align: center;
+      color: #cbbba8;
+      hyphens: none;
+    }
+    .termin {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      margin: 0 0 0.75rem;
+    }
+    .pole label {
+      display: block;
+      margin: 0 0 0.35rem;
+      font-size: 0.82rem;
+      color: #c9a84c;
+      text-align: center;
+    }
+    .pole .tlacitko {
+      display: block;
+      width: 100%;
+      padding: 0.65rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      color: #8a7a68;
+      font: inherit;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    .btn-pokracovat {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0.85rem 1rem;
+      border-radius: 999px;
+      border: 1px solid #5a4e40;
+      background: transparent;
+      color: #cbbba8;
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .plocha {
+      margin: 1.1rem 0 0;
+      padding: 1rem 0 0;
+      border-top: 1px solid #3d342a;
+    }
+    .btn-plocha {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      width: 100%;
+      margin: 0;
+      padding: 0.85rem 1rem;
+      border-radius: 999px;
+      border: 0;
+      background: #c9a84c;
+      color: #1a1510;
+      font-family: "DM Sans", system-ui, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .btn-plocha svg {
+      flex: 0 0 auto;
+      display: block;
+      width: 18px;
+      height: 18px;
+    }
+    .pl-veta {
+      margin: 0.55rem 0 0;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      text-align: center;
+      color: #cbbba8;
+      hyphens: none;
+    }
+    .paticka {
+      margin-top: 0.75rem;
+    }
+    .kontakty {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem 0.75rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #cbbba8;
+    }
+    .kontakty b {
+      display: block;
+      color: #c9a84c;
+      font-size: 0.88rem;
+      font-weight: 600;
+      white-space: nowrap;
+      margin-top: 0.2rem;
+    }
+  </style>
+</head>
+<body>
+  <p class="badge">Náhled · Termín bez plochy · Děkujeme se zlatým „Přidat na plochu“ · ještě nenasazeno do ostré poptávky</p>
+  <div class="rady">
+    <div class="sloupec">
+      <p class="pismeno">Termín</p>
+      <p class="popis-sloupce">Jen data a Pokračovat. Plocha pryč.</p>
+      <div class="karta">
+        <div class="hero hero--termin" role="img" aria-hidden="true"></div>
+        <div class="telo">
+          <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+          <h1>Rádi vás uvidíme znovu</h1>
+          <p class="uvod">Vyberte termín. Cenu a volné apartmány vám pošleme hned.</p>
+          <div class="termin">
+            <div class="pole">
+              <label>Příjezd</label>
+              <div class="tlacitko">Vyberte datum</div>
+            </div>
+            <div class="pole">
+              <label>Odjezd</label>
+              <div class="tlacitko">Vyberte datum</div>
+            </div>
+          </div>
+          <div class="btn-pokracovat">Pokračovat</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sloupec">
+      <p class="pismeno">Děkujeme</p>
+      <p class="popis-sloupce">Tenká čára, zlaté tlačítko, popis, kontakty dole.</p>
+      <div class="karta">
+        <div class="hero hero--dekujeme" role="img" aria-hidden="true"></div>
+        <div class="telo">
+          <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+          <h1>Děkujeme, že se k nám vracíte.</h1>
+          <p class="dekujeme">Cenu vám obvykle pošleme do hodiny. Odpovídáme od 8 do 20 hodin.</p>
+          <p class="specha">Když to spěchá, raději nám rovnou zavolejte. Zprávu nemusíme vidět hned, třeba když zrovna řídíme.</p>
+          <div class="plocha">
+            <div class="btn-plocha">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="7" y="2" width="10" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <path d="M11 18h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+              </svg>
+              <span>Přidat na plochu</span>
+            </div>
+            <p class="pl-veta">Mějte nás na ploše telefonu. Další pobyt pak poptáte bez hledání.</p>
+          </div>
+          <div class="paticka">
+            <div class="kontakty">
+              <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+              <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
