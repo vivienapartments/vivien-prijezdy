@@ -273,7 +273,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   const ukazLogo = !vernost || krok === 'termin' || hotovo || Boolean(heroVernost);
   /** Krátké kroky vyplní výšku. Apartmány a Kontakt necháváme jako dnes. */
-  const kartaVypln = !galerie && krok !== 'apartmany' && krok !== 'kontakt';
+  const kartaVypln = !galerie && !hotovo && krok !== 'apartmany' && krok !== 'kontakt';
+  /** Po odeslání: karta přes okno, fotka vyplní zbylé místo. */
+  const kartaDekujeme = Boolean(vernost && hotovo);
 
   function ikonaVolby(druh: 'vybrat' | 'doporucit' | 'pruvodce'): ReactNode {
     const stroke = {
@@ -323,7 +325,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     <PoptavkaPlochaRoot lang={props.lang}>
     <main className={`pp${vernost ? ' pp--vernost' : ''}${suchyBeh ? ' pp--zkouska' : ''}`} lang={props.lang}>
       <div
-        className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}${krok === 'zpusob' ? ' pp__karta--zpusob' : ''}`}
+        className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}${kartaDekujeme ? ' pp__karta--dekujeme' : ''}${krok === 'zpusob' ? ' pp__karta--zpusob' : ''}`}
       >
         {suchyBeh ? <span className="pp__zkouska-stittek">zkouška</span> : null}
         {heroVernost ? (

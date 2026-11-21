@@ -651,6 +651,34 @@
   height: clamp(110px, 20vh, 200px);
 }
 
+/* Děkujeme po odeslání: karta přes okno, fotka vyplní volné místo. */
+.pp__karta--dekujeme {
+  min-height: calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+}
+
+.pp__karta--dekujeme .pp__hero {
+  flex: 1 1 auto;
+  min-height: 120px;
+  max-height: 60vh;
+  height: auto;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.pp__karta--dekujeme .pp__telo {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pp__karta--dekujeme .pp__paticka {
+  margin-top: 0.75rem;
+  flex-shrink: 0;
+}
+
 .pp__karta--zpusob .pp__volba span,
 .pp__karta--zpusob .pp__volba-text span {
   text-align: left;

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Náhled · Děkujeme po odeslání</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: #0e0c0a;
+      color: #f5efe3;
+      font-family: "DM Sans", system-ui, sans-serif;
+      padding: 1rem 0.85rem 2.5rem;
+    }
+    .badge {
+      max-width: 26rem;
+      margin: 0 auto 0.65rem;
+      color: #c9a84c;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .karta {
+      max-width: 26rem;
+      margin: 0 auto;
+      min-height: calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      display: flex;
+      flex-direction: column;
+      background: #1c1712;
+      border: 1px solid #3d342a;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      padding: 0 1.15rem 1.6rem;
+    }
+    .hero {
+      flex: 1 1 auto;
+      min-height: 120px;
+      max-height: 60vh;
+      margin: 0 -1.15rem;
+      background: url("/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg") center 45% / cover no-repeat;
+      position: relative;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 35%, #1c1712 100%);
+    }
+    .telo {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .logo {
+      display: block;
+      width: 56px;
+      height: 56px;
+      margin: -32px auto 0.85rem;
+      border-radius: 50%;
+      border: 2px solid #c9a84c;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      background: #1c1712;
+      box-shadow: 0 0 0 4px #1c1712;
+    }
+    h1 {
+      margin: 0 0 0.65rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.55rem;
+      line-height: 1.25;
+      text-align: center;
+      color: #f5efe3;
+    }
+    .dekujeme {
+      margin: 0 0 0.55rem;
+      line-height: 1.45;
+      font-size: 0.95rem;
+      text-align: justify;
+      hyphens: auto;
+      color: #e8dfd0;
+      text-align: center;
+    }
+    .specha {
+      margin: 0.35rem 0 0.85rem;
+      font-size: 0.88rem;
+      line-height: 1.45;
+      text-align: justify;
+      hyphens: auto;
+      color: #cbbba8;
+    }
+    .paticka {
+      margin-top: 0.75rem;
+      display: grid;
+      gap: 0.55rem;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 0.55rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid #c9a84c;
+      background: transparent;
+      color: #c9a84c;
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .kontakty {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem 0.75rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #cbbba8;
+    }
+    .kontakty b {
+      display: block;
+      color: #c9a84c;
+      font-size: 0.88rem;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <p class="badge">Náhled · Děkujeme po odeslání · karta přes okno, fotka vyplní místo · ještě nenasazeno</p>
+  <div class="karta">
+    <div class="hero" role="img" aria-hidden="true"></div>
+    <div class="telo">
+      <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+      <h1>Děkujeme, že se k nám vracíte.</h1>
+      <p class="dekujeme">Cenu vám obvykle pošleme do hodiny. Odpovídáme od 8 do 20 hodin.</p>
+      <p class="specha">Když to spěchá, raději nám rovnou zavolejte. Zprávu nemusíme vidět hned, třeba když zrovna řídíme.</p>
+      <div class="paticka">
+        <div class="btn">Přidat na plochu</div>
+        <div class="kontakty">
+          <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+          <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
