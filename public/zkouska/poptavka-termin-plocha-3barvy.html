@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Náhled · Termín + jméno app + 3 barvy plochy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0a0908;
+      color: #f5efe3;
+      font-family: "DM Sans", system-ui, sans-serif;
+      padding: 1rem 0.75rem 2.75rem;
+    }
+    .hlavicka {
+      max-width: 72rem;
+      margin: 0 auto 1.1rem;
+      text-align: center;
+    }
+    .hlavicka h1 {
+      margin: 0 0 0.35rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.45rem;
+      color: #c9a84c;
+    }
+    .hlavicka p {
+      margin: 0;
+      font-size: 0.88rem;
+      color: #cbbba8;
+      line-height: 1.4;
+    }
+    .sekce-nadpis {
+      max-width: 72rem;
+      margin: 1.5rem auto 0.75rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.25rem;
+      color: #c9a84c;
+      text-align: center;
+    }
+    .rady {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+      max-width: 72rem;
+      margin: 0 auto;
+      align-items: start;
+    }
+    @media (max-width: 1100px) {
+      .rady { grid-template-columns: 1fr; justify-items: center; }
+    }
+    .sloupec { width: 100%; max-width: 390px; }
+    .pismeno {
+      margin: 0 0 0.4rem;
+      text-align: center;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 2.2rem;
+      font-weight: 600;
+      color: #c9a84c;
+      line-height: 1;
+    }
+    .popisek {
+      margin: 0 0 0.55rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #cbbba8;
+      line-height: 1.35;
+    }
+
+    /* —— Okno Instalovat (Chrome) —— */
+    .install {
+      background: #2a2520;
+      border: 1px solid #4a4036;
+      border-radius: 16px;
+      padding: 1rem 0.9rem 0.9rem;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+    }
+    .install-top {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+    .install-ikona {
+      flex: 0 0 auto;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #15110e;
+    }
+    .install-ikona img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .install-text strong {
+      display: block;
+      font-size: 0.95rem;
+      color: #f5efe3;
+      margin-bottom: 0.2rem;
+    }
+    .install-text span {
+      display: block;
+      font-size: 0.78rem;
+      color: #a89888;
+      line-height: 1.35;
+    }
+    .install-akce {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.35rem;
+    }
+    .install-akce button {
+      margin: 0;
+      padding: 0.45rem 0.85rem;
+      border: 0;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: default;
+    }
+    .install-zrusit {
+      background: transparent;
+      color: #cbbba8;
+    }
+    .install-ok {
+      background: #8ab4f8;
+      color: #0b1c33;
+    }
+    .install-note {
+      margin: 0.55rem 0 0;
+      font-size: 0.72rem;
+      color: #8a7a68;
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    /* —— Telefon Termín —— */
+    .telefon {
+      width: 390px;
+      max-width: 100%;
+      height: 750px;
+      margin: 0 auto;
+      background: #0e0c0a;
+      border: 2px solid #3d342a;
+      border-radius: 22px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 0.45rem;
+    }
+    .karta {
+      flex: 1;
+      min-height: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #1c1712;
+      border: 1px solid #3d342a;
+      border-radius: 16px;
+      overflow: hidden;
+      padding: 0 0 0.75rem;
+    }
+    .hero {
+      flex: 1 1 auto;
+      min-height: 140px;
+      max-height: 60vh;
+      background: url("/pruvodce/zahrada-po-odjezdu.jpg") center 32% / cover no-repeat;
+      position: relative;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 35%, #1c1712 100%);
+    }
+    .telo {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      padding: 0 0.9rem;
+      text-align: center;
+    }
+    .logo {
+      display: block;
+      width: 48px;
+      height: 48px;
+      margin: -26px auto 0.4rem;
+      border-radius: 50%;
+      border: 2px solid #c9a84c;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      background: #1c1712;
+      box-shadow: 0 0 0 3px #1c1712;
+    }
+    .telo h2 {
+      margin: 0 0 0.3rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.28rem;
+      line-height: 1.2;
+      color: #f5efe3;
+      text-align: center;
+      hyphens: none;
+    }
+    .uvod {
+      margin: 0 0 0.5rem;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      color: #cbbba8;
+      text-align: center;
+      hyphens: none;
+    }
+    .termin {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+      margin: 0 0 0.5rem;
+    }
+    .termin label {
+      display: grid;
+      gap: 0.2rem;
+      font-size: 0.72rem;
+      color: #c9a84c;
+      text-align: center;
+      hyphens: none;
+    }
+    .termin .pole {
+      display: block;
+      padding: 0.48rem 0.35rem;
+      border-radius: 10px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      color: #8a7a68;
+      font-size: 0.78rem;
+      text-align: center;
+    }
+    .pokracovat {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0.65rem 0.85rem;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-align: center;
+    }
+    .plocha {
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.45rem;
+      border-radius: 12px;
+    }
+    .ikona-tel {
+      flex: 0 0 auto;
+      width: 2.1rem;
+      height: 2.1rem;
+      border-radius: 10px;
+      display: grid;
+      place-items: center;
+    }
+    .ikona-tel svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .btn-plocha {
+      flex: 1 1 auto;
+      margin: 0;
+      padding: 0.5rem 0.55rem;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* A: Plocha plná zlato, Pokračovat jen obrys (tlumené) */
+    .v-a .pokracovat {
+      background: transparent;
+      border: 1px solid #5a4e40;
+      color: #cbbba8;
+      font-weight: 600;
+    }
+    .v-a .plocha {
+      border: 1px solid color-mix(in srgb, #c9a84c 55%, #3d342a);
+      background: color-mix(in srgb, #c9a84c 14%, #15110e);
+    }
+    .v-a .ikona-tel {
+      border: 1px solid #c9a84c;
+      background: color-mix(in srgb, #c9a84c 20%, #15110e);
+    }
+    .v-a .ikona-tel svg { stroke: #c9a84c; }
+    .v-a .btn-plocha {
+      border: 0;
+      background: #c9a84c;
+      color: #1a1510;
+    }
+
+    /* B: Plocha plná měď, Pokračovat jemný obrys */
+    .v-b .pokracovat {
+      background: transparent;
+      border: 1px solid #5a4e40;
+      color: #b7aa98;
+      font-weight: 600;
+    }
+    .v-b .plocha {
+      border: 1px solid color-mix(in srgb, #c4784a 50%, #3d342a);
+      background: color-mix(in srgb, #c4784a 14%, #15110e);
+    }
+    .v-b .ikona-tel {
+      border: 1px solid #c4784a;
+      background: color-mix(in srgb, #c4784a 18%, #15110e);
+    }
+    .v-b .ikona-tel svg { stroke: #e0a07a; }
+    .v-b .btn-plocha {
+      border: 0;
+      background: #c4784a;
+      color: #1a1510;
+    }
+
+    /* C: Plocha plná krém, Pokračovat jen textový rámeček */
+    .v-c .pokracovat {
+      background: transparent;
+      border: 1px solid #4a4036;
+      color: #a89888;
+      font-weight: 600;
+    }
+    .v-c .plocha {
+      border: 1px solid #e8dfd0;
+      background: color-mix(in srgb, #e8dfd0 10%, #15110e);
+    }
+    .v-c .ikona-tel {
+      border: 1px solid #e8dfd0;
+      background: color-mix(in srgb, #e8dfd0 14%, #15110e);
+    }
+    .v-c .ikona-tel svg { stroke: #e8dfd0; }
+    .v-c .btn-plocha {
+      border: 0;
+      background: #e8dfd0;
+      color: #1c1712;
+    }
+
+    .pozn {
+      max-width: 40rem;
+      margin: 1.35rem auto 0;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #8a7a68;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <header class="hlavicka">
+    <h1>Náhled · jméno app + Termín (3 barvy)</h1>
+    <p>Jen zkouška. Ostrá poptávka beze změny. Napište třeba „jméno 1, barva B“.</p>
+  </header>
+
+  <h2 class="sekce-nadpis">1) Jak vypadá okno po klepnutí na Přidat na plochu</h2>
+  <p class="popisek" style="max-width:40rem;margin:0 auto 0.75rem">Text „Instalovat“ / „Zrušit“ píše Chrome. My volíme jen jméno a ikonu.</p>
+  <div class="rady">
+    <section class="sloupec">
+      <div class="pismeno">1</div>
+      <p class="popisek">VIVIEN Club<br />short: VIVIEN</p>
+      <div class="install">
+        <div class="install-top">
+          <span class="install-ikona"><img src="/prehled/icon-192-maskable.png" alt="" /></span>
+          <div class="install-text">
+            <strong>VIVIEN Club</strong>
+            <span>vivien-prijezdy-six.vercel.app<br />Chcete nainstalovat aplikaci?</span>
+          </div>
+        </div>
+        <div class="install-akce">
+          <button type="button" class="install-zrusit">Zrušit</button>
+          <button type="button" class="install-ok">Instalovat</button>
+        </div>
+      </div>
+      <p class="install-note">Adresu vercel.app Chrome někdy ukáže pod jménem. Jméno app to změníme my.</p>
+    </section>
+    <section class="sloupec">
+      <div class="pismeno">2</div>
+      <p class="popisek">VIVIEN rezervace<br />short: VIVIEN</p>
+      <div class="install">
+        <div class="install-top">
+          <span class="install-ikona"><img src="/prehled/icon-192-maskable.png" alt="" /></span>
+          <div class="install-text">
+            <strong>VIVIEN rezervace</strong>
+            <span>vivien-prijezdy-six.vercel.app<br />Chcete nainstalovat aplikaci?</span>
+          </div>
+        </div>
+        <div class="install-akce">
+          <button type="button" class="install-zrusit">Zrušit</button>
+          <button type="button" class="install-ok">Instalovat</button>
+        </div>
+      </div>
+      <p class="install-note">Stejné systémové okno, jiné jméno z manifestu.</p>
+    </section>
+    <section class="sloupec">
+      <div class="pismeno">3</div>
+      <p class="popisek">VIVIEN Apartments<br />short: VIVIEN</p>
+      <div class="install">
+        <div class="install-top">
+          <span class="install-ikona"><img src="/prehled/icon-192-maskable.png" alt="" /></span>
+          <div class="install-text">
+            <strong>VIVIEN Apartments</strong>
+            <span>vivien-prijezdy-six.vercel.app<br />Chcete nainstalovat aplikaci?</span>
+          </div>
+        </div>
+        <div class="install-akce">
+          <button type="button" class="install-zrusit">Zrušit</button>
+          <button type="button" class="install-ok">Instalovat</button>
+        </div>
+      </div>
+      <p class="install-note">Ikona = maskable z Přehledu (přes kolečko).</p>
+    </section>
+  </div>
+
+  <h2 class="sekce-nadpis">2) Krok Termín · karta přes výšku · Přidat na plochu výraznější</h2>
+  <p class="popisek" style="max-width:40rem;margin:0 auto 0.75rem">Pokračovat je tišší. Přidat na plochu je hlavní. Ne zelená. Velikosti textů stejné.</p>
+  <div class="rady">
+    <!-- A zlato -->
+    <section class="sloupec">
+      <div class="pismeno">A</div>
+      <p class="popisek">Plocha plné zlato · Pokračovat jen obrys</p>
+      <div class="telefon v-a">
+        <div class="karta">
+          <div class="hero" role="img" aria-hidden="true"></div>
+          <div class="telo">
+            <img class="logo" src="/pruvodce/va-logo-192.png" width="48" height="48" alt="" />
+            <h2>Rádi vás uvidíme znovu</h2>
+            <p class="uvod">Vyberte termín a my vám obvykle do hodiny pošleme cenu, samozřejmě i se slíbenou slevou. Odpovídáme od 8 do 20 hodin.</p>
+            <div class="termin">
+              <label>Příjezd<span class="pole">Vyberte datum</span></label>
+              <label>Odjezd<span class="pole">Vyberte datum</span></label>
+            </div>
+            <button type="button" class="pokracovat">Pokračovat</button>
+            <div class="plocha">
+              <span class="ikona-tel" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+              </span>
+              <button type="button" class="btn-plocha">Přidat na plochu</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- B měď -->
+    <section class="sloupec">
+      <div class="pismeno">B</div>
+      <p class="popisek">Plocha plná měď · Pokračovat tišší</p>
+      <div class="telefon v-b">
+        <div class="karta">
+          <div class="hero" role="img" aria-hidden="true"></div>
+          <div class="telo">
+            <img class="logo" src="/pruvodce/va-logo-192.png" width="48" height="48" alt="" />
+            <h2>Rádi vás uvidíme znovu</h2>
+            <p class="uvod">Vyberte termín a my vám obvykle do hodiny pošleme cenu, samozřejmě i se slíbenou slevou. Odpovídáme od 8 do 20 hodin.</p>
+            <div class="termin">
+              <label>Příjezd<span class="pole">Vyberte datum</span></label>
+              <label>Odjezd<span class="pole">Vyberte datum</span></label>
+            </div>
+            <button type="button" class="pokracovat">Pokračovat</button>
+            <div class="plocha">
+              <span class="ikona-tel" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+              </span>
+              <button type="button" class="btn-plocha">Přidat na plochu</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- C krém -->
+    <section class="sloupec">
+      <div class="pismeno">C</div>
+      <p class="popisek">Plocha plný krém · Pokračovat tišší</p>
+      <div class="telefon v-c">
+        <div class="karta">
+          <div class="hero" role="img" aria-hidden="true"></div>
+          <div class="telo">
+            <img class="logo" src="/pruvodce/va-logo-192.png" width="48" height="48" alt="" />
+            <h2>Rádi vás uvidíme znovu</h2>
+            <p class="uvod">Vyberte termín a my vám obvykle do hodiny pošleme cenu, samozřejmě i se slíbenou slevou. Odpovídáme od 8 do 20 hodin.</p>
+            <div class="termin">
+              <label>Příjezd<span class="pole">Vyberte datum</span></label>
+              <label>Odjezd<span class="pole">Vyberte datum</span></label>
+            </div>
+            <button type="button" class="pokracovat">Pokračovat</button>
+            <div class="plocha">
+              <span class="ikona-tel" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+              </span>
+              <button type="button" class="btn-plocha">Přidat na plochu</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <p class="pozn">Napište např. „jméno 1, barva A“. Pak teprve zapracujeme do ostré poptávky.</p>
+</body>
+</html>
