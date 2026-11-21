@@ -41,6 +41,8 @@ export type PoptavkaTexty = {
   vybratTento: string;
   zrusitVyber: string;
   zavritGalerie: string;
+  /** Galerie otevřená z výsledku průvodce. */
+  zpetNaVysledek: string;
   jmeno: string;
   telefon: string;
   doprava: string;
@@ -102,6 +104,7 @@ const CS: PoptavkaTexty = {
   vybratTento: 'Vybrat tento apartmán',
   zrusitVyber: 'Zrušit výběr',
   zavritGalerie: 'Zpět k dlaždicím',
+  zpetNaVysledek: 'Zpět na výsledek',
   jmeno: 'Jméno',
   telefon: 'Telefon',
   doprava: 'Doprava',
@@ -160,6 +163,7 @@ const EN: PoptavkaTexty = {
   vybratTento: 'Select this apartment',
   zrusitVyber: 'Remove selection',
   zavritGalerie: 'Back to tiles',
+  zpetNaVysledek: 'Back to result',
   jmeno: 'Name',
   telefon: 'Phone',
   doprava: 'Travel',

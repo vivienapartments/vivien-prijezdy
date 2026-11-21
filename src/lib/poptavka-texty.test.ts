@@ -34,6 +34,7 @@ const KLICE: (keyof PoptavkaTexty)[] = [
   'vybratTento',
   'zrusitVyber',
   'zavritGalerie',
+  'zpetNaVysledek',
   'jmeno',
   'telefon',
   'doprava',

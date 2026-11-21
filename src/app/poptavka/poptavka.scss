@@ -340,6 +340,22 @@
   margin: 0.5rem 0 0.85rem;
 }
 
+.pp__dlazdice--jedna {
+  grid-template-columns: 1fr;
+}
+
+.pp__vysledek {
+  text-align: center;
+}
+
+.pp__vysledek .pp__cena,
+.pp__vysledek .pp__maly-radek,
+.pp__vysledek .pp__nadpis-krok {
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+
 .pp__dlazdice-polozka {
   position: relative;
   margin: 0;

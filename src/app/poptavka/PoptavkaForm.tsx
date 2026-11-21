@@ -51,10 +51,19 @@ export type PoptavkaVstupni = {
 };
 
 type Krok = 'termin' | 'zpusob' | 'apartmany' | 'pruvodce' | 'kontakt';
+type GalerieZpet = 'apartmany' | 'pruvodce';
 type GalerieStav =
-  | { druh: 'apt'; id: AptId; i: number }
-  | { druh: 'komplet'; i: number }
+  | { druh: 'apt'; id: AptId; i: number; zpetNa: GalerieZpet }
+  | { druh: 'komplet'; i: number; zpetNa: 'apartmany' }
   | null;
+
+function prvniVety(text: string, maxVet = 2): string {
+  const s = text.trim();
+  if (!s) return '';
+  const casti = s.match(/[^.!?…]+[.!?…]+(?:\s+|$)|[^.!?…]+$/gu);
+  if (!casti?.length) return s;
+  return casti.slice(0, maxVet).join('').trim();
+}
 
 export function PoptavkaForm(props: PoptavkaVstupni) {
   const vernost = props.zdroj === 'vernost';
@@ -473,41 +482,77 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             ) : null}
 
             {krok === 'pruvodce' ? (
-              <section>
+              <section className={pruvodce.phase === 'result' ? 'pp__vysledek' : undefined}>
                 {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
                 {pruvodce.phase === 'result' && pruvodce.result ? (
                   <>
-                    <p className="pp__maly-radek">
-                      {pruvodceText(props.lang, 'quiz.result.matchLabel')}
-                    </p>
-                    <h1 className="pp__nadpis-krok">{nazevApt(pruvodce.result.primary)}</h1>
-                    <p className="pp__cena" style={{ textAlign: 'center' }}>
-                      {pruvodce.result.profiles[pruvodce.result.primary]?.body}
-                    </p>
-                    <p className="pp__cena" style={{ textAlign: 'center' }}>
-                      {pruvodce.result.profiles[pruvodce.result.primary]?.traits}
-                    </p>
-                    <button
-                      type="button"
-                      className="pp__btn pp__btn--hlavni"
-                      onClick={() => pokracujSApartmanem(pruvodce.result!.primary)}
-                    >
-                      {t.pruvodceVybrat}
-                    </button>
+                    {(() => {
+                      const primary = POPTAVKA_APARTMANY.find((x) => x.id === pruvodce.result!.primary);
+                      const profil = pruvodce.result!.profiles[pruvodce.result!.primary];
+                      return (
+                        <>
+                          {primary ? (
+                            <div className="pp__dlazdice pp__dlazdice--jedna">
+                              <button
+                                type="button"
+                                className="pp__dlazdice-polozka"
+                                onClick={() =>
+                                  setGalerie({
+                                    druh: 'apt',
+                                    id: pruvodce.result!.primary,
+                                    i: 0,
+                                    zpetNa: 'pruvodce',
+                                  })
+                                }
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={coverUrl(webLang, primary)} alt="" width={400} height={260} />
+                              </button>
+                            </div>
+                          ) : null}
+                          <p className="pp__maly-radek">
+                            {pruvodceText(props.lang, 'quiz.result.matchLabel')}
+                          </p>
+                          <h1 className="pp__nadpis-krok">{nazevApt(pruvodce.result!.primary)}</h1>
+                          <p className="pp__cena">
+                            {prvniVety(profil?.body || '', 2)}
+                          </p>
+                          {profil?.traits ? (
+                            <p className="pp__maly-radek">{profil.traits}</p>
+                          ) : null}
+                          <button
+                            type="button"
+                            className="pp__btn pp__btn--hlavni"
+                            onClick={() => pokracujSApartmanem(pruvodce.result!.primary)}
+                          >
+                            {t.pruvodceVybrat}
+                          </button>
+                        </>
+                      );
+                    })()}
                     <p className="pp__maly-radek">
                       {pruvodceText(props.lang, 'quiz.result.altsHeading')}
                     </p>
-                    {pruvodce.result.alternatives.map((id) => (
-                      <button
-                        key={id}
-                        type="button"
-                        className="pp__volba"
-                        onClick={() => pokracujSApartmanem(id)}
-                      >
-                        <strong>{nazevApt(id)}</strong>
-                        <span>{pruvodce.result!.profiles[id]?.body}</span>
-                      </button>
-                    ))}
+                    <div className="pp__dlazdice">
+                      {pruvodce.result.alternatives.map((id) => {
+                        const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
+                        if (!a) return null;
+                        return (
+                          <button
+                            key={id}
+                            type="button"
+                            className="pp__dlazdice-polozka"
+                            onClick={() =>
+                              setGalerie({ druh: 'apt', id, i: 0, zpetNa: 'pruvodce' })
+                            }
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
+                            <span className="pp__dlazdice-nazev">{nazevApt(id)}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
                     <button type="button" className="pp__btn pp__btn--sms" onClick={resetPruvodce}>
                       {t.pruvodceZnovu}
                     </button>
@@ -597,7 +642,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                         key={a.id}
                         type="button"
                         className={`pp__dlazdice-polozka${on ? ' is-on' : ''}`}
-                        onClick={() => setGalerie({ druh: 'apt', id: a.id, i: 0 })}
+                        onClick={() =>
+                          setGalerie({ druh: 'apt', id: a.id, i: 0, zpetNa: 'apartmany' })
+                        }
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
@@ -609,7 +656,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   <button
                     type="button"
                     className="pp__dlazdice-polozka"
-                    onClick={() => setGalerie({ druh: 'komplet', i: 0 })}
+                    onClick={() => setGalerie({ druh: 'komplet', i: 0, zpetNa: 'apartmany' })}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={galerieKompletCoverUrl(webLang)} alt="" width={400} height={260} />
@@ -809,7 +856,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               </button>
             ) : null}
             <button type="button" className="pp__btn pp__btn--sms" onClick={() => setGalerie(null)}>
-              {t.zpet}
+              {galerie.zpetNa === 'pruvodce' ? t.zpetNaVysledek : t.zpet}
             </button>
           </div>
         </div>
