@@ -11,12 +11,26 @@ import {
 } from './poptavka-pruvodce';
 
 describe('poptavka-pruvodce Discover', () => {
-  it('pt/sv/da padají na en', () => {
-    expect(quizLang('pt')).toBe('en');
-    expect(quizLang('sv')).toBe('en');
-    expect(quizLang('da')).toBe('en');
+  it('pt/sv/da mají vlastní texty (PROMPT-80)', () => {
+    expect(quizLang('pt')).toBe('pt');
+    expect(quizLang('sv')).toBe('sv');
+    expect(quizLang('da')).toBe('da');
     expect(quizLang('cs')).toBe('cs');
     expect(quizLang('de')).toBe('de');
+    expect(pruvodceText('sv', 'quiz.q1.text')).toContain('lägenheten');
+    expect(pruvodceText('pt', 'quiz.q1.text')).toContain('apartamento');
+    expect(pruvodceText('da', 'quiz.q1.text')).toContain('lejligheden');
+  });
+
+  it('všech 13 jazyků má neprázdné zobrazované klíče', async () => {
+    const { QUIZ_LANGS, QUIZ_TEXTS } = await import('./poptavka-pruvodce-data');
+    const keys = Object.keys(QUIZ_TEXTS.en).filter((k) => !k.includes('.body'));
+    for (const lang of QUIZ_LANGS) {
+      for (const key of keys) {
+        const t = (QUIZ_TEXTS[lang][key] || '').trim();
+        expect(t.length > 0, `${lang} ${key}`).toBe(true);
+      }
+    }
   });
 
   it('má české otázky 1:1', () => {
