@@ -630,6 +630,54 @@
   -webkit-hyphens: none;
 }
 
+.pp__vysledek .pp__dlazdice--jedna {
+  margin-bottom: 0.35rem;
+}
+
+.pp__vysledek .pp__dlazdice--jedna .pp__dlazdice-polozka img {
+  height: clamp(7.5rem, 22vh, 12rem);
+}
+
+.pp__vysledek .pp__nadpis-krok {
+  margin: 0 0 0.35rem;
+}
+
+.pp__vysledek-vlastnosti {
+  margin: 0 0 0.9rem;
+  font-size: 1.0625rem;
+  line-height: 1.35;
+  text-align: center;
+  color: #e6dccb;
+  hyphens: none;
+  -webkit-hyphens: none;
+  letter-spacing: 0.01em;
+}
+
+.pp__vysledek-dalsi {
+  margin: 1.45rem 0 0.7rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.25;
+  text-align: center;
+  color: #f5efe3;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+
+.pp__vysledek-zpet {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.pp__vysledek-zpet .pp__btn {
+  margin: 0;
+  padding: 0.65rem 0.55rem;
+  font-size: 0.88rem;
+}
+
 .pp__dlazdice-polozka {
   position: relative;
   margin: 0;

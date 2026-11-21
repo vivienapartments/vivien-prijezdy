@@ -59,14 +59,6 @@ type GalerieStav =
   | { druh: 'komplet'; i: number; zpetNa: 'apartmany' }
   | null;
 
-function prvniVety(text: string, maxVet = 2): string {
-  const s = text.trim();
-  if (!s) return '';
-  const casti = s.match(/[^.!?…]+[.!?…]+(?:\s+|$)|[^.!?…]+$/gu);
-  if (!casti?.length) return s;
-  return casti.slice(0, maxVet).join('').trim();
-}
-
 export function PoptavkaForm(props: PoptavkaVstupni) {
   const vernost = props.zdroj === 'vernost';
   const suchyBeh = Boolean(props.suchyBeh);
@@ -504,7 +496,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
             {krok === 'pruvodce' ? (
               <section className={pruvodce.phase === 'result' ? 'pp__vysledek' : undefined}>
-                {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                {pruvodce.phase === 'result' ? null : malyRadekVernost ? (
+                  <p className="pp__maly-radek">{malyRadekVernost}</p>
+                ) : null}
                 {pruvodce.phase === 'result' && pruvodce.result ? (
                   <>
                     {(() => {
@@ -535,12 +529,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                             {pruvodceText(props.lang, 'quiz.result.matchLabel')}
                           </p>
                           <h1 className="pp__nadpis-krok">{nazevApt(pruvodce.result!.primary)}</h1>
-                          <p className="pp__cena">
-                            {prvniVety(profil?.body || '', 2)}
-                          </p>
-                          {profil?.traits ? (
-                            <p className="pp__maly-radek">{profil.traits}</p>
-                          ) : null}
+                          {profil?.traits ? <p className="pp__vysledek-vlastnosti">{profil.traits}</p> : null}
                           <button
                             type="button"
                             className="pp__btn pp__btn--hlavni"
@@ -551,9 +540,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                         </>
                       );
                     })()}
-                    <p className="pp__maly-radek">
+                    <h2 className="pp__vysledek-dalsi">
                       {pruvodceText(props.lang, 'quiz.result.altsHeading')}
-                    </p>
+                    </h2>
                     <div className="pp__dlazdice">
                       {pruvodce.result.alternatives.map((id) => {
                         const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
@@ -574,12 +563,18 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                         );
                       })}
                     </div>
-                    <button type="button" className="pp__btn pp__btn--sms" onClick={resetPruvodce}>
-                      {t.pruvodceZnovu}
-                    </button>
-                    <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
-                      {t.zpet}
-                    </button>
+                    <div className="pp__vysledek-zpet">
+                      <button type="button" className="pp__btn pp__btn--sms" onClick={resetPruvodce}>
+                        {t.pruvodceZnovu}
+                      </button>
+                      <button
+                        type="button"
+                        className="pp__btn pp__btn--sms"
+                        onClick={() => setKrok('zpusob')}
+                      >
+                        {t.zpet}
+                      </button>
+                    </div>
                   </>
                 ) : (
                   <>
