@@ -17,6 +17,8 @@ import {
   normalizujKod,
   spojOsoby,
   vytvorDoporuceni,
+  nactiDoporucenoOdRezervace,
+  nactiOsobaIdRezervace,
   zkusSparovatRezervaci,
 } from './doporuceni';
 import { jeRelayEmail } from './staly-host';
@@ -39,6 +41,7 @@ describe('doporuceniKlic', () => {
     expect(doporuceniKlic('osoba:abc')).toBe('test:osoba:abc');
     expect(doporuceniKlic('od:xyz')).toBe('test:od:xyz');
     expect(doporuceniKlic('test:od:xyz')).toBe('test:od:xyz');
+    expect(doporuceniKlic('rez-osoba:1')).toBe('test:rez-osoba:1');
     expect(doporuceniKlic('rez:1')).toBe('rez:1');
   });
 
@@ -221,7 +224,39 @@ describe('osoba a párování', () => {
       expect(ok.doporuceni.stav).toBe('sparovano');
       const ulozeno = await store2.getRezervace('601');
       expect(ulozeno?.doporucenoOd).toBe(dop2.id);
+      expect(await nactiDoporucenoOdRezervace(store2, '601', ulozeno)).toBe(dop2.id);
     }
+  });
+
+  it('na Preview nevolá setRezervace při založení osoby', async () => {
+    vi.stubEnv('VERCEL_ENV', 'preview');
+    const store = storeTmp();
+    const spy = vi.spyOn(store, 'setRezervace');
+    const rec = prazdnaRezervace('900', new Date().toISOString());
+    rec.telefon = '+420604111222';
+    rec.jmeno = 'Zkouška';
+    await store.setRezervace('900', rec);
+    spy.mockClear();
+
+    const osoba = await najdiNeboVytvorOsobu(store, {
+      rezervaceId: '900',
+      telefon: rec.telefon,
+      jmeno: rec.jmeno,
+    });
+    expect(spy).not.toHaveBeenCalled();
+    expect(await nactiOsobaIdRezervace(store, '900', rec)).toBe(osoba.id);
+    const po = await store.getRezervace('900');
+    expect(po?.osobaId).toBeNull();
+  });
+
+  it('souběh: stejný telefon → jedna osoba', async () => {
+    const store = storeTmp();
+    const [a, b] = await Promise.all([
+      najdiNeboVytvorOsobu(store, { rezervaceId: '801', telefon: '+420604333444', jmeno: 'A' }),
+      najdiNeboVytvorOsobu(store, { rezervaceId: '802', telefon: '+420604333444', jmeno: 'B' }),
+    ]);
+    expect(a.id).toBe(b.id);
+    expect(a.kod).toBe(b.kod);
   });
 
   it('spojení osob: oba kódy vedou na stejnou', async () => {

@@ -306,13 +306,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!jineId || jineId === id) return chyba(400, 'Zadejte číslo druhé rezervace.');
     const jina = await store.getRezervace(jineId);
     if (!jina) return chyba(404, 'Druhá rezervace není v přehledu.');
+    const { nactiOsobaIdRezervace, ulozVazbyRezervace } = await import('@/lib/doporuceni');
     const a = await najdiNeboVytvorOsobu(store, {
       rezervaceId: id,
       jmeno: rec.jmeno,
       telefon: rec.telefon || rec.telefonRezervace,
       email: rec.emailHosta,
       narodnost: rec.narodnost,
-      osobaId: rec.osobaId,
+      osobaId: await nactiOsobaIdRezervace(store, id, rec),
     });
     const b = await najdiNeboVytvorOsobu(store, {
       rezervaceId: jineId,
@@ -320,30 +321,29 @@ export async function POST(request: Request): Promise<NextResponse> {
       telefon: jina.telefon || jina.telefonRezervace,
       email: jina.emailHosta,
       narodnost: jina.narodnost,
-      osobaId: jina.osobaId,
+      osobaId: await nactiOsobaIdRezervace(store, jineId, jina),
     });
     if (a.id === b.id) {
-      await store.setRezervace(id, { ...rec, osobaId: a.id });
-      await store.setRezervace(jineId, { ...jina, osobaId: a.id });
+      await ulozVazbyRezervace(store, id, { osobaId: a.id }, { rec });
+      await ulozVazbyRezervace(store, jineId, { osobaId: a.id }, { rec: jina });
       return NextResponse.json({ ok: true, osobaId: a.id }, { headers: noStore });
     }
     const sloucená = await spojOsoby(store, a.id, b.id);
     if (!sloucená) return chyba(500, 'Spojení se nepovedlo.');
-    const ted = new Date().toISOString();
-    await store.setRezervace(id, {
-      ...rec,
-      osobaId: sloucená.id,
-      historie: [...rec.historie, { cas: ted, co: `Spojeno s #${jineId}` }].slice(-40),
-      posledniPokus: ted,
-    });
+    await ulozVazbyRezervace(
+      store,
+      id,
+      { osobaId: sloucená.id },
+      { historie: `Spojeno s #${jineId}`, rec },
+    );
     const jina2 = await store.getRezervace(jineId);
     if (jina2) {
-      await store.setRezervace(jineId, {
-        ...jina2,
-        osobaId: sloucená.id,
-        historie: [...jina2.historie, { cas: ted, co: `Spojeno s #${id}` }].slice(-40),
-        posledniPokus: ted,
-      });
+      await ulozVazbyRezervace(
+        store,
+        jineId,
+        { osobaId: sloucená.id },
+        { historie: `Spojeno s #${id}`, rec: jina2 },
+      );
     }
     return NextResponse.json({ ok: true, osobaId: sloucená.id, kod: sloucená.kod }, { headers: noStore });
   }

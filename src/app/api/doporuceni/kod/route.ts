@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { najdiNeboVytvorOsobu } from '@/lib/doporuceni';
+import { najdiNeboVytvorOsobu, nactiOsobaIdRezervace } from '@/lib/doporuceni';
 import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
 
@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 
 const noStore = { 'Cache-Control': 'no-store' };
 
-/** Vrátí (nebo založí) kód doporučitele pro hosta s platným tokenem. */
+/** Vrátí (nebo založí) kód doporučitele pro hosta s platným tokenem. Jen `kod`, ne interní ID. */
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const tokenRaw = (url.searchParams.get('token') || '').trim();
@@ -32,18 +32,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, duvod: 'rezervace' }, { status: 404, headers: noStore });
   }
 
+  const osobaId = await nactiOsobaIdRezervace(store, rezervaceId, rec);
   const osoba = await najdiNeboVytvorOsobu(store, {
     rezervaceId,
     jmeno: rec.jmeno,
     telefon: rec.telefon || rec.telefonRezervace,
     email: rec.emailHosta,
     narodnost: rec.narodnost,
-    osobaId: rec.osobaId,
+    osobaId,
   });
 
-  if (rec.osobaId !== osoba.id) {
-    await store.setRezervace(rezervaceId, { ...rec, osobaId: osoba.id });
-  }
-
-  return NextResponse.json({ ok: true, kod: osoba.kod, osobaId: osoba.id }, { headers: noStore });
+  return NextResponse.json({ ok: true, kod: osoba.kod }, { headers: noStore });
 }

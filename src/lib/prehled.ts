@@ -1070,7 +1070,12 @@ export async function buildPrehled(store: ProcessStore, now = new Date()): Promi
   });
 
   try {
-    const { nactiOsobu, privedlHosty } = await import('./doporuceni');
+    const {
+      nactiOsobu,
+      privedlHosty,
+      nactiOsobaIdRezervace,
+      nactiDoporucenoOdRezervace,
+    } = await import('./doporuceni');
     const cache = new Map<string, { jmeno: string | null; privedl: string | null }>();
     async function info(osobaId: string) {
       const hit = cache.get(osobaId);
@@ -1087,18 +1092,27 @@ export async function buildPrehled(store: ProcessStore, now = new Date()): Promi
     }
     for (let i = 0; i < rows.length; i += 1) {
       const r = rows[i];
+      const osobaId = (await nactiOsobaIdRezervace(store, r.rezervace)) || r.osobaId;
+      const doporucenoOd =
+        (await nactiDoporucenoOdRezervace(store, r.rezervace)) || r.doporucenoOd;
       let doporucilJmeno: string | null = null;
       let privedlText: string | null = null;
-      if (r.doporucenoOd) {
-        const d = await info(r.doporucenoOd);
+      if (doporucenoOd) {
+        const d = await info(doporucenoOd);
         doporucilJmeno = d.jmeno;
       }
-      if (r.osobaId) {
-        const o = await info(r.osobaId);
+      if (osobaId) {
+        const o = await info(osobaId);
         privedlText = o.privedl;
       }
-      if (doporucilJmeno || privedlText) {
-        rows[i] = { ...r, doporucilJmeno, privedlText };
+      if (doporucilJmeno || privedlText || osobaId !== r.osobaId || doporucenoOd !== r.doporucenoOd) {
+        rows[i] = {
+          ...r,
+          osobaId: osobaId || null,
+          doporucenoOd: doporucenoOd || null,
+          doporucilJmeno,
+          privedlText,
+        };
       }
     }
   } catch {

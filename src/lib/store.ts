@@ -493,6 +493,14 @@ export interface ProcessStore {
   /** Trvalý klíč (JSON string). Bez TTL. */
   getKv(key: string): Promise<string | null>;
   setKv(key: string, value: string): Promise<void>;
+  /**
+   * Zápis jen když klíč neexistuje (Redis SET NX).
+   * `ttlSec` = volitelná platnost v sekundách (zámek).
+   * true = zapsáno, false = klíč už byl.
+   */
+  setKvNx(key: string, value: string, ttlSec?: number): Promise<boolean>;
+  /** Smazání klíče (např. uvolnění zámku). */
+  delKv(key: string): Promise<void>;
 }
 
 function ttlPraniSec(ttl: PraniTtlOpts, now = new Date()): number | 'persist' | null {
@@ -1321,6 +1329,27 @@ export class FileProcessStore implements ProcessStore {
     data.kv = { ...(data.kv || {}), [k]: value };
     this.write(data);
   }
+
+  async setKvNx(key: string, value: string, _ttlSec?: number): Promise<boolean> {
+    const k = key.trim();
+    if (!k) return false;
+    const data = this.read();
+    if (data.kv?.[k] != null && data.kv[k] !== '') return false;
+    data.kv = { ...(data.kv || {}), [k]: value };
+    this.write(data);
+    return true;
+  }
+
+  async delKv(key: string): Promise<void> {
+    const k = key.trim();
+    if (!k) return;
+    const data = this.read();
+    if (!data.kv || !(k in data.kv)) return;
+    const dalsi = { ...data.kv };
+    delete dalsi[k];
+    data.kv = dalsi;
+    this.write(data);
+  }
 }
 
 /** Upstash REST (až budou KV_* v env). Stejné klíče jako lokální store. */
@@ -1806,6 +1835,22 @@ export class UpstashProcessStore implements ProcessStore {
     const k = key.trim();
     if (!k) return;
     await this.cmd('SET', k, value);
+  }
+
+  async setKvNx(key: string, value: string, ttlSec?: number): Promise<boolean> {
+    const k = key.trim();
+    if (!k) return false;
+    const res =
+      typeof ttlSec === 'number' && ttlSec > 0
+        ? await this.cmd<string | null>('SET', k, value, 'EX', Math.floor(ttlSec), 'NX')
+        : await this.cmd<string | null>('SET', k, value, 'NX');
+    return res === 'OK';
+  }
+
+  async delKv(key: string): Promise<void> {
+    const k = key.trim();
+    if (!k) return;
+    await this.cmd('DEL', k);
   }
 }
 

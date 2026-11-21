@@ -10,6 +10,9 @@ const DOPORUCENI_PREFIXY = [
   'osoba-email:',
   'doporuceni:',
   'kredit:',
+  'rez-osoba:',
+  'rez-doporuceni:',
+  'rez-lock:',
 ] as const;
 
 export function jeZkouskaDoporuceni(): boolean {

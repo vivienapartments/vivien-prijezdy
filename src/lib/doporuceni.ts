@@ -4,7 +4,7 @@
  */
 
 import { randomBytes } from 'crypto';
-import { doporuceniKlic } from './doporuceni-klic';
+import { doporuceniKlic, jeZkouskaDoporuceni } from './doporuceni-klic';
 import { jeRelayEmail } from './staly-host';
 import { normalizujTelefon } from './telefon';
 import type { ProcessStore, RezervaceRecord } from './store';
@@ -200,76 +200,197 @@ async function pridejDoSeznamu(store: ProcessStore, id: string): Promise<void> {
   await setJson(store, 'doporuceni:seznam', [id, ...list].slice(0, 5000));
 }
 
+/** Na Preview: vazby jen v test: klíčích. Na ostré: pole na rezervaci. */
+export async function nactiOsobaIdRezervace(
+  store: ProcessStore,
+  rezervaceId: string,
+  rec?: RezervaceRecord | null,
+): Promise<string | null> {
+  if (jeZkouskaDoporuceni()) {
+    const zKv = await store.getKv(doporuceniKlic(`rez-osoba:${rezervaceId}`));
+    if (zKv) return zKv;
+  }
+  const r = rec ?? (await store.getRezervace(rezervaceId));
+  return r?.osobaId || null;
+}
+
+export async function nactiDoporucenoOdRezervace(
+  store: ProcessStore,
+  rezervaceId: string,
+  rec?: RezervaceRecord | null,
+): Promise<string | null> {
+  if (jeZkouskaDoporuceni()) {
+    const zKv = await store.getKv(doporuceniKlic(`rez-doporuceni:${rezervaceId}`));
+    if (zKv) return zKv;
+    if (zKv === '') return null;
+  }
+  const r = rec ?? (await store.getRezervace(rezervaceId));
+  return r?.doporucenoOd || null;
+}
+
+/**
+ * Uloží vazbu rezervace → osoba / doporučitel.
+ * Preview nikdy nevolá setRezervace.
+ */
+export async function ulozVazbyRezervace(
+  store: ProcessStore,
+  rezervaceId: string,
+  patch: { osobaId?: string | null; doporucenoOd?: string | null },
+  opts?: { historie?: string; rec?: RezervaceRecord | null },
+): Promise<void> {
+  if (jeZkouskaDoporuceni()) {
+    if (patch.osobaId !== undefined) {
+      if (patch.osobaId) await store.setKv(doporuceniKlic(`rez-osoba:${rezervaceId}`), patch.osobaId);
+      else await store.delKv(doporuceniKlic(`rez-osoba:${rezervaceId}`));
+    }
+    if (patch.doporucenoOd !== undefined) {
+      if (patch.doporucenoOd) {
+        await store.setKv(doporuceniKlic(`rez-doporuceni:${rezervaceId}`), patch.doporucenoOd);
+      } else {
+        await store.delKv(doporuceniKlic(`rez-doporuceni:${rezervaceId}`));
+      }
+    }
+    return;
+  }
+
+  const rec = opts?.rec ?? (await store.getRezervace(rezervaceId));
+  if (!rec) return;
+  const now = new Date().toISOString();
+  const dalsi: RezervaceRecord = {
+    ...rec,
+    osobaId: patch.osobaId !== undefined ? patch.osobaId : rec.osobaId,
+    doporucenoOd: patch.doporucenoOd !== undefined ? patch.doporucenoOd : rec.doporucenoOd,
+    historie: opts?.historie
+      ? [...rec.historie, { cas: now, co: opts.historie }].slice(-40)
+      : rec.historie,
+    posledniPokus: opts?.historie ? now : rec.posledniPokus,
+  };
+  await store.setRezervace(rezervaceId, dalsi);
+}
+
+async function seZamkemRezervace<T>(
+  store: ProcessStore,
+  rezervaceId: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const lockKey = doporuceniKlic(`rez-lock:${rezervaceId}`);
+  let got = false;
+  for (let i = 0; i < 25; i += 1) {
+    got = await store.setKvNx(lockKey, '1', 8);
+    if (got) break;
+    await new Promise((r) => setTimeout(r, 40 + i * 10));
+  }
+  try {
+    return await fn();
+  } finally {
+    if (got) await store.delKv(lockKey).catch(() => undefined);
+  }
+}
+
 export type NajdiOsobuVstup = {
   rezervaceId: string;
   jmeno?: string | null;
   telefon?: string | null;
   email?: string | null;
   narodnost?: string | null;
-  /** Existující osobaId na kartě. */
+  /** Existující osobaId na kartě (nebo z Preview vazby). */
   osobaId?: string | null;
 };
 
 /**
  * Najde nebo založí osobu pro rezervaci (telefon → e-mail → nová).
- * Připíše rezervaci a vrátí osobu s kódem.
+ * Připíše rezervaci a vrátí osobu s kódem. Souběh: zámek na rezervaci + SET NX na telefon/e-mail.
  */
 export async function najdiNeboVytvorOsobu(
   store: ProcessStore,
   vstup: NajdiOsobuVstup,
 ): Promise<Osoba> {
-  const tel = jistyTelefon(vstup.telefon, vstup.narodnost);
-  const email = normalizujEmail(vstup.email);
-  const now = new Date().toISOString();
+  return seZamkemRezervace(store, vstup.rezervaceId, async () => {
+    const tel = jistyTelefon(vstup.telefon, vstup.narodnost);
+    const email = normalizujEmail(vstup.email);
+    const now = new Date().toISOString();
 
-  let osoba: Osoba | null = null;
-  if (vstup.osobaId) osoba = await nactiOsobu(store, vstup.osobaId);
+    const vazbaOsoba =
+      vstup.osobaId || (await nactiOsobaIdRezervace(store, vstup.rezervaceId));
 
-  if (!osoba && tel) {
-    const id = await store.getKv(doporuceniKlic(`osoba-tel:${tel}`));
-    if (id) osoba = await nactiOsobu(store, id);
-  }
-  if (!osoba && email) {
-    const id = await store.getKv(doporuceniKlic(`osoba-email:${email}`));
-    if (id) osoba = await nactiOsobu(store, id);
-  }
+    let osoba: Osoba | null = null;
+    if (vazbaOsoba) osoba = await nactiOsobu(store, vazbaOsoba);
 
-  if (!osoba) {
-    const id = novyId('o');
-    const kod = await unikarniKod(store);
-    osoba = {
-      id,
-      jmeno: (vstup.jmeno || '').trim() || null,
-      telefony: tel ? [tel] : [],
-      emaily: email ? [email] : [],
-      kod,
-      rezervace: [vstup.rezervaceId],
-      vytvoreno: now,
-      rucneSpojeno: [],
-    };
-    await ulozOsobu(store, osoba);
+    if (!osoba && tel) {
+      const id = await store.getKv(doporuceniKlic(`osoba-tel:${tel}`));
+      if (id) osoba = await nactiOsobu(store, id);
+    }
+    if (!osoba && email) {
+      const id = await store.getKv(doporuceniKlic(`osoba-email:${email}`));
+      if (id) osoba = await nactiOsobu(store, id);
+    }
+
+    if (!osoba) {
+      const id = novyId('o');
+      const kod = await unikarniKod(store);
+      // Nejprve nárok na telefon/e-mail (SET NX). Při kolizi použij existující osobu.
+      if (tel) {
+        const ok = await store.setKvNx(doporuceniKlic(`osoba-tel:${tel}`), id);
+        if (!ok) {
+          const exist = await store.getKv(doporuceniKlic(`osoba-tel:${tel}`));
+          if (exist) {
+            const existujici = await nactiOsobu(store, exist);
+            if (existujici) {
+              osoba = existujici;
+            }
+          }
+        }
+      }
+      if (!osoba && email) {
+        const ok = await store.setKvNx(doporuceniKlic(`osoba-email:${email}`), id);
+        if (!ok) {
+          const exist = await store.getKv(doporuceniKlic(`osoba-email:${email}`));
+          if (exist) {
+            const existujici = await nactiOsobu(store, exist);
+            if (existujici) osoba = existujici;
+          }
+        }
+      }
+      if (!osoba) {
+        osoba = {
+          id,
+          jmeno: (vstup.jmeno || '').trim() || null,
+          telefony: tel ? [tel] : [],
+          emaily: email ? [email] : [],
+          kod,
+          rezervace: [vstup.rezervaceId],
+          vytvoreno: now,
+          rucneSpojeno: [],
+        };
+        await ulozOsobu(store, osoba);
+        await ulozVazbyRezervace(store, vstup.rezervaceId, { osobaId: osoba.id });
+        return osoba;
+      }
+    }
+
+    let zmena = false;
+    if (vstup.rezervaceId && !osoba.rezervace.includes(vstup.rezervaceId)) {
+      osoba = { ...osoba, rezervace: [...osoba.rezervace, vstup.rezervaceId] };
+      zmena = true;
+    }
+    if (tel && !osoba.telefony.includes(tel)) {
+      osoba = { ...osoba, telefony: [...osoba.telefony, tel] };
+      zmena = true;
+      await store.setKvNx(doporuceniKlic(`osoba-tel:${tel}`), osoba.id);
+    }
+    if (email && !osoba.emaily.includes(email)) {
+      osoba = { ...osoba, emaily: [...osoba.emaily, email] };
+      zmena = true;
+      await store.setKvNx(doporuceniKlic(`osoba-email:${email}`), osoba.id);
+    }
+    if (!osoba.jmeno && (vstup.jmeno || '').trim()) {
+      osoba = { ...osoba, jmeno: (vstup.jmeno || '').trim() };
+      zmena = true;
+    }
+    if (zmena) await ulozOsobu(store, osoba);
+    await ulozVazbyRezervace(store, vstup.rezervaceId, { osobaId: osoba.id });
     return osoba;
-  }
-
-  let zmena = false;
-  if (vstup.rezervaceId && !osoba.rezervace.includes(vstup.rezervaceId)) {
-    osoba = { ...osoba, rezervace: [...osoba.rezervace, vstup.rezervaceId] };
-    zmena = true;
-  }
-  if (tel && !osoba.telefony.includes(tel)) {
-    osoba = { ...osoba, telefony: [...osoba.telefony, tel] };
-    zmena = true;
-  }
-  if (email && !osoba.emaily.includes(email)) {
-    osoba = { ...osoba, emaily: [...osoba.emaily, email] };
-    zmena = true;
-  }
-  if (!osoba.jmeno && (vstup.jmeno || '').trim()) {
-    osoba = { ...osoba, jmeno: (vstup.jmeno || '').trim() };
-    zmena = true;
-  }
-  if (zmena) await ulozOsobu(store, osoba);
-  return osoba;
+  });
 }
 
 export type VytvorDoporuceniVstup = {
@@ -405,7 +526,8 @@ export async function zkusSparovatRezervaci(
   rec: RezervaceRecord,
   opts: { dnu?: number; ted?: Date } = {},
 ): Promise<SparovaniVysledek> {
-  if (rec.doporucenoOd) return { ok: false, duvod: 'uz' };
+  const uz = await nactiDoporucenoOdRezervace(store, rec.rezervace, rec);
+  if (uz) return { ok: false, duvod: 'uz' };
   const otevrena = await listOtevrenaDoporuceni(store, { dnu: opts.dnu ?? 60, ted: opts.ted });
   const shody = otevrena.filter((d) => shodaKontaktu(d, rec));
   if (shody.length === 0) return { ok: false, duvod: 'nic' };
@@ -432,13 +554,12 @@ export async function sparujRucne(
   };
   await setJson(store, `doporuceni:${d.id}`, dalsi);
 
-  const patch: RezervaceRecord = {
-    ...rec,
-    doporucenoOd: d.doporucitelOsobaId,
-    historie: [...rec.historie, { cas: now, co: 'Spárováno s doporučením' }].slice(-40),
-    posledniPokus: now,
-  };
-  await store.setRezervace(rezervaceId, patch);
+  await ulozVazbyRezervace(
+    store,
+    rezervaceId,
+    { doporucenoOd: d.doporucitelOsobaId },
+    { historie: 'Spárováno s doporučením', rec },
+  );
 
   const doporucitel = d.doporucitelOsobaId ? await nactiOsobu(store, d.doporucitelOsobaId) : null;
   return { ok: true, doporuceni: dalsi, doporucitel };
@@ -450,16 +571,14 @@ export async function zrusSparovani(
 ): Promise<Doporuceni | null> {
   const d = await nactiDoporuceni(store, doporuceniId);
   if (!d || !d.rezervace) return d;
-  const now = new Date().toISOString();
   const rec = await store.getRezervace(d.rezervace);
-  if (rec) {
-    await store.setRezervace(d.rezervace, {
-      ...rec,
-      doporucenoOd: null,
-      historie: [...rec.historie, { cas: now, co: 'Zrušeno spárování doporučení' }].slice(-40),
-      posledniPokus: now,
-    });
-  }
+  await ulozVazbyRezervace(
+    store,
+    d.rezervace,
+    { doporucenoOd: null },
+    { historie: 'Zrušeno spárování doporučení', rec },
+  );
+  const now = new Date().toISOString();
   const dalsi: Doporuceni = {
     ...d,
     stav: 'poptano',
@@ -508,14 +627,13 @@ export async function spojOsoby(
 
   for (const rezId of mladsi.rezervace) {
     const rec = await store.getRezervace(rezId);
-    if (rec && rec.osobaId === mladsi.id) {
-      await store.setRezervace(rezId, { ...rec, osobaId: sloucená.id });
-    }
-    if (rec && rec.doporucenoOd === mladsi.id) {
-      await store.setRezervace(rezId, {
-        ...(await store.getRezervace(rezId))!,
-        doporucenoOd: sloucená.id,
-      });
+    const osobaId = await nactiOsobaIdRezervace(store, rezId, rec);
+    const dopOd = await nactiDoporucenoOdRezervace(store, rezId, rec);
+    const patch: { osobaId?: string | null; doporucenoOd?: string | null } = {};
+    if (osobaId === mladsi.id) patch.osobaId = sloucená.id;
+    if (dopOd === mladsi.id) patch.doporucenoOd = sloucená.id;
+    if (Object.keys(patch).length) {
+      await ulozVazbyRezervace(store, rezId, patch, { rec });
     }
   }
 
