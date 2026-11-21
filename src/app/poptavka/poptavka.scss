@@ -948,6 +948,12 @@
   margin-bottom: 0.25rem;
 }
 
+/* Popisky polí (Jméno, Telefon, Poznámka, Příjezd, Odjezd): krém, ne zlato. */
+.pp--vernost legend,
+.pp--vernost label {
+  color: #e6dccb;
+}
+
 .pp--vernost .pp__karta--kontakt .pp__akce {
   margin-top: 1rem;
   gap: 0.5rem;
