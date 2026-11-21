@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Náhled · patička a malý řádek</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0a0908;
+      color: #f5efe3;
+      font-family: "DM Sans", system-ui, sans-serif;
+      padding: 1rem 0.75rem 2.5rem;
+    }
+    .hlavicka {
+      max-width: 26rem;
+      margin: 0 auto 1rem;
+      text-align: center;
+    }
+    .hlavicka h1 {
+      margin: 0 0 0.35rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.3rem;
+      color: #c9a84c;
+      font-weight: 600;
+    }
+    .hlavicka p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: #cbbba8;
+      line-height: 1.4;
+    }
+    .sloupec { max-width: 26rem; margin: 0 auto 1.6rem; }
+    .pismeno {
+      margin: 0 0 0.35rem;
+      text-align: center;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.15rem;
+      color: #c9a84c;
+      font-weight: 600;
+    }
+    .popisek {
+      margin: 0 0 0.5rem;
+      text-align: center;
+      font-size: 0.74rem;
+      color: #cbbba8;
+      line-height: 1.35;
+    }
+    .karta {
+      background: #1c1712;
+      border: 1px solid #3d342a;
+      border-radius: 18px;
+      overflow: hidden;
+      padding: 0 1.1rem 1.15rem;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.35);
+    }
+    .hero {
+      margin: 0 -1.1rem;
+      height: 120px;
+      background: linear-gradient(to bottom, transparent 35%, #1c1712 100%),
+        url("https://www.vivienapartments.cz/cs/images/apartments/apartments-hero-600.webp") center / cover no-repeat;
+    }
+    .hero--dum {
+      background-image: linear-gradient(to bottom, transparent 35%, #1c1712 100%),
+        url("/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg");
+      height: 160px;
+    }
+    .logo {
+      display: block;
+      width: 52px;
+      height: 52px;
+      margin: -28px auto 0.55rem;
+      border-radius: 50%;
+      border: 2px solid #c9a84c;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      background: #1c1712;
+      box-shadow: 0 0 0 4px #1c1712;
+    }
+    .logo--bez { margin-top: 0.85rem; }
+    .maly {
+      margin: 0 0 0.35rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #cbbba8;
+    }
+    h2 {
+      margin: 0 0 0.55rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.35rem;
+      text-align: center;
+    }
+    .navod {
+      margin: 0 0 0.55rem;
+      text-align: center;
+      font-size: 0.88rem;
+      color: #e8dfd0;
+      line-height: 1.4;
+      hyphens: none;
+    }
+    .volba, .btn {
+      display: block;
+      width: 100%;
+      margin: 0 0 0.45rem;
+      padding: 0.7rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      color: #cbbba8;
+      font: inherit;
+      text-align: left;
+    }
+    .volba strong { display: block; color: #f5efe3; margin-bottom: 0.15rem; }
+    .volba span { font-size: 0.84rem; }
+    .btn {
+      text-align: center;
+      font-weight: 600;
+      border-radius: 999px;
+    }
+    .btn--tlumeny {
+      opacity: 0.55;
+      border: 1px solid #5a4e40;
+      background: transparent;
+      color: #cbbba8;
+    }
+    .btn--hlavni {
+      background: #b89a6a;
+      color: #1a1510;
+      border: 0;
+      font-weight: 700;
+    }
+    .btn--sms {
+      border-radius: 10px;
+      background: transparent;
+      color: #e8dfd0;
+    }
+    .btn--plocha {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      background: #c9a84c;
+      color: #1a1510;
+      border: 0;
+      font-weight: 700;
+    }
+    .mreza {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+      margin: 0 0 0.55rem;
+    }
+    .dlazdice {
+      position: relative;
+      aspect-ratio: 4/3;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #3d342a;
+    }
+    .dlazdice.is-on { border-color: #c9a84c; }
+    .dlazdice img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .dlazdice span {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      padding: 0.3rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+      font-size: 0.68rem;
+      text-align: center;
+    }
+    .kontakty {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+      margin-top: 0.75rem;
+      text-align: center;
+      font-size: 0.76rem;
+      color: #cbbba8;
+    }
+    .kontakty b {
+      display: block;
+      color: #c9a84c;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      margin-top: 0.15rem;
+    }
+    .plocha {
+      margin-top: 0.85rem;
+      padding-top: 0.85rem;
+      border-top: 1px solid #3d342a;
+    }
+    .pl-veta {
+      margin: 0.45rem 0 0;
+      text-align: center;
+      font-size: 0.76rem;
+      color: #cbbba8;
+    }
+    .specha {
+      margin: 0.35rem 0 0;
+      text-align: center;
+      font-size: 0.86rem;
+      color: #cbbba8;
+      line-height: 1.4;
+    }
+    .bez {
+      margin: 0.55rem 0 0;
+      text-align: center;
+      font-size: 0.72rem;
+      color: #8a7a68;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="hlavicka">
+    <h1>Patička + malý řádek</h1>
+    <p>Kontakty jen na Kontakt a Děkujeme. Krok 2 / 3 bez data. Ještě nenasazeno.</p>
+  </div>
+
+  <div class="sloupec">
+    <p class="pismeno">Jak vybereme</p>
+    <p class="popisek">Malý řádek jen „Krok 2“. Bez kontaktů dole.</p>
+    <div class="karta">
+      <div class="hero"></div>
+      <img class="logo" src="/pruvodce/va-logo-192.png" width="52" height="52" alt="" />
+      <p class="maly">Krok 2</p>
+      <h2>Jak vybereme apartmán?</h2>
+      <div class="volba"><strong>Vyberu si apartmán</strong><span>Prohlédnete si fotky a vyberete jeden nebo víc.</span></div>
+      <div class="volba"><strong>Kterýkoli volný</strong><span>Stačí termín, nabídneme vám, co bude volné.</span></div>
+      <div class="volba"><strong>Zjistěte, který vám sedí</strong><span>Krátký dotazník, stačí pár otázek.</span></div>
+      <div class="btn btn--sms">Zpět</div>
+      <p class="bez">↓ kontakty tu nejsou</p>
+    </div>
+  </div>
+
+  <div class="sloupec">
+    <p class="pismeno">Apartmány · bez výběru</p>
+    <p class="popisek">„Krok 3“. Pokračovat vidět, ale neaktivní. Bez kontaktů.</p>
+    <div class="karta">
+      <img class="logo logo--bez" src="/pruvodce/va-logo-192.png" width="52" height="52" alt="" />
+      <p class="maly">Krok 3</p>
+      <h2>Který apartmán tentokrát?</h2>
+      <p class="navod">Klepnutím na fotku otevřete galerii, apartmán pak vyberete tlačítkem.</p>
+      <div class="mreza">
+        <div class="dlazdice"><img src="https://www.vivienapartments.cz/cs/images/apartments/pokoj4-5-600.webp" alt="" /><span>V1</span></div>
+        <div class="dlazdice"><img src="https://www.vivienapartments.cz/cs/images/apartments/pokoj3-600.webp" alt="" /><span>V2</span></div>
+      </div>
+      <div class="btn btn--tlumeny">Pokračovat</div>
+      <div class="btn btn--sms">Zpět</div>
+      <p class="bez">↓ kontakty tu nejsou</p>
+    </div>
+  </div>
+
+  <div class="sloupec">
+    <p class="pismeno">Apartmány · po výběru</p>
+    <p class="popisek">Pokračovat aktivní. Bez kontaktů.</p>
+    <div class="karta">
+      <img class="logo logo--bez" src="/pruvodce/va-logo-192.png" width="52" height="52" alt="" />
+      <p class="maly">Krok 3</p>
+      <h2>Který apartmán tentokrát?</h2>
+      <p class="navod">Klepnutím na fotku otevřete galerii, apartmán pak vyberete tlačítkem.</p>
+      <div class="mreza">
+        <div class="dlazdice is-on"><img src="https://www.vivienapartments.cz/cs/images/apartments/pokoj4-5-600.webp" alt="" /><span>V1 ✓</span></div>
+        <div class="dlazdice"><img src="https://www.vivienapartments.cz/cs/images/apartments/pokoj3-600.webp" alt="" /><span>V2</span></div>
+      </div>
+      <div class="btn btn--hlavni">Pokračovat</div>
+      <div class="btn btn--sms">Zpět</div>
+      <p class="bez">↓ kontakty tu nejsou</p>
+    </div>
+  </div>
+
+  <div class="sloupec">
+    <p class="pismeno">Kontakt</p>
+    <p class="popisek">Malý řádek s termínem a výběrem. Kontakty dole ano.</p>
+    <div class="karta">
+      <img class="logo logo--bez" src="/pruvodce/va-logo-192.png" width="52" height="52" alt="" />
+      <p class="maly">Poslední krok · 12. 12. 2026 – 14. 12. 2026 · V1 Jemná harmonie</p>
+      <h2>Ještě kontakt a je hotovo</h2>
+      <div class="btn btn--hlavni">Odeslat poptávku</div>
+      <div class="kontakty">
+        <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+        <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sloupec">
+    <p class="pismeno">Děkujeme</p>
+    <p class="popisek">Kontakty dole ano. Plocha ano.</p>
+    <div class="karta">
+      <div class="hero hero--dum"></div>
+      <img class="logo" src="/pruvodce/va-logo-192.png" width="52" height="52" alt="" />
+      <h2>Děkujeme, že se k nám vracíte.</h2>
+      <p class="navod">Cenu vám obvykle pošleme do hodiny. Odpovídáme od 8 do 20 hodin.</p>
+      <p class="specha">Když to spěchá, raději nám rovnou zavolejte…</p>
+      <div class="plocha">
+        <div class="btn btn--plocha">Přidat na plochu</div>
+        <p class="pl-veta">Mějte nás na ploše telefonu. Další pobyt pak poptáte bez hledání.</p>
+      </div>
+      <div class="kontakty">
+        <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+        <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
