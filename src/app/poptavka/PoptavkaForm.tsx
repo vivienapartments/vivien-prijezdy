@@ -242,15 +242,10 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       ? apts.map(nazevApt).join(', ')
       : '';
 
-  const malyRadekVernost = vernost
-    ? krok === 'zpusob' || krok === 'pruvodce'
-      ? t.malyKrok.replace('{n}', '2')
-      : krok === 'apartmany'
-        ? t.malyKrok.replace('{n}', '3')
-        : krok === 'kontakt' && souhrnTerminu
-          ? `${t.malyPosledni} · ${souhrnTerminu}${souhrnVyberu ? ` · ${souhrnVyberu}` : ''}`
-          : ''
-    : '';
+  const malyRadekVernost =
+    vernost && krok === 'kontakt' && souhrnTerminu
+      ? `${souhrnTerminu}${souhrnVyberu ? ` · ${souhrnVyberu}` : ''}`
+      : '';
 
   /** Věrnost tmavá: 1 zahrada, 2 stropy, konec dům. Apartmány beze změny. */
   const heroVernost = vernost
