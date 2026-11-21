@@ -78,7 +78,8 @@ async function upozorniPohodu(
   if (hodinaPraha(now) < HODINA_DOTAZU_POHODY) return { pocet: 0, beh };
   const dnes = denPraha(now);
   if (beh.pohoda === dnes) return { pocet: 0, beh };
-  const hoste = hosteProPohodu(list, dnes);
+  /** Jen kdo ještě nedostal dotaz. Když už jste psali dřív, push znovu nechodí. */
+  const hoste = hosteProPohodu(list, dnes).filter((r) => !r.pohodaDotaz);
   if (!hoste.length) {
     return { pocet: 0, beh: { ...beh, pohoda: dnes } };
   }

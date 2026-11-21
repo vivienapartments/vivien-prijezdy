@@ -88,6 +88,56 @@ describe('pohoda', () => {
     expect(beh().pohoda).toBe('2026-10-16');
   });
 
+  it('když už jste se zeptali, push v 11:00 nechodí', async () => {
+    const now = casVPraze('2026-10-16', 11, 5);
+    const { store, beh } = pamet([
+      host({
+        rezervace: '1',
+        apartman: 'V1',
+        prijezd: '2026-10-15',
+        odjezd: '2026-10-18',
+        predano: 'ano',
+        pohodaDotaz: '2026-10-16T08:00:00.000Z',
+      }),
+      host({
+        rezervace: '2',
+        apartman: 'V3',
+        prijezd: '2026-10-15',
+        odjezd: '2026-10-19',
+        predano: 'ano',
+        pohodaDotaz: '2026-10-16T09:00:00.000Z',
+      }),
+    ]);
+    const texty: string[] = [];
+    await upozorniOdjezdy(store, now, async (_s, text) => {
+      texty.push(text);
+      return 'push';
+    });
+    expect(texty).toEqual([]);
+    expect(beh().pohoda).toBe('2026-10-16');
+  });
+
+  it('push počítá jen hosty bez odeslaného dotazu', async () => {
+    const now = casVPraze('2026-10-16', 11, 5);
+    const { store } = pamet([
+      host({
+        rezervace: '1',
+        apartman: 'V1',
+        prijezd: '2026-10-15',
+        odjezd: '2026-10-18',
+        predano: 'ano',
+        pohodaDotaz: '2026-10-16T08:00:00.000Z',
+      }),
+      host({ rezervace: '2', apartman: 'V3', prijezd: '2026-10-15', odjezd: '2026-10-19', predano: 'ano' }),
+    ]);
+    const texty: string[] = [];
+    await upozorniOdjezdy(store, now, async (_s, text) => {
+      texty.push(text);
+      return 'push';
+    });
+    expect(texty).toEqual([textPushPohody(1)]);
+  });
+
   it('před 11:00 nic neposílá', async () => {
     const now = casVPraze('2026-10-16', 10, 50);
     const { store, beh } = pamet([

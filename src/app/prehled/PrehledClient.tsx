@@ -5630,6 +5630,8 @@ export function PrehledClient({
     hledat: false,
   };
   const hostePohoda = seradOdjezdy(radky.filter((r) => jeProPohodu(r, dnes)));
+  const hostePohodaCekaji = hostePohoda.filter((r) => !r.pohodaDotaz);
+  const hostePohodaHotove = hostePohoda.filter((r) => Boolean(r.pohodaDotaz));
   const hostePodekovaniSeznam = hosteProPodekovani(radky, dnes, ted);
   const hosteShrnutiVstupy = radky.map((r) => ({ ...r, ...shrnutiVstupRadku(r) }));
   const hosteShrnutiCekaji = hosteCekajiciShrnuti(hosteShrnutiVstupy, dnes);
@@ -5641,7 +5643,7 @@ export function PrehledClient({
   const zitraCekaAkce = hosteZitraOdjezd.some(
     (r) => !jeHodina(casOdjezduRadku(r)) && !r.odjezdDotaz,
   );
-  const pohodaCekaAkce = hostePohoda.some((r) => !r.pohodaDotaz);
+  const pohodaCekaAkce = hostePohodaCekaji.length > 0;
   const podekovaniCekaAkce = hostePodekovaniSeznam.some((r) => !r.podekovaniKdy);
   const shrnutiCekaAkce = hosteShrnutiCekaji.length > 0;
   type CasKeSchvaleni = {
@@ -5984,7 +5986,7 @@ export function PrehledClient({
           jen="aktualni"
         />
       ) : null}
-      {pohledDomu && zalozka === 'prijezdy' && hostePohoda.length && pohodaCekaAkce ? (
+      {pohledDomu && zalozka === 'prijezdy' && hostePohodaCekaji.length ? (
         <section id="pohoda" className="ph-domu-radek">
           <button
             type="button"
@@ -5992,23 +5994,21 @@ export function PrehledClient({
             aria-expanded={pohodaOtevreno}
             onClick={() => setPohodaOtevreno((v) => !v)}
           >
-            Je vše v pořádku? · {hostePohoda.length} {pohodaOtevreno ? '▴' : '▸'}
+            Je vše v pořádku? · {hostePohodaCekaji.length} {pohodaOtevreno ? '▴' : '▸'}
           </button>
           {pohodaOtevreno ? (
             <ul className="ph-odjezdy ph-odjezdy--vnorene">
-              {hostePohoda.map((row) => {
-                const odeslano = row.pohodaDotaz ? hodinaPraha(row.pohodaDotaz) : '';
+              {hostePohodaCekaji.map((row) => {
                 const text = textPohody(jazykRadku(row));
                 const wa = row.telefonWa;
                 const email = row.email.includes('@') ? row.email : '';
                 return (
-                  <li key={row.rezervace} className={odeslano ? 'is-hotovo' : undefined}>
+                  <li key={row.rezervace}>
                     <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
                       {row.jmeno || 'Host'}
                     </button>
                     {' · '}
                     {row.apartman || 'bez apartmánu'}
-                    {odeslano ? <span>{` · Odesláno ${odeslano}`}</span> : null}
                     <span className="ph-odjezdy__akce">
                       <TlacitkoWhatsApp
                         wa={wa}
@@ -6018,7 +6018,7 @@ export function PrehledClient({
                       />
                       {email ? (
                         <button type="button" className="ph-wa" onClick={() => setDotazPohoda(row.rezervace)}>
-                          {odeslano ? 'Poslat e-mailem znovu' : 'Poslat e-mailem'}
+                          Poslat e-mailem
                         </button>
                       ) : null}
                       <button
@@ -6041,8 +6041,7 @@ export function PrehledClient({
                     {dotazPohoda === row.rezervace ? (
                       <div className="ph-predano-dotaz">
                         <p>
-                          Poslat e-mail na <span className="ph-tel">{email}</span>
-                          {odeslano ? ' znovu' : ''}?
+                          Poslat e-mail na <span className="ph-tel">{email}</span>?
                         </p>
                         <button
                           type="button"
@@ -6657,7 +6656,7 @@ export function PrehledClient({
           jen="pozdeji"
         />
       ) : null}
-      {pohledDomu && zalozka === 'prijezdy' && hostePohoda.length && !pohodaCekaAkce ? (
+      {pohledDomu && zalozka === 'prijezdy' && hostePohodaHotove.length && !pohodaCekaAkce ? (
         <section id="pohoda" className="ph-domu-radek">
           <button
             type="button"
@@ -6665,11 +6664,11 @@ export function PrehledClient({
             aria-expanded={pohodaOtevreno}
             onClick={() => setPohodaOtevreno((v) => !v)}
           >
-            Je vše v pořádku? · {hostePohoda.length} {pohodaOtevreno ? '▴' : '▸'}
+            Je vše v pořádku? · Hotové · {hostePohodaHotove.length} {pohodaOtevreno ? '▴' : '▸'}
           </button>
           {pohodaOtevreno ? (
             <ul className="ph-odjezdy ph-odjezdy--vnorene">
-              {hostePohoda.map((row) => {
+              {hostePohodaHotove.map((row) => {
                 const odeslano = row.pohodaDotaz ? hodinaPraha(row.pohodaDotaz) : '';
                 const text = textPohody(jazykRadku(row));
                 const wa = row.telefonWa;
