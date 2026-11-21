@@ -26,9 +26,15 @@ export type StalyHostInfo = {
   fakturaZMinula: FakturaUdaje | null;
 };
 
-function jeRelayEmail(email: string): boolean {
+export function jeRelayEmail(email: string): boolean {
   const e = email.trim().toLowerCase();
-  return e.endsWith('@guest.booking.com') || e.includes('@guest.airbnb.') || e.endsWith('@m.airbnb.com');
+  return (
+    e.endsWith('@guest.booking.com') ||
+    e.includes('@guest.airbnb.') ||
+    e.endsWith('@m.airbnb.com') ||
+    e.includes('@guest.expedia.') ||
+    e.endsWith('@messages.airbnb.com')
+  );
 }
 
 function normalizujEmail(email: string | null | undefined): string | null {

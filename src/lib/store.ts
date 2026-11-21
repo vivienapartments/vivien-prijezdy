@@ -332,6 +332,10 @@ export type RezervaceRecord = {
    * Z minulého pobytu se znovu sama nepřilepí (dokud ji znovu neuloží).
    */
   fakturaNeprebirat: boolean;
+  /** Osoba doporučitele / hosta (PROMPT-77). null = ještě není. */
+  osobaId: string | null;
+  /** Osoba, která tohoto hosta doporučila. null = bez doporučení. */
+  doporucenoOd: string | null;
 };
 
 export type RucniPole =
@@ -408,6 +412,8 @@ type StoreData = {
   praniOtevrena?: string[];
   prani?: Record<string, PraniFileSlot>;
   poptavky?: PoptavkaZaznam[];
+  /** Trvalé klíče (osoba, doporučení…). Bez TTL. */
+  kv?: Record<string, string>;
 };
 
 const RUCNI_KLIC = new Set<RucniPole>([
@@ -484,6 +490,9 @@ export interface ProcessStore {
   listOtevrenaPrani(): Promise<OtevrenaPraniPolozka[]>;
   listPoptavky(): Promise<PoptavkaZaznam[]>;
   pridejPoptavku(zaznam: PoptavkaZaznam): Promise<void>;
+  /** Trvalý klíč (JSON string). Bez TTL. */
+  getKv(key: string): Promise<string | null>;
+  setKv(key: string, value: string): Promise<void>;
 }
 
 function ttlPraniSec(ttl: PraniTtlOpts, now = new Date()): number | 'persist' | null {
@@ -543,6 +552,7 @@ function emptyData(): StoreData {
     push: [],
     upozorneni: [],
     poptavky: [],
+    kv: {},
     zpracujSelhani: 0,
     zpracujBeh: null,
     brana: null,
@@ -914,6 +924,9 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
         : null,
     faktura: nactiFakturu(r.faktura),
     fakturaNeprebirat: r.fakturaNeprebirat === true,
+    osobaId: typeof r.osobaId === 'string' && r.osobaId.trim() ? r.osobaId.trim() : null,
+    doporucenoOd:
+      typeof r.doporucenoOd === 'string' && r.doporucenoOd.trim() ? r.doporucenoOd.trim() : null,
   };
 }
 
@@ -1022,6 +1035,8 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     adresaHosta: null,
     faktura: null,
     fakturaNeprebirat: false,
+    osobaId: null,
+    doporucenoOd: null,
   };
 }
 
@@ -1054,6 +1069,7 @@ export class FileProcessStore implements ProcessStore {
           ? parsed.praniOtevrena.filter((x): x is string => typeof x === 'string')
           : [],
         prani: parsed.prani && typeof parsed.prani === 'object' ? parsed.prani : {},
+        kv: parsed.kv && typeof parsed.kv === 'object' ? parsed.kv : {},
       };
     } catch {
       return emptyData();
@@ -1288,6 +1304,21 @@ export class FileProcessStore implements ProcessStore {
   async pridejPoptavku(zaznam: PoptavkaZaznam): Promise<void> {
     const data = this.read();
     data.poptavky = nactiPoptavkySeznam([zaznam, ...(data.poptavky || [])]);
+    this.write(data);
+  }
+
+  async getKv(key: string): Promise<string | null> {
+    const k = key.trim();
+    if (!k) return null;
+    const v = this.read().kv?.[k];
+    return typeof v === 'string' ? v : null;
+  }
+
+  async setKv(key: string, value: string): Promise<void> {
+    const k = key.trim();
+    if (!k) return;
+    const data = this.read();
+    data.kv = { ...(data.kv || {}), [k]: value };
     this.write(data);
   }
 }
@@ -1762,6 +1793,19 @@ export class UpstashProcessStore implements ProcessStore {
   async pridejPoptavku(zaznam: PoptavkaZaznam): Promise<void> {
     const list = await this.listPoptavky();
     await this.cmd('SET', 'poptavky:seznam', JSON.stringify(nactiPoptavkySeznam([zaznam, ...list])));
+  }
+
+  async getKv(key: string): Promise<string | null> {
+    const k = key.trim();
+    if (!k) return null;
+    const v = await this.cmd<string | null>('GET', k);
+    return typeof v === 'string' ? v : null;
+  }
+
+  async setKv(key: string, value: string): Promise<void> {
+    const k = key.trim();
+    if (!k) return;
+    await this.cmd('SET', k, value);
   }
 }
 

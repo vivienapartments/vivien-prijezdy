@@ -1,5 +1,6 @@
 import { duvod, problemEmailu } from './chyby';
 import { nightsBetween } from './dates';
+import { poNoveRezervaci } from './doporuceni';
 import { oznacRucni, vynechRucni } from './rucni-pole';
 import { doplnUdajeZMinulehoPobytu } from './staly-host';
 import { jazykZPredvolby, normalizujTelefon } from './telefon';
@@ -12,6 +13,7 @@ import {
 } from './store';
 import type { AptId, GuideLang } from './types';
 import { APT_IDS, GUIDE_LANGS } from './types';
+import { upozorniMajitele } from './upozorneni';
 
 export type StitekRezervace = 'rucne' | 'info';
 
@@ -291,5 +293,11 @@ export async function vytvorRucniRezervaci(
     posledniPokus: now,
   };
   await store.setRezervace(id, rec);
+  try {
+    const { telegram } = await poNoveRezervaci(store, rec);
+    if (telegram) await upozorniMajitele(store, telegram, '/prehled', { telegram: 'zadost' });
+  } catch (err) {
+    console.error('doporuceni: sparovani rucne', err instanceof Error ? err.message : err);
+  }
   return { ok: true, rezervace: id };
 }

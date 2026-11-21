@@ -176,6 +176,14 @@ export type PrehledRadek = {
   fakturaNeprebirat: boolean;
   /** Stejný host z minulých karet (počítá se v paměti). */
   stalyHost?: StalyHostInfo | null;
+  /** Osoba doporučitele / hosta (PROMPT-77). */
+  osobaId: string | null;
+  /** Kdo tohoto hosta doporučil (osobaId). */
+  doporucenoOd: string | null;
+  /** Jméno doporučitele pro řádek „Doporučil“. */
+  doporucilJmeno: string | null;
+  /** Text „Přivedl: N hostů (jména)“. */
+  privedlText: string | null;
 };
 
 type AptRow = { id: AptId; nazev: { cs: string; en: string } };
@@ -945,6 +953,10 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     adresaHosta: rec.adresaHosta ?? null,
     faktura: rec.faktura ?? null,
     fakturaNeprebirat: rec.fakturaNeprebirat === true,
+    osobaId: rec.osobaId || null,
+    doporucenoOd: rec.doporucenoOd || null,
+    doporucilJmeno: null,
+    privedlText: null,
   };
 }
 
@@ -1041,7 +1053,7 @@ export function radkyBezPadu(
 
 export async function buildPrehled(store: ProcessStore, now = new Date()): Promise<PrehledRadek[]> {
   const entries = await store.listRezervace();
-  return radkyBezPadu(entries, now, (record) => {
+  const rows = radkyBezPadu(entries, now, (record) => {
     const radek = radekZRezervace(record);
     if (record.poplatek !== 'neznamo' || maRucni(record, 'poplatek')) return radek;
     const odhad = poplatekProRezervaci(record);
@@ -1056,6 +1068,44 @@ export async function buildPrehled(store: ProcessStore, now = new Date()): Promi
       poplatekOdhad: true,
     };
   });
+
+  try {
+    const { nactiOsobu, privedlHosty } = await import('./doporuceni');
+    const cache = new Map<string, { jmeno: string | null; privedl: string | null }>();
+    async function info(osobaId: string) {
+      const hit = cache.get(osobaId);
+      if (hit) return hit;
+      const o = await nactiOsobu(store, osobaId);
+      const privedl = o ? await privedlHosty(store, osobaId) : { jmena: [], pocet: 0 };
+      const text =
+        privedl.pocet > 0
+          ? `Přivedl: ${privedl.pocet} ${privedl.pocet === 1 ? 'host' : 'hostů'} (${privedl.jmena.slice(0, 5).join(', ')})`
+          : null;
+      const val = { jmeno: o?.jmeno || null, privedl: text };
+      cache.set(osobaId, val);
+      return val;
+    }
+    for (let i = 0; i < rows.length; i += 1) {
+      const r = rows[i];
+      let doporucilJmeno: string | null = null;
+      let privedlText: string | null = null;
+      if (r.doporucenoOd) {
+        const d = await info(r.doporucenoOd);
+        doporucilJmeno = d.jmeno;
+      }
+      if (r.osobaId) {
+        const o = await info(r.osobaId);
+        privedlText = o.privedl;
+      }
+      if (doporucilJmeno || privedlText) {
+        rows[i] = { ...r, doporucilJmeno, privedlText };
+      }
+    }
+  } catch {
+    /* doporučení nesmí shodit přehled */
+  }
+
+  return rows;
 }
 
 export function posunDen(ymd: string, dny: number): string {

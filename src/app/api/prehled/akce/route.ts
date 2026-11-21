@@ -77,6 +77,13 @@ import { FAKTURA_MAJITEL } from '@/lib/faktura-texty';
 import { zpravyMenu, type DruhZpravy } from '@/lib/whatsapp-zprava';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import { prehledPrihlasen } from '@/lib/prehled-session';
+import {
+  listOtevrenaDoporuceni,
+  najdiNeboVytvorOsobu,
+  nactiOsobu,
+  sparujRucne,
+  spojOsoby,
+} from '@/lib/doporuceni';
 import { createProcessStore, type JakPlatby, type RezervaceRecord, type RezervaceStav } from '@/lib/store';
 import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 
@@ -267,7 +274,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'checkin-neni' &&
       akce !== 'nedojezd' &&
       akce !== 'zrusit-nedojezd' &&
-      akce !== 'mena')
+      akce !== 'mena' &&
+      akce !== 'doporuceni-spojit' &&
+      akce !== 'doporuceni-priradit' &&
+      akce !== 'doporuceni-seznam')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -275,6 +285,84 @@ export async function POST(request: Request): Promise<NextResponse> {
   const store = createProcessStore();
   const rec = await store.getRezervace(id);
   if (!rec) return chyba(404, 'Rezervace v přehledu není.');
+
+  if (akce === 'doporuceni-seznam') {
+    const list = await listOtevrenaDoporuceni(store, { dnu: 90 });
+    const polozky = [];
+    for (const d of list) {
+      const kdo = d.doporucitelOsobaId ? await nactiOsobu(store, d.doporucitelOsobaId) : null;
+      polozky.push({
+        id: d.id,
+        jmeno: d.jmeno,
+        termin: d.termin,
+        doporucil: kdo?.jmeno || d.kod,
+      });
+    }
+    return NextResponse.json({ ok: true, polozky }, { headers: noStore });
+  }
+
+  if (akce === 'doporuceni-spojit') {
+    const jineId = (body?.dalsiRezervace || '').trim();
+    if (!jineId || jineId === id) return chyba(400, 'Zadejte číslo druhé rezervace.');
+    const jina = await store.getRezervace(jineId);
+    if (!jina) return chyba(404, 'Druhá rezervace není v přehledu.');
+    const a = await najdiNeboVytvorOsobu(store, {
+      rezervaceId: id,
+      jmeno: rec.jmeno,
+      telefon: rec.telefon || rec.telefonRezervace,
+      email: rec.emailHosta,
+      narodnost: rec.narodnost,
+      osobaId: rec.osobaId,
+    });
+    const b = await najdiNeboVytvorOsobu(store, {
+      rezervaceId: jineId,
+      jmeno: jina.jmeno,
+      telefon: jina.telefon || jina.telefonRezervace,
+      email: jina.emailHosta,
+      narodnost: jina.narodnost,
+      osobaId: jina.osobaId,
+    });
+    if (a.id === b.id) {
+      await store.setRezervace(id, { ...rec, osobaId: a.id });
+      await store.setRezervace(jineId, { ...jina, osobaId: a.id });
+      return NextResponse.json({ ok: true, osobaId: a.id }, { headers: noStore });
+    }
+    const sloucená = await spojOsoby(store, a.id, b.id);
+    if (!sloucená) return chyba(500, 'Spojení se nepovedlo.');
+    const ted = new Date().toISOString();
+    await store.setRezervace(id, {
+      ...rec,
+      osobaId: sloucená.id,
+      historie: [...rec.historie, { cas: ted, co: `Spojeno s #${jineId}` }].slice(-40),
+      posledniPokus: ted,
+    });
+    const jina2 = await store.getRezervace(jineId);
+    if (jina2) {
+      await store.setRezervace(jineId, {
+        ...jina2,
+        osobaId: sloucená.id,
+        historie: [...jina2.historie, { cas: ted, co: `Spojeno s #${id}` }].slice(-40),
+        posledniPokus: ted,
+      });
+    }
+    return NextResponse.json({ ok: true, osobaId: sloucená.id, kod: sloucená.kod }, { headers: noStore });
+  }
+
+  if (akce === 'doporuceni-priradit') {
+    const dopId = (body?.id || '').trim();
+    if (!dopId) return chyba(400, 'Chybí doporučení.');
+    const vysledek = await sparujRucne(store, dopId, id);
+    if (!vysledek.ok) return chyba(400, 'Spárování se nepovedlo.');
+    const kdo = vysledek.doporucitel?.jmeno || 'doporučitele';
+    const host = rec.jmeno || rec.krestni || 'Host';
+    await upozorniMajitele(
+      store,
+      `${host} spárován s doporučením od ${kdo}. Kredit vznikne po předání.`,
+      '/prehled',
+      { telegram: 'zadost' },
+    );
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
 
   if (akce === 'jazyk') {
     const jazyk = body?.jazyk as GuideLang;

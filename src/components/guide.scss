@@ -2769,6 +2769,68 @@ a.pv-phone.pv-phone--zari:focus-visible {
   font-size: 1rem;
 }
 
+.pv-expired__celek {
+  margin: 1.15rem 0 0;
+  padding: 1rem 0.95rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--color-dark, #1c1712) 18%, transparent);
+  background: color-mix(in srgb, var(--color-dark, #1c1712) 3%, transparent);
+  text-align: center;
+}
+
+.pv-expired__celek--vas {
+  border-color: color-mix(in srgb, var(--color-gold, #c9a84c) 70%, transparent);
+}
+
+.pv-expired__celek--blizci {
+  border-color: color-mix(in srgb, var(--color-dark, #1c1712) 14%, transparent);
+}
+
+.pv-expired__nad-male {
+  margin: 0 0 0.55rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-gold, #c9a84c) 85%, #8a7a55);
+}
+
+.pv-expired__otazka {
+  margin: 0 0 0.45rem;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: var(--color-dark, #1c1712);
+}
+
+.pv-expired__veta {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--color-dark) 62%, transparent);
+}
+
+.pv-expired__cta--obrys {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.75rem 0 0.15rem;
+  background: transparent;
+  color: var(--color-gold, #c9a84c);
+  border: 1.5px solid color-mix(in srgb, var(--color-gold, #c9a84c) 75%, transparent);
+  cursor: pointer;
+  font: inherit;
+}
+
+.pv-expired__cta--obrys:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.pv-expired__zkopirovano {
+  margin: 0.45rem 0 0;
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--color-gold, #c9a84c) 80%, #6a5a3a);
+}
+
 .pv-expired__oddel {
   width: 48px;
   height: 1px;

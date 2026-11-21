@@ -26,6 +26,7 @@ import {
 import { posliPruvodce } from './posli-pruvodce';
 import { upozorniPoOdeslaniPruvodce } from './pruvodce-wa';
 import { vynechRucni } from './rucni-pole';
+import { poNoveRezervaci } from './doporuceni';
 import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
 import { doplnUdajeZMinulehoPobytu } from './staly-host';
 import {
@@ -37,7 +38,20 @@ import {
   type SchrankaStav,
 } from './store';
 import { isDepartureExpired } from './token';
+import { upozorniMajitele } from './upozorneni';
 import { inspectVivienMail, type MailInspection } from './vivien-data';
+
+async function zkusDoporuceniPoNove(store: ProcessStore, prev: RezervaceRecord | null, id: string): Promise<void> {
+  if (prev) return;
+  try {
+    const rec = await store.getRezervace(id);
+    if (!rec) return;
+    const { telegram } = await poNoveRezervaci(store, rec);
+    if (telegram) await upozorniMajitele(store, telegram, '/prehled', { telegram: 'zadost' });
+  } catch (err) {
+    console.error('doporuceni: sparovani', err instanceof Error ? err.message : err);
+  }
+}
 
 /** Jednou načtený seznam. Při zápisu doplní prázdná pole z pevné shody stálého hosta. */
 function storeSDoplnenim(store: ProcessStore, cache: RezervaceRecord[]): ProcessStore {
@@ -504,6 +518,7 @@ export async function processOneMail(
   if (ins.odjezd && isDepartureExpired(ins.odjezd)) {
     const rec = sloucit(id, prev, { ...data, duvody, stav: prev?.stav ?? 'neodeslano' }, now, vetaDoplneni(zmeny, 'Odjezd už prošel'));
     await store.setRezervace(id, rec);
+    await zkusDoporuceniPoNove(store, prev, id);
     await store.markMessage({
       messageId: mail.messageId,
       uid: mail.uid,
@@ -520,6 +535,7 @@ export async function processOneMail(
     let rec = sloucit(id, prev, { ...data, stav: 'neodeslano', duvody }, now, vetaDoplneni(zmeny, 'Průvodce neodešel'));
     rec = await upozorniJednou(rec);
     await store.setRezervace(id, rec);
+    await zkusDoporuceniPoNove(store, prev, id);
     await store.markMessage({
       messageId: mail.messageId,
       uid: mail.uid,
@@ -549,6 +565,7 @@ export async function processOneMail(
       vetaDoplneni(zmeny, stav === 'odeslano_s_vyhradou' ? 'Průvodce odeslán s výhradou' : 'Průvodce odeslán'),
     );
     await store.setRezervace(id, rec);
+    await zkusDoporuceniPoNove(store, prev, id);
     await upozorniPoOdeslaniPruvodce(store, rec);
     await store.markMessage({
       messageId: mail.messageId,
@@ -833,6 +850,7 @@ async function zpracujInterni(mail: InboxMail, store: ProcessStore, now: string)
 
   const rec = sloucit(id, prev, udajeInterni(u, stav, prev), now, historieInterni(u, stav, odeslano));
   await store.setRezervace(id, rec);
+  await zkusDoporuceniPoNove(store, prev, id);
 
   const zmeniloSe =
     !!prev &&

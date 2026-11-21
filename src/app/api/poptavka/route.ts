@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { NextResponse } from 'next/server';
 import { jeBlokPokus, zapisPokus } from '@/lib/okno-pobytu';
+import { vytvorDoporuceni } from '@/lib/doporuceni';
 import {
   firmaZKodu,
   filtrApartmany,
@@ -158,7 +159,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, duvod: 'ulozit' }, { status: 500, headers: noStore });
   }
 
-  await upozorniMajitele(store, textTelegramPoptavky(zaznam), '/prehled', { telegram: 'zadost' });
+  let tg = textTelegramPoptavky(zaznam);
+  if (zdroj === 'doporucitel' && doporucitelKod) {
+    try {
+      const d = await vytvorDoporuceni(store, {
+        kod: doporucitelKod,
+        poptavkaId: zaznam.id,
+        jmeno,
+        telefon,
+        prijezd: zaznam.prijezd,
+        odjezd: zaznam.odjezd,
+      });
+      tg = `${tg}\n${d.telegramPoznamka}`;
+      if (d.slevaPct == null) {
+        tg = tg.replace(/\n?Sleva \d+ %[^\n]*/i, '');
+      }
+    } catch (err) {
+      console.error('poptavka: doporuceni', err instanceof Error ? err.message : err);
+      tg = `${tg}\nDoporučení: neznámý kód ${doporucitelKod}.`;
+    }
+  }
+
+  await upozorniMajitele(store, tg, '/prehled', { telegram: 'zadost' });
 
   return NextResponse.json({ ok: true, id: zaznam.id }, { headers: noStore });
 }

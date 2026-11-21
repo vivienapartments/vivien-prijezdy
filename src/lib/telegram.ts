@@ -57,7 +57,8 @@ export async function posliTelegram(
 
   const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') || 'https://vivien-prijezdy-six.vercel.app';
   const odkaz = urlPath ? `\n${base}${urlPath.startsWith('/') ? urlPath : `/${urlPath}`}` : '';
-  const body = `${text}${odkaz}`;
+  const prefix = process.env.VERCEL_ENV === 'preview' ? '[ZKOUŠKA] ' : '';
+  const body = `${prefix}${text}${odkaz}`;
 
   let ok = false;
   for (const chat_id of chats) {

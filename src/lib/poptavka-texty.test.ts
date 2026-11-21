@@ -97,7 +97,8 @@ describe('poptavkaTexty', () => {
   it('obecná / firma drží staré CS a EN', () => {
     expect(poptavkaTexty('cs', 'obecna').nadpis).toBe('Další pobyt u nás');
     expect(poptavkaTexty('cs', 'firma').sleva).toContain('5');
-    expect(poptavkaTexty('en', 'doporucitel').kvizOtazka).toBe('');
+    expect(poptavkaTexty('en', 'doporucitel').nadpis).toBe('We look forward to welcoming you');
+    expect(poptavkaTexty('en', 'doporucitel').sleva).toBe('');
     expect(poptavkaTexty('en', 'obecna').dekujemeVolejte).toBe('');
   });
 

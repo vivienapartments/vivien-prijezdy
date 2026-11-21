@@ -22,7 +22,12 @@ import {
   POPTAVKA_APARTMANY,
   webLangKod,
 } from '@/lib/poptavka-apartmany';
-import { formatDatumPoptavky, formatRozsahPoptavky, poptavkaTexty } from '@/lib/poptavka-texty';
+import {
+  formatDatumPoptavky,
+  formatRozsahPoptavky,
+  poptavkaStitekDoporuceni,
+  poptavkaTexty,
+} from '@/lib/poptavka-texty';
 import {
   odpovedHlavni,
   odpovedRozstrel,
@@ -60,9 +65,12 @@ type GalerieStav =
   | null;
 
 export function PoptavkaForm(props: PoptavkaVstupni) {
-  const vernost = props.zdroj === 'vernost';
+  /** Věrný i doporučený host: stejná stavba obrazovek (PROMPT-76 / 77). */
+  const vernost = props.zdroj === 'vernost' || props.zdroj === 'doporucitel';
+  const doporucitel = props.zdroj === 'doporucitel';
   const suchyBeh = Boolean(props.suchyBeh);
   const t = poptavkaTexty(props.lang, props.zdroj);
+  const stitekDoporuceni = doporucitel ? poptavkaStitekDoporuceni(props.lang) : '';
   const webLang = webLangKod(props.lang);
   const dnes = ymdDnesPraha();
   const [krok, setKrok] = useState<Krok>('termin');
@@ -351,6 +359,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         {vernost && !hotovo && krok === 'termin' ? (
           <>
             <h1>{t.nadpis}</h1>
+            {stitekDoporuceni ? <p className="pp__stitek">{stitekDoporuceni}</p> : null}
             <p className="pp__uvod">{t.uvod}</p>
           </>
         ) : null}

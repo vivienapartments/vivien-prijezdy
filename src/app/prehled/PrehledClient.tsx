@@ -5567,6 +5567,104 @@ export function PrehledClient({
                       <Pole text={row.zdrojText} />
                     </div>
                   ) : null}
+                  {row.doporucilJmeno ? (
+                    <div className="ph-cell" data-label="Doporučil">
+                      <Pole text={`Doporučil: ${row.doporucilJmeno}`} />
+                    </div>
+                  ) : null}
+                  {row.privedlText ? (
+                    <div className="ph-cell" data-label="Přivedl">
+                      <Pole text={row.privedlText} />
+                    </div>
+                  ) : null}
+                  <div className="ph-akce ph-akce--doporuceni">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const jine = window.prompt('Číslo rezervace druhého hosta (stejná osoba):');
+                        if (!jine?.trim()) return;
+                        setCekam(`${row.rezervace}:doporuceni-spojit`);
+                        setHlaska('');
+                        const res = await fetch('/api/prehled/akce', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            rezervace: row.rezervace,
+                            akce: 'doporuceni-spojit',
+                            dalsiRezervace: jine.trim(),
+                          }),
+                        });
+                        const json = (await res.json().catch(() => null)) as {
+                          ok?: boolean;
+                          error?: string;
+                          kod?: string;
+                        } | null;
+                        setCekam(null);
+                        if (!res.ok || !json?.ok) {
+                          setHlaska(json?.error || 'Spojení se nepovedlo.');
+                          return;
+                        }
+                        setHlaska(json.kod ? `Spojeno. Kód odkazu: ${json.kod}` : 'Spojeno.');
+                        window.location.reload();
+                      }}
+                    >
+                      Spojit s jiným hostem
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setCekam(`${row.rezervace}:doporuceni-seznam`);
+                        const res = await fetch('/api/prehled/akce', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ rezervace: row.rezervace, akce: 'doporuceni-seznam' }),
+                        });
+                        const json = (await res.json().catch(() => null)) as {
+                          ok?: boolean;
+                          error?: string;
+                          polozky?: { id: string; jmeno: string; termin: string; doporucil: string }[];
+                        } | null;
+                        setCekam(null);
+                        if (!res.ok || !json?.ok) {
+                          setHlaska(json?.error || 'Seznam se nenačetl.');
+                          return;
+                        }
+                        const polozky = json.polozky || [];
+                        if (!polozky.length) {
+                          setHlaska('Žádné otevřené doporučení za 90 dní.');
+                          return;
+                        }
+                        const vypis = polozky
+                          .slice(0, 20)
+                          .map((p, i) => `${i + 1}. ${p.jmeno} · ${p.termin} · od ${p.doporucil} · ${p.id}`)
+                          .join('\n');
+                        const volba = window.prompt(`Zadejte ID doporučení:\n${vypis}`);
+                        if (!volba?.trim()) return;
+                        setCekam(`${row.rezervace}:doporuceni-priradit`);
+                        const res2 = await fetch('/api/prehled/akce', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            rezervace: row.rezervace,
+                            akce: 'doporuceni-priradit',
+                            id: volba.trim(),
+                          }),
+                        });
+                        const json2 = (await res2.json().catch(() => null)) as {
+                          ok?: boolean;
+                          error?: string;
+                        } | null;
+                        setCekam(null);
+                        if (!res2.ok || !json2?.ok) {
+                          setHlaska(json2?.error || 'Přiřazení se nepovedlo.');
+                          return;
+                        }
+                        window.location.reload();
+                      }}
+                    >
+                      Přiřadit doporučení
+                    </button>
+                  </div>
                   <div className="ph-cell" data-label="Vytvořeno">
                     <Pole text={row.vytvorenoText} />
                   </div>
