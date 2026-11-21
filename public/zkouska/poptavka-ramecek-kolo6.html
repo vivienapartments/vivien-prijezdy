@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Návrh: Děkujeme přes celou obrazovku · kolo 5</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:#120f0d;color:#efe6d8;font-family:'DM Sans',system-ui,sans-serif}
+  .info{max-width:520px;margin:0 auto;padding:14px 16px;color:#b7aa98;font-size:13px;line-height:1.45}
+  .info b{color:#c9a84c}
+  /* obrazovka = celá výška, rámeček zůstává */
+  .obr{height:100dvh;padding:10px;display:flex}
+  .karta{flex:1;max-width:520px;margin:0 auto;border:1px solid #3a312a;border-radius:20px;background:#1c1714;overflow:hidden;display:flex;flex-direction:column;outline:2px solid #4fbf8a;outline-offset:3px}
+  .foto{height:24vh;min-height:110px;background:linear-gradient(to bottom,transparent 40%,#1c1714 100%),linear-gradient(135deg,#c9a23a,#6b5a2a 55%,#2f3a22)}
+  .telo{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 24px 26px;hyphens:none;-webkit-hyphens:none}
+  .logo{width:84px;height:84px;border:2px solid #c9a84c;border-radius:50%;background:#1c1714;margin-top:-42px;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;color:#c9a84c;font-size:30px}
+  .stred{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:18px 0}
+  h1{font-size:clamp(26px,4.2vh,34px);font-family:'Cormorant Garamond',serif;font-weight:600;line-height:1.15;margin:0}
+  .veta{font-size:18px;line-height:1.5;margin:0;color:#efe6d8}
+  .specha{font-size:15px;line-height:1.55;margin:0;color:#b7aa98;max-width:30ch;align-self:center}
+  .wa{display:block;width:100%;border:1px solid #b89a6a;color:#c9a84c;border-radius:999px;padding:14px;font-weight:700;margin-top:6px}
+  .kontakt{width:100%;border-top:1px solid #3a312a;padding-top:18px;display:flex;flex-direction:column;gap:8px}
+  .kontakt div{font-size:16px;color:#b7aa98}
+  .kontakt b{color:#c9a84c;font-weight:700;white-space:nowrap}
+  .zk{background:#3a2f1f;color:#d9cdb8;font-size:13px;text-align:center;padding:8px}
+</style>
+</head>
+<body>
+
+<div class="obr">
+  <div class="karta">
+    <div class="zk">Zkouška. Nic se neukládá ani neodesílá.</div>
+    <div class="foto"></div>
+    <div class="telo">
+      <div class="logo">VA</div>
+      <div class="stred">
+        <h1>Děkujeme, že se k nám vracíte.</h1>
+        <p class="veta">Cenu vám obvykle pošleme do hodiny. Odpovídáme od 8 do 20 hodin.</p>
+        <p class="specha">Když to spěchá, raději nám rovnou zavolejte. Zprávu nemusíme vidět hned, třeba když zrovna řídíme.</p>
+      </div>
+      <div class="kontakt">
+        <div>Zavolat Nikol · <b>+420 702 153 573</b></div>
+        <div>Když se nedovoláte · <b>+420 604 692 573</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="info"><b>Kolo 5 · obrazovka Děkujeme.</b> Rámeček zůstává, ale karta je vysoká přes celou obrazovku (zeleně ohraničená). Text uprostřed karty, kontakty dole. Vše na střed, bez dělení slov, bez roztahování mezer. Obě čísla stejně. Celá karta se vejde na jednu obrazovku bez posouvání. Fotka se na menším telefonu sama zmenší.</div>
+</body>
+</html>

@@ -1,53 +1,119 @@
+/* Poptávka: karta s rámečkem přes celou výšku, text na střed, kontakty dole. */
+
 .pp {
   min-height: 100dvh;
   margin: 0;
-  padding: 0;
-  background: #12100e;
+  padding: 10px;
+  background: #120f0d;
   color: #f5efe3;
   font-family: 'DM Sans', system-ui, sans-serif;
   box-sizing: border-box;
-}
-
-.pp__karta {
-  width: 100%;
-  max-width: 28rem;
-  min-height: 100dvh;
-  margin: 0 auto;
-  background: #1c1712;
-  border: 0;
-  border-radius: 0;
-  padding: 1.15rem 1rem 2rem;
-  box-sizing: border-box;
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
   display: flex;
   flex-direction: column;
 }
 
-@media (min-width: 721px) {
-  .pp__karta {
-    border-left: 1px solid #3d342a;
-    border-right: 1px solid #3d342a;
-    padding: 1.35rem 1.25rem 2.2rem;
-  }
+.pp__karta {
+  flex: 1;
+  width: 100%;
+  max-width: 28rem;
+  height: calc(100dvh - 20px);
+  max-height: calc(100dvh - 20px);
+  margin: 0 auto;
+  background: #1c1712;
+  border: 1px solid #3a312a;
+  border-radius: 20px;
+  padding: 0 0 0.85rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pp__telo {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 1.1rem 0.15rem;
+  hyphens: none;
+  -webkit-hyphens: none;
+}
+
+.pp__stred {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.55rem;
+  overflow: hidden;
+}
+
+.pp__stred--formular {
+  justify-content: flex-start;
+}
+
+.pp__krok-blok {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pp__krok-hlava {
+  flex-shrink: 0;
+}
+
+.pp__krok-stred {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.pp__krok-pata {
+  flex-shrink: 0;
+  padding-top: 0.45rem;
 }
 
 .pp__logo {
   display: block;
   width: 56px;
   height: 56px;
-  margin: 0 auto 0.85rem;
+  margin: 0 auto 0.55rem;
   border-radius: 50%;
   border: 2px solid #c9a84c;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
-.pp h1 {
-  margin: 0 0 0.65rem;
+.pp__karta--s-herem .pp__logo {
+  margin-top: -28px;
+  position: relative;
+  z-index: 1;
+  background: #1c1712;
+  box-shadow: 0 0 0 4px #1c1712;
+}
+
+.pp h1,
+.pp__nadpis-krok {
+  margin: 0 0 0.45rem;
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-weight: 500;
-  font-size: 1.55rem;
-  line-height: 1.25;
+  font-weight: 600;
+  font-size: clamp(26px, 4.2vh, 34px);
+  line-height: 1.15;
   text-align: center;
   color: #f5efe3;
+  letter-spacing: 0.01em;
 }
 
 .pp__uvod,
@@ -56,18 +122,25 @@
 .pp__cena,
 .pp__dekujeme,
 .pp__chyba,
-.pp__zaloha {
-  margin: 0 0 0.55rem;
+.pp__zaloha,
+.pp__dekujeme-specha,
+.pp__kviz,
+.pp__maly-radek,
+.pp__pruvodce-intro,
+.pp__pruvodce-traits,
+.pp__volba span,
+.pp__volba-text span {
+  margin: 0 0 0.45rem;
   line-height: 1.45;
   font-size: 0.95rem;
-  text-align: justify;
-  hyphens: auto;
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
   color: #cbbba8;
 }
 
 .pp__firma {
   color: #c9a84c;
-  text-align: center;
 }
 
 .pp__sleva {
@@ -80,12 +153,18 @@
 
 .pp__dekujeme {
   color: #e8dfd0;
-  text-align: center;
-  margin-top: 0.75rem;
+  font-size: 1.05rem;
+}
+
+.pp__dekujeme-specha {
+  font-size: 0.9rem;
+  max-width: 30ch;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .pp fieldset {
-  margin: 0.9rem 0 0;
+  margin: 0.7rem 0 0;
   padding: 0;
   border: 0;
 }
@@ -97,6 +176,7 @@
   font-size: 0.82rem;
   letter-spacing: 0.02em;
   color: #c9a84c;
+  text-align: center;
 }
 
 .pp__termin {
@@ -107,14 +187,15 @@
 
 .pp__termin-pole {
   display: block;
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.25rem;
+  text-align: center;
 }
 
 .pp__termin-tlacitko {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  margin: 0.35rem 0 0.75rem;
+  margin: 0.35rem 0 0.55rem;
   padding: 0.65rem 0.7rem;
   border-radius: 10px;
   border: 1px solid #3d342a;
@@ -122,96 +203,8 @@
   color: #f5efe3;
   font: inherit;
   font-size: 16px;
-  text-align: left;
-  cursor: pointer;
-}
-
-.pp__kalendar {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: #0e0c0a;
-  display: grid;
-  place-items: stretch;
-  min-height: 100dvh;
-  padding: 0;
-}
-
-.pp__kalendar-vnitr {
-  width: 100%;
-  max-width: 28rem;
-  margin: 0 auto;
-  min-height: 100dvh;
-  display: grid;
-  align-content: center;
-  gap: 0.85rem;
-  padding: 1.15rem 1rem 1.5rem;
-  box-sizing: border-box;
-  background: #1c1712;
-}
-
-.pp__kalendar-hlavicka {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.pp__kalendar-mesic {
-  flex: 1;
   text-align: center;
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.2rem;
-  color: #f5efe3;
-  text-transform: capitalize;
-}
-
-.pp__kalendar-dny {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 0.35rem;
-}
-
-.pp__kalendar-den-nazev {
-  text-align: center;
-  font-size: 0.72rem;
-  letter-spacing: 0.04em;
-  color: #c9a84c;
-  padding: 0.25rem 0;
-}
-
-.pp__kalendar-den {
-  aspect-ratio: 1;
-  margin: 0;
-  padding: 0;
-  border-radius: 10px;
-  border: 1px solid transparent;
-  background: #15110e;
-  color: #f5efe3;
-  font: inherit;
-  font-size: 0.95rem;
   cursor: pointer;
-}
-
-.pp__kalendar-den.is-empty {
-  background: transparent;
-  pointer-events: none;
-}
-
-.pp__kalendar-den.is-off {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.pp__kalendar-den.is-on {
-  border-color: #c9a84c;
-  background: color-mix(in srgb, #c9a84c 22%, #15110e);
-  color: #f5efe3;
-  font-weight: 700;
-}
-
-.pp__kalendar-den:not(.is-off):not(.is-empty):active {
-  border-color: #c9a84c;
 }
 
 .pp input[type='date'],
@@ -221,7 +214,7 @@
 .pp select {
   width: 100%;
   box-sizing: border-box;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.65rem;
   padding: 0.65rem 0.7rem;
   border-radius: 10px;
   border: 1px solid #3d342a;
@@ -229,47 +222,21 @@
   color: #f5efe3;
   font: inherit;
   font-size: 16px;
+  text-align: center;
 }
 
 .pp textarea {
-  min-height: 4.5rem;
+  min-height: 3.6rem;
   resize: vertical;
-}
-
-.pp__apts {
-  display: grid;
-  gap: 0.4rem;
-  margin: 0 0 0.75rem;
-}
-
-.pp__apt {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin: 0;
-  padding: 0.55rem 0.65rem;
-  border-radius: 10px;
-  border: 1px solid #3d342a;
-  color: #e8dfd0;
-  font-size: 0.92rem;
-  cursor: pointer;
-}
-
-.pp__apt input {
-  width: auto;
-  margin: 0;
-}
-
-.pp__apt.is-on {
-  border-color: #c9a84c;
-  background: color-mix(in srgb, #c9a84c 12%, transparent);
+  text-align: left;
 }
 
 .pp__doprava {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 0.4rem;
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.65rem;
 }
 
 .pp__chip {
@@ -292,8 +259,8 @@
 
 .pp__akce {
   display: grid;
-  gap: 0.55rem;
-  margin-top: 1rem;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
 }
 
 .pp__btn {
@@ -339,17 +306,32 @@
   cursor: wait;
 }
 
-.pp__tel {
+.pp__kontakty {
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: 0.55rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid #3a312a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.pp__kontakt-radek {
   display: block;
-  margin-top: 0.85rem;
-  text-align: center;
-  color: #c9a84c;
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: #cbbba8;
   text-decoration: none;
-  font-weight: 600;
+  text-align: center;
   white-space: nowrap;
 }
 
-.pp__tel span {
+.pp__kontakt-radek span {
+  color: #c9a84c;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -372,41 +354,33 @@
 }
 
 .pp__krok {
-  margin: 0.85rem 0 0.65rem;
+  margin: 0.55rem 0 0.55rem;
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-weight: 500;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   color: #c9a84c;
-  text-align: left;
+  text-align: center;
 }
 
 .pp__volba {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.3rem;
   width: 100%;
   box-sizing: border-box;
-  margin: 0 0 0.65rem;
-  padding: 0.85rem 0.9rem;
+  margin: 0 0 0.5rem;
+  padding: 0.75rem 0.85rem;
   border-radius: 14px;
   border: 1px solid #3d342a;
   background: #15110e;
   color: #e8dfd0;
-  text-align: left;
+  text-align: center;
   font: inherit;
   cursor: pointer;
 }
 
 .pp__volba strong {
   color: #f5efe3;
-  font-size: 1rem;
-}
-
-.pp__volba span {
-  color: #cbbba8;
-  font-size: 0.88rem;
-  line-height: 1.4;
-  text-align: justify;
-  hyphens: auto;
+  font-size: 0.98rem;
 }
 
 .pp__volba.is-on {
@@ -418,6 +392,15 @@
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
+  text-align: left;
+}
+
+.pp__volba--ikona .pp__volba-text {
+  text-align: left;
+}
+
+.pp__volba--ikona .pp__volba-text span {
+  text-align: left;
 }
 
 .pp__volba-ikona {
@@ -434,35 +417,27 @@
 
 .pp__volba-text {
   display: grid;
-  gap: 0.3rem;
+  gap: 0.25rem;
   min-width: 0;
-}
-
-.pp__volba-text span {
-  display: block;
 }
 
 .pp__zkouska-banner {
   margin: 0;
-  padding: 0.55rem 0.85rem;
+  padding: 0.5rem 0.75rem;
   background: color-mix(in srgb, #c9a84c 16%, #1c1712);
   border-bottom: 1px solid #3d342a;
   color: #e8dfd0;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   text-align: center;
   line-height: 1.35;
-}
-
-.pp--zkouska .pp__karta--s-herem .pp__zkouska-banner {
-  position: relative;
-  z-index: 2;
+  flex-shrink: 0;
 }
 
 .pp__dlazdice {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.55rem;
-  margin: 0.5rem 0 0.85rem;
+  gap: 0.45rem;
+  margin: 0.35rem 0 0.45rem;
 }
 
 .pp__dlazdice-polozka {
@@ -475,23 +450,24 @@
   background: #15110e;
   color: #f5efe3;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   font: inherit;
 }
 
 .pp__dlazdice-polozka img {
   display: block;
   width: 100%;
-  height: 7.2rem;
+  height: 5.6rem;
   object-fit: cover;
 }
 
 .pp__dlazdice-nazev {
   display: block;
-  padding: 0.45rem 0.5rem 0.55rem;
-  font-size: 0.78rem;
+  padding: 0.35rem 0.4rem 0.45rem;
+  font-size: 0.74rem;
   line-height: 1.25;
   color: #e8dfd0;
+  text-align: center;
 }
 
 .pp__dlazdice-polozka.is-on {
@@ -501,25 +477,17 @@
 
 .pp__dlazdice-vybrano {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  width: 1.4rem;
-  height: 1.4rem;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 1.3rem;
+  height: 1.3rem;
   border-radius: 50%;
   background: #c9a84c;
   color: #1a1510;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   display: grid;
   place-items: center;
-}
-
-.pp__kviz {
-  margin: 0 0 0.75rem;
-  font-size: 0.88rem;
-  text-align: justify;
-  hyphens: auto;
-  color: #cbbba8;
 }
 
 .pp__kviz a {
@@ -527,165 +495,179 @@
   text-decoration: underline;
 }
 
-/* Věrný host: rámeček kvízu jako volba v kroku 2 (PROMPT-76). */
-.pp__kviz-ramecek {
-  display: grid;
-  gap: 0.35rem;
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0.35rem 0 0.9rem;
-  padding: 0.95rem 0.95rem;
-  border-radius: 14px;
-  border: 1px solid #c9a84c;
-  background: color-mix(in srgb, #c9a84c 10%, #15110e);
-  text-align: center;
-  text-decoration: none;
-  color: #e8dfd0;
-  font: inherit;
-}
-
-.pp__kviz-ramecek strong {
-  color: #f5efe3;
-  font-size: 1rem;
-}
-
-.pp__kviz-ramecek span {
-  color: #c9a84c;
-  font-size: 0.9rem;
-  text-decoration: underline;
-  line-height: 1.4;
-}
-
-.pp__dekujeme-specha {
-  margin: 0.35rem 0 0.85rem;
-  font-size: 0.88rem;
-  line-height: 1.45;
-  text-align: justify;
-  hyphens: auto;
+.pp__maly-radek {
+  margin: 0 0 0.25rem;
+  font-size: 0.8rem;
   color: #cbbba8;
 }
 
-/* Věrnost: tmavá jako průvodce + fotky (zahrada / stropy / dům). */
-.pp--vernost {
-  background: #0e0c0a;
-}
-
-.pp--vernost .pp__karta {
-  background: #1c1712;
-  border-color: #3d342a;
-  overflow: hidden;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
-}
-
-.pp--vernost .pp__karta--s-herem {
-  padding-top: 0;
-}
-
-.pp--vernost .pp__hero {
-  height: 160px;
+/* Hero */
+.pp__hero {
+  flex-shrink: 0;
+  height: 24vh;
+  min-height: 110px;
+  max-height: 180px;
   background-size: cover;
   background-repeat: no-repeat;
   position: relative;
 }
 
-.pp--vernost .pp__hero::after {
+.pp__karta--hero-mala .pp__hero {
+  height: 14vh;
+  min-height: 80px;
+  max-height: 110px;
+}
+
+.pp__hero::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(to bottom, transparent 35%, #1c1712 100%);
 }
 
-.pp--vernost .pp__hero--zahrada {
+.pp__hero--zahrada {
   background-position: center 32%;
 }
 
-.pp--vernost .pp__hero--stropy {
+.pp__hero--stropy {
   background-position: center 40%;
 }
 
-.pp--vernost .pp__hero--dum {
+.pp__hero--dum {
   background-position: center 45%;
 }
 
-.pp--vernost .pp__telo {
-  padding: 0 0 0.15rem;
+.pp__karta--s-herem {
+  padding-top: 0;
 }
 
-.pp--vernost .pp__karta--s-herem .pp__logo {
-  margin-top: -32px;
-  position: relative;
-  z-index: 1;
-  background: #1c1712;
-  box-shadow: 0 0 0 4px #1c1712;
-}
-
-.pp--vernost h1 {
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-.pp--vernost .pp__uvod {
-  text-align: justify;
-}
-
-.pp--vernost .pp__maly-radek {
-  margin: 0 0 0.35rem;
-  text-align: center;
-  font-size: 0.82rem;
-  line-height: 1.4;
-  color: #cbbba8;
-}
-
-.pp--vernost .pp__nadpis-krok {
-  margin: 0 0 0.85rem;
-  font-family: 'Cormorant Garamond', Georgia, serif;
-  font-weight: 600;
-  font-size: 1.45rem;
-  line-height: 1.25;
-  text-align: center;
-  color: #f5efe3;
-}
-
-.pp--vernost .pp__karta--s-herem .pp__nadpis-krok {
-  font-size: 1.55rem;
-}
-
+/* Kalendář + lightbox: stejný rámeček přes výšku */
+.pp__kalendar,
 .pp__lightbox {
   position: fixed;
   inset: 0;
-  z-index: 40;
-  background: #0e0c0a;
-  display: grid;
-  place-items: stretch;
-  padding: 0;
+  z-index: 50;
+  background: #120f0d;
+  display: flex;
+  padding: 10px;
   min-height: 100dvh;
+  box-sizing: border-box;
 }
 
+.pp__kalendar-vnitr,
 .pp__lightbox-vnitr {
   width: 100%;
   max-width: 28rem;
   margin: 0 auto;
-  min-height: 100dvh;
-  display: grid;
+  height: calc(100dvh - 20px);
+  max-height: calc(100dvh - 20px);
+  display: flex;
+  flex-direction: column;
   gap: 0.65rem;
-  padding: 1rem 1rem 1.5rem;
+  padding: 1rem 1rem 1.15rem;
   box-sizing: border-box;
+  background: #1c1712;
+  border: 1px solid #3a312a;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.pp__kalendar-hlavicka {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.pp__kalendar-mesic {
+  flex: 1;
+  text-align: center;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.15rem;
+  color: #f5efe3;
+  text-transform: capitalize;
+}
+
+.pp__kalendar-dny {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
+  flex: 1;
   align-content: center;
 }
 
-.pp__lightbox-vnitr > img {
-  width: 100%;
-  max-height: 70dvh;
-  object-fit: contain;
-  border-radius: 0;
-  background: #1c1712;
+.pp__kalendar-den-nazev {
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: #c9a84c;
+  padding: 0.2rem 0;
 }
 
-@media (min-width: 721px) {
-  .pp__lightbox-vnitr > img {
-    border-radius: 12px;
-  }
+.pp__kalendar-den {
+  aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: #15110e;
+  color: #f5efe3;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.pp__kalendar-den.is-empty {
+  background: transparent;
+  pointer-events: none;
+}
+
+.pp__kalendar-den.is-off {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pp__kalendar-den.is-on {
+  border-color: #c9a84c;
+  background: color-mix(in srgb, #c9a84c 22%, #15110e);
+  font-weight: 700;
+}
+
+.pp__lightbox-apt {
+  margin: 0;
+  flex-shrink: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #f5efe3;
+  text-align: center;
+}
+
+.pp__lightbox-foto {
+  display: block;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pp__lightbox-foto:disabled {
+  cursor: default;
+}
+
+.pp__lightbox-foto img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 55dvh;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #15110e;
 }
 
 .pp__lightbox-ovladani {
@@ -695,11 +677,13 @@
   gap: 0.5rem;
   color: #cbbba8;
   font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
-/* Discover Your Atmosphere uvnitř poptávky */
+/* Discover */
 .pp__pruvodce {
   --leading-room-color: #c9a84c;
+  width: 100%;
 }
 
 .pp__pruvodce-progress {
@@ -707,8 +691,9 @@
   width: 100%;
   overflow: hidden;
   background: #3d342a;
-  margin: 0 0 0.85rem;
+  margin: 0 0 0.65rem;
   border-radius: 999px;
+  flex-shrink: 0;
 }
 
 .pp__pruvodce-progress-fill {
@@ -719,36 +704,36 @@
 }
 
 .pp__pruvodce-counter {
-  margin: 0 0 1rem;
+  margin: 0 0 0.65rem;
   text-align: center;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #c9a84c;
 }
 
 .pp__pruvodce-otazka {
-  margin: 0 0 1.1rem;
+  margin: 0 0 0.75rem;
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-weight: 500;
   font-style: italic;
-  font-size: clamp(1.2rem, 4.2vw, 1.45rem);
-  line-height: 1.35;
+  font-size: clamp(1.1rem, 3.6vh, 1.35rem);
+  line-height: 1.3;
   text-align: center;
   color: #f5efe3;
 }
 
 .pp__pruvodce-volby {
   display: grid;
-  gap: 0.55rem;
-  margin-bottom: 0.75rem;
+  gap: 0.4rem;
+  margin-bottom: 0.45rem;
 }
 
 .pp__pruvodce-eyebrow {
-  margin: 0 0 0.45rem;
+  margin: 0 0 0.35rem;
   text-align: center;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #c9a84c;
@@ -756,60 +741,38 @@
 
 .pp__pruvodce-primary {
   display: grid;
-  gap: 0.55rem;
-  margin-bottom: 1.1rem;
+  gap: 0.4rem;
+  margin-bottom: 0.65rem;
 }
 
 .pp__pruvodce-foto {
   display: block;
   width: 100%;
   height: auto;
-  max-height: 42dvh;
+  max-height: 28vh;
   object-fit: cover;
-  border-radius: 0;
-  margin: 0 0 0.35rem;
-}
-
-@media (min-width: 721px) {
-  .pp__pruvodce-foto {
-    border-radius: 12px;
-  }
-}
-
-.pp__pruvodce-intro {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.45;
-  text-align: justify;
-  hyphens: auto;
-  color: #cbbba8;
-}
-
-.pp__pruvodce-traits {
-  margin: 0 0 0.75rem;
-  text-align: center;
-  font-size: 0.88rem;
-  color: #c9a84c;
+  border-radius: 12px;
+  margin: 0 auto 0.25rem;
 }
 
 .pp__pruvodce-alts-nadpis {
-  margin: 0.5rem 0 0.65rem;
+  margin: 0.35rem 0 0.45rem;
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-weight: 600;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   text-align: center;
   color: #f5efe3;
 }
 
 .pp__pruvodce-alts {
   display: grid;
-  gap: 0.65rem;
-  margin-bottom: 0.85rem;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
 }
 
 .pp__pruvodce-alt {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.3rem;
   margin: 0;
   padding: 0;
   border: 1px solid #3d342a;
@@ -817,7 +780,7 @@
   overflow: hidden;
   background: #15110e;
   color: #e8dfd0;
-  text-align: left;
+  text-align: center;
   font: inherit;
   cursor: pointer;
 }
@@ -825,22 +788,44 @@
 .pp__pruvodce-alt img {
   display: block;
   width: 100%;
-  height: 7.5rem;
+  height: 5.5rem;
   object-fit: cover;
 }
 
 .pp__pruvodce-alt strong {
-  padding: 0 0.7rem;
+  padding: 0 0.55rem;
   color: #f5efe3;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .pp__pruvodce-alt span {
   display: block;
-  padding: 0 0.7rem 0.75rem;
-  font-size: 0.82rem;
-  line-height: 1.4;
+  padding: 0 0.55rem 0.6rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
   color: #cbbba8;
-  text-align: justify;
-  hyphens: auto;
+  text-align: center;
+  hyphens: none;
+}
+
+/* Obecná (ne věrnost): stejný rámeček, o něco volnější */
+.pp:not(.pp--vernost) .pp__karta {
+  padding: 1.1rem 1rem 0.85rem;
+}
+
+.pp:not(.pp--vernost) .pp__telo {
+  padding: 0;
+}
+
+@media (min-width: 721px) {
+  .pp {
+    padding: 16px;
+  }
+
+  .pp__karta,
+  .pp__kalendar-vnitr,
+  .pp__lightbox-vnitr {
+    height: calc(100dvh - 32px);
+    max-height: calc(100dvh - 32px);
+  }
 }

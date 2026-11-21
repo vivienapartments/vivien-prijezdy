@@ -16,9 +16,8 @@ import {
 import {
   coverUrl,
   galerieKompletCoverUrl,
-  galerieKompletUrls,
+  galerieKompletPolozky,
   galerieUrls,
-  odkazApartmanyWeb,
   odkazKvizAtmosfery,
   POPTAVKA_APARTMANY,
   webLangKod,
@@ -118,16 +117,30 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const ios = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
   const sms = odkazSmsPoptavky(zprava, ios);
 
+  const galerieKomplet = useMemo(
+    () => (galerie?.druh === 'komplet' ? galerieKompletPolozky(webLang) : []),
+    [galerie?.druh, webLang],
+  );
   const galerieFotky =
     galerie?.druh === 'apt'
       ? (() => {
           const a = POPTAVKA_APARTMANY.find((x) => x.id === galerie.id);
           return a ? galerieUrls(webLang, a) : [];
         })()
-      : galerie?.druh === 'komplet'
-        ? galerieKompletUrls(webLang)
-        : [];
+      : galerieKomplet.map((p) => p.url);
   const galerieIndex = galerie?.i ?? 0;
+  const galerieAptId: AptId | null =
+    galerie?.druh === 'apt'
+      ? galerie.id
+      : galerie?.druh === 'komplet'
+        ? galerieKomplet[Math.min(galerieIndex, Math.max(0, galerieKomplet.length - 1))]?.aptId ??
+          null
+        : null;
+
+  function vyberAptZGalerie(id: AptId) {
+    setApts((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setGalerie(null);
+  }
 
   function nazevApt(id: AptId): string {
     const a = apartmany.find((x) => x.id === id);
@@ -255,18 +268,27 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             : ''
       : '';
 
-  /** Věrnost tmavá: 1 zahrada, 2 stropy, konec dům. Apartmány beze změny. */
+  /** Věrnost: zahrada / stropy / dům. Apartmány a kontakt menší fotka. */
   const heroVernost = vernost
     ? hotovo
       ? '/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg'
       : krok === 'termin'
         ? '/pruvodce/zahrada-po-odjezdu.jpg'
-        : krok === 'zpusob'
+        : krok === 'zpusob' || krok === 'apartmany' || krok === 'kontakt'
           ? galerieKompletCoverUrl(webLang)
           : null
     : null;
+  const heroMala = vernost && (krok === 'apartmany' || krok === 'kontakt');
+  const stredFormular =
+    vernost && !hotovo && (krok === 'apartmany' || krok === 'kontakt' || krok === 'pruvodce');
 
   const ukazLogo = !vernost || krok === 'termin' || hotovo || Boolean(heroVernost);
+
+  function heroTrida(): string {
+    if (hotovo) return 'pp__hero pp__hero--dum';
+    if (krok === 'termin') return 'pp__hero pp__hero--zahrada';
+    return 'pp__hero pp__hero--stropy';
+  }
 
   function ikonaVolby(druh: 'vybrat' | 'doporucit' | 'pruvodce'): ReactNode {
     if (druh === 'vybrat') {
@@ -307,17 +329,19 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   return (
     <main className={`pp${vernost ? ' pp--vernost' : ''}${suchyBeh ? ' pp--zkouska' : ''}`} lang={props.lang}>
-      <div className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}`}>
+      <div
+        className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${heroMala ? ' pp__karta--hero-mala' : ''}`}
+      >
         {suchyBeh && t.zkouskaBanner ? <p className="pp__zkouska-banner">{t.zkouskaBanner}</p> : null}
         {heroVernost ? (
           <div
-            className={`pp__hero${hotovo ? ' pp__hero--dum' : krok === 'zpusob' ? ' pp__hero--stropy' : ' pp__hero--zahrada'}`}
+            className={heroTrida()}
             style={{ backgroundImage: `url('${heroVernost}')` }}
             role="img"
             aria-hidden="true"
           />
         ) : null}
-        <div className={heroVernost ? 'pp__telo' : undefined}>
+        <div className="pp__telo">
         {ukazLogo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -328,6 +352,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             alt="VIVIEN Apartments"
           />
         ) : null}
+        <div className={`pp__stred${stredFormular ? ' pp__stred--formular' : ''}`}>
         {!vernost ? (
           <>
             <h1>{t.nadpis}</h1>
@@ -478,134 +503,75 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
             {krok === 'pruvodce' ? (
               <section
-                className="pp__pruvodce"
+                className="pp__krok-blok pp__pruvodce"
                 style={{ ['--leading-room-color' as string]: pruvodce.leadingAccent }}
               >
                 {pruvodce.phase === 'result' && pruvodce.result ? (
                   <>
-                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
-                    <p className="pp__pruvodce-eyebrow">
-                      {pruvodceText(props.lang, 'quiz.result.matchLabel')}
-                    </p>
-                    {(() => {
-                      const primary = POPTAVKA_APARTMANY.find((x) => x.id === pruvodce.result!.primary);
-                      const profil = pruvodce.result!.profiles[pruvodce.result!.primary];
-                      return (
-                        <article className="pp__pruvodce-primary">
-                          {primary ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              className="pp__pruvodce-foto"
-                              src={coverUrl(webLang, primary)}
-                              alt=""
-                              width={800}
-                              height={520}
-                            />
-                          ) : null}
-                          <h1 className="pp__nadpis-krok">{nazevApt(pruvodce.result!.primary)}</h1>
-                          <p className="pp__pruvodce-intro">{profil.body}</p>
-                          <p className="pp__pruvodce-traits">{profil.traits}</p>
-                          <button
-                            type="button"
-                            className="pp__btn pp__btn--hlavni"
-                            onClick={() => pokracujSApartmanem(pruvodce.result!.primary)}
-                          >
-                            {t.pruvodceVybrat}
-                          </button>
-                        </article>
-                      );
-                    })()}
-                    <h2 className="pp__pruvodce-alts-nadpis">
-                      {pruvodceText(props.lang, 'quiz.result.altsHeading')}
-                    </h2>
-                    <div className="pp__pruvodce-alts">
-                      {pruvodce.result.alternatives.map((id) => {
-                        const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
-                        const profil = pruvodce.result!.profiles[id];
+                    <div className="pp__krok-hlava">
+                      {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                      <p className="pp__pruvodce-eyebrow">
+                        {pruvodceText(props.lang, 'quiz.result.matchLabel')}
+                      </p>
+                    </div>
+                    <div className="pp__krok-stred">
+                      {(() => {
+                        const primary = POPTAVKA_APARTMANY.find((x) => x.id === pruvodce.result!.primary);
+                        const profil = pruvodce.result!.profiles[pruvodce.result!.primary];
                         return (
-                          <button
-                            key={id}
-                            type="button"
-                            className="pp__pruvodce-alt"
-                            onClick={() => pokracujSApartmanem(id)}
-                          >
-                            {a ? (
+                          <article className="pp__pruvodce-primary">
+                            {primary ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
+                              <img
+                                className="pp__pruvodce-foto"
+                                src={coverUrl(webLang, primary)}
+                                alt=""
+                                width={800}
+                                height={520}
+                              />
                             ) : null}
-                            <strong>{nazevApt(id)}</strong>
-                            <span>{profil.body}</span>
-                          </button>
+                            <h1 className="pp__nadpis-krok">{nazevApt(pruvodce.result!.primary)}</h1>
+                            <p className="pp__pruvodce-intro">{profil.body}</p>
+                            <p className="pp__pruvodce-traits">{profil.traits}</p>
+                          </article>
                         );
-                      })}
+                      })()}
+                      <h2 className="pp__pruvodce-alts-nadpis">
+                        {pruvodceText(props.lang, 'quiz.result.altsHeading')}
+                      </h2>
+                      <div className="pp__pruvodce-alts">
+                        {pruvodce.result.alternatives.map((id) => {
+                          const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
+                          const profil = pruvodce.result!.profiles[id];
+                          return (
+                            <button
+                              key={id}
+                              type="button"
+                              className="pp__pruvodce-alt"
+                              onClick={() => pokracujSApartmanem(id)}
+                            >
+                              {a ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
+                              ) : null}
+                              <strong>{nazevApt(id)}</strong>
+                              <span>{profil.body}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <button type="button" className="pp__btn pp__btn--sms" onClick={resetPruvodce}>
-                      {t.pruvodceZnovu}
-                    </button>
-                    <button
-                      type="button"
-                      className="pp__btn pp__btn--sms"
-                      onClick={() => setKrok('zpusob')}
-                    >
-                      {t.zpet}
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
-                    <div className="pp__pruvodce-progress" aria-hidden="true">
-                      <div
-                        className="pp__pruvodce-progress-fill"
-                        style={{ width: `${pruvodce.progressPercent}%` }}
-                      />
-                    </div>
-                    <p className="pp__pruvodce-counter">{pruvodce.questionCounter}</p>
-                    <h1 className="pp__pruvodce-otazka">{pruvodce.question?.text}</h1>
-                    <div className="pp__pruvodce-volby">
-                      {pruvodce.question?.options.map((o) => (
-                        <button
-                          key={o.key}
-                          type="button"
-                          className="pp__volba"
-                          onClick={() => {
-                            if (pruvodce.phase === 'tie') {
-                              setPruvodce(
-                                odpovedRozstrel(
-                                  props.lang,
-                                  pruvodce.mainAnswers,
-                                  pruvodce.tieBoosts,
-                                  o.key as TieAnswerKey,
-                                ),
-                              );
-                            } else {
-                              setPruvodce(
-                                odpovedHlavni(
-                                  props.lang,
-                                  pruvodce.mainAnswers,
-                                  pruvodce.tieBoosts,
-                                  o.key as QuizAnswerKey,
-                                ),
-                              );
-                            }
-                          }}
-                        >
-                          <strong>{o.text}</strong>
-                        </button>
-                      ))}
-                    </div>
-                    {pruvodce.mainAnswers.length > 0 || pruvodce.tieBoosts.length > 0 ? (
+                    <div className="pp__krok-pata pp__akce">
                       <button
                         type="button"
-                        className="pp__btn pp__btn--sms"
-                        onClick={() =>
-                          setPruvodce(
-                            pruvodceZpet(props.lang, pruvodce.mainAnswers, pruvodce.tieBoosts),
-                          )
-                        }
+                        className="pp__btn pp__btn--hlavni"
+                        onClick={() => pokracujSApartmanem(pruvodce.result!.primary)}
                       >
-                        {pruvodceText(props.lang, 'quiz.ui.back')}
+                        {t.pruvodceVybrat}
                       </button>
-                    ) : (
+                      <button type="button" className="pp__btn pp__btn--sms" onClick={resetPruvodce}>
+                        {t.pruvodceZnovu}
+                      </button>
                       <button
                         type="button"
                         className="pp__btn pp__btn--sms"
@@ -613,59 +579,134 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       >
                         {t.zpet}
                       </button>
-                    )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="pp__krok-hlava">
+                      {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                      <div className="pp__pruvodce-progress" aria-hidden="true">
+                        <div
+                          className="pp__pruvodce-progress-fill"
+                          style={{ width: `${pruvodce.progressPercent}%` }}
+                        />
+                      </div>
+                      <p className="pp__pruvodce-counter">{pruvodce.questionCounter}</p>
+                      <h1 className="pp__pruvodce-otazka">{pruvodce.question?.text}</h1>
+                    </div>
+                    <div className="pp__krok-stred">
+                      <div className="pp__pruvodce-volby">
+                        {pruvodce.question?.options.map((o) => (
+                          <button
+                            key={o.key}
+                            type="button"
+                            className="pp__volba"
+                            onClick={() => {
+                              if (pruvodce.phase === 'tie') {
+                                setPruvodce(
+                                  odpovedRozstrel(
+                                    props.lang,
+                                    pruvodce.mainAnswers,
+                                    pruvodce.tieBoosts,
+                                    o.key as TieAnswerKey,
+                                  ),
+                                );
+                              } else {
+                                setPruvodce(
+                                  odpovedHlavni(
+                                    props.lang,
+                                    pruvodce.mainAnswers,
+                                    pruvodce.tieBoosts,
+                                    o.key as QuizAnswerKey,
+                                  ),
+                                );
+                              }
+                            }}
+                          >
+                            <strong>{o.text}</strong>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="pp__krok-pata">
+                      {pruvodce.mainAnswers.length > 0 || pruvodce.tieBoosts.length > 0 ? (
+                        <button
+                          type="button"
+                          className="pp__btn pp__btn--sms"
+                          onClick={() =>
+                            setPruvodce(
+                              pruvodceZpet(props.lang, pruvodce.mainAnswers, pruvodce.tieBoosts),
+                            )
+                          }
+                        >
+                          {pruvodceText(props.lang, 'quiz.ui.back')}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="pp__btn pp__btn--sms"
+                          onClick={() => setKrok('zpusob')}
+                        >
+                          {t.zpet}
+                        </button>
+                      )}
+                    </div>
                   </>
                 )}
               </section>
             ) : null}
 
             {krok === 'apartmany' ? (
-              <section>
-                {vernost ? (
-                  <>
-                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
-                    <h1 className="pp__nadpis-krok">{t.nadpisApartmany}</h1>
-                  </>
-                ) : (
-                  <h2 className="pp__krok">{t.krokApartmany}</h2>
-                )}
-                <p className="pp__cena">{t.vyberteApartmany}</p>
-                <div className="pp__dlazdice">
-                  {POPTAVKA_APARTMANY.map((a) => {
-                    const on = apts.includes(a.id);
-                    return (
-                      <button
-                        key={a.id}
-                        type="button"
-                        className={`pp__dlazdice-polozka${on ? ' is-on' : ''}`}
-                        onClick={() => setGalerie({ druh: 'apt', id: a.id, i: 0 })}
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
-                        <span className="pp__dlazdice-nazev">{nazevApt(a.id)}</span>
-                        {on ? <span className="pp__dlazdice-vybrano">✓</span> : null}
-                      </button>
-                    );
-                  })}
-                  <button
-                    type="button"
-                    className="pp__dlazdice-polozka"
-                    onClick={() => setGalerie({ druh: 'komplet', i: 0 })}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={galerieKompletCoverUrl(webLang)} alt="" width={400} height={260} />
-                    <span className="pp__dlazdice-nazev">{t.galerieKomplet}</span>
-                  </button>
+              <section className="pp__krok-blok">
+                <div className="pp__krok-hlava">
+                  {vernost ? (
+                    <>
+                      {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                      <h1 className="pp__nadpis-krok">{t.nadpisApartmany}</h1>
+                    </>
+                  ) : (
+                    <h2 className="pp__krok">{t.krokApartmany}</h2>
+                  )}
                 </div>
-                {!vernost ? (
-                  <p className="pp__kviz">
-                    <a href={odkazKvizAtmosfery(webLang)} target="_blank" rel="noopener noreferrer">
-                      {t.kvizAtmosfery}
-                    </a>
-                  </p>
-                ) : null}
-                {chyba ? <p className="pp__chyba">{chyba}</p> : null}
-                <div className="pp__akce">
+                <div className="pp__krok-stred">
+                  <p className="pp__cena">{t.vyberteApartmany}</p>
+                  <div className="pp__dlazdice">
+                    {POPTAVKA_APARTMANY.map((a) => {
+                      const on = apts.includes(a.id);
+                      return (
+                        <button
+                          key={a.id}
+                          type="button"
+                          className={`pp__dlazdice-polozka${on ? ' is-on' : ''}`}
+                          onClick={() => setGalerie({ druh: 'apt', id: a.id, i: 0 })}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
+                          <span className="pp__dlazdice-nazev">{nazevApt(a.id)}</span>
+                          {on ? <span className="pp__dlazdice-vybrano">✓</span> : null}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      className="pp__dlazdice-polozka"
+                      onClick={() => setGalerie({ druh: 'komplet', i: 0 })}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={galerieKompletCoverUrl(webLang)} alt="" width={400} height={260} />
+                      <span className="pp__dlazdice-nazev">{t.galerieKomplet}</span>
+                    </button>
+                  </div>
+                  {!vernost ? (
+                    <p className="pp__kviz">
+                      <a href={odkazKvizAtmosfery(webLang)} target="_blank" rel="noopener noreferrer">
+                        {t.kvizAtmosfery}
+                      </a>
+                    </p>
+                  ) : null}
+                  {chyba ? <p className="pp__chyba">{chyba}</p> : null}
+                </div>
+                <div className="pp__krok-pata pp__akce">
                   <button
                     type="button"
                     className="pp__btn pp__btn--hlavni"
@@ -688,83 +729,87 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             ) : null}
 
             {krok === 'kontakt' ? (
-              <section>
-                {vernost ? (
-                  <>
-                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
-                    <h1 className="pp__nadpis-krok">{t.nadpisKontakt}</h1>
-                  </>
-                ) : (
-                  <>
-                    <h2 className="pp__krok">{t.krokKontakt}</h2>
-                    <p className="pp__cena">
-                      {souhrnTerminu}
-                      {souhrnVyberu ? ` · ${souhrnVyberu}` : ''}
-                    </p>
-                  </>
-                )}
-                <label>
-                  {t.jmeno}
-                  <input
-                    type="text"
-                    autoComplete="name"
-                    value={jmeno}
-                    onChange={(e) => setJmeno(e.target.value)}
-                    required
-                  />
-                </label>
-                <label>
-                  {t.telefon}
-                  <input
-                    type="tel"
-                    autoComplete="tel"
-                    value={telefon}
-                    onChange={(e) => setTelefon(e.target.value)}
-                    required
-                  />
-                </label>
-                {!vernost ? (
-                  <fieldset>
-                    <legend>{t.doprava}</legend>
-                    <div className="pp__doprava">
-                      {(
-                        [
-                          ['auto', t.auto],
-                          ['pesky', t.pesky],
-                          ['nevim', t.nevim],
-                        ] as const
-                      ).map(([id, label]) => (
-                        <button
-                          key={id}
-                          type="button"
-                          className={`pp__chip${doprava === id ? ' is-on' : ''}`}
-                          onClick={() => setDoprava((d) => (d === id ? '' : id))}
-                        >
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                  </fieldset>
-                ) : null}
-                <label>
-                  {t.poznamka}
-                  <textarea
-                    value={poznamka}
-                    onChange={(e) => setPoznamka(e.target.value)}
-                    maxLength={500}
-                  />
-                </label>
-                <label className="pp__hp" aria-hidden="true">
-                  web
-                  <input
-                    tabIndex={-1}
-                    autoComplete="off"
-                    value={honeypot}
-                    onChange={(e) => setHoneypot(e.target.value)}
-                  />
-                </label>
-                {chyba ? <p className="pp__chyba">{chyba}</p> : null}
-                <div className="pp__akce">
+              <section className="pp__krok-blok">
+                <div className="pp__krok-hlava">
+                  {vernost ? (
+                    <>
+                      {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                      <h1 className="pp__nadpis-krok">{t.nadpisKontakt}</h1>
+                    </>
+                  ) : (
+                    <>
+                      <h2 className="pp__krok">{t.krokKontakt}</h2>
+                      <p className="pp__cena">
+                        {souhrnTerminu}
+                        {souhrnVyberu ? ` · ${souhrnVyberu}` : ''}
+                      </p>
+                    </>
+                  )}
+                </div>
+                <div className="pp__krok-stred">
+                  <label>
+                    {t.jmeno}
+                    <input
+                      type="text"
+                      autoComplete="name"
+                      value={jmeno}
+                      onChange={(e) => setJmeno(e.target.value)}
+                      required
+                    />
+                  </label>
+                  <label>
+                    {t.telefon}
+                    <input
+                      type="tel"
+                      autoComplete="tel"
+                      value={telefon}
+                      onChange={(e) => setTelefon(e.target.value)}
+                      required
+                    />
+                  </label>
+                  {!vernost ? (
+                    <fieldset>
+                      <legend>{t.doprava}</legend>
+                      <div className="pp__doprava">
+                        {(
+                          [
+                            ['auto', t.auto],
+                            ['pesky', t.pesky],
+                            ['nevim', t.nevim],
+                          ] as const
+                        ).map(([id, label]) => (
+                          <button
+                            key={id}
+                            type="button"
+                            className={`pp__chip${doprava === id ? ' is-on' : ''}`}
+                            onClick={() => setDoprava((d) => (d === id ? '' : id))}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </fieldset>
+                  ) : null}
+                  <label>
+                    {t.poznamka}
+                    <textarea
+                      value={poznamka}
+                      onChange={(e) => setPoznamka(e.target.value)}
+                      maxLength={500}
+                    />
+                  </label>
+                  <label className="pp__hp" aria-hidden="true">
+                    web
+                    <input
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                    />
+                  </label>
+                  {chyba ? <p className="pp__chyba">{chyba}</p> : null}
+                </div>
+                <div className="pp__krok-pata pp__akce">
                   <button
                     type="button"
                     className="pp__btn pp__btn--hlavni"
@@ -806,26 +851,39 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           </>
         )}
 
-        <a className="pp__tel" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
-          {t.zavolat} · <span>{telNikol}</span>
-        </a>
-        <p className="pp__zaloha">
-          {t.zaloha}{' '}
-          <a className="pp__tel" href={toTelHref(POPTAVKA_TEL_ZALOHA)} style={{ display: 'inline' }}>
-            <span>{telZaloha}</span>
+        </div>
+        <div className="pp__kontakty">
+          <a className="pp__kontakt-radek" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
+            {t.zavolat} · <span>{telNikol}</span>
           </a>
-        </p>
+          <a className="pp__kontakt-radek" href={toTelHref(POPTAVKA_TEL_ZALOHA)}>
+            {t.zaloha} · <span>{telZaloha}</span>
+          </a>
+        </div>
         </div>
       </div>
 
       {galerie && galerieFotky.length ? (
         <div className="pp__lightbox" role="dialog" aria-modal="true">
           <div className="pp__lightbox-vnitr">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={galerieFotky[Math.min(galerieIndex, galerieFotky.length - 1)]}
-              alt=""
-            />
+            {galerieAptId ? (
+              <p className="pp__lightbox-apt">{nazevApt(galerieAptId)}</p>
+            ) : null}
+            <button
+              type="button"
+              className="pp__lightbox-foto"
+              disabled={!galerieAptId}
+              onClick={() => {
+                if (galerieAptId) vyberAptZGalerie(galerieAptId);
+              }}
+              aria-label={t.vybratTento}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={galerieFotky[Math.min(galerieIndex, galerieFotky.length - 1)]}
+                alt=""
+              />
+            </button>
             <div className="pp__lightbox-ovladani">
               <button
                 type="button"
@@ -853,27 +911,24 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 →
               </button>
             </div>
-            {galerie.druh === 'apt' ? (
+            {galerieAptId ? (
               <button
                 type="button"
                 className="pp__btn pp__btn--hlavni"
                 onClick={() => {
-                  toggleApt(galerie.id);
-                  setGalerie(null);
+                  if (galerie.druh === 'apt') {
+                    toggleApt(galerie.id);
+                    setGalerie(null);
+                  } else {
+                    vyberAptZGalerie(galerieAptId);
+                  }
                 }}
               >
-                {apts.includes(galerie.id) ? t.zrusitVyber : t.vybratTento}
+                {galerie.druh === 'apt' && apts.includes(galerie.id)
+                  ? t.zrusitVyber
+                  : t.vybratTento}
               </button>
-            ) : (
-              <a
-                className="pp__btn pp__btn--wa"
-                href={odkazApartmanyWeb(webLang)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t.galerieKomplet}
-              </a>
-            )}
+            ) : null}
             <button type="button" className="pp__btn pp__btn--sms" onClick={() => setGalerie(null)}>
               {t.zavritGalerie}
             </button>

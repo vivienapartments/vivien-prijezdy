@@ -113,11 +113,20 @@ export function galerieKompletCoverUrl(langKod: string): string {
   return asset(langKod, GALERIE_KOMPLET_COVER_PATH);
 }
 
-export function galerieKompletUrls(langKod: string): string[] {
+export type GalerieKompletPolozka = { url: string; aptId: AptId };
+
+/** Celá galerie: u každé fotky víme, ke kterému apartmánu patří. */
+export function galerieKompletPolozky(langKod: string): GalerieKompletPolozka[] {
   return POPTAVKA_APARTMANY.flatMap((a) => [
-    coverUrl(langKod, a),
-    ...galerieUrls(langKod, a).slice(0, 2),
+    { url: coverUrl(langKod, a), aptId: a.id },
+    ...galerieUrls(langKod, a)
+      .slice(0, 2)
+      .map((url) => ({ url, aptId: a.id })),
   ]);
+}
+
+export function galerieKompletUrls(langKod: string): string[] {
+  return galerieKompletPolozky(langKod).map((p) => p.url);
 }
 
 export function odkazApartmanyWeb(langKod: string): string {
