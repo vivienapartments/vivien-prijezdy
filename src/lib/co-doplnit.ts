@@ -11,8 +11,8 @@ const DNY = ['Ne', 'Po', 'Út', 'St', 'Čt', 'Pá', 'So'];
 
 /** Telefon a první výzvy: Domů hledí 14 dní dopředu. */
 export const DOPLNIT_OKNO_DNY = 14;
-/** Check-in znovu (po 1. výzvě) až 3 dny před příjezdem. */
-export const DOPLNIT_CHECKIN_ZNOVU_DNY = 3;
+/** Check-in znovu (po 1. výzvě) až 2 dny před příjezdem. */
+export const DOPLNIT_CHECKIN_ZNOVU_DNY = 2;
 /** Průvodce znovu (po 1. výzvě) až 2 dny před příjezdem. */
 export const DOPLNIT_PRUVODCE_ZNOVU_DNY = 2;
 
@@ -74,7 +74,7 @@ function prijezdDoDnu(prijezd: string, dnes: string, maxDni: number): boolean {
 
 /**
  * Check-in svítí v „Co doplnit“.
- * 1. výzva hned (v okně 14 dní). Po odeslání klid, znovu až 3 dny před příjezdem.
+ * 1. výzva hned (i u vzdálené rezervace). Po odeslání klid, znovu až 2 dny před příjezdem.
  */
 export function svitiCheckinDoplnit(
   row: Pick<
@@ -83,7 +83,8 @@ export function svitiCheckinDoplnit(
   >,
   dnes: string,
 ): boolean {
-  if (!vOkneDoplnit(row, dnes) || !cekaNaCheckin(row) || !row.prijezd) return false;
+  if (row.stav === 'zruseno' || row.predano || row.nedojezdKdy) return false;
+  if (!cekaNaCheckin(row) || !row.prijezd || row.prijezd < dnes) return false;
   const uzVyzva = pocetCheckinPripoinek(row.historie || []) > 0;
   if (!uzVyzva) return true;
   return prijezdDoDnu(row.prijezd, dnes, DOPLNIT_CHECKIN_ZNOVU_DNY);
@@ -168,14 +169,12 @@ export function hosteCoDoplnitFiltr(
   filtr: FiltrDoplnit,
 ): PrehledRadek[] {
   return radky
-    .filter((r) => vOkneDoplnit(r, dnes))
     .filter((r) => {
-      if (filtr === 'vse') {
-        return (chybiCheckin(r) && svitiCheckinDoplnit(r, dnes)) || chybiTelefon(r);
-      }
       if (filtr === 'bez_checkinu') return svitiCheckinDoplnit(r, dnes);
       if (filtr === 'bez_pruvodce') return svitiPruvodceDoplnit(r, dnes);
-      return chybiTelefon(r);
+      if (filtr === 'bez_telefonu') return vOkneDoplnit(r, dnes) && chybiTelefon(r);
+      /** Vše: telefon v okně 14 dní, check-in i u vzdálené 1. výzvy. */
+      return (chybiCheckin(r) && svitiCheckinDoplnit(r, dnes)) || (vOkneDoplnit(r, dnes) && chybiTelefon(r));
     })
     .sort(seradDoplnit);
 }

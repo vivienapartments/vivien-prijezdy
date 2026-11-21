@@ -52,13 +52,14 @@ describe('připomínky stupně', () => {
     expect(uzOdeslanPruvodce3([{ co: 'WhatsApp: Průvodce, důrazný' }])).toBe(true);
   });
 
-  it('počítá check-in připomínky z WhatsApp i SMS', () => {
+  it('počítá check-in připomínky z WhatsApp, SMS i e-mailu', () => {
     expect(
       pocetCheckinPripoinek([
         { co: 'WhatsApp: Vyplňte check-in' },
         { co: 'SMS: Vyplňte check-in' },
+        { co: 'E-mailem: Check-in · 1. stupeň' },
       ]),
-    ).toBe(2);
+    ).toBe(3);
   });
 
   it('check-in stupeň: 0 → 1 (v okně 2), 1 → 2 (v okně 3)', () => {
@@ -125,18 +126,11 @@ describe('připomínky stupně', () => {
     ).toBe('Poslední výzva');
   });
 
-  it('vyzvaNaRade: 3 h klid, 25 h červená, den před bez dnešní, po Poslední klid', () => {
+  it('vyzvaNaRade: 1. výzva hned, po ní klid mimo 2 dny; v okně 24 h / den před', () => {
     const ted = new Date('2026-10-30T15:00:00.000Z');
     const pred3h = [{ co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-30T12:00:00.000Z' }];
     const pred25h = [{ co: 'WhatsApp: Vyplňte check-in', cas: '2026-10-29T14:00:00.000Z' }];
-    expect(
-      vyzvaNaRade('checkin', {
-        historie: pred3h,
-        prijezd: '2026-11-05',
-        dnes: '2026-10-30',
-        now: ted,
-      }),
-    ).toBe(false);
+    /** Po 1. výzvě a příjezd za 6 dní: nesvítí (až 2 dny před). */
     expect(
       vyzvaNaRade('checkin', {
         historie: pred25h,
@@ -144,11 +138,28 @@ describe('připomínky stupně', () => {
         dnes: '2026-10-30',
         now: ted,
       }),
-    ).toBe(true);
+    ).toBe(false);
     expect(
       vyzvaNaRade('checkin', {
         historie: [],
         prijezd: '2026-11-05',
+        dnes: '2026-10-30',
+        now: ted,
+      }),
+    ).toBe(true);
+    /** V okně 2 dní: do 24 h klid, pak znovu. */
+    expect(
+      vyzvaNaRade('checkin', {
+        historie: pred3h,
+        prijezd: '2026-11-01',
+        dnes: '2026-10-30',
+        now: ted,
+      }),
+    ).toBe(false);
+    expect(
+      vyzvaNaRade('checkin', {
+        historie: pred25h,
+        prijezd: '2026-11-01',
         dnes: '2026-10-30',
         now: ted,
       }),
@@ -171,7 +182,7 @@ describe('připomínky stupně', () => {
     ).toBe(false);
     const host = textVyzvyHosta('checkin', {
       historie: pred3h,
-      prijezd: '2026-11-05',
+      prijezd: '2026-11-01',
       dnes: '2026-10-30',
       now: ted,
     });

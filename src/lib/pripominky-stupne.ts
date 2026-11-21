@@ -33,8 +33,15 @@ const BRANA_NAZEV = 'Chybí údaje k bráně';
 const BRANA_NAZVY = [BRANA_NAZEV, 'Brána · 1. stupeň', 'Brána · 2. stupeň', 'Brána · 3. stupeň'];
 const PRUVODCE3_NAZEV = NAZEV_CAS.pruvodce3;
 
+/** Kanály, které se počítají jako odeslaná výzva (včetně e-mailu z přehledu). */
+const KANALY_VYZVY = ['WhatsApp', 'SMS', 'E-mailem'] as const;
+
+function platneNazvyKanalu(nazvy: string[]): Set<string> {
+  return new Set(nazvy.flatMap((n) => KANALY_VYZVY.map((k) => `${k}: ${n}`)));
+}
+
 function pocetZKanalu(historie: { co: string }[], nazvy: string[]): number {
-  const platne = new Set(nazvy.flatMap((n) => [`WhatsApp: ${n}`, `SMS: ${n}`]));
+  const platne = platneNazvyKanalu(nazvy);
   return historie.filter((h) => platne.has(h.co)).length;
 }
 
@@ -106,7 +113,7 @@ export function checkinOdeslanVOkne(
   prijezd: string,
 ): boolean {
   const denPred = posunDen(prijezd, -1);
-  const platne = new Set(CHECKIN_NAZVY.flatMap((n) => [`WhatsApp: ${n}`, `SMS: ${n}`]));
+  const platne = platneNazvyKanalu(CHECKIN_NAZVY);
   return historie.some((h) => {
     if (!platne.has(h.co) || !h.cas) return false;
     const den = denPraha(new Date(h.cas));
@@ -184,13 +191,26 @@ function datumVyzvyPraha(iso: string): string {
 }
 
 function posledniCasNazvu(historie: { co: string; cas?: string }[], nazvy: string[]): string | null {
-  const platne = new Set(nazvy.flatMap((n) => [`WhatsApp: ${n}`, `SMS: ${n}`]));
+  const platne = platneNazvyKanalu(nazvy);
   let last: string | null = null;
   for (const h of historie) {
     if (!platne.has(h.co) || !h.cas) continue;
     if (!last || h.cas > last) last = h.cas;
   }
   return last;
+}
+
+/** Po 1. výzvě: check-in i průvodce znovu až 2 dny před příjezdem. */
+const ZNOVU_DNY: Partial<Record<DruhVyzvy, number>> = {
+  checkin: 2,
+  pruvodce: 2,
+};
+
+function vOkneZnovuVyzvy(druh: DruhVyzvy, prijezd: string | null, dnes: string): boolean {
+  const max = ZNOVU_DNY[druh];
+  if (max == null) return true;
+  if (!prijezd) return false;
+  return prijezd >= dnes && prijezd <= posunDen(dnes, max);
 }
 
 function nazvySkupinyVyzvy(druh: DruhVyzvy): string[] {
@@ -225,7 +245,8 @@ export function datumDalsiVyzvy(
 
 /**
  * Majitel má teď poslat další výzvu (údaj pořád chybí, volá se jen tehdy).
- * Po Poslední výzvě už nic. Jinak: žádná / starší než 24 h / den před či den příjezdu bez dnešní.
+ * Po Poslední výzvě už nic. 1. výzva hned. Po ní check-in / průvodce
+ * znovu jen 2 dny před (+ 24 h klid / den příjezdu).
  */
 export function vyzvaNaRade(
   druh: DruhVyzvy,
@@ -242,6 +263,8 @@ export function vyzvaNaRade(
   const nazvy = nazvySkupinyVyzvy(druh);
   const last = posledniCasNazvu(historie, nazvy);
   if (!last) return true;
+  /** Už byla aspoň jedna výzva: check-in / průvodce jen blízko příjezdu. */
+  if (!vOkneZnovuVyzvy(druh, prijezd, dnes)) return false;
   const lastMs = Date.parse(last);
   if (!Number.isFinite(lastMs)) return true;
   if (now.getTime() - lastMs >= MS_24H) return true;
@@ -270,7 +293,7 @@ export function textVyzvy(
   };
 }
 
-/** Text výzvy + jestli je teď na řadě (včetně „další …“ když klid). */
+/** Text výzvy + jestli je teď na řadě (včetně „další …“ když klid v okně znovu). */
 export function textVyzvyHosta(
   druh: DruhVyzvy,
   opts: {
@@ -286,7 +309,10 @@ export function textVyzvyHosta(
     return { ...zaklad, naRade };
   }
   if (!naRade) {
-    const dalsi = datumDalsiVyzvy(druh, opts.historie);
+    /** „Další …“ jen když jsme v okně znovu (jinak je klid do 2 dnů před). */
+    const dalsi = vOkneZnovuVyzvy(druh, opts.prijezd, opts.dnes)
+      ? datumDalsiVyzvy(druh, opts.historie)
+      : '';
     return {
       plny: dalsi ? `${zaklad.plny} · další ${dalsi}` : zaklad.plny,
       kratky: zaklad.kratky,
