@@ -35,6 +35,7 @@ import {
 } from '@/lib/poptavka-pruvodce';
 import type { AptId, GuideLang } from '@/lib/types';
 import { PoptavkaPlochaRoot, PoptavkaPlochaTlacitko } from './PoptavkaPlocha';
+import { TerminPole } from './TerminKalendar';
 import './poptavka.scss';
 
 export type PoptavkaVstupni = {
@@ -376,26 +377,25 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               <section>
                 {!vernost ? <h2 className="pp__krok">{t.krokTermin}</h2> : null}
                 <div className="pp__termin">
-                  <label>
-                    {t.prijezd}
-                    <input
-                      type="date"
-                      min={dnes}
-                      value={prijezd}
-                      onChange={(e) => setPrijezd(e.target.value)}
-                      required
-                    />
-                  </label>
-                  <label>
-                    {t.odjezd}
-                    <input
-                      type="date"
-                      min={prijezd || dnes}
-                      value={odjezd}
-                      onChange={(e) => setOdjezd(e.target.value)}
-                      required
-                    />
-                  </label>
+                  <TerminPole
+                    label={t.prijezd}
+                    value={prijezd}
+                    min={dnes}
+                    lang={props.lang}
+                    zavritLabel={t.zpet}
+                    onChange={(ymd) => {
+                      setPrijezd(ymd);
+                      if (odjezd && odjezd <= ymd) setOdjezd('');
+                    }}
+                  />
+                  <TerminPole
+                    label={t.odjezd}
+                    value={odjezd}
+                    min={prijezd || dnes}
+                    lang={props.lang}
+                    zavritLabel={t.zpet}
+                    onChange={setOdjezd}
+                  />
                 </div>
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
                 <button
