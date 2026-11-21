@@ -273,10 +273,14 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     : null;
 
   const ukazLogo = !vernost || krok === 'termin' || hotovo || Boolean(heroVernost);
+  /** Termín věrnosti: karta přes okno, fotka vyplní místo (jako Děkujeme). */
+  const kartaTermin = Boolean(vernost && !hotovo && krok === 'termin');
   /** Krátké kroky vyplní výšku. Apartmány a Kontakt necháváme jako dnes. */
-  const kartaVypln = !galerie && !hotovo && krok !== 'apartmany' && krok !== 'kontakt';
+  const kartaVypln =
+    !galerie && !hotovo && !kartaTermin && krok !== 'apartmany' && krok !== 'kontakt';
   /** Po odeslání: karta přes okno, fotka vyplní zbylé místo. */
   const kartaDekujeme = Boolean(vernost && hotovo);
+  const skrytPatickuTermin = kartaTermin;
 
   function ikonaVolby(druh: 'vybrat' | 'doporucit' | 'pruvodce'): ReactNode {
     const stroke = {
@@ -326,7 +330,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     <PoptavkaPlochaRoot lang={props.lang}>
     <main className={`pp${vernost ? ' pp--vernost' : ''}${suchyBeh ? ' pp--zkouska' : ''}`} lang={props.lang}>
       <div
-        className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}${kartaDekujeme ? ' pp__karta--dekujeme' : ''}${krok === 'zpusob' ? ' pp__karta--zpusob' : ''}`}
+        className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}${kartaTermin ? ' pp__karta--termin' : ''}${kartaDekujeme ? ' pp__karta--dekujeme' : ''}${krok === 'zpusob' ? ' pp__karta--zpusob' : ''}`}
       >
         {suchyBeh ? <span className="pp__zkouska-stittek">zkouška</span> : null}
         {heroVernost ? (
@@ -400,13 +404,14 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
                 <button
                   type="button"
-                  className="pp__btn pp__btn--hlavni"
+                  className={`pp__btn${vernost ? ' pp__btn--tlumeny' : ' pp__btn--hlavni'}`}
                   onClick={() => {
                     if (overTermin()) setKrok('zpusob');
                   }}
                 >
                   {t.dale}
                 </button>
+                {vernost ? <PoptavkaPlochaTlacitko sTelefonem /> : null}
               </section>
             ) : null}
 
@@ -849,19 +854,21 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           </>
         )}
 
-        <div className="pp__paticka">
-          <PoptavkaPlochaTlacitko />
-          <div className="pp__kontakty">
-            <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
-              <span className="pp__kontakt-popis">{t.zavolat}</span>
-              <span className="pp__kontakt-cislo">{telNikol}</span>
-            </a>
-            <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_ZALOHA)}>
-              <span className="pp__kontakt-popis">{t.zaloha}</span>
-              <span className="pp__kontakt-cislo">{telZaloha}</span>
-            </a>
+        {skrytPatickuTermin ? null : (
+          <div className="pp__paticka">
+            <PoptavkaPlochaTlacitko />
+            <div className="pp__kontakty">
+              <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
+                <span className="pp__kontakt-popis">{t.zavolat}</span>
+                <span className="pp__kontakt-cislo">{telNikol}</span>
+              </a>
+              <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_ZALOHA)}>
+                <span className="pp__kontakt-popis">{t.zaloha}</span>
+                <span className="pp__kontakt-cislo">{telZaloha}</span>
+              </a>
+            </div>
           </div>
-        </div>
+        )}
         </div>
       </div>
 

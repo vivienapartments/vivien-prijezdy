@@ -315,6 +315,53 @@
   color: #1a1510;
 }
 
+/* Termín věrnosti: Pokračovat tišší než Přidat na plochu. */
+.pp__btn--tlumeny {
+  background: transparent;
+  color: #cbbba8;
+  border: 1px solid #5a4e40;
+  font-weight: 600;
+}
+
+.pp__plocha-radek {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  padding: 0.4rem 0.45rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #c9a84c 55%, #3d342a);
+  background: color-mix(in srgb, #c9a84c 14%, #15110e);
+}
+
+.pp__plocha-tel-ikona {
+  flex: 0 0 auto;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 10px;
+  border: 1px solid #c9a84c;
+  background: color-mix(in srgb, #c9a84c 20%, #15110e);
+  color: #c9a84c;
+  display: grid;
+  place-items: center;
+}
+
+.pp__btn--plocha-zlato {
+  flex: 1 1 auto;
+  width: auto;
+  margin: 0;
+  padding: 0.5rem 0.55rem;
+  border-radius: 999px;
+  border: 0;
+  background: #c9a84c;
+  color: #1a1510;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+
 .pp__btn--wa {
   background: color-mix(in srgb, #25d366 22%, #1c1712);
   color: #f5efe3;
@@ -764,22 +811,29 @@
   height: clamp(110px, 20vh, 200px);
 }
 
-/* Děkujeme po odeslání: karta přes okno, fotka vyplní volné místo. */
+/* Termín / Děkujeme: karta přes okno, fotka vyplní volné místo. */
+.pp__karta--termin,
 .pp__karta--dekujeme {
   min-height: calc(100dvh - 3.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
 }
 
+.pp__karta--termin .pp__hero,
 .pp__karta--dekujeme .pp__hero {
   flex: 1 1 auto;
-  min-height: 120px;
+  min-height: 140px;
   max-height: 60vh;
   height: auto;
   background-size: cover;
   background-repeat: no-repeat;
 }
 
+.pp__karta--dekujeme .pp__hero {
+  min-height: 120px;
+}
+
+.pp__karta--termin .pp__telo,
 .pp__karta--dekujeme .pp__telo {
   flex: 0 0 auto;
   display: flex;
@@ -790,6 +844,11 @@
 .pp__karta--dekujeme .pp__paticka {
   margin-top: 0.75rem;
   flex-shrink: 0;
+}
+
+.pp--vernost .pp__karta--termin .pp__uvod {
+  text-align: center;
+  hyphens: none;
 }
 
 .pp__karta--zpusob .pp__volba span,

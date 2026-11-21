@@ -75,7 +75,7 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
         ? `${window.location.pathname}${window.location.search}` || '/poptavka'
         : '/poptavka';
     const manifest = {
-      name: 'VIVIEN poptávka',
+      name: 'VIVIEN Club',
       short_name: 'VIVIEN',
       start_url: start,
       scope: '/poptavka',
@@ -134,10 +134,10 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
     if (!title) {
       title = document.createElement('meta');
       title.name = 'apple-mobile-web-app-title';
-      title.content = 'VIVIEN';
       title.setAttribute('data-vivien-poptavka-title', '1');
       document.head.appendChild(title);
     }
+    title.content = 'VIVIEN Club';
 
     if ('serviceWorker' in navigator) {
       void navigator.serviceWorker.register('/sw-pruvodce.js', { scope: '/' }).catch(() => undefined);
@@ -227,10 +227,32 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
 }
 
 /** Tlačítko. Může být na začátku i dole. */
-export function PoptavkaPlochaTlacitko({ vyrazne = false }: { vyrazne?: boolean }) {
+export function PoptavkaPlochaTlacitko({
+  vyrazne = false,
+  sTelefonem = false,
+}: {
+  vyrazne?: boolean;
+  /** Termín věrnosti: ikona telefonu + plné zlato (výraznější než Pokračovat). */
+  sTelefonem?: boolean;
+}) {
   const ctx = useContext(PlochaCtx);
   if (!ctx || ctx.standalone) return null;
   const popisek = t(plochaPridej, ctx.lang);
+  if (sTelefonem) {
+    return (
+      <div className="pp__plocha-radek">
+        <span className="pp__plocha-tel-ikona" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="18" height="18">
+            <rect x="7" y="2" width="10" height="20" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M11 18h2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
+        <button type="button" className="pp__btn pp__btn--plocha-zlato" onClick={ctx.naPridej}>
+          {popisek}
+        </button>
+      </div>
+    );
+  }
   return (
     <button
       type="button"
