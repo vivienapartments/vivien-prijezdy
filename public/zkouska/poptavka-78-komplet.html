@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Náhled · PROMPT-78 · celá poptávka</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0a0908;
+      color: #f5efe3;
+      font-family: "DM Sans", system-ui, sans-serif;
+      padding: 1rem 0.75rem 2.5rem;
+    }
+    .hlavicka {
+      max-width: 26rem;
+      margin: 0 auto 1rem;
+      text-align: center;
+    }
+    .hlavicka h1 {
+      margin: 0 0 0.35rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.35rem;
+      color: #c9a84c;
+    }
+    .hlavicka p {
+      margin: 0;
+      font-size: 0.82rem;
+      color: #cbbba8;
+      line-height: 1.4;
+    }
+    .sloupec {
+      max-width: 26rem;
+      margin: 0 auto 1.75rem;
+    }
+    .pismeno {
+      margin: 0 0 0.4rem;
+      text-align: center;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #c9a84c;
+    }
+    .popisek {
+      margin: 0 0 0.55rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: #cbbba8;
+      line-height: 1.35;
+    }
+    .karta {
+      display: flex;
+      flex-direction: column;
+      min-height: 720px;
+      background: #1c1712;
+      border: 1px solid #3d342a;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      padding: 0 1.15rem 1.25rem;
+    }
+    .karta--nizka { min-height: 640px; }
+    .hero {
+      margin: 0 -1.15rem;
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-position: center 40%;
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 140px;
+      max-height: 280px;
+    }
+    .hero--termin {
+      background-image: linear-gradient(to bottom, transparent 35%, #1c1712 100%),
+        url("/pruvodce/zahrada-po-odjezdu.jpg");
+    }
+    .hero--zpusob {
+      flex: 0 0 auto;
+      height: 140px;
+      max-height: none;
+      background-image: linear-gradient(to bottom, transparent 35%, #1c1712 100%),
+        url("https://www.vivienapartments.cz/cs/images/apartments/apartments-hero-600.webp");
+    }
+    .hero--dekujeme {
+      background-image: linear-gradient(to bottom, transparent 35%, #1c1712 100%),
+        url("/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg");
+    }
+    .telo { flex: 0 0 auto; }
+    .logo {
+      display: block;
+      width: 56px;
+      height: 56px;
+      margin: -32px auto 0.75rem;
+      border-radius: 50%;
+      border: 2px solid #c9a84c;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      background: #1c1712;
+      box-shadow: 0 0 0 4px #1c1712;
+    }
+    .logo--bez-hera { margin-top: 0.85rem; }
+    h2 {
+      margin: 0 0 0.55rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.45rem;
+      line-height: 1.25;
+      text-align: center;
+      color: #f5efe3;
+    }
+    .uvod, .specha, .navod, .maly {
+      margin: 0 0 0.55rem;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      text-align: center;
+      color: #cbbba8;
+      hyphens: none;
+    }
+    .maly { font-size: 0.8rem; margin-bottom: 0.35rem; }
+    .navod { color: #e8dfd0; }
+    .termin {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+      margin: 0 0 0.75rem;
+    }
+    .pole label {
+      display: block;
+      margin: 0 0 0.3rem;
+      font-size: 0.8rem;
+      color: #c9a84c;
+      text-align: center;
+    }
+    .pole .box {
+      display: block;
+      padding: 0.65rem 0.5rem;
+      border-radius: 10px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      color: #8a7a68;
+      text-align: center;
+      font-size: 0.88rem;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      margin: 0 0 0.55rem;
+      padding: 0.85rem 1rem;
+      border-radius: 999px;
+      border: 1px solid #5a4e40;
+      background: transparent;
+      color: #cbbba8;
+      font: inherit;
+      font-weight: 600;
+      text-align: center;
+    }
+    .btn--hlavni {
+      border: 0;
+      background: #c9a84c;
+      color: #1a1510;
+      font-weight: 700;
+    }
+    .btn--plocha {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      border: 0;
+      background: #c9a84c;
+      color: #1a1510;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .btn--plocha svg { width: 18px; height: 18px; flex: 0 0 auto; }
+    .btn--mensi {
+      border-radius: 10px;
+      padding: 0.65rem;
+      font-size: 0.9rem;
+    }
+    .volba {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      width: 100%;
+      margin: 0 0 0.55rem;
+      padding: 0.75rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      text-align: left;
+    }
+    .ikona {
+      flex: 0 0 auto;
+      width: 2.4rem;
+      height: 2.4rem;
+      color: #c9a84c;
+      display: grid;
+      place-items: center;
+    }
+    .ikona svg { width: 30px; height: 30px; }
+    .volba strong {
+      display: block;
+      color: #f5efe3;
+      font-size: 1rem;
+      margin-bottom: 0.2rem;
+    }
+    .volba span span {
+      display: block;
+      color: #cbbba8;
+      font-size: 0.86rem;
+      line-height: 1.35;
+      text-align: left;
+      hyphens: none;
+    }
+    .mreza {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+      margin: 0.35rem 0 0.75rem;
+    }
+    .dlazdice {
+      position: relative;
+      margin: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      aspect-ratio: 4 / 3;
+    }
+    .dlazdice img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .dlazdice span {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 0.35rem 0.45rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+      color: #f5efe3;
+      font-size: 0.72rem;
+      text-align: center;
+    }
+    .plocha {
+      margin: 1rem 0 0;
+      padding: 1rem 0 0;
+      border-top: 1px solid #3d342a;
+    }
+    .pl-veta {
+      margin: 0.55rem 0 0;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      text-align: center;
+      color: #cbbba8;
+      hyphens: none;
+    }
+    .kontakty {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem 0.75rem;
+      margin-top: 0.85rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #cbbba8;
+    }
+    .kontakty b {
+      display: block;
+      color: #c9a84c;
+      font-size: 0.88rem;
+      font-weight: 600;
+      white-space: nowrap;
+      margin-top: 0.2rem;
+    }
+    .otazka {
+      margin: 0 0 0.65rem;
+      text-align: center;
+      color: #e8dfd0;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      hyphens: none;
+    }
+    .pole-text {
+      width: 100%;
+      margin: 0 0 0.55rem;
+      padding: 0.65rem 0.7rem;
+      border-radius: 10px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      color: #8a7a68;
+      font-size: 0.9rem;
+    }
+    .nebo {
+      margin: 0.35rem 0 0.55rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #cbbba8;
+    }
+    .rada {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+      margin-bottom: 0.55rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="hlavicka">
+    <h1>PROMPT-78 · celá poptávka</h1>
+    <p>Od Termínu po Děkujeme. Fotky jako v ostré. Plocha jen na konci. Ještě nenasazeno.</p>
+  </div>
+
+  <!-- 1 Termín -->
+  <div class="sloupec">
+    <p class="pismeno">1 · Termín</p>
+    <p class="popisek">Jen data a Pokračovat. Bez Přidat na plochu.</p>
+    <div class="karta">
+      <div class="hero hero--termin" role="img" aria-hidden="true"></div>
+      <div class="telo">
+        <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+        <h2>Rádi vás uvidíme znovu</h2>
+        <p class="uvod">Vyberte termín a my vám obvykle do hodiny pošleme cenu, samozřejmě i se slíbenou slevou. Odpovídáme od 8 do 20 hodin.</p>
+        <div class="termin">
+          <div class="pole"><label>Příjezd</label><div class="box">Vyberte datum</div></div>
+          <div class="pole"><label>Odjezd</label><div class="box">Vyberte datum</div></div>
+        </div>
+        <div class="btn">Pokračovat</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 Způsob -->
+  <div class="sloupec">
+    <p class="pismeno">2 · Jak vybereme</p>
+    <p class="popisek">Nové názvy voleb. Bez Přidat na plochu.</p>
+    <div class="karta karta--nizka">
+      <div class="hero hero--zpusob" role="img" aria-hidden="true"></div>
+      <div class="telo">
+        <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+        <p class="maly">Krok 2 · 12. 12. 2026 – 14. 12. 2026</p>
+        <h2>Jak vybereme apartmán?</h2>
+        <div class="volba">
+          <span class="ikona" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="7" y="3" width="14" height="12" rx="2" /><path d="M3 7v11a2 2 0 0 0 2 2h12" /><circle cx="12" cy="7.5" r="1.3" /><path d="M21 12l-3.5-3.5L10 15" />
+            </svg>
+          </span>
+          <span><strong>Vyberu si apartmán</strong><span>Prohlédnete si fotky a vyberete jeden nebo víc.</span></span>
+        </div>
+        <div class="volba">
+          <span class="ikona" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /><path d="M12 8l.5 1.5L14 10l-1.5.5L12 12l-.5-1.5L10 10l1.5-.5z" />
+            </svg>
+          </span>
+          <span><strong>Kterýkoli volný</strong><span>Stačí termín, nabídneme vám, co bude volné.</span></span>
+        </div>
+        <div class="volba">
+          <span class="ikona" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9" /><path d="M15.5 8.5l-2 5-5 2 2-5z" />
+            </svg>
+          </span>
+          <span><strong>Zjistěte, který vám sedí</strong><span>Krátký dotazník, stačí pár otázek.</span></span>
+        </div>
+        <div class="btn btn--mensi">Zpět</div>
+        <div class="kontakty">
+          <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+          <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 Apartmány -->
+  <div class="sloupec">
+    <p class="pismeno">3 · Apartmány</p>
+    <p class="popisek">Návod na střed, bez dělení slov. Bez Přidat na plochu.</p>
+    <div class="karta karta--nizka">
+      <div class="telo">
+        <img class="logo logo--bez-hera" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+        <p class="maly">Krok 3 · 12. 12. 2026 – 14. 12. 2026</p>
+        <h2>Který apartmán tentokrát?</h2>
+        <p class="navod">Klepnutím na fotku otevřete galerii, apartmán pak vyberete tlačítkem.</p>
+        <div class="mreza">
+          <div class="dlazdice">
+            <img src="https://www.vivienapartments.cz/cs/images/apartments/pokoj4-5-600.webp" alt="" />
+            <span>V1 Jemná harmonie</span>
+          </div>
+          <div class="dlazdice">
+            <img src="https://www.vivienapartments.cz/cs/images/apartments/pokoj3-600.webp" alt="" />
+            <span>V2 Zlatá rovnováha</span>
+          </div>
+          <div class="dlazdice">
+            <img src="https://www.vivienapartments.cz/cs/images/apartments/pokoj2-600.webp" alt="" />
+            <span>V3 Večerní elegance</span>
+          </div>
+          <div class="dlazdice">
+            <img src="https://www.vivienapartments.cz/cs/images/apartments/pokoj4-600.webp" alt="" />
+            <span>V4 Ušlechtilý kontrast</span>
+          </div>
+        </div>
+        <div class="btn btn--mensi">Zpět</div>
+        <div class="kontakty">
+          <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+          <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 Dotazník -->
+  <div class="sloupec">
+    <p class="pismeno">4 · Dotazník</p>
+    <p class="popisek">Nadpis „Krátký dotazník“. Bez Přidat na plochu.</p>
+    <div class="karta karta--nizka">
+      <div class="telo">
+        <img class="logo logo--bez-hera" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+        <p class="maly">Krok 2 · 12. 12. 2026 – 14. 12. 2026</p>
+        <h2>Krátký dotazník</h2>
+        <p class="maly">Otázka 1 z 6</p>
+        <p class="otazka">Co od apartmánu potřebujete hned po příjezdu?</p>
+        <div class="btn btn--mensi" style="text-align:left;border-radius:12px">Zavřít za sebou dveře a mít ticho jen pro sebe.</div>
+        <div class="btn btn--mensi" style="text-align:left;border-radius:12px">Cítit, že si dopřávám něco kvalitního.</div>
+        <div class="btn btn--mensi" style="text-align:left;border-radius:12px">Vydechnout a srovnat se po cestě.</div>
+        <div class="btn btn--mensi" style="text-align:left;border-radius:12px">Vejít dovnitř a nechat se něčím překvapit.</div>
+        <div class="btn btn--mensi" style="text-align:left;border-radius:12px">Hned cítit atmosféru místa.</div>
+        <div class="btn btn--mensi">Zpět</div>
+        <div class="kontakty">
+          <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+          <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 Kontakt -->
+  <div class="sloupec">
+    <p class="pismeno">5 · Kontakt</p>
+    <p class="popisek">Bez Přidat na plochu.</p>
+    <div class="karta karta--nizka">
+      <div class="telo">
+        <img class="logo logo--bez-hera" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+        <p class="maly">Poslední krok · 12. 12. 2026 – 14. 12. 2026 · Kterýkoli volný</p>
+        <h2>Ještě kontakt a je hotovo</h2>
+        <div class="pole-text">Jméno</div>
+        <div class="pole-text">Telefon</div>
+        <div class="pole-text">Poznámka (volitelné)</div>
+        <div class="btn btn--hlavni">Odeslat poptávku</div>
+        <p class="nebo">nebo odeslat přes</p>
+        <div class="rada">
+          <div class="btn btn--mensi">WhatsApp</div>
+          <div class="btn btn--mensi">SMS</div>
+        </div>
+        <div class="btn btn--mensi">Zpět</div>
+        <div class="kontakty">
+          <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+          <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6 Děkujeme -->
+  <div class="sloupec">
+    <p class="pismeno">6 · Děkujeme</p>
+    <p class="popisek">Jediné místo s Přidat na plochu (zlato + popis).</p>
+    <div class="karta">
+      <div class="hero hero--dekujeme" role="img" aria-hidden="true"></div>
+      <div class="telo">
+        <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+        <h2>Děkujeme, že se k nám vracíte.</h2>
+        <p class="uvod" style="color:#e8dfd0">Cenu vám obvykle pošleme do hodiny. Odpovídáme od 8 do 20 hodin.</p>
+        <p class="specha">Když to spěchá, raději nám rovnou zavolejte. Zprávu nemusíme vidět hned, třeba když zrovna řídíme.</p>
+        <div class="plocha">
+          <div class="btn btn--plocha">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="7" y="2" width="10" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+              <path d="M11 18h2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+            <span>Přidat na plochu</span>
+          </div>
+          <p class="pl-veta">Mějte nás na ploše telefonu. Další pobyt pak poptáte bez hledání.</p>
+        </div>
+        <div class="kontakty">
+          <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+          <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
