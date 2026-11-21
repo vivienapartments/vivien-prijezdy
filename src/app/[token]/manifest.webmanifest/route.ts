@@ -17,17 +17,19 @@ export async function GET(_req: Request, { params }: Props) {
     theme_color: '#1c1712',
     lang: 'cs',
     icons: [
+      { src: '/prehled/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/prehled/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
       {
-        src: '/pruvodce/va-logo-192.png',
+        src: '/prehled/icon-192-maskable.png',
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'any',
+        purpose: 'maskable',
       },
       {
-        src: '/pruvodce/va-logo-512.png',
+        src: '/prehled/icon-512-maskable.png',
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any',
+        purpose: 'maskable',
       },
     ],
   };

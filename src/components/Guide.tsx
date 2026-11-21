@@ -53,7 +53,7 @@ import { ZpravyOdNas, type ZpravaOdNas } from './ZpravyOdNas';
 import { PRANI_NADPIS, PRANI_VETA_SBALENA, textPrani } from '@/lib/prani-texty';
 import type { FakturaUdaje } from '@/lib/faktura';
 import { FAKTURA_NADPIS, FAKTURA_VETA_SBALENA } from '@/lib/faktura-texty';
-import { PridejNaPlochu } from './PridejNaPlochu';
+import { usePlochaDotaz } from './PlochaDotaz';
 import './guide.scss';
 
 const ALIAS_K_DOMU = ['pesky-parkoviste-dum'];
@@ -386,6 +386,13 @@ export function Guide({
   /** Náhled bez API: žádost o odjezd z OdjezdRamecek, ať je i nahoře u příjezdu. */
   const [odjezdZadostLokal, setOdjezdZadostLokal] = useState<ZadostOkna | null>(null);
   const hodnoty = vstup?.hodnoty ?? lokalne ?? { cas: null, zpusob: null, telefon: '', spz: '', pujcene: false, souhlas: false };
+  const plocha = usePlochaDotaz({
+    lang,
+    rezervace,
+    token: vstup?.token ?? null,
+    /** Zprávy od nás (předání…) mají přednost. */
+    blokovano: zpravyLokal.length > 0,
+  });
   const ubytovan = Boolean(vstup?.ubytovan);
   const odDnePrijezdu = Boolean(prijezdDen && /^\d{4}-\d{2}-\d{2}$/.test(prijezdDen) && dnesDen >= prijezdDen);
   /** Přání vidí od dne příjezdu i bez kliknutí Předáno. PINy zůstávají jen po předání. */
@@ -751,7 +758,10 @@ export function Guide({
       ) : null}
 
       <main className="pv">
-        <PridejNaPlochu lang={lang} jenMobil nazev="VIVIEN průvodce" shortNazev="VIVIEN" />
+        {plocha.overlay}
+        {plocha.overlay ? null : (
+          <>
+        {plocha.krok}
         <PinyNahore lang={lang} kody={ziveKody} hotovo={krokyHotove} skrytVyzvu={ubytovan} />
         {ukazatDokladyRamecek({
           cas: hodnoty.cas,
@@ -1456,6 +1466,8 @@ export function Guide({
             })}
           </ol>
         ) : null}
+          </>
+        )}
       </main>
     </div>
   );

@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 import { jeIos, jeStandalone } from '@/lib/plocha';
 import {
+  plochaAndroidNejdeNadpis,
+  plochaAndroidNejdeText,
   plochaHotovo,
   plochaIosNedostupneNadpis,
   plochaIosNedostupneText,
-  plochaNavodAndroidKroky,
-  plochaNavodAndroidNadpis,
   plochaPridej,
   plochaZavrit,
 } from '@/lib/plocha-texty';
@@ -39,9 +39,27 @@ function jeMobilZarizeni(): boolean {
   return /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent || '');
 }
 
+const IKONY = [
+  { src: '/prehled/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+  { src: '/prehled/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+  {
+    src: '/prehled/icon-192-maskable.png',
+    sizes: '192x192',
+    type: 'image/png',
+    purpose: 'maskable',
+  },
+  {
+    src: '/prehled/icon-512-maskable.png',
+    sizes: '512x512',
+    type: 'image/png',
+    purpose: 'maskable',
+  },
+] as const;
+
 /**
- * Tlačítko Přidat na plochu.
- * Android: instalace / návod. iPhone: omluva. Když nejde, host jde dál.
+ * Tlačítko Přidat na plochu (Děkujeme / tiše).
+ * Android: nejdřív systémové beforeinstallprompt. iPhone: omluva.
+ * Návod s tečkami nikdy.
  */
 export function PridejNaPlochu({
   lang,
@@ -54,8 +72,7 @@ export function PridejNaPlochu({
   const [standalone, setStandalone] = useState(true);
   const [mobil, setMobil] = useState(false);
   const [ios, setIos] = useState(false);
-  const [navod, setNavod] = useState(false);
-  const [hotovo, setHotovo] = useState(false);
+  const [hlaska, setHlaska] = useState<'nic' | 'ios' | 'android-nejde' | 'hotovo'>('nic');
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
   const tt = useCallback((map: LText) => t(map, lang), [lang]);
 
@@ -79,14 +96,7 @@ export function PridejNaPlochu({
       background_color: '#1c1712',
       theme_color: '#1c1712',
       lang: 'cs',
-      icons: [
-        {
-          src: '/pruvodce/va-logo-192.png',
-          sizes: '192x192',
-          type: 'image/png',
-          purpose: 'any',
-        },
-      ],
+      icons: [...IKONY],
     };
     const blobUrl = URL.createObjectURL(
       new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' }),
@@ -107,7 +117,7 @@ export function PridejNaPlochu({
       apple.setAttribute('data-vivien-pridej-apple', '1');
       document.head.appendChild(apple);
     }
-    apple.href = '/pruvodce/va-logo-192.png';
+    apple.href = '/prehled/apple-icon.png';
 
     let capable = document.querySelector<HTMLMetaElement>('meta[data-vivien-pridej-capable]');
     if (!capable) {
@@ -144,7 +154,7 @@ export function PridejNaPlochu({
 
   async function naPridej() {
     if (ios || jeIos()) {
-      setNavod(true);
+      setHlaska('ios');
       return;
     }
     const evt = deferred.current;
@@ -154,15 +164,15 @@ export function PridejNaPlochu({
         const volba = await evt.userChoice;
         deferred.current = null;
         if (volba.outcome === 'accepted') {
-          setNavod(false);
-          setHotovo(true);
+          setHlaska('hotovo');
           return;
         }
+        return;
       } catch {
         /* systém */
       }
     }
-    setNavod(true);
+    setHlaska('android-nejde');
   }
 
   if (!ready || standalone) return null;
@@ -178,37 +188,29 @@ export function PridejNaPlochu({
         {tt(plochaPridej)}
       </button>
 
-      {navod || hotovo ? (
+      {hlaska !== 'nic' ? (
         <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
           <div className="pv-pridej-karta">
-            {hotovo ? (
+            {hlaska === 'hotovo' ? (
               <>
                 <h2 className="pv-pridej-nadpis">{tt(plochaHotovo)}</h2>
-                <button type="button" className="pv-pridej-ok" onClick={() => setHotovo(false)}>
+                <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
                   {tt(plochaZavrit)}
                 </button>
               </>
-            ) : ios ? (
+            ) : hlaska === 'ios' ? (
               <>
                 <h2 className="pv-pridej-nadpis">{tt(plochaIosNedostupneNadpis)}</h2>
                 <p className="pv-pridej-text">{tt(plochaIosNedostupneText)}</p>
-                <button type="button" className="pv-pridej-ok" onClick={() => setNavod(false)}>
+                <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
                   {tt(plochaZavrit)}
                 </button>
               </>
             ) : (
               <>
-                <h2 className="pv-pridej-nadpis">{tt(plochaNavodAndroidNadpis)}</h2>
-                <p className="pv-pridej-text">
-                  {tt(plochaNavodAndroidKroky)
-                    .split('\n')
-                    .map((radek, i) => (
-                      <span key={i} className="pv-pridej-radek">
-                        {radek}
-                      </span>
-                    ))}
-                </p>
-                <button type="button" className="pv-pridej-ok" onClick={() => setNavod(false)}>
+                <h2 className="pv-pridej-nadpis">{tt(plochaAndroidNejdeNadpis)}</h2>
+                <p className="pv-pridej-text">{tt(plochaAndroidNejdeText)}</p>
+                <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
                   {tt(plochaZavrit)}
                 </button>
               </>

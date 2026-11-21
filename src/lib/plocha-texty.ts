@@ -246,6 +246,39 @@ export const plochaIosNedostupneText: LText = {
   pt: 'Pedimos desculpa. A Apple não permite isto a partir de uma ligação numa mensagem ou e-mail. No Android, Adicionar ao ecrã funciona.',
 };
 
+/** Když Chrome nenabídne systémové Instalovat. Bez návodu s tečkami. */
+export const plochaAndroidNejdeNadpis: LText = {
+  cs: 'Teď to nejde',
+  en: 'Not available right now',
+  de: 'Geht jetzt nicht',
+  pl: 'Teraz nie działa',
+  uk: 'Зараз недоступно',
+  'zh-Hant': '目前無法使用',
+  sv: 'Går inte just nu',
+  es: 'Ahora no está disponible',
+  hu: 'Most nem elérhető',
+  da: 'Virker ikke lige nu',
+  fr: 'Indisponible pour le moment',
+  it: 'Non disponibile ora',
+  pt: 'Agora não está disponível',
+};
+
+export const plochaAndroidNejdeText: LText = {
+  cs: 'Zkuste to v prohlížeči Chrome. Otevřete odkaz znovu a klepněte Přidat na plochu.',
+  en: 'Try again in the Chrome browser. Open the link again and tap Add to home screen.',
+  de: 'Versuchen Sie es im Chrome-Browser. Öffnen Sie den Link erneut und tippen Sie auf Zum Startbildschirm.',
+  pl: 'Spróbujcie w przeglądarce Chrome. Otwórzcie link ponownie i kliknijcie Dodaj na ekran.',
+  uk: 'Спробуйте в браузері Chrome. Відкрийте посилання знову й натисніть Додати на екран.',
+  'zh-Hant': '請用 Chrome 瀏覽器再試。重新開啟連結並點「加到主畫面」。',
+  sv: 'Försök i webbläsaren Chrome. Öppna länken igen och tryck på Lägg till på hemskärmen.',
+  es: 'Pruébenlo en el navegador Chrome. Abran el enlace otra vez y toquen Añadir a la pantalla.',
+  hu: 'Próbálják meg a Chrome böngészőben. Nyissák meg újra a linket, és koppintsanak a Kezdőképernyőre gombra.',
+  da: 'Prøv i browseren Chrome. Åbn linket igen, og tryk på Føj til hjemmeskærm.',
+  fr: 'Essayez dans le navigateur Chrome. Rouvrez le lien et touchez Ajouter à l’écran d’accueil.',
+  it: 'Provate nel browser Chrome. Riaprite il link e toccate Aggiungi alla Home.',
+  pt: 'Tente no navegador Chrome. Abra o link outra vez e toque em Adicionar ao ecrã.',
+};
+
 export const plochaNavodAndroidNadpis: LText = {
   cs: 'Na Androidu to jde takhle',
   en: 'On Android it works like this',

@@ -12,6 +12,16 @@ import {
 import * as PT from '@/lib/plocha-texty';
 import type { GuideLang } from '@/lib/types';
 
+function jeMobilZarizeni(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (window.matchMedia('(max-width: 820px)').matches) return true;
+  } catch {
+    /* media */
+  }
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent || '');
+}
+
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -23,11 +33,13 @@ type Opts = {
   token?: string | null;
   vypnuto?: boolean;
   blokovano?: boolean;
+  /** Jen telefon. Na PC se okno neukáže (kromě ?plocha=okno). */
+  jenMobil?: boolean;
 };
 
 /**
- * Okno jako u zpráv (parkování / osobní předání).
- * Po Později samostatný box nad osou bez čísla (Přidat · Už neukazovat).
+ * Okno přes celou obrazovku, jako u osobního předání / zpráv.
+ * Nejdřív Ano / Později. Po Později box v průvodci.
  */
 export function usePlochaDotaz({
   lang,
@@ -35,10 +47,12 @@ export function usePlochaDotaz({
   token = null,
   vypnuto = false,
   blokovano = false,
+  jenMobil = true,
 }: Opts): { overlay: ReactNode; krok: ReactNode; posunOsy: number } {
   const [stav, setStav] = useState<PlochaStav>('nic');
   const [ready, setReady] = useState(false);
-  const [navod, setNavod] = useState(false);
+  /** nic = hlavní dotaz; ios / android-nejde = krátká hláška; false = zavřeno */
+  const [poAno, setPoAno] = useState<'nic' | 'ios' | 'android-nejde' | null>(null);
   const [hotovoHlaska, setHotovoHlaska] = useState(false);
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
   const tt = (map: Parameters<typeof t>[0]) => t(map, lang);
@@ -49,27 +63,72 @@ export function usePlochaDotaz({
       setReady(true);
       return;
     }
-    // Náhled: ?plocha=okno znovu ukáže vyskakovací okno.
+    // Náhled: ?plocha=okno znovu ukáže vyskakovací okno (i na PC).
     try {
       const q = new URLSearchParams(window.location.search);
       if (q.get('plocha') === 'okno') {
         ulozPlochaStav(rezervace, 'nic');
         setStav('nic');
-        setNavod(false);
+        setPoAno(null);
         setReady(true);
         return;
       }
     } catch {
       /* url */
     }
+    if (jenMobil && !jeMobilZarizeni()) {
+      setStav('hotovo');
+      setReady(true);
+      return;
+    }
     setStav(nactiPlochaStav(rezervace));
     setReady(true);
-  }, [rezervace, vypnuto]);
+  }, [rezervace, vypnuto, jenMobil]);
 
   useEffect(() => {
-    if (vypnuto || !token) return;
-    const enc = encodeURIComponent(token);
-    const manifestHref = `/${enc}/manifest.webmanifest`;
+    if (vypnuto || jeStandalone()) return;
+
+    const start = token
+      ? `/${encodeURIComponent(token)}`
+      : typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}` || '/'
+        : '/';
+    const manifestHref = token
+      ? `/${encodeURIComponent(token)}/manifest.webmanifest`
+      : URL.createObjectURL(
+          new Blob(
+            [
+              JSON.stringify({
+                name: 'VIVIEN průvodce',
+                short_name: 'VIVIEN',
+                start_url: start,
+                scope: '/',
+                display: 'standalone',
+                background_color: '#1c1712',
+                theme_color: '#1c1712',
+                lang: 'cs',
+                icons: [
+                  { src: '/prehled/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+                  { src: '/prehled/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+                  {
+                    src: '/prehled/icon-192-maskable.png',
+                    sizes: '192x192',
+                    type: 'image/png',
+                    purpose: 'maskable',
+                  },
+                  {
+                    src: '/prehled/icon-512-maskable.png',
+                    sizes: '512x512',
+                    type: 'image/png',
+                    purpose: 'maskable',
+                  },
+                ],
+              }),
+            ],
+            { type: 'application/manifest+json' },
+          ),
+        );
+
     let link = document.querySelector<HTMLLinkElement>('link[data-vivien-plocha-manifest]');
     if (!link) {
       link = document.createElement('link');
@@ -86,7 +145,7 @@ export function usePlochaDotaz({
       apple.setAttribute('data-vivien-plocha-apple', '1');
       document.head.appendChild(apple);
     }
-    apple.href = '/pruvodce/va-logo-192.png';
+    apple.href = '/prehled/apple-icon.png';
 
     let meta = document.querySelector<HTMLMetaElement>('meta[data-vivien-plocha-capable]');
     if (!meta) {
@@ -108,6 +167,7 @@ export function usePlochaDotaz({
     window.addEventListener('beforeinstallprompt', onBip);
     return () => {
       window.removeEventListener('beforeinstallprompt', onBip);
+      if (!token && manifestHref.startsWith('blob:')) URL.revokeObjectURL(manifestHref);
     };
   }, [token, vypnuto]);
 
@@ -117,6 +177,10 @@ export function usePlochaDotaz({
   }
 
   async function spustInstalaci() {
+    if (jeIos()) {
+      setPoAno('ios');
+      return;
+    }
     const evt = deferred.current;
     if (evt) {
       try {
@@ -125,25 +189,26 @@ export function usePlochaDotaz({
         deferred.current = null;
         if (volba.outcome === 'accepted') {
           uloz('hotovo');
-          setNavod(false);
+          setPoAno(null);
           setHotovoHlaska(true);
           return;
         }
+        return;
       } catch {
         /* systém */
       }
     }
-    setNavod(true);
+    setPoAno('android-nejde');
   }
 
   function naPozdeji() {
     uloz('později');
-    setNavod(false);
+    setPoAno(null);
   }
 
   function naSkryt() {
     uloz('skryto');
-    setNavod(false);
+    setPoAno(null);
   }
 
   if (!ready || vypnuto || stav === 'hotovo' || stav === 'skryto') {
@@ -164,33 +229,42 @@ export function usePlochaDotaz({
     return { overlay, krok: null, posunOsy: 0 };
   }
 
-  const ukazOverlay = !blokovano && (stav === 'nic' || navod);
-  const ukazKrok = stav === 'později' && !navod;
+  const ukazOverlay = !blokovano && (stav === 'nic' || poAno != null);
+  const ukazKrok = stav === 'později' && poAno == null;
 
   const overlay = ukazOverlay ? (
     <div className="pv-zprava-overlay" role="dialog" aria-modal="true" aria-labelledby="pv-plocha-dotaz">
       <div className="pv-zprava-overlay__karta pv-zprava-overlay__karta--prani">
         <p className="pv-zprava-overlay__krok">{tt(PT.plochaOverlayKrok)}</p>
-        {navod ? (
+        {poAno === 'ios' ? (
           <>
             <h3 className="pv-zprava-overlay__nadpis" id="pv-plocha-dotaz">
-              {tt(jeIos() ? PT.plochaNavodIosNadpis : PT.plochaNavodAndroidNadpis)}
+              {tt(PT.plochaIosNedostupneNadpis)}
             </h3>
-            <p className="pv-zprava-overlay__text">
-              {tt(jeIos() ? PT.plochaNavodIosKroky : PT.plochaNavodAndroidKroky)
-                .split('\n')
-                .map((radek, i) => (
-                  <span key={i} className="pv-plocha-navod__radek">
-                    {radek}
-                  </span>
-                ))}
-            </p>
+            <p className="pv-zprava-overlay__text">{tt(PT.plochaIosNedostupneText)}</p>
             <button
               type="button"
               className="pv-zprava-overlay__btn"
               onClick={() => {
                 uloz('později');
-                setNavod(false);
+                setPoAno(null);
+              }}
+            >
+              {tt(PT.plochaZavrit)}
+            </button>
+          </>
+        ) : poAno === 'android-nejde' ? (
+          <>
+            <h3 className="pv-zprava-overlay__nadpis" id="pv-plocha-dotaz">
+              {tt(PT.plochaAndroidNejdeNadpis)}
+            </h3>
+            <p className="pv-zprava-overlay__text">{tt(PT.plochaAndroidNejdeText)}</p>
+            <button
+              type="button"
+              className="pv-zprava-overlay__btn"
+              onClick={() => {
+                uloz('později');
+                setPoAno(null);
               }}
             >
               {tt(PT.plochaZavrit)}
