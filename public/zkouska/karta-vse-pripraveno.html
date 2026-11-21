@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Zkouška · tlačítko Vše připraveno na kartě</title>
+  <style>
+    :root {
+      --bg: #1c1712;
+      --gold: #c9a84c;
+      --text: #f3ebe0;
+      --muted: #b7a99a;
+      --card: #2a221c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: radial-gradient(1200px 600px at 50% -10%, #3a2f26, var(--bg));
+      color: var(--text);
+      padding: 1.1rem 0.9rem 2.5rem;
+      line-height: 1.4;
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.1rem;
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .lead {
+      margin: 0 0 1rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      text-align: justify;
+      hyphens: auto;
+    }
+    .karta {
+      background: var(--card);
+      border: 1px solid rgba(201, 168, 76, 0.28);
+      border-radius: 14px;
+      padding: 0.95rem 0.9rem 1rem;
+      max-width: 420px;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.4rem;
+    }
+    .pill {
+      padding: 0.2rem 0.5rem;
+      border-radius: 6px;
+      background: rgba(201, 168, 76, 0.18);
+      color: var(--gold);
+      text-transform: none;
+      font-weight: 650;
+    }
+    .jmeno {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 0.2rem;
+    }
+    .sub {
+      margin: 0 0 0.75rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .stav {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.45rem;
+      margin-bottom: 0.15rem;
+    }
+    .stav button {
+      text-align: left;
+      font: inherit;
+      border-radius: 6px;
+      border: 1px solid rgba(120, 180, 120, 0.35);
+      background: rgba(80, 140, 90, 0.18);
+      color: #c8e6c9;
+      padding: 0.55rem 0.6rem;
+      min-height: 4.2rem;
+    }
+    .stav .tit {
+      display: block;
+      font-size: 0.78rem;
+      opacity: 0.85;
+    }
+    .stav .pop {
+      display: block;
+      font-weight: 700;
+      margin-top: 0.15rem;
+    }
+    .ph-nova-predani,
+    .ph-nova-shrnuti {
+      display: block;
+      width: 100%;
+      min-height: 2.75rem;
+      margin: 0.55rem 0 0.45rem;
+      padding: 0.7rem 1rem;
+      border-radius: 6px;
+      font: inherit;
+      font-size: 1.05rem;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .ph-nova-shrnuti {
+      border: 1px solid rgba(201, 168, 76, 0.55);
+      background: rgba(201, 168, 76, 0.2);
+      color: var(--gold);
+    }
+    .ph-nova-predani {
+      border: 0;
+      background: var(--gold);
+      color: #1c1712;
+      margin-top: 0.85rem;
+    }
+    .akce {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin: 0 0 0.55rem;
+    }
+    .akce button {
+      font: inherit;
+      font-size: 0.85rem;
+      color: var(--gold);
+      background: transparent;
+      border: 1px solid rgba(201, 168, 76, 0.45);
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      min-height: 2.4rem;
+      cursor: pointer;
+    }
+    .hint {
+      margin-top: 1rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: justify;
+      hyphens: auto;
+      max-width: 420px;
+    }
+    .lab {
+      margin: 1.1rem 0 0.4rem;
+      font-size: 0.8rem;
+      color: var(--gold);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <h1>Karta · Vše připraveno</h1>
+  <p class="lead">
+    Náhled velikosti a barvy. Nahoře jemnější zlaté tlačítko pod Průvodce. Dole pro srovnání plné zlaté Předat apartmán.
+  </p>
+
+  <p class="lab">Zavřené</p>
+  <div class="karta">
+    <div class="top">
+      <span>Zítra · V1</span>
+      <span class="pill">Čeká shrnutí</span>
+    </div>
+    <div class="jmeno">Iwei Chen</div>
+    <p class="sub">V1 · 2 osoby · 21.–23. 11.</p>
+    <div class="stav">
+      <button type="button" disabled>
+        <span class="tit">Check-in</span>
+        <span class="pop">Hotovo</span>
+      </button>
+      <button type="button" disabled>
+        <span class="tit">Průvodce</span>
+        <span class="pop">Hotovo</span>
+      </button>
+    </div>
+    <button type="button" class="ph-nova-shrnuti" id="btn1">Vše připraveno</button>
+    <div class="akce" id="akce1" hidden>
+      <button type="button">WhatsApp</button>
+      <button type="button">SMS</button>
+      <button type="button">E-mail</button>
+      <button type="button">Odesláno ručně</button>
+      <button type="button">Neposílat</button>
+    </div>
+    <button type="button" class="ph-nova-predani">Předat apartmán</button>
+  </div>
+
+  <p class="lab">Po klepnutí (kanály)</p>
+  <div class="karta">
+    <div class="top">
+      <span>Zítra · V1</span>
+      <span class="pill">Čeká shrnutí</span>
+    </div>
+    <div class="jmeno">Iwei Chen</div>
+    <p class="sub">V1 · 2 osoby · 21.–23. 11.</p>
+    <div class="stav">
+      <button type="button" disabled>
+        <span class="tit">Check-in</span>
+        <span class="pop">Hotovo</span>
+      </button>
+      <button type="button" disabled>
+        <span class="tit">Průvodce</span>
+        <span class="pop">Hotovo</span>
+      </button>
+    </div>
+    <button type="button" class="ph-nova-shrnuti">Vše připraveno</button>
+    <div class="akce">
+      <button type="button">WhatsApp</button>
+      <button type="button">SMS</button>
+      <button type="button">E-mail</button>
+      <button type="button">Odesláno ručně</button>
+      <button type="button">Neposílat</button>
+    </div>
+    <button type="button" class="ph-nova-predani">Předat apartmán</button>
+  </div>
+
+  <p class="hint">
+    Po odeslání tlačítko na kartě zmizí. Domů nahoře zůstává. Až bude sedět, napište nasaď.
+  </p>
+
+  <script>
+    const b = document.getElementById('btn1');
+    const a = document.getElementById('akce1');
+    b.addEventListener('click', () => {
+      a.hidden = !a.hidden;
+    });
+  </script>
+</body>
+</html>

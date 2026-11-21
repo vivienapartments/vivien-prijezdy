@@ -2667,6 +2667,7 @@
 .ph button.ph-nova-tile,
 .ph button.ph-nova-stav,
 .ph button.ph-nova-predani,
+.ph button.ph-nova-shrnuti,
 .ph button.ph-nova-platba-btn,
 .ph button.ph-nova-platba-castka,
 .ph button.ph-nova-zprava,
@@ -3266,6 +3267,24 @@
   color: #1c1712;
   font-size: 1.05rem;
   font-weight: 750;
+}
+
+.ph button.ph-nova-shrnuti {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  margin: 0.55rem 0 0.45rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid rgba(201, 168, 76, 0.55);
+  border-radius: 6px;
+  background: rgba(201, 168, 76, 0.2);
+  color: var(--color-gold);
+  font-size: 1.05rem;
+  font-weight: 750;
+}
+
+.ph-karta-shrnuti__akce {
+  margin: 0 0 0.55rem;
 }
 
 .ph-nova-rada {
