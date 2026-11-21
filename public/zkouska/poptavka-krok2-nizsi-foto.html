@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Náhled · Krok 2 nižší fotka</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: #0e0c0a;
+      color: #f5efe3;
+      font-family: "DM Sans", system-ui, sans-serif;
+      padding: 1rem 0.85rem 2.5rem;
+    }
+    .badge {
+      max-width: 26rem;
+      margin: 0 auto 0.65rem;
+      color: #c9a84c;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .karta {
+      max-width: 26rem;
+      margin: 0 auto;
+      min-height: calc(100dvh - 3.5rem);
+      display: flex;
+      flex-direction: column;
+      background: #1c1712;
+      border: 1px solid #3d342a;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+    }
+    .hero {
+      flex-shrink: 0;
+      height: clamp(110px, 20vh, 200px);
+      background: url("https://www.vivienapartments.cz/cs/images/apartments/apartments-hero-600.webp") center 40% / cover no-repeat;
+      position: relative;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 35%, #1c1712 100%);
+    }
+    .telo {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0 1.15rem 1.25rem;
+      min-height: 0;
+    }
+    .logo {
+      display: block;
+      width: clamp(48px, 7vh, 72px);
+      height: clamp(48px, 7vh, 72px);
+      margin: -28px auto 0.55rem;
+      border-radius: 50%;
+      border: 2px solid #c9a84c;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      background: #1c1712;
+    }
+    .maly {
+      margin: 0 0 0.35rem;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #cbbba8;
+    }
+    h1 {
+      margin: 0 0 0.75rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: clamp(1.35rem, 3.6vh, 1.7rem);
+      text-align: center;
+      color: #f5efe3;
+    }
+    .volba {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      width: 100%;
+      margin: 0 0 0.55rem;
+      padding: 0.7rem 0.8rem;
+      border-radius: 14px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      color: #e8dfd0;
+      text-align: left;
+      font: inherit;
+    }
+    .ikona {
+      flex: 0 0 auto;
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 12px;
+      border: 1px solid color-mix(in srgb, #c9a84c 45%, #3d342a);
+      background: color-mix(in srgb, #c9a84c 12%, #15110e);
+      color: #c9a84c;
+      display: grid;
+      place-items: center;
+      font-size: 0.95rem;
+    }
+    .text { display: grid; gap: 0.25rem; min-width: 0; }
+    .text strong { color: #f5efe3; font-size: 0.95rem; }
+    .text span {
+      display: block;
+      color: #cbbba8;
+      font-size: 0.84rem;
+      line-height: 1.35;
+      text-align: left;
+      hyphens: none;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      margin: 0.35rem 0 0;
+      padding: 0.7rem 1rem;
+      border-radius: 999px;
+      border: 0;
+      background: #b89a6a;
+      color: #1a1510;
+      font: inherit;
+      font-weight: 700;
+      text-align: center;
+    }
+    .btn--zpet {
+      margin-top: 0.45rem;
+      background: transparent;
+      border: 1px solid #3d342a;
+      color: #e8dfd0;
+      font-weight: 600;
+    }
+    .paticka {
+      margin-top: auto;
+      padding-top: 0.65rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #cbbba8;
+    }
+    .paticka b { display: block; color: #c9a84c; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <p class="badge">Náhled · jen krok 2 · fotka nižší · popisy vlevo · ještě nenasazeno do ostré poptávky</p>
+  <div class="karta">
+    <div class="hero" role="img" aria-hidden="true"></div>
+    <div class="telo">
+      <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+      <p class="maly">2. krok · 12.–14. 12. 2026</p>
+      <h1>Jak vybereme apartmán</h1>
+      <div class="volba">
+        <span class="ikona" aria-hidden="true">▣</span>
+        <span class="text">
+          <strong>Vyberu si sám</strong>
+          <span>Prohlédnete fotky a vyberete apartmán, který vám sedí.</span>
+        </span>
+      </div>
+      <div class="volba">
+        <span class="ikona" aria-hidden="true">💡</span>
+        <span class="text">
+          <strong>Doporučíme vám</strong>
+          <span>Podle termínu vám nabídneme, co je volné a dává smysl.</span>
+        </span>
+      </div>
+      <div class="volba">
+        <span class="ikona" aria-hidden="true">📄</span>
+        <span class="text">
+          <strong>Pomozte mi vybrat</strong>
+          <span>Pár krátkých otázek a ukážeme vám nejlepší tip.</span>
+        </span>
+      </div>
+      <div class="btn">Pokračovat</div>
+      <div class="btn btn--zpet">Zpět</div>
+      <div class="paticka">
+        <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+        <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
