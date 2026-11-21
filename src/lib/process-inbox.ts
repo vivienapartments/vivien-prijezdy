@@ -27,6 +27,7 @@ import { posliPruvodce } from './posli-pruvodce';
 import { upozorniPoOdeslaniPruvodce } from './pruvodce-wa';
 import { vynechRucni } from './rucni-pole';
 import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
+import { doplnUdajeZMinulehoPobytu } from './staly-host';
 import {
   createProcessStore,
   prazdnaRezervace,
@@ -37,6 +38,26 @@ import {
 } from './store';
 import { isDepartureExpired } from './token';
 import { inspectVivienMail, type MailInspection } from './vivien-data';
+
+/** Jednou načtený seznam. Při zápisu doplní prázdná pole z pevné shody stálého hosta. */
+function storeSDoplnenim(store: ProcessStore, cache: RezervaceRecord[]): ProcessStore {
+  return new Proxy(store, {
+    get(target, prop, receiver) {
+      if (prop === 'setRezervace') {
+        return async (id: string, rec: RezervaceRecord) => {
+          const cas = rec.posledniPokus || new Date().toISOString();
+          const hotovo = doplnUdajeZMinulehoPobytu(rec, cache, cas);
+          await target.setRezervace(id, hotovo);
+          const i = cache.findIndex((r) => r.rezervace === id);
+          if (i >= 0) cache[i] = hotovo;
+          else cache.push(hotovo);
+        };
+      }
+      const v = Reflect.get(target, prop, receiver);
+      return typeof v === 'function' ? (v as (...a: unknown[]) => unknown).bind(target) : v;
+    },
+  });
+}
 
 export type ProcessItem = {
   rezervace?: string;
@@ -327,7 +348,13 @@ async function checkinKDoplneni(mail: InboxMail, store: ProcessStore): Promise<b
   return maCoUlozit(prev, udajeZMailu(ins, prev));
 }
 
-export async function processOneMail(mail: InboxMail, store: ProcessStore): Promise<ProcessItem> {
+export async function processOneMail(
+  mail: InboxMail,
+  store: ProcessStore,
+  cache?: RezervaceRecord[],
+): Promise<ProcessItem> {
+  const seznam = cache ?? (await store.listRezervace()).map((e) => e.record);
+  store = storeSDoplnenim(store, seznam);
   const now = new Date().toISOString();
 
   if (await store.isMessageProcessed(mail.messageId)) {
@@ -1052,11 +1079,12 @@ export async function runInboxProcessing(opts: {
     items: [],
   };
   let chybaMailu = false;
+  const cache = (await store.listRezervace()).map((e) => e.record);
 
   for (const mail of mails) {
     let item: ProcessItem;
     try {
-      item = await processOneMail(mail, store);
+      item = await processOneMail(mail, store, cache);
     } catch (err) {
       const reason = err instanceof Error ? err.message : 'chyba';
       const id = cisloZeSubjectu(mail.subject) || undefined;

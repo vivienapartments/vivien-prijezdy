@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { prazdnaRezervace } from './store';
 import { radekZRezervace } from './prehled';
-import { doplnStaleHosty, stalyHostPro, textStalehoHosta } from './staly-host';
+import { doplnStaleHosty, doplnUdajeZMinulehoPobytu, stalyHostPro, textStalehoHosta } from './staly-host';
 
 function karta(cast: {
   id: string;
@@ -166,5 +166,86 @@ describe('stálý host', () => {
     const a = karta({ id: '1', jmeno: 'Jan Novák', narodnost: 'CZE', prijezd: '2026-01-01' });
     const b = karta({ id: '2', jmeno: 'Jan Novák', narodnost: 'DEU', prijezd: '2026-06-01' });
     expect(stalyHostPro(b, [a, b])).toBeNull();
+  });
+
+  it('pevná shoda doplní jen prázdná pole z minulého pobytu', () => {
+    const stary = {
+      ...prazdnaRezervace('1', '2026-01-01T00:00:00.000Z'),
+      emailHosta: 'jan@example.com',
+      telefonRezervace: '+420604111222',
+      telefonRezervaceWa: '420604111222',
+      jazyk: 'de' as const,
+      telefonBrana: '+420604999888',
+      spz: '1C23456',
+      branaRegistrovano: '2026-03-01T10:00:00.000Z',
+      prijezd: '2026-03-01',
+      odjezd: '2026-03-03',
+      stav: 'odeslano' as const,
+    };
+    const novy = {
+      ...prazdnaRezervace('2', '2026-01-01T00:00:00.000Z'),
+      emailHosta: 'jan@example.com',
+      prijezd: '2026-10-01',
+      odjezd: '2026-10-03',
+      stav: 'bez_checkinu' as const,
+    };
+    const hotovo = doplnUdajeZMinulehoPobytu(novy, [stary, novy], '2026-09-01T12:00:00.000Z');
+    expect(hotovo.telefonRezervace).toBe('+420604111222');
+    expect(hotovo.jazyk).toBe('de');
+    expect(hotovo.telefonBrana).toBe('+420604999888');
+    expect(hotovo.spz).toBe('1C23456');
+    expect(hotovo.branaRegistrovano).toBeNull();
+    expect(hotovo.historie.some((h) => h.co.startsWith('Doplněno z minulého pobytu'))).toBe(true);
+    const znovu = doplnUdajeZMinulehoPobytu(hotovo, [stary, hotovo], '2026-09-02T12:00:00.000Z');
+    expect(znovu.historie.filter((h) => h.co.startsWith('Doplněno z minulého pobytu'))).toHaveLength(1);
+  });
+
+  it('pevná shoda nepřepíše vyplněné pole', () => {
+    const stary = {
+      ...prazdnaRezervace('1', '2026-01-01T00:00:00.000Z'),
+      emailHosta: 'jan@example.com',
+      jazyk: 'de' as const,
+      telefonBrana: '+420604999888',
+      prijezd: '2026-03-01',
+      odjezd: '2026-03-03',
+      stav: 'odeslano' as const,
+    };
+    const novy = {
+      ...prazdnaRezervace('2', '2026-01-01T00:00:00.000Z'),
+      emailHosta: 'jan@example.com',
+      jazyk: 'cs' as const,
+      telefonBrana: '+420604111000',
+      prijezd: '2026-10-01',
+      odjezd: '2026-10-03',
+      stav: 'bez_checkinu' as const,
+    };
+    const hotovo = doplnUdajeZMinulehoPobytu(novy, [stary, novy], '2026-09-01T12:00:00.000Z');
+    expect(hotovo.jazyk).toBe('cs');
+    expect(hotovo.telefonBrana).toBe('+420604111000');
+  });
+
+  it('slabá shoda nic nedoplní', () => {
+    const stary = {
+      ...prazdnaRezervace('1', '2026-01-01T00:00:00.000Z'),
+      jmeno: 'Jan Novák',
+      emailHosta: 'stary@example.com',
+      jazyk: 'de' as const,
+      telefonBrana: '+420604999888',
+      prijezd: '2026-03-01',
+      odjezd: '2026-03-03',
+      stav: 'odeslano' as const,
+    };
+    const novy = {
+      ...prazdnaRezervace('2', '2026-01-01T00:00:00.000Z'),
+      jmeno: 'Jan Novák',
+      emailHosta: 'novy@example.com',
+      prijezd: '2026-10-01',
+      odjezd: '2026-10-03',
+      stav: 'bez_checkinu' as const,
+    };
+    const hotovo = doplnUdajeZMinulehoPobytu(novy, [stary, novy], '2026-09-01T12:00:00.000Z');
+    expect(hotovo.jazyk).toBeNull();
+    expect(hotovo.telefonBrana).toBeNull();
+    expect(hotovo.historie.some((h) => h.co.startsWith('Doplněno z minulého pobytu'))).toBe(false);
   });
 });

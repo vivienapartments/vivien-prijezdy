@@ -87,11 +87,14 @@ describe('podekovani', () => {
     const den = textPodekovani('cs', null, '2026-11-19', '2026-11-19');
     const pozdeji = textPodekovani('cs', null, '2026-11-19', '2026-11-20');
     const treti = textPodekovani('cs', null, '2026-11-17', '2026-11-20');
-    expect(den).toContain('dojeli v pořádku');
-    expect(den).toContain('Moc děkujeme');
+    expect(den).toContain('cesta domů proběhla v pořádku');
+    expect(den).toContain('Moc děkujeme za vaši návštěvu');
+    expect(den).not.toContain('dojeli');
+    expect(den).not.toContain('byli našimi hosty');
     expect(den).not.toContain('5 %');
+    expect(pozdeji).toContain('moc děkujeme za vaši návštěvu u nás');
     expect(pozdeji).not.toContain('dojeli');
-    expect(pozdeji).toContain('děkujeme, že jste byli našimi hosty');
+    expect(pozdeji).not.toContain('byli našimi hosty');
     expect(pozdeji).not.toContain('ještě jednou');
     expect(pozdeji).not.toContain('5 %');
     expect(treti).toBe(pozdeji);

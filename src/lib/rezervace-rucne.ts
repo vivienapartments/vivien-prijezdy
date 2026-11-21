@@ -1,6 +1,7 @@
 import { duvod, problemEmailu } from './chyby';
 import { nightsBetween } from './dates';
 import { oznacRucni, vynechRucni } from './rucni-pole';
+import { doplnUdajeZMinulehoPobytu } from './staly-host';
 import { jazykZPredvolby, normalizujTelefon } from './telefon';
 import type { RucniPole } from './store';
 import {
@@ -163,7 +164,9 @@ export async function doplnRezervaci(
     if (chraneny.checkinUrl) pole.push('checkinUrl');
     if (pole.length) rec.rucniZnacky = oznacRucni(rec, pole, now);
   }
-  await store.setRezervace(id, rec);
+  const seznam = (await store.listRezervace()).map((e) => e.record);
+  const hotovo = doplnUdajeZMinulehoPobytu(rec, seznam, now);
+  await store.setRezervace(id, hotovo);
   return { ok: true, nova };
 }
 

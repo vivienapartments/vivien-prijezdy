@@ -1,6 +1,7 @@
 import { maUdajeFirmy, type FakturaUdaje } from './faktura';
 import { normalizujTelefon } from './telefon';
 import type { PrehledRadek } from './prehled';
+import type { RezervaceRecord } from './store';
 
 export type PredchoziPobyt = {
   rezervace: string;
@@ -172,4 +173,104 @@ export function doplnStaleHosty(radky: PrehledRadek[]): PrehledRadek[] {
     const info = stalyHostPro(r, radky);
     return info ? { ...r, stalyHost: info } : { ...r, stalyHost: null };
   });
+}
+
+function telefonKlicRec(rec: RezervaceRecord): string | null {
+  for (const raw of [rec.telefon, rec.telefonRezervace]) {
+    if (!raw) continue;
+    const t = normalizujTelefon(raw, rec.narodnost);
+    if (t && !t.nejisty) return t.ulozeny;
+  }
+  return null;
+}
+
+function emailKlicRec(rec: RezervaceRecord): string | null {
+  return normalizujEmail(rec.emailHosta);
+}
+
+function shodaPevnaRec(a: RezervaceRecord, b: RezervaceRecord): boolean {
+  const ta = telefonKlicRec(a);
+  const tb = telefonKlicRec(b);
+  if (ta && tb && ta === tb) return true;
+  const ea = emailKlicRec(a);
+  const eb = emailKlicRec(b);
+  if (ea && eb && ea === eb) return true;
+  return false;
+}
+
+function drivejsiRec(a: RezervaceRecord, b: RezervaceRecord): boolean {
+  const da = a.prijezd || a.odjezd || '';
+  const db = b.prijezd || b.odjezd || '';
+  if (!da || !db) return false;
+  return da < db;
+}
+
+const HISTORIE_DOPLNENI = 'Doplněno z minulého pobytu';
+
+/**
+ * Při pevné shodě (telefon nebo e-mail) doplní prázdná pole z posledního dřívějšího pobytu.
+ * Slabá shoda (jen jméno) nic. `branaRegistrovano` se nepřebírá. Jednou do historie.
+ */
+export function doplnUdajeZMinulehoPobytu(
+  nova: RezervaceRecord,
+  vsechny: RezervaceRecord[],
+  cas: string,
+): RezervaceRecord {
+  if (nova.stav === 'zruseno') return nova;
+  if (nova.historie.some((h) => h.co.startsWith(HISTORIE_DOPLNENI))) return nova;
+
+  const predchozi = vsechny
+    .filter(
+      (jiny) =>
+        jiny.rezervace !== nova.rezervace &&
+        jiny.stav !== 'zruseno' &&
+        shodaPevnaRec(nova, jiny) &&
+        drivejsiRec(jiny, nova),
+    )
+    .sort((a, b) => (b.prijezd || '').localeCompare(a.prijezd || ''));
+  if (!predchozi.length) return nova;
+
+  const zdroj = predchozi[0];
+  const casti: string[] = [];
+  const out: RezervaceRecord = { ...nova };
+
+  if (!out.telefon && !out.telefonRezervace) {
+    if (zdroj.telefon) {
+      out.telefon = zdroj.telefon;
+      out.telefonWa = zdroj.telefonWa;
+      out.telefonPuvodni = zdroj.telefonPuvodni;
+      casti.push('telefon');
+    } else if (zdroj.telefonRezervace) {
+      out.telefonRezervace = zdroj.telefonRezervace;
+      out.telefonRezervaceWa = zdroj.telefonRezervaceWa;
+      out.telefonRezervacePuvodni = zdroj.telefonRezervacePuvodni;
+      casti.push('telefon');
+    }
+  }
+
+  if (!emailKlicRec(out) && emailKlicRec(zdroj)) {
+    out.emailHosta = zdroj.emailHosta;
+    casti.push('e-mail');
+  }
+
+  if (!out.jazyk && zdroj.jazyk) {
+    out.jazyk = zdroj.jazyk;
+    casti.push('jazyk');
+  }
+
+  if (!(out.telefonBrana || '').trim() && (zdroj.telefonBrana || '').trim()) {
+    out.telefonBrana = zdroj.telefonBrana;
+    casti.push('telefon k bráně');
+  }
+
+  if (!(out.spz || '').trim() && !out.spzPujcene && (zdroj.spz || '').trim()) {
+    out.spz = zdroj.spz;
+    casti.push('SPZ');
+  }
+
+  if (!casti.length) return nova;
+  return {
+    ...out,
+    historie: [...out.historie, { cas, co: `${HISTORIE_DOPLNENI} (${casti.join(', ')})` }].slice(-40),
+  };
 }
