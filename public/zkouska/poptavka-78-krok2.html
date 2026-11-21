@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Náhled · PROMPT-78 · krok 2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0e0c0a;
+      color: #f5efe3;
+      font-family: "DM Sans", system-ui, sans-serif;
+      padding: 10px 10px 2rem;
+    }
+    .badge {
+      max-width: 26rem;
+      margin: 0 auto 0.65rem;
+      color: #c9a84c;
+      font-size: 0.82rem;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .karta {
+      max-width: 26rem;
+      margin: 0 auto;
+      min-height: calc(100dvh - 3.5rem);
+      display: flex;
+      flex-direction: column;
+      background: #1c1712;
+      border: 1px solid #3d342a;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      padding: 0 1.15rem 1.4rem;
+    }
+    .hero {
+      flex: 0 0 auto;
+      height: clamp(110px, 20vh, 200px);
+      margin: 0 -1.15rem;
+      background: linear-gradient(to bottom, transparent 35%, #1c1712 100%),
+        url("/pruvodce/images/apartments/apartments-hero-600.webp") center / cover no-repeat;
+    }
+    .telo { flex: 1 1 auto; }
+    .logo {
+      display: block;
+      width: 56px;
+      height: 56px;
+      margin: -28px auto 0.55rem;
+      border-radius: 50%;
+      border: 2px solid #c9a84c;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      background: #1c1712;
+      box-shadow: 0 0 0 4px #1c1712;
+    }
+    .maly {
+      margin: 0 0 0.35rem;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #cbbba8;
+    }
+    h1 {
+      margin: 0 0 0.85rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.45rem;
+      line-height: 1.25;
+      text-align: center;
+    }
+    .volba {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      width: 100%;
+      margin: 0 0 0.55rem;
+      padding: 0.75rem 0.85rem;
+      border-radius: 12px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      text-align: left;
+    }
+    .ikona {
+      flex: 0 0 auto;
+      width: 2.4rem;
+      height: 2.4rem;
+      color: #c9a84c;
+      display: grid;
+      place-items: center;
+    }
+    .ikona svg { width: 30px; height: 30px; }
+    .volba strong {
+      display: block;
+      color: #f5efe3;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .volba span {
+      display: block;
+      color: #cbbba8;
+      font-size: 0.88rem;
+      line-height: 1.4;
+      text-align: left;
+      hyphens: none;
+    }
+    .zpet {
+      display: block;
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.7rem;
+      border-radius: 10px;
+      border: 1px solid #5a4e40;
+      background: transparent;
+      color: #cbbba8;
+      font: inherit;
+      font-weight: 600;
+      text-align: center;
+    }
+    .kontakty {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.55rem;
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #cbbba8;
+    }
+    .kontakty b {
+      display: block;
+      color: #c9a84c;
+      font-size: 0.88rem;
+      white-space: nowrap;
+      margin-top: 0.2rem;
+    }
+    .pozn {
+      max-width: 26rem;
+      margin: 0.85rem auto 0;
+      font-size: 0.78rem;
+      color: #cbbba8;
+      text-align: center;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <p class="badge">Náhled PROMPT-78 · krok 2 · nové názvy · ještě nenasazeno</p>
+  <div class="karta">
+    <div class="hero" role="img" aria-hidden="true"></div>
+    <div class="telo">
+      <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+      <p class="maly">Krok 2 · 12. 12. 2026 – 14. 12. 2026</p>
+      <h1>Jak vybereme apartmán?</h1>
+
+      <div class="volba">
+        <span class="ikona" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="3" width="14" height="12" rx="2" />
+            <path d="M3 7v11a2 2 0 0 0 2 2h12" />
+            <circle cx="12" cy="7.5" r="1.3" />
+            <path d="M21 12l-3.5-3.5L10 15" />
+          </svg>
+        </span>
+        <span>
+          <strong>Vyberu si apartmán</strong>
+          <span>Prohlédnete si fotky a vyberete jeden nebo víc.</span>
+        </span>
+      </div>
+
+      <div class="volba">
+        <span class="ikona" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            <path d="M12 8l.5 1.5L14 10l-1.5.5L12 12l-.5-1.5L10 10l1.5-.5z" />
+          </svg>
+        </span>
+        <span>
+          <strong>Kterýkoli volný</strong>
+          <span>Stačí termín, nabídneme vám, co bude volné.</span>
+        </span>
+      </div>
+
+      <div class="volba">
+        <span class="ikona" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M15.5 8.5l-2 5-5 2 2-5z" />
+          </svg>
+        </span>
+        <span>
+          <strong>Zjistěte, který vám sedí</strong>
+          <span>Krátký dotazník, stačí pár otázek.</span>
+        </span>
+      </div>
+
+      <div class="zpet">Zpět</div>
+      <div class="kontakty">
+        <div>Zavolat Nikol<b>+420&nbsp;702&nbsp;153&nbsp;573</b></div>
+        <div>Když se nedovoláte<b>+420&nbsp;604&nbsp;692&nbsp;573</b></div>
+      </div>
+    </div>
+  </div>
+  <p class="pozn">Přidat na plochu jen na Děkujeme. Dotazník nahoře „Krátký dotazník“. Bez tichého odkazu na ostatních krocích.</p>
+</body>
+</html>
