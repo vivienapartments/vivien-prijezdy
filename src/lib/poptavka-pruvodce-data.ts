@@ -374,9 +374,9 @@ export const TIE_BREAKERS_STRUCT: TieQuestionStruct[] = [
 export const QUIZ_TEXTS: Record<QuizLang, Record<string, string>> = {
   'cs': {
     'quiz.q1.a': "Zavřít za sebou dveře a mít ticho jen pro sebe.",
-    'quiz.q1.b': "Poznat, že jsem si dopřál něco kvalitního.",
+    'quiz.q1.b': "Cítit, že si dopřávám něco kvalitního.",
     'quiz.q1.c': "Vydechnout a srovnat se po cestě.",
-    'quiz.q1.d': "Vejít dovnitř a být něčím překvapen.",
+    'quiz.q1.d': "Vejít dovnitř a nechat se něčím překvapit.",
     'quiz.q1.e': "Hned cítit atmosféru místa.",
     'quiz.q1.text': "Co od apartmánu potřebujete hned po příjezdu?",
     'quiz.q2.a': "Vyrazit za kulturou a objevovat zajímavá místa ve městě.",

@@ -858,7 +858,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
         {skrytPatickuTermin ? null : (
           <div className="pp__paticka">
-            {vernost && hotovo ? null : <PoptavkaPlochaTlacitko />}
+            {vernost ? null : <PoptavkaPlochaTlacitko />}
             <div className="pp__kontakty">
               <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
                 <span className="pp__kontakt-popis">{t.zavolat}</span>

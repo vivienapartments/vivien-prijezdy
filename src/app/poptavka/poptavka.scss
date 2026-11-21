@@ -47,8 +47,9 @@
   margin: 0 0 0.55rem;
   line-height: 1.45;
   font-size: 0.95rem;
-  text-align: justify;
-  hyphens: auto;
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
   color: #cbbba8;
 }
 
@@ -564,8 +565,9 @@
   color: #cbbba8;
   font-size: 0.88rem;
   line-height: 1.4;
-  text-align: justify;
-  hyphens: auto;
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 .pp__volba.is-on {
@@ -695,8 +697,9 @@
 .pp__kviz {
   margin: 0 0 0.75rem;
   font-size: 0.88rem;
-  text-align: justify;
-  hyphens: auto;
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
   color: #cbbba8;
 }
 
@@ -738,8 +741,9 @@
   margin: 0.35rem 0 0;
   font-size: 0.88rem;
   line-height: 1.45;
-  text-align: justify;
-  hyphens: auto;
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
   color: #cbbba8;
 }
 
@@ -915,7 +919,9 @@
 }
 
 .pp--vernost .pp__uvod {
-  text-align: justify;
+  text-align: center;
+  hyphens: none;
+  -webkit-hyphens: none;
 }
 
 .pp--vernost .pp__maly-radek {
