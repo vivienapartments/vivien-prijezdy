@@ -1,7 +1,11 @@
 /**
- * Texty stránky poptávky. Čeština je návrh A (ke schválení majitelem).
+ * Texty stránky poptávky.
+ * Cesty firma / doporučitel / obecná: CS + EN (ostatní jazyky → EN).
+ * Věrný host (`vernost`): `poptavka-texty-vernost.ts` (PROMPT-76).
  */
 
+import { poptavkaTextyVernost } from './poptavka-texty-vernost';
+import type { PoptavkaZdroj } from './poptavka';
 import type { GuideLang } from './types';
 
 export type PoptavkaTexty = {
@@ -24,6 +28,8 @@ export type PoptavkaTexty = {
   zpusobVybratPopis: string;
   vyberteApartmany: string;
   galerieKomplet: string;
+  /** Jen věrnost. U ostatních cest prázdné. */
+  kvizOtazka: string;
   kvizAtmosfery: string;
   vybratTento: string;
   zrusitVyber: string;
@@ -39,6 +45,16 @@ export type PoptavkaTexty = {
   whatsapp: string;
   sms: string;
   dekujeme: string;
+  /** Jen věrnost. U ostatních cest prázdné. */
+  dekujemeSpecha: string;
+  /** Jen věrnost (PROMPT-76B). U ostatních cest prázdné. */
+  nadpisZpusob: string;
+  nadpisApartmany: string;
+  nadpisKontakt: string;
+  nadpisOdeslano: string;
+  /** Šablona s `{n}` (2 nebo 3). Jen věrnost. */
+  malyKrok: string;
+  malyPosledni: string;
   zavolat: string;
   zaloha: string;
   chybaTermin: string;
@@ -68,6 +84,7 @@ const CS: PoptavkaTexty = {
   zpusobVybratPopis: 'Uvidíte fotky. Můžete vybrat jeden nebo víc.',
   vyberteApartmany: 'Klepněte na fotku. Otevře se galerie. Pak apartmán vyberte tlačítkem.',
   galerieKomplet: 'Galerie komplet',
+  kvizOtazka: '',
   kvizAtmosfery: 'Nevíte, který vybrat? Krátký průvodce doporučením apartmánů',
   vybratTento: 'Vybrat tento apartmán',
   zrusitVyber: 'Zrušit výběr',
@@ -83,6 +100,13 @@ const CS: PoptavkaTexty = {
   whatsapp: 'Napsat na WhatsApp',
   sms: 'Napsat SMS',
   dekujeme: 'Děkujeme. Do hodiny se ozveme s cenou.',
+  dekujemeSpecha: '',
+  nadpisZpusob: '',
+  nadpisApartmany: '',
+  nadpisKontakt: '',
+  nadpisOdeslano: '',
+  malyKrok: '',
+  malyPosledni: '',
   zavolat: 'Zavolat Nikol',
   zaloha: 'Když se nedovoláte',
   chybaTermin: 'Zvolte příjezd a odjezd. Odjezd musí být po příjezdu.',
@@ -112,6 +136,7 @@ const EN: PoptavkaTexty = {
   zpusobVybratPopis: 'You will see photos. You can pick one or more.',
   vyberteApartmany: 'Tap a photo to open the gallery. Then select the apartment.',
   galerieKomplet: 'Full gallery',
+  kvizOtazka: '',
   kvizAtmosfery: 'Not sure which to pick? Short guide to apartment recommendations',
   vybratTento: 'Select this apartment',
   zrusitVyber: 'Remove selection',
@@ -127,6 +152,13 @@ const EN: PoptavkaTexty = {
   whatsapp: 'WhatsApp',
   sms: 'SMS',
   dekujeme: 'Thank you. We will reply within an hour with the price.',
+  dekujemeSpecha: '',
+  nadpisZpusob: '',
+  nadpisApartmany: '',
+  nadpisKontakt: '',
+  nadpisOdeslano: '',
+  malyKrok: '',
+  malyPosledni: '',
   zavolat: 'Call Nikol',
   zaloha: 'If you cannot reach her',
   chybaTermin: 'Choose arrival and departure. Departure must be after arrival.',
@@ -136,6 +168,32 @@ const EN: PoptavkaTexty = {
   chybaBlok: 'Too many attempts. Try later, or call us.',
 };
 
-export function poptavkaTexty(lang: GuideLang): PoptavkaTexty {
+export function poptavkaTexty(lang: GuideLang, zdroj?: PoptavkaZdroj): PoptavkaTexty {
+  if (zdroj === 'vernost') return poptavkaTextyVernost(lang);
   return lang === 'cs' ? CS : EN;
+}
+
+/** Datum YMD → lokalizovaný zápis (cs: 12. 12. 2026). */
+export function formatDatumPoptavky(ymd: string, lang: GuideLang): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return ymd;
+  const [y, m, d] = ymd.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const locale =
+    lang === 'zh-Hant'
+      ? 'zh-Hant'
+      : lang === 'cs'
+        ? 'cs-CZ'
+        : lang === 'en'
+          ? 'en-GB'
+          : lang;
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(dt);
+  } catch {
+    return `${d}. ${m}. ${y}`;
+  }
 }

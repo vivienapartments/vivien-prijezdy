@@ -354,6 +354,130 @@
   text-decoration: underline;
 }
 
+/* Věrný host: rámeček kvízu jako volba v kroku 2 (PROMPT-76). */
+.pp__kviz-ramecek {
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.35rem 0 0.9rem;
+  padding: 0.95rem 0.95rem;
+  border-radius: 14px;
+  border: 1px solid #c9a84c;
+  background: color-mix(in srgb, #c9a84c 10%, #15110e);
+  text-align: center;
+  text-decoration: none;
+  color: #e8dfd0;
+  font: inherit;
+}
+
+.pp__kviz-ramecek strong {
+  color: #f5efe3;
+  font-size: 1rem;
+}
+
+.pp__kviz-ramecek span {
+  color: #c9a84c;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  line-height: 1.4;
+}
+
+.pp__dekujeme-specha {
+  margin: 0.35rem 0 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  text-align: justify;
+  hyphens: auto;
+  color: #cbbba8;
+}
+
+/* Věrnost: tmavá jako průvodce + fotky (zahrada / stropy / dům). */
+.pp--vernost {
+  background: #0e0c0a;
+}
+
+.pp--vernost .pp__karta {
+  background: #1c1712;
+  border-color: #3d342a;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.pp--vernost .pp__karta--s-herem {
+  padding-top: 0;
+}
+
+.pp--vernost .pp__hero {
+  height: 160px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  position: relative;
+}
+
+.pp--vernost .pp__hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 35%, #1c1712 100%);
+}
+
+.pp--vernost .pp__hero--zahrada {
+  background-position: center 32%;
+}
+
+.pp--vernost .pp__hero--stropy {
+  background-position: center 40%;
+}
+
+.pp--vernost .pp__hero--dum {
+  background-position: center 45%;
+}
+
+.pp--vernost .pp__telo {
+  padding: 0 0 0.15rem;
+}
+
+.pp--vernost .pp__karta--s-herem .pp__logo {
+  margin-top: -32px;
+  position: relative;
+  z-index: 1;
+  background: #1c1712;
+  box-shadow: 0 0 0 4px #1c1712;
+}
+
+.pp--vernost h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.pp--vernost .pp__uvod {
+  text-align: justify;
+}
+
+.pp--vernost .pp__maly-radek {
+  margin: 0 0 0.35rem;
+  text-align: center;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #cbbba8;
+}
+
+.pp--vernost .pp__nadpis-krok {
+  margin: 0 0 0.85rem;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: 1.45rem;
+  line-height: 1.25;
+  text-align: center;
+  color: #f5efe3;
+}
+
+.pp--vernost .pp__karta--s-herem .pp__nadpis-krok {
+  font-size: 1.55rem;
+}
+
 .pp__lightbox {
   position: fixed;
   inset: 0;

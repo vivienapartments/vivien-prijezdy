@@ -1476,21 +1476,21 @@ export const expiredPodpis: LText = {
   pt: 'Nikol & a família VIVIEN',
 };
 
-/** Schváleno majitelem 20. 11. 2026: malý dárek za věrnost, sleva 5 %. */
+/** Schváleno majitelem 21. 11. 2026 (PROMPT-76): dárek na příští pobyt, sleva 5 %. */
 export const expiredMost: LText = {
-  cs: 'Až budete plánovat další pobyt, termín si vyberete tady. Máte od nás malý dárek za věrnost, slevu 5 %.',
-  en: 'When you plan your next stay, you can choose your dates here. You have a small loyalty gift from us, a 5% discount.',
-  de: 'Wenn Sie Ihren nächsten Aufenthalt planen, wählen Sie den Termin hier. Sie haben von uns ein kleines Treuegeschenk, 5 % Rabatt.',
-  pl: 'Gdy będziecie planować kolejny pobyt, termin wybierzecie tutaj. Macie od nas mały prezent za lojalność, zniżkę 5 %.',
-  uk: 'Коли плануватимете наступне перебування, дату можна обрати тут. Від нас маєте невеликий подарунок за вірність, знижку 5 %.',
-  'zh-Hant': '規劃下次入住時，可以在這裡選擇日期。我們送您忠誠小禮物，享 5% 折扣。',
-  sv: 'När ni planerar nästa vistelse kan ni välja datum här. Ni har en liten present för er lojalitet från oss, 5 % rabatt.',
-  es: 'Cuando planeen su próxima estancia, pueden elegir las fechas aquí. Tienen de nosotros un pequeño detalle por su fidelidad, un 5 % de descuento.',
-  hu: 'Ha a következő tartózkodásukat tervezik, itt választhatnak időpontot. Tőlünk egy kis hűségajándék jár, 5 % kedvezmény.',
-  da: 'Når I planlægger jeres næste ophold, kan I vælge datoer her. I har en lille gave for jeres loyalitet fra os, 5 % rabat.',
-  fr: 'Pour votre prochain séjour, vous pourrez choisir vos dates ici. Vous avez de notre part un petit cadeau de fidélité, 5 % de réduction.',
-  it: 'Quando pianificherete il prossimo soggiorno, potrete scegliere le date qui. Da noi avete un piccolo regalo per la fedeltà, lo sconto del 5 %.',
-  pt: 'Quando planearem a próxima estadia, podem escolher as datas aqui. Têm de nós um pequeno presente de fidelidade, 5 % de desconto.',
+  cs: 'Až budete plánovat další pobyt, termín si vyberete tady. Máte od nás malý dárek na příští pobyt, slevu 5 %.',
+  en: 'When you plan your next stay, you can choose your dates here. You have a small gift from us for your next stay, a 5% discount.',
+  de: 'Wenn Sie Ihren nächsten Aufenthalt planen, wählen Sie den Termin hier. Sie haben von uns ein kleines Geschenk für den nächsten Aufenthalt, 5 % Rabatt.',
+  pl: 'Gdy będziecie planować kolejny pobyt, termin wybierzecie tutaj. Macie od nas mały prezent na kolejny pobyt, zniżkę 5 %.',
+  uk: 'Коли плануватимете наступне перебування, дату можна обрати тут. Від нас маєте невеликий подарунок на наступне перебування, знижку 5 %.',
+  'zh-Hant': '規劃下次入住時，可以在這裡選擇日期。我們送您下次入住的小禮物，享 5% 折扣。',
+  sv: 'När ni planerar nästa vistelse kan ni välja datum här. Ni har en liten present från oss till nästa vistelse, 5 % rabatt.',
+  es: 'Cuando planeen su próxima estancia, pueden elegir las fechas aquí. Tienen de nosotros un pequeño detalle para la próxima estancia, un 5 % de descuento.',
+  hu: 'Ha a következő tartózkodásukat tervezik, itt választhatnak időpontot. Tőlünk egy kis ajándék jár a következő tartózkodásra, 5 % kedvezmény.',
+  da: 'Når I planlægger jeres næste ophold, kan I vælge datoer her. I har en lille gave fra os til næste ophold, 5 % rabat.',
+  fr: 'Pour votre prochain séjour, vous pourrez choisir vos dates ici. Vous avez de notre part un petit cadeau pour le prochain séjour, 5 % de réduction.',
+  it: 'Quando pianificherete il prossimo soggiorno, potrete scegliere le date qui. Da noi avete un piccolo regalo per il prossimo soggiorno, lo sconto del 5 %.',
+  pt: 'Quando planearem a próxima estadia, podem escolher as datas aqui. Têm de nós um pequeno presente para a próxima estadia, 5 % de desconto.',
 };
 
 export const expiredCta: LText = {

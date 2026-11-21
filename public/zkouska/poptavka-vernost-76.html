@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zkouška · poptávka věrný host (76 + 76B)</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0e0c0a;--card:#1c1712;--card2:#15110e;--line:#3d342a;--gold:#c9a84c;--gold2:#b89a6a;--txt:#f5efe3;--muted:#cbbba8}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:'DM Sans',system-ui,sans-serif;padding:1.25rem 1rem 2.5rem}
+  header{max-width:72rem;margin:0 auto 1rem}
+  header h1{font-family:'Cormorant Garamond',serif;font-weight:600;color:var(--gold);margin:0 0 6px;font-size:1.7rem}
+  header p{color:var(--muted);margin:4px 0;font-size:.95rem;line-height:1.45;max-width:40rem}
+  .grid{max-width:72rem;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem}
+  .lbl{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold2);margin:0 0 .45rem}
+  .phone{background:var(--card);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+  .hero{height:160px;background-size:cover;background-repeat:no-repeat;position:relative}
+  .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent 35%,var(--card) 100%)}
+  .hero-z{background-image:url('/pruvodce/zahrada-po-odjezdu.jpg');background-position:center 32%}
+  .hero-s{background-image:url('https://www.vivienapartments.cz/cs/images/apartments/apartments-hero-600.webp');background-position:center 40%}
+  .hero-d{background-image:url('/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg');background-position:center 45%}
+  .body{padding:0 1.15rem 1.45rem}
+  .logo{width:56px;height:56px;margin:-28px auto .75rem;display:block;border-radius:50%;border:2px solid var(--gold);background:var(--card);object-fit:cover;box-shadow:0 0 0 4px var(--card);position:relative;z-index:1}
+  h2{font-family:'Cormorant Garamond',serif;font-weight:600;text-align:center;font-size:1.55rem;margin:0 0 .65rem;line-height:1.2}
+  .maly{text-align:center;font-size:.82rem;color:var(--muted);margin:0 0 .35rem;line-height:1.4}
+  p{line-height:1.5;margin:0 0 .75rem;font-size:.95rem;color:var(--muted);text-align:justify}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+  .f small{display:block;color:var(--gold);font-size:.75rem;margin-bottom:.3rem}
+  .inp{background:#15110e;border:1px solid var(--line);border-radius:12px;padding:.75rem .7rem;font-size:.95rem;color:var(--txt)}
+  .btn{display:block;text-align:center;background:var(--gold2);color:#1a1510;font-weight:700;border-radius:999px;padding:.9rem 1rem;margin:1rem 0 .65rem}
+  .btn.ghost{background:transparent;color:#e8dfd0;border:1px solid var(--line)}
+  .contact{text-align:center;font-size:.88rem;color:var(--muted);line-height:1.45}
+  .contact b,.contact a{color:var(--gold);font-weight:600;text-decoration:none;white-space:nowrap}
+  .opt{border:1px solid var(--line);border-radius:14px;padding:.9rem .95rem;margin:0 0 .55rem;background:#15110e}
+  .opt.on{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,#15110e)}
+  .opt b{display:block;margin:0 0 .25rem;color:var(--txt)}
+  .opt span{color:var(--muted);font-size:.88rem;line-height:1.4}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:.55rem;margin:.35rem 0 .75rem}
+  .tile{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#15110e}
+  .tile .img{height:96px;background:linear-gradient(135deg,#4a3c2c,#2a221c)}
+  .tile .t{padding:.45rem .5rem .55rem;font-size:.78rem;color:var(--txt)}
+  .tile.on{border-color:var(--gold)}
+  .kviz{display:block;margin:.5rem 0 .75rem;padding:.95rem;border-radius:14px;border:1px solid var(--gold);background:color-mix(in srgb,var(--gold) 10%,#15110e);text-align:center;text-decoration:none}
+  .kviz b{display:block;color:var(--txt);margin:0 0 .25rem}
+  .kviz span{color:var(--gold);font-size:.9rem;text-decoration:underline}
+  .cap{margin:.45rem 0 0;text-align:center;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:#8a7d6c}
+  .thanks{text-align:center;color:#e8dfd0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Zkouška · věrná poptávka (76 + 76B)</h1>
+  <p>Tmavá verze. Nadpisy podle 76B. Fotky: zahrada → stropy → apartmány → dům. Ještě nenasazeno.</p>
+</header>
+
+<div class="grid">
+  <div>
+    <div class="lbl">1 · Termín</div>
+    <div class="phone">
+      <div class="hero hero-z"></div>
+      <div class="body">
+        <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="VIVIEN" />
+        <h2>Rádi vás uvidíme znovu</h2>
+        <p>Vyberte termín a my vám obvykle do hodiny pošleme cenu, samozřejmě i se slíbenou slevou. Odpovídáme od 8 do 20 hodin.</p>
+        <div class="row">
+          <div class="f"><small>Příjezd</small><div class="inp">12. 12. 2026</div></div>
+          <div class="f"><small>Odjezd</small><div class="inp">14. 12. 2026</div></div>
+        </div>
+        <div class="btn">Pokračovat</div>
+        <div class="contact"><a href="tel:+420702153573">Zavolat Nikol · +420&nbsp;702&nbsp;153&nbsp;573</a><br>Když se nedovoláte <a href="tel:+420604692573">+420&nbsp;604&nbsp;692&nbsp;573</a></div>
+      </div>
+    </div>
+    <p class="cap">Velký nadpis + úvod jen tady</p>
+  </div>
+
+  <div>
+    <div class="lbl">2 · Výběr</div>
+    <div class="phone">
+      <div class="hero hero-s"></div>
+      <div class="body">
+        <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+        <p class="maly">Krok 2 · 12. 12. 2026 – 14. 12. 2026</p>
+        <h2>Jak vybereme apartmán?</h2>
+        <div class="opt on"><b>Doporučte mi apartmán</b><span>Stačí termín, napíšeme vám, které apartmány jsou volné.</span></div>
+        <div class="opt"><b>Vyberu si apartmán</b><span>Prohlédnete si fotky a vyberete jeden nebo víc.</span></div>
+        <div class="btn ghost">Zpět</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="lbl">3 · Apartmány</div>
+    <div class="phone">
+      <div class="body" style="padding-top:1.15rem">
+        <p class="maly">Krok 3 · 12. 12. 2026 – 14. 12. 2026</p>
+        <h2>Který apartmán tentokrát?</h2>
+        <p>Klepnutím na fotku otevřete galerii, apartmán pak vyberete tlačítkem.</p>
+        <div class="tiles">
+          <div class="tile on"><div class="img"></div><div class="t">Jemná harmonie</div></div>
+          <div class="tile"><div class="img"></div><div class="t">Zlatá rovnováha</div></div>
+          <div class="tile"><div class="img"></div><div class="t">Večerní elegance</div></div>
+          <div class="tile"><div class="img"></div><div class="t">Ušlechtilý kontrast</div></div>
+        </div>
+        <a class="kviz" href="https://www.vivienapartments.cz/cs/discover-your-atmosphere" target="_blank" rel="noopener"><b>Nevíte, který si vybrat?</b><span>Využijte náš průvodce výběrem apartmánu</span></a>
+        <div class="btn">Pokračovat</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="lbl">4 · Kontakt</div>
+    <div class="phone">
+      <div class="body" style="padding-top:1.15rem">
+        <p class="maly">Poslední krok · 12. 12. 2026 – 14. 12. 2026 · Zlatá rovnováha</p>
+        <h2>Ještě kontakt a je hotovo</h2>
+        <div class="f" style="margin-bottom:.75rem"><small>Jméno</small><div class="inp">Martin</div></div>
+        <div class="f" style="margin-bottom:.75rem"><small>Telefon</small><div class="inp">+420 722 215 363</div></div>
+        <div class="btn">Odeslat poptávku</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="lbl">5 · Odesláno</div>
+    <div class="phone">
+      <div class="hero hero-d"></div>
+      <div class="body">
+        <img class="logo" src="/pruvodce/va-logo-192.png" width="56" height="56" alt="" />
+        <h2>Děkujeme, že se k nám vracíte.</h2>
+        <p class="thanks">Cenu vám obvykle pošleme do hodiny. Odpovídáme od 8 do 20 hodin.</p>
+        <p>Když to spěchá, raději nám rovnou zavolejte. Zprávu nemusíme vidět hned, třeba když zrovna řídíme.</p>
+        <div class="btn ghost">Napsat na WhatsApp</div>
+        <div class="contact"><a href="tel:+420702153573">Zavolat Nikol · +420&nbsp;702&nbsp;153&nbsp;573</a><br>Když se nedovoláte <a href="tel:+420604692573">+420&nbsp;604&nbsp;692&nbsp;573</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

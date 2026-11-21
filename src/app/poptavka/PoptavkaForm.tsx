@@ -22,7 +22,7 @@ import {
   POPTAVKA_APARTMANY,
   webLangKod,
 } from '@/lib/poptavka-apartmany';
-import { poptavkaTexty } from '@/lib/poptavka-texty';
+import { formatDatumPoptavky, poptavkaTexty } from '@/lib/poptavka-texty';
 import type { AptId, GuideLang } from '@/lib/types';
 import './poptavka.scss';
 
@@ -45,7 +45,8 @@ type GalerieStav =
   | null;
 
 export function PoptavkaForm(props: PoptavkaVstupni) {
-  const t = poptavkaTexty(props.lang);
+  const vernost = props.zdroj === 'vernost';
+  const t = poptavkaTexty(props.lang, props.zdroj);
   const webLang = webLangKod(props.lang);
   const dnes = ymdDnesPraha();
   const [krok, setKrok] = useState<Krok>('termin');
@@ -64,6 +65,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [chyba, setChyba] = useState<string | null>(null);
 
   const libovolny = zpusob === 'doporucit';
+  const dopravaOdeslat = vernost ? null : doprava || null;
 
   const zprava = useMemo(
     () =>
@@ -79,11 +81,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         odjezd,
         apartmany: libovolny ? [] : apts,
         libovolnyApartman: libovolny,
-        doprava: doprava || null,
+        doprava: dopravaOdeslat,
         poznamka,
         jazyk: props.lang,
       }),
-    [props, jmeno, telefon, prijezd, odjezd, apts, libovolny, doprava, poznamka],
+    [props, jmeno, telefon, prijezd, odjezd, apts, libovolny, dopravaOdeslat, poznamka],
   );
 
   const wa = odkazWaPoptavky(zprava);
@@ -145,7 +147,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           odjezd,
           apartmany: libovolny ? [] : apts,
           libovolnyApartman: libovolny,
-          doprava: doprava || null,
+          doprava: dopravaOdeslat,
           poznamka,
           lang: props.lang,
           honeypot,
@@ -170,31 +172,93 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const telNikol = POPTAVKA_TEL_HOVOR.replace(/ /g, '\u00a0');
   const telZaloha = POPTAVKA_TEL_ZALOHA.replace(/ /g, '\u00a0');
 
+  const souhrnTerminu =
+    prijezd && odjezd
+      ? vernost
+        ? `${formatDatumPoptavky(prijezd, props.lang)} – ${formatDatumPoptavky(odjezd, props.lang)}`
+        : `${formatDatumPoptavky(prijezd, props.lang)} → ${formatDatumPoptavky(odjezd, props.lang)}`
+      : '';
+
+  const souhrnVyberu = libovolny
+    ? t.zpusobDoporucit
+    : apts.length
+      ? apts.map(nazevApt).join(', ')
+      : '';
+
+  const malyRadekVernost =
+    vernost && souhrnTerminu
+      ? krok === 'zpusob'
+        ? `${t.malyKrok.replace('{n}', '2')} · ${souhrnTerminu}`
+        : krok === 'apartmany'
+          ? `${t.malyKrok.replace('{n}', '3')} · ${souhrnTerminu}`
+          : krok === 'kontakt'
+            ? `${t.malyPosledni} · ${souhrnTerminu}${souhrnVyberu ? ` · ${souhrnVyberu}` : ''}`
+            : ''
+      : '';
+
+  /** Věrnost tmavá: 1 zahrada, 2 stropy, konec dům. Apartmány beze změny. */
+  const heroVernost = vernost
+    ? hotovo
+      ? '/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg'
+      : krok === 'termin'
+        ? '/pruvodce/zahrada-po-odjezdu.jpg'
+        : krok === 'zpusob'
+          ? galerieKompletCoverUrl(webLang)
+          : null
+    : null;
+
+  const ukazLogo = !vernost || krok === 'termin' || hotovo || Boolean(heroVernost);
+
   return (
-    <main className="pp" lang={props.lang}>
-      <div className="pp__karta">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          className="pp__logo"
-          src="/pruvodce/va-logo-192.png"
-          width={56}
-          height={56}
-          alt="VIVIEN Apartments"
-        />
-        <h1>{t.nadpis}</h1>
-        {props.firmaNazev ? (
-          <p className="pp__firma">{t.firmaRadek.replace('{firma}', props.firmaNazev)}</p>
+    <main className={`pp${vernost ? ' pp--vernost' : ''}`} lang={props.lang}>
+      <div className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}`}>
+        {heroVernost ? (
+          <div
+            className={`pp__hero${hotovo ? ' pp__hero--dum' : krok === 'zpusob' ? ' pp__hero--stropy' : ' pp__hero--zahrada'}`}
+            style={{ backgroundImage: `url('${heroVernost}')` }}
+            role="img"
+            aria-hidden="true"
+          />
         ) : null}
-        <p className="pp__uvod">{t.uvod}</p>
-        <p className="pp__sleva">{t.sleva}</p>
+        <div className={heroVernost ? 'pp__telo' : undefined}>
+        {ukazLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            className="pp__logo"
+            src="/pruvodce/va-logo-192.png"
+            width={56}
+            height={56}
+            alt="VIVIEN Apartments"
+          />
+        ) : null}
+        {!vernost ? (
+          <>
+            <h1>{t.nadpis}</h1>
+            {props.firmaNazev ? (
+              <p className="pp__firma">{t.firmaRadek.replace('{firma}', props.firmaNazev)}</p>
+            ) : null}
+            {!hotovo ? <p className="pp__uvod">{t.uvod}</p> : null}
+            {t.sleva ? <p className="pp__sleva">{t.sleva}</p> : null}
+          </>
+        ) : null}
+        {vernost && !hotovo && krok === 'termin' ? (
+          <>
+            <h1>{t.nadpis}</h1>
+            <p className="pp__uvod">{t.uvod}</p>
+          </>
+        ) : null}
+        {vernost && hotovo ? <h1>{t.nadpisOdeslano}</h1> : null}
 
         {hotovo ? (
-          <p className="pp__dekujeme">{t.dekujeme}</p>
+          <>
+            <p className="pp__dekujeme">{t.dekujeme}</p>
+            {t.dekujemeSpecha ? <p className="pp__dekujeme-specha">{t.dekujemeSpecha}</p> : null}
+          </>
         ) : (
           <>
             {krok === 'termin' ? (
               <section>
-                <h2 className="pp__krok">{t.krokTermin}</h2>
+                {!vernost ? <h2 className="pp__krok">{t.krokTermin}</h2> : null}
                 <div className="pp__termin">
                   <label>
                     {t.prijezd}
@@ -232,7 +296,14 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
             {krok === 'zpusob' ? (
               <section>
-                <h2 className="pp__krok">{t.krokZpusob}</h2>
+                {vernost ? (
+                  <>
+                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                    <h1 className="pp__nadpis-krok">{t.nadpisZpusob}</h1>
+                  </>
+                ) : (
+                  <h2 className="pp__krok">{t.krokZpusob}</h2>
+                )}
                 <button
                   type="button"
                   className={`pp__volba${zpusob === 'doporucit' ? ' is-on' : ''}`}
@@ -264,7 +335,14 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
             {krok === 'apartmany' ? (
               <section>
-                <h2 className="pp__krok">{t.krokApartmany}</h2>
+                {vernost ? (
+                  <>
+                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                    <h1 className="pp__nadpis-krok">{t.nadpisApartmany}</h1>
+                  </>
+                ) : (
+                  <h2 className="pp__krok">{t.krokApartmany}</h2>
+                )}
                 <p className="pp__cena">{t.vyberteApartmany}</p>
                 <div className="pp__dlazdice">
                   {POPTAVKA_APARTMANY.map((a) => {
@@ -293,11 +371,23 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     <span className="pp__dlazdice-nazev">{t.galerieKomplet}</span>
                   </button>
                 </div>
-                <p className="pp__kviz">
-                  <a href={odkazKvizAtmosfery(webLang)} target="_blank" rel="noopener noreferrer">
-                    {t.kvizAtmosfery}
+                {vernost && t.kvizOtazka ? (
+                  <a
+                    className="pp__kviz-ramecek"
+                    href={odkazKvizAtmosfery(webLang)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <strong>{t.kvizOtazka}</strong>
+                    <span>{t.kvizAtmosfery}</span>
                   </a>
-                </p>
+                ) : (
+                  <p className="pp__kviz">
+                    <a href={odkazKvizAtmosfery(webLang)} target="_blank" rel="noopener noreferrer">
+                      {t.kvizAtmosfery}
+                    </a>
+                  </p>
+                )}
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
                 <div className="pp__akce">
                   <button
@@ -323,15 +413,20 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
             {krok === 'kontakt' ? (
               <section>
-                <h2 className="pp__krok">{t.krokKontakt}</h2>
-                <p className="pp__cena">
-                  {prijezd} → {odjezd}
-                  {libovolny
-                    ? ` · ${t.zpusobDoporucit}`
-                    : apts.length
-                      ? ` · ${apts.map(nazevApt).join(', ')}`
-                      : ''}
-                </p>
+                {vernost ? (
+                  <>
+                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                    <h1 className="pp__nadpis-krok">{t.nadpisKontakt}</h1>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="pp__krok">{t.krokKontakt}</h2>
+                    <p className="pp__cena">
+                      {souhrnTerminu}
+                      {souhrnVyberu ? ` · ${souhrnVyberu}` : ''}
+                    </p>
+                  </>
+                )}
                 <label>
                   {t.jmeno}
                   <input
@@ -352,27 +447,29 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     required
                   />
                 </label>
-                <fieldset>
-                  <legend>{t.doprava}</legend>
-                  <div className="pp__doprava">
-                    {(
-                      [
-                        ['auto', t.auto],
-                        ['pesky', t.pesky],
-                        ['nevim', t.nevim],
-                      ] as const
-                    ).map(([id, label]) => (
-                      <button
-                        key={id}
-                        type="button"
-                        className={`pp__chip${doprava === id ? ' is-on' : ''}`}
-                        onClick={() => setDoprava((d) => (d === id ? '' : id))}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                </fieldset>
+                {!vernost ? (
+                  <fieldset>
+                    <legend>{t.doprava}</legend>
+                    <div className="pp__doprava">
+                      {(
+                        [
+                          ['auto', t.auto],
+                          ['pesky', t.pesky],
+                          ['nevim', t.nevim],
+                        ] as const
+                      ).map(([id, label]) => (
+                        <button
+                          key={id}
+                          type="button"
+                          className={`pp__chip${doprava === id ? ' is-on' : ''}`}
+                          onClick={() => setDoprava((d) => (d === id ? '' : id))}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </fieldset>
+                ) : null}
                 <label>
                   {t.poznamka}
                   <textarea
@@ -428,6 +525,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             <span>{telZaloha}</span>
           </a>
         </p>
+        </div>
       </div>
 
       {galerie && galerieFotky.length ? (
