@@ -56,10 +56,12 @@ type Props = {
   min: string;
   lang: GuideLang;
   zavritLabel: string;
+  /** Text v prázdném poli (např. Vyberte datum). */
+  prazdnyText?: string;
   onChange: (ymd: string) => void;
 };
 
-export function TerminPole({ label, value, min, lang, zavritLabel, onChange }: Props) {
+export function TerminPole({ label, value, min, lang, zavritLabel, prazdnyText, onChange }: Props) {
   const [otevreno, setOtevreno] = useState(false);
   const minDate = parseYmd(min) || new Date();
   const selected = parseYmd(value);
@@ -85,12 +87,16 @@ export function TerminPole({ label, value, min, lang, zavritLabel, onChange }: P
     return cells;
   }, [kurz, min]);
 
-  const text = value ? formatDatumPoptavky(value, lang) : '—';
+  const text = value ? formatDatumPoptavky(value, lang) : prazdnyText || '—';
 
   return (
     <label className="pp__termin-pole">
       {label}
-      <button type="button" className="pp__termin-tlacitko" onClick={otevri}>
+      <button
+        type="button"
+        className={`pp__termin-tlacitko${value ? '' : ' is-prazdne'}`}
+        onClick={otevri}
+      >
         {text}
       </button>
       {otevreno ? (

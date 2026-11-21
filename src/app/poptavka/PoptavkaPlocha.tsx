@@ -226,30 +226,70 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
   );
 }
 
+const plochaVetaDekujeme: LText = {
+  cs: 'Mějte nás na ploše telefonu. Další pobyt pak poptáte bez hledání.',
+  en: 'Keep us on your phone home screen. You can then request your next stay without searching.',
+  de: 'Haben Sie uns auf dem Startbildschirm. Den nächsten Aufenthalt fragen Sie dann ohne Suchen an.',
+  pl: 'Miejcie nas na ekranie telefonu. Kolejny pobyt zapytacie wtedy bez szukania.',
+  uk: 'Майте нас на екрані телефону. Наступне перебування тоді запитаєте без пошуку.',
+  'zh-Hant': '把我們放在手機主畫面。下次入住就不用再找。',
+  sv: 'Ha oss på telefonens hemskärm. Nästa vistelse frågar ni då utan att söka.',
+  es: 'Téngannos en la pantalla del teléfono. La próxima estancia la piden entonces sin buscar.',
+  hu: 'Legyünk a telefon kezdőképernyőjén. A következő tartózkodást akkor keresés nélkül kérheti.',
+  da: 'Hav os på telefonens hjemmeskærm. Næste ophold spørger I så om uden at lede.',
+  fr: 'Gardez-nous sur l’écran d’accueil. Le prochain séjour se demande alors sans chercher.',
+  it: 'Teneteci sulla schermata del telefono. Il prossimo soggiorno lo chiedete allora senza cercare.',
+  pt: 'Tenha-nos no ecrã do telemóvel. A próxima estadia pede-se então sem procurar.',
+};
+
+function jeMobilZarizeni(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (window.matchMedia('(max-width: 820px)').matches) return true;
+  } catch {
+    /* media */
+  }
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent || '');
+}
+
 /** Tlačítko. Může být na začátku i dole. */
 export function PoptavkaPlochaTlacitko({
   vyrazne = false,
   sTelefonem = false,
 }: {
   vyrazne?: boolean;
-  /** Termín věrnosti: ikona telefonu + plné zlato (výraznější než Pokračovat). */
+  /** Děkujeme věrnosti: zlaté tlačítko s ikonou + popis pod ním. */
   sTelefonem?: boolean;
 }) {
   const ctx = useContext(PlochaCtx);
-  if (!ctx || ctx.standalone) return null;
+  const [mobil, setMobil] = useState(false);
+
+  useEffect(() => {
+    setMobil(jeMobilZarizeni());
+  }, []);
+
+  if (!ctx || ctx.standalone || !mobil) return null;
   const popisek = t(plochaPridej, ctx.lang);
   if (sTelefonem) {
     return (
-      <div className="pp__plocha-radek">
-        <span className="pp__plocha-tel-ikona" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="18" height="18">
-            <rect x="7" y="2" width="10" height="20" rx="2" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <div className="pp__plocha-dekujeme">
+        <button type="button" className="pp__btn pp__btn--plocha-zlato" onClick={ctx.naPridej}>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <rect
+              x="7"
+              y="2"
+              width="10"
+              height="20"
+              rx="2"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+            />
             <path d="M11 18h2" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
           </svg>
-        </span>
-        <button type="button" className="pp__btn pp__btn--plocha-zlato" onClick={ctx.naPridej}>
-          {popisek}
+          <span>{popisek}</span>
         </button>
+        <p className="pp__plocha-veta">{t(plochaVetaDekujeme, ctx.lang)}</p>
       </div>
     );
   }

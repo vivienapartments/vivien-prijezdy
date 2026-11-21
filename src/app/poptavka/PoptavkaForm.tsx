@@ -374,6 +374,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           <>
             <p className="pp__dekujeme">{t.dekujeme}</p>
             {t.dekujemeSpecha ? <p className="pp__dekujeme-specha">{t.dekujemeSpecha}</p> : null}
+            {vernost ? <PoptavkaPlochaTlacitko sTelefonem /> : null}
           </>
         ) : (
           <>
@@ -387,6 +388,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     min={dnes}
                     lang={props.lang}
                     zavritLabel={t.zpet}
+                    prazdnyText={vernost ? (props.lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
                     onChange={(ymd) => {
                       setPrijezd(ymd);
                       if (odjezd && odjezd <= ymd) setOdjezd('');
@@ -398,6 +400,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     min={prijezd || dnes}
                     lang={props.lang}
                     zavritLabel={t.zpet}
+                    prazdnyText={vernost ? (props.lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
                     onChange={setOdjezd}
                   />
                 </div>
@@ -411,7 +414,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 >
                   {t.dale}
                 </button>
-                {vernost ? <PoptavkaPlochaTlacitko sTelefonem /> : null}
               </section>
             ) : null}
 
@@ -856,7 +858,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
         {skrytPatickuTermin ? null : (
           <div className="pp__paticka">
-            <PoptavkaPlochaTlacitko />
+            {vernost && hotovo ? null : <PoptavkaPlochaTlacitko />}
             <div className="pp__kontakty">
               <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
                 <span className="pp__kontakt-popis">{t.zavolat}</span>
