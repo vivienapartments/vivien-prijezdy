@@ -1050,6 +1050,23 @@
   color: #cbbba8;
 }
 
+/* Kontakt: souhrn termín · apartmán, zlatá jako čísla v patičce. */
+.pp--vernost .pp__maly-radek--kontakt {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #c9a84c;
+}
+
+.pp--vernost .pp__maly-radek--kontakt .pp__maly-termin {
+  white-space: nowrap;
+}
+
+.pp--vernost .pp__maly-radek--kontakt .pp__maly-zbytek {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .pp--vernost .pp__nadpis-krok {
   margin: 0 0 0.85rem;
   font-family: 'Cormorant Garamond', Georgia, serif;

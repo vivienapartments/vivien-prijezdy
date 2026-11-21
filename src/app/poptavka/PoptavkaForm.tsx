@@ -699,7 +699,17 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               <section>
                 {vernost ? (
                   <>
-                    {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                    {souhrnTerminu ? (
+                      <p className="pp__maly-radek pp__maly-radek--kontakt">
+                        <span className="pp__maly-termin">{souhrnTerminu}</span>
+                        {souhrnVyberu ? (
+                          <span className="pp__maly-zbytek">
+                            {' · '}
+                            {souhrnVyberu}
+                          </span>
+                        ) : null}
+                      </p>
+                    ) : null}
                     <h1 className="pp__nadpis-krok">{t.nadpisKontakt}</h1>
                   </>
                 ) : (
