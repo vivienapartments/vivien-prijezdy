@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Náhled · Termín · oprava Přidat na plochu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #0a0908;
+      color: #f5efe3;
+      font-family: "DM Sans", system-ui, sans-serif;
+      padding: 1rem 0.75rem 2.5rem;
+    }
+    .badge {
+      max-width: 26rem;
+      margin: 0 auto 0.75rem;
+      text-align: center;
+      color: #c9a84c;
+      font-size: 0.85rem;
+    }
+    .telefon {
+      width: 390px;
+      max-width: 100%;
+      height: 750px;
+      margin: 0 auto;
+      background: #0e0c0a;
+      border: 2px solid #3d342a;
+      border-radius: 22px;
+      padding: 0.45rem;
+      display: flex;
+      flex-direction: column;
+    }
+    .karta {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      background: #1c1712;
+      border: 1px solid #3d342a;
+      border-radius: 16px;
+      overflow: hidden;
+      padding: 0 0 0.85rem;
+    }
+    .hero {
+      flex: 1 1 auto;
+      min-height: 140px;
+      max-height: 60vh;
+      background: url("/pruvodce/zahrada-po-odjezdu.jpg") center 32% / cover no-repeat;
+      position: relative;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 35%, #1c1712 100%);
+    }
+    .telo {
+      flex: 0 0 auto;
+      padding: 0 1rem;
+      text-align: center;
+    }
+    .logo {
+      display: block;
+      width: 48px;
+      height: 48px;
+      margin: -26px auto 0.4rem;
+      border-radius: 50%;
+      border: 2px solid #c9a84c;
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      background: #1c1712;
+      box-shadow: 0 0 0 3px #1c1712;
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-weight: 600;
+      font-size: 1.35rem;
+      color: #f5efe3;
+      text-align: center;
+    }
+    .uvod {
+      margin: 0 0 0.55rem;
+      font-size: 0.8rem;
+      line-height: 1.35;
+      color: #cbbba8;
+      text-align: center;
+      hyphens: none;
+    }
+    .termin {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin: 0 0 0.55rem;
+    }
+    .termin label {
+      display: grid;
+      gap: 0.25rem;
+      font-size: 0.78rem;
+      color: #c9a84c;
+      text-align: center;
+    }
+    .termin .pole {
+      display: block;
+      padding: 0.55rem 0.4rem;
+      border-radius: 10px;
+      border: 1px solid #3d342a;
+      background: #15110e;
+      color: #8a7a68;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    .pokracovat {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0.85rem 1rem;
+      border-radius: 999px;
+      border: 1px solid #5a4e40;
+      background: transparent;
+      color: #cbbba8;
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+    }
+    .plocha-veta {
+      margin: 0.55rem 0 0.4rem;
+      font-size: 0.78rem;
+      line-height: 1.35;
+      text-align: center;
+      color: #cbbba8;
+      hyphens: none;
+    }
+    .plocha-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      width: 100%;
+      margin: 0;
+      padding: 0.85rem 1rem;
+      border: 0;
+      border-radius: 999px;
+      background: #c9a84c;
+      color: #1a1510;
+      font-family: "DM Sans", system-ui, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .plocha-btn svg {
+      flex: 0 0 auto;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.6;
+      stroke-linecap: round;
+    }
+    .pozn {
+      max-width: 26rem;
+      margin: 1rem auto 0;
+      text-align: center;
+      font-size: 0.82rem;
+      color: #8a7a68;
+    }
+  </style>
+</head>
+<body>
+  <p class="badge">Náhled · oprava tlačítka · ještě nenasazeno do ostré poptávky<br />Doména: club.vivienapartments.cz</p>
+  <div class="telefon">
+    <div class="karta">
+      <div class="hero" role="img" aria-hidden="true"></div>
+      <div class="telo">
+        <img class="logo" src="/pruvodce/va-logo-192.png" width="48" height="48" alt="" />
+        <h1>Rádi vás uvidíme znovu</h1>
+        <p class="uvod">Vyberte termín a my vám obvykle do hodiny pošleme cenu, samozřejmě i se slíbenou slevou. Odpovídáme od 8 do 20 hodin.</p>
+        <div class="termin">
+          <label>Příjezd<span class="pole">Vyberte datum</span></label>
+          <label>Odjezd<span class="pole">Vyberte datum</span></label>
+        </div>
+        <button type="button" class="pokracovat">Pokračovat</button>
+        <p class="plocha-veta">Uložte si nás na plochu telefonu. Příští pobyt pak poptáte jedním klepnutím.</p>
+        <button type="button" class="plocha-btn">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <rect x="7" y="2" width="10" height="20" rx="2" />
+            <path d="M11 18h2" />
+          </svg>
+          Přidat na plochu
+        </button>
+      </div>
+    </div>
+  </div>
+  <p class="pozn">Jedno tlačítko přes šířku, ikona uvnitř, věta nad ním. Když sedí, napište nasaď.</p>
+</body>
+</html>
