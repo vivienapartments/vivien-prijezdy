@@ -285,6 +285,50 @@
   background: color-mix(in srgb, #c9a84c 12%, #15110e);
 }
 
+.pp__volba--ikona {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.pp__volba-ikona {
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #c9a84c 45%, #3d342a);
+  background: color-mix(in srgb, #c9a84c 12%, #15110e);
+  color: #c9a84c;
+  display: grid;
+  place-items: center;
+}
+
+.pp__volba-text {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.pp__volba-text span {
+  display: block;
+}
+
+.pp__zkouska-banner {
+  margin: 0;
+  padding: 0.55rem 0.85rem;
+  background: color-mix(in srgb, #c9a84c 16%, #1c1712);
+  border-bottom: 1px solid #3d342a;
+  color: #e8dfd0;
+  font-size: 0.82rem;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.pp--zkouska .pp__karta--s-herem .pp__zkouska-banner {
+  position: relative;
+  z-index: 2;
+}
+
 .pp__dlazdice {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -26,6 +26,13 @@ export type PoptavkaTexty = {
   zpusobDoporucitPopis: string;
   zpusobVybrat: string;
   zpusobVybratPopis: string;
+  /** Jen věrnost. Třetí volba: průvodce uvnitř. */
+  zpusobPruvodce: string;
+  zpusobPruvodcePopis: string;
+  nadpisPruvodce: string;
+  pruvodceVybrat: string;
+  pruvodceZnovu: string;
+  zkouskaBanner: string;
   vyberteApartmany: string;
   galerieKomplet: string;
   /** Jen věrnost. U ostatních cest prázdné. */
@@ -82,6 +89,12 @@ const CS: PoptavkaTexty = {
   zpusobDoporucitPopis: 'Vyberete jen kdy chcete přijet. My napíšeme, které apartmány jsou volné.',
   zpusobVybrat: 'Chci si vybrat apartmán',
   zpusobVybratPopis: 'Uvidíte fotky. Můžete vybrat jeden nebo víc.',
+  zpusobPruvodce: '',
+  zpusobPruvodcePopis: '',
+  nadpisPruvodce: '',
+  pruvodceVybrat: '',
+  pruvodceZnovu: '',
+  zkouskaBanner: '',
   vyberteApartmany: 'Klepněte na fotku. Otevře se galerie. Pak apartmán vyberte tlačítkem.',
   galerieKomplet: 'Galerie komplet',
   kvizOtazka: '',
@@ -134,6 +147,12 @@ const EN: PoptavkaTexty = {
   zpusobDoporucitPopis: 'Tell us when you want to stay. We will say which apartments are free.',
   zpusobVybrat: 'I want to choose an apartment',
   zpusobVybratPopis: 'You will see photos. You can pick one or more.',
+  zpusobPruvodce: '',
+  zpusobPruvodcePopis: '',
+  nadpisPruvodce: '',
+  pruvodceVybrat: '',
+  pruvodceZnovu: '',
+  zkouskaBanner: '',
   vyberteApartmany: 'Tap a photo to open the gallery. Then select the apartment.',
   galerieKomplet: 'Full gallery',
   kvizOtazka: '',

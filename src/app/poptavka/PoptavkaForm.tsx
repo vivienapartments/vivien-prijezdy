@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { apartmany } from '@/lib/guide-data';
 import { toTelHref } from '@/lib/i18n';
 import {
@@ -23,6 +23,7 @@ import {
   webLangKod,
 } from '@/lib/poptavka-apartmany';
 import { formatDatumPoptavky, poptavkaTexty } from '@/lib/poptavka-texty';
+import { pruvodceOtazky, vyhodnotPruvodce } from '@/lib/poptavka-pruvodce';
 import type { AptId, GuideLang } from '@/lib/types';
 import './poptavka.scss';
 
@@ -36,9 +37,11 @@ export type PoptavkaVstupni = {
   rezervace: string | null;
   jmeno: string;
   telefon: string;
+  /** Zkouška: nic se neukládá. */
+  suchyBeh?: boolean;
 };
 
-type Krok = 'termin' | 'zpusob' | 'apartmany' | 'kontakt';
+type Krok = 'termin' | 'zpusob' | 'apartmany' | 'pruvodce' | 'kontakt';
 type GalerieStav =
   | { druh: 'apt'; id: AptId; i: number }
   | { druh: 'komplet'; i: number }
@@ -46,13 +49,14 @@ type GalerieStav =
 
 export function PoptavkaForm(props: PoptavkaVstupni) {
   const vernost = props.zdroj === 'vernost';
+  const suchyBeh = Boolean(props.suchyBeh);
   const t = poptavkaTexty(props.lang, props.zdroj);
   const webLang = webLangKod(props.lang);
   const dnes = ymdDnesPraha();
   const [krok, setKrok] = useState<Krok>('termin');
   const [prijezd, setPrijezd] = useState('');
   const [odjezd, setOdjezd] = useState('');
-  const [zpusob, setZpusob] = useState<'doporucit' | 'vybrat' | null>(null);
+  const [zpusob, setZpusob] = useState<'doporucit' | 'vybrat' | 'pruvodce' | null>(null);
   const [apts, setApts] = useState<AptId[]>([]);
   const [jmeno, setJmeno] = useState(props.jmeno);
   const [telefon, setTelefon] = useState(props.telefon);
@@ -63,7 +67,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [cekam, setCekam] = useState(false);
   const [hotovo, setHotovo] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
+  const [pruvodceI, setPruvodceI] = useState(0);
+  const [pruvodceOdpovedi, setPruvodceOdpovedi] = useState<AptId[][]>([]);
+  const [pruvodceVysledek, setPruvodceVysledek] = useState<AptId | null>(null);
 
+  const otazkyPruvodce = useMemo(() => pruvodceOtazky(props.lang), [props.lang]);
   const libovolny = zpusob === 'doporucit';
   const dopravaOdeslat = vernost ? null : doprava || null;
 
@@ -151,6 +159,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           poznamka,
           lang: props.lang,
           honeypot,
+          zkouska: suchyBeh || undefined,
         }),
       });
       const json = (await res.json()) as { ok?: boolean; duvod?: string };
@@ -187,7 +196,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   const malyRadekVernost =
     vernost && souhrnTerminu
-      ? krok === 'zpusob'
+      ? krok === 'zpusob' || krok === 'pruvodce'
         ? `${t.malyKrok.replace('{n}', '2')} · ${souhrnTerminu}`
         : krok === 'apartmany'
           ? `${t.malyKrok.replace('{n}', '3')} · ${souhrnTerminu}`
@@ -209,9 +218,47 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   const ukazLogo = !vernost || krok === 'termin' || hotovo || Boolean(heroVernost);
 
+  function ikonaVolby(druh: 'vybrat' | 'doporucit' | 'pruvodce'): ReactNode {
+    if (druh === 'vybrat') {
+      return (
+        <span className="pp__volba-ikona" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22">
+            <path
+              fill="currentColor"
+              d="M4 5h7v7H4V5zm9 0h7v7h-7V5zM4 14h7v5H4v-5zm9 0h7v5h-7v-5z"
+            />
+          </svg>
+        </span>
+      );
+    }
+    if (druh === 'doporucit') {
+      return (
+        <span className="pp__volba-ikona" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22">
+            <path
+              fill="currentColor"
+              d="M12 2a7 7 0 0 0-7 7c0 3.2 2.1 5.9 5 6.7V18H8v2h8v-2h-2v-2.3c2.9-.8 5-3.5 5-6.7a7 7 0 0 0-7-7zm0 2a5 5 0 0 1 5 5c0 2.3-1.6 4.2-3.7 4.8L12 14l-1.3-.2C8.6 13.2 7 11.3 7 9a5 5 0 0 1 5-5z"
+            />
+          </svg>
+        </span>
+      );
+    }
+    return (
+      <span className="pp__volba-ikona" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22">
+          <path
+            fill="currentColor"
+            d="M6 4h9l3 3v13H6V4zm2 2v12h8V8h-3V6H8zm2 4h4v2h-4v-2zm0 4h4v2h-4v-2z"
+          />
+        </svg>
+      </span>
+    );
+  }
+
   return (
-    <main className={`pp${vernost ? ' pp--vernost' : ''}`} lang={props.lang}>
+    <main className={`pp${vernost ? ' pp--vernost' : ''}${suchyBeh ? ' pp--zkouska' : ''}`} lang={props.lang}>
       <div className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}`}>
+        {suchyBeh && t.zkouskaBanner ? <p className="pp__zkouska-banner">{t.zkouskaBanner}</p> : null}
         {heroVernost ? (
           <div
             className={`pp__hero${hotovo ? ' pp__hero--dum' : krok === 'zpusob' ? ' pp__hero--stropy' : ' pp__hero--zahrada'}`}
@@ -300,34 +347,149 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   <>
                     {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
                     <h1 className="pp__nadpis-krok">{t.nadpisZpusob}</h1>
+                    <button
+                      type="button"
+                      className={`pp__volba pp__volba--ikona${zpusob === 'vybrat' ? ' is-on' : ''}`}
+                      onClick={() => {
+                        setZpusob('vybrat');
+                        setKrok('apartmany');
+                      }}
+                    >
+                      {ikonaVolby('vybrat')}
+                      <span className="pp__volba-text">
+                        <strong>{t.zpusobVybrat}</strong>
+                        <span>{t.zpusobVybratPopis}</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`pp__volba pp__volba--ikona${zpusob === 'doporucit' ? ' is-on' : ''}`}
+                      onClick={() => {
+                        setZpusob('doporucit');
+                        setApts([]);
+                        setKrok('kontakt');
+                      }}
+                    >
+                      {ikonaVolby('doporucit')}
+                      <span className="pp__volba-text">
+                        <strong>{t.zpusobDoporucit}</strong>
+                        <span>{t.zpusobDoporucitPopis}</span>
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`pp__volba pp__volba--ikona${zpusob === 'pruvodce' ? ' is-on' : ''}`}
+                      onClick={() => {
+                        setZpusob('pruvodce');
+                        setPruvodceI(0);
+                        setPruvodceOdpovedi([]);
+                        setPruvodceVysledek(null);
+                        setApts([]);
+                        setKrok('pruvodce');
+                      }}
+                    >
+                      {ikonaVolby('pruvodce')}
+                      <span className="pp__volba-text">
+                        <strong>{t.zpusobPruvodce}</strong>
+                        <span>{t.zpusobPruvodcePopis}</span>
+                      </span>
+                    </button>
                   </>
                 ) : (
-                  <h2 className="pp__krok">{t.krokZpusob}</h2>
+                  <>
+                    <h2 className="pp__krok">{t.krokZpusob}</h2>
+                    <button
+                      type="button"
+                      className={`pp__volba${zpusob === 'doporucit' ? ' is-on' : ''}`}
+                      onClick={() => {
+                        setZpusob('doporucit');
+                        setApts([]);
+                        setKrok('kontakt');
+                      }}
+                    >
+                      <strong>{t.zpusobDoporucit}</strong>
+                      <span>{t.zpusobDoporucitPopis}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`pp__volba${zpusob === 'vybrat' ? ' is-on' : ''}`}
+                      onClick={() => {
+                        setZpusob('vybrat');
+                        setKrok('apartmany');
+                      }}
+                    >
+                      <strong>{t.zpusobVybrat}</strong>
+                      <span>{t.zpusobVybratPopis}</span>
+                    </button>
+                  </>
                 )}
-                <button
-                  type="button"
-                  className={`pp__volba${zpusob === 'doporucit' ? ' is-on' : ''}`}
-                  onClick={() => {
-                    setZpusob('doporucit');
-                    setApts([]);
-                    setKrok('kontakt');
-                  }}
-                >
-                  <strong>{t.zpusobDoporucit}</strong>
-                  <span>{t.zpusobDoporucitPopis}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`pp__volba${zpusob === 'vybrat' ? ' is-on' : ''}`}
-                  onClick={() => {
-                    setZpusob('vybrat');
-                    setKrok('apartmany');
-                  }}
-                >
-                  <strong>{t.zpusobVybrat}</strong>
-                  <span>{t.zpusobVybratPopis}</span>
-                </button>
                 <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('termin')}>
+                  {t.zpet}
+                </button>
+              </section>
+            ) : null}
+
+            {krok === 'pruvodce' ? (
+              <section>
+                {malyRadekVernost ? <p className="pp__maly-radek">{malyRadekVernost}</p> : null}
+                <h1 className="pp__nadpis-krok">{t.nadpisPruvodce}</h1>
+                {pruvodceVysledek ? (
+                  <>
+                    <p className="pp__cena" style={{ textAlign: 'center' }}>
+                      {nazevApt(pruvodceVysledek)}
+                    </p>
+                    <button
+                      type="button"
+                      className="pp__btn pp__btn--hlavni"
+                      onClick={() => {
+                        setApts([pruvodceVysledek]);
+                        setKrok('kontakt');
+                      }}
+                    >
+                      {t.pruvodceVybrat}
+                    </button>
+                    <button
+                      type="button"
+                      className="pp__btn pp__btn--sms"
+                      onClick={() => {
+                        setPruvodceI(0);
+                        setPruvodceOdpovedi([]);
+                        setPruvodceVysledek(null);
+                      }}
+                    >
+                      {t.pruvodceZnovu}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className="pp__maly-radek">
+                      {pruvodceI + 1} / {otazkyPruvodce.length}
+                    </p>
+                    <p className="pp__cena" style={{ textAlign: 'center' }}>
+                      {otazkyPruvodce[pruvodceI]?.otazka}
+                    </p>
+                    {otazkyPruvodce[pruvodceI]?.volby.map((v) => (
+                      <button
+                        key={v.text}
+                        type="button"
+                        className="pp__volba"
+                        onClick={() => {
+                          const dalsi = [...pruvodceOdpovedi, v.body];
+                          if (pruvodceI + 1 >= otazkyPruvodce.length) {
+                            setPruvodceOdpovedi(dalsi);
+                            setPruvodceVysledek(vyhodnotPruvodce(dalsi));
+                          } else {
+                            setPruvodceOdpovedi(dalsi);
+                            setPruvodceI((i) => i + 1);
+                          }
+                        }}
+                      >
+                        <strong>{v.text}</strong>
+                      </button>
+                    ))}
+                  </>
+                )}
+                <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
                   {t.zpet}
                 </button>
               </section>
@@ -371,23 +533,13 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     <span className="pp__dlazdice-nazev">{t.galerieKomplet}</span>
                   </button>
                 </div>
-                {vernost && t.kvizOtazka ? (
-                  <a
-                    className="pp__kviz-ramecek"
-                    href={odkazKvizAtmosfery(webLang)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <strong>{t.kvizOtazka}</strong>
-                    <span>{t.kvizAtmosfery}</span>
-                  </a>
-                ) : (
+                {!vernost ? (
                   <p className="pp__kviz">
                     <a href={odkazKvizAtmosfery(webLang)} target="_blank" rel="noopener noreferrer">
                       {t.kvizAtmosfery}
                     </a>
                   </p>
-                )}
+                ) : null}
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
                 <div className="pp__akce">
                   <button
@@ -506,7 +658,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   <button
                     type="button"
                     className="pp__btn pp__btn--sms"
-                    onClick={() => setKrok(zpusob === 'vybrat' ? 'apartmany' : 'zpusob')}
+                    onClick={() =>
+                      setKrok(
+                        zpusob === 'vybrat' ? 'apartmany' : zpusob === 'pruvodce' ? 'pruvodce' : 'zpusob',
+                      )
+                    }
                   >
                     {t.zpet}
                   </button>

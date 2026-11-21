@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 type Props = {
-  searchParams: Promise<{ t?: string; f?: string; od?: string; lang?: string }>;
+  searchParams: Promise<{ t?: string; f?: string; od?: string; lang?: string; zkouska?: string }>;
 };
 
 export default async function PoptavkaPage({ searchParams }: Props) {
@@ -25,6 +25,7 @@ export default async function PoptavkaPage({ searchParams }: Props) {
   let rezervace: string | null = null;
   let jmeno = '';
   let telefon = '';
+  const suchyBeh = q.zkouska === '1' || q.zkouska === 'ano';
 
   const tokenRaw = (q.t || '').trim();
   if (tokenRaw) {
@@ -46,8 +47,15 @@ export default async function PoptavkaPage({ searchParams }: Props) {
     }
   }
 
+  /** Proklik bez tokenu: věrný vzhled, nic se neukládá. */
+  if (suchyBeh && zdroj === 'obecna') {
+    zdroj = 'vernost';
+    if (!jmeno) jmeno = 'Zkouška';
+    if (!telefon) telefon = '+420 604 692 573';
+  }
+
   const firma = firmaZKodu(q.f);
-  if (firma) {
+  if (firma && !suchyBeh) {
     zdroj = 'firma';
     firmaKod = firma.kod;
     firmaNazev = firma.nazev;
@@ -59,7 +67,7 @@ export default async function PoptavkaPage({ searchParams }: Props) {
     doporucitelKod = od;
   }
 
-  if (q.lang && GUIDE_LANGS.includes(q.lang as GuideLang) && zdroj !== 'vernost') {
+  if (q.lang && GUIDE_LANGS.includes(q.lang as GuideLang) && (zdroj !== 'vernost' || suchyBeh)) {
     lang = q.lang as GuideLang;
   }
 
@@ -74,6 +82,7 @@ export default async function PoptavkaPage({ searchParams }: Props) {
       rezervace={rezervace}
       jmeno={jmeno}
       telefon={telefon}
+      suchyBeh={suchyBeh}
     />
   );
 }

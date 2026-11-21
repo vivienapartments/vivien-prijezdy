@@ -41,6 +41,7 @@ export async function POST(req: Request) {
     poznamka?: string;
     lang?: string;
     honeypot?: string;
+    zkouska?: boolean | string;
   } = {};
   try {
     body = (await req.json()) as typeof body;
@@ -52,6 +53,8 @@ export async function POST(req: Request) {
   if ((body.honeypot || '').trim()) {
     return NextResponse.json({ ok: true }, { headers: noStore });
   }
+
+  const suchyBeh = body.zkouska === true || body.zkouska === '1' || body.zkouska === 'ano';
 
   const lang = (GUIDE_LANGS as readonly string[]).includes(body.lang || '')
     ? (body.lang as GuideLang)
@@ -136,6 +139,10 @@ export async function POST(req: Request) {
     jazyk: lang,
     stav: 'nova',
   };
+
+  if (suchyBeh) {
+    return NextResponse.json({ ok: true, id: 'zkouska', suchy: true }, { headers: noStore });
+  }
 
   try {
     await store.pridejPoptavku(zaznam);
