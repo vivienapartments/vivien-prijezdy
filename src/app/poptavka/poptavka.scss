@@ -1314,35 +1314,53 @@
   color: #c9a84c;
 }
 
-/* Výběr jazyka (první otevření ?od=). */
-.pp--jazyk .pp__jazyky {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.55rem;
-  margin: 0.85rem 0 1.1rem;
+/* Výběr jazyka (první otevření ?od=) – roletka, varianta C. */
+.pp__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   padding: 0;
-  list-style: none;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.pp__jazyk-dlazdice {
+.pp__jazyk-roletka {
+  position: relative;
+  display: block;
+  margin: 0.85rem 0 1.1rem;
+}
+
+.pp__jazyk-roletka-vnitr {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-  min-height: 2.6rem;
-  padding: 0.45rem 0.55rem;
-  border-radius: 10px;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.85rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
   border: 1px solid #5a4e40;
   background: #241e18;
   color: #e6dccb;
-  font-size: 0.88rem;
-  text-align: left;
-  cursor: pointer;
+  font-size: 1rem;
+  pointer-events: none;
 }
 
-.pp__jazyk-dlazdice.is-on {
-  border-color: #c9a84c;
+.pp__jazyk-roletka-vnitr b {
   color: #c9a84c;
+  font-weight: 500;
+}
+
+.pp__jazyk-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  font-size: 1rem;
 }
 
 /* Telefon: předvolba + číslo. */

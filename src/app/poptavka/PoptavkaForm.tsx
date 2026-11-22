@@ -450,11 +450,13 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             role="img"
             aria-label=""
           >
-            {doporucitel && !hotovo && krok === 'termin' ? (
-              <JazykPrepinac lang={lang} onLang={setLang} />
-            ) : null}
+            <JazykPrepinac lang={lang} onLang={setLang} />
           </div>
-        ) : null}
+        ) : (
+          <div className="pp__lang-wrap">
+            <JazykPrepinac lang={lang} onLang={setLang} />
+          </div>
+        )}
         <div className="pp__telo">
         {ukazLogo ? (
           // eslint-disable-next-line @next/next/no-img-element

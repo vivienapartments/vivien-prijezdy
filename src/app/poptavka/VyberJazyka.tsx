@@ -35,23 +35,24 @@ export function VyberJazyka(props: Props) {
             alt="VIVIEN Apartments"
           />
           <h1 className="pp__nadpis-krok">{ui.vyberteJazyk}</h1>
-          <ul className="pp__jazyky">
-            {POPTAVKA_JAZYKY.map((l) => {
-              const nazev = doporucitelUiTexty(l).nazevJazyka;
-              return (
-                <li key={l}>
-                  <button
-                    type="button"
-                    className={`pp__jazyk-dlazdice${l === props.lang ? ' is-on' : ''}`}
-                    onClick={() => props.onLang(l)}
-                  >
-                    <span aria-hidden="true">{vlajkaJazyka(l)}</span>
-                    <span>{nazev}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          <label className="pp__jazyk-roletka">
+            <span className="pp__sr-only">{ui.vyberteJazyk}</span>
+            <span className="pp__jazyk-roletka-vnitr" aria-hidden="true">
+              {vlajkaJazyka(props.lang)} {doporucitelUiTexty(props.lang).nazevJazyka}
+              <b>▾</b>
+            </span>
+            <select
+              className="pp__jazyk-select"
+              value={props.lang}
+              onChange={(e) => props.onLang(e.target.value as GuideLang)}
+            >
+              {POPTAVKA_JAZYKY.map((l) => (
+                <option key={l} value={l}>
+                  {vlajkaJazyka(l)} {doporucitelUiTexty(l).nazevJazyka}
+                </option>
+              ))}
+            </select>
+          </label>
           <button type="button" className="pp__btn pp__btn--hlavni" onClick={props.onDale}>
             {props.daleText}
           </button>
