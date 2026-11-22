@@ -74,6 +74,9 @@ type Props = {
   plnoLabel?: string;
   ukazCeny?: boolean;
   legenda?: string;
+  rozsahOd?: string;
+  rozsahDo?: string;
+  dnes?: string;
 };
 
 export function TerminPole({
@@ -89,6 +92,9 @@ export function TerminPole({
   plnoLabel,
   ukazCeny,
   legenda,
+  rozsahOd,
+  rozsahDo,
+  dnes,
 }: Props) {
   const [otevreno, setOtevreno] = useState(false);
   const minDate = parseYmd(min) || new Date();
@@ -109,28 +115,36 @@ export function TerminPole({
       day: number;
       disabled: boolean;
       plno: boolean;
+      minulost: boolean;
       cenaOd: number | null;
+      vRozsahu: 'prijezd' | 'mez' | 'odjezd' | null;
     } | null)[] = [];
     for (let i = 0; i < pad; i++) cells.push(null);
     for (let day = 1; day <= daysInMonth; day++) {
       const d = new Date(kurz.getFullYear(), kurz.getMonth(), day);
       const ymd = toYmd(d);
       const info = denInfo?.(ymd) || null;
-      let disabled = ymd < min;
+      const minulost = Boolean(dnes && ymd < dnes);
+      let disabled = ymd < min || minulost;
       if (!disabled && rezim === 'prijezd' && info) {
         if (info.plno || info.bezPrijezdu) disabled = true;
       }
-      // Odjezd: plný den jako noc nejde, ale jako den odjezdu ano → neblokovat plno u odjezdu
+      let vRozsahu: 'prijezd' | 'mez' | 'odjezd' | null = null;
+      if (rozsahOd && ymd === rozsahOd) vRozsahu = 'prijezd';
+      else if (rozsahDo && ymd === rozsahDo) vRozsahu = 'odjezd';
+      else if (rozsahOd && rozsahDo && ymd > rozsahOd && ymd < rozsahDo) vRozsahu = 'mez';
       cells.push({
         ymd,
         day,
         disabled,
-        plno: Boolean(info?.plno),
-        cenaOd: info?.cenaOd ?? null,
+        plno: minulost ? false : Boolean(info?.plno),
+        minulost,
+        cenaOd: minulost || vRozsahu === 'odjezd' ? null : (info?.cenaOd ?? null),
+        vRozsahu,
       });
     }
     return cells;
-  }, [kurz, min, denInfo, rezim]);
+  }, [kurz, min, denInfo, rezim, rozsahOd, rozsahDo, dnes]);
 
   const text = value ? formatDatumPoptavky(value, lang) : prazdnyText || '—';
 
@@ -177,7 +191,7 @@ export function TerminPole({
                   <button
                     key={c.ymd}
                     type="button"
-                    className={`pp__kalendar-den${c.ymd === value ? ' is-on' : ''}${c.disabled ? ' is-off' : ''}${c.plno ? ' is-plno' : ''}`}
+                    className={`pp__kalendar-den${c.ymd === value ? ' is-on' : ''}${c.disabled ? ' is-off' : ''}${c.plno ? ' is-plno' : ''}${c.minulost ? ' is-minulost' : ''}${c.vRozsahu ? ` is-rozsah-${c.vRozsahu}` : ''}`}
                     disabled={c.disabled}
                     onClick={() => {
                       onChange(c.ymd);
@@ -185,7 +199,7 @@ export function TerminPole({
                     }}
                   >
                     <span className={`pp__kalendar-cislo${c.plno ? ' is-skrtnute' : ''}`}>{c.day}</span>
-                    {c.plno && plnoLabel ? (
+                    {c.minulost ? null : c.plno && plnoLabel ? (
                       <span className="pp__kalendar-plno">{plnoLabel}</span>
                     ) : ukazCeny && c.cenaOd != null ? (
                       <span className="pp__kalendar-cena">{c.cenaOd}</span>

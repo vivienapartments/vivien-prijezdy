@@ -7,6 +7,7 @@ import {
   denBezPrijezdu,
   denPlno,
   minCenaVolnych,
+  nejblizsiVolneTerminy,
   nejlevnejsiVolnyPobyt,
   nociPobytu,
   slevaPctCastka,
@@ -111,6 +112,8 @@ export function usePoptavkaKalendar() {
     cenaProVyber,
     aptObsazenyVeTerminu,
     volneApty,
+    nejblizsi: (prijezd: string, odjezd: string, apt?: AptId | null) =>
+      nejblizsiVolneTerminy(dny, prijezd, odjezd, apt),
     terminPlny: (prijezd: string, odjezd: string) =>
       terminPresPlnyDen(dny, prijezd, odjezd, bezApt) ||
       aptyVolneVeTerminu(dny, prijezd, odjezd).length === 0,

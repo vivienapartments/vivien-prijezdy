@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   aplikujRezervace,
+  aptyVolneVeTerminu,
   denPlno,
+  nejblizsiVolneTerminy,
   nociPobytu,
   slevaPctCastka,
   terminPresPlnyDen,
@@ -50,5 +52,19 @@ describe('kalendar-denni', () => {
     };
     expect(terminPresPlnyDen(mapa, '2026-11-22', '2026-11-24')).toBe(true);
     expect(terminPresPlnyDen(mapa, '2026-11-23', '2026-11-24')).toBe(false);
+  });
+
+  it('volné apartmány a nejbližší termíny', () => {
+    const mapa: KalendarDenni = {
+      '2026-11-25': den({ V1: true }),
+      '2026-11-26': den({ V1: true }),
+      '2026-11-27': den(),
+      '2026-11-28': den(),
+    };
+    expect(aptyVolneVeTerminu(mapa, '2026-11-25', '2026-11-26')).not.toContain('V1');
+    expect(aptyVolneVeTerminu(mapa, '2026-11-25', '2026-11-26')).toContain('V2');
+    const nab = nejblizsiVolneTerminy(mapa, '2026-11-25', '2026-11-26', 'V1', 2);
+    expect(nab[0]).toEqual({ prijezd: '2026-11-24', odjezd: '2026-11-25' });
+    expect(nab[1]).toEqual({ prijezd: '2026-11-27', odjezd: '2026-11-28' });
   });
 });

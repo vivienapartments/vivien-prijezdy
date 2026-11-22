@@ -108,6 +108,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [hotovo, setHotovo] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
   const [pruvodce, setPruvodce] = useState<PruvodceStav>(() => prazdnyPruvodceStav(props.lang));
+  const [volneNabidka, setVolneNabidka] = useState<AptId[]>([]);
+  const [terminyProApt, setTerminyProApt] = useState<{
+    apt: AptId;
+    terminy: { prijezd: string; odjezd: string }[];
+  } | null>(null);
   const [cekamJazyk, setCekamJazyk] = useState(doporucitel);
   const [vyberJazyka, setVyberJazyka] = useState(false);
 
@@ -200,11 +205,20 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       return false;
     }
     if (kal.nacteno && kal.terminPlny(prijezd, odjezd)) {
-      setChyba(kt.terminPlno);
+      setChyba(kt.terminBezVolneho);
       return false;
     }
     setChyba(null);
     return true;
+  }
+
+  function nastavNejblizsiTermin() {
+    if (!prijezd || !odjezd) return;
+    const nab = kal.nejblizsi(prijezd, odjezd);
+    if (!nab.length) return;
+    setPrijezd(nab[0].prijezd);
+    setOdjezd(nab[0].odjezd);
+    setChyba(null);
   }
 
   const cenaVyberu =
@@ -264,13 +278,22 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           zkouska: suchyBeh || undefined,
         }),
       });
-      const json = (await res.json()) as { ok?: boolean; duvod?: string };
+      const json = (await res.json()) as {
+        ok?: boolean;
+        duvod?: string;
+        nabidka?: AptId[];
+      };
       ulozOk = Boolean(json.ok);
       if (!json.ok && kanal === 'formular') {
         if (json.duvod === 'blok') setChyba(t.chybaBlok);
         else if (json.duvod === 'termin') setChyba(t.chybaTermin);
         else if (json.duvod === 'kontakt') setChyba(t.chybaKontakt);
-        else setChyba(t.chybaObecna);
+        else if (json.duvod === 'obsazeno') {
+          setChyba(kt.aptObsazenOdeslani);
+          if (Array.isArray(json.nabidka) && json.nabidka.length) {
+            setVolneNabidka(json.nabidka);
+          }
+        } else setChyba(t.chybaObecna);
         return;
       }
     } catch {
@@ -517,6 +540,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     label={t.prijezd}
                     value={prijezd}
                     min={dnes}
+                    dnes={dnes}
                     lang={lang}
                     zavritLabel={t.zpet}
                     rezim="prijezd"
@@ -524,6 +548,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     plnoLabel={kt.plno}
                     ukazCeny={ukazCeny}
                     legenda={kt.cenaLegenda}
+                    rozsahOd={prijezd}
+                    rozsahDo={odjezd}
                     prazdnyText={vernost ? (lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
                     onChange={(ymd) => {
                       setPrijezd(ymd);
@@ -534,6 +560,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     label={t.odjezd}
                     value={odjezd}
                     min={prijezd || dnes}
+                    dnes={dnes}
                     lang={lang}
                     zavritLabel={t.zpet}
                     rezim="odjezd"
@@ -541,10 +568,23 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     plnoLabel={kt.plno}
                     ukazCeny={ukazCeny}
                     legenda={kt.cenaLegenda}
+                    rozsahOd={prijezd}
+                    rozsahDo={odjezd}
                     prazdnyText={vernost ? (lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
                     onChange={setOdjezd}
                   />
                 </div>
+                {prijezd && !odjezd ? <p className="pp__maly-radek">{kt.tedVyberteOdjezd}</p> : null}
+                {prijezd && odjezd && nociPocet > 0 && !(ukazCeny && cenaVyberu) ? (
+                  <p className="pp__maly-radek">
+                    {(souhrnTerminu || `${prijezd} → ${odjezd}`) + ' · ' + tvarNoci(nociPocet, lang)}
+                  </p>
+                ) : null}
+                {chyba === kt.terminBezVolneho ? (
+                  <button type="button" className="pp__btn pp__btn--tlumeny" onClick={nastavNejblizsiTermin}>
+                    {kt.ukazNejblizsi}
+                  </button>
+                ) : null}
                 {ukazCeny && cenaVyberu && nociPocet > 0 ? (
                   <div className="pp__cena-souhrn">
                     <p className="pp__cena-souhrn-radek">
@@ -674,69 +714,140 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 {pruvodce.phase === 'result' && pruvodce.result ? (
                   <>
                     {(() => {
-                      const primary = POPTAVKA_APARTMANY.find((x) => x.id === pruvodce.result!.primary);
-                      const profil = pruvodce.result!.profiles[pruvodce.result!.primary];
+                      const r = pruvodce.result!;
+                      const poradi: AptId[] = [r.primary, ...r.alternatives];
+                      const volnePoradi = poradi.filter(
+                        (id) => !prijezd || !odjezd || !kal.aptObsazenyVeTerminu(id, prijezd, odjezd),
+                      );
+                      const primaryId = volnePoradi[0] || null;
+                      const idealObsazen =
+                        Boolean(prijezd && odjezd) &&
+                        kal.aptObsazenyVeTerminu(r.primary, prijezd, odjezd);
+                      const dalsi = poradi.filter((id) => id !== primaryId);
+                      const primary = primaryId
+                        ? POPTAVKA_APARTMANY.find((x) => x.id === primaryId)
+                        : null;
+                      const profil = primaryId ? r.profiles[primaryId] : null;
+                      const ideal = POPTAVKA_APARTMANY.find((x) => x.id === r.primary);
                       return (
                         <>
-                          {primary ? (
-                            <div className="pp__dlazdice pp__dlazdice--jedna">
+                          {primary && primaryId ? (
+                            <>
+                              <div className="pp__dlazdice pp__dlazdice--jedna">
+                                <button
+                                  type="button"
+                                  className="pp__dlazdice-polozka"
+                                  onClick={() =>
+                                    setGalerie({
+                                      druh: 'apt',
+                                      id: primaryId,
+                                      i: 0,
+                                      zpetNa: 'pruvodce',
+                                    })
+                                  }
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={coverUrl(webLang, primary)} alt="" width={400} height={260} />
+                                </button>
+                              </div>
+                              <p className="pp__maly-radek">
+                                {pruvodceText(lang, 'quiz.result.matchLabel')}
+                              </p>
+                              <h1 className="pp__nadpis-krok">{nazevApt(primaryId)}</h1>
+                              {profil?.traits ? (
+                                <p className="pp__vysledek-vlastnosti">{profil.traits}</p>
+                              ) : null}
                               <button
                                 type="button"
-                                className="pp__dlazdice-polozka"
+                                className="pp__btn pp__btn--hlavni"
+                                onClick={() => pokracujSApartmanem(primaryId)}
+                              >
+                                {t.pruvodceVybrat}
+                              </button>
+                            </>
+                          ) : (
+                            <p className="pp__chyba">{kt.terminBezVolneho}</p>
+                          )}
+                          {idealObsazen && ideal && r.primary !== primaryId ? (
+                            <div className="pp__vysledek-obsazeno">
+                              <p className="pp__maly-radek">{kt.veTerminuObsazeno}</p>
+                              <h2 className="pp__nadpis-krok">{nazevApt(r.primary)}</h2>
+                              <button
+                                type="button"
+                                className="pp__btn pp__btn--tlumeny"
                                 onClick={() =>
-                                  setGalerie({
-                                    druh: 'apt',
-                                    id: pruvodce.result!.primary,
-                                    i: 0,
-                                    zpetNa: 'pruvodce',
+                                  setTerminyProApt({
+                                    apt: r.primary,
+                                    terminy: kal.nejblizsi(prijezd, odjezd, r.primary),
                                   })
                                 }
                               >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={coverUrl(webLang, primary)} alt="" width={400} height={260} />
+                                {kt.kdyJeVolny}
                               </button>
+                              {terminyProApt?.apt === r.primary
+                                ? terminyProApt.terminy.map((tr) => (
+                                    <button
+                                      key={`${tr.prijezd}-${tr.odjezd}`}
+                                      type="button"
+                                      className="pp__btn pp__btn--sms"
+                                      onClick={() => {
+                                        setPrijezd(tr.prijezd);
+                                        setOdjezd(tr.odjezd);
+                                        setTerminyProApt(null);
+                                        pokracujSApartmanem(r.primary);
+                                      }}
+                                    >
+                                      {formatRozsahPoptavky(tr.prijezd, tr.odjezd, lang)}
+                                      {' · '}
+                                      {tvarNoci(nociPobytu(tr.prijezd, tr.odjezd).length, lang)}
+                                    </button>
+                                  ))
+                                : null}
                             </div>
                           ) : null}
-                          <p className="pp__maly-radek">
-                            {pruvodceText(lang, 'quiz.result.matchLabel')}
-                          </p>
-                          <h1 className="pp__nadpis-krok">{nazevApt(pruvodce.result!.primary)}</h1>
-                          {profil?.traits ? <p className="pp__vysledek-vlastnosti">{profil.traits}</p> : null}
-                          <button
-                            type="button"
-                            className="pp__btn pp__btn--hlavni"
-                            onClick={() => pokracujSApartmanem(pruvodce.result!.primary)}
-                          >
-                            {t.pruvodceVybrat}
-                          </button>
+                          <h2 className="pp__vysledek-dalsi">
+                            {pruvodceText(lang, 'quiz.result.altsHeading')}
+                          </h2>
+                          <div className="pp__dlazdice">
+                            {dalsi.map((id) => {
+                              const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
+                              if (!a) return null;
+                              const obs =
+                                Boolean(prijezd && odjezd) &&
+                                kal.aptObsazenyVeTerminu(id, prijezd, odjezd);
+                              return (
+                                <button
+                                  key={id}
+                                  type="button"
+                                  className={`pp__dlazdice-polozka${obs ? ' is-obsazeno' : ''}`}
+                                  disabled={obs}
+                                  onClick={() => {
+                                    if (obs) return;
+                                    setGalerie({ druh: 'apt', id, i: 0, zpetNa: 'pruvodce' });
+                                  }}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
+                                  {obs ? (
+                                    <span className="pp__dlazdice-stitok">{kt.obsazeno}</span>
+                                  ) : null}
+                                  <span className="pp__dlazdice-text">
+                                    <span className="pp__dlazdice-nazev">{nazevNaDlazdici(id)}</span>
+                                    {obs ? (
+                                      <span className="pp__dlazdice-obsazeno">{kt.obsazeno}</span>
+                                    ) : (
+                                      <span className="pp__dlazdice-obsazeno" aria-hidden="true">
+                                        &nbsp;
+                                      </span>
+                                    )}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </>
                       );
                     })()}
-                    <h2 className="pp__vysledek-dalsi">
-                      {pruvodceText(lang, 'quiz.result.altsHeading')}
-                    </h2>
-                    <div className="pp__dlazdice">
-                      {pruvodce.result.alternatives.map((id) => {
-                        const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
-                        if (!a) return null;
-                        return (
-                          <button
-                            key={id}
-                            type="button"
-                            className="pp__dlazdice-polozka"
-                            onClick={() =>
-                              setGalerie({ druh: 'apt', id, i: 0, zpetNa: 'pruvodce' })
-                            }
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
-                            <span className="pp__dlazdice-text">
-                              <span className="pp__dlazdice-nazev">{nazevNaDlazdici(id)}</span>
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
                     <div className="pp__vysledek-zpet">
                       <button type="button" className="pp__btn pp__btn--sms" onClick={resetPruvodce}>
                         {t.pruvodceZnovu}
@@ -1000,6 +1111,43 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   />
                 </label>
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
+                {volneNabidka.length > 0 ? (
+                  <div className="pp__volne-nabidka">
+                    {volneNabidka.map((id) => (
+                      <button
+                        key={id}
+                        type="button"
+                        className="pp__btn pp__btn--tlumeny"
+                        onClick={() => {
+                          setZpusob('vybrat');
+                          setApts([id]);
+                          setVolneNabidka([]);
+                          setChyba(null);
+                        }}
+                      >
+                        {nazevApt(id)}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="pp__btn pp__btn--sms"
+                      onClick={() => {
+                        const nab = kal.nejblizsi(prijezd, odjezd, apts[0] || null);
+                        if (nab[0]) {
+                          setPrijezd(nab[0].prijezd);
+                          setOdjezd(nab[0].odjezd);
+                          setVolneNabidka([]);
+                          setChyba(null);
+                        } else {
+                          nastavNejblizsiTermin();
+                          setVolneNabidka([]);
+                        }
+                      }}
+                    >
+                      {kt.ukazNejblizsi}
+                    </button>
+                  </div>
+                ) : null}
                 <div className="pp__akce">
                   <button
                     type="button"

@@ -2,6 +2,8 @@ import { createHash } from 'crypto';
 import { NextResponse } from 'next/server';
 import { jeBlokPokus, zapisPokus } from '@/lib/okno-pobytu';
 import { vytvorDoporuceni } from '@/lib/doporuceni';
+import { aptyVolneVeTerminu } from '@/lib/kalendar-denni';
+import { sestavKalendarProHosta } from '@/lib/kalendar-uloziste';
 import {
   firmaZKodu,
   filtrApartmany,
@@ -13,7 +15,7 @@ import {
 } from '@/lib/poptavka';
 import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
-import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
+import { GUIDE_LANGS, type AptId, type GuideLang } from '@/lib/types';
 import { upozorniMajitele } from '@/lib/upozorneni';
 
 export const runtime = 'nodejs';
@@ -147,6 +149,29 @@ export async function POST(req: Request) {
     kanal,
     stav: 'nova',
   };
+
+  try {
+    const { dny } = await sestavKalendarProHosta(store);
+    const volne = aptyVolneVeTerminu(dny, zaznam.prijezd, zaznam.odjezd);
+    if (zaznam.libovolnyApartman || zaznam.apartmany.length === 0) {
+      if (volne.length === 0) {
+        return NextResponse.json(
+          { ok: false, duvod: 'obsazeno', nabidka: [] as AptId[] },
+          { status: 409, headers: noStore },
+        );
+      }
+    } else {
+      const okApt = zaznam.apartmany.some((id) => volne.includes(id));
+      if (!okApt) {
+        return NextResponse.json(
+          { ok: false, duvod: 'obsazeno', nabidka: volne.slice(0, 3) },
+          { status: 409, headers: noStore },
+        );
+      }
+    }
+  } catch (err) {
+    console.error('poptavka: obsazenost', err instanceof Error ? err.message : err);
+  }
 
   if (suchyBeh) {
     return NextResponse.json({ ok: true, id: 'zkouska', suchy: true }, { headers: noStore });

@@ -273,6 +273,43 @@ export function aptyVolneVeTerminu(
   return APT_IDS.filter((id) => noci.every((d) => !mapa[d]?.[id]?.obsazeno));
 }
 
+function posunYmd(ymd: string, dnu: number): string {
+  const t = Date.parse(`${ymd}T12:00:00Z`) + dnu * 86_400_000;
+  const d = new Date(t);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}
+
+/** 3 nejbližší volné termíny stejné délky (před i po). */
+export function nejblizsiVolneTerminy(
+  mapa: KalendarDenni,
+  prijezd: string,
+  odjezd: string,
+  apt?: AptId | null,
+  max = 3,
+): { prijezd: string; odjezd: string }[] {
+  const noci = nociPobytu(prijezd, odjezd).length;
+  if (noci < 1) return [];
+  const out: { prijezd: string; odjezd: string }[] = [];
+  for (let vzd = 1; vzd <= 120 && out.length < max; vzd++) {
+    const davka: { prijezd: string; odjezd: string }[] = [];
+    for (const smer of [1, -1] as const) {
+      const p = posunYmd(prijezd, smer * vzd);
+      const o = posunYmd(p, noci);
+      const volne = aptyVolneVeTerminu(mapa, p, o);
+      if (apt ? volne.includes(apt) : volne.length > 0) {
+        if (!davka.some((x) => x.prijezd === p && x.odjezd === o)) {
+          davka.push({ prijezd: p, odjezd: o });
+        }
+      }
+    }
+    for (const t of davka) {
+      if (out.length >= max) break;
+      if (!out.some((x) => x.prijezd === t.prijezd && x.odjezd === t.odjezd)) out.push(t);
+    }
+  }
+  return out.slice(0, max);
+}
+
 export function cenaApartmanuZaPobyt(
   mapa: KalendarDenni,
   apt: AptId,

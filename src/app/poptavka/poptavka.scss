@@ -1461,6 +1461,48 @@
   opacity: 0.7;
 }
 
+.pp__vysledek-obsazeno {
+  margin: 1rem 0 1.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(201, 168, 76, 0.25);
+}
+
+.pp__volne-nabidka {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0 1rem;
+}
+
+.pp__kalendar-den.is-minulost {
+  opacity: 0.35;
+}
+
+.pp__kalendar-den.is-minulost .pp__kalendar-cislo {
+  color: #8a7d6e;
+}
+
+.pp__kalendar-den.is-rozsah-prijezd {
+  background: #c9a84c;
+  color: #1a1510;
+  border-radius: 8px;
+}
+
+.pp__kalendar-den.is-rozsah-prijezd .pp__kalendar-cena {
+  color: #1a1510;
+}
+
+.pp__kalendar-den.is-rozsah-mez {
+  background: color-mix(in srgb, #c9a84c 28%, transparent);
+  border-radius: 8px;
+}
+
+.pp__kalendar-den.is-rozsah-odjezd {
+  box-shadow: inset 0 0 0 2px #c9a84c;
+  border-radius: 8px;
+  background: transparent;
+}
+
 .pp__kalendar-plno {
   font-size: 0.55rem;
   color: #a09080;

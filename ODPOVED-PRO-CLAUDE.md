@@ -66,9 +66,31 @@ Soubor `tmp-rozdily-obsazenost.json` je jen pracovní výstup skriptu, do gitu n
 - Texty kalendáře: `kalendar-texty.ts`. Bod 6 texty platí jen při zapnutých cenách.
 - Skript nahrání: `scripts/nahraj-kalendar-xlsx.mjs` (xlsx se necommitují).
 
-### Ještě po nasazení Preview
-1. Nahrát xlsx do `test:kalendar-denni` (Přehled na Preview, nebo skript s `VERCEL_ENV=preview`).
-2. Ověřit termíny z kontroly v promptu (22.–24. 11. plno, 18.–21. 12. jen V1, …).
+### Opravy po testu · dávka 1 (22. 11. 2026)
+- Dlaždice stejně vysoké, fotka nahoře, textová část stejná výška, V5 zkrácený název, obsazeno ztlumené + štítek.
+- Poptávka na notebooku max 520 px uprostřed.
+- Sleva 5 % zřetelněji (zlatě u ceny v dlaždici i v souhrnu).
 
-### Preview odkazy
-*(doplní se po pushi větve `doporuceni`)*
+### Opravy po testu · dávka 2 (22. 11. 2026)
+- `?od=`: výběr jazyka roletkou (varianta C), ne 13 dlaždic.
+- Ve všech krocích všech druhů poptávky malá roletka 🌐 vpravo nahoře.
+
+### Opravy po testu · dávka 3 (22. 11. 2026) · kalendář + obsazenost
+- Odjezd i při „plno“ ten den; noci (ne dny); příjezd plně zlatě, mezery slabě, odjezd rámeček bez ceny.
+- Minulé dny jen tlumené číslo. Hláška bez volného apartmánu + „Ukázat nejbližší volný termín“.
+- Dotazník: nejsilnější shoda jen z volných; obsazený ideal se štítkem a „Kdy je volný?“.
+- Pojistka API: obsazený apartmán poptávku neodešle (`duvod: obsazeno` + nabídka volných).
+
+### Ostrá · 22. 11. 2026 večer (sluč + nasaď)
+- Větev `doporuceni` sloučena do `master` a nasazena (`8b70644`). Commit `117a0ef` (zlatá tlačítka, tmavý text) je v ostré.
+- E-mail po odjezdu: tmavý jako stránka, fotka, logo, dopis, 3 výhody, zlaté tlačítko „Otevřít vaše výhody“, předmět `VIVIEN · Děkujeme za návštěvu`, 13 jazyků.
+- Nahráno `kalendar-denni` (130 dnů) + `kalendar-meta` (ceny zapnuté).
+- Karta `rez:TESTPOMAJ` (`zkusebni: true`, mimo statistiky/kredit/obsazenost). E-mail jen majiteli. Žádný Telegram.
+
+### Ostré odkazy (zkouška majitele)
+- Po odjezdu (průvodce): https://vivien-prijezdy-six.vercel.app/eyJyIjoiVEVTVFBPTUFKIiwiYSI6IlYxIiwiZCI6IjIwMjYtMTEtMjEiLCJsIjoiY3MiLCJwIjoiMjAyNi0xMS0xOSIsIm8iOjIsImkiOiIxMjM0IiwiZiI6MX0.2utgI-cWo4lxsi-ePJxiId1mSe3XLQFNXjJw6NBOw68
+- Náhled po odjezdu: https://vivien-prijezdy-six.vercel.app/nahled-po-odjezdu
+- Poptávka věrný host: https://vivien-prijezdy-six.vercel.app/poptavka?zkouska=1
+- Doporučení majitele (`?od=`): https://vivien-prijezdy-six.vercel.app/poptavka?od=a692c6
+- Běžná poptávka: https://vivien-prijezdy-six.vercel.app/poptavka
+- Firma: https://vivien-prijezdy-six.vercel.app/poptavka?f=raccoon
