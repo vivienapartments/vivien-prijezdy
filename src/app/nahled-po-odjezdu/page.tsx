@@ -2,5 +2,6 @@ import { Expired } from '@/components/Expired';
 
 /** Lokální / dočasný náhled ostré stránky po odjezdu. Hostům se neposílá. */
 export default function NahledPoOdjezduPage() {
-  return <Expired lang="cs" />;
+  /** Token jen aby se ukázal blok doporučení. */
+  return <Expired lang="cs" token="nahled" />;
 }

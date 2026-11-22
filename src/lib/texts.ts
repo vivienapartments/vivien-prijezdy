@@ -1509,20 +1509,21 @@ export const expiredCta: LText = {
   pt: 'Reservar uma estadia',
 };
 
+/** Nad tlačítkem Přidat na plochu. Věta „průvodce není aktivní“ se nepoužívá. */
 export const expiredPoznamka: LText = {
-  cs: 'Příjezdový průvodce už není aktivní.',
-  en: 'The arrival guide is no longer active.',
-  de: 'Der Anreiseführer ist nicht mehr aktiv.',
-  pl: 'Przewodnik przyjazdu nie jest już aktywny.',
-  uk: 'Путівник до приїзду вже неактивний.',
-  'zh-Hant': '抵達指南已不再有效。',
-  sv: 'Ankomstguiden är inte längre aktiv.',
-  es: 'La guía de llegada ya no está activa.',
-  hu: 'Az érkezési útmutató már nem aktív.',
-  da: 'Ankomstguiden er ikke længere aktiv.',
-  fr: 'Le guide d’arrivée n’est plus actif.',
-  it: 'La guida all’arrivo non è più attiva.',
-  pt: 'O guia de chegada já não está ativo.',
+  cs: 'Přidejte si nás na plochu a příští pobyt poptáte bez hledání a se slevou 5 %.',
+  en: 'Add us to your home screen and you can request your next stay without searching, with 5% off.',
+  de: 'Fügen Sie uns zum Startbildschirm hinzu. Den nächsten Aufenthalt fragen Sie dann ohne Suchen an, mit 5 % Rabatt.',
+  pl: 'Dodajcie nas na ekran główny, a kolejny pobyt zamówicie bez szukania i ze zniżką 5 %.',
+  uk: 'Додайте нас на головний екран, і наступне перебування замовите без пошуку та зі знижкою 5 %.',
+  'zh-Hant': '把我們加到主畫面，下次入住不用再找，還享 5% 折扣。',
+  sv: 'Lägg till oss på hemskärmen så bokar ni nästa vistelse utan att leta, med 5 % rabatt.',
+  es: 'Añádanos a la pantalla de inicio y pedirán la próxima estancia sin buscar, con un 5 % de descuento.',
+  hu: 'Tegyék fel minket a kezdőképernyőre, és a következő szállást keresés nélkül, 5 % kedvezménnyel kérhetik.',
+  da: 'Sæt os på startskærmen, så bestiller I næste ophold uden at lede, med 5 % rabat.',
+  fr: 'Ajoutez-nous à l’écran d’accueil : le prochain séjour se demande sans chercher, avec 5 % de réduction.',
+  it: 'Aggiungeteci alla schermata Home: il prossimo soggiorno lo richiedete senza cercare, con lo sconto del 5 %.',
+  pt: 'Adicionem-nos ao ecrã inicial e pedem a próxima estadia sem procurar, com 5 % de desconto.',
 };
 
 export const expiredHelp: LText = {

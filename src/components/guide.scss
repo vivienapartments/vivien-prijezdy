@@ -2796,9 +2796,11 @@ a.pv-phone.pv-phone--zari:focus-visible {
 
 .pv-expired__otazka {
   margin: 0 0 0.45rem;
-  font-size: 1.05rem;
-  line-height: 1.35;
-  color: var(--color-dark, #1c1712);
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.28rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--color-dark, #1c1712) 92%, transparent);
 }
 
 .pv-expired__veta {
@@ -2850,9 +2852,10 @@ a.pv-phone.pv-phone--zari:focus-visible {
 }
 
 .pv-expired__telo > p.pv-expired__poznamka {
-  margin: 1.1rem 0 0;
-  font-size: 0.78rem;
-  color: color-mix(in srgb, var(--color-dark) 45%, transparent);
+  margin: 1.1rem 0 0.35rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--color-dark) 62%, transparent);
 }
 
 .pv-pridej-plochu {

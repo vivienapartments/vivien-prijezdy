@@ -15,6 +15,10 @@ export function ExpiredDoporuceni({ lang, token }: { lang: GuideLang; token: str
   const [cekam, setCekam] = useState(false);
 
   useEffect(() => {
+    if (token === 'nahled') {
+      setKod('zkouska');
+      return;
+    }
     let zruseno = false;
     (async () => {
       try {
@@ -63,11 +67,8 @@ export function ExpiredDoporuceni({ lang, token }: { lang: GuideLang; token: str
   return (
     <div className="pv-expired__celek pv-expired__celek--blizci">
       <p className="pv-expired__nad-male">{t.nadBlizci}</p>
-      <p className="pv-expired__otazka">
-        <strong>{t.otazka}</strong>
-      </p>
+      <p className="pv-expired__otazka">{t.otazka}</p>
       <p className="pv-expired__veta">{t.veta1}</p>
-      <p className="pv-expired__veta">{t.veta2}</p>
       <button
         type="button"
         className="pv-expired__cta pv-expired__cta--obrys"
