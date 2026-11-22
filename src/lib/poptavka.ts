@@ -6,6 +6,7 @@
 import { apartmany } from './guide-data';
 import { NIKOL_PHONE, PARKING_OWNER_PHONE } from './constants';
 import { odkazSmsPodekovani } from './podekovani';
+import { doporucitelUiTexty } from './poptavka-doporucitel-ui';
 import type { AptId, GuideLang } from './types';
 import { APT_IDS } from './types';
 import { odkazWhatsApp } from './whatsapp-zprava';
@@ -132,6 +133,10 @@ export type PoptavkaVstup = {
   doprava?: string | null;
   poznamka?: string;
   jazyk?: GuideLang;
+  /** Cena za pobyt v Kč (už se slevou, pokud platí). */
+  cenaKc?: number | null;
+  /** Je uplatněná sleva 5 %. */
+  cenaSeSlevou?: boolean;
 };
 
 export function sestavZpravuPoptavky(v: PoptavkaVstup): string {
@@ -153,16 +158,32 @@ export function sestavZpravuPoptavky(v: PoptavkaVstup): string {
   const termin = `${formatDatumCs(v.prijezd)}–${formatDatumCs(v.odjezd)}${noci ? ` (${noci} noci)` : ''}`;
   const doprava =
     v.doprava === 'auto' ? 'přijede autem' : v.doprava === 'pesky' ? 'přijede pěšky' : '';
+  const maCenu = typeof v.cenaKc === 'number' && v.cenaKc > 0;
   const radky = [
     `Dobrý den, ${kdo}.`,
     `Poptávka ubytování: ${aptText}, ${termin}.`,
     `${(v.jmeno || '').trim() || 'bez jména'}, ${(v.telefon || '').trim() || 'bez telefonu'}.`,
-    `Sleva ${POPTAVKA_SLEVA_PCT} % (věrnostní / partnerská cesta). Cenu dopočítáme.`,
   ];
+  if (maCenu) {
+    const sleva =
+      v.cenaSeSlevou || v.zdroj === 'vernost' || v.zdroj === 'doporucitel'
+        ? ` (sleva ${POPTAVKA_SLEVA_PCT} %)`
+        : '';
+    radky.push(`Cena za pobyt ${Math.round(v.cenaKc!)} Kč${sleva}.`);
+  } else {
+    radky.push(
+      `Sleva ${POPTAVKA_SLEVA_PCT} % (věrnostní / partnerská cesta). Cenu dopočítáme.`,
+    );
+  }
   if (doprava) radky.push(doprava.charAt(0).toUpperCase() + doprava.slice(1) + '.');
   const poz = (v.poznamka || '').trim();
   if (poz) radky.push(`Poznámka: ${poz.slice(0, 300)}`);
-  return radky.join(' ');
+  let text = radky.join(' ');
+  if (v.zdroj === 'doporucitel') {
+    const z = doporucitelUiTexty(v.jazyk || 'cs').zpravaDoporuceni;
+    text = `${text} ${z}`;
+  }
+  return text;
 }
 
 export function odkazWaPoptavky(text: string): string {

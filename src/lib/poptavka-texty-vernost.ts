@@ -5,7 +5,7 @@ import type { PoptavkaTexty } from './poptavka-texty';
 
 type VernostVstup = Omit<
   PoptavkaTexty,
-  'firmaRadek' | 'sleva' | 'cenaPozdeji' | 'doprava' | 'auto' | 'pesky' | 'nevim'
+  'firmaRadek' | 'sleva' | 'cenaPozdeji' | 'doprava' | 'auto' | 'pesky' | 'nevim' | 'chybaTelefon'
 >;
 
 function dopln(t: VernostVstup): PoptavkaTexty {
@@ -17,6 +17,7 @@ function dopln(t: VernostVstup): PoptavkaTexty {
     auto: '',
     pesky: '',
     nevim: '',
+    chybaTelefon: '',
     ...t,
   };
 }

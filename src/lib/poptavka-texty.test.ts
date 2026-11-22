@@ -66,6 +66,7 @@ const KLICE: (keyof PoptavkaTexty)[] = [
   'chybaApartman',
   'chybaObecna',
   'chybaBlok',
+  'chybaTelefon',
 ];
 
 describe('poptavkaTexty', () => {

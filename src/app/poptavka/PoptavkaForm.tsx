@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState, type ReactNode, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type ReactNode, type FormEvent } from 'react';
+import { isValidPhoneNumber } from 'libphonenumber-js';
 import { apartmany } from '@/lib/guide-data';
 import { toTelHref } from '@/lib/i18n';
 import {
@@ -23,9 +24,12 @@ import {
   webLangKod,
 } from '@/lib/poptavka-apartmany';
 import {
+  doporucitelUiTexty,
+  klicJazykDoporuceni,
+} from '@/lib/poptavka-doporucitel-ui';
+import {
   formatDatumPoptavky,
   formatRozsahPoptavky,
-  poptavkaStitekDoporuceni,
   poptavkaTexty,
 } from '@/lib/poptavka-texty';
 import {
@@ -38,10 +42,18 @@ import {
   type QuizAnswerKey,
   type TieAnswerKey,
 } from '@/lib/poptavka-pruvodce';
-import type { AptId, GuideLang } from '@/lib/types';
+import { GUIDE_LANGS, type AptId, type GuideLang } from '@/lib/types';
+import { JazykPrepinac } from './JazykPrepinac';
 import { PoptavkaPlochaRoot, PoptavkaPlochaTlacitko } from './PoptavkaPlocha';
+import { TelefonPole } from './TelefonPole';
 import { TerminPole } from './TerminKalendar';
+import { usePoptavkaKalendar } from './usePoptavkaKalendar';
+import { VyberJazyka } from './VyberJazyka';
+import { formatKc, kalendarTexty, tvarNoci } from '@/lib/kalendar-texty';
+import { nociPobytu } from '@/lib/kalendar-denni';
 import './poptavka.scss';
+
+const GUIDE_LANG_SET = new Set<string>(GUIDE_LANGS);
 
 export type PoptavkaVstupni = {
   lang: GuideLang;
@@ -69,9 +81,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const vernost = props.zdroj === 'vernost' || props.zdroj === 'doporucitel';
   const doporucitel = props.zdroj === 'doporucitel';
   const suchyBeh = Boolean(props.suchyBeh);
-  const t = poptavkaTexty(props.lang, props.zdroj);
-  const stitekDoporuceni = doporucitel ? poptavkaStitekDoporuceni(props.lang) : '';
-  const webLang = webLangKod(props.lang);
+  const [lang, setLang] = useState<GuideLang>(props.lang);
+  const kal = usePoptavkaKalendar();
+  const firma = props.zdroj === 'firma';
+  const ukazCeny = kal.cenyZapnuto && !firma;
+  const slevaCesty = props.zdroj === 'vernost' || props.zdroj === 'doporucitel';
+  const t = poptavkaTexty(lang, props.zdroj, kal.cenyZapnuto);
+  const kt = kalendarTexty(lang);
+  const uiDop = doporucitel ? doporucitelUiTexty(lang) : null;
+  const webLang = webLangKod(lang);
   const dnes = ymdDnesPraha();
   const [krok, setKrok] = useState<Krok>('termin');
   const [prijezd, setPrijezd] = useState('');
@@ -80,6 +98,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [apts, setApts] = useState<AptId[]>([]);
   const [jmeno, setJmeno] = useState(props.jmeno);
   const [telefon, setTelefon] = useState(props.telefon);
+  const [telefonChyba, setTelefonChyba] = useState(false);
   const [doprava, setDoprava] = useState<'auto' | 'pesky' | 'nevim' | ''>('');
   const [poznamka, setPoznamka] = useState('');
   const [honeypot, setHoneypot] = useState('');
@@ -88,6 +107,28 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [hotovo, setHotovo] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
   const [pruvodce, setPruvodce] = useState<PruvodceStav>(() => prazdnyPruvodceStav(props.lang));
+  const [cekamJazyk, setCekamJazyk] = useState(doporucitel);
+  const [vyberJazyka, setVyberJazyka] = useState(false);
+
+  useEffect(() => {
+    if (!doporucitel) {
+      setCekamJazyk(false);
+      return;
+    }
+    try {
+      const k = klicJazykDoporuceni(props.doporucitelKod || '');
+      const ulozeny = localStorage.getItem(k);
+      if (ulozeny && GUIDE_LANG_SET.has(ulozeny)) {
+        setLang(ulozeny as GuideLang);
+        setVyberJazyka(false);
+      } else {
+        setVyberJazyka(true);
+      }
+    } catch {
+      setVyberJazyka(true);
+    }
+    setCekamJazyk(false);
+  }, [doporucitel, props.doporucitelKod]);
 
   const libovolny = zpusob === 'doporucit';
   const dopravaOdeslat = vernost ? null : doprava || null;
@@ -108,9 +149,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         libovolnyApartman: libovolny,
         doprava: dopravaOdeslat,
         poznamka,
-        jazyk: props.lang,
+        jazyk: lang,
+        cenaKc: (() => {
+          if (!ukazCeny || !prijezd || !odjezd) return null;
+          const c = kal.cenaProVyber(prijezd, odjezd, apts, libovolny, slevaCesty);
+          return c ? (slevaCesty ? c.seSlevou : c.suma) : null;
+        })(),
+        cenaSeSlevou: slevaCesty && ukazCeny,
       }),
-    [props, jmeno, telefon, prijezd, odjezd, apts, libovolny, dopravaOdeslat, poznamka],
+    [props, jmeno, telefon, prijezd, odjezd, apts, libovolny, dopravaOdeslat, poznamka, lang, ukazCeny, slevaCesty, kal],
   );
 
   const wa = odkazWaPoptavky(zprava);
@@ -139,7 +186,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   function nazevApt(id: AptId): string {
     const a = apartmany.find((x) => x.id === id);
-    return props.lang === 'cs' ? a?.nazev.cs || id : a?.nazev.en || id;
+    return lang === 'cs' ? a?.nazev.cs || id : a?.nazev.en || id;
   }
 
   function overTermin(): boolean {
@@ -147,8 +194,28 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       setChyba(t.chybaTermin);
       return false;
     }
+    if (kal.nacteno && kal.terminPlny(prijezd, odjezd)) {
+      setChyba(kt.terminPlno);
+      return false;
+    }
     setChyba(null);
     return true;
+  }
+
+  const cenaVyberu =
+    ukazCeny && prijezd && odjezd
+      ? kal.cenaProVyber(prijezd, odjezd, apts, libovolny, slevaCesty)
+      : null;
+  const nociPocet = prijezd && odjezd ? nociPobytu(prijezd, odjezd).length : 0;
+
+  function telefonOk(): boolean {
+    const raw = telefon.trim();
+    if (!raw) return false;
+    try {
+      return isValidPhoneNumber(raw);
+    } catch {
+      return false;
+    }
   }
 
   async function odeslat(kanal: PoptavkaKanal = 'formular') {
@@ -158,10 +225,16 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       setChyba(t.chybaApartman);
       return;
     }
-    if (!jmeno.trim() || !telefon.trim()) {
+    if (!jmeno.trim()) {
       setChyba(t.chybaKontakt);
       return;
     }
+    if (!telefonOk()) {
+      setTelefonChyba(true);
+      setChyba(t.chybaTelefon);
+      return;
+    }
+    setTelefonChyba(false);
     setCekam(true);
     let ulozOk = false;
     try {
@@ -180,7 +253,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           libovolnyApartman: libovolny,
           doprava: dopravaOdeslat,
           poznamka,
-          lang: props.lang,
+          lang: lang,
           honeypot,
           kanal,
           zkouska: suchyBeh || undefined,
@@ -224,7 +297,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   }
 
   function resetPruvodce() {
-    setPruvodce(prazdnyPruvodceStav(props.lang));
+    setPruvodce(prazdnyPruvodceStav(lang));
   }
 
   function pokracujSApartmanem(id: AptId) {
@@ -240,8 +313,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const souhrnTerminu =
     prijezd && odjezd
       ? vernost
-        ? formatRozsahPoptavky(prijezd, odjezd, props.lang)
-        : `${formatDatumPoptavky(prijezd, props.lang)} → ${formatDatumPoptavky(odjezd, props.lang)}`
+        ? formatRozsahPoptavky(prijezd, odjezd, lang)
+        : `${formatDatumPoptavky(prijezd, lang)} → ${formatDatumPoptavky(odjezd, lang)}`
       : '';
 
   const souhrnVyberu = libovolny
@@ -252,19 +325,25 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   const malyRadekVernost =
     vernost && krok === 'kontakt' && souhrnTerminu
-      ? `${souhrnTerminu}${souhrnVyberu ? ` · ${souhrnVyberu}` : ''}`
+      ? `${souhrnTerminu}${souhrnVyberu ? `\u00a0·\u00a0${souhrnVyberu}` : ''}`
       : '';
 
-  /** Věrnost tmavá: 1 zahrada, 2 stropy, konec dům. Apartmány beze změny. */
+  /**
+   * Tmavá cesta: věrný host svoje fotky, doporučený v kroku 1 večerní zahradu.
+   * 1 termín / 2 stropy / konec dům. Apartmány beze změny.
+   */
   const heroVernost = vernost
     ? hotovo
       ? '/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg'
       : krok === 'termin'
-        ? '/pruvodce/zahrada-po-odjezdu.jpg'
+        ? doporucitel
+          ? '/poptavka/doporuceny-zahrada-vecer.webp'
+          : '/pruvodce/zahrada-po-odjezdu.jpg'
         : krok === 'zpusob'
           ? galerieKompletCoverUrl(webLang)
           : null
     : null;
+  const heroVecer = Boolean(doporucitel && krok === 'termin' && heroVernost);
 
   const ukazLogo = !vernost || krok === 'termin' || hotovo || Boolean(heroVernost);
   /** Termín věrnosti: karta přes okno, fotka vyplní místo (jako Děkujeme). */
@@ -321,19 +400,55 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     );
   }
 
+  if (cekamJazyk) {
+    return <main className="pp pp--vernost pp--doporuceny" lang={lang} />;
+  }
+  if (doporucitel && vyberJazyka) {
+    return (
+      <VyberJazyka
+        lang={lang}
+        onLang={setLang}
+        daleText={t.dale}
+        onDale={() => {
+          try {
+            localStorage.setItem(klicJazykDoporuceni(props.doporucitelKod || ''), lang);
+          } catch {
+            /* */
+          }
+          setVyberJazyka(false);
+        }}
+      />
+    );
+  }
+
   return (
-    <PoptavkaPlochaRoot lang={props.lang}>
-    <main className={`pp${vernost ? ' pp--vernost' : ''}`} lang={props.lang}>
+    <PoptavkaPlochaRoot lang={lang}>
+    <main
+      className={`pp${vernost ? ' pp--vernost' : ''}${doporucitel ? ' pp--doporuceny' : ''}`}
+      lang={lang}
+    >
       <div
         className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}${kartaTermin ? ' pp__karta--termin' : ''}${kartaDekujeme ? ' pp__karta--dekujeme' : ''}${krok === 'zpusob' ? ' pp__karta--zpusob' : ''}${krok === 'kontakt' ? ' pp__karta--kontakt' : ''}`}
       >
         {heroVernost ? (
           <div
-            className={`pp__hero${hotovo ? ' pp__hero--dum' : krok === 'zpusob' ? ' pp__hero--stropy' : ' pp__hero--zahrada'}`}
+            className={`pp__hero${
+              hotovo
+                ? ' pp__hero--dum'
+                : krok === 'zpusob'
+                  ? ' pp__hero--stropy'
+                  : heroVecer
+                    ? ' pp__hero--vecer'
+                    : ' pp__hero--zahrada'
+            }`}
             style={{ backgroundImage: `url('${heroVernost}')` }}
             role="img"
-            aria-hidden="true"
-          />
+            aria-label=""
+          >
+            {doporucitel && !hotovo && krok === 'termin' ? (
+              <JazykPrepinac lang={lang} onLang={setLang} />
+            ) : null}
+          </div>
         ) : null}
         <div className="pp__telo">
         {ukazLogo ? (
@@ -359,8 +474,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         {vernost && !hotovo && krok === 'termin' ? (
           <>
             <h1>{t.nadpis}</h1>
-            {stitekDoporuceni ? <p className="pp__stitek">{stitekDoporuceni}</p> : null}
-            <p className="pp__uvod">{t.uvod}</p>
+            {doporucitel && uiDop ? (
+              <p className="pp__uvod">
+                {uiDop.poptavkaVeta}{' '}
+                <span className="pp__sleva-inline">{uiDop.poptavkaSleva}</span>{' '}
+                {uiDop.poptavkaNapoveda}
+              </p>
+            ) : (
+              <p className="pp__uvod">{t.uvod}</p>
+            )}
           </>
         ) : null}
         {vernost && hotovo ? <h1>{t.nadpisOdeslano}</h1> : null}
@@ -388,9 +510,14 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     label={t.prijezd}
                     value={prijezd}
                     min={dnes}
-                    lang={props.lang}
+                    lang={lang}
                     zavritLabel={t.zpet}
-                    prazdnyText={vernost ? (props.lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
+                    rezim="prijezd"
+                    denInfo={kal.denInfo}
+                    plnoLabel={kt.plno}
+                    ukazCeny={ukazCeny}
+                    legenda={kt.cenaLegenda}
+                    prazdnyText={vernost ? (lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
                     onChange={(ymd) => {
                       setPrijezd(ymd);
                       if (odjezd && odjezd <= ymd) setOdjezd('');
@@ -400,12 +527,39 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     label={t.odjezd}
                     value={odjezd}
                     min={prijezd || dnes}
-                    lang={props.lang}
+                    lang={lang}
                     zavritLabel={t.zpet}
-                    prazdnyText={vernost ? (props.lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
+                    rezim="odjezd"
+                    denInfo={kal.denInfo}
+                    plnoLabel={kt.plno}
+                    ukazCeny={ukazCeny}
+                    legenda={kt.cenaLegenda}
+                    prazdnyText={vernost ? (lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
                     onChange={setOdjezd}
                   />
                 </div>
+                {ukazCeny && cenaVyberu && nociPocet > 0 ? (
+                  <div className="pp__cena-souhrn">
+                    <p className="pp__cena-souhrn-radek">
+                      {souhrnTerminu || ''}
+                      {' · '}
+                      {tvarNoci(nociPocet, lang)}
+                    </p>
+                    <p className="pp__cena-souhrn-radek">
+                      {kt.cenaZaPobyt}{' '}
+                      {slevaCesty ? (
+                        <>
+                          <span className="pp__cena-souhrn-skrtnute">{formatKc(cenaVyberu.suma)}</span>
+                          <span className="pp__cena-souhrn-castka">{formatKc(cenaVyberu.seSlevou)}</span>
+                        </>
+                      ) : (
+                        <span className="pp__cena-souhrn-castka">{formatKc(cenaVyberu.suma)}</span>
+                      )}
+                    </p>
+                    {slevaCesty ? <p className="pp__cena-souhrn-radek">{kt.cenaSleva}</p> : null}
+                    <p className="pp__cena-souhrn-pozn">{kt.cenaPoznamka}</p>
+                  </div>
+                ) : null}
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
                 <button
                   type="button"
@@ -537,7 +691,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                             </div>
                           ) : null}
                           <p className="pp__maly-radek">
-                            {pruvodceText(props.lang, 'quiz.result.matchLabel')}
+                            {pruvodceText(lang, 'quiz.result.matchLabel')}
                           </p>
                           <h1 className="pp__nadpis-krok">{nazevApt(pruvodce.result!.primary)}</h1>
                           {profil?.traits ? <p className="pp__vysledek-vlastnosti">{profil.traits}</p> : null}
@@ -552,7 +706,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       );
                     })()}
                     <h2 className="pp__vysledek-dalsi">
-                      {pruvodceText(props.lang, 'quiz.result.altsHeading')}
+                      {pruvodceText(lang, 'quiz.result.altsHeading')}
                     </h2>
                     <div className="pp__dlazdice">
                       {pruvodce.result.alternatives.map((id) => {
@@ -603,7 +757,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                           if (pruvodce.phase === 'tie') {
                             setPruvodce(
                               odpovedRozstrel(
-                                props.lang,
+                                lang,
                                 pruvodce.mainAnswers,
                                 pruvodce.tieBoosts,
                                 o.key as TieAnswerKey,
@@ -612,7 +766,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                           } else {
                             setPruvodce(
                               odpovedHlavni(
-                                props.lang,
+                                lang,
                                 pruvodce.mainAnswers,
                                 pruvodce.tieBoosts,
                                 o.key as QuizAnswerKey,
@@ -630,11 +784,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                         className="pp__btn pp__btn--sms"
                         onClick={() =>
                           setPruvodce(
-                            pruvodceZpet(props.lang, pruvodce.mainAnswers, pruvodce.tieBoosts),
+                            pruvodceZpet(lang, pruvodce.mainAnswers, pruvodce.tieBoosts),
                           )
                         }
                       >
-                        {pruvodceText(props.lang, 'quiz.ui.back')}
+                        {pruvodceText(lang, 'quiz.ui.back')}
                       </button>
                     ) : (
                       <button
@@ -664,18 +818,32 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 <div className="pp__dlazdice">
                   {POPTAVKA_APARTMANY.map((a) => {
                     const on = apts.includes(a.id);
+                    const obs = prijezd && odjezd ? kal.aptObsazenyVeTerminu(a.id, prijezd, odjezd) : false;
+                    const cenaApt =
+                      ukazCeny && prijezd && odjezd && !obs
+                        ? kal.cenaProVyber(prijezd, odjezd, [a.id], false, slevaCesty)
+                        : null;
                     return (
                       <button
                         key={a.id}
                         type="button"
-                        className={`pp__dlazdice-polozka${on ? ' is-on' : ''}`}
-                        onClick={() =>
-                          setGalerie({ druh: 'apt', id: a.id, i: 0, zpetNa: 'apartmany' })
-                        }
+                        className={`pp__dlazdice-polozka${on ? ' is-on' : ''}${obs ? ' is-obsazeno' : ''}`}
+                        disabled={obs}
+                        onClick={() => {
+                          if (obs) return;
+                          setGalerie({ druh: 'apt', id: a.id, i: 0, zpetNa: 'apartmany' });
+                        }}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
                         <span className="pp__dlazdice-nazev">{nazevApt(a.id)}</span>
+                        {obs ? (
+                          <span className="pp__dlazdice-obsazeno">{kt.obsazeno}</span>
+                        ) : cenaApt ? (
+                          <span className="pp__dlazdice-cena">
+                            {formatKc(slevaCesty ? cenaApt.seSlevou : cenaApt.suma)} {kt.zaPobyt}
+                          </span>
+                        ) : null}
                         {on ? <span className="pp__dlazdice-vybrano">✓</span> : null}
                       </button>
                     );
@@ -712,7 +880,13 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       <p className="pp__maly-radek pp__maly-radek--kontakt">
                         <span className="pp__maly-termin">{souhrnTerminu}</span>
                         {souhrnVyberu ? (
-                          <span className="pp__maly-zbytek">{` · ${souhrnVyberu}`}</span>
+                          <span className="pp__maly-zbytek">{`\u00a0·\u00a0${souhrnVyberu}`}</span>
+                        ) : null}
+                        {ukazCeny && cenaVyberu ? (
+                          <span className="pp__maly-zbytek">
+                            {`\u00a0·\u00a0${formatKc(slevaCesty ? cenaVyberu.seSlevou : cenaVyberu.suma)}`}
+                            {slevaCesty ? ` ${kt.cenaSleva}` : ''}
+                          </span>
                         ) : null}
                       </p>
                     ) : null}
@@ -737,16 +911,18 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     required
                   />
                 </label>
-                <label>
-                  {t.telefon}
-                  <input
-                    type="tel"
-                    autoComplete="tel"
-                    value={telefon}
-                    onChange={(e) => setTelefon(e.target.value)}
-                    required
-                  />
-                </label>
+                <TelefonPole
+                  key={lang}
+                  lang={lang}
+                  label={t.telefon}
+                  chybaText={t.chybaTelefon}
+                  ukazujeChybu={telefonChyba}
+                  onBlurValidace={() => setTelefonChyba(true)}
+                  onChangeE164={(e164) => {
+                    setTelefon(e164);
+                    if (telefonChyba) setTelefonChyba(false);
+                  }}
+                />
                 {!vernost ? (
                   <fieldset>
                     <legend>{t.doprava}</legend>

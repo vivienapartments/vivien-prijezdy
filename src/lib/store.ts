@@ -1402,7 +1402,12 @@ export class UpstashProcessStore implements ProcessStore {
   }
 
   private rezKey(id: string): string {
-    return `rez:${id}`;
+    const cid = id.trim();
+    /** Preview: zkušební karty (ID začíná TEST) jen do test:rez:, ostré rez: se nemění. */
+    if (process.env.VERCEL_ENV === 'preview' && /^TEST/i.test(cid)) {
+      return `test:rez:${cid}`;
+    }
+    return `rez:${cid}`;
   }
 
   private async scanKeys(match: string): Promise<string[]> {
@@ -1445,7 +1450,11 @@ export class UpstashProcessStore implements ProcessStore {
 
   private zaznamZHodnoty(key: string, v: string | null): RezervaceEntry | null {
     if (!v) return null;
-    const id = key.startsWith('rez:') ? key.slice(4) : key;
+    const id = key.startsWith('test:rez:')
+      ? key.slice('test:rez:'.length)
+      : key.startsWith('rez:')
+        ? key.slice(4)
+        : key;
     try {
       const record = asRezervace(id, JSON.parse(v));
       if (!record) return this.chybejiciZaznam(id);
@@ -1500,10 +1509,14 @@ export class UpstashProcessStore implements ProcessStore {
   async listRezervace(): Promise<RezervaceEntry[]> {
     if (this.seznam) return this.seznam;
     const keys = await this.scanKeys('rez:*');
-    const hodnoty = await this.hodnotyKlicu(keys);
+    /** Preview: přidej zkušební karty, ostré rez:* se jen čtou. */
+    const testKeys =
+      process.env.VERCEL_ENV === 'preview' ? await this.scanKeys('test:rez:*') : [];
+    const vse = [...keys, ...testKeys];
+    const hodnoty = await this.hodnotyKlicu(vse);
     const out: RezervaceEntry[] = [];
-    for (let i = 0; i < keys.length; i += 1) {
-      const zaznam = this.zaznamZHodnoty(keys[i], hodnoty[i] ?? null);
+    for (let i = 0; i < vse.length; i += 1) {
+      const zaznam = this.zaznamZHodnoty(vse[i], hodnoty[i] ?? null);
       if (zaznam) out.push(zaznam);
     }
     this.seznam = out;

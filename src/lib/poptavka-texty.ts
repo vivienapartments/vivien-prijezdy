@@ -5,6 +5,8 @@
  */
 
 import { doporuceniTexty } from './doporuceni-texty';
+import { DEKUJEME_POTVRDIME, UVOD_VERNOST_CENA } from './poptavka-ceny-texty';
+import { doporucitelUiTexty } from './poptavka-doporucitel-ui';
 import { poptavkaTextyVernost } from './poptavka-texty-vernost';
 import type { PoptavkaZdroj } from './poptavka';
 import type { GuideLang } from './types';
@@ -74,6 +76,24 @@ export type PoptavkaTexty = {
   chybaApartman: string;
   chybaObecna: string;
   chybaBlok: string;
+  /** Neplatný telefon (všechny zdroje). */
+  chybaTelefon: string;
+};
+
+const CHYBA_TELEFON: Record<GuideLang, string> = {
+  cs: 'Zkontrolujte telefonní číslo, i s předvolbou.',
+  en: 'Please check the phone number, including the country code.',
+  de: 'Bitte prüfen Sie die Telefonnummer samt Ländervorwahl.',
+  pl: 'Sprawdźcie numer telefonu razem z numerem kierunkowym kraju.',
+  uk: 'Перевірте номер телефону разом із кодом країни.',
+  'zh-Hant': '請檢查電話號碼，包括國碼。',
+  es: 'Comprueben el número de teléfono, con el prefijo del país.',
+  fr: 'Vérifiez le numéro de téléphone, avec l’indicatif du pays.',
+  it: 'Controllate il numero di telefono, con il prefisso internazionale.',
+  pt: 'Verifiquem o número de telefone, com o indicativo do país.',
+  sv: 'Kontrollera telefonnumret, inklusive landsnummer.',
+  hu: 'Ellenőrizzék a telefonszámot az országhívószámmal együtt.',
+  da: 'Tjek telefonnummeret, inklusive landekode.',
 };
 
 const CS: PoptavkaTexty = {
@@ -134,6 +154,7 @@ const CS: PoptavkaTexty = {
   chybaApartman: 'Vyberte aspoň jeden apartmán, nebo zvolte doporučení od nás.',
   chybaObecna: 'Poptávku teď nešlo uložit. Zavolejte nebo napište.',
   chybaBlok: 'Příliš mnoho pokusů. Zkuste to později, nebo zavolejte.',
+  chybaTelefon: CHYBA_TELEFON.cs,
 };
 
 const EN: PoptavkaTexty = {
@@ -194,10 +215,28 @@ const EN: PoptavkaTexty = {
   chybaApartman: 'Pick at least one apartment, or choose our recommendation.',
   chybaObecna: 'We could not save the request. Please call or write.',
   chybaBlok: 'Too many attempts. Try later, or call us.',
+  chybaTelefon: CHYBA_TELEFON.en,
 };
 
-export function poptavkaTexty(lang: GuideLang, zdroj?: PoptavkaZdroj): PoptavkaTexty {
-  if (zdroj === 'vernost') return poptavkaTextyVernost(lang);
+/**
+ * @param cenyZapnuto výchozí true. Vypnuto = staré texty „pošleme cenu“.
+ */
+export function poptavkaTexty(
+  lang: GuideLang,
+  zdroj?: PoptavkaZdroj,
+  cenyZapnuto = true,
+): PoptavkaTexty {
+  const chybaTelefon = CHYBA_TELEFON[lang] || CHYBA_TELEFON.en;
+  if (zdroj === 'vernost') {
+    const base = poptavkaTextyVernost(lang);
+    if (!cenyZapnuto) return { ...base, chybaTelefon };
+    return {
+      ...base,
+      uvod: UVOD_VERNOST_CENA[lang] || UVOD_VERNOST_CENA.en,
+      dekujeme: DEKUJEME_POTVRDIME[lang] || DEKUJEME_POTVRDIME.en,
+      chybaTelefon,
+    };
+  }
   if (zdroj === 'doporucitel') {
     const base = poptavkaTextyVernost(lang);
     const d = doporuceniTexty(lang);
@@ -208,9 +247,27 @@ export function poptavkaTexty(lang: GuideLang, zdroj?: PoptavkaZdroj): PoptavkaT
       sleva: '',
       nadpisApartmany: d.poptavkaNadpisApartmany,
       nadpisOdeslano: d.poptavkaNadpisOdeslano,
+      dekujeme: cenyZapnuto
+        ? DEKUJEME_POTVRDIME[lang] || DEKUJEME_POTVRDIME.en
+        : base.dekujeme,
+      chybaTelefon,
     };
   }
-  return lang === 'cs' ? CS : EN;
+  /** Firma: staré texty (bez „ceny hned“ / „blokujeme termín“). */
+  if (zdroj === 'firma') {
+    const base = lang === 'cs' ? CS : EN;
+    return { ...base, chybaTelefon };
+  }
+  const base = lang === 'cs' ? CS : EN;
+  if (!cenyZapnuto) return { ...base, chybaTelefon };
+  /** Běžná poptávka: poslední věta o ceně → napověda, děkujeme → potvrzení termínu. */
+  const napoveda = doporucitelUiTexty(lang).poptavkaNapoveda;
+  return {
+    ...base,
+    uvod: napoveda,
+    dekujeme: DEKUJEME_POTVRDIME[lang] || DEKUJEME_POTVRDIME.en,
+    chybaTelefon,
+  };
 }
 
 /** Štítek na první obrazovce doporučeného hosta. */

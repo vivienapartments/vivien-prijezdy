@@ -116,3 +116,16 @@ export function zlatSlevaVTextu(text: string): { pred: string; sleva: string; po
     po: text.slice(m.index + m[0].length),
   };
 }
+
+/** Zvýrazní „3 výhody“ (a obdobu) zlatě ve výzvě. */
+export function zlatTriVyhodyVTextu(text: string): { pred: string; vyhody: string; po: string } | null {
+  const m = text.match(
+    /(3\s+výhody|3\s+benefits|3\s+Vorteile|3\s+korzyści|3\s+переваги|3\s+項優惠|3\s+ventajas|3\s+avantages|3\s+vantaggi|3\s+vantagens|3\s+förmåner|3\s+előnnyel|3\s+fordele)/i,
+  );
+  if (!m || m.index == null) return null;
+  return {
+    pred: text.slice(0, m.index),
+    vyhody: m[0],
+    po: text.slice(m.index + m[0].length),
+  };
+}

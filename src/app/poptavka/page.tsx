@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { nactiOsobuPodleKodu } from '@/lib/doporuceni';
 import { firmaZKodu, normalizujKod, type PoptavkaZdroj } from '@/lib/poptavka';
 import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
@@ -65,6 +66,17 @@ export default async function PoptavkaPage({ searchParams }: Props) {
   if (od && zdroj === 'obecna') {
     zdroj = 'doporucitel';
     doporucitelKod = od;
+    try {
+      const store = createProcessStore();
+      const osoba = await nactiOsobuPodleKodu(store, od);
+      const posledni = osoba?.rezervace?.[osoba.rezervace.length - 1];
+      if (posledni) {
+        const rec = await store.getRezervace(posledni);
+        if (rec?.jazyk && GUIDE_LANGS.includes(rec.jazyk)) lang = rec.jazyk;
+      }
+    } catch {
+      /* zůstane cs / výchozí */
+    }
   }
 
   if (q.lang && GUIDE_LANGS.includes(q.lang as GuideLang) && (zdroj !== 'vernost' || suchyBeh)) {

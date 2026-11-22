@@ -82,6 +82,7 @@ import {
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
+import { KalendarPrehled } from './KalendarPrehled';
 import { CoDoplnit, StitkyDoplnit14 } from './CoDoplnit';
 import { Dnesek } from './Dnesek';
 import { FakturaDetail, FakturaStitek, FakturyDomu } from './FakturaAdmin';
@@ -5928,6 +5929,7 @@ export function PrehledClient({
             );
           })}
         </div>
+        {pohledDomu ? <KalendarPrehled /> : null}
         {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu ? (
           <div className={zalozka === 'prijezdy' || !pohledDomu ? 'ph-den is-on' : 'ph-den'}>
             <div className="ph-den__radek">

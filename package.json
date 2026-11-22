@@ -15,6 +15,7 @@
   "dependencies": {
     "dotenv": "^17.2.3",
     "imapflow": "^2.3.0",
+    "libphonenumber-js": "^1.13.17",
     "mailauth": "^4.13.3",
     "mailparser": "^3.9.37",
     "next": "^15.5.27",
@@ -24,7 +25,8 @@
     "react-dom": "19.1.0",
     "sass": "^1.105.1",
     "vokativ": "^1.0.1",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

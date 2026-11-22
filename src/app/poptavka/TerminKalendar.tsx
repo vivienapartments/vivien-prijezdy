@@ -50,6 +50,15 @@ function nazevMesice(d: Date, lang: GuideLang): string {
   return MESIC[key].format(d);
 }
 
+export type DenInfoKalendare = {
+  /** Plno (5/5) – nejde jako noc, odjezd ano. */
+  plno: boolean;
+  /** Nejde jako příjezd. */
+  bezPrijezdu: boolean;
+  /** Nejnižší cena volného apt (null = nezobrazit). */
+  cenaOd: number | null;
+};
+
 type Props = {
   label: string;
   value: string;
@@ -59,9 +68,28 @@ type Props = {
   /** Text v prázdném poli (např. Vyberte datum). */
   prazdnyText?: string;
   onChange: (ymd: string) => void;
+  /** Režim příjezdu: blokuje plno i bezPrijezdu. Odjezd: blokuje jen dny před min. */
+  rezim?: 'prijezd' | 'odjezd';
+  denInfo?: (ymd: string) => DenInfoKalendare | null;
+  plnoLabel?: string;
+  ukazCeny?: boolean;
+  legenda?: string;
 };
 
-export function TerminPole({ label, value, min, lang, zavritLabel, prazdnyText, onChange }: Props) {
+export function TerminPole({
+  label,
+  value,
+  min,
+  lang,
+  zavritLabel,
+  prazdnyText,
+  onChange,
+  rezim = 'prijezd',
+  denInfo,
+  plnoLabel,
+  ukazCeny,
+  legenda,
+}: Props) {
   const [otevreno, setOtevreno] = useState(false);
   const minDate = parseYmd(min) || new Date();
   const selected = parseYmd(value);
@@ -76,16 +104,33 @@ export function TerminPole({ label, value, min, lang, zavritLabel, prazdnyText, 
     const first = startOfMonth(kurz);
     const pad = weekdayMon0(first);
     const daysInMonth = new Date(kurz.getFullYear(), kurz.getMonth() + 1, 0).getDate();
-    const cells: ({ ymd: string; day: number; disabled: boolean } | null)[] = [];
+    const cells: ({
+      ymd: string;
+      day: number;
+      disabled: boolean;
+      plno: boolean;
+      cenaOd: number | null;
+    } | null)[] = [];
     for (let i = 0; i < pad; i++) cells.push(null);
     for (let day = 1; day <= daysInMonth; day++) {
       const d = new Date(kurz.getFullYear(), kurz.getMonth(), day);
       const ymd = toYmd(d);
-      const disabled = ymd < min;
-      cells.push({ ymd, day, disabled });
+      const info = denInfo?.(ymd) || null;
+      let disabled = ymd < min;
+      if (!disabled && rezim === 'prijezd' && info) {
+        if (info.plno || info.bezPrijezdu) disabled = true;
+      }
+      // Odjezd: plný den jako noc nejde, ale jako den odjezdu ano → neblokovat plno u odjezdu
+      cells.push({
+        ymd,
+        day,
+        disabled,
+        plno: Boolean(info?.plno),
+        cenaOd: info?.cenaOd ?? null,
+      });
     }
     return cells;
-  }, [kurz, min]);
+  }, [kurz, min, denInfo, rezim]);
 
   const text = value ? formatDatumPoptavky(value, lang) : prazdnyText || '—';
 
@@ -132,20 +177,26 @@ export function TerminPole({ label, value, min, lang, zavritLabel, prazdnyText, 
                   <button
                     key={c.ymd}
                     type="button"
-                    className={`pp__kalendar-den${c.ymd === value ? ' is-on' : ''}${c.disabled ? ' is-off' : ''}`}
+                    className={`pp__kalendar-den${c.ymd === value ? ' is-on' : ''}${c.disabled ? ' is-off' : ''}${c.plno ? ' is-plno' : ''}`}
                     disabled={c.disabled}
                     onClick={() => {
                       onChange(c.ymd);
                       setOtevreno(false);
                     }}
                   >
-                    {c.day}
+                    <span className={`pp__kalendar-cislo${c.plno ? ' is-skrtnute' : ''}`}>{c.day}</span>
+                    {c.plno && plnoLabel ? (
+                      <span className="pp__kalendar-plno">{plnoLabel}</span>
+                    ) : ukazCeny && c.cenaOd != null ? (
+                      <span className="pp__kalendar-cena">{c.cenaOd}</span>
+                    ) : null}
                   </button>
                 ) : (
                   <span key={`e-${i}`} className="pp__kalendar-den is-empty" />
                 ),
               )}
             </div>
+            {ukazCeny && legenda ? <p className="pp__kalendar-legenda">{legenda}</p> : null}
             <button type="button" className="pp__btn pp__btn--sms" onClick={() => setOtevreno(false)}>
               {zavritLabel}
             </button>
