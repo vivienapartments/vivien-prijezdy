@@ -250,7 +250,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     }
     if (!telefonOk()) {
       setTelefonChyba(true);
-      setChyba(t.chybaTelefon);
       return;
     }
     setTelefonChyba(false);

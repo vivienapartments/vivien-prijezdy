@@ -3,10 +3,12 @@
  * Etapa 1: bez ostrých cen z Better Hotelu.
  */
 
-import { apartmany } from './guide-data';
+import { apartmany, aptRecord } from './guide-data';
 import { NIKOL_PHONE, PARKING_OWNER_PHONE } from './constants';
+import { formatKc, tvarNoci } from './kalendar-texty';
 import { odkazSmsPodekovani } from './podekovani';
 import { doporucitelUiTexty } from './poptavka-doporucitel-ui';
+import { formatRozsahPoptavky } from './poptavka-texty';
 import type { AptId, GuideLang } from './types';
 import { APT_IDS } from './types';
 import { odkazWhatsApp } from './whatsapp-zprava';
@@ -195,18 +197,40 @@ export function odkazSmsPoptavky(text: string, ios: boolean): string {
   return odkazSmsPodekovani(POPTAVKA_TEL_ZPRAVY, text, ios);
 }
 
-export function textTelegramPoptavky(z: PoptavkaZaznam): string {
+export type TelegramPoptavkaOpts = {
+  cenaKc?: number | null;
+  seSlevouKc?: number | null;
+  slevaPct?: number | null;
+  doporucitelJmeno?: string | null;
+};
+
+export function textTelegramPoptavky(z: PoptavkaZaznam, opts: TelegramPoptavkaOpts = {}): string {
   const noci = nociMezi(z.prijezd, z.odjezd);
+  const termin = `${formatRozsahPoptavky(z.prijezd, z.odjezd, 'cs')} · ${tvarNoci(noci, 'cs')}`;
   const apt = z.libovolnyApartman
-    ? 'libovolný'
+    ? 'libovolný apartmán'
     : z.apartmany.length
-      ? z.apartmany.join('+')
+      ? z.apartmany.map((id) => aptRecord(id).nazev.cs).join(', ')
       : '?';
-  const kdo = z.firmaNazev || z.rezervace || z.doporucitelKod || z.zdroj;
-  const zaklad = `Poptávka ${kdo}: ${z.jmeno}, ${z.prijezd}→${z.odjezd} (${noci} n.), ${apt}, ${z.telefon}`;
-  if (z.kanal === 'whatsapp') return `${zaklad}\nhost pokračuje na WhatsApp`;
-  if (z.kanal === 'sms') return `${zaklad}\nhost pokračuje na SMS`;
-  return zaklad;
+  let odkud = 'web';
+  if (z.zdroj === 'vernost') odkud = 'věrný host';
+  else if (z.zdroj === 'firma') odkud = `firma: ${z.firmaNazev || z.firmaKod || '?'}`;
+  else if (z.zdroj === 'doporucitel') {
+    odkud = `doporučení od: ${opts.doporucitelJmeno || z.doporucitelKod || '?'}`;
+  }
+  const radky = [`Poptávka: ${z.jmeno}`, termin, apt];
+  if (opts.seSlevouKc != null && opts.slevaPct != null && opts.slevaPct > 0) {
+    radky.push(`${formatKc(opts.seSlevouKc)}, sleva ${opts.slevaPct} %`);
+  } else if (opts.cenaKc != null) {
+    radky.push(formatKc(opts.cenaKc));
+  }
+  radky.push(odkud, `jazyk: ${z.jazyk}`, z.telefon);
+  if (z.poznamka.trim()) radky.push(`poznámka: ${z.poznamka.trim().slice(0, 200)}`);
+  if (z.kanal === 'whatsapp') radky.push('host pokračuje na WhatsApp');
+  if (z.kanal === 'sms') radky.push('host pokračuje na SMS');
+  let text = radky.join('\n');
+  if (z.rezervace && /^TEST/i.test(z.rezervace)) text = `ZKOUŠKA\n${text}`;
+  return text;
 }
 
 export function novyIdPoptavky(now = new Date()): string {

@@ -492,6 +492,7 @@ export interface ProcessStore {
   listOtevrenaPrani(): Promise<OtevrenaPraniPolozka[]>;
   listPoptavky(): Promise<PoptavkaZaznam[]>;
   pridejPoptavku(zaznam: PoptavkaZaznam): Promise<void>;
+  ulozPoptavky(seznam: PoptavkaZaznam[]): Promise<void>;
   /** Trvalý klíč (JSON string). Bez TTL. */
   getKv(key: string): Promise<string | null>;
   setKv(key: string, value: string): Promise<void>;
@@ -1319,6 +1320,12 @@ export class FileProcessStore implements ProcessStore {
     this.write(data);
   }
 
+  async ulozPoptavky(seznam: PoptavkaZaznam[]): Promise<void> {
+    const data = this.read();
+    data.poptavky = nactiPoptavkySeznam(seznam);
+    this.write(data);
+  }
+
   async getKv(key: string): Promise<string | null> {
     const k = key.trim();
     if (!k) return null;
@@ -1839,6 +1846,10 @@ export class UpstashProcessStore implements ProcessStore {
   async pridejPoptavku(zaznam: PoptavkaZaznam): Promise<void> {
     const list = await this.listPoptavky();
     await this.cmd('SET', 'poptavky:seznam', JSON.stringify(nactiPoptavkySeznam([zaznam, ...list])));
+  }
+
+  async ulozPoptavky(seznam: PoptavkaZaznam[]): Promise<void> {
+    await this.cmd('SET', 'poptavky:seznam', JSON.stringify(nactiPoptavkySeznam(seznam)));
   }
 
   async getKv(key: string): Promise<string | null> {

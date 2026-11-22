@@ -3752,3 +3752,63 @@
   font-size: 0.85rem;
   opacity: 0.8;
 }
+.ph-poptavka {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(10, 8, 6, 0.72);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.ph-poptavka__vnitr {
+  width: min(100%, 420px);
+  max-height: 90vh;
+  overflow: auto;
+  background: #1c1712;
+  color: #e6dccb;
+  border: 1px solid #5a4e40;
+  border-radius: 14px 14px 0 0;
+  padding: 1rem 1rem 1.25rem;
+}
+
+.ph-poptavka__zavrit {
+  float: right;
+  border: 0;
+  background: transparent;
+  color: #c9a84c;
+  cursor: pointer;
+}
+
+.ph-poptavka__zkouska {
+  color: #c9a84c;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ph-poptavka__chyba {
+  color: #e07a7a;
+}
+
+.ph-poptavka__akce {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.ph-poptavka__akce .ph-btn,
+.ph-poptavka__akce a.ph-btn {
+  display: block;
+  text-align: center;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 168, 76, 0.5);
+  background: rgba(201, 168, 76, 0.15);
+  color: #e6dccb;
+  text-decoration: none;
+  font-weight: 650;
+  cursor: pointer;
+}

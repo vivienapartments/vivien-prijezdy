@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CountryCode } from 'libphonenumber-js';
 import type { GuideLang } from '@/lib/types';
 import {
@@ -29,6 +29,7 @@ export function TelefonPole(props: Props) {
   const [narodni, setNarodni] = useState('');
   const [otevreno, setOtevreno] = useState(false);
   const [hledani, setHledani] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const aktualni: TelefonPredvolba =
     vse.find((x) => x.iso === iso) ||
@@ -49,6 +50,50 @@ export function TelefonPole(props: Props) {
     props.onChangeE164(naE164(fmt, zeme) || '');
   }
 
+  function zapisZHodnoty(raw: string) {
+    const t = raw.trim();
+    if (!t) {
+      setNarodni('');
+      props.onChangeE164('');
+      return;
+    }
+    if (t.startsWith('+') || t.startsWith('00')) {
+      const roz = rozeberVlozene(t, iso);
+      setIso(roz.iso);
+      setNarodni(roz.narodni);
+      syncE164(roz.narodni, roz.iso);
+      return;
+    }
+    const jenCislice = t.replace(/\D/g, '');
+    if (jenCislice.length >= 11) {
+      const roz = rozeberVlozene(t.startsWith('+') ? t : `+${jenCislice}`, iso);
+      setIso(roz.iso);
+      setNarodni(roz.narodni);
+      syncE164(roz.narodni, roz.iso);
+      return;
+    }
+    const fmt = formatujCisloProZobrazeni(raw, iso);
+    setNarodni(fmt);
+    syncE164(fmt, iso);
+  }
+
+  /** Prohlížečové doplnění někdy nepřijde přes onChange. */
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    function zDomu() {
+      const v = el!.value;
+      if (v && v !== narodni) zapisZHodnoty(v);
+    }
+    el.addEventListener('change', zDomu);
+    el.addEventListener('input', zDomu);
+    return () => {
+      el.removeEventListener('change', zDomu);
+      el.removeEventListener('input', zDomu);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iso, narodni]);
+
   return (
     <label className="pp__telefon">
       {props.label}
@@ -62,29 +107,21 @@ export function TelefonPole(props: Props) {
         >
           <span aria-hidden="true">{aktualni.vlajka}</span>
           <span>{aktualni.dial}</span>
-          <span aria-hidden="true">▾</span>
         </button>
         <input
+          ref={inputRef}
           type="tel"
           inputMode="tel"
-          autoComplete="tel"
+          autoComplete="tel-national"
+          name="tel-national"
           className="pp__telefon-cislo"
           placeholder={placeholderCisla(iso)}
           value={narodni}
-          onChange={(e) => {
-            const raw = e.target.value;
-            if (raw.trim().startsWith('+') || raw.trim().startsWith('00')) {
-              const roz = rozeberVlozene(raw, iso);
-              setIso(roz.iso);
-              setNarodni(roz.narodni);
-              syncE164(roz.narodni, roz.iso);
-              return;
-            }
-            const fmt = formatujCisloProZobrazeni(raw, iso);
-            setNarodni(fmt);
-            syncE164(fmt, iso);
+          onChange={(e) => zapisZHodnoty(e.target.value)}
+          onBlur={(e) => {
+            zapisZHodnoty(e.target.value);
+            props.onBlurValidace();
           }}
-          onBlur={() => props.onBlurValidace()}
         />
       </div>
       {otevreno ? (

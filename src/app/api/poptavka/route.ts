@@ -2,13 +2,14 @@ import { createHash } from 'crypto';
 import { NextResponse } from 'next/server';
 import { jeBlokPokus, zapisPokus } from '@/lib/okno-pobytu';
 import { vytvorDoporuceni } from '@/lib/doporuceni';
-import { aptyVolneVeTerminu } from '@/lib/kalendar-denni';
+import { aptyVolneVeTerminu, nejlevnejsiVolnyPobyt } from '@/lib/kalendar-denni';
 import { sestavKalendarProHosta } from '@/lib/kalendar-uloziste';
 import {
   firmaZKodu,
   filtrApartmany,
   novyIdPoptavky,
   overTerminy,
+  POPTAVKA_SLEVA_PCT,
   textTelegramPoptavky,
   type PoptavkaZaznam,
   type PoptavkaZdroj,
@@ -150,9 +151,11 @@ export async function POST(req: Request) {
     stav: 'nova',
   };
 
+  let dnyKal = null as Awaited<ReturnType<typeof sestavKalendarProHosta>>['dny'] | null;
   try {
-    const { dny } = await sestavKalendarProHosta(store);
-    const volne = aptyVolneVeTerminu(dny, zaznam.prijezd, zaznam.odjezd);
+    const kal = await sestavKalendarProHosta(store);
+    dnyKal = kal.dny;
+    const volne = aptyVolneVeTerminu(kal.dny, zaznam.prijezd, zaznam.odjezd);
     if (zaznam.libovolnyApartman || zaznam.apartmany.length === 0) {
       if (volne.length === 0) {
         return NextResponse.json(
@@ -184,7 +187,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, duvod: 'ulozit' }, { status: 500, headers: noStore });
   }
 
-  let tg = textTelegramPoptavky(zaznam);
+  const slevaCesty = zdroj === 'vernost' || zdroj === 'doporucitel';
+  let cenaKc: number | null = null;
+  let seSlevouKc: number | null = null;
+  let slevaPct: number | null = null;
+  if (dnyKal) {
+    const cena = nejlevnejsiVolnyPobyt(
+      dnyKal,
+      zaznam.prijezd,
+      zaznam.odjezd,
+      zaznam.libovolnyApartman || !zaznam.apartmany.length ? undefined : zaznam.apartmany,
+    );
+    if (cena) {
+      cenaKc = cena.suma;
+      if (slevaCesty) {
+        seSlevouKc = cena.seSlevou;
+        slevaPct = POPTAVKA_SLEVA_PCT;
+      }
+    }
+  }
+
+  let doporucitelJmeno: string | null = null;
+  let tgExtra = '';
   if (zdroj === 'doporucitel' && doporucitelKod) {
     try {
       const d = await vytvorDoporuceni(store, {
@@ -195,17 +219,30 @@ export async function POST(req: Request) {
         prijezd: zaznam.prijezd,
         odjezd: zaznam.odjezd,
       });
-      tg = `${tg}\n${d.telegramPoznamka}`;
+      doporucitelJmeno = d.doporucitel?.jmeno || null;
       if (d.slevaPct == null) {
-        tg = tg.replace(/\n?Sleva \d+ %[^\n]*/i, '');
+        seSlevouKc = null;
+        slevaPct = null;
+      } else if (d.telegramPoznamka && /mnoho poptávek/i.test(d.telegramPoznamka)) {
+        tgExtra = `\nZkontroluj kód ${doporucitelKod}, mnoho poptávek.`;
       }
     } catch (err) {
       console.error('poptavka: doporuceni', err instanceof Error ? err.message : err);
-      tg = `${tg}\nDoporučení: neznámý kód ${doporucitelKod}.`;
+      tgExtra = `\nDoporučení: neznámý kód ${doporucitelKod}.`;
     }
   }
 
-  await upozorniMajitele(store, tg, '/prehled', { telegram: 'zadost' });
+  const tg =
+    textTelegramPoptavky(zaznam, {
+      cenaKc,
+      seSlevouKc,
+      slevaPct,
+      doporucitelJmeno,
+    }) + tgExtra;
+
+  await upozorniMajitele(store, tg, `/prehled?poptavka=${encodeURIComponent(zaznam.id)}`, {
+    telegram: 'zadost',
+  });
 
   return NextResponse.json({ ok: true, id: zaznam.id }, { headers: noStore });
 }

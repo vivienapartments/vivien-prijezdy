@@ -29,6 +29,7 @@ import {
 } from '@/lib/prehled';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
 import { ukolZUpozorneniUrl, zpravaZUpozorneniUrl, type UkolUpozorneni } from '@/lib/prehled-odkaz';
+import { PoptavkaDetail } from './PoptavkaDetail';
 import { cekaWhatsAppPoPruvodci } from '@/lib/pruvodce-wa-stav';
 import { textSchvaleniOdjezduOdeslat } from '@/lib/odjezd-souhlas';
 import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
@@ -514,12 +515,28 @@ export function PrehledClient({
   const [detailSekce, setDetailSekce] = useState<Record<string, DetailSekceId[]>>({});
   const [hledatDotaz, setHledatDotaz] = useState('');
   const [kontaktUlozen, setKontaktUlozen] = useState<Record<string, string>>({});
+  const [poptavkaId, setPoptavkaId] = useState<string | null>(null);
 
   useEffect(() => {
     setRadky(rows);
     setSloty(nactiBranu(brana));
     setBranaOk(branaPotvrzena);
   }, [rows, brana, branaPotvrzena]);
+
+  useEffect(() => {
+    function nactiPoptavkuZUrl() {
+      try {
+        const q = new URLSearchParams(window.location.search);
+        const id = (q.get('poptavka') || '').trim();
+        setPoptavkaId(id || null);
+      } catch {
+        setPoptavkaId(null);
+      }
+    }
+    nactiPoptavkuZUrl();
+    window.addEventListener('popstate', nactiPoptavkuZUrl);
+    return () => window.removeEventListener('popstate', nactiPoptavkuZUrl);
+  }, []);
 
   function rozbalDetailKarty(cislo: string) {
     setRozbalene((prev) => ({ ...prev, [cislo]: true }));
@@ -5867,6 +5884,21 @@ export function PrehledClient({
 
   return (
     <main className="ph">
+      {poptavkaId ? (
+        <PoptavkaDetail
+          id={poptavkaId}
+          onZavrit={() => {
+            setPoptavkaId(null);
+            try {
+              const u = new URL(window.location.href);
+              u.searchParams.delete('poptavka');
+              window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+            } catch {
+              /* */
+            }
+          }}
+        />
+      ) : null}
       {radky
         .filter((row) => row.nelzeNacist)
         .map((row) => (

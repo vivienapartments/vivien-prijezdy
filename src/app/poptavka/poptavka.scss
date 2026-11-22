@@ -1393,6 +1393,15 @@
 .pp__telefon-cislo {
   flex: 1 1 auto;
   min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.pp__telefon-cislo::-webkit-contacts-auto-fill-button,
+.pp__telefon-cislo::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
 }
 
 .pp__telefon-seznam {
