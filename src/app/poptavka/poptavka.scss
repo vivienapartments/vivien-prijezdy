@@ -962,10 +962,17 @@
   text-align: center;
 }
 
-.pp--doporuceny .pp__btn--tlumeny,
+/* Zlaté výplňové tlačítko: vždy tmavý text (ne zlatý na zlatém). */
 .pp--doporuceny .pp__btn--hlavni {
+  border: 0;
+  background: #c9a84c;
+  color: #1a1510;
+}
+
+.pp--doporuceny .pp__btn--tlumeny {
   border-color: #c9a84c;
   color: #c9a84c;
+  background: transparent;
 }
 
 .pp--doporuceny .pp__termin-tlacitko {

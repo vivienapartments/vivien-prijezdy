@@ -729,7 +729,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       <p className="pp__maly-radek pp__maly-radek--kontakt">
                         <span className="pp__maly-termin">{souhrnTerminu}</span>
                         {souhrnVyberu ? (
-                          <span className="pp__maly-zbytek">{` · ${souhrnVyberu}`}</span>
+                          <span className="pp__maly-zbytek">{`\u00a0·\u00a0${souhrnVyberu}`}</span>
                         ) : null}
                       </p>
                     ) : null}
