@@ -171,9 +171,11 @@ export function Expired({
     seznamRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, []);
 
-  const poptavkaHref = token
-    ? `/poptavka?t=${encodeURIComponent(token)}`
-    : '/poptavka';
+  /* Věrnostní poptávka (včera schválená). Zkouška /nahled → ?zkouska=1. Ostrý host → ?t=token. */
+  const poptavkaHref =
+    !token || token === 'nahled'
+      ? '/poptavka?zkouska=1'
+      : `/poptavka?t=${encodeURIComponent(token)}`;
 
   const pridejNaPlochu = useCallback(() => {
     const btn = plochaBtnRef.current?.querySelector('button');
