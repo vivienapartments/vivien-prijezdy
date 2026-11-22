@@ -46,6 +46,7 @@ import { GUIDE_LANGS, type AptId, type GuideLang } from '@/lib/types';
 import { JazykPrepinac } from './JazykPrepinac';
 import { PoptavkaPlochaRoot, PoptavkaPlochaTlacitko } from './PoptavkaPlocha';
 import { TelefonPole } from './TelefonPole';
+import { nazevDlazdice } from '@/lib/poptavka-nazev-dlazdice';
 import { TerminPole } from './TerminKalendar';
 import { usePoptavkaKalendar } from './usePoptavkaKalendar';
 import { VyberJazyka } from './VyberJazyka';
@@ -187,6 +188,10 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   function nazevApt(id: AptId): string {
     const a = apartmany.find((x) => x.id === id);
     return lang === 'cs' ? a?.nazev.cs || id : a?.nazev.en || id;
+  }
+
+  function nazevNaDlazdici(id: AptId): string {
+    return nazevDlazdice(id, lang, nazevApt(id));
   }
 
   function overTermin(): boolean {
@@ -723,7 +728,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
-                            <span className="pp__dlazdice-nazev">{nazevApt(id)}</span>
+                            <span className="pp__dlazdice-text">
+                              <span className="pp__dlazdice-nazev">{nazevNaDlazdici(id)}</span>
+                            </span>
                           </button>
                         );
                       })}
@@ -836,14 +843,24 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
-                        <span className="pp__dlazdice-nazev">{nazevApt(a.id)}</span>
-                        {obs ? (
-                          <span className="pp__dlazdice-obsazeno">{kt.obsazeno}</span>
-                        ) : cenaApt ? (
-                          <span className="pp__dlazdice-cena">
-                            {formatKc(slevaCesty ? cenaApt.seSlevou : cenaApt.suma)} {kt.zaPobyt}
-                          </span>
-                        ) : null}
+                        {obs ? <span className="pp__dlazdice-stitok">{kt.obsazeno}</span> : null}
+                        <span className="pp__dlazdice-text">
+                          <span className="pp__dlazdice-nazev">{nazevNaDlazdici(a.id)}</span>
+                          {obs ? (
+                            <span className="pp__dlazdice-obsazeno">{kt.obsazeno}</span>
+                          ) : cenaApt ? (
+                            <span className="pp__dlazdice-cena">
+                              {formatKc(slevaCesty ? cenaApt.seSlevou : cenaApt.suma)} {kt.zaPobyt}
+                              {slevaCesty ? (
+                                <span className="pp__dlazdice-sleva"> · {kt.cenaSleva}</span>
+                              ) : null}
+                            </span>
+                          ) : (
+                            <span className="pp__dlazdice-obsazeno" aria-hidden="true">
+                              &nbsp;
+                            </span>
+                          )}
+                        </span>
                         {on ? <span className="pp__dlazdice-vybrano">✓</span> : null}
                       </button>
                     );
@@ -855,7 +872,12 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={galerieKompletCoverUrl(webLang)} alt="" width={400} height={260} />
-                    <span className="pp__dlazdice-nazev">{t.galerieKomplet}</span>
+                    <span className="pp__dlazdice-text">
+                      <span className="pp__dlazdice-nazev">{t.galerieKomplet}</span>
+                      <span className="pp__dlazdice-obsazeno" aria-hidden="true">
+                        &nbsp;
+                      </span>
+                    </span>
                   </button>
                 </div>
                 {!vernost ? (

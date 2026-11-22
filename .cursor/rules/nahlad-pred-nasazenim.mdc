@@ -12,6 +12,16 @@ Majitel chce věci **sám vyzkoušet**, než to uvidí hosté. Nestačí jen tes
 2. Počkej, až majitel řekne, že to vyzkoušel / souhlasí, **nebo** výslovně „nasaď i bez dalšího zkoušení“.
 3. Nepiš „je to hotové, nasaď“, dokud nemá jak to kliknout očima a rukou v náhledu vpravo.
 
+## Výjimka: OPRAVY-PO-TESTU-1 (22. 11. 2026)
+Majitel potřebuje kontroly **na mobilu na ostré**. U oprav z `OPRAVY-PO-TESTU-1.md` **nečekej na „nasaď“**. Po každé hotové dávce rovnou slouč do `master`, pushni a nasaď na ostrou:
+
+1. dlaždice + šířka notebooku + viditelná sleva
+2. jazyk roletkou
+3. kalendář a obsazenost
+4. telefon a Telegram
+
+Po každém nasazení napiš **jednou větou**, co se změnilo a že to může zkontrolovat na mobilu na ostré.
+
 ## Jak majitel požádá (stačí jedna věta)
 - „ukaž náhled“
 - „ať to vyzkouším“
@@ -25,4 +35,4 @@ Na to **vždy** otevři `npm run dev` (když ještě neběží) a stránku v pra
 - Telegram zůstává jen pro skutečná upozornění aplikace (poptávky, příjezdy, chyby).
 
 ## Po opravě chyby z provozu
-Nejdřív oprava + lokální náhled vpravo. Hostovi „zkus znovu“ až po nasazení („nasaď“).
+Nejdřív oprava + lokální náhled vpravo. Hostovi „zkus znovu“ až po nasazení („nasaď“ nebo výjimka výše).
