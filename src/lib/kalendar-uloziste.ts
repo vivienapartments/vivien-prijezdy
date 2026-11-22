@@ -46,6 +46,7 @@ export function rezervaceNaKalendar(rec: RezervaceRecord): RezProKalendar {
     odjezd: rec.odjezd,
     apartman: rec.apartman,
     stav: rec.stav,
+    zkusebni: rec.zkusebni === true,
   };
 }
 

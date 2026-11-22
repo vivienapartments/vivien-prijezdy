@@ -159,6 +159,8 @@ export type RezervaceRecord = {
   telefonPuvodni: string | null;
   /** ZDROJ z Better Hotelu, jak přišel. */
   zdroj: string | null;
+  /** Zkušební karta majitele. Nejde do statistik, kreditu ani obsazenosti. */
+  zkusebni: boolean;
   /** Čas, který host napsal a majitel si ho sem zapsal. Tvar HH:MM. */
   casPrijezdu: string | null;
   /** Čas odjezdu. HH:MM. Ruční zápis majitele má přednost před hostem. */
@@ -802,6 +804,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     telefonWa: typeof r.telefonWa === 'string' && r.telefonWa ? r.telefonWa : null,
     telefonPuvodni: typeof r.telefonPuvodni === 'string' && r.telefonPuvodni ? r.telefonPuvodni : null,
     zdroj: typeof r.zdroj === 'string' && r.zdroj ? r.zdroj : null,
+    zkusebni: r.zkusebni === true || /^TEST/i.test(String(r.rezervace || '')),
     casPrijezdu:
       r.casPrijezdu === 'po20' ||
       r.casPrijezdu === 'po23' ||
@@ -968,6 +971,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     telefonWa: null,
     telefonPuvodni: null,
     zdroj: null,
+    zkusebni: false,
     casPrijezdu: null,
     telefonRezervace: null,
     telefonRezervaceWa: null,

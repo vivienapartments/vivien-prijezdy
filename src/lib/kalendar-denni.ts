@@ -172,6 +172,7 @@ export type RezProKalendar = {
   odjezd: string | null;
   apartman: AptId | null;
   stav?: string | null;
+  zkusebni?: boolean;
 };
 
 /** Noci od příjezdu do dne před odjezdem. */
@@ -201,6 +202,7 @@ export function aplikujRezervace(
   const out: KalendarDenni = { ...mapa };
   const bezAptPoDnech: Record<string, number> = {};
   for (const r of rezervace) {
+    if (r.zkusebni) continue;
     if (r.stav === 'zruseno') continue;
     if (!r.prijezd || !r.odjezd) continue;
     const noci = nociPobytu(r.prijezd, r.odjezd);

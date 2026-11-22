@@ -52,22 +52,8 @@ export const ZPRAVA_PODEKOVANI_POZDEJI: Record<GuideLang, string> = {
   da: 'Hej, mange tak for jeres besøg hos os. I guiden venter en kort besked fra os, en lille gave til jeres næste ophold og også en gave til jeres nærmeste.',
 };
 
-/** Předmět e-mailu. Schváleno 19. 11. 2026: VIVIEN · Než odkaz na průvodce skončí. */
-export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {
-  cs: 'VIVIEN · Než odkaz na průvodce skončí',
-  en: 'VIVIEN · Before the guide link ends',
-  de: 'VIVIEN · Bevor der Leitfaden-Link endet',
-  pl: 'VIVIEN · Zanim link do przewodnika wygaśnie',
-  uk: 'VIVIEN · Поки посилання на путівник ще діє',
-  'zh-Hant': 'VIVIEN · 在指南連結結束前',
-  sv: 'VIVIEN · Innan guidenlänken tar slut',
-  es: 'VIVIEN · Antes de que termine el enlace de la guía',
-  hu: 'VIVIEN · Mielőtt az útmutató linkje lejár',
-  da: 'VIVIEN · Før guidelinket udløber',
-  fr: 'VIVIEN · Avant que le lien du guide ne se termine',
-  it: 'VIVIEN · Prima che il link della guida scada',
-  pt: 'VIVIEN · Antes de o link do guia terminar',
-};
+/** Předmět e-mailu. Schváleno 22. 11. 2026: VIVIEN · Děkujeme za návštěvu. */
+export { PREDMET_PODEKOVANI, predmetPodekovani } from './podekovani-email';
 
 /** `odjezd < dnes` → pozdější verze. Chybí-li odjezd nebo dnes → den odjezdu. */
 export function textPodekovani(
@@ -82,11 +68,6 @@ export function textPodekovani(
   const url = (odkaz || '').trim();
   if (!url) return zaklad;
   return `${zaklad}\n\n${url}`;
-}
-
-export function predmetPodekovani(lang: GuideLang | null): string {
-  if (lang && lang in PREDMET_PODEKOVANI) return PREDMET_PODEKOVANI[lang];
-  return PREDMET_PODEKOVANI.en;
 }
 
 function sklonHostu(n: number): string {

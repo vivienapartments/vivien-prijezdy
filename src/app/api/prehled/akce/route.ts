@@ -1435,25 +1435,41 @@ export async function POST(request: Request): Promise<NextResponse> {
     const komu = (rec.emailHosta || '').trim();
     if (!komu || problemEmailu(komu)) return chyba(400, 'Host nemá e-mail.');
     try {
-      await posliEmailZpravy({
-        to: komu,
-        subject:
-          druh === 'pripraveno'
-            ? predmetPripraveno(lang)
-            : predmetZpravy(
-                druh,
-                lang,
-                druh === 'odjezd' || druh === 'podekovani' ? rec.odjezd : rec.prijezd,
-              ),
-        text: zprava.text,
-        lang,
-        telefon:
-          druh !== 'odjezd' &&
-          druh !== 'pripraveno' &&
-          druh !== 'pohoda' &&
-          druh !== 'podekovani' &&
-          druh !== 'shrnuti',
-      });
+      if (druh === 'podekovani') {
+        const { htmlPodekovaniEmail, textPodekovaniEmail, tlacitkoPodekovani } = await import(
+          '@/lib/podekovani-email'
+        );
+        const url = odkaz || '';
+        if (!url) return chyba(400, 'Chybí odkaz na průvodce.');
+        await posliEmailZpravy({
+          to: komu,
+          subject: predmetZpravy('podekovani', lang, rec.odjezd),
+          text: textPodekovaniEmail(lang, url),
+          lang,
+          telefon: false,
+          tlacitko: { url, label: tlacitkoPodekovani(lang) },
+          html: htmlPodekovaniEmail(lang, url),
+        });
+      } else {
+        await posliEmailZpravy({
+          to: komu,
+          subject:
+            druh === 'pripraveno'
+              ? predmetPripraveno(lang)
+              : predmetZpravy(
+                  druh,
+                  lang,
+                  druh === 'odjezd' ? rec.odjezd : rec.prijezd,
+                ),
+          text: zprava.text,
+          lang,
+          telefon:
+            druh !== 'odjezd' &&
+            druh !== 'pripraveno' &&
+            druh !== 'pohoda' &&
+            druh !== 'shrnuti',
+        });
+      }
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');
     }

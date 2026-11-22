@@ -149,6 +149,8 @@ export async function posliEmailZpravy(opts: {
   telefon?: boolean;
   /** Tlačítko v HTML (plain text dostane odkaz na konec). */
   tlacitko?: { url: string; label: string } | null;
+  /** Hotové HTML (např. poděkování po odjezdu). Jinak výchozí šablona. */
+  html?: string | null;
 }): Promise<void> {
   if (process.env.VITEST) throw new Error('V testu se e-mail neposílá.');
   const majitel = process.env.MAJITEL_EMAIL?.trim();
@@ -165,7 +167,7 @@ export async function posliEmailZpravy(opts: {
   });
   const doplnit = opts.telefon !== false;
   let text = textEmailuHostovi(opts.text, doplnit);
-  if (opts.tlacitko?.url) {
+  if (opts.tlacitko?.url && !opts.html) {
     text = `${text}\n\n${opts.tlacitko.label}: ${opts.tlacitko.url}`;
   }
   await transporter.sendMail({
@@ -174,6 +176,6 @@ export async function posliEmailZpravy(opts: {
     bcc: testMode ? undefined : majitel,
     subject: testMode ? `[TEST] ${opts.subject}` : opts.subject,
     text,
-    html: htmlEmailuHostovi(opts.text, opts.lang, doplnit, opts.tlacitko),
+    html: opts.html || htmlEmailuHostovi(opts.text, opts.lang, doplnit, opts.tlacitko),
   });
 }

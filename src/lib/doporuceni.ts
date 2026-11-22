@@ -352,24 +352,28 @@ export async function najdiNeboVytvorOsobu(
         }
       }
       if (!osoba) {
+        const zkusebniNova = /^TEST/i.test(vstup.rezervaceId || '');
         osoba = {
           id,
           jmeno: (vstup.jmeno || '').trim() || null,
           telefony: tel ? [tel] : [],
           emaily: email ? [email] : [],
           kod,
-          rezervace: [vstup.rezervaceId],
+          rezervace: zkusebniNova || !vstup.rezervaceId ? [] : [vstup.rezervaceId],
           vytvoreno: now,
           rucneSpojeno: [],
         };
         await ulozOsobu(store, osoba);
-        await ulozVazbyRezervace(store, vstup.rezervaceId, { osobaId: osoba.id });
+        if (vstup.rezervaceId && !zkusebniNova) {
+          await ulozVazbyRezervace(store, vstup.rezervaceId, { osobaId: osoba.id });
+        }
         return osoba;
       }
     }
 
     let zmena = false;
-    if (vstup.rezervaceId && !osoba.rezervace.includes(vstup.rezervaceId)) {
+    const zkusebniId = /^TEST/i.test(vstup.rezervaceId || '');
+    if (vstup.rezervaceId && !zkusebniId && !osoba.rezervace.includes(vstup.rezervaceId)) {
       osoba = { ...osoba, rezervace: [...osoba.rezervace, vstup.rezervaceId] };
       zmena = true;
     }
@@ -526,6 +530,7 @@ export async function zkusSparovatRezervaci(
   rec: RezervaceRecord,
   opts: { dnu?: number; ted?: Date } = {},
 ): Promise<SparovaniVysledek> {
+  if (rec.zkusebni || /^TEST/i.test(rec.rezervace)) return { ok: false, duvod: 'nic' };
   const uz = await nactiDoporucenoOdRezervace(store, rec.rezervace, rec);
   if (uz) return { ok: false, duvod: 'uz' };
   const otevrena = await listOtevrenaDoporuceni(store, { dnu: opts.dnu ?? 60, ted: opts.ted });
