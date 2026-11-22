@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { NIKOL_PHONE } from '@/lib/constants';
 import { doporuceniTexty } from '@/lib/doporuceni-texty';
 import { t, toTelHref } from '@/lib/i18n';
@@ -15,6 +16,24 @@ import type { GuideLang } from '@/lib/types';
 import { ExpiredDoporuceni } from './ExpiredDoporuceni';
 import { PridejNaPlochu } from './PridejNaPlochu';
 import './guide.scss';
+
+/** Zvýrazní „slevu 5 %“ (a obdobu v jiných jazycích) zlatě. */
+function mostSeZlatouSlevou(text: string): ReactNode {
+  const re =
+    /(slevu\s+5\s*%|a\s+5%\s+discount|5\s*%\s+Rabatt|zniżkę\s+5\s*%|знижку\s+5\s*%|5%\s+折扣|5\s*%\s+rabatt|un\s+5\s*%\s+de\s+descuento|5\s*%\s+kedvezmény|5\s*%\s+rabat|5\s*%\s+de\s+réduction|lo\s+sconto\s+del\s+5\s*%|5\s*%\s+de\s+desconto)/i;
+  const m = text.match(re);
+  if (!m || m.index == null) return text;
+  const pred = text.slice(0, m.index);
+  const sleva = m[0];
+  const po = text.slice(m.index + sleva.length);
+  return (
+    <>
+      {pred}
+      <span className="pv-expired__sleva">{sleva}</span>
+      {po}
+    </>
+  );
+}
 
 export function Expired({
   lang = 'cs',
@@ -47,7 +66,7 @@ export function Expired({
 
           <div className="pv-expired__celek pv-expired__celek--vas">
             <p className="pv-expired__nad-male">{d.nadVas}</p>
-            <p className="pv-expired__most">{t(expiredMost, lang)}</p>
+            <p className="pv-expired__most">{mostSeZlatouSlevou(t(expiredMost, lang))}</p>
             <a className="pv-expired__cta" href={poptavkaHref}>
               {t(expiredCta, lang)}
               <span className="pv-expired__sipka" aria-hidden="true">

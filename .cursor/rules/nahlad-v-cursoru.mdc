@@ -1,0 +1,33 @@
+---
+description: Náhledy vzhledu pro majitele jen v Cursoru (ne Telegram)
+alwaysApply: true
+---
+
+# Náhledy změn pro majitele: v Cursoru, ne v Telegramu
+
+## Telegram
+- Náhledy vzhledu **neposílej** do Telegramu.
+- Telegram dál slouží jen pro skutečná upozornění aplikace (poptávky, příjezdy, chyby). Na ta nesahej.
+
+## Dev server
+- Před první úpravou spusť `npm run dev` a nech server běžet.
+- Když už běží, nespouštěj ho znovu.
+- Výjimka z úklidu procesů: při práci na náhledu vzhledu nech `npm run dev` běžet, dokud majitel neřekne jinak nebo dokud chat neskončí.
+
+## Náhled vpravo
+- Stránku, kterou upravuješ, otevři ve vestavěném prohlížeči Cursoru v pravém panelu.
+- Když vestavěný prohlížeč nejde, použij příkaz „Simple Browser: Show“.
+- Adresa `http://localhost:3000/…` (hlavní složka) nebo u worktree doporučení `http://localhost:3011/…`. U poptávky věrného hosta se zkušebním režimem: `/poptavka?zkouska=1&t=…`.
+- Velikost jako telefon: **390 × 750**.
+- Po každé změně stránku obnov a sám se podívej, jestli se nic nepřekrývá, nic není uříznuté a vše se vejde. Teprve pak napiš, že je hotovo.
+
+## Schvalování a nasazení
+- Majitel upravuje a schvaluje jen v tomto náhledu vpravo.
+- Napiš jednou větou, co se změnilo, a čekej.
+- Nasazení (commit, push, Vercel) až po slově **„nasaď“**.
+- Všude, kde dřívější prompty říkaly „náhled do Telegramu“, platí místo toho tento náhled vpravo.
+
+## Větev doporuceni
+- Worktree ve vlastní složce, `npm run dev` na portu **3011**, náhled vpravo z 3011.
+- Do hlavní složky (master / druhé vlákno) nesahej.
+- Do `master` nic bez **„sluč do ostré“**.

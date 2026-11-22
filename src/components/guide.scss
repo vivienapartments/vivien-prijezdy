@@ -2845,6 +2845,10 @@ a.pv-phone.pv-phone--zari:focus-visible {
   color: color-mix(in srgb, var(--color-dark) 60%, transparent);
 }
 
+.pv-expired__sleva {
+  color: var(--color-gold, #c9a84c);
+}
+
 .pv-expired__telo > p.pv-expired__poznamka {
   margin: 1.1rem 0 0;
   font-size: 0.78rem;

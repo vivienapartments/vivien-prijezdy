@@ -8,9 +8,9 @@ alwaysApply: true
 Majitel chce věci **sám vyzkoušet**, než to uvidí hosté. Nestačí jen testy v konzoli.
 
 ## Před „nasaď“
-1. U změn v průvodci / přehledu / e-mailu / zprávách hostovi **vždy nabídni náhled** (lokální stránka, `/nahled…`, HTML ve `public/`, nebo krátký postup „otevři přehled a klepni sem“).
+1. U změn v průvodci / přehledu / e-mailu / zprávách hostovi / poptávce **vždy nabídni náhled vpravo v Cursoru** (viz pravidlo `nahlad-v-cursoru`).
 2. Počkej, až majitel řekne, že to vyzkoušel / souhlasí, **nebo** výslovně „nasaď i bez dalšího zkoušení“.
-3. Nepiš „je to hotové, nasaď“, dokud nemá jak to kliknout očima a rukou.
+3. Nepiš „je to hotové, nasaď“, dokud nemá jak to kliknout očima a rukou v náhledu vpravo.
 
 ## Jak majitel požádá (stačí jedna věta)
 - „ukaž náhled“
@@ -18,16 +18,11 @@ Majitel chce věci **sám vyzkoušet**, než to uvidí hosté. Nestačí jen tes
 - „nejdřív vyzkoušíme“
 - „do náhledu“
 
-Na to **vždy** připrav viditelný náhled a krátký návod (kam kliknout, co má vidět). Dev server po použití ukonči (viz úklid procesů).
+Na to **vždy** otevři `npm run dev` (když ještě neběží) a stránku v pravém panelu Cursoru na 390 × 750. Jednou větou napiš, co se změnilo, a čekej.
 
-## Zkoušení na telefonu (Telegram)
-Když má majitel něco vyzkoušet **na mobilu** (náhled, ověření opravy, Domů, karta), **pošli odkaz do Telegramu** (provozní chaty z `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` v `.env.local`).  
-**Nedávej odkaz jen do chatu v Cursoru.** Na počítači ho do mobilu nepřeloží. V chatu stačí napsat „posláno do Telegramu“ a co má klepnout.
-
-### Odkazy, které na telefonu fungují
-- Jen **ostrá HTTPS adresa** `https://vivien-prijezdy-six.vercel.app/…`. Nikdy `localhost`, `127.0.0.1` ani `192.168.…`.
-- Cesty `/nahled…` na ostrém webu **nefungují** (middleware je schová). Pro zkoušku na telefonu dej HTML pod `/zkouska/…` (např. `/zkouska/pruvodce-wa.html`), nasaď, a teprve pak pošli odkaz do Telegramu.
-- Když ještě není nasaď, pošli do Telegramu **obrázek** (screenshot) nebo celý text zprávy, ne mrtvý lokální odkaz.
+## Telegram
+- **Náhledy vzhledu do Telegramu neposílej.**
+- Telegram zůstává jen pro skutečná upozornění aplikace (poptávky, příjezdy, chyby).
 
 ## Po opravě chyby z provozu
-Nejdřív oprava + test. Pak pošli do Telegramu odkaz, jak ověřit. Hostovi „zkus znovu“ až po nasazení.
+Nejdřív oprava + lokální náhled vpravo. Hostovi „zkus znovu“ až po nasazení („nasaď“).

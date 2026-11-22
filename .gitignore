@@ -40,6 +40,8 @@ yarn-error.log*
 .data/
 nahled-emailu/
 nahled-prehledu/
+nahledy/
+ZMENY-LOG.md
 STAV-PRO-CLAUDE.md
 PODEKOVANI-POZDEJI-texty.json
 SHRNUTI-texty.json
