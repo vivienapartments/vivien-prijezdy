@@ -25,6 +25,8 @@ type Props = {
   jenMobil?: boolean;
   /** Menší / tišší (např. dole u poděkování). */
   tichy?: boolean;
+  /** Lokální náhled: tlačítko vždy vidět. */
+  nahled?: boolean;
   nazev?: string;
   shortNazev?: string;
 };
@@ -65,6 +67,7 @@ export function PridejNaPlochu({
   lang,
   jenMobil = true,
   tichy = false,
+  nahled = false,
   nazev = 'VIVIEN průvodce',
   shortNazev = 'VIVIEN',
 }: Props) {
@@ -175,8 +178,8 @@ export function PridejNaPlochu({
     setHlaska('android-nejde');
   }
 
-  if (!ready || standalone) return null;
-  if (jenMobil && !mobil) return null;
+  if (!nahled && (!ready || standalone)) return null;
+  if (!nahled && jenMobil && !mobil) return null;
 
   return (
     <>
