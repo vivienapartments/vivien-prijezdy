@@ -22,7 +22,12 @@ import {
   POPTAVKA_APARTMANY,
   webLangKod,
 } from '@/lib/poptavka-apartmany';
-import { formatDatumPoptavky, formatRozsahPoptavky, poptavkaTexty } from '@/lib/poptavka-texty';
+import {
+  formatDatumPoptavky,
+  formatRozsahPoptavky,
+  poptavkaStitekDoporuceni,
+  poptavkaTexty,
+} from '@/lib/poptavka-texty';
 import {
   odpovedHlavni,
   odpovedRozstrel,
@@ -60,9 +65,12 @@ type GalerieStav =
   | null;
 
 export function PoptavkaForm(props: PoptavkaVstupni) {
-  const vernost = props.zdroj === 'vernost';
+  /** Věrný i doporučený host: stejná stavba obrazovek (PROMPT-76 / 77). */
+  const vernost = props.zdroj === 'vernost' || props.zdroj === 'doporucitel';
+  const doporucitel = props.zdroj === 'doporucitel';
   const suchyBeh = Boolean(props.suchyBeh);
   const t = poptavkaTexty(props.lang, props.zdroj);
+  const stitekDoporuceni = doporucitel ? poptavkaStitekDoporuceni(props.lang) : '';
   const webLang = webLangKod(props.lang);
   const dnes = ymdDnesPraha();
   const [krok, setKrok] = useState<Krok>('termin');
@@ -247,16 +255,22 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       ? `${souhrnTerminu}${souhrnVyberu ? ` · ${souhrnVyberu}` : ''}`
       : '';
 
-  /** Věrnost tmavá: 1 zahrada, 2 stropy, konec dům. Apartmány beze změny. */
+  /**
+   * Tmavá cesta: věrný host svoje fotky, doporučený v kroku 1 večerní zahradu.
+   * 1 termín / 2 stropy / konec dům. Apartmány beze změny.
+   */
   const heroVernost = vernost
     ? hotovo
       ? '/pruvodce/zahrada/zahrada-5-celkovy-pohled.jpg'
       : krok === 'termin'
-        ? '/pruvodce/zahrada-po-odjezdu.jpg'
+        ? doporucitel
+          ? '/poptavka/doporuceny-zahrada-vecer.webp'
+          : '/pruvodce/zahrada-po-odjezdu.jpg'
         : krok === 'zpusob'
           ? galerieKompletCoverUrl(webLang)
           : null
     : null;
+  const heroVecer = Boolean(doporucitel && krok === 'termin' && heroVernost);
 
   const ukazLogo = !vernost || krok === 'termin' || hotovo || Boolean(heroVernost);
   /** Termín věrnosti: karta přes okno, fotka vyplní místo (jako Děkujeme). */
@@ -315,13 +329,24 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   return (
     <PoptavkaPlochaRoot lang={props.lang}>
-    <main className={`pp${vernost ? ' pp--vernost' : ''}`} lang={props.lang}>
+    <main
+      className={`pp${vernost ? ' pp--vernost' : ''}${doporucitel ? ' pp--doporuceny' : ''}`}
+      lang={props.lang}
+    >
       <div
         className={`pp__karta${heroVernost ? ' pp__karta--s-herem' : ''}${kartaVypln ? ' pp__karta--vypln' : ''}${kartaTermin ? ' pp__karta--termin' : ''}${kartaDekujeme ? ' pp__karta--dekujeme' : ''}${krok === 'zpusob' ? ' pp__karta--zpusob' : ''}${krok === 'kontakt' ? ' pp__karta--kontakt' : ''}`}
       >
         {heroVernost ? (
           <div
-            className={`pp__hero${hotovo ? ' pp__hero--dum' : krok === 'zpusob' ? ' pp__hero--stropy' : ' pp__hero--zahrada'}`}
+            className={`pp__hero${
+              hotovo
+                ? ' pp__hero--dum'
+                : krok === 'zpusob'
+                  ? ' pp__hero--stropy'
+                  : heroVecer
+                    ? ' pp__hero--vecer'
+                    : ' pp__hero--zahrada'
+            }`}
             style={{ backgroundImage: `url('${heroVernost}')` }}
             role="img"
             aria-hidden="true"
@@ -351,6 +376,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         {vernost && !hotovo && krok === 'termin' ? (
           <>
             <h1>{t.nadpis}</h1>
+            {stitekDoporuceni ? <p className="pp__stitek">{stitekDoporuceni}</p> : null}
             <p className="pp__uvod">{t.uvod}</p>
           </>
         ) : null}

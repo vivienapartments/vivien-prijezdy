@@ -928,12 +928,55 @@
   background-position: center 32%;
 }
 
+.pp--vernost .pp__hero--vecer {
+  background-position: center 45%;
+}
+
 .pp--vernost .pp__hero--stropy {
   background-position: center 40%;
 }
 
 .pp--vernost .pp__hero--dum {
   background-position: center 45%;
+}
+
+/* Doporučený host: zlaté nadpisy jako po odjezdu. Vracející se host beze změny. */
+.pp--doporuceny h1,
+.pp--doporuceny .pp__nadpis-krok {
+  color: #c9a84c;
+}
+
+.pp--doporuceny .pp__stitek {
+  display: inline-block;
+  margin: 0 auto 0.65rem;
+  padding: 0.2rem 0.7rem;
+  border: 1px solid #6b5a3a;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: #c9a84c;
+  background: transparent;
+}
+
+.pp--doporuceny .pp__telo {
+  text-align: center;
+}
+
+.pp--doporuceny .pp__btn--tlumeny,
+.pp--doporuceny .pp__btn--hlavni {
+  border-color: #c9a84c;
+  color: #c9a84c;
+}
+
+.pp--doporuceny .pp__termin-tlacitko {
+  border-color: #b89a6a;
+  color: #e6dccb;
+}
+
+.pp--doporuceny .pp__termin-pole label,
+.pp--doporuceny legend,
+.pp--doporuceny label {
+  color: #c9a84c;
 }
 
 .pp--vernost .pp__telo {

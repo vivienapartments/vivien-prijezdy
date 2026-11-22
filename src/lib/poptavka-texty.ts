@@ -4,6 +4,7 @@
  * Věrný host (`vernost`): `poptavka-texty-vernost.ts` (PROMPT-76).
  */
 
+import { doporuceniTexty } from './doporuceni-texty';
 import { poptavkaTextyVernost } from './poptavka-texty-vernost';
 import type { PoptavkaZdroj } from './poptavka';
 import type { GuideLang } from './types';
@@ -197,7 +198,24 @@ const EN: PoptavkaTexty = {
 
 export function poptavkaTexty(lang: GuideLang, zdroj?: PoptavkaZdroj): PoptavkaTexty {
   if (zdroj === 'vernost') return poptavkaTextyVernost(lang);
+  if (zdroj === 'doporucitel') {
+    const base = poptavkaTextyVernost(lang);
+    const d = doporuceniTexty(lang);
+    return {
+      ...base,
+      nadpis: d.poptavkaNadpis,
+      uvod: d.poptavkaUvod,
+      sleva: '',
+      nadpisApartmany: d.poptavkaNadpisApartmany,
+      nadpisOdeslano: d.poptavkaNadpisOdeslano,
+    };
+  }
   return lang === 'cs' ? CS : EN;
+}
+
+/** Štítek na první obrazovce doporučeného hosta. */
+export function poptavkaStitekDoporuceni(lang: GuideLang): string {
+  return doporuceniTexty(lang).poptavkaStitek;
 }
 
 function poptavkaLocale(lang: GuideLang): string {
