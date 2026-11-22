@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { NIKOL_PHONE } from '@/lib/constants';
 import { doporuceniTexty } from '@/lib/doporuceni-texty';
-import { expiredVyhodyTexty, zlatSlevaVTextu } from '@/lib/expired-vyhody-texty';
+import { expiredVyhodyTexty, zlatSlevaVTextu, zlatTriVyhodyVTextu } from '@/lib/expired-vyhody-texty';
 import { t, toTelHref } from '@/lib/i18n';
 import { jeStandalone, nactiPlochaStav } from '@/lib/plocha';
 import { plochaPridej } from '@/lib/plocha-texty';
@@ -60,6 +60,18 @@ function IkonaDarek() {
       <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
       <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
     </svg>
+  );
+}
+
+function vyzvaSeZlatem(text: string): ReactNode {
+  const z = zlatTriVyhodyVTextu(text);
+  if (!z) return text;
+  return (
+    <>
+      {z.pred}
+      <span className="pv-exp__zlat">{z.vyhody}</span>
+      {z.po}
+    </>
   );
 }
 
@@ -228,10 +240,7 @@ export function Expired({
               </div>
             </div>
             <button type="button" className="pv-exp__vyzva" onClick={sjelKVyhodam}>
-              {v.vyzva}{' '}
-              <span className="pv-exp__sipka" aria-hidden="true">
-                ⌄
-              </span>
+              {vyzvaSeZlatem(v.vyzva)}
             </button>
           </>
         ) : (
