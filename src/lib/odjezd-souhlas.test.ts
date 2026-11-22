@@ -105,8 +105,10 @@ describe('odjezd-souhlas', () => {
       rezervace: '3',
       apartman: 'V2',
       jmeno: 'Jan Novák',
+      prijezd: '2026-11-18',
       odjezd: '2026-11-19',
       casOdjezdu: '12:00',
+      predano: '2026-11-18T15:00:00.000Z',
       zadostOdjezd: {
         cas: '12:00',
         kc: 300,
@@ -123,5 +125,37 @@ describe('odjezd-souhlas', () => {
     expect(ven[0].kdo.rezervace).toBe('3');
     expect(ven[0].kc).toBe(300);
     expect(ven[0].text).toContain('V2');
+  });
+
+  it('u hosta co ještě nepřijel (Lackner) výběr peněz nehlásí', () => {
+    const now = new Date('2026-11-19T09:52:00.000Z');
+    const odjizdi = rec({
+      rezervace: '2',
+      apartman: 'V3',
+      odjezd: '2026-11-19',
+      casOdjezdu: '11:00',
+    });
+    const lackner = rec({
+      rezervace: 'lackner',
+      apartman: 'V1',
+      jmeno: 'Melanie Lackner',
+      prijezd: '2026-11-25',
+      odjezd: '2026-11-27',
+      casOdjezdu: '11:00',
+      predano: null,
+      naMiste: null,
+      zadostOdjezd: {
+        cas: '11:00',
+        kc: 150,
+        stav: 'potvrzeno',
+        kdy: '2026-11-18T10:00:00.000Z',
+        od: 'pruvodce',
+        hned: true,
+        upozorneno: true,
+        kanal: 'whatsapp',
+      },
+      priplatekPozde: 150,
+    });
+    expect(najdiVyberyProdlouzeni([odjizdi, lackner], now)).toEqual([]);
   });
 });

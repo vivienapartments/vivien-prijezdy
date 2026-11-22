@@ -263,8 +263,19 @@ export type UpozorneniVyberProdlouzeni = {
   text: string;
 };
 
+/** Host už u nás bydlí (předán / na místě), ještě neodjel. Jinak výběr peněz nemá smysl. */
+export function bydliTed(
+  rec: Pick<RezervaceRecord, 'prijezd' | 'predano' | 'naMiste' | 'prevzatoKdy' | 'stav' | 'nedojezdKdy'>,
+  dnes: string,
+): boolean {
+  if (rec.stav === 'zruseno' || rec.nedojezdKdy || rec.prevzatoKdy) return false;
+  if (!rec.prijezd || rec.prijezd > dnes) return false;
+  return Boolean(rec.predano || rec.naMiste);
+}
+
 /**
  * 10 min před převzetím jiného bytu: kdo má nezaplacené prodloužení.
+ * Jen u hostů, co už bydlí (ne u těch, co ještě nepřijeli).
  * Klíč držíme u hosta s dluhem (`prodlouzeniVyberPush`).
  */
 export function najdiVyberyProdlouzeni(
@@ -291,6 +302,7 @@ export function najdiVyberyProdlouzeni(
     for (const kdo of list) {
       if (kdo.rezervace === kvuli.rezervace) continue;
       if (kdo.apartman && kvuli.apartman && kdo.apartman === kvuli.apartman) continue;
+      if (!bydliTed(kdo, dnes)) continue;
       const dluh = nevybraneProdlouzeni(kdo);
       if (!dluh) continue;
       if (kdo.prodlouzeniVyberPush === klicPrevzeti) continue;
