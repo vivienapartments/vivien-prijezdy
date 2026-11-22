@@ -1,0 +1,22 @@
+---
+description: Po každé úpravě zapsat do ZMENY-LOG.md (+ snímek do nahledy/)
+alwaysApply: true
+---
+
+# Záznam změn pro Clauda (ZMENY-LOG)
+
+Po každé úpravě připiš na konec souboru `ZMENY-LOG.md` v kořeni repa (když neexistuje, založ ho) jeden blok:
+
+```
+## 2026-11-22 08:20 · poptávka / krok Kontakt
+- Co: (1–3 věty, co se změnilo a proč, podle majitele)
+- Soubory: PoptavkaForm.tsx, poptavka.scss
+- Stav: jen náhled vpravo / nasazeno (hash) / větev doporuceni
+- Snímek: nahledy/2026-11-22-0820-kontakt.png
+```
+
+- Datum a čas v názvu bloku ber z aktuálního času.
+- Nadpis bloku = co se upravovalo (stránka / krok), ne šablona Kontakt, pokud to není Kontakt.
+- Pokud vestavěný prohlížeč umí uložit snímek, ulož ho do `nahledy/` (390 × 750) a uveď v záznamu. Když to nejde, řádek „Snímek“ vynech.
+- Do záznamu nikdy nepiš hesla, tokeny ani telefonní čísla hostů.
+- `ZMENY-LOG.md` a složku `nahledy/` **necommituj** (jsou v `.gitignore`).
