@@ -273,6 +273,35 @@ export function aptyVolneVeTerminu(
   return APT_IDS.filter((id) => noci.every((d) => !mapa[d]?.[id]?.obsazeno));
 }
 
+/** Kolik nocí v kuse je apartmán volný od příjezdu (max 60). */
+export function dosahNociApartmanu(mapa: KalendarDenni, prijezd: string, apt: AptId): number {
+  let n = 0;
+  for (let i = 0; i < 60; i++) {
+    const den = posunYmd(prijezd, i);
+    if (mapa[den]?.[apt]?.obsazeno) break;
+    n += 1;
+  }
+  return n;
+}
+
+/** Nejdelší dosah ze všech apartmánů (kolik nocí jde v jednom apt). */
+export function maxDosahNoci(mapa: KalendarDenni, prijezd: string): number {
+  let max = 0;
+  for (const id of APT_IDS) {
+    const d = dosahNociApartmanu(mapa, prijezd, id);
+    if (d > max) max = d;
+  }
+  return max;
+}
+
+/** Možné dny odjezdu = příjezd+1 … příjezd+dosah. */
+export function mozneDnyOdjezdu(mapa: KalendarDenni, prijezd: string): string[] {
+  const dosah = maxDosahNoci(mapa, prijezd);
+  const out: string[] = [];
+  for (let i = 1; i <= dosah; i++) out.push(posunYmd(prijezd, i));
+  return out;
+}
+
 function posunYmd(ymd: string, dnu: number): string {
   const t = Date.parse(`${ymd}T12:00:00Z`) + dnu * 86_400_000;
   const d = new Date(t);

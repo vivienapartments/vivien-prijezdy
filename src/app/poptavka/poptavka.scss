@@ -1640,3 +1640,147 @@
   font-weight: 700;
   font-size: 1.15rem;
 }
+
+.pp__chytry {
+  margin: 0.35rem 0 0.5rem;
+}
+
+.pp__chytry-hlavicka {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.pp__chytry-mesic {
+  flex: 1;
+  text-align: center;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.2rem;
+  color: #f5efe3;
+  text-transform: capitalize;
+}
+
+.pp__chytry-dny {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.3rem;
+}
+
+.pp__chytry-den-nazev {
+  text-align: center;
+  font-size: 0.72rem;
+  color: #c9a84c;
+  padding: 0.2rem 0;
+}
+
+.pp__chytry-den {
+  min-height: 2.7rem;
+  margin: 0;
+  padding: 0.15rem 0;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: #15110e;
+  color: #f5efe3;
+  font: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pp__chytry-den > * {
+  pointer-events: none;
+}
+
+.pp__chytry-den small {
+  font-size: 0.58rem;
+  color: #c9a84c;
+}
+
+.pp__chytry-den.is-empty {
+  background: transparent;
+  pointer-events: none;
+}
+
+.pp__chytry-den.is-min {
+  background: transparent;
+  color: #4a4038;
+}
+
+.pp__chytry-den.is-plno span.is-skrt,
+.pp__chytry-den .is-skrt {
+  text-decoration: line-through;
+  color: #6b5f52;
+}
+
+.pp__chytry-den.is-ztl {
+  opacity: 0.25;
+}
+
+.pp__chytry-den.is-prijezd {
+  background: #c9a84c;
+  color: #1a1510;
+}
+
+.pp__chytry-den.is-prijezd small {
+  color: #3a2e14;
+}
+
+.pp__chytry-den.is-mez {
+  background: #3a2f1f;
+}
+
+.pp__chytry-den.is-odjezd {
+  border: 2px solid #c9a84c;
+  background: #15110e;
+}
+
+.pp__chytry-den.is-mozny {
+  outline: 1px dashed #c9a84c;
+  outline-offset: -1px;
+}
+
+.pp__chytry-info {
+  text-align: center;
+  font-size: 0.92rem;
+  color: #e6dccb;
+  margin: 0.75rem 0 0.35rem;
+  line-height: 1.45;
+}
+
+.pp__chytry-mal {
+  display: block;
+  font-size: 0.78rem;
+  color: #8d806f;
+  margin-top: 0.25rem;
+}
+
+.pp__chytry-legenda {
+  text-align: center;
+  margin-top: 0.65rem;
+}
+
+.pp__chytry-souhrn {
+  border: 1px solid #6b5a3a;
+  border-radius: 14px;
+  padding: 0.75rem;
+  margin-top: 0.75rem;
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+.pp__chytry-souhrn b {
+  color: #c9a84c;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.pp__chytry-skrt {
+  color: #8d806f;
+}

@@ -66,45 +66,21 @@ Soubor `tmp-rozdily-obsazenost.json` je jen pracovní výstup skriptu, do gitu n
 - Texty kalendáře: `kalendar-texty.ts`. Bod 6 texty platí jen při zapnutých cenách.
 - Skript nahrání: `scripts/nahraj-kalendar-xlsx.mjs` (xlsx se necommitují).
 
-### Opravy po testu · dávka 1 (22. 11. 2026)
-- Dlaždice stejně vysoké, fotka nahoře, textová část stejná výška, V5 zkrácený název, obsazeno ztlumené + štítek.
-- Poptávka na notebooku max 520 px uprostřed.
-- Sleva 5 % zřetelněji (zlatě u ceny v dlaždici i v souhrnu).
-
-### Opravy po testu · dávka 2 (22. 11. 2026)
-- `?od=`: výběr jazyka roletkou (varianta C), ne 13 dlaždic.
-- Ve všech krocích všech druhů poptávky malá roletka 🌐 vpravo nahoře.
-
-### Opravy po testu · dávka 3 (22. 11. 2026) · kalendář + obsazenost
-- Odjezd i při „plno“ ten den; noci (ne dny); příjezd plně zlatě, mezery slabě, odjezd rámeček bez ceny.
-- Minulé dny jen tlumené číslo. Hláška bez volného apartmánu + „Ukázat nejbližší volný termín“.
-- Dotazník: nejsilnější shoda jen z volných; obsazený ideal se štítkem a „Kdy je volný?“.
-- Pojistka API: obsazený apartmán poptávku neodešle (`duvod: obsazeno` + nabídka volných).
-
-### Ostrá · 22. 11. 2026 večer (sluč + nasaď)
-- Větev `doporuceni` sloučena do `master` a nasazena (`8b70644`). Commit `117a0ef` (zlatá tlačítka, tmavý text) je v ostré.
-- E-mail po odjezdu: tmavý jako stránka, fotka, logo, dopis, 3 výhody, zlaté tlačítko „Otevřít vaše výhody“, předmět `VIVIEN · Děkujeme za návštěvu`, 13 jazyků.
-- Nahráno `kalendar-denni` (130 dnů) + `kalendar-meta` (ceny zapnuté).
-- Karta `rez:TESTPOMAJ` (`zkusebni: true`, mimo statistiky/kredit/obsazenost). E-mail jen majiteli. Žádný Telegram.
-
-### Ostré odkazy (zkouška majitele)
-- Po odjezdu (průvodce): https://vivien-prijezdy-six.vercel.app/eyJyIjoiVEVTVFBPTUFKIiwiYSI6IlYxIiwiZCI6IjIwMjYtMTEtMjEiLCJsIjoiY3MiLCJwIjoiMjAyNi0xMS0xOSIsIm8iOjIsImkiOiIxMjM0IiwiZiI6MX0.2utgI-cWo4lxsi-ePJxiId1mSe3XLQFNXjJw6NBOw68
-- Náhled po odjezdu: https://vivien-prijezdy-six.vercel.app/nahled-po-odjezdu
-- Poptávka věrný host: https://vivien-prijezdy-six.vercel.app/poptavka?zkouska=1
-- Doporučení majitele (`?od=`): https://vivien-prijezdy-six.vercel.app/poptavka?od=a692c6
-- Běžná poptávka: https://vivien-prijezdy-six.vercel.app/poptavka
-- Firma: https://vivien-prijezdy-six.vercel.app/poptavka?f=raccoon
-
-### Opravy po testu � d�vka 4 (22. 11. 2026) � telefon + Telegram
-- Telefon: autocomplete tel-national, autofill z�stane, chyba jen pod polem, bez b�l� �ipky.
-- Telegram: �esk� datum a noci, n�zev apartm�nu, cena se slevou, odkud, jazyk; ZKOU�KA u TEST.
-- Odkaz /prehled?poptavka=id otev�e detail (Zavolat, WhatsApp, Potvrdit term�n).
+### Opravy po testu · dávka 4 (22. 11. 2026) · telefon + Telegram
+- Telefon: autocomplete tel-national, autofill zůstane, chyba jen pod polem, bez bílé šipky.
+- Telegram: české datum a noci, název apartmánu, cena se slevou, odkud, jazyk; ZKOUŠKA u TEST.
+- Odkaz /prehled?poptavka=id otevře detail (Zavolat, WhatsApp, Potvrdit termín).
 
 ## OPRAVY-PO-TESTU-2 · 23. 11. 2026
 
-### A · iPhone, zpet, jazyk (nasazeno)
-- Kalendar otevreny do document.body (portal), mimo overflow:hidden karty. Div misto label, touch-action, z-index 200.
-- Sipka Zpet / gesto: history.pushState po kazdem kroku, popstate o krok zpet; z prvniho kroku lze odejit.
-- Rozpracovana poptavka v localStorage, po odeslani smazat.
-- Prepinac jazyka jen v kroku termin (VyberJazyka u ?od= zustava).
-- Paticka: mala seda verze (commit + cas nasazeni) v poptavce i po odjezdu.
+### A · iPhone, zpět, jazyk (nasazeno)
+- Kalendář otevřený do document.body (portal), mimo overflow:hidden karty. Div místo label, touch-action, z-index 200.
+- Šipka Zpět / gesto: history.pushState po každém kroku, popstate o krok zpět; z prvního kroku lze odejít.
+- Rozpracovaná poptávka v localStorage, po odeslání smazat.
+- Přepínač jazyka jen v kroku termín (VyberJazyka u ?od= zůstává).
+- Patička: malá šedá verze (commit + čas nasazení) v poptávce i po odjezdu.
+
+### B · Chytrý kalendář (nasazeno)
+- Jeden kalendář: po příjezdu jen možné odjezdy (dosah jednoho apartmánu), zlatý čárkovaný rámeček a „odjezd“.
+- Odjezd není noc. Souhrn s nocemi a „ráno“. Texty A–G ve 13 jazycích.
+- Apartmány: volné nahoře, obsazené dole.

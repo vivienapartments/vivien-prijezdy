@@ -3,6 +3,8 @@ import {
   aplikujRezervace,
   aptyVolneVeTerminu,
   denPlno,
+  maxDosahNoci,
+  mozneDnyOdjezdu,
   nejblizsiVolneTerminy,
   nociPobytu,
   slevaPctCastka,
@@ -52,6 +54,15 @@ describe('kalendar-denni', () => {
     };
     expect(terminPresPlnyDen(mapa, '2026-11-22', '2026-11-24')).toBe(true);
     expect(terminPresPlnyDen(mapa, '2026-11-23', '2026-11-24')).toBe(false);
+  });
+
+  it('dosah nocí od příjezdu', () => {
+    const mapa: KalendarDenni = {
+      '2026-11-25': den({ V1: true, V2: false, V3: true, V4: true, V5: true }),
+      '2026-11-26': den({ V1: true, V2: true, V3: true, V4: true, V5: true }),
+    };
+    expect(maxDosahNoci(mapa, '2026-11-25')).toBe(1);
+    expect(mozneDnyOdjezdu(mapa, '2026-11-25')).toEqual(['2026-11-26']);
   });
 
   it('volné apartmány a nejbližší termíny', () => {

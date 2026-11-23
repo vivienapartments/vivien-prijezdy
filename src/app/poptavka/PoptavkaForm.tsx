@@ -54,7 +54,7 @@ import { JazykPrepinac } from './JazykPrepinac';
 import { PoptavkaPlochaRoot, PoptavkaPlochaTlacitko } from './PoptavkaPlocha';
 import { TelefonPole } from './TelefonPole';
 import { nazevDlazdice } from '@/lib/poptavka-nazev-dlazdice';
-import { TerminPole } from './TerminKalendar';
+import { ChytryKalendar } from './ChytryKalendar';
 import { usePoptavkaKalendar } from './usePoptavkaKalendar';
 import { VyberJazyka } from './VyberJazyka';
 import { formatKc, kalendarTexty, tvarNoci } from '@/lib/kalendar-texty';
@@ -677,88 +677,34 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             {krok === 'termin' ? (
               <section>
                 {!vernost ? <h2 className="pp__krok">{t.krokTermin}</h2> : null}
-                <div className="pp__termin">
-                  <TerminPole
-                    label={t.prijezd}
-                    value={prijezd}
-                    min={dnes}
-                    dnes={dnes}
-                    lang={lang}
-                    zavritLabel={t.zpet}
-                    rezim="prijezd"
-                    denInfo={kal.denInfo}
-                    plnoLabel={kt.plno}
-                    ukazCeny={ukazCeny}
-                    legenda={kt.cenaLegenda}
-                    rozsahOd={prijezd}
-                    rozsahDo={odjezd}
-                    prazdnyText={vernost ? (lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
-                    onChange={(ymd) => {
-                      setPrijezd(ymd);
-                      if (odjezd && odjezd <= ymd) setOdjezd('');
-                    }}
-                  />
-                  <TerminPole
-                    label={t.odjezd}
-                    value={odjezd}
-                    min={prijezd || dnes}
-                    dnes={dnes}
-                    lang={lang}
-                    zavritLabel={t.zpet}
-                    rezim="odjezd"
-                    denInfo={kal.denInfo}
-                    plnoLabel={kt.plno}
-                    ukazCeny={ukazCeny}
-                    legenda={kt.cenaLegenda}
-                    rozsahOd={prijezd}
-                    rozsahDo={odjezd}
-                    prazdnyText={vernost ? (lang === 'cs' ? 'Vyberte datum' : 'Select date') : undefined}
-                    onChange={setOdjezd}
-                  />
-                </div>
-                {prijezd && !odjezd ? <p className="pp__maly-radek">{kt.tedVyberteOdjezd}</p> : null}
-                {prijezd && odjezd && nociPocet > 0 && !(ukazCeny && cenaVyberu) ? (
-                  <p className="pp__maly-radek">
-                    {(souhrnTerminu || `${prijezd} → ${odjezd}`) + ' · ' + tvarNoci(nociPocet, lang)}
-                  </p>
-                ) : null}
-                {chyba === kt.terminBezVolneho ? (
-                  <button type="button" className="pp__btn pp__btn--tlumeny" onClick={nastavNejblizsiTermin}>
-                    {kt.ukazNejblizsi}
-                  </button>
-                ) : null}
-                {ukazCeny && cenaVyberu && nociPocet > 0 ? (
-                  <div className="pp__cena-souhrn">
-                    <p className="pp__cena-souhrn-radek">
-                      {souhrnTerminu || ''}
-                      {' · '}
-                      {tvarNoci(nociPocet, lang)}
-                    </p>
-                    <p className="pp__cena-souhrn-radek">
-                      {kt.cenaZaPobyt}{' '}
-                      {slevaCesty ? (
-                        <>
-                          <span className="pp__cena-souhrn-skrtnute">{formatKc(cenaVyberu.suma)}</span>
-                          <span className="pp__cena-souhrn-castka">{formatKc(cenaVyberu.seSlevou)}</span>
-                        </>
-                      ) : (
-                        <span className="pp__cena-souhrn-castka">{formatKc(cenaVyberu.suma)}</span>
-                      )}
-                    </p>
-                    {slevaCesty ? <p className="pp__cena-souhrn-radek">{kt.cenaSleva}</p> : null}
-                    <p className="pp__cena-souhrn-pozn">{kt.cenaPoznamka}</p>
-                  </div>
-                ) : null}
-                {chyba ? <p className="pp__chyba">{chyba}</p> : null}
-                <button
-                  type="button"
-                  className={`pp__btn${vernost ? ' pp__btn--tlumeny' : ' pp__btn--hlavni'}`}
-                  onClick={() => {
+                <ChytryKalendar
+                  lang={lang}
+                  dnes={dnes}
+                  dny={kal.dny}
+                  bezApt={kal.bezApt}
+                  prijezd={prijezd}
+                  odjezd={odjezd}
+                  onPrijezd={(ymd) => {
+                    setPrijezd(ymd);
+                    setChyba(null);
+                  }}
+                  onOdjezd={(ymd) => {
+                    setOdjezd(ymd);
+                    setChyba(null);
+                  }}
+                  ukazCeny={ukazCeny}
+                  sleva={slevaCesty}
+                  cenaSuma={cenaVyberu?.suma ?? null}
+                  cenaSeSlevou={cenaVyberu?.seSlevou ?? null}
+                  daleLabel={t.dale}
+                  onDale={() => {
                     if (overTermin()) jdiNaKrok('zpusob');
                   }}
-                >
-                  {t.dale}
-                </button>
+                  chyba={chyba === kt.terminBezVolneho ? chyba : null}
+                  ukazNejblizsiLabel={kt.ukazNejblizsi}
+                  onNejblizsi={nastavNejblizsiTermin}
+                />
+                {chyba && chyba !== kt.terminBezVolneho ? <p className="pp__chyba">{chyba}</p> : null}
               </section>
             ) : null}
 
@@ -1078,7 +1024,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 )}
                 <p className="pp__cena">{t.vyberteApartmany}</p>
                 <div className="pp__dlazdice">
-                  {POPTAVKA_APARTMANY.map((a) => {
+                  {[...POPTAVKA_APARTMANY]
+                    .sort((a, b) => {
+                      const oa =
+                        prijezd && odjezd ? Number(kal.aptObsazenyVeTerminu(a.id, prijezd, odjezd)) : 0;
+                      const ob =
+                        prijezd && odjezd ? Number(kal.aptObsazenyVeTerminu(b.id, prijezd, odjezd)) : 0;
+                      return oa - ob;
+                    })
+                    .map((a) => {
                     const on = apts.includes(a.id);
                     const obs = prijezd && odjezd ? kal.aptObsazenyVeTerminu(a.id, prijezd, odjezd) : false;
                     const cenaApt =
