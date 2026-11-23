@@ -3,10 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 import {
+  cistyStartUrlPlochy,
   jeAndroid,
-  jeChrome,
   jeIos,
   jeStandalone,
+  maVchromeParam,
   otevriStejnouStrankuVChrome,
 } from '@/lib/plocha';
 import {
@@ -102,10 +103,7 @@ export function PridejNaPlochu({
     setReady(true);
     if (jeStandalone()) return;
 
-    const start =
-      typeof window !== 'undefined'
-        ? `${window.location.pathname}${window.location.search}` || '/'
-        : '/';
+    const start = cistyStartUrlPlochy();
     const manifest = {
       name: nazev,
       short_name: shortNazev,
@@ -172,16 +170,18 @@ export function PridejNaPlochu({
     };
   }, [nazev, shortNazev]);
 
-  /** Ve výzvě v Chrome: když BIP nepřijde do 3 s, jedna věta do menu. */
+  /**
+   * Tip do menu jen když už jsme v plném Chrome (`vchrome=1`)
+   * a BIP nepřijde do 3 s. V Custom Tabu tip nedává smysl.
+   */
   useEffect(() => {
     if (!vyzva || !ready) return;
     if (jeIos() || jeStandalone()) return;
-    if (!jeChrome() && !jeAndroid()) return;
+    if (!maVchromeParam()) return;
     if (deferred.current) {
       setTipChrome(false);
       return;
     }
-    if (!jeChrome()) return;
     setTipChrome(false);
     const tmr = window.setTimeout(() => {
       if (!deferred.current) setTipChrome(true);
@@ -211,7 +211,8 @@ export function PridejNaPlochu({
         /* systém */
       }
     }
-    if (jeAndroid() && !jeChrome()) {
+    // Custom Tab / Gmail / Seznam: vždy intent do Chrome (smyčku drží vchrome=1).
+    if (jeAndroid() && !maVchromeParam()) {
       otevriStejnouStrankuVChrome({ plocha: true });
       return;
     }

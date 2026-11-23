@@ -2,20 +2,20 @@ import type { GuideLang, LText } from './types';
 
 /** Přechodová věta před výhodami (e-mail i stránka). */
 export const vyhodyUvod: LText = {
-  cs: 'Jako poděkování jsme pro vás připravili 3 výhody:',
-  en: 'As a thank you, we have prepared 3 benefits for you:',
-  de: 'Als Dankeschön haben wir 3 Vorteile für Sie vorbereitet:',
-  pl: 'W podziękowaniu przygotowaliśmy dla Was 3 korzyści:',
-  uk: 'Як подяку ми підготували для вас 3 переваги:',
-  'zh-Hant': '為感謝您，我們準備了 3 項優惠：',
-  es: 'Como agradecimiento, hemos preparado 3 ventajas para ustedes:',
-  fr: 'En guise de remerciement, nous avons préparé 3 avantages pour vous :',
-  it: 'Come ringraziamento abbiamo preparato 3 vantaggi per voi:',
-  pt: 'Como agradecimento, preparámos 3 vantagens para vocês:',
-  sv: 'Som tack har vi förberett 3 förmåner för er:',
-  hu: 'Köszönetképpen 3 előnyt készítettünk Önöknek:',
-  da: 'Som tak har vi forberedt 3 fordele til jer:',
-  fi: 'As a thank you, we have prepared 3 benefits for you:',
+  cs: 'Jako poděkování jsme pro vás připravili 3\u00a0výhody:',
+  en: 'As a thank you, we have prepared 3\u00a0benefits for you:',
+  de: 'Als Dankeschön haben wir 3\u00a0Vorteile für Sie vorbereitet:',
+  pl: 'W podziękowaniu przygotowaliśmy dla Was 3\u00a0korzyści:',
+  uk: 'Як подяку ми підготували для вас 3\u00a0переваги:',
+  'zh-Hant': '為感謝您，我們準備了 3\u00a0項優惠：',
+  es: 'Como agradecimiento, hemos preparado 3\u00a0ventajas para ustedes:',
+  fr: 'En guise de remerciement, nous avons préparé 3\u00a0avantages pour vous :',
+  it: 'Come ringraziamento abbiamo preparato 3\u00a0vantaggi per voi:',
+  pt: 'Como agradecimento, preparámos 3\u00a0vantagens para vocês:',
+  sv: 'Som tack har vi förberett 3\u00a0förmåner för er:',
+  hu: 'Köszönetképpen 3\u00a0előnyt készítettünk Önöknek:',
+  da: 'Som tak har vi forberedt 3\u00a0fordele til jer:',
+  fi: 'As a thank you, we have prepared 3\u00a0benefits for you:',
 };
 
 export const radek1Nadpis: LText = {
@@ -205,13 +205,66 @@ export const blizciText: LText = {
   fi: 'Send your friends your link. When they book a stay with us through it, they get a discount and you get a reward from us.',
 };
 
+/** 3 řádky příkladu (rámeček Pro vaše blízké). Částky 3 800 a 200 zlatě. */
+export const blizciPrikladRadek1: LText = {
+  cs: 'Například pobyt za 4\u00a0000\u00a0Kč:',
+  en: 'For example a stay for 4\u00a0000\u00a0Kč:',
+  de: 'Zum Beispiel ein Aufenthalt für 4\u00a0000\u00a0Kč:',
+  pl: 'Na przykład pobyt za 4\u00a0000\u00a0Kč:',
+  uk: 'Наприклад перебування за 4\u00a0000\u00a0Kč:',
+  'zh-Hant': '例如 4\u00a0000\u00a0Kč 的住宿：',
+  es: 'Por ejemplo una estancia de 4\u00a0000\u00a0Kč:',
+  fr: 'Par exemple un séjour à 4\u00a0000\u00a0Kč\u00a0:',
+  it: 'Ad esempio un soggiorno da 4\u00a0000\u00a0Kč:',
+  pt: 'Por exemplo uma estadia de 4\u00a0000\u00a0Kč:',
+  sv: 'Till exempel en vistelse för 4\u00a0000\u00a0Kč:',
+  hu: 'Például 4\u00a0000\u00a0Kč-s tartózkodás:',
+  da: 'For eksempel et ophold til 4\u00a0000\u00a0Kč:',
+  fi: 'For example a stay for 4\u00a0000\u00a0Kč:',
+};
+
+export const blizciPrikladRadek2: LText = {
+  cs: 'přátelé zaplatí 3\u00a0800\u00a0Kč',
+  en: 'friends pay 3\u00a0800\u00a0Kč',
+  de: 'Freunde zahlen 3\u00a0800\u00a0Kč',
+  pl: 'bliscy zapłacą 3\u00a0800\u00a0Kč',
+  uk: 'друзі сплатять 3\u00a0800\u00a0Kč',
+  'zh-Hant': '親友付 3\u00a0800\u00a0Kč',
+  es: 'los amigos pagan 3\u00a0800\u00a0Kč',
+  fr: 'les amis paient 3\u00a0800\u00a0Kč',
+  it: 'gli amici pagano 3\u00a0800\u00a0Kč',
+  pt: 'os amigos pagam 3\u00a0800\u00a0Kč',
+  sv: 'vännerna betalar 3\u00a0800\u00a0Kč',
+  hu: 'az ismerősök 3\u00a0800\u00a0Kč-t fizetnek',
+  da: 'vennerne betaler 3\u00a0800\u00a0Kč',
+  fi: 'friends pay 3\u00a0800\u00a0Kč',
+};
+
+export const blizciPrikladRadek3: LText = {
+  cs: 'vy od nás dostanete 200\u00a0Kč',
+  en: 'you receive 200\u00a0Kč from us',
+  de: 'Sie erhalten von uns 200\u00a0Kč',
+  pl: 'Wy od nas dostaniecie 200\u00a0Kč',
+  uk: 'ви від нас отримаєте 200\u00a0Kč',
+  'zh-Hant': '您從我們獲得 200\u00a0Kč',
+  es: 'ustedes reciben de nosotros 200\u00a0Kč',
+  fr: 'vous recevez de nous 200\u00a0Kč',
+  it: 'voi da noi ricevete 200\u00a0Kč',
+  pt: 'vocês recebem de nós 200\u00a0Kč',
+  sv: 'ni får 200\u00a0Kč från oss',
+  hu: 'Önök tőlünk 200\u00a0Kč-t kapnak',
+  da: 'I får 200\u00a0Kč fra os',
+  fi: 'you receive 200\u00a0Kč from us',
+};
+
+/** Starší jednořádkový text (e-mail / prostý text). */
 export const blizciPriklad: LText = {
   cs: 'Například pobyt za 4 000 Kč: přátelé zaplatí 3 800 Kč, vy od nás dostanete 200 Kč',
   en: 'For example a stay for 4 000 Kč: friends pay 3 800 Kč, you receive 200 Kč from us',
   de: 'Zum Beispiel ein Aufenthalt für 4 000 Kč: Freunde zahlen 3 800 Kč, Sie erhalten von uns 200 Kč',
   pl: 'Na przykład pobyt za 4 000 Kč: bliscy zapłacą 3 800 Kč, Wy od nas dostaniecie 200 Kč',
   uk: 'Наприклад перебування за 4 000 Kč: друзі сплатять 3 800 Kč, ви від нас отримаєте 200 Kč',
-  'zh-Hant': '例如 4 000 Kč 的入住：親友付 3 800 Kč，您從我們獲得 200 Kč',
+  'zh-Hant': '例如 4 000 Kč 的住宿：親友付 3 800 Kč，您從我們獲得 200 Kč',
   es: 'Por ejemplo una estancia de 4 000 Kč: los amigos pagan 3 800 Kč, ustedes reciben de nosotros 200 Kč',
   fr: 'Par exemple un séjour à 4 000 Kč : les amis paient 3 800 Kč, vous recevez de nous 200 Kč',
   it: 'Ad esempio un soggiorno da 4 000 Kč: gli amici pagano 3 800 Kč, voi da noi ricevete 200 Kč',

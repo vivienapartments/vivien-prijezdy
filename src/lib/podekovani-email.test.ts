@@ -24,7 +24,7 @@ describe('podekovani-email', () => {
     expect(html).not.toContain('zahrada-po-odjezdu.jpg');
     expect(html).toContain('Děkujeme za návštěvu');
     expect(html).toContain('Nikol a rodina VIVIEN');
-    expect(html).toContain('Jako poděkování jsme pro vás připravili 3 výhody:');
+    expect(html).toContain('Jako poděkování jsme pro vás připravili 3\u00a0výhody:');
     expect(html).not.toContain('Využít výhody');
     expect(html).toContain('Rezervovat ›');
     expect(html).toContain('Poslat ›');

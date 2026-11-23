@@ -131,7 +131,7 @@ export async function POST(req: Request) {
         auth: { user, pass },
       });
       await transporter.sendMail({
-        from: fromTipKamaradovi(jmeno, user),
+        from: fromTipKamaradovi(jmeno, user, lang),
         to,
         bcc: testMode ? undefined : majitel || undefined,
         subject: testMode ? `[TEST] ${predmetTipKamaradovi(lang)}` : predmetTipKamaradovi(lang),

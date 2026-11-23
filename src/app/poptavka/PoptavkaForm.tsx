@@ -944,10 +944,17 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                                   <button
                                     type="button"
                                     className="pp__vysledek-karta-foto"
-                                    onClick={() => pokracujSApartmanem(id)}
+                                    onClick={() =>
+                                      setGalerie({ druh: 'apt', id, i: 0, zpetNa: 'pruvodce' })
+                                    }
                                   >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
+                                    <img
+                                      src={galerieUrls(webLang, a)[0] || coverUrl(webLang, a)}
+                                      alt=""
+                                      width={400}
+                                      height={260}
+                                    />
                                     <span className="pp__vysledek-stitok">{vt.volba(volbaCislo)}</span>
                                   </button>
                                   <p className="pp__vysledek-karta-nazev">{nazevApt(id)}</p>

@@ -28,9 +28,31 @@ export function predmetTipKamaradovi(lang: GuideLang): string {
   return t(tipEmailPredmet, lang);
 }
 
-export function fromTipKamaradovi(jmeno: string, smtpUser: string): string {
+const PRES_PODLE_JAZYKA: Record<GuideLang, string> = {
+  cs: 'přes',
+  en: 'via',
+  de: 'über',
+  pl: 'przez',
+  uk: 'через',
+  'zh-Hant': '透過',
+  es: 'vía',
+  fr: 'via',
+  it: 'tramite',
+  pt: 'via',
+  sv: 'via',
+  hu: 'via',
+  da: 'via',
+  fi: 'via',
+};
+
+export function fromTipKamaradovi(
+  jmeno: string,
+  smtpUser: string,
+  lang: GuideLang = 'cs',
+): string {
   const j = jmeno.trim() || 'VIVIEN';
-  return `${j} přes VIVIEN Apartments <${smtpUser}>`;
+  const pres = PRES_PODLE_JAZYKA[lang] || PRES_PODLE_JAZYKA.en;
+  return `${j} ${pres} VIVIEN Apartments <${smtpUser}>`;
 }
 
 export function textTipKamaradovi(lang: GuideLang, jmeno: string, odkaz: string): string {

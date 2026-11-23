@@ -33,52 +33,67 @@
 }
 
 .pv-exp__prvni {
-  /* Dopis zabere většinu obrazovky, dole vykukuje výzva a začátek řádku 1. */
-  min-height: calc(100dvh - 7.5rem);
   display: flex;
   flex-direction: column;
 }
 
 .pv-exp__foto {
-  flex: 1 1 auto;
-  min-height: 200px;
+  /* Stejný poměr jako hlavička e-mailu (1024×566), celá rodina vidět. */
+  flex: none;
+  width: 100%;
+  aspect-ratio: 1024 / 566;
+  min-height: 0;
   background:
-    linear-gradient(to bottom, transparent 55%, var(--exp-karta) 100%),
-    url('/pruvodce/zahrada-po-odjezdu.jpg') center 48% / cover no-repeat;
+    linear-gradient(to bottom, transparent 62%, var(--exp-karta) 100%),
+    url('/pruvodce/zahrada-po-odjezdu.jpg') center 28% / cover no-repeat;
+  border: 0;
+  box-shadow: none;
 }
 
 .pv-exp__foto--mala {
-  flex: none;
-  height: 240px;
-  min-height: 240px;
+  aspect-ratio: 1024 / 566;
+  height: auto;
+  min-height: 0;
 }
 
 .pv-exp__obsah {
   flex: 0 0 auto;
   /* Dole bez rezervy: mezera podpis → výzva má být stejná jako dopis → podpis (14 px). */
   padding: 0 1.6rem 0;
+  border: 0;
+  box-shadow: none;
+  position: relative;
+  z-index: 1;
+  background: var(--exp-karta);
 }
 
 .pv-exp__logo {
   display: block;
   width: 66px;
   height: 66px;
-  /* Ještě o půl kroužku výš (~33 px): dřív -66 px, teď -99 px. */
-  margin: -99px auto 8px;
+  /* S kratší fotkou (poměr e-mailu) stačí -66 px: logo na spodku fotky, nadpis pod ní bez čáry. */
+  margin: -66px auto 8px;
   border: 2px solid var(--exp-gold);
   border-radius: 50%;
   background: var(--exp-karta);
   object-fit: cover;
   box-sizing: border-box;
+  position: relative;
+  z-index: 2;
 }
 
 .pv-exp__h1 {
   margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
   font-family: var(--font-display, 'Cormorant Garamond'), Georgia, serif;
   font-weight: 500;
   font-size: 34px;
   line-height: 1.2;
   color: var(--exp-gold);
+  position: relative;
+  z-index: 1;
 }
 
 .pv-exp__h1--dalsi {
@@ -326,6 +341,13 @@
   line-height: 1.45;
   color: var(--exp-text);
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pv-exp__blizci-priklad-radek {
+  display: block;
 }
 
 .pv-exp__blizci-pozn {
@@ -356,13 +378,20 @@
   cursor: pointer;
 }
 
+.pv-exp__blizci-btn--hlavni {
+  background: var(--exp-gold);
+  color: #1a1510;
+  border-color: var(--exp-gold);
+  font-weight: 700;
+}
+
 .pv-exp__blizci-btn:disabled {
   opacity: 0.5;
   cursor: wait;
 }
 
 .pv-exp__tip-form {
-  margin-top: 14px;
+  margin: 0;
   text-align: left;
 }
 

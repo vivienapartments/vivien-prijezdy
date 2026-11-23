@@ -51,7 +51,7 @@ export function jeAndroid(): boolean {
 
 /**
  * Skutečný Chrome (ne WebView, ne Edge/Opera/Samsung).
- * V Gmailu/Seznamu často nejde, tam je potřeba intent://.
+ * Pozor: Custom Tab z Gmailu/Seznamu má stejný UA — smyčku řeš `vchrome=1`, ne UA.
  */
 export function jeChrome(): boolean {
   if (typeof window === 'undefined') return false;
@@ -61,16 +61,46 @@ export function jeChrome(): boolean {
   return /Chrome\//i.test(ua);
 }
 
+/** Už jsme v plném Chrome přes intent (ochrana proti smyčce). */
+export function maVchromeParam(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('vchrome') === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Čistý start_url pro ikonu na ploše: /{token} bez poprve/plocha/vchrome a bez #.
+ */
+export function cistyStartUrlPlochy(href?: string): string {
+  if (typeof window === 'undefined' && !href) return '/';
+  try {
+    const u = new URL(href || window.location.href, 'https://vivien-prijezdy-six.vercel.app');
+    u.searchParams.delete('poprve');
+    u.searchParams.delete('plocha');
+    u.searchParams.delete('vchrome');
+    u.hash = '';
+    const q = u.searchParams.toString();
+    return `${u.pathname}${q ? `?${q}` : ''}` || '/';
+  } catch {
+    return '/';
+  }
+}
+
 /**
  * Otevře stejnou stránku v Chrome (z Gmailu, Seznamu, Custom Tab…).
- * Funguje jen na Androidu. Když už jsi v Chrome, nic nedělá (ochrana proti smyčce).
- * `plocha: true` doplní ?plocha=1, ať se po otevření znovu ukáže výzva.
+ * Smyčku řeší `vchrome=1`: když už je v URL, nic nedělá.
+ * `plocha: true` doplní plocha=1 i vchrome=1.
  */
 export function otevriStejnouStrankuVChrome(opts?: { plocha?: boolean }): void {
   if (typeof window === 'undefined') return;
-  if (jeChrome()) return;
+  if (maVchromeParam()) return;
   const u = new URL(window.location.href);
   if (opts?.plocha) u.searchParams.set('plocha', '1');
-  const cil = `${u.host}${u.pathname}${u.search}${u.hash}`;
+  u.searchParams.set('vchrome', '1');
+  u.hash = '';
+  const cil = `${u.host}${u.pathname}${u.search}`;
   window.location.href = `intent://${cil}#Intent;scheme=https;package=com.android.chrome;end`;
 }
