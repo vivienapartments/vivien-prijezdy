@@ -1604,6 +1604,19 @@
   color: #1a1510;
 }
 
+.pp__vysledek-fotky {
+  position: absolute;
+  right: 0.55rem;
+  bottom: 0.55rem;
+  padding: 0.2rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(12, 10, 8, 0.78);
+  color: #e8dfd0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
 .pp__vysledek-karta-nazev {
   margin: 0.55rem 0 0.2rem;
   text-align: center;

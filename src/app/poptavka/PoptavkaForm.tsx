@@ -932,6 +932,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                               const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
                               if (!a) return null;
                               const jePrvni = volbaCislo === 1;
+                              const fotkyApt = galerieUrls(webLang, a);
                               const cenaApt =
                                 ukazCeny && prijezd && odjezd
                                   ? kal.cenaProVyber(prijezd, odjezd, [id], false, slevaCesty)
@@ -950,12 +951,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                                   >
                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
-                                      src={galerieUrls(webLang, a)[0] || coverUrl(webLang, a)}
+                                      src={fotkyApt[0] || coverUrl(webLang, a)}
                                       alt=""
                                       width={400}
                                       height={260}
                                     />
                                     <span className="pp__vysledek-stitok">{vt.volba(volbaCislo)}</span>
+                                    <span className="pp__vysledek-fotky" aria-hidden="true">
+                                      1/{Math.max(1, fotkyApt.length)}
+                                    </span>
                                   </button>
                                   <p className="pp__vysledek-karta-nazev">{nazevApt(id)}</p>
                                   {cenaApt ? (
@@ -973,15 +977,17 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                                       {kt.zaPobyt}
                                     </p>
                                   ) : null}
-                                  {jePrvni ? (
-                                    <button
-                                      type="button"
-                                      className="pp__btn pp__btn--hlavni"
-                                      onClick={() => pokracujSApartmanem(id)}
-                                    >
-                                      {t.pruvodceVybrat}
-                                    </button>
-                                  ) : null}
+                                  <button
+                                    type="button"
+                                    className={
+                                      jePrvni
+                                        ? 'pp__btn pp__btn--hlavni'
+                                        : 'pp__btn pp__btn--sms pp__btn--mensi'
+                                    }
+                                    onClick={() => pokracujSApartmanem(id)}
+                                  >
+                                    {jePrvni ? t.pruvodceVybrat || t.vybratTento : t.vybratTento}
+                                  </button>
                                 </div>
                               );
                             })}

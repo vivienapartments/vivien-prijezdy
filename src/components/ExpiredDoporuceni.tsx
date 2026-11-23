@@ -5,10 +5,11 @@ import {
   blizciEmail,
   blizciKopie,
   blizciNadpis,
-  blizciPoznamka,
+  blizciPodrobnosti,
   blizciPrikladRadek1,
   blizciPrikladRadek2,
   blizciPrikladRadek3,
+  blizciPrikladRadek4,
   blizciText,
   blizciWhatsapp,
   blizciZkopirovano,
@@ -32,17 +33,24 @@ function odkazTip(kod: string, lang: GuideLang): string {
   return `${BASE}/poptavka?od=${encodeURIComponent(kod)}&lang=${encodeURIComponent(lang)}`;
 }
 
-/** Zvýrazní částku zlatě (např. 3 800 Kč). */
-function zlatCastku(text: string, castka: string): ReactNode {
-  const i = text.indexOf(castka);
-  if (i < 0) return text;
-  return (
-    <>
-      {text.slice(0, i)}
-      <span className="pv-exp__zl">{castka}</span>
-      {text.slice(i + castka.length)}
-    </>
-  );
+/** Zvýrazní jednu nebo víc částek zlatě. */
+function zlatCastky(text: string, castky: string[]): ReactNode {
+  let zbytek = text;
+  const casti: ReactNode[] = [];
+  let klic = 0;
+  for (const castka of castky) {
+    const i = zbytek.indexOf(castka);
+    if (i < 0) continue;
+    if (i > 0) casti.push(<span key={klic++}>{zbytek.slice(0, i)}</span>);
+    casti.push(
+      <span key={klic++} className="pv-exp__zl">
+        {castka}
+      </span>,
+    );
+    zbytek = zbytek.slice(i + castka.length);
+  }
+  if (zbytek) casti.push(<span key={klic++}>{zbytek}</span>);
+  return casti.length ? <>{casti}</> : text;
 }
 
 export function ExpiredDoporuceni({
@@ -57,6 +65,7 @@ export function ExpiredDoporuceni({
   jmenoPredvypln: string;
 }) {
   const [ukazEmail, setUkazEmail] = useState(false);
+  const [ukazPodrobnosti, setUkazPodrobnosti] = useState(false);
   const [emailKam, setEmailKam] = useState('');
   const [jmeno, setJmeno] = useState(jmenoPredvypln);
   const [hlaska, setHlaska] = useState<string | null>(null);
@@ -168,16 +177,33 @@ export function ExpiredDoporuceni({
     <section className="pv-exp__blizci" id="doporucit">
       <h2 className="pv-exp__blizci-h">{t(blizciNadpis, lang)}</h2>
       <p className="pv-exp__blizci-text">{t(blizciText, lang)}</p>
-      <p className="pv-exp__blizci-priklad">
-        <span className="pv-exp__blizci-priklad-radek">{t(blizciPrikladRadek1, lang)}</span>
-        <span className="pv-exp__blizci-priklad-radek">
-          {zlatCastku(t(blizciPrikladRadek2, lang), '3\u00a0800\u00a0Kč')}
+
+      <button
+        type="button"
+        className={`pv-exp__blizci-podrobnosti${ukazPodrobnosti ? ' is-otevreno' : ''}`}
+        aria-expanded={ukazPodrobnosti}
+        onClick={() => setUkazPodrobnosti((v) => !v)}
+      >
+        <span className="pv-exp__blizci-podrobnosti-q" aria-hidden="true">
+          ?
         </span>
-        <span className="pv-exp__blizci-priklad-radek">
-          {zlatCastku(t(blizciPrikladRadek3, lang), '200\u00a0Kč')}
-        </span>
-      </p>
-      <p className="pv-exp__blizci-pozn">{t(blizciPoznamka, lang)}</p>
+        {t(blizciPodrobnosti, lang)}
+      </button>
+
+      {ukazPodrobnosti ? (
+        <div className="pv-exp__blizci-priklad">
+          <span className="pv-exp__blizci-priklad-radek">{t(blizciPrikladRadek1, lang)}</span>
+          <span className="pv-exp__blizci-priklad-radek">
+            {zlatCastky(t(blizciPrikladRadek2, lang), ['3\u00a0800\u00a0Kč'])}
+          </span>
+          <span className="pv-exp__blizci-priklad-radek">
+            {zlatCastky(t(blizciPrikladRadek3, lang), ['200\u00a0Kč'])}
+          </span>
+          <span className="pv-exp__blizci-priklad-radek">
+            {zlatCastky(t(blizciPrikladRadek4, lang), ['5\u00a0%', '200\u00a0Kč'])}
+          </span>
+        </div>
+      ) : null}
 
       <div className="pv-exp__blizci-akce">
         <button

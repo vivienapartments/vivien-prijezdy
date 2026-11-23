@@ -331,19 +331,54 @@
   hyphens: auto;
 }
 
+.pv-exp__blizci-podrobnosti {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 6px 12px;
+  border: 1px solid var(--exp-icon-border);
+  border-radius: 16px;
+  background: transparent;
+  color: var(--exp-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.pv-exp__blizci-podrobnosti.is-otevreno {
+  color: var(--exp-gold);
+  border-color: var(--exp-gold);
+}
+
+.pv-exp__blizci-podrobnosti-q {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .pv-exp__blizci-priklad {
-  margin: 0 0 8px;
-  padding: 12px 12px;
-  border: 1px solid var(--exp-line-soft);
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid #6b5a3a;
   border-radius: 12px;
-  background: #15110e;
+  background: #2a231b;
+  box-shadow: none;
   font-size: 13.5px;
-  line-height: 1.45;
-  color: var(--exp-text);
+  line-height: 1.55;
+  color: #e8dfc8;
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .pv-exp__blizci-priklad-radek {
