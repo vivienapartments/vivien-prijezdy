@@ -4,7 +4,7 @@ type T = Record<GuideLang, string>;
 
 export const PRANI_NADPIS: T = {
   cs: 'Prostor pro vaše přání',
-  en: 'A space for your wishes',
+  en: 'Tila toiveillenne',
   de: 'Raum für Ihre Wünsche',
   pl: 'Miejsce na Wasze życzenia',
   uk: 'Простір для ваших побажань',
@@ -16,6 +16,7 @@ export const PRANI_NADPIS: T = {
   pt: 'Um espaço para os vossos pedidos',
   hu: 'Hely az önök kívánságainak',
   da: 'Plads til jeres ønsker',
+  fi: 'A space for your wishes',
 };
 
 /** Věta pod nadpisem sbalené dlaždice (Prompt 64). */
@@ -33,6 +34,7 @@ export const PRANI_VETA_SBALENA: T = {
   pt: 'Falta-vos alguma coisa? Escrevam-nos diretamente a partir do guia.',
   hu: 'Hiányzik valami? Írjanak nekünk közvetlenül az útmutatóból.',
   da: 'Mangler I noget? Skriv til os direkte fra guiden.',
+  fi: 'Missing something? Write to us right from the guide.',
 };
 
 export const PRANI_NAHLED: T = {
@@ -49,6 +51,7 @@ export const PRANI_NAHLED: T = {
   pt: 'Pré-visualização, só o hóspede escreve',
   hu: 'Előnézet, csak a vendég ír',
   da: 'Forhåndsvisning, kun gæsten skriver',
+  fi: 'Preview, only the guest writes',
 };
 
 export const PRANI_UVOD: T = {
@@ -65,6 +68,7 @@ export const PRANI_UVOD: T = {
   pt: 'Falta-vos alguma coisa, têm alguma dúvida ou há algo que possamos fazer para tornar a estadia mais agradável? Escrevam-nos. Vamos ver com gosto o que podemos fazer.',
   hu: 'Hiányzik valami, nem tudnak valamiben eligazodni, vagy kellemesebbé tehetnénk a tartózkodást? Írjanak nekünk. Szívesen megnézzük, mit tehetünk.',
   da: 'Mangler I noget, er I i tvivl om noget, eller kan vi gøre jeres ophold bedre? Skriv til os. Vi ser gerne, hvad vi kan gøre.',
+  fi: 'Are you missing something, unsure about anything, or is there a way we could make your stay nicer? Write to us. We will gladly see what we can do.',
 };
 
 export const PRANI_DOSTUPNOST: T = {
@@ -81,6 +85,7 @@ export const PRANI_DOSTUPNOST: T = {
   pt: 'Lemos as mensagens à medida que chegam, normalmente entre as 8:00 e as 20:00. Se for urgente, liguem-nos para +420 604 692 573.',
   hu: 'Az üzeneteket folyamatosan olvassuk, általában 8:00 és 20:00 között. Ha sürgős, hívjanak minket: +420 604 692 573.',
   da: 'Vi læser beskeder løbende, som regel mellem 8:00 og 20:00. Hvis det haster, så ring til os på +420 604 692 573.',
+  fi: 'We read messages as they come, usually between 8:00 and 20:00. If it is urgent, call us: +420 604 692 573.',
 };
 
 export const PRANI_POLE: T = {
@@ -97,6 +102,7 @@ export const PRANI_POLE: T = {
   pt: 'O vosso pedido',
   hu: 'Az Önök kívánsága',
   da: 'Jeres ønske',
+  fi: 'Your wish',
 };
 
 export const PRANI_ODESLAT: T = {
@@ -113,6 +119,7 @@ export const PRANI_ODESLAT: T = {
   pt: 'Enviar',
   hu: 'Küldés',
   da: 'Send',
+  fi: 'Send',
 };
 
 export const PRANI_ODESILAM: T = {
@@ -129,6 +136,7 @@ export const PRANI_ODESILAM: T = {
   pt: 'A enviar…',
   hu: 'Küldés…',
   da: 'Sender…',
+  fi: 'Sending…',
 };
 
 export const PRANI_ODESLANO: T = {
@@ -145,6 +153,7 @@ export const PRANI_ODESLANO: T = {
   pt: 'Enviado',
   hu: 'Elküldve',
   da: 'Sendt',
+  fi: 'Sent',
 };
 
 export const PRANI_VYRIZENO: T = {
@@ -161,6 +170,7 @@ export const PRANI_VYRIZENO: T = {
   pt: 'Feito ✓',
   hu: 'Elintézve ✓',
   da: 'Færdig ✓',
+  fi: 'Done ✓',
 };
 
 export const PRANI_NOVA_ODPOVED: T = {
@@ -177,6 +187,7 @@ export const PRANI_NOVA_ODPOVED: T = {
   pt: 'Nova resposta',
   hu: 'Új válasz',
   da: 'Nyt svar',
+  fi: 'New reply',
 };
 
 export const PRANI_RAMECEK_ODPOVED: T = {
@@ -193,11 +204,12 @@ export const PRANI_RAMECEK_ODPOVED: T = {
   pt: 'Temos uma resposta ao vosso pedido',
   hu: 'Válaszoltunk a kívánságára',
   da: 'Vi har et svar på jeres ønske',
+  fi: 'We have a reply to your wish',
 };
 
 export const PRANI_ZOBRAZIT: T = {
   cs: 'Zobrazit',
-  en: 'Show',
+  en: 'Näyttäkää',
   de: 'Anzeigen',
   pl: 'Pokaż',
   uk: 'Показати',
@@ -209,6 +221,7 @@ export const PRANI_ZOBRAZIT: T = {
   pt: 'Mostrar',
   hu: 'Megjelenítés',
   da: 'Vis',
+  fi: 'Show',
 };
 
 /** Štítek v okně: původní text hosta. */
@@ -226,6 +239,7 @@ export const PRANI_VAS_DOTAZ: T = {
   pt: 'A vossa pergunta',
   hu: 'Az ön kérdése',
   da: 'Jeres spørgsmål',
+  fi: 'Your question',
 };
 
 /** Štítek v okně: odpověď od nás. */
@@ -243,6 +257,7 @@ export const PRANI_ODPOVED_OD: T = {
   pt: 'Resposta',
   hu: 'Válasz',
   da: 'Svar',
+  fi: 'Reply',
 };
 
 /** Tlačítko v okně s odpovědí na přání (jako u potvrzení času / brány). */
@@ -260,6 +275,7 @@ export const PRANI_POKRACOVAT: T = {
   pt: 'Continuar',
   hu: 'Tovább',
   da: 'Fortsæt',
+  fi: 'Continue',
 };
 
 export const PRANI_VY: T = {
@@ -276,6 +292,7 @@ export const PRANI_VY: T = {
   pt: 'Vós',
   hu: 'Ön',
   da: 'I',
+  fi: 'You',
 };
 
 export const PRANI_UPRAVENO: T = {
@@ -292,6 +309,7 @@ export const PRANI_UPRAVENO: T = {
   pt: 'editado',
   hu: 'szerkesztve',
   da: 'redigeret',
+  fi: 'edited',
 };
 
 export const PRANI_ZRUSIT: T = {
@@ -308,6 +326,7 @@ export const PRANI_ZRUSIT: T = {
   pt: 'Cancelar',
   hu: 'Mégse',
   da: 'Annuller',
+  fi: 'Cancel',
 };
 
 export const PRANI_OKNO_ZAVRENO: T = {
@@ -324,6 +343,7 @@ export const PRANI_OKNO_ZAVRENO: T = {
   pt: 'Já não conseguimos responder a pedidos a tempo. Se precisarem de alguma coisa para a manhã, liguem-nos.',
   hu: 'Kívánságokra sajnos már nem tudunk időben reagálni. Ha reggelre kell valami, kérjük, hívjanak minket.',
   da: 'Vi kan ikke længere nå at svare på ønsker i tide. Hvis I har brug for noget til i morgen tidlig, så ring til os.',
+  fi: 'We can no longer respond to wishes in time. If you need something for the morning, please call us.',
 };
 
 export const PRANI_CHYBA: T = {
@@ -340,6 +360,7 @@ export const PRANI_CHYBA: T = {
   pt: 'Não foi possível enviar a mensagem agora. Tentem novamente daqui a pouco.',
   hu: 'Az üzenetet most nem sikerült elküldeni. Próbálják meg egy pillanat múlva.',
   da: 'Beskeden kunne ikke sendes nu. Prøv igen om lidt.',
+  fi: 'The message could not be sent now. Please try again in a moment.',
 };
 
 export const PRANI_LIMIT: T = {
@@ -356,6 +377,7 @@ export const PRANI_LIMIT: T = {
   pt: 'Tentem novamente daqui a pouco.',
   hu: 'Próbálják meg egy pillanat múlva.',
   da: 'Prøv igen om lidt.',
+  fi: 'Please try again in a moment.',
 };
 
 export const PRANI_ODPOVEDET: T = {
@@ -372,6 +394,7 @@ export const PRANI_ODPOVEDET: T = {
   pt: 'Responder',
   hu: 'Válasz',
   da: 'Svar',
+  fi: 'Reply',
 };
 
 export const PRANI_UPRAVIT: T = {
@@ -388,6 +411,7 @@ export const PRANI_UPRAVIT: T = {
   pt: 'Editar',
   hu: 'Szerkesztés',
   da: 'Rediger',
+  fi: 'Edit',
 };
 
 export const PRANI_SMAZAT: T = {
@@ -404,6 +428,7 @@ export const PRANI_SMAZAT: T = {
   pt: 'Eliminar',
   hu: 'Törlés',
   da: 'Slet',
+  fi: 'Delete',
 };
 
 export function textPrani(tab: T, lang: GuideLang): string {
@@ -425,6 +450,7 @@ export const PRANI_WHATSAPP_ODPOVED: T = {
   pt: 'Olá, no guia espera-vos a nossa resposta ao pedido:\n{odkaz}',
   hu: 'Jó napot, az útmutatóban várja önt a válaszunk a kívánságára:\n{odkaz}',
   da: 'Hej, vores svar på jeres ønske venter på jer i guiden:\n{odkaz}',
+  fi: 'Hello, our reply to your wish is waiting for you in the guide:\n{odkaz}',
 };
 
 export function textWhatsAppPraniOdpoved(lang: GuideLang | null | undefined, odkaz: string): string {

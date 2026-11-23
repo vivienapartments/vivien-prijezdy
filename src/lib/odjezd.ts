@@ -74,6 +74,7 @@ const NAZEV: Record<GuideLang, Record<DruhDluhu, string>> = {
   sv: { poplatek: 'stadsskatt', prijezd: 'sen ankomst', cesta: 'extra resa', drive: 'tidigare ankomst', pozde: 'senare avresa', dohoda: 'överenskommet belopp' },
   hu: { poplatek: 'idegenforgalmi adó', prijezd: 'késői érkezés', cesta: 'ismételt út', drive: 'korábbi érkezés', pozde: 'későbbi távozás', dohoda: 'megbeszélt összeg' },
   da: { poplatek: 'city tax', prijezd: 'late arrival', cesta: 'extra trip', drive: 'earlier arrival', pozde: 'later departure', dohoda: 'agreed amount' },
+  fi: { poplatek: 'city tax', prijezd: 'late arrival', cesta: 'extra trip', drive: 'earlier arrival', pozde: 'later departure', dohoda: 'agreed amount' },
 };
 
 function jazyk(lang: GuideLang | null): GuideLang {
@@ -279,6 +280,7 @@ function vetaDluhu(lang: GuideLang, polozky: PolozkaDluhu[]): string {
     sv: `När vi tar över lägenheten gör vi upp de återstående ${castka(soucet, j)} (${vnitrni}).`,
     hu: `A lakás átvételekor rendezzük a fennmaradó ${castka(soucet, j)} összeget (${vnitrni}).`,
     da: `Når vi overtager lejligheden, afregner vi det resterende beløb ${castka(soucet, j)} (${vnitrni}).`,
+    fi: `When we take over the apartment, we will settle the remaining ${castka(soucet, j)} (${vnitrni}).`,
   };
   return sablony[j];
 }
@@ -362,6 +364,12 @@ const ODSTAVEC: Record<GuideLang, { a: string; b: string; odkaz: string; podpis:
     odkaz: 'You can also enter the time here: {odkaz}',
     podpis: 'Nikol and the VIVIEN family',
   },
+  fi: {
+    a: `Hello, tomorrow is your departure day. Let us know what time you will be leaving so we can say goodbye in person and take over the apartment. Standard check-out is by ${CHECKOUT}.`,
+    b: 'If you have any request before you leave, just write to us. We are looking forward to seeing you one last time.',
+    odkaz: 'You can also enter the time here: {odkaz}',
+    podpis: 'Nikol and the VIVIEN family',
+  },
 };
 
 export function zpravaOdjezdu(lang: GuideLang | null, polozky: PolozkaDluhu[], odkaz: string | null): string {
@@ -390,6 +398,7 @@ export const PREDMET_ODJEZDU: Record<GuideLang, string> = {
   sv: 'VIVIEN · Er avresa {datum}',
   hu: 'VIVIEN · Az elutazásuk {datum}',
   da: 'VIVIEN · Jeres afrejse {datum}',
+  fi: 'VIVIEN · Your departure {datum}',
 };
 
 export function ukazatDotazOdjezdu(opts: {
@@ -555,6 +564,15 @@ export const TEXT_ODJEZDU: Record<
     radek: 'Elutazás',
   },
   da: {
+    nadpisZitra: 'What time are you leaving tomorrow?',
+    nadpisDnes: 'What time are you leaving today?',
+    nadpisJindy: 'What time are you leaving?',
+    poznamka: 'A later time only by agreement.',
+    ulozit: 'Save',
+    zmenit: 'change',
+    radek: 'Departure',
+  },
+  fi: {
     nadpisZitra: 'What time are you leaving tomorrow?',
     nadpisDnes: 'What time are you leaving today?',
     nadpisJindy: 'What time are you leaving?',

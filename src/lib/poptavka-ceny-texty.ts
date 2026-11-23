@@ -19,6 +19,7 @@ export const UVOD_VERNOST_CENA: Record<GuideLang, string> = {
   sv: 'Välj datum så ser ni direkt priset med den utlovade rabatten.',
   hu: 'Válasszanak időpontot, és az ígért kedvezménnyel csökkentett árat azonnal látják.',
   da: 'Vælg datoer, så ser I med det samme prisen med den lovede rabat.',
+  fi: 'Choose your dates and you will see the price with your promised discount right away.',
 };
 
 /** Děkujeme (všechny druhy kromě firmy). */
@@ -36,4 +37,5 @@ export const DEKUJEME_POTVRDIME: Record<GuideLang, string> = {
   sv: 'Vi håller datumen åt er. Vi bekräftar dem vanligtvis inom en timme. Vi svarar mellan 8 och 20.',
   hu: 'Lefoglaljuk Önöknek az időpontot. Általában egy órán belül visszaigazoljuk. 8 és 20 óra között válaszolunk.',
   da: 'Vi holder datoerne for jer. Vi bekræfter dem normalt inden for en time. Vi svarer mellem kl. 8 og 20.',
+  fi: 'We are holding the dates for you. We will usually confirm them within an hour. We reply between 8 am and 8 pm.',
 };

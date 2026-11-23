@@ -27,6 +27,7 @@ const ZKRATKA: Record<GuideLang, string> = {
   sv: 'SV',
   hu: 'HU',
   da: 'DA',
+  fi: 'FI',
 };
 
 export function JazykPrepinac(props: Props) {

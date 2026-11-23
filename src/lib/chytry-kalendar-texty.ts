@@ -155,6 +155,16 @@ const RAW: Record<
     G: 'I rejser om morgenen, den nat betaler I ikke.',
     souhrn: '(afrejse {d} om morgenen)',
   },
+  fi: {
+    A: 'Tap your arrival day.',
+    B: 'Arrival {d}. Now tap your departure day.',
+    C: 'From {d} we have one apartment free for up to {n} {nights}.',
+    D: 'departure',
+    E: 'Arrival day',
+    F: 'Departure day',
+    G: 'You leave in the morning, this night is not charged.',
+    souhrn: '(leaving {d} morning)',
+  },
 };
 
 function kratkeDatum(ymd: string, lang: GuideLang): string {

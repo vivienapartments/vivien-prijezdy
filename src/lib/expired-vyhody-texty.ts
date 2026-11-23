@@ -100,6 +100,13 @@ const MAPA: Record<GuideLang, ExpiredVyhodyTexty> = {
     radek3Nadpis: 'Send linket til venner',
     dalsiVeta: 'Jeres fordele til næste ophold er klar her.',
   },
+  fi: {
+    vyzva: 'And if you would like to come back, we have 3 benefits for you.',
+    radek1Pod: 'Your gift: 5% off',
+    radek2Pod: 'Next time without searching, with 5% off',
+    radek3Nadpis: 'Send the link to friends',
+    dalsiVeta: 'Your benefits for your next stay are ready here.',
+  },
 };
 
 export function expiredVyhodyTexty(lang: GuideLang): ExpiredVyhodyTexty {

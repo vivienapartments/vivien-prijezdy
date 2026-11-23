@@ -21,7 +21,7 @@ const BASE =
 /** Předmět e-mailu po odjezdu. Schváleno majitelem 22. 11. 2026. */
 export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {
   cs: 'VIVIEN · Děkujeme za návštěvu',
-  en: 'VIVIEN · Thank you for your visit',
+  en: 'VIVIEN · Kiitos vierailustanne',
   de: 'VIVIEN · Danke für Ihren Besuch',
   pl: 'VIVIEN · Dziękujemy za wizytę',
   uk: 'VIVIEN · Дякуємо за візит',
@@ -30,6 +30,7 @@ export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {
   es: 'VIVIEN · Gracias por su visita',
   hu: 'VIVIEN · Köszönjük a látogatást',
   da: 'VIVIEN · Tak for besøget',
+  fi: 'VIVIEN · Thank you for your visit',
   fr: 'VIVIEN · Merci de votre visite',
   it: 'VIVIEN · Grazie della visita',
   pt: 'VIVIEN · Obrigado pela vossa visita',
@@ -50,6 +51,7 @@ export const TLACITKO_PODEKOVANI: LText = {
   sv: 'Använd förmånerna',
   hu: 'Előnyök igénybevétele',
   da: 'Brug fordelene',
+  fi: 'Use your benefits',
 };
 
 function esc(s: string): string {

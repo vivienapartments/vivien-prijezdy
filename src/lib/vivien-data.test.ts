@@ -190,6 +190,10 @@ KONEC`,
     expect(langFromNarodnost('DK')).toBe('da');
     expect(langFromNarodnost('Denmark')).toBe('da');
     expect(langFromNarodnost('Danmark')).toBe('da');
+    expect(langFromNarodnost('FIN')).toBe('fi');
+    expect(langFromNarodnost('FI')).toBe('fi');
+    expect(langFromNarodnost('Finland')).toBe('fi');
+    expect(langFromNarodnost('Suomi')).toBe('fi');
   });
 
   it('španělský průvodce není anglický text', () => {
