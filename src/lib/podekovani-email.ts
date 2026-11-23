@@ -1,10 +1,18 @@
 import { NIKOL_PHONE, PARKING_OWNER_PHONE } from './constants';
-import { doporuceniTexty } from './doporuceni-texty';
-import { expiredVyhodyTexty } from './expired-vyhody-texty';
-import { t, toTelHref } from './i18n';
-import { plochaPridej } from './plocha-texty';
 import {
-  expiredCta,
+  radek1Nadpis,
+  radek1Pod,
+  radek1Tlacitko,
+  radek2Nadpis,
+  radek2Pod,
+  radek2Tlacitko,
+  radek3Nadpis,
+  radek3Pod,
+  radek3Tlacitko,
+  vyhodyUvod,
+} from './doporuceni-komplet-texty';
+import { t, toTelHref } from './i18n';
+import {
   expiredDopis,
   expiredNadpis,
   expiredPodpis,
@@ -18,10 +26,10 @@ const BASE =
     (process.env.NEXT_PUBLIC_BASE_URL || process.env.PRUVODCE_BASE_URL)?.replace(/\/$/, '')) ||
   'https://vivien-prijezdy-six.vercel.app';
 
-/** Předmět e-mailu po odjezdu. Schváleno majitelem 22. 11. 2026. */
+/** Předmět e-mailu po odjezdu. Schváleno majitelem 22. 11. 2026, oprava en/fi 23. 11. */
 export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {
   cs: 'VIVIEN · Děkujeme za návštěvu',
-  en: 'VIVIEN · Kiitos vierailustanne',
+  en: 'VIVIEN · Thank you for your visit',
   de: 'VIVIEN · Danke für Ihren Besuch',
   pl: 'VIVIEN · Dziękujemy za wizytę',
   uk: 'VIVIEN · Дякуємо за візит',
@@ -30,13 +38,13 @@ export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {
   es: 'VIVIEN · Gracias por su visita',
   hu: 'VIVIEN · Köszönjük a látogatást',
   da: 'VIVIEN · Tak for besøget',
-  fi: 'VIVIEN · Thank you for your visit',
+  fi: 'VIVIEN · Kiitos vierailustanne',
   fr: 'VIVIEN · Merci de votre visite',
   it: 'VIVIEN · Grazie della visita',
   pt: 'VIVIEN · Obrigado pela vossa visita',
 };
 
-/** Zlaté tlačítko v e-mailu (OPRAVY-PO-TESTU-2 C). */
+/** Starší tlačítko (v e-mailu už není). */
 export const TLACITKO_PODEKOVANI: LText = {
   cs: 'Využít výhody',
   en: 'Use your benefits',
@@ -80,11 +88,16 @@ export function tlacitkoPodekovani(lang: GuideLang | null): string {
 }
 
 /** Prostý text (textová část e-mailu). */
-export function textPodekovaniEmail(lang: GuideLang | null, odkaz: string): string {
+export function textPodekovaniEmail(
+  lang: GuideLang | null,
+  odkaz: string,
+  odkazDoporucit?: string,
+  odkazPlocha?: string,
+): string {
   const l = jazyk(lang);
-  const v = expiredVyhodyTexty(l);
-  const d = doporuceniTexty(l);
-  const btn = tlacitkoPodekovani(l);
+  const url = odkaz.trim();
+  const urlDop = (odkazDoporucit || `${url}#doporucit`).trim();
+  const urlPlo = (odkazPlocha || `${url}?plocha=1`).trim();
   return [
     t(expiredNadpis, l),
     '',
@@ -92,12 +105,14 @@ export function textPodekovaniEmail(lang: GuideLang | null, odkaz: string): stri
     '',
     t(expiredPodpis, l),
     '',
-    `1. ${t(expiredCta, l)}. ${v.radek1Pod}`,
-    `2. ${v.radek3Nadpis}. ${d.otazka}`,
-    `3. ${t(plochaPridej, l)}. ${v.radek2Pod}`,
+    t(vyhodyUvod, l),
     '',
-    `${btn}:`,
-    odkaz.trim(),
+    `1. ${t(radek1Nadpis, l)}. ${t(radek1Pod, l)}`,
+    url,
+    `2. ${t(radek2Nadpis, l)}. ${t(radek2Pod, l)}`,
+    urlDop,
+    `3. ${t(radek3Nadpis, l)}. ${t(radek3Pod, l)}`,
+    urlPlo,
     '',
     `${t(expiredZavolat, l)}: ${NIKOL_PHONE}`,
     `${t(expiredZaloha, l)}: ${PARKING_OWNER_PHONE}`,
@@ -128,20 +143,25 @@ function radekVyhody(
   ikonaUrl: string,
   nad: string,
   pod: string,
+  tlacitko: string,
   odkaz: string,
   sans: string,
+  alt: string,
 ): string {
   return `<tr>
   <td style="padding:0;">
-    <a href="${odkaz}" style="text-decoration:none;display:block;padding:10px 0;border-bottom:1px solid #3d342a;">
+    <a href="${odkaz}" style="text-decoration:none;display:block;padding:12px 0;border-bottom:1px solid #3d342a;">
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
         <tr>
-          <td width="52" valign="middle" style="padding-right:12px;">
-            <img src="${ikonaUrl}" width="44" height="44" alt="" style="display:block;width:44px;height:44px;border:1px solid #6b5a3a;border-radius:12px;background:#15110e;">
+          <td width="48" valign="middle" style="padding-right:10px;">
+            <img src="${ikonaUrl}" width="40" height="40" alt="${esc(alt)}" style="display:block;width:40px;height:40px;border:1px solid #6b5a3a;border-radius:10px;background:#15110e;">
           </td>
           <td valign="middle" style="font-family:${sans};text-align:left;">
-            <div style="color:#f5efe3;font-size:16px;line-height:1.35;font-weight:700;">${slevaNbsp(esc(nad))}</div>
-            <div style="color:#c9a84c;font-size:14px;line-height:1.4;padding-top:3px;">${slevaNbsp(esc(pod))}</div>
+            <div style="color:#f5efe3;font-size:15px;line-height:1.25;font-weight:700;white-space:nowrap;">${slevaNbsp(esc(nad))}</div>
+            <div style="color:#cbbba8;font-size:13px;line-height:1.3;padding-top:2px;white-space:nowrap;">${slevaNbsp(esc(pod))}</div>
+          </td>
+          <td width="92" valign="middle" align="right" style="padding-left:8px;">
+            <span style="display:inline-block;min-width:84px;padding:7px 10px;background:#c9a84c;color:#1a1510;font-family:${sans};font-size:13px;line-height:1.2;font-weight:700;border-radius:18px;text-align:center;white-space:nowrap;">${esc(tlacitko)}</span>
           </td>
         </tr>
       </table>
@@ -151,18 +171,18 @@ function radekVyhody(
 }
 
 /**
- * HTML e-mail jako stránka po odjezdu (tmavé pozadí, fotka, logo, 3 výhody, zlaté tlačítko).
- * Tabulky kvůli Outlooku. Absolutní URL obrázků.
+ * HTML e-mail po odjezdu: hlavička-jpg, 3 klikací řádky se zlatou šipkou, bez CTA tlačítka.
  */
 export function htmlPodekovaniEmail(
   lang: GuideLang | null,
   odkaz: string,
   baseUrl: string = BASE,
+  odkazDoporucit?: string,
+  odkazPlocha?: string,
 ): string {
   const l = jazyk(lang);
   const base = baseUrl.replace(/\/$/, '') || BASE;
-  const foto = `${base}/pruvodce/zahrada-po-odjezdu.jpg`;
-  const logo = `${base}/pruvodce/va-logo-192.png`;
+  const hlavicka = `${base}/email/hlavicka-po-odjezdu.jpg`;
   const ikKal = `${base}/email/ikona-kalendar.png`;
   const ikDarek = `${base}/email/ikona-darek.png`;
   const ikTel = `${base}/email/ikona-telefon.png`;
@@ -170,19 +190,42 @@ export function htmlPodekovaniEmail(
   const nadpis = esc(t(expiredNadpis, l));
   const dopis = slevaNbsp(esc(t(expiredDopis, l)));
   const podpis = esc(t(expiredPodpis, l));
-  const v = expiredVyhodyTexty(l);
-  const d = doporuceniTexty(l);
-  const btn = esc(tlacitkoPodekovani(l));
+  const uvod = esc(t(vyhodyUvod, l));
   const url = odkaz.trim().replaceAll('"', '%22');
+  const urlDop = (odkazDoporucit || `${url}#doporucit`).replaceAll('"', '%22');
+  const urlPlo = (odkazPlocha || `${url}?plocha=1`).replaceAll('"', '%22');
   const serif = "Georgia,'Times New Roman',serif";
   const sans = "Arial,Helvetica,sans-serif";
-  const plocha = t(plochaPridej, l);
   const kontakty = `<tr>${tlacitkoTelefonu(ikHovor, t(expiredZavolat, l), NIKOL_PHONE, sans)}${tlacitkoTelefonu(ikHovor, t(expiredZaloha, l), PARKING_OWNER_PHONE, sans)}</tr>`;
 
   const vyhody = [
-    radekVyhody(ikKal, t(expiredCta, l), v.radek1Pod, url, sans),
-    radekVyhody(ikDarek, v.radek3Nadpis, d.otazka, url, sans),
-    radekVyhody(ikTel, plocha, v.radek2Pod, url, sans),
+    radekVyhody(
+      ikKal,
+      t(radek1Nadpis, l),
+      t(radek1Pod, l),
+      t(radek1Tlacitko, l),
+      url,
+      sans,
+      t(radek1Nadpis, l),
+    ),
+    radekVyhody(
+      ikDarek,
+      t(radek2Nadpis, l),
+      t(radek2Pod, l),
+      t(radek2Tlacitko, l),
+      urlDop,
+      sans,
+      t(radek2Nadpis, l),
+    ),
+    radekVyhody(
+      ikTel,
+      t(radek3Nadpis, l),
+      t(radek3Pod, l),
+      t(radek3Tlacitko, l),
+      urlPlo,
+      sans,
+      t(radek3Nadpis, l),
+    ),
   ].join('');
 
   return `<!DOCTYPE html>
@@ -195,22 +238,11 @@ export function htmlPodekovaniEmail(
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#1c1712;border:1px solid #3d342a;border-radius:12px;overflow:hidden;">
           <tr>
             <td style="padding:0;line-height:0;font-size:0;">
-              <img src="${foto}" width="560" alt="VIVIEN Apartments" style="display:block;width:100%;max-width:560px;height:auto;border:0;">
+              <img src="${hlavicka}" width="560" alt="VIVIEN Apartments" style="display:block;width:100%;max-width:560px;height:auto;border:0;">
             </td>
           </tr>
           <tr>
-            <td align="center" style="padding:0 24px;">
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:-33px;">
-                <tr>
-                  <td align="center" style="width:66px;height:66px;border-radius:33px;background:#1c1712;border:2px solid #c9a84c;padding:3px;">
-                    <img src="${logo}" width="56" height="56" alt="VIVIEN" style="display:block;width:56px;height:56px;border-radius:28px;border:0;background:#1c1712;">
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:18px 24px 8px;font-family:${serif};text-align:center;">
+            <td style="padding:22px 24px 8px;font-family:${serif};text-align:center;">
               <h1 style="margin:0;font-size:26px;line-height:1.25;font-weight:400;color:#c9a84c;">${nadpis}</h1>
             </td>
           </tr>
@@ -220,30 +252,24 @@ export function htmlPodekovaniEmail(
             </td>
           </tr>
           <tr>
-            <td style="padding:10px 24px 18px;font-family:${serif};font-size:18px;font-style:italic;color:#c9a84c;text-align:center;">
+            <td style="padding:10px 24px 6px;font-family:${serif};font-size:18px;font-style:italic;color:#c9a84c;text-align:center;">
               ${podpis}
             </td>
           </tr>
           <tr>
-            <td style="padding:4px 24px 8px;">
+            <td style="padding:6px 24px 10px;font-family:${serif};font-size:16px;font-style:italic;color:#e8dfc8;text-align:center;">
+              ${uvod}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:4px 16px 8px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 ${vyhody}
               </table>
             </td>
           </tr>
           <tr>
-            <td align="center" style="padding:22px 24px 8px;">
-              <table role="presentation" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td align="center" style="background:#c9a84c;border-radius:28px;">
-                    <a href="${url}" style="display:inline-block;padding:13px 26px;font-family:${sans};font-size:16px;line-height:1.3;color:#1a1510;text-decoration:none;border-radius:28px;font-weight:700;">${btn}</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:8px 20px 24px;">
+            <td style="padding:16px 20px 24px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 ${kontakty}
               </table>

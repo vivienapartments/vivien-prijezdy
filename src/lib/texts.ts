@@ -1588,7 +1588,7 @@ export const expiredMost: LText = {
 
 export const expiredCta: LText = {
   cs: 'Rezervovat pobyt',
-  en: 'Varatkaa majoitus',
+  en: 'Book a stay',
   de: 'Aufenthalt buchen',
   pl: 'Zarezerwujcie pobyt',
   uk: 'Забронювати перебування',

@@ -1,14 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { doporuceniTexty } from '@/lib/doporuceni-texty';
-import { expiredVyhodyTexty, zlatSlevaVTextu, zlatTriVyhodyVTextu } from '@/lib/expired-vyhody-texty';
+import {
+  radek1Nadpis,
+  radek1Pod,
+  radek2Nadpis,
+  radek2Pod,
+  radek3Nadpis,
+  radek3Pod,
+  vyhodyUvod,
+} from '@/lib/doporuceni-komplet-texty';
+import { zlatSlevaVTextu } from '@/lib/expired-vyhody-texty';
 import { t } from '@/lib/i18n';
 import { jeStandalone, nactiPlochaStav } from '@/lib/plocha';
-import { plochaPridej } from '@/lib/plocha-texty';
 import { poptavkaTextyVernost } from '@/lib/poptavka-texty-vernost';
 import {
-  expiredCta,
   expiredDopis,
   expiredHelp,
   expiredNadpis,
@@ -18,21 +24,13 @@ import {
 } from '@/lib/texts';
 import { textBuildVerze } from '@/lib/build-verze';
 import type { GuideLang } from '@/lib/types';
+import { ExpiredDoporuceni } from './ExpiredDoporuceni';
 import { KontaktTelefony } from './KontaktTelefony';
 import { PridejNaPlochu } from './PridejNaPlochu';
 import './expired-final.scss';
 
-const BASE =
-  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '')) ||
-  'https://vivien-prijezdy-six.vercel.app';
-
 function klicNavrat(token: string | undefined): string {
   return `vivien-exp-navrat:${token || 'x'}`;
-}
-
-/** Budoucí měření: host klepl na výzvu a sjel k výhodám. */
-function zaznamSjelKVyhodam(): void {
-  /* připraveno pro pozdější měření */
 }
 
 function IkonaKalendar() {
@@ -65,18 +63,6 @@ function IkonaDarek() {
   );
 }
 
-function vyzvaSeZlatem(text: string): ReactNode {
-  const z = zlatTriVyhodyVTextu(text);
-  if (!z) return text;
-  return (
-    <>
-      {z.pred}
-      <span className="pv-exp__zlat">{z.vyhody}</span>
-      {z.po}
-    </>
-  );
-}
-
 function podSZlatem(text: string): ReactNode {
   const z = zlatSlevaVTextu(text);
   if (!z) return text;
@@ -89,6 +75,18 @@ function podSZlatem(text: string): ReactNode {
   );
 }
 
+function nowrapSleva(text: string): ReactNode {
+  const m = text.match(/^(.*?)(5\s*%)(.*)$/);
+  if (!m) return podSZlatem(text);
+  return (
+    <>
+      {m[1]}
+      <span className="pv-exp__nowrap">{podSZlatem(m[2])}</span>
+      {m[3]}
+    </>
+  );
+}
+
 export function Expired({
   lang = 'cs',
   token,
@@ -96,16 +94,15 @@ export function Expired({
   lang?: GuideLang;
   token?: string;
 }) {
-  const v = expiredVyhodyTexty(lang);
-  const d = doporuceniTexty(lang);
   const vernostNadpis = poptavkaTextyVernost(lang).nadpis;
   const seznamRef = useRef<HTMLDivElement | null>(null);
+  const doporucitRef = useRef<HTMLDivElement | null>(null);
   const plochaBtnRef = useRef<HTMLDivElement | null>(null);
   const [rezim, setRezim] = useState<'nacitam' | 'prvni' | 'dalsi'>('nacitam');
   const [skrytPlochu, setSkrytPlochu] = useState(false);
   const [kod, setKod] = useState<string | null>(null);
-  const [hlaska, setHlaska] = useState<string | null>(null);
-  const [cekamSdil, setCekamSdil] = useState(false);
+  const [jmeno, setJmeno] = useState('');
+  const [autoPlocha, setAutoPlocha] = useState(false);
 
   const jeNahled = token === 'nahled';
 
@@ -115,10 +112,12 @@ export function Expired({
     const forceDalsi = params.get('dalsi') === '1';
     /** Jen test: vždy první návštěva, nic se do paměti neukládá. */
     const forcePoprve = params.get('poprve') === '1';
+    const chcePlochu = params.get('plocha') === '1';
     const standalone = jeStandalone();
     const plochaHotovo = nactiPlochaStav(token) === 'hotovo';
     /* dalsi=1 = náhled návratu z ikony na ploše → jako standalone (bez „Přidat na plochu“) */
     setSkrytPlochu(standalone || plochaHotovo || (forceDalsi && !forcePoprve));
+    if (chcePlochu && !standalone && !plochaHotovo) setAutoPlocha(true);
 
     if (forcePoprve) {
       setRezim('prvni');
@@ -157,16 +156,18 @@ export function Expired({
     if (!token) return;
     if (token === 'nahled') {
       setKod('zkouska');
+      setJmeno('Zkouška');
       return;
     }
     let zruseno = false;
     (async () => {
       try {
         const res = await fetch(`/api/doporuceni/kod?token=${encodeURIComponent(token)}`);
-        const json = (await res.json()) as { ok?: boolean; kod?: string };
+        const json = (await res.json()) as { ok?: boolean; kod?: string; jmeno?: string };
         if (!zruseno && json.ok && json.kod) setKod(json.kod);
+        if (!zruseno && json.jmeno) setJmeno(json.jmeno);
       } catch {
-        /* bez kódu řádek 3 nefunguje */
+        /* bez kódu řádek doporučení nefunguje */
       }
     })();
     return () => {
@@ -174,59 +175,43 @@ export function Expired({
     };
   }, [token]);
 
-  const sjelKVyhodam = useCallback(() => {
-    zaznamSjelKVyhodam();
-    seznamRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, []);
-
-  /* Věrnostní poptávka (včera schválená). Zkouška /nahled → ?zkouska=1. Ostrý host → ?t=token. */
-  const poptavkaHref =
-    !token || token === 'nahled'
-      ? '/poptavka?zkouska=1'
-      : `/poptavka?t=${encodeURIComponent(token)}`;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.location.hash !== '#doporucit') return;
+    const tmr = window.setTimeout(() => {
+      document.getElementById('doporucit')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 120);
+    return () => window.clearTimeout(tmr);
+  }, [rezim, kod]);
 
   const pridejNaPlochu = useCallback(() => {
     const btn = plochaBtnRef.current?.querySelector('button');
     if (btn instanceof HTMLButtonElement) btn.click();
   }, []);
 
-  const poslatOdkaz = useCallback(async () => {
-    if (!kod || cekamSdil) return;
-    setCekamSdil(true);
-    setHlaska(null);
-    const url = `${BASE}/poptavka?od=${encodeURIComponent(kod)}&lang=${encodeURIComponent(lang)}`;
-    const text = d.zprava;
-    try {
-      if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-        try {
-          await navigator.share({ text, url });
-          setCekamSdil(false);
-          return;
-        } catch (err) {
-          const name =
-            err && typeof err === 'object' && 'name' in err ? String((err as { name: string }).name) : '';
-          if (name === 'AbortError') {
-            setCekamSdil(false);
-            return;
-          }
-        }
-      }
-      await navigator.clipboard.writeText(`${text} ${url}`);
-      setHlaska(d.zkopirovano);
-    } catch {
-      setHlaska(d.zkopirovano);
-    } finally {
-      setCekamSdil(false);
-    }
-  }, [kod, cekamSdil, lang, d.zprava, d.zkopirovano]);
+  useEffect(() => {
+    if (!autoPlocha || skrytPlochu || rezim === 'nacitam') return;
+    const tmr = window.setTimeout(() => pridejNaPlochu(), 400);
+    return () => window.clearTimeout(tmr);
+  }, [autoPlocha, skrytPlochu, rezim, pridejNaPlochu]);
+
+  const sjelKDoporuceni = useCallback(() => {
+    doporucitRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  /* Věrnostní poptávka. Zkouška /nahled → ?zkouska=1. Ostrý host → ?t=token. */
+  const poptavkaHref =
+    !token || token === 'nahled'
+      ? '/poptavka?zkouska=1'
+      : `/poptavka?t=${encodeURIComponent(token)}`;
 
   if (rezim === 'nacitam') {
     return <main className="pv-exp" aria-busy="true" />;
   }
 
   const prvni = rezim === 'prvni';
-  const cisloPlocha = 2;
-  const cisloDarek = skrytPlochu ? 2 : 3;
+  const cisloPlocha = 3;
+  const cisloDarek = 2;
 
   return (
     <main className="pv-exp">
@@ -249,9 +234,7 @@ export function Expired({
                 <p className="pv-exp__podpis">{t(expiredPodpis, lang)}</p>
               </div>
             </div>
-            <button type="button" className="pv-exp__vyzva" onClick={sjelKVyhodam}>
-              {vyzvaSeZlatem(v.vyzva)}
-            </button>
+            <p className="pv-exp__vyzva">{t(vyhodyUvod, lang)}</p>
           </>
         ) : (
           <div className="pv-exp__dalsi">
@@ -265,7 +248,7 @@ export function Expired({
               alt="VIVIEN Apartments"
             />
             <h1 className="pv-exp__h1 pv-exp__h1--dalsi">{vernostNadpis}</h1>
-            <p className="pv-exp__dalsi-veta">{v.dalsiVeta}</p>
+            <p className="pv-exp__dalsi-veta">{t(vyhodyUvod, lang)}</p>
             <p className="pv-exp__podpis">{t(expiredPodpis, lang)}</p>
           </div>
         )}
@@ -277,13 +260,27 @@ export function Expired({
               <IkonaKalendar />
             </span>
             <span className="pv-exp__radek-text">
-              <span className="pv-exp__radek-nadpis">{t(expiredCta, lang)}</span>
-              <span className="pv-exp__radek-pod">{podSZlatem(v.radek1Pod)}</span>
+              <span className="pv-exp__radek-nadpis pv-exp__nowrap">{t(radek1Nadpis, lang)}</span>
+              <span className="pv-exp__radek-pod pv-exp__nowrap">{nowrapSleva(t(radek1Pod, lang))}</span>
             </span>
             <span className="pv-exp__sip" aria-hidden="true">
               ›
             </span>
           </a>
+
+          <button type="button" className="pv-exp__radek" onClick={sjelKDoporuceni} disabled={!kod}>
+            <span className="pv-exp__ik">
+              <span className="pv-exp__cislo">{cisloDarek}</span>
+              <IkonaDarek />
+            </span>
+            <span className="pv-exp__radek-text">
+              <span className="pv-exp__radek-nadpis pv-exp__nowrap">{t(radek2Nadpis, lang)}</span>
+              <span className="pv-exp__radek-pod pv-exp__nowrap">{t(radek2Pod, lang)}</span>
+            </span>
+            <span className="pv-exp__sip" aria-hidden="true">
+              ›
+            </span>
+          </button>
 
           {!skrytPlochu ? (
             <button type="button" className="pv-exp__radek" onClick={pridejNaPlochu}>
@@ -292,36 +289,24 @@ export function Expired({
                 <IkonaTelefon />
               </span>
               <span className="pv-exp__radek-text">
-                <span className="pv-exp__radek-nadpis">{t(plochaPridej, lang)}</span>
-                <span className="pv-exp__radek-pod">{v.radek2Pod}</span>
+                <span className="pv-exp__radek-nadpis pv-exp__nowrap">{t(radek3Nadpis, lang)}</span>
+                <span className="pv-exp__radek-pod pv-exp__nowrap">{t(radek3Pod, lang)}</span>
               </span>
               <span className="pv-exp__sip" aria-hidden="true">
                 ›
               </span>
             </button>
           ) : null}
-
-          <button
-            type="button"
-            className="pv-exp__radek"
-            onClick={() => void poslatOdkaz()}
-            disabled={!kod || cekamSdil}
-          >
-            <span className="pv-exp__ik">
-              <span className="pv-exp__cislo">{cisloDarek}</span>
-              <IkonaDarek />
-            </span>
-            <span className="pv-exp__radek-text">
-              <span className="pv-exp__radek-nadpis">{v.radek3Nadpis}</span>
-              <span className="pv-exp__radek-pod">{d.otazka}</span>
-            </span>
-            <span className="pv-exp__sip" aria-hidden="true">
-              ›
-            </span>
-          </button>
         </div>
 
-        {hlaska ? <p className="pv-exp__hlaska">{hlaska}</p> : null}
+        <div ref={doporucitRef}>
+          <ExpiredDoporuceni
+            lang={lang}
+            token={token || 'nahled'}
+            kod={kod}
+            jmenoPredvypln={jmeno}
+          />
+        </div>
 
         <div className="pv-exp__pomoc">
           <p className="pv-exp__pomoc-otazka">{t(expiredHelp, lang)}</p>

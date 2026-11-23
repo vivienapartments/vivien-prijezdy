@@ -1,19 +1,63 @@
 import type { Metadata } from 'next';
 import { nactiOsobuPodleKodu } from '@/lib/doporuceni';
+import { ogDescription, ogTitle } from '@/lib/doporuceni-komplet-texty';
+import { t } from '@/lib/i18n';
 import { firmaZKodu, normalizujKod, type PoptavkaZdroj } from '@/lib/poptavka';
 import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
 import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
 import { PoptavkaForm } from './PoptavkaForm';
 
-export const metadata: Metadata = {
-  title: 'Poptávka pobytu · VIVIEN',
-  robots: { index: false, follow: false, nocache: true },
-};
-
 type Props = {
   searchParams: Promise<{ t?: string; f?: string; od?: string; lang?: string; zkouska?: string }>;
 };
+
+function baseUrl(): string {
+  return (
+    (process.env.NEXT_PUBLIC_BASE_URL || process.env.PRUVODCE_BASE_URL || '').replace(/\/$/, '') ||
+    'https://vivien-prijezdy-six.vercel.app'
+  );
+}
+
+function jazykZParamu(raw: string | undefined): GuideLang | null {
+  if (!raw) return null;
+  return GUIDE_LANGS.includes(raw as GuideLang) ? (raw as GuideLang) : null;
+}
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const q = await searchParams;
+  const od = normalizujKod(q.od);
+  const lang = jazykZParamu(q.lang) || 'cs';
+
+  if (!od) {
+    return {
+      title: 'Poptávka pobytu · VIVIEN',
+      robots: { index: false, follow: false, nocache: true },
+    };
+  }
+
+  const title = t(ogTitle, lang);
+  const description = t(ogDescription, lang);
+  const image = `${baseUrl()}/og/og-doporuceni.jpg`;
+
+  return {
+    title,
+    description,
+    robots: { index: false, follow: false, nocache: true },
+    openGraph: {
+      title,
+      description,
+      images: [{ url: image, width: 1200, height: 630, alt: title }],
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [image],
+    },
+  };
+}
 
 export default async function PoptavkaPage({ searchParams }: Props) {
   const q = await searchParams;

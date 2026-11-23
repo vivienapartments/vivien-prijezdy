@@ -42,5 +42,13 @@ export async function GET(req: Request) {
     osobaId,
   });
 
-  return NextResponse.json({ ok: true, kod: osoba.kod }, { headers: noStore });
+  const krestni =
+    (rec.krestni || '').trim().split(/\s+/)[0] ||
+    (rec.jmeno || '').trim().split(/\s+/)[0] ||
+    '';
+
+  return NextResponse.json(
+    { ok: true, kod: osoba.kod, jmeno: krestni || undefined },
+    { headers: noStore },
+  );
 }
