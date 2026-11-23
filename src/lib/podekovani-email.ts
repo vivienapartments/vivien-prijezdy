@@ -27,21 +27,21 @@ export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {
   pt: 'VIVIEN · Obrigado pela vossa visita',
 };
 
-/** Zlaté tlačítko v e-mailu. */
+/** Zlaté tlačítko v e-mailu (OPRAVY-PO-TESTU-2 C). */
 export const TLACITKO_PODEKOVANI: LText = {
-  cs: 'Otevřít vaše výhody',
-  en: 'Open your benefits',
-  de: 'Ihre Vorteile öffnen',
-  pl: 'Otwórzcie swoje korzyści',
-  uk: 'Відкрити ваші переваги',
-  'zh-Hant': '開啟您的優惠',
-  sv: 'Öppna era förmåner',
-  es: 'Abrir sus ventajas',
-  hu: 'Előnyeik megnyitása',
-  da: 'Åbn jeres fordele',
-  fr: 'Ouvrir vos avantages',
-  it: 'Aprire i vostri vantaggi',
-  pt: 'Abrir as vossas vantagens',
+  cs: 'Využít výhody',
+  en: 'Use your benefits',
+  de: 'Vorteile nutzen',
+  pl: 'Skorzystajcie z korzyści',
+  uk: 'Скористатися перевагами',
+  'zh-Hant': '使用您的優惠',
+  es: 'Aprovechar las ventajas',
+  fr: 'Profiter des avantages',
+  it: 'Usufruire dei vantaggi',
+  pt: 'Aproveitar as vantagens',
+  sv: 'Använd förmånerna',
+  hu: 'Előnyök igénybevétele',
+  da: 'Brug fordelene',
 };
 
 function esc(s: string): string {
@@ -50,6 +50,11 @@ function esc(s: string): string {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
+}
+
+/** 5 % se v HTML nesmí zlomit. */
+function slevaNbsp(htmlEscaped: string): string {
+  return htmlEscaped.replace(/5\s*%/g, '5&nbsp;%');
 }
 
 function jazyk(lang: GuideLang | null): GuideLang {
@@ -86,20 +91,28 @@ export function textPodekovaniEmail(lang: GuideLang | null, odkaz: string): stri
   ].join('\n');
 }
 
-function radekVyhody(cislo: number, nad: string, pod: string, serif: string): string {
+function radekVyhody(
+  ikonaUrl: string,
+  nad: string,
+  pod: string,
+  odkaz: string,
+  sans: string,
+): string {
   return `<tr>
-  <td style="padding:10px 0;border-bottom:1px solid #3d342a;">
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-      <tr>
-        <td width="44" valign="top" style="padding-right:12px;">
-          <div style="width:36px;height:36px;border-radius:18px;background:#2a241c;border:1px solid #c9a84c;text-align:center;line-height:36px;color:#c9a84c;font-family:${serif};font-size:15px;font-weight:700;">${cislo}</div>
-        </td>
-        <td valign="middle" style="font-family:${serif};">
-          <div style="color:#f5efe3;font-size:16px;line-height:1.35;">${esc(nad)}</div>
-          <div style="color:#c9a84c;font-size:14px;line-height:1.4;padding-top:3px;">${esc(pod)}</div>
-        </td>
-      </tr>
-    </table>
+  <td style="padding:0;">
+    <a href="${odkaz}" style="text-decoration:none;display:block;padding:10px 0;border-bottom:1px solid #3d342a;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+        <tr>
+          <td width="52" valign="middle" style="padding-right:12px;">
+            <img src="${ikonaUrl}" width="44" height="44" alt="" style="display:block;width:44px;height:44px;border:1px solid #6b5a3a;border-radius:12px;background:#15110e;">
+          </td>
+          <td valign="middle" style="font-family:${sans};text-align:left;">
+            <div style="color:#f5efe3;font-size:16px;line-height:1.35;font-weight:700;">${slevaNbsp(esc(nad))}</div>
+            <div style="color:#c9a84c;font-size:14px;line-height:1.4;padding-top:3px;">${slevaNbsp(esc(pod))}</div>
+          </td>
+        </tr>
+      </table>
+    </a>
   </td>
 </tr>`;
 }
@@ -117,20 +130,24 @@ export function htmlPodekovaniEmail(
   const base = baseUrl.replace(/\/$/, '') || BASE;
   const foto = `${base}/pruvodce/zahrada-po-odjezdu.jpg`;
   const logo = `${base}/pruvodce/va-logo-192.png`;
+  const ikKal = `${base}/email/ikona-kalendar.png`;
+  const ikDarek = `${base}/email/ikona-darek.png`;
+  const ikTel = `${base}/email/ikona-telefon.png`;
   const nadpis = esc(t(expiredNadpis, l));
-  const dopis = esc(t(expiredDopis, l));
+  const dopis = slevaNbsp(esc(t(expiredDopis, l)));
   const podpis = esc(t(expiredPodpis, l));
   const v = expiredVyhodyTexty(l);
   const d = doporuceniTexty(l);
   const btn = esc(tlacitkoPodekovani(l));
   const url = odkaz.trim().replaceAll('"', '%22');
   const serif = "Georgia,'Times New Roman',serif";
+  const sans = "Arial,Helvetica,sans-serif";
   const plocha = t(plochaPridej, l);
 
   const vyhody = [
-    radekVyhody(1, t(expiredCta, l), v.radek1Pod, serif),
-    radekVyhody(2, v.radek3Nadpis, d.otazka, serif),
-    radekVyhody(3, plocha, v.radek2Pod, serif),
+    radekVyhody(ikKal, t(expiredCta, l), v.radek1Pod, url, sans),
+    radekVyhody(ikDarek, v.radek3Nadpis, d.otazka, url, sans),
+    radekVyhody(ikTel, plocha, v.radek2Pod, url, sans),
   ].join('');
 
   return `<!DOCTYPE html>
@@ -140,7 +157,7 @@ export function htmlPodekovaniEmail(
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0d0b0a;">
     <tr>
       <td align="center" style="padding:16px 10px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#1a1510;border:1px solid #3d342a;border-radius:12px;overflow:hidden;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#1c1712;border:1px solid #3d342a;border-radius:12px;overflow:hidden;">
           <tr>
             <td style="padding:0;line-height:0;font-size:0;">
               <img src="${foto}" width="560" alt="VIVIEN Apartments" style="display:block;width:100%;max-width:560px;height:auto;border:0;">
@@ -150,8 +167,8 @@ export function htmlPodekovaniEmail(
             <td align="center" style="padding:0 24px;">
               <table role="presentation" cellspacing="0" cellpadding="0" style="margin-top:-33px;">
                 <tr>
-                  <td align="center" style="width:66px;height:66px;border-radius:33px;background:#c9a84c;padding:3px;">
-                    <img src="${logo}" width="60" height="60" alt="VIVIEN" style="display:block;width:60px;height:60px;border-radius:30px;border:0;">
+                  <td align="center" style="width:66px;height:66px;border-radius:33px;background:#1c1712;border:2px solid #c9a84c;padding:3px;">
+                    <img src="${logo}" width="56" height="56" alt="VIVIEN" style="display:block;width:56px;height:56px;border-radius:28px;border:0;background:#1c1712;">
                   </td>
                 </tr>
               </table>
@@ -163,7 +180,7 @@ export function htmlPodekovaniEmail(
             </td>
           </tr>
           <tr>
-            <td style="padding:8px 24px 4px;font-family:${serif};font-size:16px;line-height:1.55;color:#e8dfc8;text-align:justify;">
+            <td style="padding:8px 24px 4px;font-family:${sans};font-size:16px;line-height:1.55;color:#e8dfc8;text-align:center;">
               ${dopis}
             </td>
           </tr>
@@ -184,7 +201,7 @@ export function htmlPodekovaniEmail(
               <table role="presentation" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center" style="background:#c9a84c;border-radius:28px;">
-                    <a href="${url}" style="display:inline-block;padding:13px 26px;font-family:${serif};font-size:16px;line-height:1.3;color:#1a1510;text-decoration:none;border-radius:28px;font-weight:700;">${btn}</a>
+                    <a href="${url}" style="display:inline-block;padding:13px 26px;font-family:${sans};font-size:16px;line-height:1.3;color:#1a1510;text-decoration:none;border-radius:28px;font-weight:700;">${btn}</a>
                   </td>
                 </tr>
               </table>

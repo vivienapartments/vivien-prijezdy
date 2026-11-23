@@ -21,7 +21,11 @@ describe('podekovani-email', () => {
     expect(html).toContain('va-logo-192.png');
     expect(html).toContain('Děkujeme za návštěvu');
     expect(html).toContain('Nikol a rodina VIVIEN');
-    expect(html).toContain('Otevřít vaše výhody');
+    expect(html).toContain('Využít výhody');
+    expect(html).toContain('5&nbsp;%');
+    expect(html).toContain('ikona-kalendar.png');
+    expect(html).toContain('text-align:center');
+    expect(html).toContain('background:#1c1712;border:2px solid #c9a84c');
     expect(html).toContain('#c9a84c');
     expect(html).toContain('color:#1a1510');
     expect(html).toContain('Kolik ušetří oni, tolik získáte vy');
@@ -31,6 +35,6 @@ describe('podekovani-email', () => {
   it('prostý text obsahuje odkaz', () => {
     const text = textPodekovaniEmail('cs', 'https://priklad.cz/t');
     expect(text).toContain('https://priklad.cz/t');
-    expect(text).toContain('Otevřít vaše výhody');
+    expect(text).toContain('Využít výhody');
   });
 });
