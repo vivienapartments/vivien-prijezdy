@@ -1,8 +1,15 @@
 import type { GuideLang } from './types';
 
+/** Kde se ve větě „Cena za pobyt od …“ vloží „od“. */
+export type CenaOdPozice = 'pred' | 'za';
+
 export type KalendarTexty = {
   cenaLegenda: string;
   cenaZaPobyt: string;
+  /** Slovo „od“ u ceny na kroku Termín (ještě bez zvoleného apartmánu). */
+  cenaOd: string;
+  /** pred = před částkou, za = hned za částkou (zh-Hant 起, hu -tól). */
+  cenaOdPozice: CenaOdPozice;
   cenaSleva: string;
   cenaPoznamka: string;
   zaPobyt: string;
@@ -124,6 +131,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   cs: {
     cenaLegenda: 'Ceny za noc, od nejlevnějšího volného apartmánu',
     cenaZaPobyt: 'Cena za pobyt',
+    cenaOd: 'od',
+    cenaOdPozice: 'pred',
     cenaSleva: 'se slevou 5 %',
     cenaPoznamka: 'za apartmán, ne za osobu · včetně poplatku z pobytu',
     zaPobyt: 'za pobyt',
@@ -140,6 +149,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   en: {
     cenaLegenda: 'Prices per night, from the lowest-priced available apartment',
     cenaZaPobyt: 'Price for your stay',
+    cenaOd: 'from',
+    cenaOdPozice: 'pred',
     cenaSleva: 'with 5% off',
     cenaPoznamka: 'per apartment, not per person · tourist tax included',
     zaPobyt: 'for your stay',
@@ -156,6 +167,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   de: {
     cenaLegenda: 'Preise pro Nacht, ab dem günstigsten freien Apartment',
     cenaZaPobyt: 'Preis für den Aufenthalt',
+    cenaOd: 'ab',
+    cenaOdPozice: 'pred',
     cenaSleva: 'mit 5 % Rabatt',
     cenaPoznamka: 'pro Apartment, nicht pro Person · inkl. Kurtaxe',
     zaPobyt: 'für den Aufenthalt',
@@ -172,6 +185,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   pl: {
     cenaLegenda: 'Ceny za noc, od najtańszego wolnego apartamentu',
     cenaZaPobyt: 'Cena za pobyt',
+    cenaOd: 'od',
+    cenaOdPozice: 'pred',
     cenaSleva: 'ze zniżką 5 %',
     cenaPoznamka: 'za apartament, nie za osobę · z opłatą miejscową',
     zaPobyt: 'za pobyt',
@@ -188,6 +203,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   uk: {
     cenaLegenda: 'Ціни за ніч, від найдешевших вільних апартаментів',
     cenaZaPobyt: 'Ціна за перебування',
+    cenaOd: 'від',
+    cenaOdPozice: 'pred',
     cenaSleva: 'зі знижкою 5 %',
     cenaPoznamka: 'за апартаменти, не за особу · туристичний збір включено',
     zaPobyt: 'за перебування',
@@ -204,6 +221,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   'zh-Hant': {
     cenaLegenda: '每晚價格，以最便宜的空房公寓計',
     cenaZaPobyt: '住宿總價',
+    cenaOd: '起',
+    cenaOdPozice: 'za',
     cenaSleva: '已含 5% 折扣',
     cenaPoznamka: '以整間公寓計價，非按人數 · 含住宿稅',
     zaPobyt: '總價',
@@ -220,6 +239,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   es: {
     cenaLegenda: 'Precios por noche, desde el apartamento libre más económico',
     cenaZaPobyt: 'Precio de la estancia',
+    cenaOd: 'desde',
+    cenaOdPozice: 'pred',
     cenaSleva: 'con 5 % de descuento',
     cenaPoznamka: 'por apartamento, no por persona · tasa turística incluida',
     zaPobyt: 'por la estancia',
@@ -236,6 +257,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   fr: {
     cenaLegenda: 'Prix par nuit, à partir de l’appartement libre le moins cher',
     cenaZaPobyt: 'Prix du séjour',
+    cenaOd: 'à partir de',
+    cenaOdPozice: 'pred',
     cenaSleva: 'avec 5 % de réduction',
     cenaPoznamka: 'par appartement, pas par personne · taxe de séjour incluse',
     zaPobyt: 'pour le séjour',
@@ -252,6 +275,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   it: {
     cenaLegenda: 'Prezzi a notte, dall’appartamento libero più economico',
     cenaZaPobyt: 'Prezzo del soggiorno',
+    cenaOd: 'da',
+    cenaOdPozice: 'pred',
     cenaSleva: 'con sconto del 5 %',
     cenaPoznamka: 'per appartamento, non a persona · tassa di soggiorno inclusa',
     zaPobyt: 'per il soggiorno',
@@ -268,6 +293,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   pt: {
     cenaLegenda: 'Preços por noite, a partir do apartamento livre mais económico',
     cenaZaPobyt: 'Preço da estadia',
+    cenaOd: 'desde',
+    cenaOdPozice: 'pred',
     cenaSleva: 'com 5 % de desconto',
     cenaPoznamka: 'por apartamento, não por pessoa · taxa turística incluída',
     zaPobyt: 'pela estadia',
@@ -284,6 +311,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   sv: {
     cenaLegenda: 'Pris per natt, från den billigaste lediga lägenheten',
     cenaZaPobyt: 'Pris för vistelsen',
+    cenaOd: 'från',
+    cenaOdPozice: 'pred',
     cenaSleva: 'med 5 % rabatt',
     cenaPoznamka: 'per lägenhet, inte per person · turistskatt ingår',
     zaPobyt: 'för vistelsen',
@@ -300,6 +329,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   hu: {
     cenaLegenda: 'Éjszakánkénti árak a legolcsóbb szabad apartmantól',
     cenaZaPobyt: 'A tartózkodás ára',
+    cenaOd: '-tól',
+    cenaOdPozice: 'za',
     cenaSleva: '5 % kedvezménnyel',
     cenaPoznamka: 'apartmanonként, nem személyenként · az idegenforgalmi adóval együtt',
     zaPobyt: 'a teljes tartózkodásra',
@@ -316,6 +347,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   da: {
     cenaLegenda: 'Priser pr. nat, fra den billigste ledige lejlighed',
     cenaZaPobyt: 'Pris for opholdet',
+    cenaOd: 'fra',
+    cenaOdPozice: 'pred',
     cenaSleva: 'med 5 % rabat',
     cenaPoznamka: 'pr. lejlighed, ikke pr. person · inkl. turistafgift',
     zaPobyt: 'for opholdet',
@@ -332,6 +365,8 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
   fi: {
     cenaLegenda: 'Prices per night, from the lowest-priced available apartment',
     cenaZaPobyt: 'Price for your stay',
+    cenaOd: 'from',
+    cenaOdPozice: 'pred',
     cenaSleva: 'with 5% off',
     cenaPoznamka: 'per apartment, not per person · tourist tax included',
     zaPobyt: 'for your stay',

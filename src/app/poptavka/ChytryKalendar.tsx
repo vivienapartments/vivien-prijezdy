@@ -257,7 +257,8 @@ export function ChytryKalendar(props: Props) {
           <p>{souhrnText}</p>
           {ukazCeny && cenaSuma != null ? (
             <p>
-              {kt.cenaZaPobyt}{' '}
+              {kt.cenaZaPobyt}
+              {kt.cenaOdPozice === 'pred' ? ` ${kt.cenaOd} ` : ' '}
               {sleva && cenaSeSlevou != null ? (
                 <>
                   <s className="pp__chytry-skrt">{formatKc(cenaSuma)}</s>{' '}
@@ -266,6 +267,7 @@ export function ChytryKalendar(props: Props) {
               ) : (
                 <b>{formatKc(cenaSuma)}</b>
               )}
+              {kt.cenaOdPozice === 'za' ? kt.cenaOd : null}
             </p>
           ) : null}
           {sleva && ukazCeny ? <p className="pp__chytry-mal">{kt.cenaSleva}</p> : null}
