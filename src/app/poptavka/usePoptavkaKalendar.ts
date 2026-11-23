@@ -92,11 +92,11 @@ export function usePoptavkaKalendar() {
 
   const aptObsazenyVeTerminu = useCallback(
     (apt: AptId, prijezd: string, odjezd: string): boolean => {
-      if (!prijezd || !odjezd) return false;
+      if (!prijezd || !odjezd || !nacteno) return false;
       // Bez ceny nebo obsazeno = nenabízet jako volný.
       return !aptyVolneVeTerminu(dny, prijezd, odjezd).includes(apt);
     },
-    [dny],
+    [dny, nacteno],
   );
 
   const volneApty = useMemo(() => {
