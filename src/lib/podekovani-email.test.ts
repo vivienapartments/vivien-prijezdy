@@ -29,6 +29,7 @@ describe('podekovani-email', () => {
     expect(html).toContain('Rezervovat ›');
     expect(html).toContain('Poslat ›');
     expect(html).toContain('Přidat ›');
+    expect(html).toContain('/poptavka?t=');
     expect(html).toContain('#doporucit');
     expect(html).toContain('plocha=1');
     expect(html).toContain('5&nbsp;%');

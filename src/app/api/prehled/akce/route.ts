@@ -1436,18 +1436,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (!komu || problemEmailu(komu)) return chyba(400, 'Host nemá e-mail.');
     try {
       if (druh === 'podekovani') {
-        const { htmlPodekovaniEmail, textPodekovaniEmail } = await import('@/lib/podekovani-email');
+        const {
+          htmlPodekovaniEmail,
+          textPodekovaniEmail,
+          odkazPoptavkaVernost,
+        } = await import('@/lib/podekovani-email');
         const url = odkaz || '';
         if (!url) return chyba(400, 'Chybí odkaz na průvodce.');
+        const urlRez = odkazPoptavkaVernost(url);
         const urlDop = `${url}#doporucit`;
         const urlPlo = `${url}${url.includes('?') ? '&' : '?'}plocha=1`;
         await posliEmailZpravy({
           to: komu,
           subject: predmetZpravy('podekovani', lang, rec.odjezd),
-          text: textPodekovaniEmail(lang, url, urlDop, urlPlo),
+          text: textPodekovaniEmail(lang, url, urlDop, urlPlo, urlRez),
           lang,
           telefon: false,
-          html: htmlPodekovaniEmail(lang, url, undefined, urlDop, urlPlo),
+          html: htmlPodekovaniEmail(lang, url, undefined, urlDop, urlPlo, urlRez),
         });
       } else {
         await posliEmailZpravy({

@@ -85,17 +85,34 @@ export function tlacitkoPodekovani(lang: GuideLang | null): string {
   return t(TLACITKO_PODEKOVANI, jazyk(lang));
 }
 
+/** Z odkazu průvodce `…/{token}` udělá odkaz na poptávku věrného hosta. */
+export function odkazPoptavkaVernost(odkazPruvodce: string): string {
+  const raw = odkazPruvodce.trim();
+  try {
+    const u = new URL(raw);
+    const cast = u.pathname.replace(/^\//, '').split('/')[0] || '';
+    if (!cast || cast === 'poptavka') return raw;
+    return `${u.origin}/poptavka?t=${encodeURIComponent(cast)}`;
+  } catch {
+    return raw;
+  }
+}
+
 /** Prostý text (textová část e-mailu). */
 export function textPodekovaniEmail(
   lang: GuideLang | null,
   odkaz: string,
   odkazDoporucit?: string,
   odkazPlocha?: string,
+  odkazRezervovat?: string,
 ): string {
   const l = jazyk(lang);
   const url = odkaz.trim();
+  const urlRez = (odkazRezervovat || odkazPoptavkaVernost(url)).trim();
   const urlDop = (odkazDoporucit || `${url}#doporucit`).trim();
-  const urlPlo = (odkazPlocha || `${url}?plocha=1`).trim();
+  const urlPlo = (
+    odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`
+  ).trim();
   return [
     t(expiredNadpis, l),
     '',
@@ -106,7 +123,7 @@ export function textPodekovaniEmail(
     t(vyhodyUvod, l),
     '',
     `1. ${t(radek1Nadpis, l)}. ${t(radek1Pod, l)}`,
-    url,
+    urlRez,
     `2. ${t(radek2Nadpis, l)}. ${t(radek2Pod, l)}`,
     urlDop,
     `3. ${t(radek3Nadpis, l)}. ${t(radek3Pod, l)}`,
@@ -177,6 +194,7 @@ export function htmlPodekovaniEmail(
   _baseUrl?: string,
   odkazDoporucit?: string,
   odkazPlocha?: string,
+  odkazRezervovat?: string,
 ): string {
   const l = jazyk(lang);
   const asset = OSTRA_ASSET;
@@ -189,15 +207,18 @@ export function htmlPodekovaniEmail(
   const dopis = slevaNbsp(esc(t(expiredDopis, l)));
   const podpis = esc(t(expiredPodpis, l));
   const uvod = esc(t(vyhodyUvod, l));
-  const url = odkaz.trim().replaceAll('"', '%22');
+  const url = odkaz.trim();
+  const urlRez = (odkazRezervovat || odkazPoptavkaVernost(url)).replaceAll('"', '%22');
   const urlDop = (odkazDoporucit || `${url}#doporucit`).replaceAll('"', '%22');
-  const urlPlo = (odkazPlocha || `${url}?plocha=1`).replaceAll('"', '%22');
+  const urlPlo = (
+    odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`
+  ).replaceAll('"', '%22');
   const serif = "Georgia,'Times New Roman',serif";
   const sans = "Arial,Helvetica,sans-serif";
   const kontakty = `<tr>${tlacitkoTelefonu(ikHovor, t(expiredZavolat, l), NIKOL_PHONE, sans)}${tlacitkoTelefonu(ikHovor, t(expiredZaloha, l), PARKING_OWNER_PHONE, sans)}</tr>`;
 
   const vyhody = [
-    radekVyhody(ikKal, t(radek1Nadpis, l), t(radek1Pod, l), t(radek1Tlacitko, l), url, sans),
+    radekVyhody(ikKal, t(radek1Nadpis, l), t(radek1Pod, l), t(radek1Tlacitko, l), urlRez, sans),
     radekVyhody(ikDarek, t(radek2Nadpis, l), t(radek2Pod, l), t(radek2Tlacitko, l), urlDop, sans),
     radekVyhody(ikTel, t(radek3Nadpis, l), t(radek3Pod, l), t(radek3Tlacitko, l), urlPlo, sans),
   ].join('');

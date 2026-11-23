@@ -142,8 +142,8 @@ const {
 } = require(path.join(root, 'src/lib/podekovani-email.ts'));
 const { doporuceniTexty } = require(path.join(root, 'src/lib/doporuceni-texty.ts'));
 
-const html = htmlPodekovaniEmail('cs', odkaz, base);
-const text = textPodekovaniEmail('cs', odkaz);
+const html = htmlPodekovaniEmail('cs', odkazPoprve, base);
+const text = textPodekovaniEmail('cs', odkazPoprve);
 const subject = predmetPodekovani('cs');
 
 const transporter = nodemailer.createTransport({
