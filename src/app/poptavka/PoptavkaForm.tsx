@@ -1111,10 +1111,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                             <span className="pp__dlazdice-obsazeno">{kt.obsazeno}</span>
                           ) : cenaApt ? (
                             <span className="pp__dlazdice-cena">
-                              {formatKc(slevaCesty ? cenaApt.seSlevou : cenaApt.suma)} {kt.zaPobyt}
-                              {slevaCesty ? (
-                                <span className="pp__dlazdice-sleva"> · {kt.cenaSleva}</span>
-                              ) : null}
+                              {slevaCesty && cenaApt.seSlevou !== cenaApt.suma ? (
+                                <>
+                                  <s className="pp__chytry-skrt">{formatKc(cenaApt.suma)}</s>{' '}
+                                  <b>{formatKc(cenaApt.seSlevou)}</b>
+                                </>
+                              ) : (
+                                formatKc(cenaApt.suma)
+                              )}{' '}
+                              {kt.zaPobyt}
                             </span>
                           ) : (
                             <span className="pp__dlazdice-obsazeno" aria-hidden="true">
@@ -1167,8 +1172,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                         ) : null}
                         {ukazCeny && cenaVyberu ? (
                           <span className="pp__maly-zbytek">
-                            {`\u00a0·\u00a0${formatKc(slevaCesty ? cenaVyberu.seSlevou : cenaVyberu.suma)}`}
-                            {slevaCesty ? ` ${kt.cenaSleva}` : ''}
+                            {'\u00a0·\u00a0'}
+                            {slevaCesty && cenaVyberu.seSlevou !== cenaVyberu.suma ? (
+                              <>
+                                <s className="pp__chytry-skrt">{formatKc(cenaVyberu.suma)}</s>{' '}
+                                <b>{formatKc(cenaVyberu.seSlevou)}</b>
+                              </>
+                            ) : (
+                              formatKc(cenaVyberu.suma)
+                            )}
                           </span>
                         ) : null}
                       </p>

@@ -15,7 +15,7 @@ import {
   chytryKalendarTexty,
   formatChytryDatum,
 } from '@/lib/chytry-kalendar-texty';
-import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
+import { formatRozsahPoptavkyBezRoku } from '@/lib/poptavka-texty';
 import { formatKc, kalendarTexty, tvarNoci } from '@/lib/kalendar-texty';
 import type { GuideLang } from '@/lib/types';
 
@@ -225,7 +225,7 @@ export function ChytryKalendar(props: Props) {
 
   const souhrnText =
     prijezd && odjezd
-      ? `${formatRozsahPoptavky(prijezd, odjezd, lang)} · ${tvarNoci(nociPocet, lang)} ${ct.souhrnOdjezdRano(formatChytryDatum(odjezd, lang))}`
+      ? `${formatRozsahPoptavkyBezRoku(prijezd, odjezd, lang)} · ${tvarNoci(nociPocet, lang)} ${ct.souhrnOdjezdRano}`
       : '';
 
   const hotovyTermin = Boolean(prijezd && odjezd && nociPocet > 0 && !chyba);
@@ -336,7 +336,7 @@ export function ChytryKalendar(props: Props) {
                       </span>
                       {c.minulost ? null : c.moznyOdjezd || c.role === 'odjezd' ? (
                         <small>{ct.podDnemOdjezd}</small>
-                      ) : c.plno ? (
+                      ) : vybiramOdjezd ? null : c.plno ? (
                         <small>{kt.plno}</small>
                       ) : ukazCeny && c.cenaOd != null ? (
                         <small>{c.cenaOd}</small>
@@ -348,8 +348,9 @@ export function ChytryKalendar(props: Props) {
                 )}
               </div>
 
-              <p className="pp__chytry-mal pp__chytry-legenda">{kt.cenaLegenda}</p>
-              <p className="pp__chytry-mal">{ct.ranoOdjezd}</p>
+              {zalozka === 'prijezd' ? (
+                <p className="pp__chytry-mal pp__chytry-legenda">{kt.cenaLegenda}</p>
+              ) : null}
               <button type="button" className="pp__btn pp__btn--sms" onClick={zavri}>
                 ←
               </button>
@@ -386,9 +387,9 @@ export function ChytryKalendar(props: Props) {
 
       {hotovyTermin ? (
         <div className="pp__chytry-souhrn">
-          <p>{souhrnText}</p>
+          <p className="pp__chytry-souhrn-radek">{souhrnText}</p>
           {ukazCeny && cenaSuma != null ? (
-            <p>
+            <p className="pp__chytry-souhrn-radek">
               {kt.cenaZaPobyt}
               {kt.cenaOdPozice === 'pred' ? ` ${kt.cenaOd} ` : ' '}
               {sleva && cenaSeSlevou != null ? (
@@ -402,8 +403,7 @@ export function ChytryKalendar(props: Props) {
               {kt.cenaOdPozice === 'za' ? kt.cenaOd : null}
             </p>
           ) : null}
-          {sleva && ukazCeny ? <p className="pp__chytry-mal">{kt.cenaSleva}</p> : null}
-          {ukazCeny ? <p className="pp__chytry-mal">{kt.cenaPoznamka}</p> : null}
+          {ukazCeny ? <p className="pp__chytry-souhrn-mal">{kt.cenaPoznamka}</p> : null}
         </div>
       ) : null}
 
@@ -420,7 +420,6 @@ export function ChytryKalendar(props: Props) {
         </button>
       ) : null}
 
-      <p className="pp__chytry-mal">{ct.ranoOdjezd}</p>
       {panel}
     </div>
   );

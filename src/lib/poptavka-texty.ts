@@ -341,3 +341,36 @@ export function formatRozsahPoptavky(od: string, doYmd: string, lang: GuideLang)
   }
   return `${formatDatumPoptavky(od, lang)} – ${formatDatumPoptavky(doYmd, lang)}`;
 }
+
+/** Rozsah bez roku pro hustý souhrn na Termínu: „25.–26. 11.“ */
+export function formatRozsahPoptavkyBezRoku(od: string, doYmd: string, lang: GuideLang): string {
+  const [y1, m1, d1] = od.split('-').map(Number);
+  const [y2, m2, d2] = doYmd.split('-').map(Number);
+  if (!y1 || !m1 || !d1 || !y2 || !m2 || !d2) {
+    return formatRozsahPoptavky(od, doYmd, lang);
+  }
+  if (lang === 'zh-Hant') {
+    if (m1 === m2) return `${m1}/${d1}–${d2}`;
+    return `${m1}/${d1}–${m2}/${d2}`;
+  }
+  if (lang === 'cs') {
+    if (m1 === m2) return `${d1}.–${d2}. ${m1}.`;
+    return `${d1}. ${m1}. – ${d2}. ${m2}.`;
+  }
+  const a = ymdNaUtc(od);
+  const b = ymdNaUtc(doYmd);
+  if (a && b) {
+    try {
+      const fmt = new Intl.DateTimeFormat(poptavkaLocale(lang), {
+        day: 'numeric',
+        month: 'numeric',
+        timeZone: 'UTC',
+      });
+      if (typeof fmt.formatRange === 'function') return fmt.formatRange(a, b);
+    } catch {
+      /* */
+    }
+  }
+  if (m1 === m2) return `${d1}.–${d2}. ${m1}.`;
+  return `${d1}. ${m1}. – ${d2}. ${m2}.`;
+}

@@ -8,8 +8,10 @@ type T = {
   podDnemOdjezd: string;
   denPrijezdu: string;
   denOdjezdu: string;
+  /** Dřív G – už se neukazuje (OPRAVY-3). */
   ranoOdjezd: string;
-  souhrnOdjezdRano: (d: string) => string;
+  /** Bez data: „(odjezd ráno)“. */
+  souhrnOdjezdRano: string;
 };
 
 const RAW: Record<
@@ -32,8 +34,8 @@ const RAW: Record<
     D: 'odjezd',
     E: 'Den příjezdu',
     F: 'Den odjezdu',
-    G: 'Ráno odjíždíte, tuto noc už neplatíte.',
-    souhrn: '(odjezd {d} ráno)',
+    G: '',
+    souhrn: '(odjezd ráno)',
   },
   en: {
     A: 'Tap your arrival day.',
@@ -42,8 +44,8 @@ const RAW: Record<
     D: 'departure',
     E: 'Arrival day',
     F: 'Departure day',
-    G: 'You leave in the morning, this night is not charged.',
-    souhrn: '(leaving {d} morning)',
+    G: '',
+    souhrn: '(leaving in the morning)',
   },
   de: {
     A: 'Tippen Sie auf den Anreisetag.',
@@ -52,8 +54,8 @@ const RAW: Record<
     D: 'Abreise',
     E: 'Anreisetag',
     F: 'Abreisetag',
-    G: 'Sie reisen morgens ab, diese Nacht zahlen Sie nicht.',
-    souhrn: '(Abreise {d} morgens)',
+    G: '',
+    souhrn: '(Abreise morgens)',
   },
   pl: {
     A: 'Kliknijcie dzień przyjazdu.',
@@ -62,8 +64,8 @@ const RAW: Record<
     D: 'wyjazd',
     E: 'Dzień przyjazdu',
     F: 'Dzień wyjazdu',
-    G: 'Wyjeżdżacie rano, tej nocy już nie płacicie.',
-    souhrn: '(wyjazd {d} rano)',
+    G: '',
+    souhrn: '(wyjazd rano)',
   },
   uk: {
     A: 'Натисніть день заїзду.',
@@ -72,8 +74,8 @@ const RAW: Record<
     D: 'виїзд',
     E: 'День заїзду',
     F: 'День виїзду',
-    G: 'Ви виїжджаєте вранці, цю ніч не оплачуєте.',
-    souhrn: '(виїзд {d} вранці)',
+    G: '',
+    souhrn: '(виїзд вранці)',
   },
   'zh-Hant': {
     A: '請點選入住日。',
@@ -82,8 +84,8 @@ const RAW: Record<
     D: '退房',
     E: '入住日',
     F: '退房日',
-    G: '您當天早上退房，這一晚不收費。',
-    souhrn: '（{d} 早上退房）',
+    G: '',
+    souhrn: '（早上退房）',
   },
   es: {
     A: 'Toquen el día de llegada.',
@@ -92,8 +94,8 @@ const RAW: Record<
     D: 'salida',
     E: 'Día de llegada',
     F: 'Día de salida',
-    G: 'Salen por la mañana, esa noche no se cobra.',
-    souhrn: '(salida {d} por la mañana)',
+    G: '',
+    souhrn: '(salida por la mañana)',
   },
   fr: {
     A: 'Touchez le jour d’arrivée.',
@@ -102,8 +104,8 @@ const RAW: Record<
     D: 'départ',
     E: 'Jour d’arrivée',
     F: 'Jour de départ',
-    G: 'Vous partez le matin, cette nuit n’est pas facturée.',
-    souhrn: '(départ le {d} au matin)',
+    G: '',
+    souhrn: '(départ le matin)',
   },
   it: {
     A: 'Toccate il giorno di arrivo.',
@@ -112,8 +114,8 @@ const RAW: Record<
     D: 'partenza',
     E: 'Giorno di arrivo',
     F: 'Giorno di partenza',
-    G: 'Partite al mattino, quella notte non si paga.',
-    souhrn: '(partenza {d} al mattino)',
+    G: '',
+    souhrn: '(partenza al mattino)',
   },
   pt: {
     A: 'Toquem no dia de chegada.',
@@ -122,8 +124,8 @@ const RAW: Record<
     D: 'partida',
     E: 'Dia de chegada',
     F: 'Dia de partida',
-    G: 'Partem de manhã, essa noite não é paga.',
-    souhrn: '(partida {d} de manhã)',
+    G: '',
+    souhrn: '(partida de manhã)',
   },
   sv: {
     A: 'Tryck på ankomstdagen.',
@@ -132,8 +134,8 @@ const RAW: Record<
     D: 'avresa',
     E: 'Ankomstdag',
     F: 'Avresedag',
-    G: 'Ni åker på morgonen, den natten betalar ni inte.',
-    souhrn: '(avresa {d} på morgonen)',
+    G: '',
+    souhrn: '(avresa på morgonen)',
   },
   hu: {
     A: 'Koppintsanak az érkezés napjára.',
@@ -142,8 +144,8 @@ const RAW: Record<
     D: 'távozás',
     E: 'Érkezés napja',
     F: 'Távozás napja',
-    G: 'Reggel távoznak, ezt az éjszakát már nem fizetik.',
-    souhrn: '(távozás {d} reggel)',
+    G: '',
+    souhrn: '(távozás reggel)',
   },
   da: {
     A: 'Tryk på ankomstdagen.',
@@ -152,8 +154,8 @@ const RAW: Record<
     D: 'afrejse',
     E: 'Ankomstdag',
     F: 'Afrejsedag',
-    G: 'I rejser om morgenen, den nat betaler I ikke.',
-    souhrn: '(afrejse {d} om morgenen)',
+    G: '',
+    souhrn: '(afrejse om morgenen)',
   },
   fi: {
     A: 'Tap your arrival day.',
@@ -162,8 +164,8 @@ const RAW: Record<
     D: 'departure',
     E: 'Arrival day',
     F: 'Departure day',
-    G: 'You leave in the morning, this night is not charged.',
-    souhrn: '(leaving {d} morning)',
+    G: '',
+    souhrn: '(leaving in the morning)',
   },
 };
 
@@ -197,7 +199,7 @@ export function chytryKalendarTexty(lang: GuideLang): T {
     denPrijezdu: r.E,
     denOdjezdu: r.F,
     ranoOdjezd: r.G,
-    souhrnOdjezdRano: (d) => r.souhrn.replace('{d}', d),
+    souhrnOdjezdRano: r.souhrn,
   };
 }
 
