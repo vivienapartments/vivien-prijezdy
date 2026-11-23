@@ -50,12 +50,27 @@ export function jeAndroid(): boolean {
 }
 
 /**
- * Otevře stejnou stránku v Chrome (z Gmailu, Seznamu, Custom Tab…).
- * Žádný návod. Funguje jen na Androidu.
+ * Skutečný Chrome (ne WebView, ne Edge/Opera/Samsung).
+ * V Gmailu/Seznamu často nejde, tam je potřeba intent://.
  */
-export function otevriStejnouStrankuVChrome(): void {
+export function jeChrome(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ua = window.navigator.userAgent || '';
+  if (/; wv\)|WebView/i.test(ua)) return false;
+  if (/EdgA?|OPR|SamsungBrowser|Firefox|CriOS/i.test(ua)) return false;
+  return /Chrome\//i.test(ua);
+}
+
+/**
+ * Otevře stejnou stránku v Chrome (z Gmailu, Seznamu, Custom Tab…).
+ * Funguje jen na Androidu. Když už jsi v Chrome, nic nedělá (ochrana proti smyčce).
+ * `plocha: true` doplní ?plocha=1, ať se po otevření znovu ukáže výzva.
+ */
+export function otevriStejnouStrankuVChrome(opts?: { plocha?: boolean }): void {
   if (typeof window === 'undefined') return;
-  const u = window.location;
+  if (jeChrome()) return;
+  const u = new URL(window.location.href);
+  if (opts?.plocha) u.searchParams.set('plocha', '1');
   const cil = `${u.host}${u.pathname}${u.search}${u.hash}`;
   window.location.href = `intent://${cil}#Intent;scheme=https;package=com.android.chrome;end`;
 }

@@ -1,0 +1,123 @@
+.pv-pridej-plochu {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-gold, #c9a84c);
+  background: transparent;
+  color: var(--color-gold, #c9a84c);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pv-pridej-plochu--tichy {
+  margin: 0.85rem 0 0.35rem;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--color-dark, #1c1712) 55%, transparent);
+  border-color: color-mix(in srgb, var(--color-dark, #1c1712) 22%, transparent);
+}
+
+.pv-pridej-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(8, 6, 4, 0.88);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.pv-pridej-karta {
+  width: min(22rem, 100%);
+  background: #1c1712;
+  border: 1px solid #3d342a;
+  border-radius: 18px;
+  padding: 1.15rem 1.1rem 1.25rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.pv-pridej-nadpis {
+  margin: 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: 1.3rem;
+  line-height: 1.25;
+  text-align: center;
+  color: #f5efe3;
+}
+
+.pv-pridej-text {
+  margin: 0;
+  text-align: center;
+  color: #cbbba8;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  hyphens: none;
+}
+
+.pv-pridej-radek {
+  display: block;
+  margin: 0 0 0.35rem;
+}
+
+.pv-pridej-ok {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #b89a6a;
+  color: #1a1510;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pv-pridej-zlato {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 1rem 1.15rem;
+  border: 0;
+  border-radius: 999px;
+  background: #c9a84c;
+  color: #1a1510;
+  font: inherit;
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+}
+
+.pv-pridej-tip {
+  margin: 0;
+  text-align: center;
+  color: #cbbba8;
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.pv-pridej-zavrit-link {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: #8a7b6a;
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}

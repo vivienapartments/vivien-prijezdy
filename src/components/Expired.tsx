@@ -97,12 +97,12 @@ export function Expired({
   const vernostNadpis = poptavkaTextyVernost(lang).nadpis;
   const seznamRef = useRef<HTMLDivElement | null>(null);
   const doporucitRef = useRef<HTMLDivElement | null>(null);
-  const plochaBtnRef = useRef<HTMLDivElement | null>(null);
   const [rezim, setRezim] = useState<'nacitam' | 'prvni' | 'dalsi'>('nacitam');
   const [skrytPlochu, setSkrytPlochu] = useState(false);
   const [kod, setKod] = useState<string | null>(null);
   const [jmeno, setJmeno] = useState('');
-  const [autoPlocha, setAutoPlocha] = useState(false);
+  /** Překryv „Přidat na plochu“ (?plocha=1 nebo klepnutí na řádek 3). Bez automatického spuštění. */
+  const [vyzvaPlocha, setVyzvaPlocha] = useState(false);
 
   const jeNahled = token === 'nahled';
 
@@ -117,7 +117,7 @@ export function Expired({
     const plochaHotovo = nactiPlochaStav(token) === 'hotovo';
     /* dalsi=1 = náhled návratu z ikony na ploše → jako standalone (bez „Přidat na plochu“) */
     setSkrytPlochu(standalone || plochaHotovo || (forceDalsi && !forcePoprve));
-    if (chcePlochu && !standalone && !plochaHotovo) setAutoPlocha(true);
+    if (chcePlochu && !standalone && !plochaHotovo) setVyzvaPlocha(true);
 
     if (forcePoprve) {
       setRezim('prvni');
@@ -184,16 +184,9 @@ export function Expired({
     return () => window.clearTimeout(tmr);
   }, [rezim, kod]);
 
-  const pridejNaPlochu = useCallback(() => {
-    const btn = plochaBtnRef.current?.querySelector('button');
-    if (btn instanceof HTMLButtonElement) btn.click();
+  const otevritVyzvuPlocha = useCallback(() => {
+    setVyzvaPlocha(true);
   }, []);
-
-  useEffect(() => {
-    if (!autoPlocha || skrytPlochu || rezim === 'nacitam') return;
-    const tmr = window.setTimeout(() => pridejNaPlochu(), 400);
-    return () => window.clearTimeout(tmr);
-  }, [autoPlocha, skrytPlochu, rezim, pridejNaPlochu]);
 
   const sjelKDoporuceni = useCallback(() => {
     doporucitRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -283,7 +276,7 @@ export function Expired({
           </button>
 
           {!skrytPlochu ? (
-            <button type="button" className="pv-exp__radek" onClick={pridejNaPlochu}>
+            <button type="button" className="pv-exp__radek" onClick={otevritVyzvuPlocha}>
               <span className="pv-exp__ik">
                 <span className="pv-exp__cislo">{cisloPlocha}</span>
                 <IkonaTelefon />
@@ -321,16 +314,16 @@ export function Expired({
         </p>
 
         {!skrytPlochu ? (
-          <div className="pv-exp__plocha-skryte" ref={plochaBtnRef} aria-hidden="true">
-            <PridejNaPlochu
-              lang={lang}
-              jenMobil={false}
-              nahled={jeNahled}
-              tichy
-              nazev="VIVIEN průvodce"
-              shortNazev="VIVIEN"
-            />
-          </div>
+          <PridejNaPlochu
+            lang={lang}
+            jenMobil={false}
+            nahled={jeNahled}
+            skrytTlacitko
+            vyzva={vyzvaPlocha}
+            onVyzvaZmena={setVyzvaPlocha}
+            nazev="VIVIEN průvodce"
+            shortNazev="VIVIEN"
+          />
         ) : null}
       </div>
     </main>

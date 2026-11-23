@@ -330,6 +330,24 @@ export const plochaNavodAndroidKroky: LText = {
   pt: '1. Abram o menu do navegador (três pontos).\n2. Escolham Instalar aplicação ou Adicionar ao ecrã principal.\n3. Confirmem.',
 };
 
+/** Jediná výjimka „bez návodu na Androidu“, když BIP v Chrome nepřijde. */
+export const plochaChromeMenuTip: LText = {
+  cs: 'V menu ⋮ zvolte Přidat na plochu.',
+  en: 'In the ⋮ menu choose Add to Home screen.',
+  de: 'Im Menü ⋮ „Zum Startbildschirm“ wählen.',
+  pl: 'W menu ⋮ wybierz Dodaj do ekranu głównego.',
+  uk: 'У меню ⋮ оберіть Додати на головний екран.',
+  'zh-Hant': '在選單 ⋮ 選擇「加到主畫面」。',
+  sv: 'I menyn ⋮ välj Lägg till på hemskärmen.',
+  es: 'En el menú ⋮ elija Añadir a pantalla de inicio.',
+  hu: 'A ⋮ menüben válassza: Kezdőképernyőhöz adás.',
+  da: 'I menuen ⋮ vælg Føj til startskærm.',
+  fi: 'In the ⋮ menu choose Add to Home screen.',
+  fr: 'Dans le menu ⋮ choisissez Ajouter à l’écran d’accueil.',
+  it: 'Nel menu ⋮ scegliete Aggiungi a Home.',
+  pt: 'No menu ⋮ escolham Adicionar ao ecrã principal.',
+};
+
 export const plochaHotovo: LText = {
   cs: 'Hotovo. Příště už nemusíte přes mail, najdete nás na ploše telefonu.',
   en: 'Valmista. Seuraavalla kerralla ei tarvitse mennä sähköpostin kautta, löydätte meidät puhelimen kotinäytöltä.',
