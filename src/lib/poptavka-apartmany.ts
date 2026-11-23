@@ -115,9 +115,19 @@ export function galerieKompletCoverUrl(langKod: string): string {
 
 export type GalerieKompletPolozka = { url: string; aptId: AptId };
 
-/** Celá galerie: u každé fotky víme, ke kterému apartmánu patří. */
-export function galerieKompletPolozky(langKod: string): GalerieKompletPolozka[] {
-  return POPTAVKA_APARTMANY.flatMap((a) => [
+/**
+ * Celá galerie: u každé fotky víme, ke kterému apartmánu patří.
+ * `jenApty` = jen tyto (volné v termínu). Bez něj / null = všech 5.
+ */
+export function galerieKompletPolozky(
+  langKod: string,
+  jenApty?: readonly AptId[] | null,
+): GalerieKompletPolozka[] {
+  const seznam =
+    jenApty == null
+      ? POPTAVKA_APARTMANY
+      : POPTAVKA_APARTMANY.filter((a) => jenApty.includes(a.id));
+  return seznam.flatMap((a) => [
     { url: coverUrl(langKod, a), aptId: a.id },
     ...galerieUrls(langKod, a)
       .slice(0, 2)

@@ -1238,6 +1238,19 @@
   overflow: hidden;
 }
 
+.pp__lightbox-vnitr--s-radkem {
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+}
+
+.pp__lightbox-radek {
+  margin: 0;
+  text-align: center;
+  color: #cbbba8;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
 .pp__lightbox-nazev {
   margin: 0;
   text-align: center;

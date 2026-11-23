@@ -418,3 +418,66 @@ export function formatKc(castka: number): string {
   const n = Math.round(castka);
   return `${n.toLocaleString('cs-CZ')} Kč`;
 }
+
+/** Tvar slova apartmán podle počtu (bez čísla). */
+function tvarApartmanu(pocet: number, lang: GuideLang): string {
+  const n = Math.max(0, Math.floor(pocet));
+  const f = new Intl.PluralRules(lang === 'zh-Hant' ? 'zh-Hant' : lang).select(n);
+  const m: Partial<Record<GuideLang, Record<string, string>>> = {
+    cs: { one: 'apartmán', few: 'apartmány', many: 'apartmánů', other: 'apartmánů' },
+    en: { one: 'apartment', other: 'apartments' },
+    de: { one: 'Apartment', other: 'Apartments' },
+    pl: { one: 'apartament', few: 'apartamenty', many: 'apartamentów', other: 'apartamentów' },
+    uk: { one: 'апартамент', few: 'апартаменти', many: 'апартаментів', other: 'апартаментів' },
+    'zh-Hant': { other: '間空房' },
+    es: { one: 'apartamento libre', other: 'apartamentos libres' },
+    fr: { one: 'appartement libre', other: 'appartements libres' },
+    it: { one: 'appartamento libero', other: 'appartamenti liberi' },
+    pt: { one: 'apartamento livre', other: 'apartamentos livres' },
+    sv: { one: 'ledig lägenhet', other: 'lediga lägenheter' },
+    hu: { one: 'szabad apartmanunk', other: 'szabad apartmanunk' },
+    da: { one: 'ledig lejlighed', other: 'ledige lejligheder' },
+    fi: { one: 'apartment', other: 'apartments' },
+  };
+  const tv = m[lang] || m.en!;
+  return tv[f] || tv.other || tv.one || '';
+}
+
+/**
+ * Malý řádek nad Celou galerií při zvoleném termínu.
+ * „Ve vašem termínu {t} máme volné {n} apartmány.“
+ */
+export function radekVolnychVTerminu(lang: GuideLang, termin: string, pocet: number): string {
+  const n = Math.max(0, Math.floor(pocet));
+  const apt = tvarApartmanu(n, lang);
+  switch (lang) {
+    case 'cs':
+      return `Ve vašem termínu ${termin} máme volné ${n} ${apt}.`;
+    case 'de':
+      return `Für Ihren Termin ${termin} sind ${n} ${apt} frei.`;
+    case 'pl':
+      return `W Waszym terminie ${termin} mamy wolne ${n} ${apt}.`;
+    case 'uk':
+      return `На ваші дати ${termin} вільні ${n} ${apt}.`;
+    case 'zh-Hant':
+      return `您的日期 ${termin} 尚有 ${n} ${apt}。`;
+    case 'es':
+      return `Para sus fechas ${termin} tenemos ${n} ${apt}.`;
+    case 'fr':
+      return `Pour vos dates ${termin}, ${n} ${apt}.`;
+    case 'it':
+      return `Per le vostre date ${termin} abbiamo ${n} ${apt}.`;
+    case 'pt':
+      return `Para as vossas datas ${termin} temos ${n} ${apt}.`;
+    case 'sv':
+      return `För era datum ${termin} har vi ${n} ${apt}.`;
+    case 'hu':
+      return `Az Önök időpontjában (${termin}) ${n} ${apt} van.`;
+    case 'da':
+      return `Til jeres datoer ${termin} har vi ${n} ${apt}.`;
+    case 'en':
+    case 'fi':
+    default:
+      return `For your dates ${termin} we have ${n} ${apt} free.`;
+  }
+}

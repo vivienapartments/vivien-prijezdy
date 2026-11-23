@@ -55,7 +55,7 @@ import { nazevDlazdice } from '@/lib/poptavka-nazev-dlazdice';
 import { ChytryKalendar } from './ChytryKalendar';
 import { usePoptavkaKalendar } from './usePoptavkaKalendar';
 import { VyberJazyka } from './VyberJazyka';
-import { formatKc, kalendarTexty, tvarNoci } from '@/lib/kalendar-texty';
+import { formatKc, kalendarTexty, radekVolnychVTerminu, tvarNoci } from '@/lib/kalendar-texty';
 import { nociPobytu } from '@/lib/kalendar-denni';
 import './poptavka.scss';
 
@@ -309,9 +309,16 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const ios = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
   const sms = odkazSmsPoptavky(zprava, ios);
 
+  /** Při zvoleném termínu jen apartmány volné ve všech nocích. Bez termínu = všech 5. */
+  const volneProGalerii = useMemo(() => {
+    if (!prijezd || !odjezd) return null;
+    return kal.volneApty(prijezd, odjezd);
+  }, [prijezd, odjezd, kal.volneApty]);
+
   const galerieKomplet = useMemo(
-    () => (galerie?.druh === 'komplet' ? galerieKompletPolozky(webLang) : []),
-    [galerie?.druh, webLang],
+    () =>
+      galerie?.druh === 'komplet' ? galerieKompletPolozky(webLang, volneProGalerii) : [],
+    [galerie?.druh, webLang, volneProGalerii],
   );
   const galerieFotky =
     galerie?.druh === 'apt'
@@ -806,7 +813,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       const idealObsazen =
                         Boolean(prijezd && odjezd) &&
                         kal.aptObsazenyVeTerminu(r.primary, prijezd, odjezd);
-                      const dalsi = poradi.filter((id) => id !== primaryId);
+                      const dalsi = poradi.filter(
+                        (id) =>
+                          id !== primaryId &&
+                          (!prijezd || !odjezd || !kal.aptObsazenyVeTerminu(id, prijezd, odjezd)),
+                      );
                       const primary = primaryId
                         ? POPTAVKA_APARTMANY.find((x) => x.id === primaryId)
                         : null;
@@ -888,46 +899,45 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                                 : null}
                             </div>
                           ) : null}
-                          <h2 className="pp__vysledek-dalsi">
-                            {pruvodceText(lang, 'quiz.result.altsHeading')}
-                          </h2>
-                          <div className="pp__dlazdice">
-                            {dalsi.map((id) => {
-                              const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
-                              if (!a) return null;
-                              const obs =
-                                Boolean(prijezd && odjezd) &&
-                                kal.aptObsazenyVeTerminu(id, prijezd, odjezd);
-                              return (
-                                <button
-                                  key={id}
-                                  type="button"
-                                  className={`pp__dlazdice-polozka${obs ? ' is-obsazeno' : ''}`}
-                                  disabled={obs}
-                                  onClick={() => {
-                                    if (obs) return;
-                                    setGalerie({ druh: 'apt', id, i: 0, zpetNa: 'pruvodce' });
-                                  }}
-                                >
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img src={coverUrl(webLang, a)} alt="" width={400} height={260} />
-                                  {obs ? (
-                                    <span className="pp__dlazdice-stitok">{kt.obsazeno}</span>
-                                  ) : null}
-                                  <span className="pp__dlazdice-text">
-                                    <span className="pp__dlazdice-nazev">{nazevNaDlazdici(id)}</span>
-                                    {obs ? (
-                                      <span className="pp__dlazdice-obsazeno">{kt.obsazeno}</span>
-                                    ) : (
-                                      <span className="pp__dlazdice-obsazeno" aria-hidden="true">
-                                        &nbsp;
+                          {dalsi.length ? (
+                            <>
+                              <h2 className="pp__vysledek-dalsi">
+                                {pruvodceText(lang, 'quiz.result.altsHeading')}
+                              </h2>
+                              <div className="pp__dlazdice">
+                                {dalsi.map((id) => {
+                                  const a = POPTAVKA_APARTMANY.find((x) => x.id === id);
+                                  if (!a) return null;
+                                  return (
+                                    <button
+                                      key={id}
+                                      type="button"
+                                      className="pp__dlazdice-polozka"
+                                      onClick={() =>
+                                        setGalerie({ druh: 'apt', id, i: 0, zpetNa: 'pruvodce' })
+                                      }
+                                    >
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={coverUrl(webLang, a)}
+                                        alt=""
+                                        width={400}
+                                        height={260}
+                                      />
+                                      <span className="pp__dlazdice-text">
+                                        <span className="pp__dlazdice-nazev">
+                                          {nazevNaDlazdici(id)}
+                                        </span>
+                                        <span className="pp__dlazdice-obsazeno" aria-hidden="true">
+                                          &nbsp;
+                                        </span>
                                       </span>
-                                    )}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          ) : null}
                         </>
                       );
                     })()}
@@ -1331,7 +1341,20 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
       {galerie && galerieFotky.length ? (
         <div className="pp__lightbox" role="dialog" aria-modal="true">
-          <div className="pp__lightbox-vnitr">
+          <div
+            className={`pp__lightbox-vnitr${
+              galerie.druh === 'komplet' && prijezd && odjezd ? ' pp__lightbox-vnitr--s-radkem' : ''
+            }`}
+          >
+            {galerie.druh === 'komplet' && prijezd && odjezd ? (
+              <p className="pp__lightbox-radek">
+                {radekVolnychVTerminu(
+                  lang,
+                  formatRozsahPoptavky(prijezd, odjezd, lang),
+                  volneProGalerii?.length ?? 0,
+                )}
+              </p>
+            ) : null}
             {galerieAptId ? (
               <p className="pp__lightbox-nazev">{nazevApt(galerieAptId)}</p>
             ) : null}
