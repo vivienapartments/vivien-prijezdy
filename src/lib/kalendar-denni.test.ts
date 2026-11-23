@@ -5,6 +5,7 @@ import {
   denPlno,
   maxDosahNoci,
   mozneDnyOdjezdu,
+  mozneDnyOdjezduApartmanu,
   nejblizsiVolneTerminy,
   nociPobytu,
   slevaPctCastka,
@@ -77,5 +78,15 @@ describe('kalendar-denni', () => {
     const nab = nejblizsiVolneTerminy(mapa, '2026-11-25', '2026-11-26', 'V1', 2);
     expect(nab[0]).toEqual({ prijezd: '2026-11-24', odjezd: '2026-11-25' });
     expect(nab[1]).toEqual({ prijezd: '2026-11-27', odjezd: '2026-11-28' });
+  });
+
+  it('dosah odjezdu jen v jednom apartmánu', () => {
+    const mapa: KalendarDenni = {
+      '2026-12-01': den(),
+      '2026-12-02': den({ V3: true }),
+      '2026-12-03': den(),
+    };
+    expect(mozneDnyOdjezduApartmanu(mapa, '2026-12-01', 'V3')).toEqual(['2026-12-02']);
+    expect(mozneDnyOdjezduApartmanu(mapa, '2026-12-01', 'V1').length).toBeGreaterThan(1);
   });
 });

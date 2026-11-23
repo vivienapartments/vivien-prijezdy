@@ -224,4 +224,26 @@ Projít s ním Věrného a Doporučeného **od první obrazovky po Děkujeme**, 
 | 2026-12-07 | V5 | OBSAZENO | volno |
 
 - Plné dny 27.–28. 11., 4.–5. 12., 12. 12., 31. 12., 1. 1.: všechny 5/5 PLNÉ podle iCal.
-- Stav: nasazuji na ostrou
+- Stav: nasazeno (`ff4336a` na master)
+
+## 2026-11-23 15:55 · Volné termíny kalendář (texty ke kontrole)
+
+Tři nové texty (vykání), 13 jazyků:
+
+| Jazyk | Volné termíny: {apt} | Nejbližší volný termín: {termin} | Vybrat tento termín |
+|---|---|---|---|
+| cs | Volné termíny: {apt} | Nejbližší volný termín: {termin} | Vybrat tento termín |
+| en | Free dates: {apt} | Nearest free stay: {termin} | Choose these dates |
+| de | Freie Termine: {apt} | Nächster freier Termin: {termin} | Diesen Termin wählen |
+| pl | Wolne terminy: {apt} | Najbliższy wolny termin: {termin} | Wybrać ten termin |
+| uk | Вільні дати: {apt} | Найближчий вільний термін: {termin} | Вибрати цей термін |
+| zh-Hant | 可訂日期：{apt} | 最近的空房：{termin} | 選擇此日期 |
+| es | Fechas libres: {apt} | Fecha libre más cercana: {termin} | Elegir estas fechas |
+| fr | Dates libres : {apt} | Prochaine date libre : {termin} | Choisir ces dates |
+| it | Date libere: {apt} | Data libera più vicina: {termin} | Scegliere queste date |
+| pt | Datas livres: {apt} | Data livre mais próxima: {termin} | Escolher estas datas |
+| sv | Lediga datum: {apt} | Närmaste lediga datum: {termin} | Välj dessa datum |
+| hu | Szabad időpontok: {apt} | Legközelebbi szabad időpont: {termin} | Ezt az időpontot választom |
+| da | Ledige datoer: {apt} | Nærmeste ledige dato: {termin} | Vælg denne dato |
+
+fi = en (stejně jako jinde).

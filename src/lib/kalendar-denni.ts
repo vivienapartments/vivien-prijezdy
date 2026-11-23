@@ -302,6 +302,18 @@ export function mozneDnyOdjezdu(mapa: KalendarDenni, prijezd: string): string[] 
   return out;
 }
 
+/** Možné odjezdy jen v jednom apartmánu. */
+export function mozneDnyOdjezduApartmanu(
+  mapa: KalendarDenni,
+  prijezd: string,
+  apt: AptId,
+): string[] {
+  const dosah = dosahNociApartmanu(mapa, prijezd, apt);
+  const out: string[] = [];
+  for (let i = 1; i <= dosah; i++) out.push(posunYmd(prijezd, i));
+  return out;
+}
+
 function posunYmd(ymd: string, dnu: number): string {
   const t = Date.parse(`${ymd}T12:00:00Z`) + dnu * 86_400_000;
   const d = new Date(t);

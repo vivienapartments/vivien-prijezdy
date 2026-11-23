@@ -53,6 +53,7 @@ import { PoptavkaPlochaRoot, PoptavkaPlochaTlacitko } from './PoptavkaPlocha';
 import { TelefonPole } from './TelefonPole';
 import { nazevDlazdice } from '@/lib/poptavka-nazev-dlazdice';
 import { ChytryKalendar } from './ChytryKalendar';
+import { VolneTerminyKalendar } from './VolneTerminyKalendar';
 import { usePoptavkaKalendar } from './usePoptavkaKalendar';
 import { VyberJazyka } from './VyberJazyka';
 import { formatKc, kalendarTexty, radekVolnychVTerminu, tvarNoci } from '@/lib/kalendar-texty';
@@ -116,9 +117,10 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [chyba, setChyba] = useState<string | null>(null);
   const [pruvodce, setPruvodce] = useState<PruvodceStav>(() => prazdnyPruvodceStav(props.lang));
   const [volneNabidka, setVolneNabidka] = useState<AptId[]>([]);
-  const [terminyProApt, setTerminyProApt] = useState<{
+  const [hledaniTerminu, setHledaniTerminu] = useState<{
     apt: AptId;
-    terminy: { prijezd: string; odjezd: string }[];
+    puvodniPrijezd: string;
+    puvodniOdjezd: string;
   } | null>(null);
   const [cekamJazyk, setCekamJazyk] = useState(doporucitel);
   const [vyberJazyka, setVyberJazyka] = useState(false);
@@ -127,6 +129,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const zpusobRef = useRef(zpusob);
   const galerieRef = useRef(galerie);
   const kalendarRef = useRef(kalendarOtevren);
+  const hledaniRef = useRef(hledaniTerminu);
   /** Zavření kalendáře přes history.back() – popstate už nic dalšího nedělá. */
   const kalendarZavirameRef = useRef(false);
   const buildVerze = textBuildVerze();
@@ -150,22 +153,19 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   useEffect(() => {
     kalendarRef.current = kalendarOtevren;
   }, [kalendarOtevren]);
+  useEffect(() => {
+    hledaniRef.current = hledaniTerminu;
+  }, [hledaniTerminu]);
 
-  function nastavKalendarOtevren(otevreno: boolean) {
-    if (otevreno) {
-      if (kalendarRef.current) return;
-      kalendarRef.current = true;
-      setKalendarOtevren(true);
-      try {
-        window.history.pushState({ ppKrok: krokRef.current, ppKalendar: 1 }, '');
-      } catch {
-        /* */
-      }
-      return;
+  function pushKalendarHistorie() {
+    try {
+      window.history.pushState({ ppKrok: krokRef.current, ppKalendar: 1 }, '');
+    } catch {
+      /* */
     }
-    if (!kalendarRef.current && !kalendarOtevren) return;
-    kalendarRef.current = false;
-    setKalendarOtevren(false);
+  }
+
+  function zavriKalendarHistorii() {
     try {
       const st = window.history.state as { ppKalendar?: number } | null;
       if (st && st.ppKalendar) {
@@ -175,6 +175,49 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     } catch {
       /* */
     }
+  }
+
+  function nastavKalendarOtevren(otevreno: boolean) {
+    if (otevreno) {
+      if (kalendarRef.current || hledaniRef.current) return;
+      kalendarRef.current = true;
+      setKalendarOtevren(true);
+      pushKalendarHistorie();
+      return;
+    }
+    if (!kalendarRef.current && !kalendarOtevren) return;
+    kalendarRef.current = false;
+    setKalendarOtevren(false);
+    zavriKalendarHistorii();
+  }
+
+  function otevriHledaniTerminu(apt: AptId) {
+    if (!prijezd || !odjezd) return;
+    if (kalendarRef.current || hledaniRef.current) return;
+    hledaniRef.current = { apt, puvodniPrijezd: prijezd, puvodniOdjezd: odjezd };
+    setHledaniTerminu({ apt, puvodniPrijezd: prijezd, puvodniOdjezd: odjezd });
+    pushKalendarHistorie();
+  }
+
+  function zavriHledaniTerminu() {
+    if (!hledaniRef.current && !hledaniTerminu) return;
+    hledaniRef.current = null;
+    setHledaniTerminu(null);
+    zavriKalendarHistorii();
+  }
+
+  function vyberHledanyTermin(novyPrijezd: string, novyOdjezd: string) {
+    const apt = hledaniRef.current?.apt || hledaniTerminu?.apt;
+    hledaniRef.current = null;
+    setHledaniTerminu(null);
+    zavriKalendarHistorii();
+    if (!apt) return;
+    setPrijezd(novyPrijezd);
+    setOdjezd(novyOdjezd);
+    setApts([apt]);
+    setGalerie(null);
+    setChyba(null);
+    jdiNaKrok('kontakt');
   }
 
   function jdiNaKrok(novy: Krok, opts?: { nahradit?: boolean }) {
@@ -298,6 +341,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       if (kalendarRef.current) {
         kalendarRef.current = false;
         setKalendarOtevren(false);
+        return;
+      }
+      if (hledaniRef.current) {
+        hledaniRef.current = null;
+        setHledaniTerminu(null);
         return;
       }
       const zeStavu = (e.state as { ppKrok?: Krok } | null)?.ppKrok;
@@ -946,38 +994,10 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                                 <button
                                   type="button"
                                   className="pp__vysledek-odkaz"
-                                  onClick={() => {
-                                    const terminy = kal.nejblizsi(prijezd, odjezd, r.primary);
-                                    if (terminy[0]) {
-                                      setPrijezd(terminy[0].prijezd);
-                                      setOdjezd(terminy[0].odjezd);
-                                      pokracujSApartmanem(r.primary);
-                                    } else {
-                                      setTerminyProApt({ apt: r.primary, terminy });
-                                    }
-                                  }}
+                                  onClick={() => otevriHledaniTerminu(r.primary)}
                                 >
                                   {vt.najitTermin}
                                 </button>
-                                {terminyProApt?.apt === r.primary
-                                  ? terminyProApt.terminy.map((tr) => (
-                                      <button
-                                        key={`${tr.prijezd}-${tr.odjezd}`}
-                                        type="button"
-                                        className="pp__btn pp__btn--sms"
-                                        onClick={() => {
-                                          setPrijezd(tr.prijezd);
-                                          setOdjezd(tr.odjezd);
-                                          setTerminyProApt(null);
-                                          pokracujSApartmanem(r.primary);
-                                        }}
-                                      >
-                                        {formatRozsahPoptavky(tr.prijezd, tr.odjezd, lang)}
-                                        {' · '}
-                                        {tvarNoci(nociPobytu(tr.prijezd, tr.odjezd).length, lang)}
-                                      </button>
-                                    ))
-                                  : null}
                               </div>
                             ) : null}
                           </div>
@@ -1288,15 +1308,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       type="button"
                       className="pp__btn pp__btn--sms"
                       onClick={() => {
-                        const nab = kal.nejblizsi(prijezd, odjezd, apts[0] || null);
-                        if (nab[0]) {
-                          setPrijezd(nab[0].prijezd);
-                          setOdjezd(nab[0].odjezd);
-                          setVolneNabidka([]);
-                          setChyba(null);
-                        } else {
+                        setVolneNabidka([]);
+                        if (apts[0]) otevriHledaniTerminu(apts[0]);
+                        else {
                           nastavNejblizsiTermin();
-                          setVolneNabidka([]);
+                          setChyba(null);
                         }
                       }}
                     >
@@ -1393,6 +1409,24 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         )}
         </div>
       </div>
+
+      {hledaniTerminu ? (
+        <VolneTerminyKalendar
+          lang={lang}
+          dnes={dnes}
+          dny={kal.dny}
+          apt={hledaniTerminu.apt}
+          aptNazev={nazevApt(hledaniTerminu.apt)}
+          puvodniPrijezd={hledaniTerminu.puvodniPrijezd}
+          puvodniOdjezd={hledaniTerminu.puvodniOdjezd}
+          otevreno
+          onZavrit={zavriHledaniTerminu}
+          onVybrat={vyberHledanyTermin}
+          ukazCeny={ukazCeny}
+          labelPrijezd={t.prijezd}
+          labelOdjezd={t.odjezd}
+        />
+      ) : null}
 
       {galerie && galerieFotky.length ? (
         <div className="pp__lightbox" role="dialog" aria-modal="true">
