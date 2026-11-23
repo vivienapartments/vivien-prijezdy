@@ -42,9 +42,15 @@ export function nactiPoptavkaStav(raw: unknown): PoptavkaStav {
   return 'nova';
 }
 
-export function jeZkouskaPoptavky(z: Pick<PoptavkaZaznam, 'rezervace' | 'zkouska'>): boolean {
+export function jeZkouskaPoptavky(
+  z: Pick<PoptavkaZaznam, 'rezervace' | 'zkouska' | 'id'>,
+): boolean {
   if (z.zkouska === true) return true;
-  return Boolean(z.rezervace && /^TEST/i.test(z.rezervace));
+  if (z.rezervace && /^TEST/i.test(z.rezervace)) return true;
+  if (typeof z.id === 'string' && (z.id.startsWith('test:') || z.id.startsWith('zkouska:'))) {
+    return true;
+  }
+  return false;
 }
 
 export function stitekStavu(stav: PoptavkaStav): string {
@@ -433,6 +439,7 @@ export function resetNocniPokudRano(z: PoptavkaZaznam, now = new Date()): Poptav
 }
 
 export function blokujeObsazenost(z: PoptavkaZaznam): z is PoptavkaZaznam & { blokApt: AptId } {
+  if (jeZkouskaPoptavky(z)) return false;
   const stav = nactiPoptavkaStav(z.stav);
   return Boolean(z.blokApt && POPTAVKA_STAVY_BLOKUJI.has(stav));
 }

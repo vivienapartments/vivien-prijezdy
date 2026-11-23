@@ -35,9 +35,10 @@ function baza(partial: Partial<PoptavkaZaznam> = {}): PoptavkaZaznam {
 }
 
 describe('poptavka-vyrizeni', () => {
-  it('zkouška podle TEST rezervace', () => {
+  it('zkouška podle TEST rezervace / id test:', () => {
     expect(jeZkouskaPoptavky(baza({ rezervace: 'TESTPOMAJ' }))).toBe(true);
     expect(jeZkouskaPoptavky(baza({ zkouska: true }))).toBe(true);
+    expect(jeZkouskaPoptavky(baza({ id: 'test:p123' }))).toBe(true);
     expect(jeZkouskaPoptavky(baza())).toBe(false);
   });
 
