@@ -3950,19 +3950,6 @@
   cursor: pointer;
 }
 
-.ph-kalendar__dny-box {
-  margin-top: 0.85rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid #3d342a;
-}
-
-.ph-kalendar__dny-nadpis {
-  margin: 0 0 0.55rem;
-  color: #f5efe3;
-  font-size: 0.95rem;
-  text-transform: capitalize;
-}
-
 .ph-kalendar__dny {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -3999,9 +3986,30 @@
 }
 
 .ph-kalendar__den.is-plno {
-  color: #6b5f52;
+  background: #2a1c18;
+  color: #8a6a5a;
 }
 
 .ph-kalendar__den .is-skrt {
   text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: #c07050;
+  opacity: 0.75;
+}
+
+.ph-kalendar__dny-radek td {
+  padding: 0.35rem 0 0.65rem;
+  border-bottom: 1px solid #2a231c;
+}
+
+.ph-kalendar__dny-box {
+  margin: 0;
+  padding: 0.55rem 0.25rem 0.35rem;
+  border-top: 0;
+}
+
+.ph-kalendar__pata {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #3d342a;
 }
