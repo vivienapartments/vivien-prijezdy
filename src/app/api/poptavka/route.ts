@@ -14,6 +14,7 @@ import {
   type PoptavkaZaznam,
   type PoptavkaZdroj,
 } from '@/lib/poptavka';
+import { jeNocPraha } from '@/lib/poptavka-vyrizeni';
 import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
 import { GUIDE_LANGS, type AptId, type GuideLang } from '@/lib/types';
@@ -148,7 +149,14 @@ export async function POST(req: Request) {
     poznamka: (body.poznamka || '').trim().slice(0, 500),
     jazyk: lang,
     kanal,
-    stav: 'nova',
+    stav: 'predbezne',
+    blokApt: null,
+    lhutaDo: null,
+    navrhMajitele: null,
+    // První připomínka až za 2 min (hned po odeslání už jde jedna zpráva).
+    pripominkaPosledni: new Date().toISOString(),
+    pripominkaNocniPocet: jeNocPraha() ? 1 : 0,
+    zkouska: Boolean(rezervace && /^TEST/i.test(rezervace)),
   };
 
   let dnyKal = null as Awaited<ReturnType<typeof sestavKalendarProHosta>>['dny'] | null;
@@ -163,6 +171,8 @@ export async function POST(req: Request) {
           { status: 409, headers: noStore },
         );
       }
+      const nej = nejlevnejsiVolnyPobyt(kal.dny, zaznam.prijezd, zaznam.odjezd);
+      zaznam.blokApt = nej?.apt || volne[0] || null;
     } else {
       const okApt = zaznam.apartmany.some((id) => volne.includes(id));
       if (!okApt) {
@@ -171,6 +181,8 @@ export async function POST(req: Request) {
           { status: 409, headers: noStore },
         );
       }
+      const nej = nejlevnejsiVolnyPobyt(kal.dny, zaznam.prijezd, zaznam.odjezd, zaznam.apartmany);
+      zaznam.blokApt = nej?.apt || zaznam.apartmany.find((id) => volne.includes(id)) || null;
     }
   } catch (err) {
     console.error('poptavka: obsazenost', err instanceof Error ? err.message : err);

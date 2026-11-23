@@ -3812,3 +3812,28 @@
   font-weight: 650;
   cursor: pointer;
 }
+
+.ph-poptavka__nejde {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.85rem;
+}
+
+.ph-poptavka__nejde label {
+  display: grid;
+  gap: 0.35rem;
+  color: #cbbba8;
+  font-size: 0.9rem;
+}
+
+.ph-poptavka__nejde textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #3d342a;
+  background: #15110e;
+  color: #e6dccb;
+  font: inherit;
+  resize: vertical;
+}

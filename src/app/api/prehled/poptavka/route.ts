@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 import { aptRecord } from '@/lib/guide-data';
-import { nejlevnejsiVolnyPobyt } from '@/lib/kalendar-denni';
+import { aptyVolneVeTerminu, nejlevnejsiVolnyPobyt } from '@/lib/kalendar-denni';
 import { formatKc, tvarNoci } from '@/lib/kalendar-texty';
 import { sestavKalendarProHosta } from '@/lib/kalendar-uloziste';
 import { nociMezi, POPTAVKA_SLEVA_PCT, type PoptavkaZaznam } from '@/lib/poptavka';
 import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
+import {
+  jeZkouskaPoptavky,
+  odkazZpravyHostovi,
+  spocitejLhutu,
+  stitekStavu,
+  textNejdeHostovi,
+  textPotvrditHostovi,
+  nactiPoptavkaStav,
+} from '@/lib/poptavka-vyrizeni';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore } from '@/lib/store';
 
@@ -24,6 +33,58 @@ function odkudText(z: PoptavkaZaznam): string {
   return 'web';
 }
 
+async function cenaPro(z: PoptavkaZaznam, store: ReturnType<typeof createProcessStore>) {
+  try {
+    const { dny } = await sestavKalendarProHosta(store);
+    const kandidati = z.blokApt
+      ? [z.blokApt]
+      : z.libovolnyApartman || !z.apartmany.length
+        ? undefined
+        : z.apartmany;
+    const cena = nejlevnejsiVolnyPobyt(dny, z.prijezd, z.odjezd, kandidati);
+    if (!cena) return { text: '', kc: null as number | null, seSlevou: false };
+    const sleva = z.zdroj === 'vernost' || z.zdroj === 'doporucitel';
+    return {
+      text: sleva
+        ? `${formatKc(cena.seSlevou)}, sleva ${POPTAVKA_SLEVA_PCT} %`
+        : formatKc(cena.suma),
+      kc: sleva ? cena.seSlevou : cena.suma,
+      seSlevou: sleva,
+    };
+  } catch {
+    return { text: '', kc: null as number | null, seSlevou: false };
+  }
+}
+
+function detailJson(z: PoptavkaZaznam, cenaText: string) {
+  const noci = nociMezi(z.prijezd, z.odjezd);
+  const aptNazvy = z.blokApt
+    ? aptRecord(z.blokApt).nazev.cs
+    : z.libovolnyApartman
+      ? 'libovolný'
+      : z.apartmany.map((a) => aptRecord(a).nazev.cs).join(', ') || '—';
+  return {
+    id: z.id,
+    jmeno: z.jmeno,
+    telefon: z.telefon,
+    termin: `${formatRozsahPoptavky(z.prijezd, z.odjezd, 'cs')} · ${tvarNoci(noci, 'cs')}`,
+    prijezd: z.prijezd,
+    odjezd: z.odjezd,
+    noci,
+    apartman: aptNazvy,
+    cena: cenaText,
+    odkud: odkudText(z),
+    jazyk: z.jazyk,
+    poznamka: z.poznamka,
+    stav: z.stav,
+    stavText: stitekStavu(nactiPoptavkaStav(z.stav)),
+    lhutaDo: z.lhutaDo || null,
+    navrhMajitele: z.navrhMajitele || '',
+    kanal: z.kanal || 'formular',
+    zkouska: jeZkouskaPoptavky(z),
+  };
+}
+
 export async function GET(req: Request) {
   if (!(await prehledPrihlasen())) return chyba(401, 'Nepřihlášen.');
   const id = new URL(req.url).searchParams.get('id')?.trim() || '';
@@ -32,71 +93,103 @@ export async function GET(req: Request) {
   const store = createProcessStore();
   const z = (await store.listPoptavky()).find((x) => x.id === id);
   if (!z) return chyba(404, 'Poptávka nenalezena.');
-
-  const noci = nociMezi(z.prijezd, z.odjezd);
-  const aptNazvy = z.libovolnyApartman
-    ? 'libovolný'
-    : z.apartmany.map((a) => aptRecord(a).nazev.cs).join(', ') || '—';
-
-  let cenaText = '';
-  try {
-    const { dny } = await sestavKalendarProHosta(store);
-    const cena = nejlevnejsiVolnyPobyt(
-      dny,
-      z.prijezd,
-      z.odjezd,
-      z.libovolnyApartman || !z.apartmany.length ? undefined : z.apartmany,
-    );
-    if (cena) {
-      const sleva = z.zdroj === 'vernost' || z.zdroj === 'doporucitel';
-      cenaText = sleva
-        ? `${formatKc(cena.seSlevou)}, sleva ${POPTAVKA_SLEVA_PCT} %`
-        : formatKc(cena.suma);
-    }
-  } catch {
-    /* bez ceny */
-  }
-
-  return NextResponse.json(
-    {
-      ok: true,
-      poptavka: {
-        id: z.id,
-        jmeno: z.jmeno,
-        telefon: z.telefon,
-        termin: `${formatRozsahPoptavky(z.prijezd, z.odjezd, 'cs')} · ${tvarNoci(noci, 'cs')}`,
-        prijezd: z.prijezd,
-        odjezd: z.odjezd,
-        noci,
-        apartman: aptNazvy,
-        cena: cenaText,
-        odkud: odkudText(z),
-        jazyk: z.jazyk,
-        poznamka: z.poznamka,
-        stav: z.stav,
-        zkouska: Boolean(z.rezervace && /^TEST/i.test(z.rezervace)),
-      },
-    },
-    { headers: noStore },
-  );
+  const cena = await cenaPro(z, store);
+  return NextResponse.json({ ok: true, poptavka: detailJson(z, cena.text) }, { headers: noStore });
 }
 
 export async function POST(req: Request) {
   if (!(await prehledPrihlasen())) return chyba(401, 'Nepřihlášen.');
-  let body: { id?: string; akce?: string } = {};
+  let body: { id?: string; akce?: string; navrh?: string; ios?: boolean } = {};
   try {
     body = (await req.json()) as typeof body;
   } catch {
     body = {};
   }
   const id = (body.id || '').trim();
-  if (!id || body.akce !== 'potvrdit') return chyba(400, 'Špatný požadavek.');
+  const akce = (body.akce || '').trim();
+  if (!id || !akce) return chyba(400, 'Špatný požadavek.');
 
   const store = createProcessStore();
   const seznam = await store.listPoptavky();
   const i = seznam.findIndex((x) => x.id === id);
   if (i < 0) return chyba(404, 'Poptávka nenalezena.');
-  seznam[i] = { ...seznam[i], stav: 'hotovo' };
+  let z = seznam[i];
+  const cena = await cenaPro(z, store);
+  let odkaz: string | null = null;
+  let zprava: string | null = null;
+
+  if (akce === 'potvrdit') {
+    const lhuta = spocitejLhutu(z.prijezd);
+    zprava = textPotvrditHostovi(z, {
+      cenaKc: cena.kc,
+      seSlevou: cena.seSlevou,
+      lhutaIso: lhuta,
+    });
+    const o = odkazZpravyHostovi(z, zprava, Boolean(body.ios));
+    odkaz = o.href;
+    z = {
+      ...z,
+      stav: 'ceka_na_hosta',
+      lhutaDo: lhuta,
+      pripominkaPosledni: null,
+      pripominkaNocniPocet: 0,
+    };
+  } else if (akce === 'host_potvrdil') {
+    z = {
+      ...z,
+      stav: 'potvrzeno',
+      lhutaDo: null,
+      pripominkaPosledni: null,
+      pripominkaNocniPocet: 0,
+    };
+  } else if (akce === 'zapsano_bh') {
+    z = {
+      ...z,
+      stav: 'hotovo',
+      blokApt: null,
+      lhutaDo: null,
+      pripominkaPosledni: null,
+      pripominkaNocniPocet: 0,
+    };
+  } else if (akce === 'nejde') {
+    const navrh = (body.navrh || '').trim().slice(0, 500);
+    if (!navrh) return chyba(400, 'Napište návrh.');
+    zprava = textNejdeHostovi(z, navrh);
+    const o = odkazZpravyHostovi(z, zprava, Boolean(body.ios));
+    odkaz = o.href;
+    z = {
+      ...z,
+      stav: 'nejde',
+      blokApt: null,
+      lhutaDo: null,
+      navrhMajitele: navrh,
+      pripominkaPosledni: null,
+      pripominkaNocniPocet: 0,
+    };
+  } else if (akce === 'prodlouzit') {
+    if (nactiPoptavkaStav(z.stav) !== 'neozval_se') return chyba(400, 'Nelze prodloužit.');
+    const { dny } = await sestavKalendarProHosta(store);
+    const apt = z.blokApt || z.apartmany[0];
+    const volne = aptyVolneVeTerminu(dny, z.prijezd, z.odjezd);
+    const kandidat = apt && volne.includes(apt) ? apt : volne[0] || null;
+    if (!kandidat) return chyba(409, 'Termín už není volný.');
+    const lhuta = new Date(Date.now() + 24 * 3600000).toISOString();
+    z = {
+      ...z,
+      stav: 'ceka_na_hosta',
+      blokApt: kandidat,
+      lhutaDo: lhuta,
+      pripominkaPosledni: null,
+      pripominkaNocniPocet: 0,
+    };
+  } else {
+    return chyba(400, 'Neznámá akce.');
+  }
+
+  seznam[i] = z;
   await store.ulozPoptavky(seznam);
-  return NextResponse.json({ ok: true }, { headers: noStore });
+  return NextResponse.json(
+    { ok: true, poptavka: detailJson(z, cena.text), odkaz, zprava },
+    { headers: noStore },
+  );
 }

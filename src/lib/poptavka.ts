@@ -9,6 +9,7 @@ import { formatKc, tvarNoci } from './kalendar-texty';
 import { odkazSmsPodekovani } from './podekovani';
 import { doporucitelUiTexty } from './poptavka-doporucitel-ui';
 import { formatRozsahPoptavky } from './poptavka-texty';
+import { nactiPoptavkaStav, type PoptavkaStav } from './poptavka-vyrizeni';
 import type { AptId, GuideLang } from './types';
 import { APT_IDS } from './types';
 import { odkazWhatsApp } from './whatsapp-zprava';
@@ -16,6 +17,8 @@ import { odkazWhatsApp } from './whatsapp-zprava';
 export type PoptavkaZdroj = 'vernost' | 'firma' | 'doporucitel' | 'obecna';
 
 export type PoptavkaKanal = 'formular' | 'whatsapp' | 'sms';
+
+export type { PoptavkaStav };
 
 export type PoptavkaZaznam = {
   id: string;
@@ -36,7 +39,16 @@ export type PoptavkaZaznam = {
   jazyk: GuideLang;
   /** Jak host pokračoval. Chybí = klasický formulář. */
   kanal?: PoptavkaKanal | null;
-  stav: 'nova' | 'hotovo';
+  stav: PoptavkaStav;
+  /** Apartmán držený předběžně v obsazenosti. */
+  blokApt?: AptId | null;
+  /** Lhůta pro odpověď hosta (ISO). */
+  lhutaDo?: string | null;
+  navrhMajitele?: string | null;
+  pripominkaPosledni?: string | null;
+  pripominkaNocniPocet?: number;
+  /** Zkušební poptávka (bez Telegram připomínek). */
+  zkouska?: boolean;
 };
 
 /** Firmy spravujeme tady (kód v odkazu ?f=). Hesla tu nejsou. */
@@ -275,7 +287,16 @@ export function nactiPoptavkySeznam(raw: unknown): PoptavkaZaznam[] {
       jazyk: (typeof r.jazyk === 'string' ? r.jazyk : 'cs') as GuideLang,
       kanal:
         r.kanal === 'whatsapp' || r.kanal === 'sms' || r.kanal === 'formular' ? r.kanal : null,
-      stav: r.stav === 'hotovo' ? 'hotovo' : 'nova',
+      stav: nactiPoptavkaStav(r.stav),
+      blokApt: filtrApartmany([String(r.blokApt || '')])[0] || null,
+      lhutaDo: typeof r.lhutaDo === 'string' ? r.lhutaDo : null,
+      navrhMajitele: typeof r.navrhMajitele === 'string' ? r.navrhMajitele.slice(0, 500) : null,
+      pripominkaPosledni: typeof r.pripominkaPosledni === 'string' ? r.pripominkaPosledni : null,
+      pripominkaNocniPocet:
+        typeof r.pripominkaNocniPocet === 'number' && r.pripominkaNocniPocet >= 0
+          ? Math.min(20, Math.floor(r.pripominkaNocniPocet))
+          : 0,
+      zkouska: r.zkouska === true,
     });
     if (out.length >= 200) break;
   }

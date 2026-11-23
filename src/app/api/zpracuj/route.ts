@@ -7,6 +7,7 @@ import { createProcessStore, pocetPrikazu, prevedPlatbyJednou, prodluzKartyJedno
 import { upozorniBranu } from '@/lib/brana-upozorneni';
 import { upozorniDnes } from '@/lib/dnesek-upozorneni';
 import { upozorniOdjezdy } from '@/lib/odjezd-upozorneni';
+import { zpracujPoptavkyPripominky } from '@/lib/poptavka-pripominky';
 import { upozorniPrijezd } from '@/lib/prijezd-upozorneni';
 import { poBehZpracovani } from '@/lib/upozorneni';
 
@@ -84,6 +85,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await upozorniPrijezd(store).catch(() => undefined);
     await upozorniOdjezdy(store).catch(() => undefined);
     await upozorniDnes(store).catch(() => undefined);
+    await zpracujPoptavkyPripominky(store).catch(() => undefined);
     zapisSpotrebu(store);
     return NextResponse.json({
       ok: true,
@@ -115,6 +117,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await upozorniPrijezd(store).catch(() => undefined);
     await upozorniOdjezdy(store).catch(() => undefined);
     await upozorniDnes(store).catch(() => undefined);
+    await zpracujPoptavkyPripominky(store).catch(() => undefined);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

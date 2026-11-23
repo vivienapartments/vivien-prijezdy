@@ -8,6 +8,7 @@ import {
   PRAZDNA_META,
 } from './kalendar-denni';
 import { KLIC_KALENDAR_DENNI, KLIC_KALENDAR_META, kalendarKlic } from './kalendar-klic';
+import { blokujeObsazenost } from './poptavka-vyrizeni';
 import type { ProcessStore, RezervaceRecord } from './store';
 
 export async function nactiUlozenyKalendar(store: ProcessStore): Promise<{
@@ -50,7 +51,7 @@ export function rezervaceNaKalendar(rec: RezervaceRecord): RezProKalendar {
   };
 }
 
-/** Tabulka + rezervace z průvodce (čtení ostrých rez:* i na Preview). */
+/** Tabulka + rezervace z průvodce + předběžné blokace poptávek. */
 export async function sestavKalendarProHosta(store: ProcessStore): Promise<{
   dny: KalendarDenni;
   meta: KalendarMeta;
@@ -58,7 +59,22 @@ export async function sestavKalendarProHosta(store: ProcessStore): Promise<{
 }> {
   const { dny: zaklad, meta } = await nactiUlozenyKalendar(store);
   const seznam = await store.listRezervace();
-  const rez = seznam.map((e) => rezervaceNaKalendar(e.record));
+  const rez: RezProKalendar[] = seznam.map((e) => rezervaceNaKalendar(e.record));
+  try {
+    const poptavky = await store.listPoptavky();
+    for (const z of poptavky) {
+      if (!blokujeObsazenost(z)) continue;
+      rez.push({
+        prijezd: z.prijezd,
+        odjezd: z.odjezd,
+        apartman: z.blokApt,
+        stav: 'cekame',
+        zkusebni: false,
+      });
+    }
+  } catch {
+    /* bez blokací poptávek */
+  }
   const { mapa, bezAptPoDnech } = aplikujRezervace(zaklad, rez);
 
   let posledni: string | null = meta.posledniRezervace;
