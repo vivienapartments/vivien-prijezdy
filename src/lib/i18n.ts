@@ -115,7 +115,8 @@ export function parseLang(raw: string | null | undefined): GuideLang {
     v === 'pt' ||
     v === 'sv' ||
     v === 'hu' ||
-    v === 'da'
+    v === 'da' ||
+    v === 'fi'
   ) {
     return v;
   }

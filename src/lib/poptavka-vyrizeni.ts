@@ -181,7 +181,9 @@ export function formatLhutaProHosta(iso: string, lang: GuideLang): string {
                           ? 'hu-HU'
                           : lang === 'da'
                             ? 'da-DK'
-                            : 'en-GB';
+                            : lang === 'fi'
+                              ? 'fi-FI'
+                              : 'en-GB';
   return new Intl.DateTimeFormat(locale, {
     timeZone: 'Europe/Prague',
     weekday: 'long',
@@ -261,6 +263,11 @@ const POTVRDIT: Record<GuideLang, Sablona> = {
       'Hej {jmeno}, vi bekræfter jeres ophold {termin} i lejligheden {apartman}. Pris {cena}{sleva}. Før ankomst sender vi jer vores ankomstguide. Vi glæder os til at se jer. Nikol, VIVIEN Apartments',
     lhuta: 'Bekræft venligst datoerne senest {lhuta}, så holder vi dem til jer.',
   },
+  fi: {
+    potvrzeni:
+      'Hello {jmeno}, we confirm your stay {termin} in the {apartman} apartment. Price {cena}{sleva}. Before your arrival we will send you our arrival guide. We look forward to welcoming you. Nikol, VIVIEN Apartments',
+    lhuta: 'Please reply by {lhuta} to confirm the dates, so we can keep them for you.',
+  },
 };
 
 const SLEVA: Record<GuideLang, string> = {
@@ -277,6 +284,7 @@ const SLEVA: Record<GuideLang, string> = {
   sv: ' (med 5 % rabatt)',
   hu: ' (5 % kedvezménnyel)',
   da: ' (med 5 % rabat)',
+  fi: ' (5 % alennuksella)',
 };
 
 const NEJDE: Record<GuideLang, string> = {
@@ -294,6 +302,7 @@ const NEJDE: Record<GuideLang, string> = {
   sv: 'Hej {jmeno}, tack för förfrågan. Datumet {termin} är tyvärr inte ledigt längre. Vi kan erbjuda: {navrh}. Skriv gärna om det passar er. Nikol, VIVIEN Apartments',
   hu: 'Jó napot, {jmeno}! Köszönjük a megkeresést. A(z) {termin} időpont sajnos már foglalt. Ezt tudjuk ajánlani: {navrh}. Írják meg, kérjük, megfelel-e. Nikol, VIVIEN Apartments',
   da: 'Hej {jmeno}, tak for henvendelsen. Terminen {termin} er desværre ikke ledig længere. Vi kan tilbyde: {navrh}. Skriv gerne, om det passer jer. Nikol, VIVIEN Apartments',
+  fi: 'Hello {jmeno}, thank you for your enquiry. The dates {termin} are no longer available. We can offer: {navrh}. Please let us know if that works for you. Nikol, VIVIEN Apartments',
 };
 
 function krestni(jmeno: string): string {

@@ -32,6 +32,7 @@ const EXTRA = {
     sv: 'Välj nu avresedagen',
     hu: 'Most válasszák ki a távozás napját',
     da: 'Vælg nu afrejsedagen',
+    fi: 'Now choose your departure day',
   },
   terminBezVolneho: {
     cs: 'V tomto termínu nemáme jeden apartmán volný na všechny noci.',
@@ -47,6 +48,7 @@ const EXTRA = {
     sv: 'Under dessa datum har vi ingen lägenhet ledig alla nätter.',
     hu: 'Ebben az időszakban nincs olyan apartman, amely az összes éjszakára szabad.',
     da: 'I denne periode har vi ikke én lejlighed ledig alle nætter.',
+    fi: 'For these dates we do not have one apartment free for all nights.',
   },
   ukazNejblizsi: {
     cs: 'Ukázat nejbližší volný termín',
@@ -62,6 +64,7 @@ const EXTRA = {
     sv: 'Visa närmaste lediga datum',
     hu: 'A legközelebbi szabad időpont mutatása',
     da: 'Vis nærmeste ledige dato',
+    fi: 'Show the nearest free dates',
   },
   veTerminuObsazeno: {
     cs: 'Ve vašem termínu obsazeno',
@@ -77,6 +80,7 @@ const EXTRA = {
     sv: 'Upptaget på era datum',
     hu: 'Az önök időpontjában foglalt',
     da: 'Optaget på jeres datoer',
+    fi: 'Booked for your dates',
   },
   kdyJeVolny: {
     cs: 'Kdy je volný?',
@@ -92,6 +96,7 @@ const EXTRA = {
     sv: 'När är den ledig?',
     hu: 'Mikor szabad?',
     da: 'Hvornår er den ledig?',
+    fi: 'When is it free?',
   },
   aptObsazenOdeslani: {
     cs: 'Tento apartmán je ve vašem termínu obsazený.',
@@ -107,6 +112,7 @@ const EXTRA = {
     sv: 'Denna lägenhet är upptagen på era datum.',
     hu: 'Ez az apartman az önök időpontjában foglalt.',
     da: 'Denne lejlighed er optaget på jeres datoer.',
+    fi: 'This apartment is booked for your dates.',
   },
 } as const;
 
@@ -323,6 +329,22 @@ const MAPA: Record<GuideLang, KalendarTexty> = {
     kdyJeVolny: s('da', 'kdyJeVolny'),
     aptObsazenOdeslani: s('da', 'aptObsazenOdeslani'),
   },
+  fi: {
+    cenaLegenda: 'Prices per night, from the lowest-priced available apartment',
+    cenaZaPobyt: 'Price for your stay',
+    cenaSleva: 'with 5% off',
+    cenaPoznamka: 'per apartment, not per person · tourist tax included',
+    zaPobyt: 'for your stay',
+    plno: 'full',
+    obsazeno: 'booked',
+    terminPlno: 'We are fully booked on these dates. Please try other dates.',
+    tedVyberteOdjezd: s('en', 'tedVyberteOdjezd'),
+    terminBezVolneho: s('en', 'terminBezVolneho'),
+    ukazNejblizsi: s('en', 'ukazNejblizsi'),
+    veTerminuObsazeno: s('en', 'veTerminuObsazeno'),
+    kdyJeVolny: s('en', 'kdyJeVolny'),
+    aptObsazenOdeslani: s('en', 'aptObsazenOdeslani'),
+  },
 };
 
 export function kalendarTexty(lang: GuideLang): KalendarTexty {
@@ -348,6 +370,7 @@ export function tvarNoci(pocet: number, lang: GuideLang): string {
     sv: { one: 'natt', other: 'nätter' },
     hu: { other: 'éj' },
     da: { one: 'nat', other: 'nætter' },
+    fi: { one: 'night', other: 'nights' },
   };
   const m = tvary[lang] || tvary.en!;
   const slovo = m[f] || m.other || m.one || '';

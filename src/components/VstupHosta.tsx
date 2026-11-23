@@ -100,7 +100,7 @@ function vopUrl(lang: GuideLang): string {
   const p = '/vop';
   if (lang === 'cs') return `https://vivienapartments.cz${p}`;
   if (lang === 'zh-Hant') return `https://vivienapartments.cz/zh${p}`;
-  if (lang === 'sv' || lang === 'hu' || lang === 'pt' || lang === 'da') {
+  if (lang === 'sv' || lang === 'hu' || lang === 'pt' || lang === 'da' || lang === 'fi') {
     return `https://vivienapartments.cz/en${p}`;
   }
   return `https://vivienapartments.cz/${lang}${p}`;

@@ -93,6 +93,13 @@ Szép napot kívánunk.
 
 Nikol és a VIVIEN család`,
   da: `Hej,\r\n\r\nvi ville bare høre, om alt er i orden, og om I er tilfredse med opholdet. Hvis I har brug for noget, så skriv til os.\r\n\r\nVi ønsker jer en god dag.\r\n\r\nNikol og familien VIVIEN`,
+  fi: `Hello,
+
+we just wanted to ask whether everything is all right and whether you are happy with your stay. If you need anything, please write to us.
+
+We wish you a lovely day.
+
+Nikol and the VIVIEN family`,
 };
 
 export const PREDMET_POHODY: Record<GuideLang, string> = {
@@ -109,6 +116,7 @@ export const PREDMET_POHODY: Record<GuideLang, string> = {
   sv: 'VIVIEN · Är allt bra?',
   hu: 'VIVIEN · Minden rendben?',
   da: 'VIVIEN · Er alt i orden?',
+  fi: 'VIVIEN · Is everything all right?',
 };
 
 export function textPohody(lang: GuideLang | null): string {

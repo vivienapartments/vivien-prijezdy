@@ -114,6 +114,14 @@ const MAPA: Record<GuideLang, DoporucitelUiTexty> = {
     vyberteJazyk: 'Vælg sprog',
     nazevJazyka: 'Dansk',
   },
+  fi: {
+    poptavkaVeta: 'Five original apartments, each with its own mood. Choose yours.',
+    poptavkaSleva: 'On your first stay with us you get 5 % off.',
+    poptavkaNapoveda: 'Choose your dates and you will see the price right away.',
+    zpravaDoporuceni: '(referral, 5 % discount)',
+    vyberteJazyk: 'Choose language',
+    nazevJazyka: 'Suomi',
+  },
 };
 
 const VLAJKY: Record<GuideLang, string> = {
@@ -130,6 +138,7 @@ const VLAJKY: Record<GuideLang, string> = {
   sv: '🇸🇪',
   hu: '🇭🇺',
   da: '🇩🇰',
+  fi: '🇫🇮',
 };
 
 export const POPTAVKA_JAZYKY: GuideLang[] = [
@@ -146,6 +155,7 @@ export const POPTAVKA_JAZYKY: GuideLang[] = [
   'sv',
   'hu',
   'da',
+  'fi',
 ];
 
 export function doporucitelUiTexty(lang: GuideLang): DoporucitelUiTexty {

@@ -237,6 +237,23 @@ const MAPA: Record<GuideLang, DoporuceniTexty> = {
     poptavkaNadpisApartmany: 'Hvilken lejlighed frister jer?',
     poptavkaNadpisOdeslano: 'Tak, vi glæder os til at se jer.',
   },
+  fi: {
+    nadVas: 'Your next stay',
+    nadBlizci: 'For people close to you',
+    otazka: 'They save, you gain the same',
+    veta1:
+      'Your friends get 5% off their first stay with us. We then add the same amount to your next stay.',
+    tlacitko: 'Send the link',
+    zkopirovano: 'The link has been copied.',
+    zprava:
+      'Hi, here is a tip: VIVIEN Apartments in the centre of České Budějovice. With this link you get 5% off your first stay:',
+    poptavkaNadpis: 'We look forward to welcoming you',
+    poptavkaStitek: 'You come recommended',
+    poptavkaUvod:
+      'You get 5% off your first stay with us. Choose your dates and we will usually send you the price within an hour. We reply between 8 am and 8 pm.',
+    poptavkaNadpisApartmany: 'Which apartment appeals to you?',
+    poptavkaNadpisOdeslano: 'Thank you, we look forward to having you.',
+  },
 } as Record<GuideLang, DoporuceniTexty>;
 
 export function doporuceniTexty(lang: GuideLang): DoporuceniTexty {

@@ -205,6 +205,7 @@ export const SHRNUTI_NADPIS: Record<GuideLang, string> = {
   pt: 'Está tudo preparado',
   hu: 'Minden elő van készítve',
   da: 'Alt er klar',
+  fi: 'Kaikki on valmista',
 };
 
 export const SHRNUTI_SBALENA: Record<GuideLang, string> = {
@@ -221,4 +222,5 @@ export const SHRNUTI_SBALENA: Record<GuideLang, string> = {
   pt: 'Resumo após o preenchimento',
   hu: 'Összefoglaló a kitöltés után',
   da: 'Opsummering efter udfyldning',
+  fi: 'Yhteenveto täytön jälkeen',
 };
