@@ -113,10 +113,17 @@ export function Expired({
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const forceDalsi = params.get('dalsi') === '1';
+    /** Jen test: vždy první návštěva, nic se do paměti neukládá. */
+    const forcePoprve = params.get('poprve') === '1';
     const standalone = jeStandalone();
     const plochaHotovo = nactiPlochaStav(token) === 'hotovo';
     /* dalsi=1 = náhled návratu z ikony na ploše → jako standalone (bez „Přidat na plochu“) */
-    setSkrytPlochu(standalone || plochaHotovo || forceDalsi);
+    setSkrytPlochu(standalone || plochaHotovo || (forceDalsi && !forcePoprve));
+
+    if (forcePoprve) {
+      setRezim('prvni');
+      return;
+    }
 
     if (jeNahled && !forceDalsi) {
       setRezim('prvni');
