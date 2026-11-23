@@ -2,13 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
-import { jeIos, jeStandalone } from '@/lib/plocha';
+import { jeIos, jeStandalone, otevriStejnouStrankuVChrome } from '@/lib/plocha';
 import {
-  plochaAndroidNejdeNadpis,
-  plochaAndroidNejdeText,
   plochaHotovo,
-  plochaIosNedostupneNadpis,
-  plochaIosNedostupneText,
+  plochaNavodIosKroky,
+  plochaNavodIosNadpis,
   plochaPridej,
   plochaZavrit,
 } from '@/lib/plocha-texty';
@@ -60,8 +58,8 @@ const IKONY = [
 
 /**
  * Tlačítko Přidat na plochu (Děkujeme / tiše).
- * Android: nejdřív systémové beforeinstallprompt. iPhone: omluva.
- * Návod s tečkami nikdy.
+ * Android: beforeinstallprompt, jinak rovnou Chrome (žádný návod).
+ * iPhone: krátký návod Safari.
  */
 export function PridejNaPlochu({
   lang,
@@ -75,7 +73,7 @@ export function PridejNaPlochu({
   const [standalone, setStandalone] = useState(true);
   const [mobil, setMobil] = useState(false);
   const [ios, setIos] = useState(false);
-  const [hlaska, setHlaska] = useState<'nic' | 'ios' | 'android-nejde' | 'hotovo'>('nic');
+  const [hlaska, setHlaska] = useState<'nic' | 'ios' | 'hotovo'>('nic');
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
   const tt = useCallback((map: LText) => t(map, lang), [lang]);
 
@@ -175,7 +173,7 @@ export function PridejNaPlochu({
         /* systém */
       }
     }
-    setHlaska('android-nejde');
+    otevriStejnouStrankuVChrome();
   }
 
   if (!nahled && (!ready || standalone)) return null;
@@ -201,18 +199,18 @@ export function PridejNaPlochu({
                   {tt(plochaZavrit)}
                 </button>
               </>
-            ) : hlaska === 'ios' ? (
-              <>
-                <h2 className="pv-pridej-nadpis">{tt(plochaIosNedostupneNadpis)}</h2>
-                <p className="pv-pridej-text">{tt(plochaIosNedostupneText)}</p>
-                <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
-                  {tt(plochaZavrit)}
-                </button>
-              </>
             ) : (
               <>
-                <h2 className="pv-pridej-nadpis">{tt(plochaAndroidNejdeNadpis)}</h2>
-                <p className="pv-pridej-text">{tt(plochaAndroidNejdeText)}</p>
+                <h2 className="pv-pridej-nadpis">{tt(plochaNavodIosNadpis)}</h2>
+                <p className="pv-pridej-text">
+                  {tt(plochaNavodIosKroky)
+                    .split('\n')
+                    .map((radek, i) => (
+                      <span key={i} className="pv-pridej-radek">
+                        {radek}
+                      </span>
+                    ))}
+                </p>
                 <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
                   {tt(plochaZavrit)}
                 </button>

@@ -43,3 +43,19 @@ export function jeIos(): boolean {
   if (/iPad|iPhone|iPod/i.test(ua)) return true;
   return window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1;
 }
+
+export function jeAndroid(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /Android/i.test(window.navigator.userAgent || '');
+}
+
+/**
+ * Otevře stejnou stránku v Chrome (z Gmailu, Seznamu, Custom Tab…).
+ * Žádný návod. Funguje jen na Androidu.
+ */
+export function otevriStejnouStrankuVChrome(): void {
+  if (typeof window === 'undefined') return;
+  const u = window.location;
+  const cil = `${u.host}${u.pathname}${u.search}${u.hash}`;
+  window.location.href = `intent://${cil}#Intent;scheme=https;package=com.android.chrome;end`;
+}

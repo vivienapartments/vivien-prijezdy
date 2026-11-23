@@ -416,6 +416,10 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       ? kal.cenaProVyber(prijezd, odjezd, apts, libovolny, slevaCesty)
       : null;
   const nociPocet = prijezd && odjezd ? nociPobytu(prijezd, odjezd).length : 0;
+  const cenaGalerie =
+    ukazCeny && prijezd && odjezd && galerieAptId
+      ? kal.cenaProVyber(prijezd, odjezd, [galerieAptId], false, slevaCesty)
+      : null;
 
   function telefonOk(): boolean {
     const raw = telefon.trim();
@@ -1441,6 +1445,21 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 →
               </button>
             </div>
+            {cenaGalerie ? (
+              <p className="pp__lightbox-cena">
+                {tvarNoci(nociPocet, lang)}
+                {' · '}
+                {slevaCesty && cenaGalerie.seSlevou !== cenaGalerie.suma ? (
+                  <>
+                    <s className="pp__chytry-skrt">{formatKc(cenaGalerie.suma)}</s>{' '}
+                    <b>{formatKc(cenaGalerie.seSlevou)}</b>
+                  </>
+                ) : (
+                  <b>{formatKc(cenaGalerie.suma)}</b>
+                )}{' '}
+                {kt.zaPobyt}
+              </p>
+            ) : null}
             {galerieAptId ? (
               <button
                 type="button"

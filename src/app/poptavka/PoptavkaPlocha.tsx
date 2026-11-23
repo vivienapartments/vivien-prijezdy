@@ -11,12 +11,10 @@ import {
   type ReactNode,
 } from 'react';
 import { t } from '@/lib/i18n';
-import { jeIos, jeStandalone } from '@/lib/plocha';
+import { jeIos, jeStandalone, otevriStejnouStrankuVChrome } from '@/lib/plocha';
 import {
-  plochaIosNedostupneNadpis,
-  plochaIosNedostupneText,
-  plochaNavodAndroidKroky,
-  plochaNavodAndroidNadpis,
+  plochaNavodIosKroky,
+  plochaNavodIosNadpis,
   plochaPridej,
   plochaZavrit,
 } from '@/lib/plocha-texty';
@@ -55,7 +53,7 @@ type RootProps = { lang: GuideLang; children: ReactNode };
 
 /**
  * Jednou nastaví manifest. Tlačítko Přidat na plochu může být na začátku i dole.
- * Android: instalace / návod. iPhone: omluva. Když nejde, host jde dál.
+ * Android: beforeinstallprompt, jinak Chrome (bez návodu). iPhone: krátký návod Safari.
  */
 export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
   const [standalone, setStandalone] = useState(true);
@@ -171,11 +169,12 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
             setHotovo(true);
             return;
           }
+          return;
         } catch {
           /* systém */
         }
       }
-      setNavod(true);
+      otevriStejnouStrankuVChrome();
     })();
   }, [ios]);
 
@@ -194,19 +193,11 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
                   {tt(plochaZavrit)}
                 </button>
               </>
-            ) : ios ? (
-              <>
-                <h2 className="pp__plocha-nadpis">{tt(plochaIosNedostupneNadpis)}</h2>
-                <p className="pp__plocha-text">{tt(plochaIosNedostupneText)}</p>
-                <button type="button" className="pp__btn pp__btn--hlavni" onClick={() => setNavod(false)}>
-                  {tt(plochaZavrit)}
-                </button>
-              </>
             ) : (
               <>
-                <h2 className="pp__plocha-nadpis">{tt(plochaNavodAndroidNadpis)}</h2>
+                <h2 className="pp__plocha-nadpis">{tt(plochaNavodIosNadpis)}</h2>
                 <p className="pp__plocha-text">
-                  {tt(plochaNavodAndroidKroky)
+                  {tt(plochaNavodIosKroky)
                     .split('\n')
                     .map((radek, i) => (
                       <span key={i} className="pp__plocha-radek">

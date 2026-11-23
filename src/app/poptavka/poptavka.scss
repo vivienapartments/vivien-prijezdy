@@ -1279,6 +1279,20 @@
   font-size: 0.9rem;
 }
 
+.pp__lightbox-cena {
+  margin: 0;
+  text-align: center;
+  color: #ebe4d4;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  text-wrap: pretty;
+
+  b {
+    color: #c9a84c;
+    font-weight: 700;
+  }
+}
+
 .pp__lightbox .pp__btn {
   margin: 0;
 }

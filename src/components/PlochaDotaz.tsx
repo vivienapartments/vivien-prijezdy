@@ -6,6 +6,7 @@ import {
   jeIos,
   jeStandalone,
   nactiPlochaStav,
+  otevriStejnouStrankuVChrome,
   ulozPlochaStav,
   type PlochaStav,
 } from '@/lib/plocha';
@@ -51,8 +52,8 @@ export function usePlochaDotaz({
 }: Opts): { overlay: ReactNode; krok: ReactNode; posunOsy: number } {
   const [stav, setStav] = useState<PlochaStav>('nic');
   const [ready, setReady] = useState(false);
-  /** nic = hlavní dotaz; ios / android-nejde = krátká hláška; false = zavřeno */
-  const [poAno, setPoAno] = useState<'nic' | 'ios' | 'android-nejde' | null>(null);
+  /** nic = hlavní dotaz; ios = krátký návod Safari; null = zavřeno */
+  const [poAno, setPoAno] = useState<'nic' | 'ios' | null>(null);
   const [hotovoHlaska, setHotovoHlaska] = useState(false);
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
   const tt = (map: Parameters<typeof t>[0]) => t(map, lang);
@@ -198,7 +199,7 @@ export function usePlochaDotaz({
         /* systém */
       }
     }
-    setPoAno('android-nejde');
+    otevriStejnouStrankuVChrome();
   }
 
   function naPozdeji() {
@@ -239,26 +240,9 @@ export function usePlochaDotaz({
         {poAno === 'ios' ? (
           <>
             <h3 className="pv-zprava-overlay__nadpis" id="pv-plocha-dotaz">
-              {tt(PT.plochaIosNedostupneNadpis)}
+              {tt(PT.plochaNavodIosNadpis)}
             </h3>
-            <p className="pv-zprava-overlay__text">{tt(PT.plochaIosNedostupneText)}</p>
-            <button
-              type="button"
-              className="pv-zprava-overlay__btn"
-              onClick={() => {
-                uloz('později');
-                setPoAno(null);
-              }}
-            >
-              {tt(PT.plochaZavrit)}
-            </button>
-          </>
-        ) : poAno === 'android-nejde' ? (
-          <>
-            <h3 className="pv-zprava-overlay__nadpis" id="pv-plocha-dotaz">
-              {tt(PT.plochaAndroidNejdeNadpis)}
-            </h3>
-            <p className="pv-zprava-overlay__text">{tt(PT.plochaAndroidNejdeText)}</p>
+            <p className="pv-zprava-overlay__text pv-plocha-navod">{tt(PT.plochaNavodIosKroky)}</p>
             <button
               type="button"
               className="pv-zprava-overlay__btn"
