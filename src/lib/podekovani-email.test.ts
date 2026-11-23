@@ -32,13 +32,17 @@ describe('podekovani-email', () => {
     expect(html).toContain('#doporucit');
     expect(html).toContain('plocha=1');
     expect(html).toContain('5&nbsp;%');
-    expect(html).toContain('ikona-kalendar.png');
+    expect(html).toContain('https://vivien-prijezdy-six.vercel.app/email/hlavicka-po-odjezdu.jpg');
+    expect(html).toContain('https://vivien-prijezdy-six.vercel.app/email/ikona-kalendar.png');
+    expect(html).toContain('alt=""');
     expect(html).toContain('ikona-hovor.png');
     expect(html).toContain('tel:+420702153573');
     expect(html).toContain('tel:+420604692573');
     expect(html).toContain('text-align:center');
     expect(html).toContain('#c9a84c');
     expect(html).toContain('color:#1a1510');
+    expect(html).not.toContain('127.0.0.1');
+    expect(html).not.toContain('localhost');
     expect(html).not.toContain('Zkouška Preview');
   });
 

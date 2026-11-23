@@ -21,10 +21,8 @@ import {
 } from './texts';
 import type { GuideLang, LText } from './types';
 
-const BASE =
-  (typeof process !== 'undefined' &&
-    (process.env.NEXT_PUBLIC_BASE_URL || process.env.PRUVODCE_BASE_URL)?.replace(/\/$/, '')) ||
-  'https://vivien-prijezdy-six.vercel.app';
+/** Ostrá adresa obrázků v e-mailu (ne env, ne localhost, ne Preview). */
+const OSTRA_ASSET = 'https://vivien-prijezdy-six.vercel.app';
 
 /** Předmět e-mailu po odjezdu. Schváleno majitelem 22. 11. 2026, oprava en/fi 23. 11. */
 export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {
@@ -146,7 +144,6 @@ function radekVyhody(
   tlacitko: string,
   odkaz: string,
   sans: string,
-  alt: string,
 ): string {
   return `<tr>
   <td style="padding:0;">
@@ -154,7 +151,7 @@ function radekVyhody(
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
         <tr>
           <td width="48" valign="middle" style="padding-right:10px;">
-            <img src="${ikonaUrl}" width="40" height="40" alt="${esc(alt)}" style="display:block;width:40px;height:40px;border:1px solid #6b5a3a;border-radius:10px;background:#15110e;">
+            <img src="${ikonaUrl}" width="40" height="40" alt="" style="display:block;width:40px;height:40px;border:1px solid #6b5a3a;border-radius:10px;background:#15110e;">
           </td>
           <td valign="middle" style="font-family:${sans};text-align:left;">
             <div style="color:#f5efe3;font-size:15px;line-height:1.25;font-weight:700;white-space:nowrap;">${slevaNbsp(esc(nad))}</div>
@@ -172,21 +169,22 @@ function radekVyhody(
 
 /**
  * HTML e-mail po odjezdu: hlavička-jpg, 3 klikací řádky se zlatou šipkou, bez CTA tlačítka.
+ * Obrázky vždy z ostré produkce.
  */
 export function htmlPodekovaniEmail(
   lang: GuideLang | null,
   odkaz: string,
-  baseUrl: string = BASE,
+  _baseUrl?: string,
   odkazDoporucit?: string,
   odkazPlocha?: string,
 ): string {
   const l = jazyk(lang);
-  const base = baseUrl.replace(/\/$/, '') || BASE;
-  const hlavicka = `${base}/email/hlavicka-po-odjezdu.jpg`;
-  const ikKal = `${base}/email/ikona-kalendar.png`;
-  const ikDarek = `${base}/email/ikona-darek.png`;
-  const ikTel = `${base}/email/ikona-telefon.png`;
-  const ikHovor = `${base}/email/ikona-hovor.png`;
+  const asset = OSTRA_ASSET;
+  const hlavicka = `${asset}/email/hlavicka-po-odjezdu.jpg`;
+  const ikKal = `${asset}/email/ikona-kalendar.png`;
+  const ikDarek = `${asset}/email/ikona-darek.png`;
+  const ikTel = `${asset}/email/ikona-telefon.png`;
+  const ikHovor = `${asset}/email/ikona-hovor.png`;
   const nadpis = esc(t(expiredNadpis, l));
   const dopis = slevaNbsp(esc(t(expiredDopis, l)));
   const podpis = esc(t(expiredPodpis, l));
@@ -199,33 +197,9 @@ export function htmlPodekovaniEmail(
   const kontakty = `<tr>${tlacitkoTelefonu(ikHovor, t(expiredZavolat, l), NIKOL_PHONE, sans)}${tlacitkoTelefonu(ikHovor, t(expiredZaloha, l), PARKING_OWNER_PHONE, sans)}</tr>`;
 
   const vyhody = [
-    radekVyhody(
-      ikKal,
-      t(radek1Nadpis, l),
-      t(radek1Pod, l),
-      t(radek1Tlacitko, l),
-      url,
-      sans,
-      t(radek1Nadpis, l),
-    ),
-    radekVyhody(
-      ikDarek,
-      t(radek2Nadpis, l),
-      t(radek2Pod, l),
-      t(radek2Tlacitko, l),
-      urlDop,
-      sans,
-      t(radek2Nadpis, l),
-    ),
-    radekVyhody(
-      ikTel,
-      t(radek3Nadpis, l),
-      t(radek3Pod, l),
-      t(radek3Tlacitko, l),
-      urlPlo,
-      sans,
-      t(radek3Nadpis, l),
-    ),
+    radekVyhody(ikKal, t(radek1Nadpis, l), t(radek1Pod, l), t(radek1Tlacitko, l), url, sans),
+    radekVyhody(ikDarek, t(radek2Nadpis, l), t(radek2Pod, l), t(radek2Tlacitko, l), urlDop, sans),
+    radekVyhody(ikTel, t(radek3Nadpis, l), t(radek3Pod, l), t(radek3Tlacitko, l), urlPlo, sans),
   ].join('');
 
   return `<!DOCTYPE html>

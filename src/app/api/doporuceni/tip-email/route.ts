@@ -18,9 +18,8 @@ export const runtime = 'nodejs';
 const noStore = { 'Cache-Control': 'no-store' };
 const LIMIT_DEN = 5;
 
-const BASE =
-  (process.env.NEXT_PUBLIC_BASE_URL || process.env.PRUVODCE_BASE_URL || '').replace(/\/$/, '') ||
-  'https://vivien-prijezdy-six.vercel.app';
+/** Odkazy v tip e-mailu vždy na ostrou (ne Preview, ne localhost). */
+const BASE = 'https://vivien-prijezdy-six.vercel.app';
 
 function denPraha(): string {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Prague' });
@@ -112,7 +111,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, duvod: 'limit' }, { status: 429, headers: noStore });
   }
 
-  const odkaz = `${BASE}/poptavka?od=${encodeURIComponent(kod)}&lang=${encodeURIComponent(lang)}`;
+  const odkaz = `${BASE}/poptavka?od=${encodeURIComponent(kod)}&lang=${encodeURIComponent(lang)}&k=e`;
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_HESLO?.trim();
   if (!user || !pass || pass.startsWith('SEM_NAPIS')) {

@@ -9,10 +9,8 @@ import {
 import { t } from './i18n';
 import type { GuideLang } from './types';
 
-const BASE =
-  (typeof process !== 'undefined' &&
-    (process.env.NEXT_PUBLIC_BASE_URL || process.env.PRUVODCE_BASE_URL)?.replace(/\/$/, '')) ||
-  'https://vivien-prijezdy-six.vercel.app';
+/** Ostrá adresa obrázků v e-mailu (ne env, ne localhost). */
+const OSTRA_ASSET = 'https://vivien-prijezdy-six.vercel.app';
 
 function esc(s: string): string {
   return s
@@ -53,10 +51,9 @@ export function htmlTipKamaradovi(
   lang: GuideLang,
   jmeno: string,
   odkaz: string,
-  baseUrl: string = BASE,
+  _baseUrl?: string,
 ): string {
-  const base = baseUrl.replace(/\/$/, '') || BASE;
-  const hlavicka = `${base}/email/hlavicka-tip.jpg`;
+  const hlavicka = `${OSTRA_ASSET}/email/hlavicka-tip.jpg`;
   const serif = "Georgia,'Times New Roman',serif";
   const sans = "Arial,Helvetica,sans-serif";
   const url = odkaz.trim().replaceAll('"', '%22');
