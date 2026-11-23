@@ -43,6 +43,8 @@ export type PruvodceProfil = {
 export type PruvodceVysledek = {
   primary: AptId;
   alternatives: [AptId, AptId];
+  /** Všech 5 apartmánů podle bodů (nejvyšší první). */
+  ranked: AptId[];
   profiles: Record<AptId, PruvodceProfil>;
 };
 
@@ -209,7 +211,12 @@ export function sestavPruvodceStav(
       V4: resultProfile(lang, 'v4'),
       V5: resultProfile(lang, 'v5'),
     } as Record<AptId, PruvodceProfil>;
-    result = { primary, alternatives: [alt1, alt2], profiles };
+    result = {
+      primary,
+      alternatives: [alt1, alt2],
+      ranked: ranked.map(aptIdFromQuiz),
+      profiles,
+    };
   }
 
   return {

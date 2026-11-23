@@ -420,7 +420,7 @@ export function formatKc(castka: number): string {
 }
 
 /** Tvar slova apartmán podle počtu (bez čísla). */
-function tvarApartmanu(pocet: number, lang: GuideLang): string {
+export function tvarApartmanu(pocet: number, lang: GuideLang): string {
   const n = Math.max(0, Math.floor(pocet));
   const f = new Intl.PluralRules(lang === 'zh-Hant' ? 'zh-Hant' : lang).select(n);
   const m: Partial<Record<GuideLang, Record<string, string>>> = {

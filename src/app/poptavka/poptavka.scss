@@ -1521,6 +1521,111 @@
   border-top: 1px solid rgba(201, 168, 76, 0.25);
 }
 
+.pp__vysledek-uvod {
+  text-align: center;
+  margin: 0 0 0.85rem;
+  line-height: 1.4;
+}
+
+.pp__vysledek-karty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.pp__vysledek-karta {
+  border: 1px solid #3d342a;
+  border-radius: 14px;
+  padding: 0.55rem 0.55rem 0.75rem;
+  background: #15110e;
+}
+
+.pp__vysledek-karta.is-prvni {
+  border-color: #c9a84c;
+  box-shadow: inset 0 0 0 1px #c9a84c;
+}
+
+.pp__vysledek-karta.is-obsazeno {
+  opacity: 0.5;
+}
+
+.pp__vysledek-karta-foto {
+  position: relative;
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pp__vysledek-karta-foto.is-static {
+  cursor: default;
+  pointer-events: none;
+}
+
+.pp__vysledek-karta-foto img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.pp__vysledek-stitok {
+  position: absolute;
+  left: 0.55rem;
+  top: 0.55rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(12, 10, 8, 0.82);
+  color: #c9a84c;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.pp__vysledek-karta.is-prvni .pp__vysledek-stitok {
+  background: #c9a84c;
+  color: #1a1510;
+}
+
+.pp__vysledek-karta-nazev {
+  margin: 0.55rem 0 0.2rem;
+  text-align: center;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.25rem;
+  color: #f5efe3;
+}
+
+.pp__vysledek-karta-cena {
+  margin: 0 0 0.55rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: #cbbba8;
+}
+
+.pp__vysledek-karta-cena b {
+  color: #c9a84c;
+  font-weight: 600;
+}
+
+.pp__vysledek-odkaz {
+  display: block;
+  width: 100%;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #c9a84c;
+  font: inherit;
+  font-size: 0.88rem;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
 .pp__volne-nabidka {
   display: flex;
   flex-direction: column;
