@@ -1659,6 +1659,64 @@
   margin: 0.35rem 0 0.5rem;
 }
 
+.pp__chytry-panel-vnitr {
+  align-content: start;
+  gap: 0.55rem;
+  padding-top: 0.85rem;
+}
+
+.pp__chytry-zalozky {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.pp__chytry-zalozka {
+  margin: 0;
+  padding: 0.55rem 0.4rem;
+  border-radius: 12px;
+  border: 1px solid #3d342a;
+  background: #15110e;
+  color: #cbbba8;
+  font: inherit;
+  font-size: 0.88rem;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pp__chytry-zalozka.is-on {
+  border-color: #c9a84c;
+  color: #f5efe3;
+  box-shadow: inset 0 0 0 1px #c9a84c;
+}
+
+.pp__chytry-zalozka:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pp__chytry-pokyn {
+  margin: 0.35rem 0 0.15rem;
+  text-align: center;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: #f5efe3;
+}
+
+.pp__chytry-pokyn-mal {
+  text-align: center;
+  margin: 0 0 0.35rem;
+}
+
+.pp__termin-tlacitko.is-prazdne {
+  color: #8a7d6e;
+}
+
 .pp__chytry-hlavicka {
   display: flex;
   align-items: center;

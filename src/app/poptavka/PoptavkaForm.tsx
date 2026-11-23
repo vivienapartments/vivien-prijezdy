@@ -109,6 +109,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [poznamka, setPoznamka] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [galerie, setGalerie] = useState<GalerieStav>(null);
+  const [kalendarOtevren, setKalendarOtevren] = useState(false);
   const [cekam, setCekam] = useState(false);
   const [hotovo, setHotovo] = useState(false);
   const [chyba, setChyba] = useState<string | null>(null);
@@ -124,6 +125,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const krokRef = useRef(krok);
   const zpusobRef = useRef(zpusob);
   const galerieRef = useRef(galerie);
+  const kalendarRef = useRef(kalendarOtevren);
+  /** Zavření kalendáře přes history.back() – popstate už nic dalšího nedělá. */
+  const kalendarZavirameRef = useRef(false);
   const buildVerze = textBuildVerze();
   const konceptKlic = klicPoptavkaKoncept({
     zdroj: props.zdroj,
@@ -141,6 +145,36 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   useEffect(() => {
     galerieRef.current = galerie;
   }, [galerie]);
+
+  useEffect(() => {
+    kalendarRef.current = kalendarOtevren;
+  }, [kalendarOtevren]);
+
+  function nastavKalendarOtevren(otevreno: boolean) {
+    if (otevreno) {
+      if (kalendarRef.current) return;
+      kalendarRef.current = true;
+      setKalendarOtevren(true);
+      try {
+        window.history.pushState({ ppKrok: krokRef.current, ppKalendar: 1 }, '');
+      } catch {
+        /* */
+      }
+      return;
+    }
+    if (!kalendarRef.current && !kalendarOtevren) return;
+    kalendarRef.current = false;
+    setKalendarOtevren(false);
+    try {
+      const st = window.history.state as { ppKalendar?: number } | null;
+      if (st && st.ppKalendar) {
+        kalendarZavirameRef.current = true;
+        window.history.back();
+      }
+    } catch {
+      /* */
+    }
+  }
 
   function jdiNaKrok(novy: Krok, opts?: { nahradit?: boolean }) {
     setKrok(novy);
@@ -254,6 +288,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         } catch {
           /* */
         }
+        return;
+      }
+      if (kalendarZavirameRef.current) {
+        kalendarZavirameRef.current = false;
+        return;
+      }
+      if (kalendarRef.current) {
+        kalendarRef.current = false;
+        setKalendarOtevren(false);
         return;
       }
       const zeStavu = (e.state as { ppKrok?: Krok } | null)?.ppKrok;
@@ -694,6 +737,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     setOdjezd(ymd);
                     setChyba(null);
                   }}
+                  labelPrijezd={t.prijezd}
+                  labelOdjezd={t.odjezd}
                   ukazCeny={ukazCeny}
                   sleva={slevaCesty}
                   cenaSuma={cenaVyberu?.suma ?? null}
@@ -705,6 +750,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   chyba={chyba === kt.terminBezVolneho ? chyba : null}
                   ukazNejblizsiLabel={kt.ukazNejblizsi}
                   onNejblizsi={nastavNejblizsiTermin}
+                  otevreno={kalendarOtevren}
+                  onOtevreno={nastavKalendarOtevren}
                 />
                 {chyba && chyba !== kt.terminBezVolneho ? <p className="pp__chyba">{chyba}</p> : null}
               </section>

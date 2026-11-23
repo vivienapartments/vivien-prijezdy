@@ -170,7 +170,8 @@ const RAW: Record<
 function kratkeDatum(ymd: string, lang: GuideLang): string {
   const [, m, d] = ymd.split('-').map(Number);
   if (lang === 'zh-Hant') return `${m}/${d}`;
-  return `${d}. ${m}.`;
+  /** Bez tečky na konci – šablony B/C/souhrn mají vlastní interpunkci. */
+  return `${d}. ${m}`;
 }
 
 export function chytryKalendarTexty(lang: GuideLang): T {

@@ -1,12 +1,14 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   denBezPrijezdu,
   denPlno,
   maxDosahNoci,
   minCenaVolnych,
   mozneDnyOdjezdu,
+  nociPobytu,
   type KalendarDenni,
 } from '@/lib/kalendar-denni';
 import {
@@ -15,7 +17,6 @@ import {
 } from '@/lib/chytry-kalendar-texty';
 import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
 import { formatKc, kalendarTexty, tvarNoci } from '@/lib/kalendar-texty';
-import { nociPobytu } from '@/lib/kalendar-denni';
 import type { GuideLang } from '@/lib/types';
 
 function parseYmd(s: string): Date | null {
@@ -49,6 +50,8 @@ const DNY: Record<string, string[]> = {
   de: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
 };
 
+type Zalozka = 'prijezd' | 'odjezd';
+
 type Props = {
   lang: GuideLang;
   dnes: string;
@@ -58,6 +61,8 @@ type Props = {
   odjezd: string;
   onPrijezd: (ymd: string) => void;
   onOdjezd: (ymd: string) => void;
+  labelPrijezd: string;
+  labelOdjezd: string;
   ukazCeny: boolean;
   sleva: boolean;
   cenaSuma: number | null;
@@ -67,6 +72,9 @@ type Props = {
   chyba: string | null;
   ukazNejblizsiLabel: string;
   onNejblizsi: () => void;
+  /** Pro šipku zpět v PoptavkaForm. */
+  otevreno: boolean;
+  onOtevreno: (otevreno: boolean) => void;
 };
 
 export function ChytryKalendar(props: Props) {
@@ -79,6 +87,8 @@ export function ChytryKalendar(props: Props) {
     odjezd,
     onPrijezd,
     onOdjezd,
+    labelPrijezd,
+    labelOdjezd,
     ukazCeny,
     sleva,
     cenaSuma,
@@ -88,11 +98,28 @@ export function ChytryKalendar(props: Props) {
     chyba,
     ukazNejblizsiLabel,
     onNejblizsi,
+    otevreno,
+    onOtevreno,
   } = props;
   const ct = chytryKalendarTexty(lang);
   const kt = kalendarTexty(lang);
+  const [vDomu, setVDomu] = useState(false);
+  const [zalozka, setZalozka] = useState<Zalozka>('prijezd');
   const start = parseYmd(prijezd || dnes) || new Date();
   const [kurz, setKurz] = useState(() => startOfMonth(start));
+
+  useEffect(() => {
+    setVDomu(true);
+  }, []);
+
+  useEffect(() => {
+    if (!otevreno) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [otevreno]);
 
   const mozneOdjezdy = useMemo(
     () => (prijezd ? new Set(mozneDnyOdjezdu(dny, prijezd)) : new Set<string>()),
@@ -100,6 +127,7 @@ export function ChytryKalendar(props: Props) {
   );
   const dosah = prijezd ? maxDosahNoci(dny, prijezd) : 0;
   const nociPocet = prijezd && odjezd ? nociPobytu(prijezd, odjezd).length : 0;
+  const vybiramOdjezd = otevreno && zalozka === 'odjezd' && Boolean(prijezd);
 
   const bunky = useMemo(() => {
     const first = startOfMonth(kurz);
@@ -123,19 +151,16 @@ export function ChytryKalendar(props: Props) {
       const ba = bezApt[ymd] || 0;
       const minulost = ymd < dnes;
       const plno = !minulost && denPlno(den, ba);
-      const bezP = !minulost && denBezPrijezdu(den, ba);
       let ztlumeno = false;
       let moznyOdjezd = false;
-      if (prijezd && !odjezd) {
+      if (vybiramOdjezd) {
         if (ymd < prijezd || (ymd > prijezd && !mozneOdjezdy.has(ymd))) ztlumeno = true;
         if (mozneOdjezdy.has(ymd)) moznyOdjezd = true;
-      } else if (prijezd && odjezd) {
-        if (ymd < prijezd || ymd > odjezd) ztlumeno = true;
       }
       let role: 'prijezd' | 'mez' | 'odjezd' | null = null;
       if (prijezd && ymd === prijezd) role = 'prijezd';
       else if (odjezd && ymd === odjezd) role = 'odjezd';
-      else if (prijezd && odjezd && ymd > prijezd && ymd < odjezd) role = 'mez';
+      else if (prijezd && odjezd && !vybiramOdjezd && ymd > prijezd && ymd < odjezd) role = 'mez';
       const cenaOd =
         minulost || role === 'odjezd' || moznyOdjezd ? null : minCenaVolnych(den);
       cells.push({
@@ -148,27 +173,47 @@ export function ChytryKalendar(props: Props) {
         cenaOd,
         role,
       });
-      void bezP;
     }
     return cells;
-  }, [kurz, dnes, dny, bezApt, prijezd, odjezd, mozneOdjezdy]);
+  }, [kurz, dnes, dny, bezApt, prijezd, odjezd, mozneOdjezdy, vybiramOdjezd]);
+
+  function otevri(tab: Zalozka) {
+    if (tab === 'odjezd' && !prijezd) {
+      setZalozka('prijezd');
+    } else if (tab === 'prijezd') {
+      onOdjezd('');
+      setZalozka('prijezd');
+    } else {
+      setZalozka('odjezd');
+    }
+    const kotva = tab === 'odjezd' && prijezd ? prijezd : prijezd || dnes;
+    setKurz(startOfMonth(parseYmd(kotva) || new Date()));
+    onOtevreno(true);
+  }
+
+  function zavri() {
+    onOtevreno(false);
+  }
 
   function klep(ymd: string, b: NonNullable<(typeof bunky)[number]>) {
     if (b.minulost) return;
-    if (!prijezd || (prijezd && odjezd)) {
+    if (zalozka === 'prijezd' || !prijezd) {
       if (b.plno || denBezPrijezdu(dny[ymd], bezApt[ymd] || 0)) return;
       onPrijezd(ymd);
       onOdjezd('');
+      setZalozka('odjezd');
       return;
     }
     if (ymd === prijezd || ymd < prijezd) {
       if (b.plno || denBezPrijezdu(dny[ymd], bezApt[ymd] || 0)) return;
       onPrijezd(ymd);
       onOdjezd('');
+      setZalozka('odjezd');
       return;
     }
     if (mozneOdjezdy.has(ymd)) {
       onOdjezd(ymd);
+      onOtevreno(false);
     }
   }
 
@@ -185,72 +230,159 @@ export function ChytryKalendar(props: Props) {
 
   const hotovyTermin = Boolean(prijezd && odjezd && nociPocet > 0 && !chyba);
 
+  const textPrijezd = prijezd ? formatChytryDatum(prijezd, lang) : '—';
+  const textOdjezd = odjezd ? formatChytryDatum(odjezd, lang) : '—';
+  const datumVPoli = (ymd: string) => (ymd ? formatDatumPole(ymd, lang) : '—');
+
+  const pokyn =
+    zalozka === 'odjezd' && prijezd
+      ? ct.poPrijezdu(formatChytryDatum(prijezd, lang))
+      : ct.predVyberem;
+
+  const panel =
+    otevreno && vDomu
+      ? createPortal(
+          <div className="pp__kalendar pp__chytry-panel" role="dialog" aria-modal="true">
+            <div className="pp__kalendar-vnitr pp__chytry-panel-vnitr">
+              <div className="pp__chytry-zalozky" role="tablist">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={zalozka === 'prijezd'}
+                  className={`pp__chytry-zalozka${zalozka === 'prijezd' ? ' is-on' : ''}`}
+                  onClick={() => {
+                    onOdjezd('');
+                    setZalozka('prijezd');
+                  }}
+                >
+                  {labelPrijezd} {textPrijezd}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={zalozka === 'odjezd'}
+                  className={`pp__chytry-zalozka${zalozka === 'odjezd' ? ' is-on' : ''}`}
+                  disabled={!prijezd}
+                  onClick={() => {
+                    if (!prijezd) return;
+                    setZalozka('odjezd');
+                  }}
+                >
+                  {labelOdjezd} {textOdjezd}
+                </button>
+              </div>
+
+              <p className="pp__chytry-pokyn">{pokyn}</p>
+              {zalozka === 'odjezd' && prijezd && dosah > 0 && dosah < 7 ? (
+                <p className="pp__chytry-mal pp__chytry-pokyn-mal">
+                  {ct.dosah(formatChytryDatum(prijezd, lang), dosah)}
+                </p>
+              ) : null}
+
+              <div className="pp__chytry-hlavicka">
+                <button
+                  type="button"
+                  className="pp__chip"
+                  onClick={() => setKurz((k) => addMonths(k, -1))}
+                >
+                  ←
+                </button>
+                <span className="pp__chytry-mesic">{mesicNazev}</span>
+                <button
+                  type="button"
+                  className="pp__chip"
+                  onClick={() => setKurz((k) => addMonths(k, 1))}
+                >
+                  →
+                </button>
+              </div>
+              <div className="pp__chytry-dny">
+                {dnyHlav.map((d) => (
+                  <span key={d} className="pp__chytry-den-nazev">
+                    {d}
+                  </span>
+                ))}
+                {bunky.map((c, i) =>
+                  c ? (
+                    <button
+                      key={c.ymd}
+                      type="button"
+                      className={[
+                        'pp__chytry-den',
+                        c.minulost ? 'is-min' : '',
+                        c.plno && !c.moznyOdjezd && c.role !== 'odjezd' ? 'is-plno' : '',
+                        c.ztlumeno ? 'is-ztl' : '',
+                        c.role === 'prijezd' ? 'is-prijezd' : '',
+                        c.role === 'mez' ? 'is-mez' : '',
+                        c.role === 'odjezd' ? 'is-odjezd' : '',
+                        c.moznyOdjezd ? 'is-mozny' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      disabled={
+                        c.minulost ||
+                        (c.ztlumeno && !c.moznyOdjezd && c.role !== 'prijezd') ||
+                        (zalozka === 'prijezd' &&
+                          (c.plno || denBezPrijezdu(dny[c.ymd], bezApt[c.ymd] || 0)))
+                      }
+                      onClick={() => klep(c.ymd, c)}
+                    >
+                      <span
+                        className={
+                          c.plno && !c.moznyOdjezd && c.role !== 'odjezd' ? 'is-skrt' : undefined
+                        }
+                      >
+                        {c.day}
+                      </span>
+                      {c.minulost ? null : c.moznyOdjezd || c.role === 'odjezd' ? (
+                        <small>{ct.podDnemOdjezd}</small>
+                      ) : c.plno ? (
+                        <small>{kt.plno}</small>
+                      ) : ukazCeny && c.cenaOd != null ? (
+                        <small>{c.cenaOd}</small>
+                      ) : null}
+                    </button>
+                  ) : (
+                    <span key={`e-${i}`} className="pp__chytry-den is-empty" />
+                  ),
+                )}
+              </div>
+
+              <p className="pp__chytry-mal pp__chytry-legenda">{kt.cenaLegenda}</p>
+              <p className="pp__chytry-mal">{ct.ranoOdjezd}</p>
+              <button type="button" className="pp__btn pp__btn--sms" onClick={zavri}>
+                ←
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <div className="pp__chytry">
-      <div className="pp__chytry-hlavicka">
-        <button type="button" className="pp__chip" onClick={() => setKurz((k) => addMonths(k, -1))}>
-          ←
-        </button>
-        <span className="pp__chytry-mesic">{mesicNazev}</span>
-        <button type="button" className="pp__chip" onClick={() => setKurz((k) => addMonths(k, 1))}>
-          →
-        </button>
+      <div className="pp__termin">
+        <div className="pp__termin-pole">
+          <span className="pp__termin-label">{labelPrijezd}</span>
+          <button
+            type="button"
+            className={`pp__termin-tlacitko${prijezd ? '' : ' is-prazdne'}`}
+            onClick={() => otevri('prijezd')}
+          >
+            {datumVPoli(prijezd)}
+          </button>
+        </div>
+        <div className="pp__termin-pole">
+          <span className="pp__termin-label">{labelOdjezd}</span>
+          <button
+            type="button"
+            className={`pp__termin-tlacitko${odjezd ? '' : ' is-prazdne'}`}
+            onClick={() => otevri('odjezd')}
+          >
+            {datumVPoli(odjezd)}
+          </button>
+        </div>
       </div>
-      <div className="pp__chytry-dny">
-        {dnyHlav.map((d) => (
-          <span key={d} className="pp__chytry-den-nazev">
-            {d}
-          </span>
-        ))}
-        {bunky.map((c, i) =>
-          c ? (
-            <button
-              key={c.ymd}
-              type="button"
-              className={[
-                'pp__chytry-den',
-                c.minulost ? 'is-min' : '',
-                c.plno ? 'is-plno' : '',
-                c.ztlumeno ? 'is-ztl' : '',
-                c.role === 'prijezd' ? 'is-prijezd' : '',
-                c.role === 'mez' ? 'is-mez' : '',
-                c.role === 'odjezd' ? 'is-odjezd' : '',
-                c.moznyOdjezd ? 'is-mozny' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              disabled={c.minulost || (c.ztlumeno && !c.moznyOdjezd && c.role !== 'prijezd')}
-              onClick={() => klep(c.ymd, c)}
-            >
-              <span className={c.plno ? 'is-skrt' : undefined}>{c.day}</span>
-              {c.minulost ? null : c.moznyOdjezd || c.role === 'odjezd' ? (
-                <small>{ct.podDnemOdjezd}</small>
-              ) : c.plno ? (
-                <small>{kt.plno}</small>
-              ) : ukazCeny && c.cenaOd != null ? (
-                <small>{c.cenaOd}</small>
-              ) : null}
-            </button>
-          ) : (
-            <span key={`e-${i}`} className="pp__chytry-den is-empty" />
-          ),
-        )}
-      </div>
-
-      {!prijezd ? <p className="pp__chytry-info">{ct.predVyberem}</p> : null}
-      {prijezd && !odjezd ? (
-        <p className="pp__chytry-info">
-          {ct.poPrijezdu(formatChytryDatum(prijezd, lang))}
-          {dosah > 0 && dosah < 7 ? (
-            <>
-              <br />
-              <span className="pp__chytry-mal">
-                {ct.dosah(formatChytryDatum(prijezd, lang), dosah)}
-              </span>
-            </>
-          ) : null}
-        </p>
-      ) : null}
 
       {hotovyTermin ? (
         <div className="pp__chytry-souhrn">
@@ -288,8 +420,15 @@ export function ChytryKalendar(props: Props) {
         </button>
       ) : null}
 
-      <p className="pp__chytry-mal pp__chytry-legenda">{kt.cenaLegenda}</p>
       <p className="pp__chytry-mal">{ct.ranoOdjezd}</p>
+      {panel}
     </div>
   );
+}
+
+function formatDatumPole(ymd: string, lang: GuideLang): string {
+  const [y, m, d] = ymd.split('-').map(Number);
+  if (!y || !m || !d) return ymd;
+  if (lang === 'zh-Hant') return `${y}/${m}/${d}`;
+  return `${d}. ${m}. ${y}`;
 }
