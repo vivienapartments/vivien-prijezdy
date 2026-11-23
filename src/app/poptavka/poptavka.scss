@@ -102,6 +102,12 @@
   margin: 0;
 }
 
+.pp__termin-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #cbbba8;
+}
+
 .pp__termin-tlacitko {
   display: block;
   width: 100%;
@@ -116,6 +122,8 @@
   font-size: 16px;
   text-align: left;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .pp--vernost .pp__termin-tlacitko {
@@ -125,12 +133,14 @@
 .pp__kalendar {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 200;
   background: #0e0c0a;
   display: grid;
   place-items: stretch;
   min-height: 100dvh;
   padding: 0;
+  /* Mimo kartu s overflow:hidden (iOS Safari jinak nepustí klepnutí). */
+  touch-action: manipulation;
 }
 
 .pp__kalendar-vnitr {
@@ -179,7 +189,7 @@
 .pp__kalendar-den {
   aspect-ratio: 1;
   margin: 0;
-  padding: 0;
+  padding: 0.15rem 0;
   border-radius: 10px;
   border: 1px solid transparent;
   background: #15110e;
@@ -187,6 +197,19 @@
   font: inherit;
   font-size: 0.95rem;
   cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  position: relative;
+  z-index: 1;
+}
+
+.pp__kalendar-den > * {
+  pointer-events: none;
 }
 
 .pp__kalendar-den.is-empty {
@@ -1014,6 +1037,14 @@
 
 .pp--vernost .pp__telo {
   padding: 0 0 0.15rem;
+}
+
+.pp__verze {
+  margin: 0.75rem 0 0;
+  text-align: center;
+  font-size: 0.65rem;
+  letter-spacing: 0.02em;
+  color: #6a5e52;
 }
 
 .pp__paticka {

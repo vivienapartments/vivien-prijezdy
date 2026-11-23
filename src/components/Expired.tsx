@@ -16,6 +16,7 @@ import {
   expiredPodpis,
   expiredZavolat,
 } from '@/lib/texts';
+import { textBuildVerze } from '@/lib/build-verze';
 import type { GuideLang } from '@/lib/types';
 import { PridejNaPlochu } from './PridejNaPlochu';
 import './expired-final.scss';
@@ -321,6 +322,9 @@ export function Expired({
             {t(expiredZavolat, lang)} · {tel}
           </a>
         </div>
+        <p className="pv-exp__verze" aria-hidden="true">
+          {textBuildVerze()}
+        </p>
 
         {!skrytPlochu ? (
           <div className="pv-exp__plocha-skryte" ref={plochaBtnRef} aria-hidden="true">

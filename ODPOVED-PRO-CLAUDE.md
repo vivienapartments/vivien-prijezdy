@@ -94,3 +94,17 @@ Soubor `tmp-rozdily-obsazenost.json` je jen pracovní výstup skriptu, do gitu n
 - Doporučení majitele (`?od=`): https://vivien-prijezdy-six.vercel.app/poptavka?od=a692c6
 - Běžná poptávka: https://vivien-prijezdy-six.vercel.app/poptavka
 - Firma: https://vivien-prijezdy-six.vercel.app/poptavka?f=raccoon
+
+### Opravy po testu � d�vka 4 (22. 11. 2026) � telefon + Telegram
+- Telefon: autocomplete tel-national, autofill z�stane, chyba jen pod polem, bez b�l� �ipky.
+- Telegram: �esk� datum a noci, n�zev apartm�nu, cena se slevou, odkud, jazyk; ZKOU�KA u TEST.
+- Odkaz /prehled?poptavka=id otev�e detail (Zavolat, WhatsApp, Potvrdit term�n).
+
+## OPRAVY-PO-TESTU-2 · 23. 11. 2026
+
+### A · iPhone, zpet, jazyk (nasazeno)
+- Kalendar otevreny do document.body (portal), mimo overflow:hidden karty. Div misto label, touch-action, z-index 200.
+- Sipka Zpet / gesto: history.pushState po kazdem kroku, popstate o krok zpet; z prvniho kroku lze odejit.
+- Rozpracovana poptavka v localStorage, po odeslani smazat.
+- Prepinac jazyka jen v kroku termin (VyberJazyka u ?od= zustava).
+- Paticka: mala seda verze (commit + cas nasazeni) v poptavce i po odjezdu.

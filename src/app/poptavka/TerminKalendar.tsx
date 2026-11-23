@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { formatDatumPoptavky } from '@/lib/poptavka-texty';
 import type { GuideLang } from '@/lib/types';
 
@@ -97,13 +98,32 @@ export function TerminPole({
   dnes,
 }: Props) {
   const [otevreno, setOtevreno] = useState(false);
+  const [vDomu, setVDomu] = useState(false);
   const minDate = parseYmd(min) || new Date();
   const selected = parseYmd(value);
   const [kurz, setKurz] = useState(() => startOfMonth(selected || minDate));
 
+  useEffect(() => {
+    setVDomu(true);
+  }, []);
+
+  useEffect(() => {
+    if (!otevreno) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [otevreno]);
+
   function otevri() {
     setKurz(startOfMonth(selected || minDate));
     setOtevreno(true);
+  }
+
+  function vyberDen(ymd: string) {
+    onChange(ymd);
+    setOtevreno(false);
   }
 
   const bunky = useMemo(() => {
@@ -148,9 +168,81 @@ export function TerminPole({
 
   const text = value ? formatDatumPoptavky(value, lang) : prazdnyText || '—';
 
+  const dialog =
+    otevreno && vDomu
+      ? createPortal(
+          <div
+            className="pp__kalendar"
+            role="dialog"
+            aria-modal="true"
+            aria-label={label}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setOtevreno(false);
+            }}
+          >
+            <div className="pp__kalendar-vnitr">
+              <div className="pp__kalendar-hlavicka">
+                <button
+                  type="button"
+                  className="pp__chip"
+                  onClick={() => setKurz((k) => addMonths(k, -1))}
+                  aria-label="←"
+                >
+                  ←
+                </button>
+                <span className="pp__kalendar-mesic">{nazevMesice(kurz, lang)}</span>
+                <button
+                  type="button"
+                  className="pp__chip"
+                  onClick={() => setKurz((k) => addMonths(k, 1))}
+                  aria-label="→"
+                >
+                  →
+                </button>
+              </div>
+              <div className="pp__kalendar-dny">
+                {dnyLang(lang).map((d) => (
+                  <span key={d} className="pp__kalendar-den-nazev">
+                    {d}
+                  </span>
+                ))}
+                {bunky.map((c, i) =>
+                  c ? (
+                    <button
+                      key={c.ymd}
+                      type="button"
+                      className={`pp__kalendar-den${c.ymd === value ? ' is-on' : ''}${c.disabled ? ' is-off' : ''}${c.plno ? ' is-plno' : ''}${c.minulost ? ' is-minulost' : ''}${c.vRozsahu ? ` is-rozsah-${c.vRozsahu}` : ''}`}
+                      disabled={c.disabled}
+                      onClick={() => {
+                        if (c.disabled) return;
+                        vyberDen(c.ymd);
+                      }}
+                    >
+                      <span className={`pp__kalendar-cislo${c.plno ? ' is-skrtnute' : ''}`}>{c.day}</span>
+                      {c.minulost ? null : c.plno && plnoLabel ? (
+                        <span className="pp__kalendar-plno">{plnoLabel}</span>
+                      ) : ukazCeny && c.cenaOd != null ? (
+                        <span className="pp__kalendar-cena">{c.cenaOd}</span>
+                      ) : null}
+                    </button>
+                  ) : (
+                    <span key={`e-${i}`} className="pp__kalendar-den is-empty" />
+                  ),
+                )}
+              </div>
+              {ukazCeny && legenda ? <p className="pp__kalendar-legenda">{legenda}</p> : null}
+              <button type="button" className="pp__btn pp__btn--sms" onClick={() => setOtevreno(false)}>
+                {zavritLabel}
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
-    <label className="pp__termin-pole">
-      {label}
+    <div className="pp__termin-pole">
+      <span className="pp__termin-label">{label}</span>
       <button
         type="button"
         className={`pp__termin-tlacitko${value ? '' : ' is-prazdne'}`}
@@ -158,65 +250,7 @@ export function TerminPole({
       >
         {text}
       </button>
-      {otevreno ? (
-        <div className="pp__kalendar" role="dialog" aria-modal="true" aria-label={label}>
-          <div className="pp__kalendar-vnitr">
-            <div className="pp__kalendar-hlavicka">
-              <button
-                type="button"
-                className="pp__chip"
-                onClick={() => setKurz((k) => addMonths(k, -1))}
-                aria-label="←"
-              >
-                ←
-              </button>
-              <span className="pp__kalendar-mesic">{nazevMesice(kurz, lang)}</span>
-              <button
-                type="button"
-                className="pp__chip"
-                onClick={() => setKurz((k) => addMonths(k, 1))}
-                aria-label="→"
-              >
-                →
-              </button>
-            </div>
-            <div className="pp__kalendar-dny">
-              {dnyLang(lang).map((d) => (
-                <span key={d} className="pp__kalendar-den-nazev">
-                  {d}
-                </span>
-              ))}
-              {bunky.map((c, i) =>
-                c ? (
-                  <button
-                    key={c.ymd}
-                    type="button"
-                    className={`pp__kalendar-den${c.ymd === value ? ' is-on' : ''}${c.disabled ? ' is-off' : ''}${c.plno ? ' is-plno' : ''}${c.minulost ? ' is-minulost' : ''}${c.vRozsahu ? ` is-rozsah-${c.vRozsahu}` : ''}`}
-                    disabled={c.disabled}
-                    onClick={() => {
-                      onChange(c.ymd);
-                      setOtevreno(false);
-                    }}
-                  >
-                    <span className={`pp__kalendar-cislo${c.plno ? ' is-skrtnute' : ''}`}>{c.day}</span>
-                    {c.minulost ? null : c.plno && plnoLabel ? (
-                      <span className="pp__kalendar-plno">{plnoLabel}</span>
-                    ) : ukazCeny && c.cenaOd != null ? (
-                      <span className="pp__kalendar-cena">{c.cenaOd}</span>
-                    ) : null}
-                  </button>
-                ) : (
-                  <span key={`e-${i}`} className="pp__kalendar-den is-empty" />
-                ),
-              )}
-            </div>
-            {ukazCeny && legenda ? <p className="pp__kalendar-legenda">{legenda}</p> : null}
-            <button type="button" className="pp__btn pp__btn--sms" onClick={() => setOtevreno(false)}>
-              {zavritLabel}
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </label>
+      {dialog}
+    </div>
   );
 }

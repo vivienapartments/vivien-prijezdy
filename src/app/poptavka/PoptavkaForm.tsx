@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type FormEvent } from 'react';
 import { isValidPhoneNumber } from 'libphonenumber-js';
+import { textBuildVerze } from '@/lib/build-verze';
 import { apartmany } from '@/lib/guide-data';
 import { toTelHref } from '@/lib/i18n';
 import {
@@ -14,6 +15,12 @@ import {
   type PoptavkaKanal,
   type PoptavkaZdroj,
 } from '@/lib/poptavka';
+import {
+  klicPoptavkaKoncept,
+  nactiKoncept,
+  smazKoncept,
+  ulozKoncept,
+} from '@/lib/poptavka-koncept';
 import {
   coverUrl,
   galerieKompletCoverUrl,
@@ -115,6 +122,48 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   } | null>(null);
   const [cekamJazyk, setCekamJazyk] = useState(doporucitel);
   const [vyberJazyka, setVyberJazyka] = useState(false);
+  const [konceptNacten, setKonceptNacten] = useState(false);
+  const krokRef = useRef(krok);
+  const zpusobRef = useRef(zpusob);
+  const galerieRef = useRef(galerie);
+  const buildVerze = textBuildVerze();
+  const konceptKlic = klicPoptavkaKoncept({
+    zdroj: props.zdroj,
+    doporucitelKod: props.doporucitelKod,
+    firmaKod: props.firmaKod,
+    rezervace: props.rezervace,
+  });
+
+  useEffect(() => {
+    krokRef.current = krok;
+  }, [krok]);
+  useEffect(() => {
+    zpusobRef.current = zpusob;
+  }, [zpusob]);
+  useEffect(() => {
+    galerieRef.current = galerie;
+  }, [galerie]);
+
+  function jdiNaKrok(novy: Krok, opts?: { nahradit?: boolean }) {
+    setKrok(novy);
+    try {
+      if (opts?.nahradit) window.history.replaceState({ ppKrok: novy }, '');
+      else window.history.pushState({ ppKrok: novy }, '');
+    } catch {
+      /* */
+    }
+  }
+
+  function predchoziKrok(aktualni: Krok, z: typeof zpusob): Krok {
+    if (aktualni === 'kontakt') {
+      if (z === 'vybrat') return 'apartmany';
+      if (z === 'pruvodce') return 'pruvodce';
+      return 'zpusob';
+    }
+    if (aktualni === 'apartmany' || aktualni === 'pruvodce') return 'zpusob';
+    if (aktualni === 'zpusob') return 'termin';
+    return 'termin';
+  }
 
   useEffect(() => {
     if (!doporucitel) {
@@ -135,6 +184,98 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     }
     setCekamJazyk(false);
   }, [doporucitel, props.doporucitelKod]);
+
+  useEffect(() => {
+    const k = nactiKoncept(konceptKlic);
+    if (k) {
+      setKrok(k.krok);
+      setPrijezd(k.prijezd);
+      setOdjezd(k.odjezd);
+      setZpusob(k.zpusob);
+      setApts(k.apts);
+      if (k.jmeno) setJmeno(k.jmeno);
+      if (k.telefon) setTelefon(k.telefon);
+      setPoznamka(k.poznamka);
+      setDoprava(k.doprava);
+      if (GUIDE_LANG_SET.has(k.lang)) setLang(k.lang);
+      try {
+        window.history.replaceState({ ppKrok: k.krok }, '');
+      } catch {
+        /* */
+      }
+    } else {
+      try {
+        window.history.replaceState({ ppKrok: 'termin' }, '');
+      } catch {
+        /* */
+      }
+    }
+    setKonceptNacten(true);
+  }, [konceptKlic]);
+
+  useEffect(() => {
+    if (!konceptNacten || hotovo) return;
+    ulozKoncept(konceptKlic, {
+      krok,
+      prijezd,
+      odjezd,
+      zpusob,
+      apts,
+      jmeno,
+      telefon,
+      poznamka,
+      doprava,
+      lang,
+    });
+  }, [
+    konceptNacten,
+    hotovo,
+    konceptKlic,
+    krok,
+    prijezd,
+    odjezd,
+    zpusob,
+    apts,
+    jmeno,
+    telefon,
+    poznamka,
+    doprava,
+    lang,
+  ]);
+
+  useEffect(() => {
+    if (hotovo) smazKoncept(konceptKlic);
+  }, [hotovo, konceptKlic]);
+
+  useEffect(() => {
+    function naZpet(e: PopStateEvent) {
+      if (galerieRef.current) {
+        setGalerie(null);
+        try {
+          window.history.pushState({ ppKrok: krokRef.current }, '');
+        } catch {
+          /* */
+        }
+        return;
+      }
+      const zeStavu = (e.state as { ppKrok?: Krok } | null)?.ppKrok;
+      if (zeStavu === 'termin' || zeStavu === 'zpusob' || zeStavu === 'apartmany' || zeStavu === 'pruvodce' || zeStavu === 'kontakt') {
+        setKrok(zeStavu);
+        return;
+      }
+      const ted = krokRef.current;
+      if (ted === 'termin') return;
+      const zpet = predchoziKrok(ted, zpusobRef.current);
+      setKrok(zpet);
+      try {
+        window.history.pushState({ ppKrok: zpet }, '');
+      } catch {
+        /* */
+      }
+    }
+    window.addEventListener('popstate', naZpet);
+    return () => window.removeEventListener('popstate', naZpet);
+  }, []);
 
   const libovolny = zpusob === 'doporucit';
   const dopravaOdeslat = vernost ? null : doprava || null;
@@ -331,7 +472,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     setApts([id]);
     setGalerie(null);
     setChyba(null);
-    setKrok('kontakt');
+    jdiNaKrok('kontakt');
   }
 
   const telNikol = POPTAVKA_TEL_HOVOR.replace(/ /g, '\u00a0');
@@ -472,13 +613,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
             role="img"
             aria-label=""
           >
-            <JazykPrepinac lang={lang} onLang={setLang} />
+            {!hotovo && krok === 'termin' ? (
+              <JazykPrepinac lang={lang} onLang={setLang} />
+            ) : null}
           </div>
-        ) : (
+        ) : !hotovo && krok === 'termin' ? (
           <div className="pp__lang-wrap">
             <JazykPrepinac lang={lang} onLang={setLang} />
           </div>
-        )}
+        ) : null}
         <div className="pp__telo">
         {ukazLogo ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -611,7 +754,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   type="button"
                   className={`pp__btn${vernost ? ' pp__btn--tlumeny' : ' pp__btn--hlavni'}`}
                   onClick={() => {
-                    if (overTermin()) setKrok('zpusob');
+                    if (overTermin()) jdiNaKrok('zpusob');
                   }}
                 >
                   {t.dale}
@@ -630,7 +773,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       className={`pp__volba pp__volba--ikona${zpusob === 'vybrat' ? ' is-on' : ''}`}
                       onClick={() => {
                         setZpusob('vybrat');
-                        setKrok('apartmany');
+                        jdiNaKrok('apartmany');
                       }}
                     >
                       {ikonaVolby('vybrat')}
@@ -645,7 +788,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       onClick={() => {
                         setZpusob('doporucit');
                         setApts([]);
-                        setKrok('kontakt');
+                        jdiNaKrok('kontakt');
                       }}
                     >
                       {ikonaVolby('doporucit')}
@@ -661,7 +804,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                         setZpusob('pruvodce');
                         resetPruvodce();
                         setApts([]);
-                        setKrok('pruvodce');
+                        jdiNaKrok('pruvodce');
                       }}
                     >
                       {ikonaVolby('pruvodce')}
@@ -680,7 +823,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       onClick={() => {
                         setZpusob('doporucit');
                         setApts([]);
-                        setKrok('kontakt');
+                        jdiNaKrok('kontakt');
                       }}
                     >
                       <strong>{t.zpusobDoporucit}</strong>
@@ -691,7 +834,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       className={`pp__volba${zpusob === 'vybrat' ? ' is-on' : ''}`}
                       onClick={() => {
                         setZpusob('vybrat');
-                        setKrok('apartmany');
+                        jdiNaKrok('apartmany');
                       }}
                     >
                       <strong>{t.zpusobVybrat}</strong>
@@ -699,7 +842,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     </button>
                   </>
                 )}
-                <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('termin')}>
+                <button type="button" className="pp__btn pp__btn--sms" onClick={() => jdiNaKrok('termin')}>
                   {t.zpet}
                 </button>
               </section>
@@ -854,7 +997,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       <button
                         type="button"
                         className="pp__btn pp__btn--sms"
-                        onClick={() => setKrok('zpusob')}
+                        onClick={() => jdiNaKrok('zpusob')}
                       >
                         {t.zpet}
                       </button>
@@ -913,7 +1056,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                       <button
                         type="button"
                         className="pp__btn pp__btn--sms"
-                        onClick={() => setKrok('zpusob')}
+                        onClick={() => jdiNaKrok('zpusob')}
                       >
                         {t.zpet}
                       </button>
@@ -1000,7 +1143,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                   </p>
                 ) : null}
                 {chyba ? <p className="pp__chyba">{chyba}</p> : null}
-                <button type="button" className="pp__btn pp__btn--sms" onClick={() => setKrok('zpusob')}>
+                <button type="button" className="pp__btn pp__btn--sms" onClick={() => jdiNaKrok('zpusob')}>
                   {t.zpet}
                 </button>
               </section>
@@ -1208,7 +1351,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     type="button"
                     className={vernost ? 'pp__odkaz-zpet' : 'pp__btn pp__btn--sms'}
                     onClick={() =>
-                      setKrok(
+                      jdiNaKrok(
                         zpusob === 'vybrat' ? 'apartmany' : zpusob === 'pruvodce' ? 'pruvodce' : 'zpusob',
                       )
                     }
@@ -1234,8 +1377,15 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                 <span className="pp__kontakt-cislo">{telZaloha}</span>
               </a>
             </div>
+            <p className="pp__verze" aria-hidden="true">
+              {buildVerze}
+            </p>
           </div>
-        ) : null}
+        ) : (
+          <p className="pp__verze" aria-hidden="true">
+            {buildVerze}
+          </p>
+        )}
         </div>
       </div>
 
