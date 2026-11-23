@@ -7,6 +7,7 @@ import {
   type RezProKalendar,
   PRAZDNA_META,
 } from './kalendar-denni';
+import { nactiIcalUloziste, sloucitObsazenostIcal } from './kalendar-ical';
 import { KLIC_KALENDAR_DENNI, KLIC_KALENDAR_META, kalendarKlic } from './kalendar-klic';
 import { blokujeObsazenost } from './poptavka-vyrizeni';
 import type { ProcessStore, RezervaceRecord } from './store';
@@ -58,6 +59,8 @@ export async function sestavKalendarProHosta(store: ProcessStore): Promise<{
   bezAptPoDnech: Record<string, number>;
 }> {
   const { dny: zaklad, meta } = await nactiUlozenyKalendar(store);
+  const ical = await nactiIcalUloziste(store);
+  const seZakladem = sloucitObsazenostIcal(zaklad, ical);
   const seznam = await store.listRezervace();
   const rez: RezProKalendar[] = seznam.map((e) => rezervaceNaKalendar(e.record));
   try {
@@ -75,7 +78,7 @@ export async function sestavKalendarProHosta(store: ProcessStore): Promise<{
   } catch {
     /* bez blokací poptávek */
   }
-  const { mapa, bezAptPoDnech } = aplikujRezervace(zaklad, rez);
+  const { mapa, bezAptPoDnech } = aplikujRezervace(seZakladem, rez);
 
   let posledni: string | null = meta.posledniRezervace;
   for (const e of seznam) {

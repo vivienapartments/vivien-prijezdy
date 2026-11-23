@@ -84,3 +84,144 @@ Soubor `tmp-rozdily-obsazenost.json` je jen pracovní výstup skriptu, do gitu n
 - Jeden kalendář: po příjezdu jen možné odjezdy (dosah jednoho apartmánu), zlatý čárkovaný rámeček a „odjezd“.
 - Odjezd není noc. Souhrn s nocemi a „ráno“. Texty A–G ve 13 jazycích.
 - Apartmány: volné nahoře, obsazené dole.
+
+## 2026-11-23 09:24 · C e-mail po odjezdu
+- HTML podle nahled-email-po-odjezdu: logo v kruhu, střed, 5&nbsp;%, PNG ikony, CTA Využít výhody.
+- Ikony: public/email/ikona-kalendar.png, ikona-darek.png, ikona-telefon.png.
+- Stav: nasazuji na ostrou + zkušební mail jen majiteli.
+
+## 2026-11-23 09:35 · C e-mail po odjezdu
+- HTML podle nahled-email-po-odjezdu: logo v kruhu, střed, 5&nbsp;%, PNG ikony, CTA Využít výhody.
+- Ikony: public/email/ikona-kalendar.png, ikona-darek.png, ikona-telefon.png.
+- Stav: nasazuji na ostrou + zkušební mail jen majiteli.
+
+## 2026-11-23 09:36 · C hotovo
+- Nasazeno bd195da na master. Zkušební e-mail odeslán jen na info@vivienapartments.cz (rez:TESTPOMAJ).
+
+## 2026-11-23 09:38 · D klikací telefony
+- Kontaktní čísla jako tlačítka se zlatým rámečkem a ikonou (poptávka, po odjezdu, e-mail).
+- Soubory: KontaktTelefony.tsx, Expired.tsx, PoptavkaForm.tsx, podekovani-email.ts, ikona-hovor.png.
+- Stav: nasazuji na ostrou.
+
+## 2026-11-23 09:39 · E před startem: co dělá „Potvrdit termín“
+- Dnes: POST /api/prehled/poptavka s akce=potvrdit jen přepíše stav poptávky na hotovo. Neotevírá WhatsApp/SMS, neblokuje apartmán, nepočítá lhůtu, nepřipomíná.
+- Dál: stavový tok podle OPRAVY-PO-TESTU-2 E (blokace, připomínky, POTVRDIT/HOST POTVRDIL/ZAPSÁNO/NEJDE/PRODLOUŽIT).
+
+## 2026-11-23 09:39 · E NEJDE texty (ke kontrole, mimo cs)
+- en: Hello {jmeno}, thank you for your enquiry. The dates {termin} are no longer available. We can offer: {navrh}. Please let us know if that works for you. Nikol, VIVIEN Apartments
+- de: Guten Tag {jmeno}, danke für Ihre Anfrage. Der Termin {termin} ist leider nicht mehr frei. Wir können Ihnen anbieten: {navrh}. Schreiben Sie uns bitte, ob Ihnen das passt. Nikol, VIVIEN Apartments
+- pl: Dzień dobry {jmeno}, dziękujemy za zapytanie. Termin {termin} jest już niestety zajęty. Możemy zaproponować: {navrh}. Napiszcie nam proszę, czy Wam to odpowiada. Nikol, VIVIEN Apartments
+- uk: Добрий день, {jmeno}, дякуємо за запит. Термін {termin} на жаль уже зайнятий. Можемо запропонувати: {navrh}. Напишіть нам, будь ласка, чи вам це підходить. Nikol, VIVIEN Apartments
+- zh-Hant: {jmeno} 您好，感謝您的詢問。{termin} 的日期已滿。我們可提供：{navrh}。請告訴我們是否適合您。Nikol，VIVIEN Apartments
+- es: Hola {jmeno}, gracias por su consulta. Las fechas {termin} ya no están libres. Podemos ofrecerles: {navrh}. Escríbannos si les conviene. Nikol, VIVIEN Apartments
+- fr: Bonjour {jmeno}, merci pour votre demande. Les dates {termin} ne sont plus libres. Nous pouvons vous proposer: {navrh}. Dites-nous si cela vous convient. Nikol, VIVIEN Apartments
+- it: Buongiorno {jmeno}, grazie per la richiesta. Le date {termin} non sono più libere. Possiamo proporvi: {navrh}. Scriveteci se va bene. Nikol, VIVIEN Apartments
+- pt: Olá {jmeno}, obrigado pelo pedido. As datas {termin} já não estão livres. Podemos oferecer: {navrh}. Digam-nos se vos serve. Nikol, VIVIEN Apartments
+- sv: Hej {jmeno}, tack för förfrågan. Datumet {termin} är tyvärr inte ledigt längre. Vi kan erbjuda: {navrh}. Skriv gärna om det passar er. Nikol, VIVIEN Apartments
+- hu: Jó napot, {jmeno}! Köszönjük a megkeresést. A(z) {termin} időpont sajnos már foglalt. Ezt tudjuk ajánlani: {navrh}. Írják meg, kérjük, megfelel-e. Nikol, VIVIEN Apartments
+- da: Hej {jmeno}, tak for henvendelsen. Terminen {termin} er desværre ikke ledig længere. Vi kan tilbyde: {navrh}. Skriv gerne, om det passer jer. Nikol, VIVIEN Apartments
+
+## 2026-11-23 09:42 · E vyřízení poptávky hotovo
+- Po odeslání: blokace nejlevnějšího/zvoleného apartmánu, stav Předběžně.
+- Telegram připomínky z cronu /api/zpracuj (~2 min), noc 20–8 max 2 (hned + 30 min). ZKOUŠKA bez připomínek.
+- Detail: POTVRDIT / HOST POTVRDIL / ZAPSÁNO V BH / NEJDE / PRODLOUŽIT O 24 H + lhůta a texty.
+- Stav: nasazuji na ostrou.
+
+## 2026-11-23 09:48 · Oprava NEJDE pt/fr/uk
+- pt: agradecemos o vosso pedido
+- fr: mezera před dvojtečkou (proposer : {navrh})
+- uk: Термін {termin}, на жаль, уже зайнятий.
+- Stav: nasazeno na ostrou
+
+## 2026-11-23 10:09 · Úklid testovacích poptávek + pojistka ZKOUŠKA
+- Uzavřeno 5 aktivních (stav nejde, bez blokace, bez připomínek):
+  1. pmwsbueyoatozle Pravoslav Tomek TESTPOMAJ 16.–18. 12. 2026
+  2. pmwsbh6eon1com5 Pravoslav Tomek TESTPOMAJ 25.–26. 11. 2026
+  3. pmws96yrs8lu9uo Pravoslav Tomek TESTPOMAJ 25.–26. 11. 2026
+  4. pmwryr1w47qkgtp Rr 25.–27. 11. 2026
+  5. pmwrto18j3dbq9p Ndjd 22.–26. 11. 2026
+- Žádná z nich neměla blokApt. Aktivní blokace po úklidu: 0.
+- Kód: ZKOUŠKA / test: / TEST* = bez Telegramu, bez připomínek, bez blokace.
+
+## 2026-11-23 10:12 · Smazány všechny poptávky
+- Na pokyn majitele vymazán celý seznam poptavky:seznam (6 záznamů, včetně Nikol tvrdaruza a testů). Po smazání 0.
+
+## 2026-11-23 10:14 · Termín: Cena za pobyt od …
+- Na kroku Termín je „Cena za pobyt od {cena}“ (věrný/doporučený přeškrtnutá + zlatá). Přesná cena zůstává u dlaždic a na Kontaktu.
+- Stav: nasazeno
+
+## 2026-11-23 10:25 · Náhled věrný/doporučený
+- Adresa: http://localhost:3011/nahled-poptavka-cesty (přepínač nahoře, suchý běh).
+- Stav: jen náhled vpravo
+
+## 2026-11-23 11:13 · Jak to teď vypadá (pro majitele s Claudem)
+
+Majitel si to chce projít s tebou od začátku do konce. Níže je přesný stav. Nic z toho neměň, dokud neřekne.
+
+### Kde zkoušet
+- Lokální náhled s přepínačem: `http://localhost:3011/nahled-poptavka-cesty` (větev `doporuceni`, port 3011, suchý běh = nic se neukládá / nejde do Telegramu).
+- Nahoře přepínač **Věrný** / **Doporučený**. Po přepnutí se formulář resetuje (`key={rezim}`).
+- Ostrá: `/poptavka?t=…` (věrný) nebo odkaz doporučitele. Zkouška: `/poptavka?zkouska=1`.
+
+### Důležité (ať se neplete)
+- **Žádná dvě políčka** „datum příjezdu“ a „datum odjezdu“. Termín = **hned otevřený kalendář**. Klepnutí na den = příjezd, druhé klepnutí = odjezd.
+- Kalendář není „něco navíc“. Je to **krok 1**.
+- **Děkujeme** je až po **Odeslat poptávku** na Kontaktu. Ne dřív.
+
+### Věrný host · pořadí obrazovek
+1. **Termín** – fotka / logo, „Rádi vás uvidíme znovu“, „Klepněte na den příjezdu.“ Kalendář otevřený. Jazyk: roletka CS vpravo nahoře (jen na tomto kroku).
+2. Po klepnutí na příjezd – text „Teď klepněte na den odjezdu…“, možné odjezdy (dosah), „odjezd“ na dni.
+3. Po odjezdu – souhrn termínu (noci, ráno), **„Cena za pobyt od …“** (přeškrtnutá plná + zlatá se slevou 5 %), tlačítko **Pokračovat**.
+4. **Jak vybereme apartmán?** – tři volby (vyberu si / kterýkoli volný / dotazník).
+5. **Apartmány** (když „vyberu si“) – dlaždice s **přesnou** cenou za pobyt + „se slevou 5 %“, obsazené dole. Detail → **Vybrat tento apartmán**.
+6. **Kontakt** – souhrn nahoře (termín · apartmán · cena se slevou), jméno, telefon, poznámka, **Odeslat** / WhatsApp / SMS, telefony Nikol + 604.
+7. **Děkujeme** – „Děkujeme, že se k nám vracíte.“ Blokujeme termín, potvrzení do hodiny, zlaté „Spěcháte? Zavolejte…“, Přidat na plochu, telefony.
+
+### Doporučený host · pořadí
+Stejné kroky 1–7. Rozdíly jen v textech a fotce:
+- Úvod: „Rádi vás u nás přivítáme“, večerní zahrada, „Na první pobyt u nás máte slevu 5 %.“
+- Na Termínu také „Cena za pobyt od …“ se slevou.
+- Děkujeme má své texty pro doporučeného (ne „že se k nám vracíte“).
+
+### Co už je na ostré (související)
+- OPRAVY-PO-TESTU-2 A–E, oprava NEJDE pt/fr/uk, ZKOUŠKA bez TG/připomínek/blokace, „Cena za pobyt od …“ na Termínu.
+- Testovací poptávky v Upstash smazány (0).
+
+### Co majitel chce od tebe
+Projít s ním Věrného a Doporučeného **od první obrazovky po Děkujeme**, krok po kroku, ať vidí konkrétní vzhled. Nezačínat uprostřed. Náhledy do Telegramu neposílat.
+
+## 2026-11-23 11:24 · Termín finální (políčka + panel)
+- Na kroku Termín: fotka, nadpis, text + **Příjezd / Odjezd** (bez trvale otevřeného kalendáře).
+- Klepnutí otevře panel: záložky Příjezd|Odjezd, pokyny A/B (+ C při dosahu &lt; 7), po odjezdu zavření, souhrn + „Cena za pobyt od …“ + Pokračovat.
+- Příjezd = výběr znovu. Odjezd = jen změna odjezdu. Šipka zpět zavře panel.
+- Stav: nasazeno (9f791f4)
+
+## 2026-11-23 12:40 · bod 0 pravidlo nahledy-claude
+- Pravidlo `.cursor/rules/nahledy-claude.mdc`: `nahled-*.html` od Clauda jsou přibližné návrhy (obsah, pořadí, texty). Vzhled řídí aplikace.
+- Stav: nasazeno (bac3254)
+
+## 2026-11-23 12:40 · bod 1 OPRAVY-PO-TESTU-3
+- Termín: hustý souhrn bez roku, bez „se slevou 5 %“ a bez „Ráno odjíždíte…“, legenda jen u příjezdu.
+- Stav: nasazeno (d0a8217)
+
+## 2026-11-23 12:40 · bod 2 OPRAVY-PO-TESTU-4
+- Výsledek dotazníku varianta A (karty volných, obsazené až dole). Oprava červené hlášky pryč.
+- Stav: nasazeno (72c1f1d)
+
+## 2026-11-23 12:40 · bod 3 PROMPT-ICAL
+- Obsazenost z Better Hotel iCal (`ICAL_V1`…`ICAL_V5` v `.env.local` i Vercel Production + Preview). Soubor `ICAL-ODKAZY.local.txt` smazán, `*.local.txt` v `.gitignore`. URL nikde v logu ani v tomto souboru.
+- Cron `/api/zpracuj` obnoví iCal max každých 10 min. Přehled: řádek iCal + „Načíst teď“.
+- Skládání: iCal NEBO rezervace průvodce NEBO blokace poptávky; xlsx obsazenost jen když iCal není načtený. Ceny dál z xlsx.
+- Porovnání iCal vs list „Podle screenshotů“ (22. 11. 2026 – 12. 1. 2027), 6 rozdílů:
+
+| Datum | Apt | iCal | Tabulka |
+|---|---|---|---|
+| 2026-12-10 | V1 | volno | OBSAZENO |
+| 2026-12-27 | V1 | OBSAZENO | volno |
+| 2026-12-28 | V1 | OBSAZENO | volno |
+| 2026-12-29 | V3 | OBSAZENO | volno |
+| 2026-12-11 | V4 | OBSAZENO | volno |
+| 2026-12-07 | V5 | OBSAZENO | volno |
+
+- Plné dny 27.–28. 11., 4.–5. 12., 12. 12., 31. 12., 1. 1.: všechny 5/5 PLNÉ podle iCal.
+- Stav: nasazuji na ostrou

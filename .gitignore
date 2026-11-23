@@ -35,6 +35,8 @@ yarn-error.log*
 .env.local
 .env.*.local
 !.env.example
+*.local.txt
+ICAL-ODKAZY.local.txt
 
 # lokální data a náhledy e-mailů
 .data/
@@ -56,3 +58,4 @@ PRAVIDLA-PRUVODCE-73.json
 next-env.d.ts
 
 .vercel
+.env*

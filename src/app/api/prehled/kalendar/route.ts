@@ -8,10 +8,16 @@ import {
   sloucitKalendar,
   type KalendarDenni,
 } from '@/lib/kalendar-denni';
+import {
+  nactiIcalUloziste,
+  obnovIcalObsazenost,
+  pocetIcalNoci90,
+} from '@/lib/kalendar-ical';
 import { nactiUlozenyKalendar, sestavKalendarProHosta, ulozKalendar } from '@/lib/kalendar-uloziste';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore } from '@/lib/store';
 import { APT_IDS } from '@/lib/types';
+import { ymdDnesPraha } from '@/lib/poptavka';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +86,8 @@ export async function GET(req: NextRequest) {
         { headers: noStore },
       );
     }
+    const ical = await nactiIcalUloziste(store);
+    const dnes = ymdDnesPraha();
     return NextResponse.json(
       {
         ok: true,
@@ -87,6 +95,10 @@ export async function GET(req: NextRequest) {
         stariObsazenost: Boolean(stariObs),
         mesice: nahledMesice(dny, bezAptPoDnech),
         pocetDni: Object.keys(dny).length,
+        ical: {
+          nacteno: ical.nacteno,
+          noci90: pocetIcalNoci90(ical, dnes),
+        },
       },
       { headers: noStore },
     );
@@ -101,7 +113,22 @@ export async function POST(req: NextRequest) {
   const ct = req.headers.get('content-type') || '';
 
   if (ct.includes('application/json')) {
-    const telo = (await req.json()) as { cenyZapnuto?: boolean };
+    const telo = (await req.json()) as { cenyZapnuto?: boolean; icalNacist?: boolean };
+    if (telo.icalNacist) {
+      const vysl = await obnovIcalObsazenost(store);
+      const ical = await nactiIcalUloziste(store);
+      return NextResponse.json(
+        {
+          ok: vysl.ok,
+          error: vysl.chyba,
+          ical: {
+            nacteno: ical.nacteno,
+            noci90: pocetIcalNoci90(ical, ymdDnesPraha()),
+          },
+        },
+        { headers: noStore },
+      );
+    }
     const { dny, meta } = await nactiUlozenyKalendar(store);
     const dalsi = {
       ...meta,

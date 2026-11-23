@@ -53,7 +53,7 @@ function prazdnyDen(): DenKalendare {
   return d;
 }
 
-function zajistiDen(mapa: KalendarDenni, ymd: string): DenKalendare {
+export function zajistiDen(mapa: KalendarDenni, ymd: string): DenKalendare {
   if (!mapa[ymd]) mapa[ymd] = prazdnyDen();
   return mapa[ymd];
 }

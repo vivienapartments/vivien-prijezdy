@@ -10,6 +10,11 @@ type Meta = {
   posledniRezervace: string | null;
 };
 
+type IcalInfo = {
+  nacteno: string | null;
+  noci90: number;
+};
+
 type Mesic = {
   mesic: string;
   od: number | null;
@@ -54,6 +59,7 @@ const DNY_HLAV = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 export function KalendarPrehled() {
   const [otevreno, setOtevreno] = useState(false);
   const [meta, setMeta] = useState<Meta | null>(null);
+  const [ical, setIcal] = useState<IcalInfo | null>(null);
   const [mesice, setMesice] = useState<Mesic[]>([]);
   const [stari, setStari] = useState(false);
   const [hlaska, setHlaska] = useState<string | null>(null);
@@ -69,6 +75,7 @@ export function KalendarPrehled() {
       meta?: Meta;
       mesice?: Mesic[];
       stariObsazenost?: boolean;
+      ical?: IcalInfo;
       error?: string;
     };
     if (!json.ok) {
@@ -76,6 +83,7 @@ export function KalendarPrehled() {
       return;
     }
     setMeta(json.meta || null);
+    setIcal(json.ical || null);
     setMesice(json.mesice || []);
     setStari(Boolean(json.stariObsazenost));
   }, []);
@@ -84,6 +92,31 @@ export function KalendarPrehled() {
     if (!otevreno) return;
     void nacti();
   }, [otevreno, nacti]);
+
+  async function nacistIcalTed() {
+    setCekam(true);
+    setHlaska(null);
+    try {
+      const res = await fetch('/api/prehled/kalendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ icalNacist: true }),
+      });
+      const json = (await res.json()) as {
+        ok?: boolean;
+        ical?: IcalInfo;
+        error?: string;
+      };
+      if (!json.ok) setHlaska(json.error || 'iCal se nenačetl.');
+      else {
+        setIcal(json.ical || null);
+        setHlaska('iCal načten.');
+        await nacti();
+      }
+    } finally {
+      setCekam(false);
+    }
+  }
 
   async function prepniCeny(zap: boolean) {
     setCekam(true);
@@ -210,8 +243,20 @@ export function KalendarPrehled() {
           </p>
           <p className="ph-kalendar__meta">Ceny nahrány: {formatCas(meta?.cenyNahrano || null)}</p>
           <p className="ph-kalendar__meta">
-            Obsazenost nahrána: {formatCas(meta?.obsazenostNahrano || null)}
+            Obsazenost nahrána (záloha xlsx): {formatCas(meta?.obsazenostNahrano || null)}
           </p>
+          <p className="ph-kalendar__meta">
+            iCal Better Hotel: poslední načtení {formatCas(ical?.nacteno || null)},{' '}
+            {ical?.noci90 ?? 0} obsazených nocí v příštích 90 dnech
+          </p>
+          <button
+            type="button"
+            className="ph-btn"
+            disabled={cekam}
+            onClick={() => void nacistIcalTed()}
+          >
+            Načíst teď
+          </button>
           <p className="ph-kalendar__meta">
             Rezervace z průvodce: poslední přišla {formatCas(meta?.posledniRezervace || null)}
           </p>
