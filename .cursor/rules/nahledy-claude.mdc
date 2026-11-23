@@ -1,0 +1,12 @@
+---
+description: Náhledy od Clauda (nahled-*.html) jsou přibližné návrhy, vzhled řídí aplikace
+alwaysApply: true
+---
+
+# Náhledy od Clauda (nahled-*.html)
+
+Soubory `nahled-*.html` (od Clauda / Koda) jsou **přibližné návrhy pro inspiraci**.
+
+- Ber z nich: **co** se kde ukáže, **pořadí** a **texty**.
+- **Vzhled** (písma, mezery, barvy, rámečky, tlačítka) se řídí estetikou **aplikace** (poptávka, průvodce, přehled).
+- Když se náhled a aplikace liší, **drž se aplikace**. Náhled nepřepisuj 1:1 do CSS.
