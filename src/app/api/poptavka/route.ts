@@ -133,7 +133,8 @@ export async function POST(req: Request) {
   const zkouska =
     suchyBeh ||
     Boolean(rezervace && /^TEST/i.test(rezervace)) ||
-    Boolean(body.zkouska === true || body.zkouska === '1' || body.zkouska === 'ano');
+    Boolean(body.zkouska === true || body.zkouska === '1' || body.zkouska === 'ano') ||
+    doporucitelKod === 'zkouska';
 
   const zaznam: PoptavkaZaznam = {
     id: zkouska ? `test:${novyIdPoptavky()}` : novyIdPoptavky(),

@@ -92,13 +92,6 @@ export default async function PoptavkaPage({ searchParams }: Props) {
     }
   }
 
-  /** Proklik bez tokenu: věrný vzhled, nic se neukládá. */
-  if (suchyBeh && zdroj === 'obecna') {
-    zdroj = 'vernost';
-    if (!jmeno) jmeno = 'Zkouška';
-    if (!telefon) telefon = '+420 604 692 573';
-  }
-
   const firma = firmaZKodu(q.f);
   if (firma && !suchyBeh) {
     zdroj = 'firma';
@@ -106,6 +99,7 @@ export default async function PoptavkaPage({ searchParams }: Props) {
     firmaNazev = firma.nazev;
   }
 
+  /** Nejdřív odkaz doporučení, ať ?zkouska=1 nesmaže cestu doporučeného. */
   const od = normalizujKod(q.od);
   if (od && zdroj === 'obecna') {
     zdroj = 'doporucitel';
@@ -122,6 +116,16 @@ export default async function PoptavkaPage({ searchParams }: Props) {
       /* zůstane cs / výchozí */
     }
   }
+
+  /** Proklik bez tokenu: věrný vzhled, nic se neukládá. Jen když není doporučení. */
+  if (suchyBeh && zdroj === 'obecna') {
+    zdroj = 'vernost';
+    if (!jmeno) jmeno = 'Zkouška';
+    if (!telefon) telefon = '+420 604 692 573';
+  }
+
+  if (suchyBeh && zdroj === 'doporucitel' && !jmeno) jmeno = 'Zkouška';
+  if (suchyBeh && zdroj === 'doporucitel' && !telefon) telefon = '+420 604 692 573';
 
   if (q.lang && GUIDE_LANGS.includes(q.lang as GuideLang) && (zdroj !== 'vernost' || suchyBeh)) {
     lang = q.lang as GuideLang;
