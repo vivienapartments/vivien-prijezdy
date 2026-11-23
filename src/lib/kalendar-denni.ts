@@ -227,10 +227,16 @@ export function denPlno(den: DenKalendare | undefined, bezApt = 0): boolean {
   return obs >= 5;
 }
 
-/** Volné apartmány (ne obsazené). */
+/** Má apartmán v dané noci platnou cenu. */
+export function maCenuNoci(den: DenKalendare | undefined, apt: AptId): boolean {
+  const c = den?.[apt]?.cena;
+  return typeof c === 'number' && c > 0;
+}
+
+/** Volné apartmány (ne obsazené) s cenou. Bez ceny se nenabízejí. */
 export function volneApty(den: DenKalendare | undefined): AptId[] {
-  if (!den) return [...APT_IDS];
-  return APT_IDS.filter((id) => !den[id]?.obsazeno);
+  if (!den) return [];
+  return APT_IDS.filter((id) => !den[id]?.obsazeno && maCenuNoci(den, id));
 }
 
 export function minCenaVolnych(den: DenKalendare | undefined): number | null {
@@ -262,7 +268,7 @@ export type CenaPobytu = {
   seSlevou: number;
 };
 
-/** Apartmány volné ve všech nocích termínu. */
+/** Apartmány volné ve všech nocích termínu a s cenou za každou noc. */
 export function aptyVolneVeTerminu(
   mapa: KalendarDenni,
   prijezd: string,
@@ -270,15 +276,21 @@ export function aptyVolneVeTerminu(
 ): AptId[] {
   const noci = nociPobytu(prijezd, odjezd);
   if (!noci.length) return [];
-  return APT_IDS.filter((id) => noci.every((d) => !mapa[d]?.[id]?.obsazeno));
+  return APT_IDS.filter((id) =>
+    noci.every((d) => {
+      const b = mapa[d]?.[id];
+      return Boolean(b) && !b.obsazeno && maCenuNoci(mapa[d], id);
+    }),
+  );
 }
 
-/** Kolik nocí v kuse je apartmán volný od příjezdu (max 60). */
+/** Kolik nocí v kuse je apartmán volný od příjezdu (max 60). Bez ceny noc končí. */
 export function dosahNociApartmanu(mapa: KalendarDenni, prijezd: string, apt: AptId): number {
   let n = 0;
   for (let i = 0; i < 60; i++) {
     const den = posunYmd(prijezd, i);
-    if (mapa[den]?.[apt]?.obsazeno) break;
+    const b = mapa[den]?.[apt];
+    if (!b || b.obsazeno || !maCenuNoci(mapa[den], apt)) break;
     n += 1;
   }
   return n;

@@ -7,6 +7,7 @@ import { createProcessStore, pocetPrikazu, prevedPlatbyJednou, prodluzKartyJedno
 import { upozorniBranu } from '@/lib/brana-upozorneni';
 import { upozorniDnes } from '@/lib/dnesek-upozorneni';
 import { upozorniOdjezdy } from '@/lib/odjezd-upozorneni';
+import { upozorniChybejiciCeny } from '@/lib/kalendar-chybejici-ceny';
 import { obnovIcalKdyzStary } from '@/lib/kalendar-ical';
 import { zpracujPoptavkyPripominky } from '@/lib/poptavka-pripominky';
 import { upozorniPrijezd } from '@/lib/prijezd-upozorneni';
@@ -88,6 +89,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await upozorniDnes(store).catch(() => undefined);
     await zpracujPoptavkyPripominky(store).catch(() => undefined);
     await obnovIcalKdyzStary(store).catch(() => undefined);
+    await upozorniChybejiciCeny(store).catch(() => undefined);
     zapisSpotrebu(store);
     return NextResponse.json({
       ok: true,
@@ -121,6 +123,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await upozorniDnes(store).catch(() => undefined);
     await zpracujPoptavkyPripominky(store).catch(() => undefined);
     await obnovIcalKdyzStary(store).catch(() => undefined);
+    await upozorniChybejiciCeny(store).catch(() => undefined);
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }

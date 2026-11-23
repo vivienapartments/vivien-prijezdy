@@ -68,6 +68,7 @@ describe('kalendar-denni', () => {
 
   it('volné apartmány a nejbližší termíny', () => {
     const mapa: KalendarDenni = {
+      '2026-11-24': den(),
       '2026-11-25': den({ V1: true }),
       '2026-11-26': den({ V1: true }),
       '2026-11-27': den(),
@@ -78,6 +79,16 @@ describe('kalendar-denni', () => {
     const nab = nejblizsiVolneTerminy(mapa, '2026-11-25', '2026-11-26', 'V1', 2);
     expect(nab[0]).toEqual({ prijezd: '2026-11-24', odjezd: '2026-11-25' });
     expect(nab[1]).toEqual({ prijezd: '2026-11-27', odjezd: '2026-11-28' });
+  });
+
+  it('bez ceny se apartmán nenabízí', () => {
+    const mapa: KalendarDenni = {
+      '2026-12-01': den(),
+      '2026-12-02': den(),
+    };
+    mapa['2026-12-01'].V2.cena = null;
+    expect(aptyVolneVeTerminu(mapa, '2026-12-01', '2026-12-02')).not.toContain('V2');
+    expect(aptyVolneVeTerminu(mapa, '2026-12-01', '2026-12-02')).toContain('V1');
   });
 
   it('dosah odjezdu jen v jednom apartmánu', () => {

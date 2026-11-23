@@ -553,6 +553,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       } catch {
         /* ignorovat */
       }
+      smazKoncept(konceptKlic);
       setHotovo(true);
       try {
         window.location.href = cil;
@@ -562,7 +563,10 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       return;
     }
 
-    if (ulozOk) setHotovo(true);
+    if (ulozOk) {
+      smazKoncept(konceptKlic);
+      setHotovo(true);
+    }
   }
 
   function resetPruvodce() {

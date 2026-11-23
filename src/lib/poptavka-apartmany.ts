@@ -129,9 +129,7 @@ export function galerieKompletPolozky(
       : POPTAVKA_APARTMANY.filter((a) => jenApty.includes(a.id));
   return seznam.flatMap((a) => [
     { url: coverUrl(langKod, a), aptId: a.id },
-    ...galerieUrls(langKod, a)
-      .slice(0, 2)
-      .map((url) => ({ url, aptId: a.id })),
+    ...galerieUrls(langKod, a).map((url) => ({ url, aptId: a.id })),
   ]);
 }
 

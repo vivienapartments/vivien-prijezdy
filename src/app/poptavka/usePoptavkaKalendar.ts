@@ -9,7 +9,6 @@ import {
   minCenaVolnych,
   nejblizsiVolneTerminy,
   nejlevnejsiVolnyPobyt,
-  nociPobytu,
   slevaPctCastka,
   terminPresPlnyDen,
   type KalendarDenni,
@@ -94,7 +93,8 @@ export function usePoptavkaKalendar() {
   const aptObsazenyVeTerminu = useCallback(
     (apt: AptId, prijezd: string, odjezd: string): boolean => {
       if (!prijezd || !odjezd) return false;
-      return nociPobytu(prijezd, odjezd).some((d) => Boolean(dny[d]?.[apt]?.obsazeno));
+      // Bez ceny nebo obsazeno = nenabízet jako volný.
+      return !aptyVolneVeTerminu(dny, prijezd, odjezd).includes(apt);
     },
     [dny],
   );
