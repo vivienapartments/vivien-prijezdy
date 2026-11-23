@@ -1,0 +1,56 @@
+.kontakt-tel {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  align-items: stretch;
+}
+
+.kontakt-tel__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.22rem;
+  min-width: 0;
+  padding: 0.7rem 0.45rem 0.65rem;
+  border: 1px solid #c9a84c;
+  border-radius: 12px;
+  background: #15110e;
+  color: inherit;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.12s ease;
+}
+
+.kontakt-tel__btn:active {
+  background: #0a0806;
+}
+
+.kontakt-tel__ik {
+  width: 1.15rem;
+  height: 1.15rem;
+  color: #c9a84c;
+  display: block;
+  margin-bottom: 0.1rem;
+}
+
+.kontakt-tel__popis {
+  font-size: 0.78rem;
+  line-height: 1.25;
+  color: #cbbba8;
+  hyphens: none;
+}
+
+.kontakt-tel__cislo {
+  color: #c9a84c;
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 380px) {
+  .kontakt-tel {
+    grid-template-columns: 1fr;
+  }
+}

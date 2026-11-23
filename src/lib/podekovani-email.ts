@@ -1,8 +1,16 @@
+import { NIKOL_PHONE, PARKING_OWNER_PHONE } from './constants';
 import { doporuceniTexty } from './doporuceni-texty';
 import { expiredVyhodyTexty } from './expired-vyhody-texty';
-import { t } from './i18n';
+import { t, toTelHref } from './i18n';
 import { plochaPridej } from './plocha-texty';
-import { expiredCta, expiredDopis, expiredNadpis, expiredPodpis } from './texts';
+import {
+  expiredCta,
+  expiredDopis,
+  expiredNadpis,
+  expiredPodpis,
+  expiredZaloha,
+  expiredZavolat,
+} from './texts';
 import type { GuideLang, LText } from './types';
 
 const BASE =
@@ -88,7 +96,30 @@ export function textPodekovaniEmail(lang: GuideLang | null, odkaz: string): stri
     '',
     `${btn}:`,
     odkaz.trim(),
+    '',
+    `${t(expiredZavolat, l)}: ${NIKOL_PHONE}`,
+    `${t(expiredZaloha, l)}: ${PARKING_OWNER_PHONE}`,
   ].join('\n');
+}
+
+function telNbsp(s: string): string {
+  return esc(s).replace(/ /g, '&nbsp;');
+}
+
+function tlacitkoTelefonu(
+  ikonaUrl: string,
+  popis: string,
+  cislo: string,
+  sans: string,
+): string {
+  const href = toTelHref(cislo);
+  return `<td width="50%" valign="top" style="padding:4px;">
+  <a href="${href}" style="text-decoration:none;display:block;border:1px solid #c9a84c;border-radius:12px;background:#15110e;padding:12px 8px;text-align:center;">
+    <img src="${ikonaUrl}" width="22" height="22" alt="" style="display:block;margin:0 auto 6px;width:22px;height:22px;border:0;">
+    <div style="font-family:${sans};color:#cbbba8;font-size:13px;line-height:1.3;">${esc(popis)}</div>
+    <div style="font-family:${sans};color:#c9a84c;font-size:14px;line-height:1.35;font-weight:700;padding-top:3px;white-space:nowrap;">${telNbsp(cislo)}</div>
+  </a>
+</td>`;
 }
 
 function radekVyhody(
@@ -133,6 +164,7 @@ export function htmlPodekovaniEmail(
   const ikKal = `${base}/email/ikona-kalendar.png`;
   const ikDarek = `${base}/email/ikona-darek.png`;
   const ikTel = `${base}/email/ikona-telefon.png`;
+  const ikHovor = `${base}/email/ikona-hovor.png`;
   const nadpis = esc(t(expiredNadpis, l));
   const dopis = slevaNbsp(esc(t(expiredDopis, l)));
   const podpis = esc(t(expiredPodpis, l));
@@ -143,6 +175,7 @@ export function htmlPodekovaniEmail(
   const serif = "Georgia,'Times New Roman',serif";
   const sans = "Arial,Helvetica,sans-serif";
   const plocha = t(plochaPridej, l);
+  const kontakty = `<tr>${tlacitkoTelefonu(ikHovor, t(expiredZavolat, l), NIKOL_PHONE, sans)}${tlacitkoTelefonu(ikHovor, t(expiredZaloha, l), PARKING_OWNER_PHONE, sans)}</tr>`;
 
   const vyhody = [
     radekVyhody(ikKal, t(expiredCta, l), v.radek1Pod, url, sans),
@@ -197,13 +230,20 @@ export function htmlPodekovaniEmail(
             </td>
           </tr>
           <tr>
-            <td align="center" style="padding:22px 24px 28px;">
+            <td align="center" style="padding:22px 24px 8px;">
               <table role="presentation" cellspacing="0" cellpadding="0">
                 <tr>
                   <td align="center" style="background:#c9a84c;border-radius:28px;">
                     <a href="${url}" style="display:inline-block;padding:13px 26px;font-family:${sans};font-size:16px;line-height:1.3;color:#1a1510;text-decoration:none;border-radius:28px;font-weight:700;">${btn}</a>
                   </td>
                 </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 20px 24px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                ${kontakty}
               </table>
             </td>
           </tr>

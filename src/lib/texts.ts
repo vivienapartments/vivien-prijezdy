@@ -1558,6 +1558,22 @@ export const expiredZavolat: LText = {
   pt: 'Ligar à Nikol',
 };
 
+export const expiredZaloha: LText = {
+  cs: 'Když se nedovoláte',
+  en: 'If you cannot reach her',
+  de: 'Wenn Sie sie nicht erreichen',
+  pl: 'Jeśli się nie dodzwonicie',
+  uk: 'Якщо не додзвонитеся',
+  'zh-Hant': '若無法接通',
+  sv: 'Om ni inte når henne',
+  es: 'Si no consiguen hablar con ella',
+  hu: 'Ha nem érik el',
+  da: 'Hvis I ikke kan få fat i hende',
+  fr: 'Si vous ne la joignez pas',
+  it: 'Se non riuscite a contattarla',
+  pt: 'Se não conseguirem falar com ela',
+};
+
 /** Starý nadpis (testy / záloha). */
 export const expiredTexts: LText = expiredNadpis;
 /** Staré názvy ponechané kvůli případným dalším importům. */

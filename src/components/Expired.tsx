@@ -1,10 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { NIKOL_PHONE } from '@/lib/constants';
 import { doporuceniTexty } from '@/lib/doporuceni-texty';
 import { expiredVyhodyTexty, zlatSlevaVTextu, zlatTriVyhodyVTextu } from '@/lib/expired-vyhody-texty';
-import { t, toTelHref } from '@/lib/i18n';
+import { t } from '@/lib/i18n';
 import { jeStandalone, nactiPlochaStav } from '@/lib/plocha';
 import { plochaPridej } from '@/lib/plocha-texty';
 import { poptavkaTextyVernost } from '@/lib/poptavka-texty-vernost';
@@ -14,10 +13,12 @@ import {
   expiredHelp,
   expiredNadpis,
   expiredPodpis,
+  expiredZaloha,
   expiredZavolat,
 } from '@/lib/texts';
 import { textBuildVerze } from '@/lib/build-verze';
 import type { GuideLang } from '@/lib/types';
+import { KontaktTelefony } from './KontaktTelefony';
 import { PridejNaPlochu } from './PridejNaPlochu';
 import './expired-final.scss';
 
@@ -95,7 +96,6 @@ export function Expired({
   lang?: GuideLang;
   token?: string;
 }) {
-  const tel = NIKOL_PHONE.replace(/ /g, '\u00a0');
   const v = expiredVyhodyTexty(lang);
   const d = doporuceniTexty(lang);
   const vernostNadpis = poptavkaTextyVernost(lang).nadpis;
@@ -318,9 +318,11 @@ export function Expired({
 
         <div className="pv-exp__pomoc">
           <p className="pv-exp__pomoc-otazka">{t(expiredHelp, lang)}</p>
-          <a className="pv-exp__pomoc-tel" href={toTelHref(NIKOL_PHONE)}>
-            {t(expiredZavolat, lang)} · {tel}
-          </a>
+          <KontaktTelefony
+            className="pv-exp__kontakty"
+            zavolat={t(expiredZavolat, lang)}
+            zaloha={t(expiredZaloha, lang)}
+          />
         </div>
         <p className="pv-exp__verze" aria-hidden="true">
           {textBuildVerze()}

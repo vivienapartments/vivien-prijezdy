@@ -4,17 +4,15 @@ import { useEffect, useMemo, useRef, useState, type ReactNode, type FormEvent } 
 import { isValidPhoneNumber } from 'libphonenumber-js';
 import { textBuildVerze } from '@/lib/build-verze';
 import { apartmany } from '@/lib/guide-data';
-import { toTelHref } from '@/lib/i18n';
 import {
   odkazSmsPoptavky,
   odkazWaPoptavky,
-  POPTAVKA_TEL_HOVOR,
-  POPTAVKA_TEL_ZALOHA,
   sestavZpravuPoptavky,
   ymdDnesPraha,
   type PoptavkaKanal,
   type PoptavkaZdroj,
 } from '@/lib/poptavka';
+import { KontaktTelefony } from '@/components/KontaktTelefony';
 import {
   klicPoptavkaKoncept,
   nactiKoncept,
@@ -474,9 +472,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
     setChyba(null);
     jdiNaKrok('kontakt');
   }
-
-  const telNikol = POPTAVKA_TEL_HOVOR.replace(/ /g, '\u00a0');
-  const telZaloha = POPTAVKA_TEL_ZALOHA.replace(/ /g, '\u00a0');
 
   const souhrnTerminu =
     prijezd && odjezd
@@ -1321,16 +1316,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         {ukazPaticku ? (
           <div className="pp__paticka">
             {vernost ? null : <PoptavkaPlochaTlacitko />}
-            <div className="pp__kontakty">
-              <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_HOVOR)}>
-                <span className="pp__kontakt-popis">{t.zavolat}</span>
-                <span className="pp__kontakt-cislo">{telNikol}</span>
-              </a>
-              <a className="pp__kontakt" href={toTelHref(POPTAVKA_TEL_ZALOHA)}>
-                <span className="pp__kontakt-popis">{t.zaloha}</span>
-                <span className="pp__kontakt-cislo">{telZaloha}</span>
-              </a>
-            </div>
+            <KontaktTelefony zavolat={t.zavolat} zaloha={t.zaloha} className="pp__kontakty-wrap" />
             <p className="pp__verze" aria-hidden="true">
               {buildVerze}
             </p>

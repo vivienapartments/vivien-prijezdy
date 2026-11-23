@@ -24,6 +24,9 @@ describe('podekovani-email', () => {
     expect(html).toContain('Využít výhody');
     expect(html).toContain('5&nbsp;%');
     expect(html).toContain('ikona-kalendar.png');
+    expect(html).toContain('ikona-hovor.png');
+    expect(html).toContain('tel:+420702153573');
+    expect(html).toContain('tel:+420604692573');
     expect(html).toContain('text-align:center');
     expect(html).toContain('background:#1c1712;border:2px solid #c9a84c');
     expect(html).toContain('#c9a84c');
