@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   denPlno,
+  minCenaVolnych,
   parsujCenyXlsx,
   parsujObsazenostXlsx,
   rozpoznajXlsx,
@@ -44,7 +45,23 @@ function nahledMesice(dny: KalendarDenni, bezApt: Record<string, number>) {
     .map(([mesic, v]) => ({ mesic, ...v }));
 }
 
-export async function GET() {
+/** Jednotlivé dny jednoho měsíce (cena od / plno) pro rozbalení v přehledu. */
+function dnyMesice(dny: KalendarDenni, bezApt: Record<string, number>, mesic: string) {
+  return Object.keys(dny)
+    .filter((ymd) => ymd.startsWith(mesic))
+    .sort()
+    .map((ymd) => {
+      const den = dny[ymd];
+      const ba = bezApt[ymd] || 0;
+      return {
+        ymd,
+        plno: denPlno(den, ba),
+        cenaOd: minCenaVolnych(den),
+      };
+    });
+}
+
+export async function GET(req: NextRequest) {
   if (!(await prehledPrihlasen())) return chyba(401, 'Nepřihlášen.');
   try {
     const store = createProcessStore();
@@ -52,6 +69,17 @@ export async function GET() {
     const stariObs =
       meta.obsazenostNahrano &&
       Date.now() - Date.parse(meta.obsazenostNahrano) > 3 * 24 * 60 * 60 * 1000;
+    const mesic = req.nextUrl.searchParams.get('mesic');
+    if (mesic && /^\d{4}-\d{2}$/.test(mesic)) {
+      return NextResponse.json(
+        {
+          ok: true,
+          mesic,
+          dny: dnyMesice(dny, bezAptPoDnech, mesic),
+        },
+        { headers: noStore },
+      );
+    }
     return NextResponse.json(
       {
         ok: true,

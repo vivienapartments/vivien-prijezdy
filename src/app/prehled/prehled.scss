@@ -3837,3 +3837,171 @@
   font: inherit;
   resize: vertical;
 }
+
+.ph-kalendar {
+  margin: 1.25rem 0 1.5rem;
+  border: 1px solid #3d342a;
+  border-radius: 12px;
+  background: #15110e;
+  overflow: hidden;
+}
+
+.ph-kalendar__hlavicka {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 0;
+  background: transparent;
+  color: #c9a84c;
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ph-kalendar__sipka {
+  color: #c9a84c;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.ph-kalendar.is-open .ph-kalendar__hlavicka {
+  border-bottom: 1px solid #3d342a;
+}
+
+.ph-kalendar__telo {
+  padding: 0.85rem 1rem 1rem;
+}
+
+.ph-kalendar__check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #e6dccb;
+  font-size: 0.9rem;
+}
+
+.ph-kalendar__meta {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  color: #cbbba8;
+}
+
+.ph-kalendar__varovani {
+  margin: 0 0 0.75rem;
+  color: #e8a070;
+  font-size: 0.85rem;
+}
+
+.ph-kalendar__nahrat {
+  display: inline-block;
+  cursor: pointer;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.ph-kalendar__hlaska {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+.ph-kalendar__prazdno {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #a09080;
+}
+
+.ph-kalendar__tabulka {
+  overflow-x: auto;
+}
+
+.ph-kalendar__tabulka table {
+  width: 100%;
+  font-size: 0.8rem;
+  border-collapse: collapse;
+}
+
+.ph-kalendar__tabulka th,
+.ph-kalendar__tabulka td {
+  padding: 0.4rem 0.25rem;
+  border-bottom: 1px solid #2a231c;
+  color: #e6dccb;
+}
+
+.ph-kalendar__tabulka tr.is-on td {
+  background: color-mix(in srgb, #c9a84c 12%, transparent);
+}
+
+.ph-kalendar__mesic-btn {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #c9a84c;
+  font: inherit;
+  font-size: inherit;
+  text-align: left;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.ph-kalendar__dny-box {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #3d342a;
+}
+
+.ph-kalendar__dny-nadpis {
+  margin: 0 0 0.55rem;
+  color: #f5efe3;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+}
+
+.ph-kalendar__dny {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+}
+
+.ph-kalendar__den-nazev {
+  text-align: center;
+  font-size: 0.68rem;
+  color: #c9a84c;
+  padding: 0.15rem 0;
+}
+
+.ph-kalendar__den {
+  min-height: 2.45rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  border-radius: 8px;
+  background: #1c1712;
+  color: #f5efe3;
+  font-size: 0.85rem;
+}
+
+.ph-kalendar__den small {
+  font-size: 0.58rem;
+  color: #c9a84c;
+}
+
+.ph-kalendar__den.is-empty {
+  background: transparent;
+}
+
+.ph-kalendar__den.is-plno {
+  color: #6b5f52;
+}
+
+.ph-kalendar__den .is-skrt {
+  text-decoration: line-through;
+}

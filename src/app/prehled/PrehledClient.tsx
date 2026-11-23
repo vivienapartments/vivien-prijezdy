@@ -5961,7 +5961,6 @@ export function PrehledClient({
             );
           })}
         </div>
-        {pohledDomu ? <KalendarPrehled /> : null}
         {(pohledDomu && zalozka === 'prijezdy') || !pohledDomu ? (
           <div className={zalozka === 'prijezdy' || !pohledDomu ? 'ph-den is-on' : 'ph-den'}>
             <div className="ph-den__radek">
@@ -7149,6 +7148,7 @@ export function PrehledClient({
           }}
         />
       ) : null}
+      {pohledDomu ? <KalendarPrehled /> : null}
     </main>
   );
 }
