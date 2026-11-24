@@ -322,7 +322,7 @@ function dopln(s: string, mapa: Record<string, string>): string {
 
 export function textPotvrditHostovi(
   z: PoptavkaZaznam,
-  opts: { cenaKc: number | null; seSlevou: boolean; lhutaIso: string },
+  opts: { cenaKc: number | null; seSlevou: boolean; lhutaIso?: string | null },
 ): string {
   const lang = z.jazyk || 'cs';
   const s = POTVRDIT[lang] || POTVRDIT.en;
@@ -331,22 +331,16 @@ export function textPotvrditHostovi(
   const termin = formatRozsahPoptavky(z.prijezd, z.odjezd, lang);
   const cena = opts.cenaKc != null ? formatKc(opts.cenaKc) : '—';
   const sleva = opts.seSlevou ? SLEVA[lang] || SLEVA.en : '';
-  const lhuta = formatLhutaProHosta(opts.lhutaIso, lang);
   const mapa = {
     jmeno: krestni(z.jmeno),
     termin,
     apartman,
     cena,
     sleva,
-    lhuta,
+    lhuta: '',
   };
-  const telo = dopln(s.potvrzeni, mapa);
-  const vetaLhuta = dopln(s.lhuta, mapa);
-  // Věta s lhůtou před podpisem Nikol.
-  if (/Nikol[,，]?\s*VIVIEN Apartments\s*$/i.test(telo)) {
-    return telo.replace(/Nikol[,，]?\s*VIVIEN Apartments\s*$/i, `${vetaLhuta} Nikol, VIVIEN Apartments`);
-  }
-  return `${telo} ${vetaLhuta}`;
+  // Bez druhého „ano“. Rozsekne se u platby nebo u check-inu.
+  return dopln(s.potvrzeni, mapa);
 }
 
 export function textNejdeHostovi(z: PoptavkaZaznam, navrh: string): string {

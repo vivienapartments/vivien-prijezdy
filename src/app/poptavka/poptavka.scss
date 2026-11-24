@@ -1128,6 +1128,31 @@
   gap: 0.25rem;
 }
 
+.pp__kontakt-z-karty {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #3d342a;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pp__kontakt-z-karty-jmeno,
+.pp__kontakt-z-karty-tel {
+  margin: 0;
+  color: #f5efe6;
+  text-align: center;
+}
+
+.pp__kontakt-z-karty-jmeno {
+  font-size: 1.05rem;
+}
+
+.pp__kontakt-z-karty-tel {
+  margin-top: 0.35rem;
+  color: #c9b8a0;
+  font-size: 0.95rem;
+}
+
 .pp--vernost .pp__karta--dekujeme {
   padding-bottom: 1.25rem;
 }

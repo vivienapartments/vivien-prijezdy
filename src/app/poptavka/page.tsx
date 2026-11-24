@@ -2,7 +2,13 @@ import type { Metadata } from 'next';
 import { nactiOsobuPodleKodu } from '@/lib/doporuceni';
 import { ogDescription, ogTitle } from '@/lib/doporuceni-komplet-texty';
 import { t } from '@/lib/i18n';
-import { firmaZKodu, normalizujKod, type PoptavkaZdroj } from '@/lib/poptavka';
+import {
+  firmaZKodu,
+  jmenoZKarty,
+  normalizujKod,
+  telefonZKarty,
+  type PoptavkaZdroj,
+} from '@/lib/poptavka';
 import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
 import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
@@ -82,8 +88,8 @@ export default async function PoptavkaPage({ searchParams }: Props) {
         const store = createProcessStore();
         const rec = await store.getRezervace(rezervace);
         if (rec?.jazyk && GUIDE_LANGS.includes(rec.jazyk)) lang = rec.jazyk;
-        jmeno = (rec?.jmeno || '').trim();
-        telefon = (rec?.telefon || '').trim();
+        jmeno = jmenoZKarty(rec);
+        telefon = telefonZKarty(rec);
       }
     } catch {
       /* obecná stránka */

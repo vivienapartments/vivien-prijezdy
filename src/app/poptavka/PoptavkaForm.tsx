@@ -51,6 +51,7 @@ import { GUIDE_LANGS, type AptId, type GuideLang } from '@/lib/types';
 import { JazykPrepinac } from './JazykPrepinac';
 import { PoptavkaPlochaRoot, PoptavkaPlochaTlacitko } from './PoptavkaPlocha';
 import { TelefonPole } from './TelefonPole';
+import { textTelefonu } from '@/lib/telefon';
 import { nazevDlazdice } from '@/lib/poptavka-nazev-dlazdice';
 import { ChytryKalendar } from './ChytryKalendar';
 import { VolneTerminyKalendar } from './VolneTerminyKalendar';
@@ -107,6 +108,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [jmeno, setJmeno] = useState(props.jmeno);
   const [telefon, setTelefon] = useState(props.telefon);
   const [telefonChyba, setTelefonChyba] = useState(false);
+  /** Jen věrný host z tokenu: jméno a telefon z karty, znovu je nepíše. */
+  const kontaktZKarty =
+    props.zdroj === 'vernost' && Boolean(props.jmeno.trim() && props.telefon.trim());
   const [doprava, setDoprava] = useState<'auto' | 'pesky' | 'nevim' | ''>('');
   const [poznamka, setPoznamka] = useState('');
   const [honeypot, setHoneypot] = useState('');
@@ -469,8 +473,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       ? kal.cenaProVyber(prijezd, odjezd, [galerieAptId], false, slevaCesty)
       : null;
 
-  function telefonOk(): boolean {
-    const raw = telefon.trim();
+  function telefonOk(rawIn?: string): boolean {
+    const raw = (rawIn ?? telefon).trim();
     if (!raw) return false;
     try {
       return isValidPhoneNumber(raw);
@@ -486,11 +490,13 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       setChyba(t.chybaApartman);
       return;
     }
-    if (!jmeno.trim()) {
+    const jmenoOdeslat = (jmeno.trim() || props.jmeno.trim()).slice(0, 120);
+    const telefonOdeslat = (telefon.trim() || props.telefon.trim()).slice(0, 40);
+    if (!jmenoOdeslat) {
       setChyba(t.chybaKontakt);
       return;
     }
-    if (!telefonOk()) {
+    if (!telefonOk(telefonOdeslat)) {
       setTelefonChyba(true);
       return;
     }
@@ -505,8 +511,8 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           token: props.token,
           f: props.firmaKod,
           od: props.doporucitelKod,
-          jmeno,
-          telefon,
+          jmeno: jmenoOdeslat,
+          telefon: telefonOdeslat,
           prijezd,
           odjezd,
           apartmany: libovolny ? [] : apts,
@@ -1229,28 +1235,40 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     </p>
                   </>
                 )}
-                <label>
-                  {t.jmeno}
-                  <input
-                    type="text"
-                    autoComplete="name"
-                    value={jmeno}
-                    onChange={(e) => setJmeno(e.target.value)}
-                    required
-                  />
-                </label>
-                <TelefonPole
-                  key={lang}
-                  lang={lang}
-                  label={t.telefon}
-                  chybaText={t.chybaTelefon}
-                  ukazujeChybu={telefonChyba}
-                  onBlurValidace={() => setTelefonChyba(true)}
-                  onChangeE164={(e164) => {
-                    setTelefon(e164);
-                    if (telefonChyba) setTelefonChyba(false);
-                  }}
-                />
+                {kontaktZKarty ? (
+                  <div className="pp__kontakt-z-karty">
+                    <p className="pp__kontakt-z-karty-jmeno">{jmeno || props.jmeno}</p>
+                    <p className="pp__kontakt-z-karty-tel" style={{ whiteSpace: 'nowrap' }}>
+                      {textTelefonu(telefon || props.telefon).replace(/ /g, '\u00a0')}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <label>
+                      {t.jmeno}
+                      <input
+                        type="text"
+                        autoComplete="name"
+                        value={jmeno}
+                        onChange={(e) => setJmeno(e.target.value)}
+                        required
+                      />
+                    </label>
+                    <TelefonPole
+                      key={lang}
+                      lang={lang}
+                      label={t.telefon}
+                      chybaText={t.chybaTelefon}
+                      ukazujeChybu={telefonChyba}
+                      vychoziE164={telefon}
+                      onBlurValidace={() => setTelefonChyba(true)}
+                      onChangeE164={(e164) => {
+                        setTelefon(e164);
+                        if (telefonChyba) setTelefonChyba(false);
+                      }}
+                    />
+                  </>
+                )}
                 {!vernost ? (
                   <fieldset>
                     <legend>{t.doprava}</legend>

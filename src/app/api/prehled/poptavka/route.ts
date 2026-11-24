@@ -3,13 +3,18 @@ import { aptRecord } from '@/lib/guide-data';
 import { aptyVolneVeTerminu, nejlevnejsiVolnyPobyt } from '@/lib/kalendar-denni';
 import { formatKc, tvarNoci } from '@/lib/kalendar-texty';
 import { sestavKalendarProHosta } from '@/lib/kalendar-uloziste';
-import { nociMezi, POPTAVKA_SLEVA_PCT, type PoptavkaZaznam } from '@/lib/poptavka';
+import {
+  jmenoZKarty,
+  nociMezi,
+  POPTAVKA_SLEVA_PCT,
+  telefonZKarty,
+  type PoptavkaZaznam,
+} from '@/lib/poptavka';
 import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
 import {
   jeZkouskaPoptavky,
   odkazZpravyHostovi,
   POPTAVKA_STAVY_BLOKUJI,
-  spocitejLhutu,
   stitekStavu,
   textNejdeHostovi,
   textPotvrditHostovi,
@@ -149,22 +154,30 @@ export async function POST(req: Request) {
   let zprava: string | null = null;
 
   if (akce === 'potvrdit') {
-    const lhuta = spocitejLhutu(z.prijezd);
+    /* Host už termín chce. Potvrzujeme rezervaci, bez druhého „ano“. Další je platba / BH. */
+    if (z.rezervace && (!z.jmeno.trim() || !z.telefon.trim())) {
+      const rec = await store.getRezervace(z.rezervace);
+      z = {
+        ...z,
+        jmeno: z.jmeno.trim() || jmenoZKarty(rec),
+        telefon: z.telefon.trim() || telefonZKarty(rec),
+      };
+    }
     zprava = textPotvrditHostovi(z, {
       cenaKc: cena.kc,
       seSlevou: cena.seSlevou,
-      lhutaIso: lhuta,
     });
     const o = odkazZpravyHostovi(z, zprava, Boolean(body.ios));
     odkaz = o.href;
     z = {
       ...z,
-      stav: 'ceka_na_hosta',
-      lhutaDo: lhuta,
+      stav: 'potvrzeno',
+      lhutaDo: null,
       pripominkaPosledni: null,
       pripominkaNocniPocet: 0,
     };
   } else if (akce === 'host_potvrdil') {
+    /* Staré poptávky ve stavu „čeká na hosta“. Nové sem už nejdou. */
     z = {
       ...z,
       stav: 'potvrzeno',
@@ -203,12 +216,11 @@ export async function POST(req: Request) {
     const volne = aptyVolneVeTerminu(dny, z.prijezd, z.odjezd);
     const kandidat = apt && volne.includes(apt) ? apt : volne[0] || null;
     if (!kandidat) return chyba(409, 'Termín už není volný.');
-    const lhuta = new Date(Date.now() + 24 * 3600000).toISOString();
     z = {
       ...z,
-      stav: 'ceka_na_hosta',
+      stav: 'potvrzeno',
       blokApt: kandidat,
-      lhutaDo: lhuta,
+      lhutaDo: null,
       pripominkaPosledni: null,
       pripominkaNocniPocet: 0,
     };

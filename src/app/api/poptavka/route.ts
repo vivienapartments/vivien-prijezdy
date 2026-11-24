@@ -7,9 +7,11 @@ import { sestavKalendarProHosta } from '@/lib/kalendar-uloziste';
 import {
   firmaZKodu,
   filtrApartmany,
+  jmenoZKarty,
   novyIdPoptavky,
   overTerminy,
   POPTAVKA_SLEVA_PCT,
+  telefonZKarty,
   textTelegramPoptavky,
   type PoptavkaZaznam,
   type PoptavkaZdroj,
@@ -94,8 +96,9 @@ export async function POST(req: Request) {
         zdroj = 'vernost';
         rezervace = parsed.payload.r;
         const rec = await store.getRezervace(rezervace);
-        if (!jmeno) jmeno = (rec?.jmeno || '').trim().slice(0, 120);
-        if (!telefon) telefon = (rec?.telefon || '').trim().slice(0, 40);
+        /* Věrný host: jméno a telefon z karty mají přednost. Host je znovu nepíše. */
+        jmeno = (jmenoZKarty(rec) || jmeno).slice(0, 120);
+        telefon = (telefonZKarty(rec) || telefon).slice(0, 40);
       }
     } catch {
       /* neplatný token = obecná poptávka */

@@ -63,6 +63,19 @@ export const POPTAVKA_TEL_ZALOHA = PARKING_OWNER_PHONE;
 /** WhatsApp / SMS na pracovní číslo VIVIEN (stejné jako u hostů). */
 export const POPTAVKA_TEL_ZPRAVY = PARKING_OWNER_PHONE;
 
+/** Telefon z karty hosta pro předvyplnění poptávky (check-in, jinak z rezervace). */
+export function telefonZKarty(rec: {
+  telefon?: string | null;
+  telefonRezervace?: string | null;
+} | null | undefined): string {
+  return (rec?.telefon || rec?.telefonRezervace || '').trim();
+}
+
+/** Jméno z karty hosta pro předvyplnění poptávky. */
+export function jmenoZKarty(rec: { jmeno?: string | null } | null | undefined): string {
+  return (rec?.jmeno || '').trim();
+}
+
 export function normalizujKod(raw: string | null | undefined): string {
   return (raw || '')
     .trim()

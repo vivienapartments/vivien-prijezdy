@@ -1,17 +1,35 @@
 import { describe, expect, it } from 'vitest';
 import {
   firmaZKodu,
+  jmenoZKarty,
   nociMezi,
   overTerminy,
   POPTAVKA_SLEVA_PCT,
   sestavZpravuPoptavky,
+  telefonZKarty,
   textTelegramPoptavky,
 } from './poptavka';
+import { rozeberVlozene } from './poptavka-telefon';
 
 describe('poptavka', () => {
   it('pozná firmu z kódu', () => {
     expect(firmaZKodu('RACCOON')?.nazev).toBe('RACCOON');
     expect(firmaZKodu('neznama')).toBeNull();
+  });
+
+  it('vezme jméno a telefon z karty (check-in, jinak rezervace)', () => {
+    expect(jmenoZKarty({ jmeno: ' Dominik Hromada ' })).toBe('Dominik Hromada');
+    expect(telefonZKarty({ telefon: '+420604111222', telefonRezervace: '+420777000111' })).toBe(
+      '+420604111222',
+    );
+    expect(telefonZKarty({ telefon: null, telefonRezervace: '+420777000111' })).toBe('+420777000111');
+    expect(telefonZKarty(null)).toBe('');
+  });
+
+  it('rozeberE164 na předvolbu a národní číslo pro předvyplnění', () => {
+    const r = rozeberVlozene('+420604692573', 'CZ');
+    expect(r.iso).toBe('CZ');
+    expect(r.narodni.replace(/\s/g, '')).toBe('604692573');
   });
 
   it('ověří termíny', () => {

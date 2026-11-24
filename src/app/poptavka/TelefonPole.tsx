@@ -21,15 +21,28 @@ type Props = {
   onChangeE164: (e164: string) => void;
   ukazujeChybu: boolean;
   onBlurValidace: () => void;
+  /** Číslo z karty hosta (E.164 nebo jak je uložené). Ukáže se hned v poli. */
+  vychoziE164?: string;
 };
+
+function startZVychozi(
+  raw: string | undefined,
+  lang: GuideLang,
+): { iso: CountryCode; narodni: string } {
+  const vychoziIso = predvolbaProJazyk(lang);
+  if (!raw || !raw.trim()) return { iso: vychoziIso, narodni: '' };
+  return rozeberVlozene(raw.trim(), vychoziIso);
+}
 
 export function TelefonPole(props: Props) {
   const vse = useMemo(() => seznamPredvoleb(), []);
-  const [iso, setIso] = useState<CountryCode>(() => predvolbaProJazyk(props.lang));
-  const [narodni, setNarodni] = useState('');
+  const start = startZVychozi(props.vychoziE164, props.lang);
+  const [iso, setIso] = useState<CountryCode>(() => start.iso);
+  const [narodni, setNarodni] = useState(() => start.narodni);
   const [otevreno, setOtevreno] = useState(false);
   const [hledani, setHledani] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const uzPredvyplneno = useRef(Boolean(start.narodni));
 
   const aktualni: TelefonPredvolba =
     vse.find((x) => x.iso === iso) ||
@@ -76,6 +89,19 @@ export function TelefonPole(props: Props) {
     setNarodni(fmt);
     syncE164(fmt, iso);
   }
+
+  /** Předvyplnění z karty (hned nebo později z konceptu). Ruční zápis nepřepisuje. */
+  useEffect(() => {
+    const raw = (props.vychoziE164 || '').trim();
+    if (!raw || uzPredvyplneno.current || narodni.trim()) return;
+    const roz = startZVychozi(raw, props.lang);
+    if (!roz.narodni) return;
+    setIso(roz.iso);
+    setNarodni(roz.narodni);
+    syncE164(roz.narodni, roz.iso);
+    uzPredvyplneno.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.vychoziE164, props.lang]);
 
   /** Prohlížečové doplnění někdy nepřijde přes onChange. */
   useEffect(() => {

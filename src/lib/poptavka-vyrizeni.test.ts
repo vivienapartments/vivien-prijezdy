@@ -48,15 +48,15 @@ describe('poptavka-vyrizeni', () => {
     expect(jeNocPraha(new Date(lhuta))).toBe(false);
   });
 
-  it('text POTVRDIT má lhůtu před podpisem', () => {
+  it('text POTVRDIT potvrzuje pobyt bez druhého ano', () => {
     const t = textPotvrditHostovi(baza(), {
       cenaKc: 1473,
       seSlevou: true,
-      lhutaIso: '2026-11-24T21:00:00.000Z',
     });
     expect(t).toContain('Jana');
     expect(t).toContain('5 %');
-    expect(t.indexOf('Napište nám')).toBeLessThan(t.indexOf('Nikol'));
+    expect(t).toContain('potvrzujeme');
+    expect(t).not.toContain('Napište nám');
   });
 
   it('text NEJDE cs', () => {
