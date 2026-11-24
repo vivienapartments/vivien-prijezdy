@@ -6608,6 +6608,15 @@ export function PrehledClient({
                     {odeslano ? (
                       <span>{` · Poděkování odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
                     ) : null}
+                    <span className="ph-podekovani-email-radek">
+                      {email ? (
+                        <>
+                          E-mail hosta: <span className="ph-tel">{email}</span>
+                        </>
+                      ) : (
+                        'Bez e-mailu'
+                      )}
+                    </span>
                     <span className="ph-odjezdy__akce">
                       {wa ? (
                         <TlacitkoWhatsApp
@@ -6629,7 +6638,18 @@ export function PrehledClient({
                         </a>
                       ) : null}
                       {email ? (
-                        <button type="button" className="ph-wa" onClick={() => setDotazPodekovani(row.rezervace)}>
+                        <button
+                          type="button"
+                          className="ph-wa"
+                          onClick={() => {
+                            setDotazPodekovani(row.rezervace);
+                            requestAnimationFrame(() => {
+                              document
+                                .getElementById(`podekovani-email-${row.rezervace}`)
+                                ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                            });
+                          }}
+                        >
                           E-mail
                         </button>
                       ) : null}
@@ -6640,10 +6660,17 @@ export function PrehledClient({
                       ) : null}
                     </span>
                     {dotazPodekovani === row.rezervace ? (
-                      <div className="ph-predano-dotaz">
+                      <div
+                        id={`podekovani-email-${row.rezervace}`}
+                        className="ph-predano-dotaz ph-predano-dotaz--email"
+                      >
+                        <p>E-mail půjde na</p>
+                        <p className="ph-podekovani-email-cil">
+                          <span className="ph-tel">{email}</span>
+                        </p>
                         <p>
-                          Poslat e-mail na <span className="ph-tel">{email}</span>
-                          {odeslano ? ' znovu' : ''}?
+                          Kopie na <span className="ph-tel">info@vivienapartments.cz</span>
+                          {odeslano ? '. Poslat znovu?' : '.'}
                         </p>
                         <button
                           type="button"
@@ -6652,7 +6679,7 @@ export function PrehledClient({
                             void posliEmail(row, 'podekovani');
                           }}
                         >
-                          Ano
+                          Ano, poslat
                         </button>
                         <button type="button" onClick={() => setDotazPodekovani(null)}>
                           Zrušit
@@ -6701,6 +6728,15 @@ export function PrehledClient({
                     {odeslano ? (
                       <span>{` · Poděkování odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
                     ) : null}
+                    <span className="ph-podekovani-email-radek">
+                      {email ? (
+                        <>
+                          E-mail hosta: <span className="ph-tel">{email}</span>
+                        </>
+                      ) : (
+                        'Bez e-mailu'
+                      )}
+                    </span>
                     <span className="ph-odjezdy__akce">
                       {wa ? (
                         <TlacitkoWhatsApp
@@ -6722,7 +6758,18 @@ export function PrehledClient({
                         </a>
                       ) : null}
                       {email ? (
-                        <button type="button" className="ph-wa" onClick={() => setDotazPodekovani(row.rezervace)}>
+                        <button
+                          type="button"
+                          className="ph-wa"
+                          onClick={() => {
+                            setDotazPodekovani(row.rezervace);
+                            requestAnimationFrame(() => {
+                              document
+                                .getElementById(`podekovani-email-${row.rezervace}`)
+                                ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                            });
+                          }}
+                        >
                           E-mail
                         </button>
                       ) : null}
@@ -6733,10 +6780,17 @@ export function PrehledClient({
                       ) : null}
                     </span>
                     {dotazPodekovani === row.rezervace ? (
-                      <div className="ph-predano-dotaz">
+                      <div
+                        id={`podekovani-email-${row.rezervace}`}
+                        className="ph-predano-dotaz ph-predano-dotaz--email"
+                      >
+                        <p>E-mail půjde na</p>
+                        <p className="ph-podekovani-email-cil">
+                          <span className="ph-tel">{email}</span>
+                        </p>
                         <p>
-                          Poslat e-mail na <span className="ph-tel">{email}</span>
-                          {odeslano ? ' znovu' : ''}?
+                          Kopie na <span className="ph-tel">info@vivienapartments.cz</span>
+                          {odeslano ? '. Poslat znovu?' : '.'}
                         </p>
                         <button
                           type="button"
@@ -6745,7 +6799,7 @@ export function PrehledClient({
                             void posliEmail(row, 'podekovani');
                           }}
                         >
-                          Ano
+                          Ano, poslat
                         </button>
                         <button type="button" onClick={() => setDotazPodekovani(null)}>
                           Zrušit
@@ -7231,6 +7285,15 @@ export function PrehledClient({
                     {odeslano ? (
                       <span>{` · Poděkování odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
                     ) : null}
+                    <span className="ph-podekovani-email-radek">
+                      {email ? (
+                        <>
+                          E-mail hosta: <span className="ph-tel">{email}</span>
+                        </>
+                      ) : (
+                        'Bez e-mailu'
+                      )}
+                    </span>
                     <span className="ph-odjezdy__akce">
                       {wa ? (
                         <TlacitkoWhatsApp
@@ -7252,7 +7315,18 @@ export function PrehledClient({
                         </a>
                       ) : null}
                       {email ? (
-                        <button type="button" className="ph-wa" onClick={() => setDotazPodekovani(row.rezervace)}>
+                        <button
+                          type="button"
+                          className="ph-wa"
+                          onClick={() => {
+                            setDotazPodekovani(row.rezervace);
+                            requestAnimationFrame(() => {
+                              document
+                                .getElementById(`podekovani-email-${row.rezervace}`)
+                                ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                            });
+                          }}
+                        >
                           E-mail
                         </button>
                       ) : null}
@@ -7261,9 +7335,16 @@ export function PrehledClient({
                       </button>
                     </span>
                     {dotazPodekovani === row.rezervace ? (
-                      <div className="ph-predano-dotaz">
+                      <div
+                        id={`podekovani-email-${row.rezervace}`}
+                        className="ph-predano-dotaz ph-predano-dotaz--email"
+                      >
+                        <p>E-mail půjde na</p>
+                        <p className="ph-podekovani-email-cil">
+                          <span className="ph-tel">{email}</span>
+                        </p>
                         <p>
-                          Poslat e-mail na <span className="ph-tel">{email}</span> znovu?
+                          Kopie na <span className="ph-tel">info@vivienapartments.cz</span>. Poslat znovu?
                         </p>
                         <button
                           type="button"
@@ -7272,7 +7353,7 @@ export function PrehledClient({
                             void posliEmail(row, 'podekovani');
                           }}
                         >
-                          Ano
+                          Ano, poslat
                         </button>
                         <button type="button" onClick={() => setDotazPodekovani(null)}>
                           Zrušit
