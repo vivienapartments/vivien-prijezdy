@@ -22,7 +22,8 @@ export async function GET(req: Request, { params }: Props) {
     short_name: 'VIVIEN',
     description: 'Osobní průvodce příjezdem VIVIEN Apartments',
     start_url: cesta,
-    scope: cesta,
+    /** Celý web (včetně /poptavka), ať rezervace z ikony zůstane bez lišty prohlížeče. */
+    scope: '/',
     display: 'standalone',
     background_color: '#1c1712',
     theme_color: '#1c1712',

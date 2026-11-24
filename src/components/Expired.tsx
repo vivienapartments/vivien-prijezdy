@@ -14,7 +14,13 @@ import {
 } from '@/lib/doporuceni-komplet-texty';
 import { zlatSlevaVTextu } from '@/lib/expired-vyhody-texty';
 import { t } from '@/lib/i18n';
-import { jePwaNainstalovana, jeStandalone, nactiPlochaStav, posliPlochaNaServer, ulozPlochaStav } from '@/lib/plocha';
+import {
+  jeStandalone,
+  nactiPlochaStav,
+  posliPlochaNaServer,
+  ulozPlochaStav,
+  zjistiPwaNaPlose,
+} from '@/lib/plocha';
 import { plochaUzMate, plochaUzMateRadek, plochaZavrit } from '@/lib/plocha-texty';
 import {
   expiredDopis,
@@ -106,6 +112,8 @@ export function Expired({
   const doporucitRef = useRef<HTMLDivElement | null>(null);
   const spustPlochuRef = useRef<(() => void) | null>(null);
   const [rezim, setRezim] = useState<'nacitam' | 'prvni' | 'dalsi'>('nacitam');
+  /** Než zjistíme related apps, řádek 3 ani hlášku neukazujeme. */
+  const [plochaZjisteno, setPlochaZjisteno] = useState(false);
   const [plochaHotovo, setPlochaHotovo] = useState(false);
   const [kod, setKod] = useState<string | null>(null);
   const [jmeno, setJmeno] = useState('');
@@ -121,7 +129,15 @@ export function Expired({
 
   const poHotovePloše = useCallback(() => {
     setPlochaHotovo(true);
+    setPlochaZjisteno(true);
     setVyzvaPlocha(false);
+  }, []);
+
+  const poUzMatePloše = useCallback(() => {
+    setPlochaHotovo(true);
+    setPlochaZjisteno(true);
+    setVyzvaPlocha(false);
+    setHlaskaUzPlocha(true);
   }, []);
 
   const onPlochaReady = useCallback((spust: () => void) => {
@@ -135,26 +151,52 @@ export function Expired({
     const forcePoprve = params.get('poprve') === '1';
     const chcePlochu = params.get('plocha') === '1';
     const standalone = jeStandalone();
-    const localHotovo = nactiPlochaStav(token) === 'hotovo';
-    const hotovo = standalone || localHotovo;
-    setPlochaHotovo(hotovo || (forceDalsi && !forcePoprve));
     setHashDoporucit(window.location.hash === '#doporucit');
-
-    if (chcePlochu && hotovo) {
-      setHlaskaUzPlocha(true);
-    } else if (chcePlochu && !hotovo) {
-      setVyzvaPlocha(true);
-    }
 
     let zruseno = false;
     void (async () => {
-      const nainstalovano = await jePwaNainstalovana();
-      if (zruseno || !nainstalovano) return;
-      ulozPlochaStav(token, 'hotovo');
-      posliPlochaNaServer(token);
-      setPlochaHotovo(true);
-      setVyzvaPlocha(false);
-      if (chcePlochu) setHlaskaUzPlocha(true);
+      /* Náhled návratu z ikony: jako hotovo, bez blikání. */
+      if (forceDalsi && !forcePoprve) {
+        if (zruseno) return;
+        setPlochaHotovo(true);
+        setPlochaZjisteno(true);
+        return;
+      }
+      if (standalone) {
+        if (zruseno) return;
+        ulozPlochaStav(token, 'hotovo');
+        posliPlochaNaServer(token);
+        setPlochaHotovo(true);
+        setPlochaZjisteno(true);
+        return;
+      }
+
+      const zjisteni = await zjistiPwaNaPlose();
+      if (zruseno) return;
+
+      let hotovo = false;
+      if (zjisteni === 'ano') {
+        hotovo = true;
+        ulozPlochaStav(token, 'hotovo');
+        posliPlochaNaServer(token);
+      } else if (zjisteni === 'ne') {
+        /* Chrome říká: ikona není. Uložené hotovo zruš. */
+        ulozPlochaStav(token, 'nic');
+        hotovo = false;
+      } else {
+        /* iPhone / bez API: bereme jen paměť. */
+        hotovo = nactiPlochaStav(token) === 'hotovo';
+      }
+
+      setPlochaHotovo(hotovo);
+      setPlochaZjisteno(true);
+      if (chcePlochu && hotovo) {
+        setHlaskaUzPlocha(true);
+        setVyzvaPlocha(false);
+      } else if (chcePlochu && !hotovo) {
+        setVyzvaPlocha(true);
+        setHlaskaUzPlocha(false);
+      }
     })();
 
     if (forcePoprve) {
@@ -243,15 +285,20 @@ export function Expired({
   }, [rezim, kod]);
 
   const spustPlochuPrimo = useCallback(() => {
-    if (nactiPlochaStav(token) === 'hotovo' || jeStandalone()) {
+    if (jeStandalone()) {
       setPlochaHotovo(true);
       setHlaskaUzPlocha(true);
       return;
     }
     const fn = spustPlochuRef.current;
-    if (fn) fn();
+    if (fn) {
+      fn();
+      return;
+    }
+    /* Fallback jen když PridejNaPlochu ještě není ready. */
+    if (plochaHotovo) setHlaskaUzPlocha(true);
     else setVyzvaPlocha(true);
-  }, [token]);
+  }, [plochaHotovo]);
 
   const sjelKDoporuceni = useCallback(() => {
     setBlizciVynutit(true);
@@ -341,7 +388,7 @@ export function Expired({
             </span>
           </button>
 
-          {plochaHotovo && prvni ? (
+          {plochaZjisteno && plochaHotovo && prvni ? (
             <div className="pv-exp__radek pv-exp__radek--tichy" aria-live="polite">
               <span className="pv-exp__ik">
                 {cisla ? <span className="pv-exp__cislo">3</span> : null}
@@ -352,7 +399,7 @@ export function Expired({
               </span>
             </div>
           ) : null}
-          {!plochaHotovo ? (
+          {plochaZjisteno && !plochaHotovo ? (
             <button type="button" className="pv-exp__radek" onClick={spustPlochuPrimo}>
               <span className="pv-exp__ik">
                 {cisla ? <span className="pv-exp__cislo">3</span> : null}
@@ -399,9 +446,10 @@ export function Expired({
           jenMobil={false}
           nahled={jeNahled}
           skrytTlacitko
-          vyzva={vyzvaPlocha && !plochaHotovo}
+          vyzva={plochaZjisteno && vyzvaPlocha && !plochaHotovo}
           onVyzvaZmena={setVyzvaPlocha}
           onHotovo={poHotovePloše}
+          onUzMate={poUzMatePloše}
           onReady={onPlochaReady}
           shortNazev="VIVIEN"
         />

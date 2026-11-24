@@ -18,7 +18,6 @@ import {
   plochaNavodIosKroky,
   plochaNavodIosNadpis,
   plochaPridej,
-  plochaUzMate,
   plochaZavrit,
 } from '@/lib/plocha-texty';
 import type { GuideLang, LText } from '@/lib/types';
@@ -44,8 +43,10 @@ type Props = {
   /** Překryv se zlatým „Přidat na plochu“ (?plocha=1). */
   vyzva?: boolean;
   onVyzvaZmena?: (otevreno: boolean) => void;
-  /** Po úspěšném přidání / když už je na ploše. */
+  /** Po úspěšném přidání / tiché zjištění instalace. */
   onHotovo?: () => void;
+  /** Klepnutí zjistilo, že už je na ploše → hlášku ukáže Expired. */
+  onUzMate?: () => void;
   /** Řádek 3: spustí instalaci rovnou, bez našeho překryvu. */
   onReady?: (spust: () => void) => void;
   nazev?: string;
@@ -71,11 +72,8 @@ function jeMobilZarizeni(): boolean {
 
 /**
  * Přidat na plochu.
- * ?plocha=1: jen překryv + zlaté tlačítko (žádné automatické spuštění).
- * Řádek 3: onReady → spust rovnou (bez překryvu).
- * Android: beforeinstallprompt, jinak Chrome (intent), v Chrome tip po 3 s.
- * iPhone: krátký návod Safari.
- * Manifest: skutečná HTTPS route `/{token}/manifest.webmanifest` (ne blob).
+ * Hlášku „už máte“ ukazuje jen Expired (onUzMate / ?plocha=1).
+ * Manifest: HTTPS `/{token}/manifest.webmanifest`.
  */
 export function PridejNaPlochu({
   lang,
@@ -87,6 +85,7 @@ export function PridejNaPlochu({
   vyzva = false,
   onVyzvaZmena,
   onHotovo,
+  onUzMate,
   onReady,
   shortNazev = 'VIVIEN',
 }: Props) {
@@ -95,7 +94,7 @@ export function PridejNaPlochu({
   const [mobil, setMobil] = useState(false);
   const [ios, setIos] = useState(false);
   const [vchrome, setVchrome] = useState(false);
-  const [hlaska, setHlaska] = useState<'nic' | 'ios' | 'uz'>('nic');
+  const [hlaska, setHlaska] = useState<'nic' | 'ios'>('nic');
   const [tipChrome, setTipChrome] = useState(false);
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
   const tt = useCallback((map: LText) => t(map, lang), [lang]);
@@ -118,8 +117,8 @@ export function PridejNaPlochu({
     if (await jePwaNainstalovana()) {
       ulozPlochaStav(token, 'hotovo');
       posliPlochaNaServer(token);
-      setHlaska('uz');
       onVyzvaZmena?.(false);
+      onUzMate?.();
       onHotovo?.();
       return;
     }
@@ -131,7 +130,6 @@ export function PridejNaPlochu({
         deferred.current = null;
         if (volba.outcome === 'accepted') {
           oznacHotovo();
-          setHlaska('nic');
           return;
         }
         return;
@@ -144,7 +142,7 @@ export function PridejNaPlochu({
       return;
     }
     setTipChrome(true);
-  }, [ios, token, onVyzvaZmena, onHotovo, oznacHotovo]);
+  }, [ios, token, onVyzvaZmena, onHotovo, onUzMate, oznacHotovo]);
 
   useEffect(() => {
     setStandalone(jeStandalone());
@@ -162,14 +160,12 @@ export function PridejNaPlochu({
     let zruseno = false;
     void (async () => {
       const nainstalovano = await jePwaNainstalovana();
-      if (zruseno) return;
-      if (nainstalovano) {
-        ulozPlochaStav(token, 'hotovo');
-        posliPlochaNaServer(token);
-        setHlaska('uz');
-        onVyzvaZmena?.(false);
-        onHotovo?.();
-      }
+      if (zruseno || !nainstalovano) return;
+      /* Bez vlastního překryvu „už máte“ — to dělá jen Expired. */
+      ulozPlochaStav(token, 'hotovo');
+      posliPlochaNaServer(token);
+      onVyzvaZmena?.(false);
+      onHotovo?.();
     })();
 
     const manifestHref = hrefManifestu(token);
@@ -224,7 +220,6 @@ export function PridejNaPlochu({
     }
     function onAppInstalled() {
       oznacHotovo();
-      setHlaska('nic');
     }
     window.addEventListener('beforeinstallprompt', onBip);
     window.addEventListener('appinstalled', onAppInstalled);
@@ -242,14 +237,9 @@ export function PridejNaPlochu({
     });
   }, [ready, onReady, spustInstalaci]);
 
-  /**
-   * Tip do menu jen když už jsme v plném Chrome (`vchrome=1`)
-   * a BIP nepřijde do 3 s. V Custom Tabu tip nedává smysl.
-   */
   useEffect(() => {
     if (!vyzva || !ready) return;
     if (jeIos() || jeStandalone()) return;
-    if (hlaska === 'uz') return;
     if (!maVchromeParam()) return;
     if (deferred.current) {
       setTipChrome(false);
@@ -260,11 +250,10 @@ export function PridejNaPlochu({
       if (!deferred.current) setTipChrome(true);
     }, 3000);
     return () => window.clearTimeout(tmr);
-  }, [vyzva, ready, hlaska]);
+  }, [vyzva, ready]);
 
   function zavritVyzvu() {
     onVyzvaZmena?.(false);
-    if (hlaska === 'uz') setHlaska('nic');
   }
 
   if (!nahled && (!ready || standalone)) return null;
@@ -304,34 +293,22 @@ export function PridejNaPlochu({
         </div>
       ) : null}
 
-      {hlaska === 'uz' || hlaska === 'ios' ? (
+      {hlaska === 'ios' ? (
         <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
           <div className="pv-pridej-karta">
-            {hlaska === 'uz' ? (
-              <>
-                <p className="pv-pridej-text">{tt(plochaUzMate)}</p>
-                <button type="button" className="pv-pridej-ok" onClick={zavritVyzvu}>
-                  {tt(plochaZavrit)}
-                </button>
-              </>
-            ) : null}
-            {hlaska === 'ios' ? (
-              <>
-                <h2 className="pv-pridej-nadpis">{tt(plochaNavodIosNadpis)}</h2>
-                <p className="pv-pridej-text">
-                  {tt(plochaNavodIosKroky)
-                    .split('\n')
-                    .map((radek, i) => (
-                      <span key={i} className="pv-pridej-radek">
-                        {radek}
-                      </span>
-                    ))}
-                </p>
-                <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
-                  {tt(plochaZavrit)}
-                </button>
-              </>
-            ) : null}
+            <h2 className="pv-pridej-nadpis">{tt(plochaNavodIosNadpis)}</h2>
+            <p className="pv-pridej-text">
+              {tt(plochaNavodIosKroky)
+                .split('\n')
+                .map((radek, i) => (
+                  <span key={i} className="pv-pridej-radek">
+                    {radek}
+                  </span>
+                ))}
+            </p>
+            <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
+              {tt(plochaZavrit)}
+            </button>
           </div>
         </div>
       ) : null}

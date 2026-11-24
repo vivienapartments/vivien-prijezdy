@@ -58,23 +58,31 @@ export function jeStandalone(): boolean {
 
 type RelatedApp = { id?: string; platform?: string; url?: string };
 
+/** ano = ikona je, ne = Chrome říká že není, nevim = API chybí (iPhone…). */
+export type PlochaZjisteni = 'ano' | 'ne' | 'nevim';
+
 /**
- * Je PWA už nainstalovaná (ikona na ploše).
- * Chrome Android: getInstalledRelatedApps + related_applications ve manifestu.
+ * Skutečný stav ikony na ploše.
+ * Chrome Android: getInstalledRelatedApps. Jinak nevim (bereme localStorage).
  */
-export async function jePwaNainstalovana(): Promise<boolean> {
-  if (typeof window === 'undefined') return false;
-  if (jeStandalone()) return true;
+export async function zjistiPwaNaPlose(): Promise<PlochaZjisteni> {
+  if (typeof window === 'undefined') return 'nevim';
+  if (jeStandalone()) return 'ano';
   const nav = window.navigator as Navigator & {
     getInstalledRelatedApps?: () => Promise<RelatedApp[]>;
   };
-  if (typeof nav.getInstalledRelatedApps !== 'function') return false;
+  if (typeof nav.getInstalledRelatedApps !== 'function') return 'nevim';
   try {
     const apps = await nav.getInstalledRelatedApps();
-    return Array.isArray(apps) && apps.length > 0;
+    return Array.isArray(apps) && apps.length > 0 ? 'ano' : 'ne';
   } catch {
-    return false;
+    return 'nevim';
   }
+}
+
+/** true jen když víme jistě, že ikona je (standalone nebo related apps). */
+export async function jePwaNainstalovana(): Promise<boolean> {
+  return (await zjistiPwaNaPlose()) === 'ano';
 }
 
 export function jeIos(): boolean {
