@@ -144,6 +144,9 @@ export function htmlEmailuHostovi(
   return `<div lang="${lang || 'en'}" style="font-family:Georgia,serif;font-size:17px;line-height:1.45;color:#1c1714">${uvodniHtml(textEmailuHostovi(text, doplnitTelefon), doplnitTelefon)}${tlacitkoHtml}</div>`;
 }
 
+/** Viditelná kopie všech zpráv hostovi (poděkování, odjezd, …). */
+export const KOPIE_INFO = 'info@vivienapartments.cz';
+
 export async function posliEmailZpravy(opts: {
   to: string;
   subject: string;
@@ -155,7 +158,7 @@ export async function posliEmailZpravy(opts: {
   tlacitko?: { url: string; label: string } | null;
   /** Hotové HTML (např. poděkování po odjezdu). Jinak výchozí šablona. */
   html?: string | null;
-}): Promise<void> {
+}): Promise<{ to: string; cc?: string }> {
   if (process.env.VITEST) throw new Error('V testu se e-mail neposílá.');
   const majitel = process.env.MAJITEL_EMAIL?.trim();
   const user = process.env.SMTP_USER?.trim();
@@ -174,12 +177,19 @@ export async function posliEmailZpravy(opts: {
   if (opts.tlacitko?.url && !opts.html) {
     text = `${text}\n\n${opts.tlacitko.label}: ${opts.tlacitko.url}`;
   }
+  const to = testMode ? majitel : opts.to;
+  const cc = testMode ? undefined : KOPIE_INFO;
+  // BCC jen když majitel není stejný jako viditelná kopie (Seznam často zahodí BCC sám sobě).
+  const bcc =
+    testMode || majitel.toLowerCase() === KOPIE_INFO.toLowerCase() ? undefined : majitel;
   await transporter.sendMail({
     from: `VIVIEN Apartments <${user}>`,
-    to: testMode ? majitel : opts.to,
-    bcc: testMode ? undefined : majitel,
+    to,
+    cc,
+    bcc,
     subject: testMode ? `[TEST] ${opts.subject}` : opts.subject,
     text,
     html: opts.html || htmlEmailuHostovi(opts.text, opts.lang, doplnit, opts.tlacitko),
   });
+  return { to, cc };
 }

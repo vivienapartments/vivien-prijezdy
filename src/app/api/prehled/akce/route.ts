@@ -1434,6 +1434,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
     const komu = (rec.emailHosta || '').trim();
     if (!komu || problemEmailu(komu)) return chyba(400, 'Host nemá e-mail.');
+    let odeslanoNa = komu;
     try {
       if (druh === 'podekovani') {
         const {
@@ -1446,7 +1447,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         const urlRez = odkazPoptavkaVernost(url);
         const urlDop = `${url}#doporucit`;
         const urlPlo = `${url}${url.includes('?') ? '&' : '?'}plocha=1`;
-        await posliEmailZpravy({
+        const vysledek = await posliEmailZpravy({
           to: komu,
           subject: predmetZpravy('podekovani', lang, rec.odjezd),
           text: textPodekovaniEmail(lang, url, urlDop, urlPlo, urlRez),
@@ -1454,8 +1455,9 @@ export async function POST(request: Request): Promise<NextResponse> {
           telefon: false,
           html: htmlPodekovaniEmail(lang, url, undefined, urlDop, urlPlo, urlRez),
         });
+        odeslanoNa = vysledek.to;
       } else {
-        await posliEmailZpravy({
+        const vysledek = await posliEmailZpravy({
           to: komu,
           subject:
             druh === 'pripraveno'
@@ -1473,12 +1475,19 @@ export async function POST(request: Request): Promise<NextResponse> {
             druh !== 'pohoda' &&
             druh !== 'shrnuti',
         });
+        odeslanoNa = vysledek.to;
       }
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');
     }
-    await store.setRezervace(id, pridej(sJazykem, `E-mailem: ${zprava.nazev}`, patch));
-    return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
+    await store.setRezervace(
+      id,
+      pridej(sJazykem, `E-mailem: ${zprava.nazev} → ${odeslanoNa}`, patch),
+    );
+    return NextResponse.json(
+      { ok: true, nazev: zprava.nazev, email: odeslanoNa },
+      { headers: noStore },
+    );
   }
 
   if (akce === 'odkaz') {

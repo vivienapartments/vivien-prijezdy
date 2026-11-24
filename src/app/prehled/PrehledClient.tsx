@@ -1956,7 +1956,12 @@ export function PrehledClient({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ rezervace: row.rezervace, akce: 'email', zprava, jazyk: jazykRadku(row) }),
     });
-    const json = (await res.json().catch(() => null)) as { ok?: boolean; error?: string; nazev?: string } | null;
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      nazev?: string;
+      email?: string;
+    } | null;
     setCekam(null);
     if (!res.ok || !json?.ok) {
       setHlaska(json?.error || 'E-mail se nepodařilo odeslat.');
@@ -1970,6 +1975,7 @@ export function PrehledClient({
     setDotazPodekovani(null);
     setDotazShrnuti(null);
     const nazev = json.nazev || 'zpráva';
+    const kam = (json.email || row.email || '').trim();
     const ted = new Date().toISOString();
     setRadky((prev) =>
       prev.map((r) =>
@@ -1983,16 +1989,19 @@ export function PrehledClient({
               shrnutiKdy: zprava === 'shrnuti' ? ted : r.shrnutiKdy,
               shrnutiKanal: zprava === 'shrnuti' ? 'email' : r.shrnutiKanal,
               shrnutiOtisk: zprava === 'shrnuti' ? otiskShrnuti(r) : r.shrnutiOtisk,
-              historie: [...r.historie, { cas: ted, co: `E-mailem: ${nazev}` }].slice(-40),
+              historie: [
+                ...r.historie,
+                { cas: ted, co: kam ? `E-mailem: ${nazev} → ${kam}` : `E-mailem: ${nazev}` },
+              ].slice(-40),
             }
           : r,
       ),
     );
     if (zprava === 'shrnuti') setPanelShrnutiKarty(null);
     setHlaska(
-      zprava === 'shrnuti'
-        ? `E-mail se shrnutím je odeslaný na ${row.email}. Host ho má ve schránce.`
-        : `E-mail „${nazev}“ je odeslaný.`,
+      kam
+        ? `E-mail „${nazev}“ je odeslaný na ${kam}. Kopie na info@vivienapartments.cz.`
+        : `E-mail „${nazev}“ je odeslaný. Kopie na info@vivienapartments.cz.`,
     );
     requestAnimationFrame(() => {
       document.getElementById('ph-domu-hlaska')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
