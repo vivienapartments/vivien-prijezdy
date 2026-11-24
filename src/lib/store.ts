@@ -212,6 +212,8 @@ export type RezervaceRecord = {
   stitek: 'rucne' | 'info' | null;
   /** Čas osobního předání. Než je vyplněný, průvodce kódy neukáže. Maže se se záznamem. */
   predano: string | null;
+  /** Kdy host přidal průvodce na plochu (jen poprvé). null = ještě ne. */
+  plochaOd: string | null;
   /** Kdy host napsal, že je na místě. Příplatek se bere odtud, jinak z předání. */
   naMiste: string | null;
   /** Ruční příplatek za čas. Když je vyplněný, výpočet ho nepřepíše. */
@@ -896,6 +898,7 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     checkinUrl: typeof r.checkinUrl === 'string' && /^https:\/\//i.test(r.checkinUrl) ? r.checkinUrl : null,
     stitek: r.stitek === 'rucne' || r.stitek === 'info' ? r.stitek : null,
     predano: typeof r.predano === 'string' && r.predano ? r.predano : null,
+    plochaOd: typeof r.plochaOd === 'string' && r.plochaOd ? r.plochaOd : null,
     naMiste: typeof r.naMiste === 'string' && r.naMiste ? r.naMiste : null,
     priplatekRucni:
       typeof r.priplatekRucni === 'number' && Number.isFinite(r.priplatekRucni) && r.priplatekRucni >= 0
@@ -980,6 +983,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     checkinUrl: null,
     stitek: null,
     predano: null,
+    plochaOd: null,
     naMiste: null,
     priplatekRucni: null,
     dohodaKc: null,

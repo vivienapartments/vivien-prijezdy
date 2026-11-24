@@ -9,12 +9,12 @@ import {
   jeStandalone,
   maVchromeParam,
   otevriStejnouStrankuVChrome,
+  posliPlochaNaServer,
   ulozPlochaStav,
 } from '@/lib/plocha';
 import {
   plochaChromeMenuTip,
   plochaDokoncit,
-  plochaDokoncitVeta,
   plochaNavodIosKroky,
   plochaNavodIosNadpis,
   plochaPridej,
@@ -41,11 +41,13 @@ type Props = {
   nahled?: boolean;
   /** Skrýt volné tlačítko (výzva jen přes překryv / řádek 3). */
   skrytTlacitko?: boolean;
-  /** Překryv se zlatým „Přidat na plochu“ (?plocha=1 nebo klepnutí na řádek). */
+  /** Překryv se zlatým „Přidat na plochu“ (?plocha=1). */
   vyzva?: boolean;
   onVyzvaZmena?: (otevreno: boolean) => void;
   /** Po úspěšném přidání / když už je na ploše. */
   onHotovo?: () => void;
+  /** Řádek 3: spustí instalaci rovnou, bez našeho překryvu. */
+  onReady?: (spust: () => void) => void;
   nazev?: string;
   shortNazev?: string;
 };
@@ -69,8 +71,9 @@ function jeMobilZarizeni(): boolean {
 
 /**
  * Přidat na plochu.
- * ?plocha=1 / výzva: jen překryv + zlaté tlačítko (žádné automatické spuštění).
- * Android: beforeinstallprompt, jinak Chrome (intent), v Chrome bez smyčky + tip po 3 s.
+ * ?plocha=1: jen překryv + zlaté tlačítko (žádné automatické spuštění).
+ * Řádek 3: onReady → spust rovnou (bez překryvu).
+ * Android: beforeinstallprompt, jinak Chrome (intent), v Chrome tip po 3 s.
  * iPhone: krátký návod Safari.
  * Manifest: skutečná HTTPS route `/{token}/manifest.webmanifest` (ne blob).
  */
@@ -84,6 +87,7 @@ export function PridejNaPlochu({
   vyzva = false,
   onVyzvaZmena,
   onHotovo,
+  onReady,
   shortNazev = 'VIVIEN',
 }: Props) {
   const [ready, setReady] = useState(false);
@@ -98,11 +102,49 @@ export function PridejNaPlochu({
 
   const oznacHotovo = useCallback(() => {
     ulozPlochaStav(token, 'hotovo');
+    posliPlochaNaServer(token);
     deferred.current = null;
     setTipChrome(false);
     onVyzvaZmena?.(false);
     onHotovo?.();
   }, [token, onVyzvaZmena, onHotovo]);
+
+  const spustInstalaci = useCallback(async () => {
+    if (ios || jeIos()) {
+      setHlaska('ios');
+      onVyzvaZmena?.(false);
+      return;
+    }
+    if (await jePwaNainstalovana()) {
+      ulozPlochaStav(token, 'hotovo');
+      posliPlochaNaServer(token);
+      setHlaska('uz');
+      onVyzvaZmena?.(false);
+      onHotovo?.();
+      return;
+    }
+    const evt = deferred.current;
+    if (evt) {
+      try {
+        await evt.prompt();
+        const volba = await evt.userChoice;
+        deferred.current = null;
+        if (volba.outcome === 'accepted') {
+          oznacHotovo();
+          setHlaska('nic');
+          return;
+        }
+        return;
+      } catch {
+        /* systém */
+      }
+    }
+    if (jeAndroid() && !maVchromeParam()) {
+      otevriStejnouStrankuVChrome({ plocha: true });
+      return;
+    }
+    setTipChrome(true);
+  }, [ios, token, onVyzvaZmena, onHotovo, oznacHotovo]);
 
   useEffect(() => {
     setStandalone(jeStandalone());
@@ -112,6 +154,7 @@ export function PridejNaPlochu({
     setReady(true);
     if (jeStandalone()) {
       ulozPlochaStav(token, 'hotovo');
+      posliPlochaNaServer(token);
       onHotovo?.();
       return;
     }
@@ -122,6 +165,7 @@ export function PridejNaPlochu({
       if (zruseno) return;
       if (nainstalovano) {
         ulozPlochaStav(token, 'hotovo');
+        posliPlochaNaServer(token);
         setHlaska('uz');
         onVyzvaZmena?.(false);
         onHotovo?.();
@@ -179,7 +223,6 @@ export function PridejNaPlochu({
       setTipChrome(false);
     }
     function onAppInstalled() {
-      /* Bez dalšího překryvu: systémové okno stačilo. */
       oznacHotovo();
       setHlaska('nic');
     }
@@ -191,6 +234,13 @@ export function PridejNaPlochu({
       window.removeEventListener('appinstalled', onAppInstalled);
     };
   }, [token, shortNazev, onHotovo, onVyzvaZmena, oznacHotovo]);
+
+  useEffect(() => {
+    if (!ready) return;
+    onReady?.(() => {
+      void spustInstalaci();
+    });
+  }, [ready, onReady, spustInstalaci]);
 
   /**
    * Tip do menu jen když už jsme v plném Chrome (`vchrome=1`)
@@ -211,45 +261,6 @@ export function PridejNaPlochu({
     }, 3000);
     return () => window.clearTimeout(tmr);
   }, [vyzva, ready, hlaska]);
-
-  async function spustInstalaci() {
-    if (ios || jeIos()) {
-      setHlaska('ios');
-      onVyzvaZmena?.(false);
-      return;
-    }
-    if (await jePwaNainstalovana()) {
-      ulozPlochaStav(token, 'hotovo');
-      setHlaska('uz');
-      onVyzvaZmena?.(false);
-      onHotovo?.();
-      return;
-    }
-    const evt = deferred.current;
-    if (evt) {
-      try {
-        await evt.prompt();
-        const volba = await evt.userChoice;
-        deferred.current = null;
-        if (volba.outcome === 'accepted') {
-          /* Systémové okno už potvrdilo. Další „Hotovo“ nepřidáváme. */
-          oznacHotovo();
-          setHlaska('nic');
-          return;
-        }
-        /* Odmítnuto: překryv necháme, ať může zkusit znovu nebo zavřít. */
-        return;
-      } catch {
-        /* systém */
-      }
-    }
-    // Custom Tab / Gmail / Seznam: intent do Chrome (smyčku drží vchrome=1).
-    if (jeAndroid() && !maVchromeParam()) {
-      otevriStejnouStrankuVChrome({ plocha: true });
-      return;
-    }
-    setTipChrome(true);
-  }
 
   function zavritVyzvu() {
     onVyzvaZmena?.(false);
@@ -278,7 +289,6 @@ export function PridejNaPlochu({
       {ukazVyzvu ? (
         <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
           <div className="pv-pridej-karta">
-            {vchrome ? <p className="pv-pridej-tip">{tt(plochaDokoncitVeta)}</p> : null}
             <button
               type="button"
               className="pv-pridej-zlato"

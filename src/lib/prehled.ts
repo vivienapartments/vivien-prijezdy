@@ -102,6 +102,8 @@ export type PrehledRadek = {
   stitek: 'rucne' | 'info' | null;
   /** Čas předání. null = kódy v průvodci ještě nejsou. */
   predano: string | null;
+  /** Kdy host přidal na plochu. null = ještě ne. */
+  plochaOd: string | null;
   /** Kdy host napsal, že je na místě. */
   naMiste: string | null;
   /** Ruční příplatek za čas. null = počítá se sám. */
@@ -912,6 +914,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     zprava: zpravy.find((z) => z.vychozi)?.text || '',
     stitek: rec.stitek,
     predano: rec.predano,
+    plochaOd: rec.plochaOd || null,
     naMiste: rec.naMiste,
     priplatekRucni: rec.priplatekRucni,
     dohodaKc: rec.dohodaKc,

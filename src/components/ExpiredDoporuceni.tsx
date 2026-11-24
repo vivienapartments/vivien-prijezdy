@@ -58,11 +58,14 @@ export function ExpiredDoporuceni({
   token,
   kod,
   jmenoPredvypln,
+  forceEmail = false,
 }: {
   lang: GuideLang;
   token: string;
   kod: string | null;
   jmenoPredvypln: string;
+  /** Z e-mailu #doporucit: formulář hned otevřený. */
+  forceEmail?: boolean;
 }) {
   const [ukazEmail, setUkazEmail] = useState(false);
   const [ukazPodrobnosti, setUkazPodrobnosti] = useState(false);
@@ -79,8 +82,8 @@ export function ExpiredDoporuceni({
   /** Z e-mailu s #doporucit rovnou otevři formulář. */
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (window.location.hash === '#doporucit') setUkazEmail(true);
-  }, []);
+    if (forceEmail || window.location.hash === '#doporucit') setUkazEmail(true);
+  }, [forceEmail]);
 
   const poslatWhatsapp = useCallback(() => {
     if (!kod) return;

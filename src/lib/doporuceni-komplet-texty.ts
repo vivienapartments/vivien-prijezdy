@@ -1,6 +1,6 @@
 import type { GuideLang, LText } from './types';
 
-/** Přechodová věta před výhodami (e-mail i stránka). */
+/** Přechodová věta před výhodami (e-mail i stránka, režim první). */
 export const vyhodyUvod: LText = {
   cs: 'Jako poděkování jsme pro vás připravili 3\u00a0výhody:',
   en: 'As a thank you, we have prepared 3\u00a0benefits for you:',
@@ -16,6 +16,41 @@ export const vyhodyUvod: LText = {
   hu: 'Köszönetképpen 3\u00a0előnyt készítettünk Önöknek:',
   da: 'Som tak har vi forberedt 3\u00a0fordele til jer:',
   fi: 'As a thank you, we have prepared 3\u00a0benefits for you:',
+};
+
+/** Režim další (návrat z plochy). Bez tečky. */
+export const dalsiNadpis: LText = {
+  cs: 'Děkujeme, že se k nám vracíte',
+  en: 'Thank you for coming back to us',
+  de: 'Danke, dass Sie zu uns zurückkehren',
+  pl: 'Dziękujemy, że do nas wracacie',
+  uk: 'Дякуємо, що повертаєтеся до нас',
+  'zh-Hant': '感謝您再次回來',
+  es: 'Gracias por volver con nosotros',
+  fr: 'Merci de revenir chez nous',
+  it: 'Grazie di tornare da noi',
+  pt: 'Obrigado por voltarem até nós',
+  sv: 'Tack för att ni kommer tillbaka till oss',
+  hu: 'Köszönjük, hogy visszatérnek hozzánk',
+  da: 'Tak fordi I kommer tilbage til os',
+  fi: 'Thank you for coming back to us',
+};
+
+export const dalsiVeta: LText = {
+  cs: 'Těšíme se na váš další pobyt.',
+  en: 'We look forward to your next stay.',
+  de: 'Wir freuen uns auf Ihren nächsten Aufenthalt.',
+  pl: 'Cieszymy się na Wasz kolejny pobyt.',
+  uk: 'Чекаємо на ваше наступне перебування.',
+  'zh-Hant': '期待您的下一次住宿。',
+  es: 'Esperamos su próxima estancia.',
+  fr: 'Nous avons hâte de vous revoir pour un prochain séjour.',
+  it: 'Non vediamo l’ora del vostro prossimo soggiorno.',
+  pt: 'Estamos ansiosos pela vossa próxima estadia.',
+  sv: 'Vi ser fram emot er nästa vistelse.',
+  hu: 'Várjuk Önöket a következő tartózkodásra.',
+  da: 'Vi glæder os til jeres næste ophold.',
+  fi: 'We look forward to your next stay.',
 };
 
 export const radek1Nadpis: LText = {

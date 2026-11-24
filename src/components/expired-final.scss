@@ -189,6 +189,16 @@
   cursor: wait;
 }
 
+.pv-exp__radek--tichy {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.pv-exp__radek--tichy .pv-exp__radek-nadpis {
+  color: var(--exp-cream);
+  font-weight: 500;
+}
+
 .pv-exp__ik {
   position: relative;
   flex: none;

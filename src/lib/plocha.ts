@@ -25,6 +25,25 @@ export function ulozPlochaStav(rezervace: string | null | undefined, stav: Ploch
   }
 }
 
+/**
+ * Záznam „na ploše“ u nás (plochaOd). Jen poprvé. Bez Telegramu a e-mailu.
+ * Token může být i po odjezdu (stránka Expired).
+ */
+export function posliPlochaNaServer(token: string | null | undefined): void {
+  const t = (token || '').trim();
+  if (!t || t === 'nahled') return;
+  try {
+    void fetch('/api/pruvodce/plocha', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: t }),
+      keepalive: true,
+    }).catch(() => undefined);
+  } catch {
+    /* síť */
+  }
+}
+
 export function jeStandalone(): boolean {
   if (typeof window === 'undefined') return false;
   try {

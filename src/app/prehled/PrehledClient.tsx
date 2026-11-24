@@ -5398,6 +5398,11 @@ export function PrehledClient({
                     {row.otevreniText}
                     {row.otevreniTitle ? ` · ${row.otevreniTitle}` : ''}
                   </p>
+                  {row.plochaOd ? (
+                    <p className="ph-pruvodce-otevreni">
+                      Na ploše ✓ {casPraha(row.plochaOd) || hodinaPraha(row.plochaOd) || ''}
+                    </p>
+                  ) : null}
                   {dotazDalsi?.id === row.rezervace ? (
                     <div className="ph-predano-dotaz">
                       <p>Opravdu odemknout celý průvodce? Kódy se tím neotevřou.</p>

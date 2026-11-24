@@ -157,22 +157,40 @@ export const plochaDokoncitVeta: LText = {
   pt: 'Abrimos o Chrome. Toquem uma vez para concluir.',
 };
 
-/** Ikona už je na ploše. */
+/** Překryv z e-mailu (?plocha=1), když už ikona je. */
 export const plochaUzMate: LText = {
-  cs: 'Už to máte na ploše. Příště otevřete ikonu VIVIEN na telefonu, nepřidávejte znovu.',
-  en: 'It is already on your home screen. Next time open the VIVIEN icon on your phone. Do not add it again.',
-  de: 'Es ist schon auf dem Startbildschirm. Öffnen Sie beim nächsten Mal die VIVIEN-Ikone am Telefon. Nicht noch einmal hinzufügen.',
-  pl: 'Już macie to na ekranie. Następnym razem otwórzcie ikonę VIVIEN na telefonie. Nie dodawajcie ponownie.',
-  uk: 'Це вже на екрані. Наступного разу відкрийте значок VIVIEN на телефоні. Не додавайте знову.',
-  'zh-Hant': '主畫面已有圖示。下次請直接開啟手機上的 VIVIEN，不必再加入。',
-  sv: 'Det finns redan på hemskärmen. Nästa gång öppnar ni VIVIEN-ikonen på telefonen. Lägg inte till den igen.',
-  es: 'Ya está en la pantalla. La próxima vez abran el icono VIVIEN del teléfono. No lo añadan otra vez.',
-  hu: 'Már a kezdőképernyőn van. Legközelebb a telefonon a VIVIEN ikont nyissák meg. Ne adják hozzá újra.',
-  da: 'Det er allerede på hjemmeskærmen. Næste gang åbner I VIVIEN-ikonet på telefonen. Tilføj det ikke igen.',
-  fi: 'It is already on your home screen. Next time open the VIVIEN icon on your phone. Do not add it again.',
-  fr: 'C’est déjà sur l’écran d’accueil. La prochaine fois, ouvrez l’icône VIVIEN sur le téléphone. Ne l’ajoutez pas une nouvelle fois.',
-  it: 'È già sulla schermata Home. La prossima volta aprite l’icona VIVIEN sul telefono. Non aggiungetela di nuovo.',
-  pt: 'Já está no ecrã. Da próxima vez abram o ícone VIVIEN no telemóvel. Não o adicionem outra vez.',
+  cs: 'VIVIEN už máte na ploše. Otevřete ji ikonou.',
+  en: 'VIVIEN is already on your home screen. Open it with the icon.',
+  de: 'VIVIEN ist schon auf dem Startbildschirm. Öffnen Sie es über die Ikone.',
+  pl: 'VIVIEN macie już na ekranie. Otwórzcie go ikoną.',
+  uk: 'VIVIEN уже на екрані. Відкрийте його значком.',
+  'zh-Hant': '主畫面已有 VIVIEN。請用圖示開啟。',
+  sv: 'VIVIEN finns redan på hemskärmen. Öppna det med ikonen.',
+  es: 'VIVIEN ya está en la pantalla. Ábranlo con el icono.',
+  hu: 'A VIVIEN már a kezdőképernyőn van. Nyissák meg az ikonnal.',
+  da: 'VIVIEN er allerede på hjemmeskærmen. Åbn den med ikonet.',
+  fi: 'VIVIEN is already on your home screen. Open it with the icon.',
+  fr: 'VIVIEN est déjà sur l’écran d’accueil. Ouvrez-le avec l’icône.',
+  it: 'VIVIEN è già sulla schermata Home. Apritelo con l’icona.',
+  pt: 'A VIVIEN já está no ecrã. Abram-na com o ícone.',
+};
+
+/** Řádek 3 na stránce po odjezdu, když už ikona je. */
+export const plochaUzMateRadek: LText = {
+  cs: 'Už máte na ploše ✓',
+  en: 'Already on your home screen ✓',
+  de: 'Schon auf dem Startbildschirm ✓',
+  pl: 'Już na ekranie ✓',
+  uk: 'Вже на екрані ✓',
+  'zh-Hant': '主畫面已有 ✓',
+  sv: 'Redan på hemskärmen ✓',
+  es: 'Ya en la pantalla ✓',
+  hu: 'Már a kezdőképernyőn ✓',
+  da: 'Allerede på hjemmeskærmen ✓',
+  fi: 'Already on your home screen ✓',
+  fr: 'Déjà sur l’écran d’accueil ✓',
+  it: 'Già sulla schermata Home ✓',
+  pt: 'Já no ecrã ✓',
 };
 
 export const plochaSkryt: LText = {

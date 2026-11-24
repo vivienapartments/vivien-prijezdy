@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
+  dalsiNadpis,
+  dalsiVeta,
   radek1Nadpis,
   radek1Pod,
   radek2Nadpis,
@@ -12,9 +14,8 @@ import {
 } from '@/lib/doporuceni-komplet-texty';
 import { zlatSlevaVTextu } from '@/lib/expired-vyhody-texty';
 import { t } from '@/lib/i18n';
-import { jePwaNainstalovana, jeStandalone, nactiPlochaStav, ulozPlochaStav } from '@/lib/plocha';
-import { plochaUzMate, plochaZavrit } from '@/lib/plocha-texty';
-import { poptavkaTextyVernost } from '@/lib/poptavka-texty-vernost';
+import { jePwaNainstalovana, jeStandalone, nactiPlochaStav, posliPlochaNaServer, ulozPlochaStav } from '@/lib/plocha';
+import { plochaUzMate, plochaUzMateRadek, plochaZavrit } from '@/lib/plocha-texty';
 import {
   expiredDopis,
   expiredHelp,
@@ -33,6 +34,11 @@ import './pridej-na-plochu.scss';
 
 function klicNavrat(token: string | undefined): string {
   return `vivien-exp-navrat:${token || 'x'}`;
+}
+
+/** Počet návratů v režimu „další“ (zařízení). */
+function klicNavratyPocet(token: string | undefined): string {
+  return `vivien-pv-navraty:${token || 'x'}`;
 }
 
 function IkonaKalendar() {
@@ -96,39 +102,47 @@ export function Expired({
   lang?: GuideLang;
   token?: string;
 }) {
-  const vernostNadpis = poptavkaTextyVernost(lang).nadpis;
   const seznamRef = useRef<HTMLDivElement | null>(null);
   const doporucitRef = useRef<HTMLDivElement | null>(null);
+  const spustPlochuRef = useRef<(() => void) | null>(null);
   const [rezim, setRezim] = useState<'nacitam' | 'prvni' | 'dalsi'>('nacitam');
-  const [skrytPlochu, setSkrytPlochu] = useState(false);
+  const [plochaHotovo, setPlochaHotovo] = useState(false);
   const [kod, setKod] = useState<string | null>(null);
   const [jmeno, setJmeno] = useState('');
-  /** Překryv „Přidat na plochu“ (?plocha=1 nebo klepnutí na řádek 3). Bez automatického spuštění. */
+  /** Překryv jen z ?plocha=1. Řádek 3 spouští instalaci rovnou. */
   const [vyzvaPlocha, setVyzvaPlocha] = useState(false);
-  /** Už na ploše: jednorázová hláška místo instalace. */
   const [hlaskaUzPlocha, setHlaskaUzPlocha] = useState(false);
+  /** Počet návratů (1–3 = blízké vidět, od 4 schovat). */
+  const [navratPocet, setNavratPocet] = useState(1);
+  const [blizciVynutit, setBlizciVynutit] = useState(false);
+  const [hashDoporucit, setHashDoporucit] = useState(false);
 
   const jeNahled = token === 'nahled';
 
   const poHotovePloše = useCallback(() => {
-    setSkrytPlochu(true);
+    setPlochaHotovo(true);
     setVyzvaPlocha(false);
+  }, []);
+
+  const onPlochaReady = useCallback((spust: () => void) => {
+    spustPlochuRef.current = spust;
   }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const forceDalsi = params.get('dalsi') === '1';
-    /** Jen test: vždy první návštěva, nic se do paměti neukládá. */
     const forcePoprve = params.get('poprve') === '1';
     const chcePlochu = params.get('plocha') === '1';
     const standalone = jeStandalone();
-    const plochaHotovo = nactiPlochaStav(token) === 'hotovo';
-    /* dalsi=1 = náhled návratu z ikony na ploše → jako standalone (bez „Přidat na plochu“) */
-    setSkrytPlochu(standalone || plochaHotovo || (forceDalsi && !forcePoprve));
-    if (chcePlochu && (standalone || plochaHotovo)) {
+    const localHotovo = nactiPlochaStav(token) === 'hotovo';
+    const hotovo = standalone || localHotovo;
+    setPlochaHotovo(hotovo || (forceDalsi && !forcePoprve));
+    setHashDoporucit(window.location.hash === '#doporucit');
+
+    if (chcePlochu && hotovo) {
       setHlaskaUzPlocha(true);
-    } else if (chcePlochu && !standalone && !plochaHotovo) {
+    } else if (chcePlochu && !hotovo) {
       setVyzvaPlocha(true);
     }
 
@@ -137,17 +151,21 @@ export function Expired({
       const nainstalovano = await jePwaNainstalovana();
       if (zruseno || !nainstalovano) return;
       ulozPlochaStav(token, 'hotovo');
-      setSkrytPlochu(true);
+      posliPlochaNaServer(token);
+      setPlochaHotovo(true);
       setVyzvaPlocha(false);
       if (chcePlochu) setHlaskaUzPlocha(true);
     })();
 
     if (forcePoprve) {
       setRezim('prvni');
+      setNavratPocet(1);
     } else if (jeNahled && !forceDalsi) {
       setRezim('prvni');
+      setNavratPocet(1);
     } else if (jeNahled && forceDalsi) {
       setRezim('dalsi');
+      setNavratPocet(1);
     } else {
       const klic = klicNavrat(token);
       let videno = false;
@@ -158,8 +176,25 @@ export function Expired({
       }
       if (standalone || videno || forceDalsi) {
         setRezim('dalsi');
+        /* ?dalsi=1 a ?poprve=1 počítadlo nemění. */
+        if (!forceDalsi && !forcePoprve) {
+          const klicPocet = klicNavratyPocet(token);
+          let dalsi = 1;
+          try {
+            const raw = window.localStorage.getItem(klicPocet);
+            const pred = raw ? parseInt(raw, 10) : 0;
+            dalsi = (Number.isFinite(pred) ? pred : 0) + 1;
+            window.localStorage.setItem(klicPocet, String(dalsi));
+          } catch {
+            dalsi = 1;
+          }
+          setNavratPocet(dalsi);
+        } else {
+          setNavratPocet(1);
+        }
       } else {
         setRezim('prvni');
+        setNavratPocet(1);
         try {
           window.localStorage.setItem(klic, '1');
         } catch {
@@ -199,25 +234,32 @@ export function Expired({
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (window.location.hash !== '#doporucit') return;
+    setHashDoporucit(true);
+    setBlizciVynutit(true);
     const tmr = window.setTimeout(() => {
       document.getElementById('doporucit')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 120);
     return () => window.clearTimeout(tmr);
   }, [rezim, kod]);
 
-  const otevritVyzvuPlocha = useCallback(() => {
+  const spustPlochuPrimo = useCallback(() => {
     if (nactiPlochaStav(token) === 'hotovo' || jeStandalone()) {
+      setPlochaHotovo(true);
       setHlaskaUzPlocha(true);
       return;
     }
-    setVyzvaPlocha(true);
+    const fn = spustPlochuRef.current;
+    if (fn) fn();
+    else setVyzvaPlocha(true);
   }, [token]);
 
   const sjelKDoporuceni = useCallback(() => {
-    doporucitRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setBlizciVynutit(true);
+    window.setTimeout(() => {
+      doporucitRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 40);
   }, []);
 
-  /* Věrnostní poptávka. Zkouška /nahled → ?zkouska=1. Ostrý host → ?t=token. */
   const poptavkaHref =
     !token || token === 'nahled'
       ? '/poptavka?zkouska=1'
@@ -228,8 +270,8 @@ export function Expired({
   }
 
   const prvni = rezim === 'prvni';
-  const cisloPlocha = 3;
-  const cisloDarek = 2;
+  const cisla = prvni;
+  const ukazBlizci = hashDoporucit || blizciVynutit || navratPocet <= 3 || prvni;
 
   return (
     <main className="pv-exp">
@@ -265,16 +307,15 @@ export function Expired({
               height={66}
               alt="VIVIEN Apartments"
             />
-            <h1 className="pv-exp__h1 pv-exp__h1--dalsi">{vernostNadpis}</h1>
-            <p className="pv-exp__dalsi-veta">{t(vyhodyUvod, lang)}</p>
-            <p className="pv-exp__podpis">{t(expiredPodpis, lang)}</p>
+            <h1 className="pv-exp__h1 pv-exp__h1--dalsi">{t(dalsiNadpis, lang)}</h1>
+            <p className="pv-exp__dalsi-veta">{t(dalsiVeta, lang)}</p>
           </div>
         )}
 
         <div className="pv-exp__seznam" id="vyhody" ref={seznamRef}>
           <a className="pv-exp__radek" href={poptavkaHref}>
             <span className="pv-exp__ik">
-              <span className="pv-exp__cislo">1</span>
+              {cisla ? <span className="pv-exp__cislo">1</span> : null}
               <IkonaKalendar />
             </span>
             <span className="pv-exp__radek-text">
@@ -288,7 +329,7 @@ export function Expired({
 
           <button type="button" className="pv-exp__radek" onClick={sjelKDoporuceni} disabled={!kod}>
             <span className="pv-exp__ik">
-              <span className="pv-exp__cislo">{cisloDarek}</span>
+              {cisla ? <span className="pv-exp__cislo">2</span> : null}
               <IkonaDarek />
             </span>
             <span className="pv-exp__radek-text">
@@ -300,10 +341,21 @@ export function Expired({
             </span>
           </button>
 
-          {!skrytPlochu ? (
-            <button type="button" className="pv-exp__radek" onClick={otevritVyzvuPlocha}>
+          {plochaHotovo && prvni ? (
+            <div className="pv-exp__radek pv-exp__radek--tichy" aria-live="polite">
               <span className="pv-exp__ik">
-                <span className="pv-exp__cislo">{cisloPlocha}</span>
+                {cisla ? <span className="pv-exp__cislo">3</span> : null}
+                <IkonaTelefon />
+              </span>
+              <span className="pv-exp__radek-text">
+                <span className="pv-exp__radek-nadpis pv-exp__nowrap">{t(plochaUzMateRadek, lang)}</span>
+              </span>
+            </div>
+          ) : null}
+          {!plochaHotovo ? (
+            <button type="button" className="pv-exp__radek" onClick={spustPlochuPrimo}>
+              <span className="pv-exp__ik">
+                {cisla ? <span className="pv-exp__cislo">3</span> : null}
                 <IkonaTelefon />
               </span>
               <span className="pv-exp__radek-text">
@@ -318,12 +370,15 @@ export function Expired({
         </div>
 
         <div ref={doporucitRef}>
-          <ExpiredDoporuceni
-            lang={lang}
-            token={token || 'nahled'}
-            kod={kod}
-            jmenoPredvypln={jmeno}
-          />
+          {ukazBlizci ? (
+            <ExpiredDoporuceni
+              lang={lang}
+              token={token || 'nahled'}
+              kod={kod}
+              jmenoPredvypln={jmeno}
+              forceEmail={hashDoporucit}
+            />
+          ) : null}
         </div>
 
         <div className="pv-exp__pomoc">
@@ -338,19 +393,18 @@ export function Expired({
           {textBuildVerze()}
         </p>
 
-        {!skrytPlochu ? (
-          <PridejNaPlochu
-            lang={lang}
-            token={token && token !== 'nahled' ? token : null}
-            jenMobil={false}
-            nahled={jeNahled}
-            skrytTlacitko
-            vyzva={vyzvaPlocha}
-            onVyzvaZmena={setVyzvaPlocha}
-            onHotovo={poHotovePloše}
-            shortNazev="VIVIEN"
-          />
-        ) : null}
+        <PridejNaPlochu
+          lang={lang}
+          token={token && token !== 'nahled' ? token : null}
+          jenMobil={false}
+          nahled={jeNahled}
+          skrytTlacitko
+          vyzva={vyzvaPlocha && !plochaHotovo}
+          onVyzvaZmena={setVyzvaPlocha}
+          onHotovo={poHotovePloše}
+          onReady={onPlochaReady}
+          shortNazev="VIVIEN"
+        />
 
         {hlaskaUzPlocha ? (
           <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
