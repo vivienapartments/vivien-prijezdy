@@ -128,5 +128,21 @@ describe('podekovani', () => {
     expect(hledejProPodekovani([stary], 'novak', '2026-11-20', now).map((r) => r.rezervace)).toEqual([
       '9',
     ]);
+    expect(
+      hledejProPodekovani([stary], { rezervace: '9' }, '2026-11-20', now).map((r) => r.rezervace),
+    ).toEqual(['9']);
+  });
+
+  it('ruční hledání podle telefonu', () => {
+    const now = new Date('2026-11-20T15:00:00+01:00');
+    const stary = host({
+      rezervace: '8',
+      odjezd: '2026-10-01',
+      jmeno: 'Starý',
+      telefonText: '+420 777 111 222',
+    } as Partial<RezervaceRecord>);
+    expect(
+      hledejProPodekovani([stary], { telefon: '777111' }, '2026-11-20', now).map((r) => r.rezervace),
+    ).toEqual(['8']);
   });
 });

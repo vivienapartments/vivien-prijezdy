@@ -429,6 +429,9 @@ export function PrehledClient({
   const [podekovaniOtevreno, setPodekovaniOtevreno] = useState(false);
   const [dotazPodekovani, setDotazPodekovani] = useState<string | null>(null);
   const [hledaniPodekovani, setHledaniPodekovani] = useState('');
+  const [hledaniPodekovaniRez, setHledaniPodekovaniRez] = useState('');
+  const [hledaniPodekovaniTel, setHledaniPodekovaniTel] = useState('');
+  const [hledaniPodekovaniVic, setHledaniPodekovaniVic] = useState(false);
   const [shrnutiOtevreno, setShrnutiOtevreno] = useState(false);
   const [shrnutiHotoveOtevreno, setShrnutiHotoveOtevreno] = useState(false);
   const [dotazShrnuti, setDotazShrnuti] = useState<string | null>(null);
@@ -5788,8 +5791,26 @@ export function PrehledClient({
   const hostePohodaHotove = hostePohoda.filter((r) => Boolean(r.pohodaDotaz));
   const hostePodekovaniSeznam = hosteProPodekovani(radky, dnes, ted);
   const hostePodekovaniHledani = useMemo(
-    () => hledejProPodekovani(radky, hledaniPodekovani, dnes, ted),
-    [radky, hledaniPodekovani, dnes, ted],
+    () =>
+      hledejProPodekovani(
+        radky,
+        {
+          jmeno: hledaniPodekovani,
+          rezervace: hledaniPodekovaniVic ? hledaniPodekovaniRez : '',
+          telefon: hledaniPodekovaniVic ? hledaniPodekovaniTel : '',
+        },
+        dnes,
+        ted,
+      ),
+    [
+      radky,
+      hledaniPodekovani,
+      hledaniPodekovaniRez,
+      hledaniPodekovaniTel,
+      hledaniPodekovaniVic,
+      dnes,
+      ted,
+    ],
   );
   const hosteShrnutiVstupy = radky.map((r) => ({ ...r, ...shrnutiVstupRadku(r) }));
   const hosteShrnutiCekaji = hosteCekajiciShrnuti(hosteShrnutiVstupy, dnes);
@@ -6496,24 +6517,63 @@ export function PrehledClient({
       ) : null}
       {pohledDomu && zalozka === 'prijezdy' ? (
         <section id="podekovani-hledat" className="ph-domu-radek">
-          <p className="ph-domu-radek__souhrn" style={{ marginBottom: '0.5rem' }}>
-            Najít hosta na poděkování
-          </p>
-          <label className="ph-pole" style={{ display: 'block', margin: '0 0.75rem 0.5rem' }}>
-            <span className="ph-skryty">Jméno nebo číslo rezervace</span>
-            <input
-              type="search"
-              value={hledaniPodekovani}
-              onChange={(e) => setHledaniPodekovani(e.target.value)}
-              placeholder="Jméno nebo číslo rezervace"
-              autoComplete="off"
-            />
-          </label>
-          {hledaniPodekovani.trim().length >= 2 && !hostePodekovaniHledani.length ? (
-            <p style={{ margin: '0 0.75rem 0.75rem', color: '#b7aa98', fontSize: '0.9rem' }}>
-              Nikdo se nenašel (musí mít předání a odjezd).
-            </p>
-          ) : null}
+          <button
+            type="button"
+            className="ph-domu-radek__souhrn"
+            aria-expanded={hledaniPodekovaniVic}
+            onClick={() => setHledaniPodekovaniVic((v) => !v)}
+          >
+            Najít hosta na poděkování {hledaniPodekovaniVic ? '▴' : '▸'}
+          </button>
+          <div className="ph-podekovani-hledat">
+            <label>
+              <span className="ph-skryty">Jméno</span>
+              <input
+                className="ph-podekovani-hledat__pole"
+                type="search"
+                value={hledaniPodekovani}
+                onChange={(e) => setHledaniPodekovani(e.target.value)}
+                placeholder="Jméno"
+                autoComplete="off"
+              />
+            </label>
+            {hledaniPodekovaniVic ? (
+              <div className="ph-podekovani-hledat__vic">
+                <label>
+                  <span className="ph-skryty">Telefon</span>
+                  <input
+                    className="ph-podekovani-hledat__pole"
+                    type="search"
+                    inputMode="tel"
+                    value={hledaniPodekovaniTel}
+                    onChange={(e) => setHledaniPodekovaniTel(e.target.value)}
+                    placeholder="Telefon"
+                    autoComplete="off"
+                  />
+                </label>
+                <label>
+                  <span className="ph-skryty">Číslo rezervace</span>
+                  <input
+                    className="ph-podekovani-hledat__pole"
+                    type="search"
+                    value={hledaniPodekovaniRez}
+                    onChange={(e) => setHledaniPodekovaniRez(e.target.value)}
+                    placeholder="Číslo rezervace"
+                    autoComplete="off"
+                  />
+                </label>
+              </div>
+            ) : null}
+            {(hledaniPodekovani.trim().length >= 2 ||
+              (hledaniPodekovaniVic &&
+                (hledaniPodekovaniRez.trim().length >= 1 ||
+                  hledaniPodekovaniTel.replace(/\D/g, '').length >= 3))) &&
+            !hostePodekovaniHledani.length ? (
+              <p className="ph-podekovani-hledat__prazdne">
+                Nikdo se nenašel (musí mít předání a odjezd).
+              </p>
+            ) : null}
+          </div>
           {hostePodekovaniHledani.length ? (
             <ul className="ph-odjezdy ph-odjezdy--vnorene">
               {hostePodekovaniHledani.map((row) => {

@@ -2203,6 +2203,44 @@
   cursor: pointer;
 }
 
+.ph-podekovani-hledat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+
+.ph-podekovani-hledat__pole {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  min-height: 2.6rem;
+  box-sizing: border-box;
+  border: 1px solid rgba(201, 168, 76, 0.45);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.ph-podekovani-hledat__pole::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.ph-podekovani-hledat__vic {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.ph-podekovani-hledat__prazdne {
+  margin: 0;
+  color: #b7aa98;
+  font-size: 0.9rem;
+}
+
 .ph-domu-radek__souhrn.is-akce {
   border-color: rgba(220, 80, 80, 0.5);
   background: rgba(220, 80, 80, 0.12);

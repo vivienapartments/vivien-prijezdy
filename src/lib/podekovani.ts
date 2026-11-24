@@ -229,7 +229,14 @@ export function muzePodekovatKdykoliv(
   return isDepartureExpired(r.odjezd, now);
 }
 
-/** Hledání podle jména nebo čísla rezervace (min. 2 znaky). */
+/** Filtr ručního hledání na poděkování. Hlavní je jméno. */
+export type HledaniPodekovaniFiltr = {
+  jmeno?: string;
+  rezervace?: string;
+  telefon?: string;
+};
+
+/** Hledání odjetých hostů. Výchozí jméno (min. 2 znaky), volitelně rezervace / telefon. */
 export function hledejProPodekovani<
   T extends {
     stav: string;
@@ -239,15 +246,40 @@ export function hledejProPodekovani<
     apartman: string | null;
     jmeno?: string | null;
     rezervace?: string;
+    telefonText?: string | null;
+    telefonWa?: string | null;
+    jinyTelefonText?: string | null;
+    jinyTelefonWa?: string | null;
   },
->(list: T[], dotaz: string, dnes: string, now = new Date()): T[] {
-  const q = bezDiakritiky(dotaz.trim());
-  if (q.length < 2) return [];
+>(list: T[], filtr: HledaniPodekovaniFiltr | string, dnes: string, now = new Date()): T[] {
+  const f: HledaniPodekovaniFiltr =
+    typeof filtr === 'string' ? { jmeno: filtr } : filtr || {};
+  const jmenoQ = bezDiakritiky(f.jmeno || '');
+  const rezQ = String(f.rezervace || '')
+    .trim()
+    .toLowerCase();
+  const telQ = String(f.telefon || '').replace(/\D/g, '');
+  const maJmeno = jmenoQ.length >= 2;
+  const maRez = rezQ.length >= 1;
+  const maTel = telQ.length >= 3;
+  if (!maJmeno && !maRez && !maTel) return [];
+
   const nalezeni = list.filter((r) => {
     if (!muzePodekovatKdykoliv(r, dnes, now)) return false;
-    const jmeno = bezDiakritiky(r.jmeno || '');
-    const rez = String(r.rezervace || '').toLowerCase();
-    return jmeno.includes(q) || rez.includes(q);
+    if (maJmeno && !bezDiakritiky(r.jmeno || '').includes(jmenoQ)) return false;
+    if (maRez && !String(r.rezervace || '').toLowerCase().includes(rezQ)) return false;
+    if (maTel) {
+      const tel = [
+        r.telefonText,
+        r.telefonWa,
+        r.jinyTelefonText,
+        r.jinyTelefonWa,
+      ]
+        .map((x) => String(x || '').replace(/\D/g, ''))
+        .join(' ');
+      if (!tel.includes(telQ)) return false;
+    }
+    return true;
   });
   return seradPodekovani(nalezeni).slice(0, 25);
 }
