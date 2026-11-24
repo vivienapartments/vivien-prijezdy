@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Guide } from '@/components/Guide';
 import { OtevreniBeacon } from '@/components/OtevreniBeacon';
@@ -19,6 +20,29 @@ import { urovenZRezervace, vstupZRezervace } from '@/lib/vstup-pruvodce';
 import { zpravyOdNasZRezervace } from '@/lib/zpravy-od-nas';
 
 type Props = { params: Promise<{ token: string }> };
+
+/** Skutečný HTTPS manifest (ne blob) — start_url = /{token}. */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { token } = await params;
+  const cesta = `/${encodeURIComponent(token)}`;
+  return {
+    title: 'VIVIEN · průvodce příjezdem',
+    applicationName: 'VIVIEN',
+    manifest: `${cesta}/manifest.webmanifest`,
+    icons: {
+      icon: [
+        { url: '/prehled/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { url: '/prehled/icon-512.png', sizes: '512x512', type: 'image/png' },
+      ],
+      apple: [{ url: '/prehled/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+    },
+    appleWebApp: {
+      capable: true,
+      title: 'VIVIEN',
+      statusBarStyle: 'black-translucent',
+    },
+  };
+}
 
 export default async function TokenPage({ params }: Props) {
   const { token } = await params;
