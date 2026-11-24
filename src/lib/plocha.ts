@@ -37,6 +37,27 @@ export function jeStandalone(): boolean {
   return Boolean(nav.standalone);
 }
 
+type RelatedApp = { id?: string; platform?: string; url?: string };
+
+/**
+ * Je PWA už nainstalovaná (ikona na ploše).
+ * Chrome Android: getInstalledRelatedApps + related_applications ve manifestu.
+ */
+export async function jePwaNainstalovana(): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  if (jeStandalone()) return true;
+  const nav = window.navigator as Navigator & {
+    getInstalledRelatedApps?: () => Promise<RelatedApp[]>;
+  };
+  if (typeof nav.getInstalledRelatedApps !== 'function') return false;
+  try {
+    const apps = await nav.getInstalledRelatedApps();
+    return Array.isArray(apps) && apps.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export function jeIos(): boolean {
   if (typeof window === 'undefined') return false;
   const ua = window.navigator.userAgent || '';

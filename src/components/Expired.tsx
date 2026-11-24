@@ -12,7 +12,8 @@ import {
 } from '@/lib/doporuceni-komplet-texty';
 import { zlatSlevaVTextu } from '@/lib/expired-vyhody-texty';
 import { t } from '@/lib/i18n';
-import { jeStandalone, nactiPlochaStav } from '@/lib/plocha';
+import { jePwaNainstalovana, jeStandalone, nactiPlochaStav, ulozPlochaStav } from '@/lib/plocha';
+import { plochaUzMate, plochaZavrit } from '@/lib/plocha-texty';
 import { poptavkaTextyVernost } from '@/lib/poptavka-texty-vernost';
 import {
   expiredDopis,
@@ -28,6 +29,7 @@ import { ExpiredDoporuceni } from './ExpiredDoporuceni';
 import { KontaktTelefony } from './KontaktTelefony';
 import { PridejNaPlochu } from './PridejNaPlochu';
 import './expired-final.scss';
+import './pridej-na-plochu.scss';
 
 function klicNavrat(token: string | undefined): string {
   return `vivien-exp-navrat:${token || 'x'}`;
@@ -103,8 +105,15 @@ export function Expired({
   const [jmeno, setJmeno] = useState('');
   /** Překryv „Přidat na plochu“ (?plocha=1 nebo klepnutí na řádek 3). Bez automatického spuštění. */
   const [vyzvaPlocha, setVyzvaPlocha] = useState(false);
+  /** Už na ploše: jednorázová hláška místo instalace. */
+  const [hlaskaUzPlocha, setHlaskaUzPlocha] = useState(false);
 
   const jeNahled = token === 'nahled';
+
+  const poHotovePloše = useCallback(() => {
+    setSkrytPlochu(true);
+    setVyzvaPlocha(false);
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -117,39 +126,51 @@ export function Expired({
     const plochaHotovo = nactiPlochaStav(token) === 'hotovo';
     /* dalsi=1 = náhled návratu z ikony na ploše → jako standalone (bez „Přidat na plochu“) */
     setSkrytPlochu(standalone || plochaHotovo || (forceDalsi && !forcePoprve));
-    if (chcePlochu && !standalone && !plochaHotovo) setVyzvaPlocha(true);
+    if (chcePlochu && (standalone || plochaHotovo)) {
+      setHlaskaUzPlocha(true);
+    } else if (chcePlochu && !standalone && !plochaHotovo) {
+      setVyzvaPlocha(true);
+    }
+
+    let zruseno = false;
+    void (async () => {
+      const nainstalovano = await jePwaNainstalovana();
+      if (zruseno || !nainstalovano) return;
+      ulozPlochaStav(token, 'hotovo');
+      setSkrytPlochu(true);
+      setVyzvaPlocha(false);
+      if (chcePlochu) setHlaskaUzPlocha(true);
+    })();
 
     if (forcePoprve) {
       setRezim('prvni');
-      return;
-    }
-
-    if (jeNahled && !forceDalsi) {
+    } else if (jeNahled && !forceDalsi) {
       setRezim('prvni');
-      return;
-    }
-    if (jeNahled && forceDalsi) {
-      setRezim('dalsi');
-      return;
-    }
-
-    const klic = klicNavrat(token);
-    let videno = false;
-    try {
-      videno = Boolean(window.localStorage.getItem(klic));
-    } catch {
-      /* paměť */
-    }
-    if (standalone || videno || forceDalsi) {
+    } else if (jeNahled && forceDalsi) {
       setRezim('dalsi');
     } else {
-      setRezim('prvni');
+      const klic = klicNavrat(token);
+      let videno = false;
       try {
-        window.localStorage.setItem(klic, '1');
+        videno = Boolean(window.localStorage.getItem(klic));
       } catch {
         /* paměť */
       }
+      if (standalone || videno || forceDalsi) {
+        setRezim('dalsi');
+      } else {
+        setRezim('prvni');
+        try {
+          window.localStorage.setItem(klic, '1');
+        } catch {
+          /* paměť */
+        }
+      }
     }
+
+    return () => {
+      zruseno = true;
+    };
   }, [token, jeNahled]);
 
   useEffect(() => {
@@ -185,8 +206,12 @@ export function Expired({
   }, [rezim, kod]);
 
   const otevritVyzvuPlocha = useCallback(() => {
+    if (nactiPlochaStav(token) === 'hotovo' || jeStandalone()) {
+      setHlaskaUzPlocha(true);
+      return;
+    }
     setVyzvaPlocha(true);
-  }, []);
+  }, [token]);
 
   const sjelKDoporuceni = useCallback(() => {
     doporucitRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -322,8 +347,20 @@ export function Expired({
             skrytTlacitko
             vyzva={vyzvaPlocha}
             onVyzvaZmena={setVyzvaPlocha}
+            onHotovo={poHotovePloše}
             shortNazev="VIVIEN"
           />
+        ) : null}
+
+        {hlaskaUzPlocha ? (
+          <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
+            <div className="pv-pridej-karta">
+              <p className="pv-pridej-text">{t(plochaUzMate, lang)}</p>
+              <button type="button" className="pv-pridej-ok" onClick={() => setHlaskaUzPlocha(false)}>
+                {t(plochaZavrit, lang)}
+              </button>
+            </div>
+          </div>
         ) : null}
       </div>
     </main>

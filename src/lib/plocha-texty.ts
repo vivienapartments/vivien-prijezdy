@@ -122,6 +122,59 @@ export const plochaPridej: LText = {
   pt: 'Adicionar ao ecrã',
 };
 
+/** Po přesměrování do Chrome (vchrome=1): druhé klepnutí dokončí instalaci. */
+export const plochaDokoncit: LText = {
+  cs: 'Dokončit přidání',
+  en: 'Finish adding',
+  de: 'Hinzufügen abschließen',
+  pl: 'Dokończyć dodawanie',
+  uk: 'Завершити додавання',
+  'zh-Hant': '完成加入',
+  sv: 'Slutför tillägg',
+  es: 'Terminar de añadir',
+  hu: 'Hozzáadás befejezése',
+  da: 'Fuldfør tilføjelse',
+  fi: 'Finish adding',
+  fr: 'Terminer l’ajout',
+  it: 'Completare l’aggiunta',
+  pt: 'Concluir a adição',
+};
+
+export const plochaDokoncitVeta: LText = {
+  cs: 'Otevřeli jsme Chrome. Klepněte jednou pro dokončení.',
+  en: 'We opened Chrome. Tap once to finish.',
+  de: 'Wir haben Chrome geöffnet. Tippen Sie einmal zum Abschluss.',
+  pl: 'Otworzyliśmy Chrome. Dotknijcie raz, aby dokończyć.',
+  uk: 'Ми відкрили Chrome. Натисніть один раз, щоб завершити.',
+  'zh-Hant': '已開啟 Chrome。再點一次即可完成。',
+  sv: 'Vi öppnade Chrome. Tryck en gång för att avsluta.',
+  es: 'Abrimos Chrome. Toquen una vez para terminar.',
+  hu: 'Megnyitottuk a Chrome-ot. Koppintson egyszer a befejezéshez.',
+  da: 'Vi åbnede Chrome. Tryk én gang for at afslutte.',
+  fi: 'We opened Chrome. Tap once to finish.',
+  fr: 'Nous avons ouvert Chrome. Touchez une fois pour terminer.',
+  it: 'Abbiamo aperto Chrome. Toccate una volta per finire.',
+  pt: 'Abrimos o Chrome. Toquem uma vez para concluir.',
+};
+
+/** Ikona už je na ploše. */
+export const plochaUzMate: LText = {
+  cs: 'Už to máte na ploše. Příště otevřete ikonu VIVIEN na telefonu, nepřidávejte znovu.',
+  en: 'It is already on your home screen. Next time open the VIVIEN icon on your phone. Do not add it again.',
+  de: 'Es ist schon auf dem Startbildschirm. Öffnen Sie beim nächsten Mal die VIVIEN-Ikone am Telefon. Nicht noch einmal hinzufügen.',
+  pl: 'Już macie to na ekranie. Następnym razem otwórzcie ikonę VIVIEN na telefonie. Nie dodawajcie ponownie.',
+  uk: 'Це вже на екрані. Наступного разу відкрийте значок VIVIEN на телефоні. Не додавайте знову.',
+  'zh-Hant': '主畫面已有圖示。下次請直接開啟手機上的 VIVIEN，不必再加入。',
+  sv: 'Det finns redan på hemskärmen. Nästa gång öppnar ni VIVIEN-ikonen på telefonen. Lägg inte till den igen.',
+  es: 'Ya está en la pantalla. La próxima vez abran el icono VIVIEN del teléfono. No lo añadan otra vez.',
+  hu: 'Már a kezdőképernyőn van. Legközelebb a telefonon a VIVIEN ikont nyissák meg. Ne adják hozzá újra.',
+  da: 'Det er allerede på hjemmeskærmen. Næste gang åbner I VIVIEN-ikonet på telefonen. Tilføj det ikke igen.',
+  fi: 'It is already on your home screen. Next time open the VIVIEN icon on your phone. Do not add it again.',
+  fr: 'C’est déjà sur l’écran d’accueil. La prochaine fois, ouvrez l’icône VIVIEN sur le téléphone. Ne l’ajoutez pas une nouvelle fois.',
+  it: 'È già sulla schermata Home. La prossima volta aprite l’icona VIVIEN sul telefono. Non aggiungetela di nuovo.',
+  pt: 'Já está no ecrã. Da próxima vez abram o ícone VIVIEN no telemóvel. Não o adicionem outra vez.',
+};
+
 export const plochaSkryt: LText = {
   cs: 'Už neukazovat',
   en: 'Älkää näyttäkö enää',
