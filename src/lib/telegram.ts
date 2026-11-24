@@ -3,6 +3,8 @@
  * Env: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (více chatů oddělených čárkou).
  */
 
+import { OSTRA_ADRESA } from './verejna-adresa';
+
 export type TelegramDruh =
   | 'cas-prijezdu'
   | 'cas-odjezdu'
@@ -55,7 +57,7 @@ export async function posliTelegram(
   const chats = chatIds();
   if (!bot || !chats.length) return false;
 
-  const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') || 'https://vivien-prijezdy-six.vercel.app';
+  const base = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') || OSTRA_ADRESA;
   const odkaz = urlPath ? `\n${base}${urlPath.startsWith('/') ? urlPath : `/${urlPath}`}` : '';
   const prefix = process.env.VERCEL_ENV === 'preview' ? '[ZKOUŠKA] ' : '';
   const body = `${prefix}${text}${odkaz}`;

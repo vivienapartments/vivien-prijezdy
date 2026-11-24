@@ -6,6 +6,7 @@ import { firmaZKodu, normalizujKod, type PoptavkaZdroj } from '@/lib/poptavka';
 import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
 import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
+import { verejnaAdresa } from '@/lib/verejna-adresa';
 import { PoptavkaForm } from './PoptavkaForm';
 
 type Props = {
@@ -13,10 +14,7 @@ type Props = {
 };
 
 function baseUrl(): string {
-  return (
-    (process.env.NEXT_PUBLIC_BASE_URL || process.env.PRUVODCE_BASE_URL || '').replace(/\/$/, '') ||
-    'https://vivien-prijezdy-six.vercel.app'
-  );
+  return verejnaAdresa();
 }
 
 function jazykZParamu(raw: string | undefined): GuideLang | null {

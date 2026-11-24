@@ -9,8 +9,10 @@ import {
 import { t } from './i18n';
 import type { GuideLang } from './types';
 
-/** Ostrá adresa obrázků v e-mailu (ne env, ne localhost). */
-const OSTRA_ASSET = 'https://vivien-prijezdy-six.vercel.app';
+import { OSTRA_ADRESA_ZALOHA } from './verejna-adresa';
+
+/** Obrázky v e-mailu přes stálou vercel.app, dokud běží i club. */
+const OSTRA_ASSET = OSTRA_ADRESA_ZALOHA;
 
 function esc(s: string): string {
   return s

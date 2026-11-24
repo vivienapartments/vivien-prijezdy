@@ -25,9 +25,11 @@ import {
 import { t } from '@/lib/i18n';
 import type { GuideLang } from '@/lib/types';
 
+import { OSTRA_ADRESA } from '@/lib/verejna-adresa';
+
 const BASE =
   (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '')) ||
-  'https://vivien-prijezdy-six.vercel.app';
+  OSTRA_ADRESA;
 
 function odkazTip(kod: string, lang: GuideLang): string {
   return `${BASE}/poptavka?od=${encodeURIComponent(kod)}&lang=${encodeURIComponent(lang)}`;

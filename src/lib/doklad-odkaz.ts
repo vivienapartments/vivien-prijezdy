@@ -138,7 +138,7 @@ export function zakladUrlZEnv(): string {
   return (
     process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.replace(/\/$/, '')}` : '') ||
-    'https://vivien-prijezdy-six.vercel.app'
+    'https://club.vivienapartments.cz'
   );
 }
 

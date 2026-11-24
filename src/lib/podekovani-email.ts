@@ -21,8 +21,10 @@ import {
 } from './texts';
 import type { GuideLang, LText } from './types';
 
-/** Ostrá adresa obrázků v e-mailu (ne env, ne localhost, ne Preview). */
-const OSTRA_ASSET = 'https://vivien-prijezdy-six.vercel.app';
+import { OSTRA_ADRESA_ZALOHA } from './verejna-adresa';
+
+/** Obrázky v e-mailu přes stálou vercel.app, dokud běží i club. */
+const OSTRA_ASSET = OSTRA_ADRESA_ZALOHA;
 
 /** Předmět e-mailu po odjezdu. Schváleno majitelem 22. 11. 2026, oprava en/fi 23. 11. */
 export const PREDMET_PODEKOVANI: Record<GuideLang, string> = {

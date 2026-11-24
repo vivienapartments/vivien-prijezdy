@@ -12,14 +12,15 @@ import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
 import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
 import { normalizujKod } from '@/lib/poptavka';
+import { OSTRA_ADRESA_ZALOHA } from '@/lib/verejna-adresa';
 
 export const runtime = 'nodejs';
 
 const noStore = { 'Cache-Control': 'no-store' };
 const LIMIT_DEN = 5;
 
-/** Odkazy v tip e-mailu vždy na ostrou (ne Preview, ne localhost). */
-const BASE = 'https://vivien-prijezdy-six.vercel.app';
+/** Po napojení club.vivienapartments.cz přepnout na OSTRA_ADRESA. */
+const BASE = OSTRA_ADRESA_ZALOHA;
 
 function denPraha(): string {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Prague' });
