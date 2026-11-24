@@ -6,6 +6,7 @@ import {
   adresaKlub,
   adresaPrujezd,
   domenaJesteNebezi,
+  opravVerejnyOdkaz,
 } from './verejna-adresa';
 
 afterEach(() => {
@@ -37,5 +38,15 @@ describe('verejna-adresa', () => {
   it('jiná ostrá adresa z env projde', () => {
     vi.stubEnv('PRUVODCE_BASE_URL', 'https://vivien-prijezdy-six.vercel.app');
     expect(adresaPrujezd()).toBe('https://vivien-prijezdy-six.vercel.app');
+  });
+
+  it('opraví odkaz s club/prijezd na vercel.app', () => {
+    expect(opravVerejnyOdkaz('https://prijezd.vivienapartments.cz/abc#doporucit')).toBe(
+      `${OSTRA_ADRESA_ZALOHA}/abc#doporucit`,
+    );
+    expect(opravVerejnyOdkaz('https://club.vivienapartments.cz/poptavka?t=x')).toBe(
+      `${OSTRA_ADRESA_ZALOHA}/poptavka?t=x`,
+    );
+    expect(opravVerejnyOdkaz(`${OSTRA_ADRESA_ZALOHA}/ok`)).toBe(`${OSTRA_ADRESA_ZALOHA}/ok`);
   });
 });

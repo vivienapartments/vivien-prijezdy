@@ -125,7 +125,7 @@ export function maVchromeParam(): boolean {
 export function cistyStartUrlPlochy(href?: string): string {
   if (typeof window === 'undefined' && !href) return '/';
   try {
-    const u = new URL(href || window.location.href, 'https://prijezd.vivienapartments.cz');
+    const u = new URL(href || window.location.href, 'https://vivien-prijezdy-six.vercel.app');
     u.searchParams.delete('poprve');
     u.searchParams.delete('plocha');
     u.searchParams.delete('vchrome');

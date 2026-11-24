@@ -51,3 +51,19 @@ export function adresaPrujezd(): string {
 export function verejnaAdresa(): string {
   return adresaKlub();
 }
+
+/**
+ * Když odkaz míří na club/prijezd (ještě neběží), přepíše origin na vercel.app.
+ * Cestu, query i hash nechá.
+ */
+export function opravVerejnyOdkaz(url: string): string {
+  const raw = String(url || '').trim();
+  if (!raw) return OSTRA_ADRESA_ZALOHA;
+  try {
+    const u = new URL(raw);
+    if (!domenaJesteNebezi(u.origin)) return raw;
+    return `${OSTRA_ADRESA_ZALOHA}${u.pathname}${u.search}${u.hash}`;
+  } catch {
+    return raw;
+  }
+}

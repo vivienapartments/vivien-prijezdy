@@ -6,6 +6,7 @@ import {
   type TypDokladu,
   type ZpusobUhrady,
 } from './faktura-doklad';
+import { adresaKlub } from './verejna-adresa';
 
 export type DokladOdkazPayload = {
   r: string;
@@ -135,11 +136,7 @@ export function urlDokladu(base: string, token: string): string {
 }
 
 export function zakladUrlZEnv(): string {
-  return (
-    process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '') ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL.replace(/\/$/, '')}` : '') ||
-    'https://club.vivienapartments.cz'
-  );
+  return adresaKlub();
 }
 
 /** Krátký text do e-mailu / WhatsApp. */

@@ -21,7 +21,7 @@ import {
 } from './texts';
 import type { GuideLang, LText } from './types';
 
-import { OSTRA_ADRESA_ZALOHA } from './verejna-adresa';
+import { OSTRA_ADRESA_ZALOHA, opravVerejnyOdkaz } from './verejna-adresa';
 
 /** Obrázky v e-mailu přes stálou vercel.app, dokud běží i club. */
 const OSTRA_ASSET = OSTRA_ADRESA_ZALOHA;
@@ -89,7 +89,7 @@ export function tlacitkoPodekovani(lang: GuideLang | null): string {
 
 /** Z odkazu průvodce `…/{token}` udělá odkaz na poptávku věrného hosta. */
 export function odkazPoptavkaVernost(odkazPruvodce: string): string {
-  const raw = odkazPruvodce.trim();
+  const raw = opravVerejnyOdkaz(odkazPruvodce.trim());
   try {
     const u = new URL(raw);
     const cast = u.pathname.replace(/^\//, '').split('/')[0] || '';
@@ -109,12 +109,12 @@ export function textPodekovaniEmail(
   odkazRezervovat?: string,
 ): string {
   const l = jazyk(lang);
-  const url = odkaz.trim();
-  const urlRez = (odkazRezervovat || odkazPoptavkaVernost(url)).trim();
-  const urlDop = (odkazDoporucit || `${url}#doporucit`).trim();
-  const urlPlo = (
-    odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`
-  ).trim();
+  const url = opravVerejnyOdkaz(odkaz.trim());
+  const urlRez = opravVerejnyOdkaz(odkazRezervovat || odkazPoptavkaVernost(url));
+  const urlDop = opravVerejnyOdkaz(odkazDoporucit || `${url}#doporucit`);
+  const urlPlo = opravVerejnyOdkaz(
+    odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`,
+  );
   return [
     t(expiredNadpis, l),
     '',
@@ -209,11 +209,14 @@ export function htmlPodekovaniEmail(
   const dopis = slevaNbsp(esc(t(expiredDopis, l)));
   const podpis = esc(t(expiredPodpis, l));
   const uvod = esc(t(vyhodyUvod, l));
-  const url = odkaz.trim();
-  const urlRez = (odkazRezervovat || odkazPoptavkaVernost(url)).replaceAll('"', '%22');
-  const urlDop = (odkazDoporucit || `${url}#doporucit`).replaceAll('"', '%22');
-  const urlPlo = (
-    odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`
+  const url = opravVerejnyOdkaz(odkaz.trim());
+  const urlRez = opravVerejnyOdkaz(odkazRezervovat || odkazPoptavkaVernost(url)).replaceAll(
+    '"',
+    '%22',
+  );
+  const urlDop = opravVerejnyOdkaz(odkazDoporucit || `${url}#doporucit`).replaceAll('"', '%22');
+  const urlPlo = opravVerejnyOdkaz(
+    odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`,
   ).replaceAll('"', '%22');
   const serif = "Georgia,'Times New Roman',serif";
   const sans = "Arial,Helvetica,sans-serif";

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { ADRESA_PRUJEZD } from '@/lib/verejna-adresa';
+import { adresaPrujezd } from '@/lib/verejna-adresa';
 
 type Props = { params: Promise<{ token: string }> };
 
-const OSTRA = ADRESA_PRUJEZD;
+const OSTRA = adresaPrujezd();
 
 /** Manifest jen pro tento odkaz průvodce. Ikona na ploše otevře stejný token. */
 export async function GET(req: Request, { params }: Props) {

@@ -25,14 +25,18 @@ import {
 import { t } from '@/lib/i18n';
 import type { GuideLang } from '@/lib/types';
 
-import { OSTRA_ADRESA } from '@/lib/verejna-adresa';
+import { adresaKlub, domenaJesteNebezi } from '@/lib/verejna-adresa';
 
-const BASE =
-  (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '')) ||
-  OSTRA_ADRESA;
+function baseProTip(): string {
+  if (typeof window !== 'undefined') {
+    const o = window.location.origin;
+    if (o && !domenaJesteNebezi(o)) return o;
+  }
+  return adresaKlub();
+}
 
 function odkazTip(kod: string, lang: GuideLang): string {
-  return `${BASE}/poptavka?od=${encodeURIComponent(kod)}&lang=${encodeURIComponent(lang)}`;
+  return `${baseProTip()}/poptavka?od=${encodeURIComponent(kod)}&lang=${encodeURIComponent(lang)}`;
 }
 
 /** Zvýrazní jednu nebo víc částek zlatě. */
