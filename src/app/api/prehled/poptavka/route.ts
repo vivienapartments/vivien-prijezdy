@@ -8,6 +8,7 @@ import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
 import {
   jeZkouskaPoptavky,
   odkazZpravyHostovi,
+  POPTAVKA_STAVY_BLOKUJI,
   spocitejLhutu,
   stitekStavu,
   textNejdeHostovi,
@@ -88,9 +89,38 @@ function detailJson(z: PoptavkaZaznam, cenaText: string) {
 export async function GET(req: Request) {
   if (!(await prehledPrihlasen())) return chyba(401, 'Nepřihlášen.');
   const id = new URL(req.url).searchParams.get('id')?.trim() || '';
-  if (!id) return chyba(400, 'Chybí id.');
-
   const store = createProcessStore();
+
+  /** Bez id = celý seznam (nejnovější nahoře). */
+  if (!id) {
+    const seznam = await store.listPoptavky();
+    const radky = [...seznam]
+      .sort((a, b) => (a.cas < b.cas ? 1 : a.cas > b.cas ? -1 : 0))
+      .map((z) => {
+        const noci = nociMezi(z.prijezd, z.odjezd);
+        return {
+          id: z.id,
+          cas: z.cas,
+          jmeno: z.jmeno,
+          telefon: z.telefon,
+          prijezd: z.prijezd,
+          odjezd: z.odjezd,
+          termin: `${formatRozsahPoptavky(z.prijezd, z.odjezd, 'cs')} · ${tvarNoci(noci, 'cs')}`,
+          apartman: z.blokApt
+            ? aptRecord(z.blokApt).nazev.cs
+            : z.libovolnyApartman
+              ? 'libovolný'
+              : z.apartmany.map((a) => aptRecord(a).nazev.cs).join(', ') || '—',
+          odkud: odkudText(z),
+          stav: z.stav,
+          stavText: stitekStavu(nactiPoptavkaStav(z.stav)),
+          zkouska: jeZkouskaPoptavky(z),
+          vyrizena: !POPTAVKA_STAVY_BLOKUJI.has(nactiPoptavkaStav(z.stav)),
+        };
+      });
+    return NextResponse.json({ ok: true, poptavky: radky }, { headers: noStore });
+  }
+
   const z = (await store.listPoptavky()).find((x) => x.id === id);
   if (!z) return chyba(404, 'Poptávka nenalezena.');
   const cena = await cenaPro(z, store);
@@ -180,6 +210,24 @@ export async function POST(req: Request) {
       blokApt: kandidat,
       lhutaDo: lhuta,
       pripominkaPosledni: null,
+      pripominkaNocniPocet: 0,
+    };
+  } else if (akce === 'do_vyrizenych') {
+    /* Archiv: pryč z nevyřízených, bez zprávy hostovi. */
+    z = {
+      ...z,
+      stav: 'hotovo',
+      blokApt: null,
+      lhutaDo: null,
+      pripominkaPosledni: null,
+      pripominkaNocniPocet: 0,
+    };
+  } else if (akce === 'zpet_nevyrizene') {
+    z = {
+      ...z,
+      stav: 'predbezne',
+      lhutaDo: null,
+      pripominkaPosledni: new Date().toISOString(),
       pripominkaNocniPocet: 0,
     };
   } else {

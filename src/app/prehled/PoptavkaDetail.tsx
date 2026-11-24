@@ -147,6 +147,20 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
                   ZAPSÁNO V BETTER HOTELU
                 </button>
               ) : null}
+              {stav === 'predbezne' ||
+              stav === 'nova' ||
+              stav === 'ceka_na_hosta' ||
+              stav === 'potvrzeno' ||
+              stav === 'neozval_se' ? (
+                <button
+                  type="button"
+                  className="ph-btn"
+                  disabled={cekam}
+                  onClick={() => void akce('do_vyrizenych')}
+                >
+                  DO VYŘÍZENÝCH
+                </button>
+              ) : null}
               {stav === 'neozval_se' ? (
                 <button
                   type="button"

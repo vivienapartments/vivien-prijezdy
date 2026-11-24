@@ -5927,6 +5927,11 @@ export function PrehledClient({
           </button>
           <h1>Přehled rezervací</h1>
         </div>
+        <p className="ph-dnesek__akce" style={{ margin: '0 0 0.6rem' }}>
+          <a className="ph-dnesek__odkaz" href="/prehled/poptavky">
+            Poptávky
+          </a>
+        </p>
         <div className="ph-dny" role="tablist" aria-label="Výběr dne">
           {dnyNahled.map((d) => {
             const on = !pohledDomu && d.den === vybranyDen;
