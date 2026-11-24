@@ -273,8 +273,11 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       setOdjezd(k.odjezd);
       setZpusob(k.zpusob);
       setApts(k.apts);
-      if (k.jmeno) setJmeno(k.jmeno);
-      if (k.telefon) setTelefon(k.telefon);
+      /* Věrný host: jméno a telefon vždy z karty, starý koncept je nepřepíše. */
+      if (props.zdroj !== 'vernost') {
+        if (k.jmeno) setJmeno(k.jmeno);
+        if (k.telefon) setTelefon(k.telefon);
+      }
       setPoznamka(k.poznamka);
       setDoprava(k.doprava);
       if (GUIDE_LANG_SET.has(k.lang)) setLang(k.lang);
@@ -290,8 +293,12 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         /* */
       }
     }
+    if (props.zdroj === 'vernost') {
+      if (props.jmeno.trim()) setJmeno(props.jmeno.trim());
+      if (props.telefon.trim()) setTelefon(props.telefon.trim());
+    }
     setKonceptNacten(true);
-  }, [konceptKlic]);
+  }, [konceptKlic, props.zdroj, props.jmeno, props.telefon]);
 
   useEffect(() => {
     if (!konceptNacten || hotovo) return;

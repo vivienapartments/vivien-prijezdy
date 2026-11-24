@@ -4,12 +4,12 @@ import { aptyVolneVeTerminu, nejlevnejsiVolnyPobyt } from '@/lib/kalendar-denni'
 import { formatKc, tvarNoci } from '@/lib/kalendar-texty';
 import { sestavKalendarProHosta } from '@/lib/kalendar-uloziste';
 import {
-  jmenoZKarty,
+  doplnKontaktZKarty,
   nociMezi,
   POPTAVKA_SLEVA_PCT,
-  telefonZKarty,
   type PoptavkaZaznam,
 } from '@/lib/poptavka';
+import type { ProcessStore } from '@/lib/store';
 import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
 import {
   jeZkouskaPoptavky,
@@ -91,6 +91,14 @@ function detailJson(z: PoptavkaZaznam, cenaText: string) {
   };
 }
 
+async function doplnPoptavkuZKarty(z: PoptavkaZaznam, store: ProcessStore): Promise<PoptavkaZaznam> {
+  if (!z.rezervace || ((z.jmeno || '').trim() && (z.telefon || '').trim())) return z;
+  const rec = await store.getRezervace(z.rezervace);
+  const d = doplnKontaktZKarty(z, rec);
+  if (!d.zmeneno) return z;
+  return { ...z, jmeno: d.jmeno, telefon: d.telefon };
+}
+
 export async function GET(req: Request) {
   if (!(await prehledPrihlasen())) return chyba(401, 'Nepřihlášen.');
   const id = new URL(req.url).searchParams.get('id')?.trim() || '';
@@ -99,7 +107,15 @@ export async function GET(req: Request) {
   /** Bez id = celý seznam (nejnovější nahoře). */
   if (!id) {
     const seznam = await store.listPoptavky();
-    const radky = [...seznam]
+    let zmena = false;
+    const doplnene: PoptavkaZaznam[] = [];
+    for (const z of seznam) {
+      const d = await doplnPoptavkuZKarty(z, store);
+      if (d !== z) zmena = true;
+      doplnene.push(d);
+    }
+    if (zmena) await store.ulozPoptavky(doplnene);
+    const radky = [...doplnene]
       .sort((a, b) => (a.cas < b.cas ? 1 : a.cas > b.cas ? -1 : 0))
       .map((z) => {
         const noci = nociMezi(z.prijezd, z.odjezd);
@@ -126,8 +142,16 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, poptavky: radky }, { headers: noStore });
   }
 
-  const z = (await store.listPoptavky()).find((x) => x.id === id);
-  if (!z) return chyba(404, 'Poptávka nenalezena.');
+  const seznam = await store.listPoptavky();
+  const i = seznam.findIndex((x) => x.id === id);
+  if (i < 0) return chyba(404, 'Poptávka nenalezena.');
+  let z = seznam[i];
+  const doplnena = await doplnPoptavkuZKarty(z, store);
+  if (doplnena !== z) {
+    seznam[i] = doplnena;
+    await store.ulozPoptavky(seznam);
+    z = doplnena;
+  }
   const cena = await cenaPro(z, store);
   return NextResponse.json({ ok: true, poptavka: detailJson(z, cena.text) }, { headers: noStore });
 }
@@ -155,14 +179,7 @@ export async function POST(req: Request) {
 
   if (akce === 'potvrdit') {
     /* Host už termín chce. Potvrzujeme rezervaci, bez druhého „ano“. Další je platba / BH. */
-    if (z.rezervace && (!z.jmeno.trim() || !z.telefon.trim())) {
-      const rec = await store.getRezervace(z.rezervace);
-      z = {
-        ...z,
-        jmeno: z.jmeno.trim() || jmenoZKarty(rec),
-        telefon: z.telefon.trim() || telefonZKarty(rec),
-      };
-    }
+    z = await doplnPoptavkuZKarty(z, store);
     zprava = textPotvrditHostovi(z, {
       cenaKc: cena.kc,
       seSlevou: cena.seSlevou,

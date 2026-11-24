@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  doplnKontaktZKarty,
   firmaZKodu,
   jmenoZKarty,
   nociMezi,
@@ -30,6 +31,16 @@ describe('poptavka', () => {
     const r = rozeberVlozene('+420604692573', 'CZ');
     expect(r.iso).toBe('CZ');
     expect(r.narodni.replace(/\s/g, '')).toBe('604692573');
+  });
+
+  it('doplní prázdný kontakt u už otevřené poptávky z karty', () => {
+    const d = doplnKontaktZKarty(
+      { jmeno: '', telefon: '', rezervace: '120260001' },
+      { jmeno: 'Dominik Hromada', telefon: null, telefonRezervace: '+420604111222' },
+    );
+    expect(d.zmeneno).toBe(true);
+    expect(d.jmeno).toBe('Dominik Hromada');
+    expect(d.telefon).toBe('+420604111222');
   });
 
   it('ověří termíny', () => {

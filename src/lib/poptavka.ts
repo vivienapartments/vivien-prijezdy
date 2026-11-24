@@ -76,6 +76,24 @@ export function jmenoZKarty(rec: { jmeno?: string | null } | null | undefined): 
   return (rec?.jmeno || '').trim();
 }
 
+/** Doplní chybějící jméno/telefon u věrné poptávky z karty rezervace. */
+export function doplnKontaktZKarty(
+  z: Pick<PoptavkaZaznam, 'jmeno' | 'telefon' | 'rezervace'>,
+  rec: {
+    jmeno?: string | null;
+    telefon?: string | null;
+    telefonRezervace?: string | null;
+  } | null | undefined,
+): { jmeno: string; telefon: string; zmeneno: boolean } {
+  const jmeno = (z.jmeno || '').trim() || jmenoZKarty(rec);
+  const telefon = (z.telefon || '').trim() || telefonZKarty(rec);
+  return {
+    jmeno,
+    telefon,
+    zmeneno: jmeno !== (z.jmeno || '').trim() || telefon !== (z.telefon || '').trim(),
+  };
+}
+
 export function normalizujKod(raw: string | null | undefined): string {
   return (raw || '')
     .trim()
