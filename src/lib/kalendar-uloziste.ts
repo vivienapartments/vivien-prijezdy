@@ -9,6 +9,7 @@ import {
 } from './kalendar-denni';
 import { nactiIcalUloziste, sloucitObsazenostIcal } from './kalendar-ical';
 import { KLIC_KALENDAR_DENNI, KLIC_KALENDAR_META, kalendarKlic } from './kalendar-klic';
+import { aplikujUvolneni, nactiKalendarUvolneni } from './kalendar-uvolneni';
 import { blokujeObsazenost } from './poptavka-vyrizeni';
 import type { ProcessStore, RezervaceRecord } from './store';
 
@@ -60,7 +61,10 @@ export async function sestavKalendarProHosta(store: ProcessStore): Promise<{
 }> {
   const { dny: zaklad, meta } = await nactiUlozenyKalendar(store);
   const ical = await nactiIcalUloziste(store);
-  const seZakladem = sloucitObsazenostIcal(zaklad, ical);
+  const seIcal = sloucitObsazenostIcal(zaklad, ical);
+  /** BH bloky („Žádný“) drží svět; u nás je lze ručně uvolnit pro poptávku. */
+  const uvolneni = await nactiKalendarUvolneni(store);
+  const seZakladem = aplikujUvolneni(seIcal, uvolneni);
   const seznam = await store.listRezervace();
   const rez: RezProKalendar[] = seznam.map((e) => rezervaceNaKalendar(e.record));
   try {

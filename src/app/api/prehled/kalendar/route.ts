@@ -14,9 +14,10 @@ import {
   pocetIcalNoci90,
 } from '@/lib/kalendar-ical';
 import { nactiUlozenyKalendar, sestavKalendarProHosta, ulozKalendar } from '@/lib/kalendar-uloziste';
+import { nactiKalendarUvolneni, pridejUvolneni } from '@/lib/kalendar-uvolneni';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore } from '@/lib/store';
-import { APT_IDS } from '@/lib/types';
+import { APT_IDS, type AptId } from '@/lib/types';
 import { ymdDnesPraha } from '@/lib/poptavka';
 
 export const dynamic = 'force-dynamic';
@@ -113,7 +114,12 @@ export async function POST(req: NextRequest) {
   const ct = req.headers.get('content-type') || '';
 
   if (ct.includes('application/json')) {
-    const telo = (await req.json()) as { cenyZapnuto?: boolean; icalNacist?: boolean };
+    const telo = (await req.json()) as {
+      cenyZapnuto?: boolean;
+      icalNacist?: boolean;
+      /** Ruční uvolnění pro poptávku (BH může zůstat zablokovaný). */
+      uvolnit?: { apt?: string; den?: string }[];
+    };
     if (telo.icalNacist) {
       const vysl = await obnovIcalObsazenost(store);
       const ical = await nactiIcalUloziste(store);
@@ -129,13 +135,28 @@ export async function POST(req: NextRequest) {
         { headers: noStore },
       );
     }
-    const { dny, meta } = await nactiUlozenyKalendar(store);
-    const dalsi = {
-      ...meta,
-      cenyZapnuto: telo.cenyZapnuto === false ? false : true,
-    };
-    await ulozKalendar(store, dny, dalsi);
-    return NextResponse.json({ ok: true, meta: dalsi }, { headers: noStore });
+    if (Array.isArray(telo.uvolnit) && telo.uvolnit.length) {
+      const polozky = telo.uvolnit
+        .map((p) => ({
+          apt: (p.apt || '').trim() as AptId,
+          den: (p.den || '').trim(),
+        }))
+        .filter((p) => APT_IDS.includes(p.apt) && /^\d{4}-\d{2}-\d{2}$/.test(p.den));
+      if (!polozky.length) return chyba(400, 'Špatné uvolnění.');
+      const uvolneni = await pridejUvolneni(store, polozky);
+      return NextResponse.json({ ok: true, uvolneni }, { headers: noStore });
+    }
+    if (typeof telo.cenyZapnuto === 'boolean') {
+      const { dny, meta } = await nactiUlozenyKalendar(store);
+      const dalsi = {
+        ...meta,
+        cenyZapnuto: telo.cenyZapnuto === false ? false : true,
+      };
+      await ulozKalendar(store, dny, dalsi);
+      return NextResponse.json({ ok: true, meta: dalsi }, { headers: noStore });
+    }
+    const uvolneni = await nactiKalendarUvolneni(store);
+    return NextResponse.json({ ok: true, uvolneni }, { headers: noStore });
   }
 
   const form = await req.formData();
