@@ -63,6 +63,7 @@ import {
 import { cekaPotvrzeniRozlouceni, ROZLOUCENI_ZPET_DNY } from '@/lib/odjezd-potvrzeni';
 import { jeProPohodu, textPohody } from '@/lib/pohoda';
 import {
+  hledejProPodekovani,
   hosteProPodekovani,
   odkazSmsPodekovani,
   stitekPodekovaniKanalu,
@@ -427,6 +428,7 @@ export function PrehledClient({
   const [pohodaOtevreno, setPohodaOtevreno] = useState(false);
   const [podekovaniOtevreno, setPodekovaniOtevreno] = useState(false);
   const [dotazPodekovani, setDotazPodekovani] = useState<string | null>(null);
+  const [hledaniPodekovani, setHledaniPodekovani] = useState('');
   const [shrnutiOtevreno, setShrnutiOtevreno] = useState(false);
   const [shrnutiHotoveOtevreno, setShrnutiHotoveOtevreno] = useState(false);
   const [dotazShrnuti, setDotazShrnuti] = useState<string | null>(null);
@@ -5785,6 +5787,10 @@ export function PrehledClient({
   const hostePohodaCekaji = hostePohoda.filter((r) => !r.pohodaDotaz);
   const hostePohodaHotove = hostePohoda.filter((r) => Boolean(r.pohodaDotaz));
   const hostePodekovaniSeznam = hosteProPodekovani(radky, dnes, ted);
+  const hostePodekovaniHledani = useMemo(
+    () => hledejProPodekovani(radky, hledaniPodekovani, dnes, ted),
+    [radky, hledaniPodekovani, dnes, ted],
+  );
   const hosteShrnutiVstupy = radky.map((r) => ({ ...r, ...shrnutiVstupRadku(r) }));
   const hosteShrnutiCekaji = hosteCekajiciShrnuti(hosteShrnutiVstupy, dnes);
   const hosteShrnutiHotove = hosteHotoveShrnuti(hosteShrnutiVstupy, dnes);
@@ -6484,6 +6490,109 @@ export function PrehledClient({
                   ) : null}
                 </li>
               ) : null}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+      {pohledDomu && zalozka === 'prijezdy' ? (
+        <section id="podekovani-hledat" className="ph-domu-radek">
+          <p className="ph-domu-radek__souhrn" style={{ marginBottom: '0.5rem' }}>
+            Najít hosta na poděkování
+          </p>
+          <label className="ph-pole" style={{ display: 'block', margin: '0 0.75rem 0.5rem' }}>
+            <span className="ph-skryty">Jméno nebo číslo rezervace</span>
+            <input
+              type="search"
+              value={hledaniPodekovani}
+              onChange={(e) => setHledaniPodekovani(e.target.value)}
+              placeholder="Jméno nebo číslo rezervace"
+              autoComplete="off"
+            />
+          </label>
+          {hledaniPodekovani.trim().length >= 2 && !hostePodekovaniHledani.length ? (
+            <p style={{ margin: '0 0.75rem 0.75rem', color: '#b7aa98', fontSize: '0.9rem' }}>
+              Nikdo se nenašel (musí mít předání a odjezd).
+            </p>
+          ) : null}
+          {hostePodekovaniHledani.length ? (
+            <ul className="ph-odjezdy ph-odjezdy--vnorene">
+              {hostePodekovaniHledani.map((row) => {
+                const odeslano = row.podekovaniKdy ? hodinaPraha(row.podekovaniKdy) : '';
+                const kanalStitek = stitekPodekovaniKanalu(row.podekovaniKanal);
+                const text =
+                  zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
+                  textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
+                const wa = row.telefonWa;
+                const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
+                const email = row.email.includes('@') ? row.email : '';
+                const odjezdText = row.odjezd
+                  ? `${Number(row.odjezd.slice(8, 10))}. ${Number(row.odjezd.slice(5, 7))}.`
+                  : '';
+                return (
+                  <li key={`hledani-${row.rezervace}`} className={odeslano ? 'is-hotovo' : 'is-akce'}>
+                    <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
+                      {row.jmeno || 'Host'}
+                    </button>
+                    {' · '}
+                    {row.apartman || 'bez apartmánu'}
+                    {odjezdText ? ` · odjezd ${odjezdText}` : null}
+                    {odeslano ? (
+                      <span>{` · Poděkování odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
+                    ) : null}
+                    <span className="ph-odjezdy__akce">
+                      {wa ? (
+                        <TlacitkoWhatsApp
+                          wa={wa}
+                          zprava={text}
+                          userAgent={userAgent}
+                          onPredOtevrenim={() => oznacPodekovani(row, 'whatsapp')}
+                        >
+                          WhatsApp
+                        </TlacitkoWhatsApp>
+                      ) : null}
+                      {telefonSms ? (
+                        <a
+                          className="ph-wa"
+                          href={odkazSmsPodekovani(telefonSms, text, jeIos(userAgent))}
+                          onClick={() => void oznacPodekovani(row, 'sms')}
+                        >
+                          SMS
+                        </a>
+                      ) : null}
+                      {email ? (
+                        <button type="button" className="ph-wa" onClick={() => setDotazPodekovani(row.rezervace)}>
+                          E-mail
+                        </button>
+                      ) : null}
+                      {odeslano ? (
+                        <button type="button" className="ph-kopie" onClick={() => void vratPodekovani(row)}>
+                          Vrátit
+                        </button>
+                      ) : null}
+                    </span>
+                    {dotazPodekovani === row.rezervace ? (
+                      <div className="ph-predano-dotaz">
+                        <p>
+                          Poslat e-mail na <span className="ph-tel">{email}</span>
+                          {odeslano ? ' znovu' : ''}?
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDotazPodekovani(null);
+                            void posliEmail(row, 'podekovani');
+                          }}
+                        >
+                          Ano
+                        </button>
+                        <button type="button" onClick={() => setDotazPodekovani(null)}>
+                          Zrušit
+                        </button>
+                      </div>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
         </section>

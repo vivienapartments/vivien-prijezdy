@@ -202,3 +202,52 @@ export function predvybratPodekovani(opts: {
   if (opts.odjezd < lim) return false;
   return isDepartureExpired(opts.odjezd, opts.now || new Date());
 }
+
+function bezDiakritiky(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Host už odjel a byl předán. Bez limitu dnů (pro ruční hledání starších).
+ */
+export function muzePodekovatKdykoliv(
+  r: {
+    stav: string;
+    predano?: string | null;
+    odjezd?: string | null;
+    nedojezdKdy?: string | null;
+  },
+  dnes: string,
+  now = new Date(),
+): boolean {
+  if (r.stav === 'zruseno' || r.nedojezdKdy) return false;
+  if (!r.predano || !r.odjezd) return false;
+  if (r.odjezd > dnes) return false;
+  return isDepartureExpired(r.odjezd, now);
+}
+
+/** Hledání podle jména nebo čísla rezervace (min. 2 znaky). */
+export function hledejProPodekovani<
+  T extends {
+    stav: string;
+    predano?: string | null;
+    odjezd: string | null;
+    nedojezdKdy?: string | null;
+    apartman: string | null;
+    jmeno?: string | null;
+    rezervace?: string;
+  },
+>(list: T[], dotaz: string, dnes: string, now = new Date()): T[] {
+  const q = bezDiakritiky(dotaz.trim());
+  if (q.length < 2) return [];
+  const nalezeni = list.filter((r) => {
+    if (!muzePodekovatKdykoliv(r, dnes, now)) return false;
+    const jmeno = bezDiakritiky(r.jmeno || '');
+    const rez = String(r.rezervace || '').toLowerCase();
+    return jmeno.includes(q) || rez.includes(q);
+  });
+  return seradPodekovani(nalezeni).slice(0, 25);
+}

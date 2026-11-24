@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  hledejProPodekovani,
   hosteProPodekovani,
   jeProPodekovani,
+  muzePodekovatKdykoliv,
   odkazSmsPodekovani,
   textPushPodekovani,
   textPodekovani,
@@ -116,5 +118,15 @@ describe('podekovani', () => {
         now: new Date('2026-11-20T15:00:00+01:00'),
       }),
     ).toBe(true);
+  });
+
+  it('ruční hledání najde i staršího hosta', () => {
+    const now = new Date('2026-11-20T15:00:00+01:00');
+    const stary = host({ rezervace: '9', odjezd: '2026-10-01', jmeno: 'Novák Petr' });
+    expect(jeProPodekovani(stary, '2026-11-20', now)).toBe(false);
+    expect(muzePodekovatKdykoliv(stary, '2026-11-20', now)).toBe(true);
+    expect(hledejProPodekovani([stary], 'novak', '2026-11-20', now).map((r) => r.rezervace)).toEqual([
+      '9',
+    ]);
   });
 });
