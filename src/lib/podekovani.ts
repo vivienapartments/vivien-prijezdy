@@ -3,7 +3,7 @@ import { isDepartureExpired } from './token';
 import type { GuideLang } from './types';
 
 /** Kolik dní po odjezdu zůstane host v seznamu poděkování. */
-export const PODEKOVANI_DNU = 3;
+export const PODEKOVANI_DNU = 14;
 
 /** Denní upomínka majiteli (Praha). */
 export const HODINA_PODEKOVANI = 17;

@@ -107,6 +107,30 @@ export function PoptavkyClient() {
     }
   }
 
+  async function smazat(id: string, jmeno: string) {
+    if (!window.confirm(`Smazat poptávku ${jmeno}? Termín se uvolní.`)) return;
+    setCekam(true);
+    setChyba('');
+    try {
+      const res = await fetch('/api/prehled/poptavka', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, akce: 'smazat' }),
+      });
+      const json = (await res.json()) as { ok?: boolean; error?: string };
+      if (!json.ok) {
+        setChyba(json.error || 'Nepovedlo se smazat.');
+        return;
+      }
+      setDetailId(null);
+      await nacti();
+    } catch {
+      setChyba('Nepovedlo se smazat.');
+    } finally {
+      setCekam(false);
+    }
+  }
+
   const pocetNev = radky.filter((r) => !r.vyrizena).length;
   const pocetVyr = radky.filter((r) => r.vyrizena).length;
 
@@ -222,6 +246,14 @@ export function PoptavkyClient() {
                   Zpět mezi nevyřízené
                 </button>
               )}
+              <button
+                type="button"
+                className="ph-btn"
+                disabled={cekam}
+                onClick={() => void smazat(r.id, r.jmeno)}
+              >
+                Smazat
+              </button>
             </div>
           </li>
         ))}

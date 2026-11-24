@@ -49,10 +49,10 @@ describe('podekovani', () => {
     expect(jeProPodekovani(host({ nedojezdKdy: 'x' }), dnes, now)).toBe(false);
   });
 
-  it('po 3 dnech zmizí', () => {
-    const r = host({ odjezd: '2026-11-16' });
+  it('po 14 dnech zmizí', () => {
     const now = new Date('2026-11-20T15:00:00+01:00');
-    expect(jeProPodekovani(r, '2026-11-20', now)).toBe(false);
+    expect(jeProPodekovani(host({ odjezd: '2026-11-05' }), '2026-11-20', now)).toBe(false);
+    expect(jeProPodekovani(host({ odjezd: '2026-11-06' }), '2026-11-20', now)).toBe(true);
   });
 
   it('řadí nejstarší odjezd nahoře', () => {

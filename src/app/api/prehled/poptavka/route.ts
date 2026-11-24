@@ -213,7 +213,7 @@ export async function POST(req: Request) {
       pripominkaNocniPocet: 0,
     };
   } else if (akce === 'do_vyrizenych') {
-    /* Archiv: pryč z nevyřízených, bez zprávy hostovi. */
+    /* Archiv: pryč z nevyřízených, uvolní termín, bez zprávy hostovi. */
     z = {
       ...z,
       stav: 'hotovo',
@@ -230,6 +230,10 @@ export async function POST(req: Request) {
       pripominkaPosledni: new Date().toISOString(),
       pripominkaNocniPocet: 0,
     };
+  } else if (akce === 'smazat') {
+    const bez = seznam.filter((x) => x.id !== id);
+    await store.ulozPoptavky(bez);
+    return NextResponse.json({ ok: true, smazano: true }, { headers: noStore });
   } else {
     return chyba(400, 'Neznámá akce.');
   }
