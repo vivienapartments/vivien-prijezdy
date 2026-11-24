@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '@/lib/i18n';
 import {
-  cistyStartUrlPlochy,
   jeAndroid,
   jeIos,
   jeStandalone,
@@ -28,6 +27,8 @@ type BeforeInstallPromptEvent = Event & {
 
 type Props = {
   lang: GuideLang;
+  /** Token odkazu hosta → skutečný manifest `/{token}/manifest.webmanifest`. */
+  token?: string | null;
   /** Jen telefon. Na PC se tlačítko neukáže (výzva z ?plocha=1 ano). */
   jenMobil?: boolean;
   /** Menší / tišší (např. dole u poděkování). */
@@ -43,6 +44,13 @@ type Props = {
   shortNazev?: string;
 };
 
+/** HTTPS manifest hosta. Blob ne (start_url vůči blob: nejde složit). */
+function hrefManifestu(token: string | null | undefined): string | null {
+  const raw = (token || '').trim();
+  if (!raw) return null;
+  return `/${encodeURIComponent(raw)}/manifest.webmanifest`;
+}
+
 function jeMobilZarizeni(): boolean {
   if (typeof window === 'undefined') return false;
   try {
@@ -53,38 +61,22 @@ function jeMobilZarizeni(): boolean {
   return /Android|iPhone|iPad|iPod|Mobile/i.test(window.navigator.userAgent || '');
 }
 
-const IKONY = [
-  { src: '/prehled/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-  { src: '/prehled/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-  {
-    src: '/prehled/icon-192-maskable.png',
-    sizes: '192x192',
-    type: 'image/png',
-    purpose: 'maskable',
-  },
-  {
-    src: '/prehled/icon-512-maskable.png',
-    sizes: '512x512',
-    type: 'image/png',
-    purpose: 'maskable',
-  },
-] as const;
-
 /**
  * Přidat na plochu.
  * ?plocha=1 / výzva: jen překryv + zlaté tlačítko (žádné automatické spuštění).
  * Android: beforeinstallprompt, jinak Chrome (intent), v Chrome bez smyčky + tip po 3 s.
  * iPhone: krátký návod Safari.
+ * Manifest: skutečná HTTPS route `/{token}/manifest.webmanifest` (ne blob).
  */
 export function PridejNaPlochu({
   lang,
+  token = null,
   jenMobil = true,
   tichy = false,
   nahled = false,
   skrytTlacitko = false,
   vyzva = false,
   onVyzvaZmena,
-  nazev = 'VIVIEN průvodce',
   shortNazev = 'VIVIEN',
 }: Props) {
   const [ready, setReady] = useState(false);
@@ -103,29 +95,19 @@ export function PridejNaPlochu({
     setReady(true);
     if (jeStandalone()) return;
 
-    const start = cistyStartUrlPlochy();
-    const manifest = {
-      name: nazev,
-      short_name: shortNazev,
-      start_url: start,
-      scope: '/',
-      display: 'standalone',
-      background_color: '#1c1712',
-      theme_color: '#1c1712',
-      lang: 'cs',
-      icons: [...IKONY],
-    };
-    const blobUrl = URL.createObjectURL(
-      new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' }),
-    );
+    const manifestHref = hrefManifestu(token);
     let link = document.querySelector<HTMLLinkElement>('link[data-vivien-pridej-manifest]');
-    if (!link) {
-      link = document.createElement('link');
-      link.rel = 'manifest';
-      link.setAttribute('data-vivien-pridej-manifest', '1');
-      document.head.appendChild(link);
+    if (manifestHref) {
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'manifest';
+        link.setAttribute('data-vivien-pridej-manifest', '1');
+        document.head.appendChild(link);
+      }
+      link.href = manifestHref;
+    } else if (link) {
+      link.remove();
     }
-    link.href = blobUrl;
 
     let apple = document.querySelector<HTMLLinkElement>('link[data-vivien-pridej-apple]');
     if (!apple) {
@@ -166,9 +148,8 @@ export function PridejNaPlochu({
     window.addEventListener('beforeinstallprompt', onBip);
     return () => {
       window.removeEventListener('beforeinstallprompt', onBip);
-      URL.revokeObjectURL(blobUrl);
     };
-  }, [nazev, shortNazev]);
+  }, [token, shortNazev]);
 
   /**
    * Tip do menu jen když už jsme v plném Chrome (`vchrome=1`)

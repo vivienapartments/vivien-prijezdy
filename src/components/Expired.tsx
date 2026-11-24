@@ -316,12 +316,12 @@ export function Expired({
         {!skrytPlochu ? (
           <PridejNaPlochu
             lang={lang}
+            token={token && token !== 'nahled' ? token : null}
             jenMobil={false}
             nahled={jeNahled}
             skrytTlacitko
             vyzva={vyzvaPlocha}
             onVyzvaZmena={setVyzvaPlocha}
-            nazev="VIVIEN průvodce"
             shortNazev="VIVIEN"
           />
         ) : null}

@@ -7,6 +7,7 @@ export async function GET(_req: Request, { params }: Props) {
   const { token } = await params;
   const cesta = `/${encodeURIComponent(token)}`;
   const telo = {
+    id: cesta,
     name: 'VIVIEN průvodce',
     short_name: 'VIVIEN',
     description: 'Osobní průvodce příjezdem VIVIEN Apartments',
