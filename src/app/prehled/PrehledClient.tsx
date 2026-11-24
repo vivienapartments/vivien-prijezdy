@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { useEffect, useMemo, useRef, useState, type FormEvent, type InputHTMLAttributes, type ReactNode } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import apartmanyJson from '@/data/apartmany.json';
 import {
@@ -5928,9 +5929,9 @@ export function PrehledClient({
           <h1>Přehled rezervací</h1>
         </div>
         <p className="ph-dnesek__akce" style={{ margin: '0 0 0.6rem' }}>
-          <a className="ph-dnesek__odkaz" href="/prehled/poptavky">
+          <Link className="ph-dnesek__odkaz" href="/prehled/poptavky">
             Poptávky
-          </a>
+          </Link>
         </p>
         <div className="ph-dny" role="tablist" aria-label="Výběr dne">
           {dnyNahled.map((d) => {

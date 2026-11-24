@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { PoptavkaDetail } from '../PoptavkaDetail';
 
 type Radek = {
@@ -122,9 +123,9 @@ export function PoptavkyClient() {
       ) : null}
 
       <p>
-        <a href="/prehled" style={{ color: '#c9a84c' }}>
+        <Link href="/prehled" style={{ color: '#c9a84c' }}>
           ← Zpět do přehledu
-        </a>
+        </Link>
       </p>
       <h1 style={{ color: '#c9a84c', fontFamily: 'Georgia, serif', fontWeight: 500 }}>Poptávky</h1>
       <p style={{ color: '#b7aa98', fontSize: '0.9rem' }}>Řazeno od nejnovější.</p>
