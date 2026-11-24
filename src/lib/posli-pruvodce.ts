@@ -2,9 +2,14 @@ import { tokenPoplatku } from './poplatek';
 import { createToken } from './token';
 import { sendGuestEmail } from './email-host';
 import type { RezervaceRecord } from './store';
+import { adresaPrujezd } from './verejna-adresa';
 
 function baseUrl(): string {
-  return (process.env.PRUVODCE_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
+  const lokalne = (process.env.PRUVODCE_BASE_URL || '').trim();
+  if (lokalne.includes('127.0.0.1') || lokalne.includes('localhost')) {
+    return lokalne.replace(/\/$/, '') || 'http://127.0.0.1:3000';
+  }
+  return adresaPrujezd();
 }
 
 export function odkazNaPruvodce(rec: RezervaceRecord): string | null {
