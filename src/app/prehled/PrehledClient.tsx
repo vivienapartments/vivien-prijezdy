@@ -86,6 +86,7 @@ import {
 } from '@/lib/shrnuti';
 import { odkazPruvodceMajitele } from '@/lib/pruvodce-majitel';
 import { TlacitkoWhatsApp } from '@/components/TlacitkoWhatsApp';
+import { druhZpravyNaOdchozi, pripravTextSmsWa } from '@/lib/odchozi-host';
 import { BranaTabulka, ParkovaniRadek } from './BranaPrehled';
 import { KalendarPrehled } from './KalendarPrehled';
 import { CoDoplnit, StitkyDoplnit14 } from './CoDoplnit';
@@ -2926,6 +2927,16 @@ export function PrehledClient({
     );
   }
 
+  function textSmsWaHostovi(
+    row: PrehledRadek,
+    text: string,
+    druhZpravy?: string,
+  ): { ok: true; text: string } | { ok: false; duvod: string } {
+    const email = row.email.includes('@') ? row.email : '';
+    const id = druhZpravy ?? volba[row.rezervace] ?? '';
+    return pripravTextSmsWa(text, email, druhZpravyNaOdchozi(id));
+  }
+
   async function oznacKanal(
     row: PrehledRadek,
     kanal: 'whatsapp' | 'sms',
@@ -2935,8 +2946,15 @@ export function PrehledClient({
     const zprava = druhZpravy ?? volba[row.rezervace] ?? seznam.find((z) => z.vychozi)?.id;
     if (!zprava) return null;
     const nazev = seznam.find((z) => z.id === zprava)?.nazev || 'zpráva';
+    const surovy = seznam.find((z) => z.id === zprava)?.text || row.zprava;
+    const lokalni = textSmsWaHostovi(row, surovy, zprava);
+    if (!lokalni.ok) {
+      setHlaska(lokalni.duvod);
+      return null;
+    }
     const ted = new Date().toISOString();
     const prefix = kanal === 'sms' ? 'SMS' : 'WhatsApp';
+    let textVen = lokalni.text;
     if (!ukazka) {
       const res = await fetch('/api/prehled/akce', {
         method: 'POST',
@@ -2948,10 +2966,17 @@ export function PrehledClient({
           jazyk: jazykRadku(row),
         }),
       });
+      let j: { error?: string; duvod?: string; text?: string } = {};
+      try {
+        j = (await res.json()) as typeof j;
+      } catch {
+        /* tělo nemusí být JSON */
+      }
       if (!res.ok) {
-        setHlaska(`${prefix} se nepodařilo zapsat.`);
+        setHlaska(j.error || j.duvod || `${prefix} se nepodařilo zapsat.`);
         return null;
       }
+      if (j.text) textVen = j.text;
     }
     setVolba((prev) => ({ ...prev, [row.rezervace]: zprava }));
     setRadky((prev) =>
@@ -2970,7 +2995,7 @@ export function PrehledClient({
           : r,
       ),
     );
-    return seznam.find((z) => z.id === zprava)?.text || row.zprava;
+    return textVen;
   }
 
   async function oznacWhatsApp(row: PrehledRadek, druhZpravy?: string) {
@@ -3108,8 +3133,10 @@ export function PrehledClient({
   function zpravaRadku(row: PrehledRadek): string {
     const seznam = zpravyRadku(row);
     const id = volba[row.rezervace] ?? seznam.find((z) => z.vychozi)?.id;
-    if (id === 'odjezd') return textDotazuOdjezdu(row);
-    return seznam.find((z) => z.id === id)?.text || row.zprava;
+    const surovy =
+      id === 'odjezd' ? textDotazuOdjezdu(row) : seznam.find((z) => z.id === id)?.text || row.zprava;
+    const cisty = textSmsWaHostovi(row, surovy, id);
+    return cisty.ok ? cisty.text : surovy;
   }
 
   async function ulozJazyk(row: PrehledRadek, jazyk: GuideLang) {
@@ -3293,7 +3320,16 @@ export function PrehledClient({
   }
 
   async function kopirovatZpravu(row: PrehledRadek) {
-    const text = zpravaRadku(row);
+    const seznam = zpravyRadku(row);
+    const id = volba[row.rezervace] ?? seznam.find((z) => z.vychozi)?.id;
+    const surovy =
+      id === 'odjezd' ? textDotazuOdjezdu(row) : seznam.find((z) => z.id === id)?.text || row.zprava;
+    const cisty = textSmsWaHostovi(row, surovy, id);
+    if (!cisty.ok) {
+      setHlaska(cisty.duvod);
+      return;
+    }
+    const text = cisty.text;
     try {
       await navigator.clipboard.writeText(text);
       setHlaska(`Zpráva pro #${row.rezervace} je ve schránce.`);
@@ -4710,11 +4746,10 @@ export function PrehledClient({
                   type="button"
                   disabled={!wa || cekam !== null}
                   onClick={() => {
-                    const text = zpravaRadku(row);
                     const druh = volba[row.rezervace] ?? zpravyHosta.find((z) => z.vychozi)?.id;
                     if (!wa || !druh) return;
-                    void oznacKanal(row, 'sms', druh).then((ok) => {
-                      if (ok == null && !ukazka) return;
+                    void oznacKanal(row, 'sms', druh).then((text) => {
+                      if (text == null) return;
                       window.location.href = smsOdkaz(`+${wa}`, text, jeIos(userAgent));
                     });
                   }}

@@ -1458,9 +1458,24 @@ export async function POST(request: Request): Promise<NextResponse> {
         ? zapisMajitele(rec, 'jazyk', { jazyk: lang }, `Jazyk → ${LANG_LABELS[lang]}`)
         : rec;
     if (akce === 'whatsapp' || akce === 'sms') {
+      const { druhZpravyNaOdchozi, overOdchoziHostovi } = await import('@/lib/odchozi-host');
+      const kanal = akce === 'sms' ? ('sms' as const) : ('whatsapp' as const);
+      const over = await overOdchoziHostovi({
+        kanal,
+        druh: druhZpravyNaOdchozi(druh),
+        emailCil: rec.emailHosta,
+        text: zprava.text,
+        rezervace: id,
+      });
+      if (!over.ok) {
+        return chyba(400, over.duvod || 'Zpráva zablokována (relay).');
+      }
       const prefix = akce === 'sms' ? 'SMS' : 'WhatsApp';
       await store.setRezervace(id, pridej(sJazykem, `${prefix}: ${zprava.nazev}`, patch));
-      return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
+      return NextResponse.json(
+        { ok: true, nazev: zprava.nazev, text: over.text || zprava.text },
+        { headers: noStore },
+      );
     }
     let komu = (rec.emailHosta || '').trim();
     if (druh === 'podekovani') {
