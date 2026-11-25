@@ -1,4 +1,4 @@
-# Odpovědi na bod 0 (PROMPT-FINAL-POPTAVKA) · 22. 11. 2026
+﻿# Odpovědi na bod 0 (PROMPT-FINAL-POPTAVKA) · 22. 11. 2026
 
 Pro Clauda před body 5–6. Nic se v Upstash neměnilo. Hesla a čísla hostů tu nejsou.
 
@@ -247,3 +247,36 @@ Tři nové texty (vykání), 13 jazyků:
 | da | Ledige datoer: {apt} | Nærmeste ledige dato: {termin} | Vælg denne dato |
 
 fi = en (stejně jako jinde).
+
+## 2026-11-25 18:30 · Booking relay · kompletní ochrana + seznam míst
+
+Centrální brána `src/lib/odchozi-host.ts` (`overOdchoziHostovi` / `pripravTextSmsWa`):
+- marketing na relay e-mail = zákaz + Telegram `automat`
+- provoz na relay = vyčistit slevu (více jazyků) a odkazy `/poptavka`, `/klub`, `/doporucitel`, `?od=`, `#doporucit`; nejde-li, zákaz + Telegram
+- SMS/WhatsApp marketing (poděkování) na telefon při relay e-mailu = povolit (nejde přes schránku Booking)
+- SMS/WhatsApp provoz při relay = stejné čištění obsahu
+
+### Seznam míst, odkud aplikace hostům píše
+
+| Místo | Kanál | Co | Ohlídání |
+|---|---|---|---|
+| Automat / inbox → `posliPruvodce` → `sendGuestEmail` | e-mail | průvodce (souhrn + tlačítko) | `odchozi-host` druh `provozni` |
+| Přehled menu zpráv → `posliEmailZpravy` | e-mail | check-in, brána, odjezd, pohoda, shrnutí, připraveno… | `odchozi-host` přes `druhZpravyNaOdchozi` (jen `podekovani` = marketing) |
+| Přehled poděkování e-mailem | e-mail | po odjezdu se slevou / doporučením | nejdřív skutečný e-mail (`podekovani.ts`); pak brána druh `podekovani` |
+| Přehled WhatsApp / SMS (odkaz wa.me / sms:) | WA / SMS | stejné menu zpráv | API `akce` + `PrehledClient` přes `pripravTextSmsWa` / `overOdchoziHostovi` |
+| Přehled poděkování WA / SMS | WA / SMS | marketing na telefon | povolené (ne přes relay schránku) |
+| Závady předání / po odjezdu | e-mail | `posliEmailZpravy` provozni | brána `provozni` |
+| Úklid → apartmán připravený | e-mail | `posliEmailZpravy` | brána `provozni` |
+| Doklad / faktura hostovi | e-mail | `posliEmailDokladu` | brána `provozni` |
+| Tip kamarádovi | e-mail | `/api/doporuceni/tip-email` | brána druh `tip-kamaradovi` |
+| Upozornění majiteli (Telegram / e-mail na info) | ne host | `upozorneni.ts` | netýká se relay |
+
+Testy: `odchozi-host.test.ts` včetně každého typu z menu (e-mail / SMS / WA). npm test 597/597.
+
+Klub na master nešel (zůstává Preview / `doporuceni`).
+
+### Preview /prehled/klienti
+- Záloha migrace: `.data/zalohy-klub/dop-2026-11-25T17-24-37-873Z.json` (0 klíčů `dop*`). Migraci v UI spustí majitel po přihlášení.
+- Sdílecí odkaz (Vercel Share, 7 dní, bez Vercel SSO; heslo přehledu `ADMIN_HESLO` zůstává):
+  (odkaz předán majiteli v chatu, platnost 7 dní)
+
