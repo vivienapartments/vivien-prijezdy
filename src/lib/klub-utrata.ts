@@ -120,6 +120,12 @@ export async function sparujNeboVytvorKlienta(
         if (!exist.role.includes('host')) exist.role = [...exist.role, 'host'];
         await ulozKlientKartu(store, exist);
       }
+      try {
+        const { pripojUtratuCekaKeKarte } = await import('./klub-utrata-ceka');
+        await pripojUtratuCekaKeKarte(store, exist);
+      } catch {
+        /* ignore */
+      }
       return exist;
     }
   }
@@ -153,6 +159,12 @@ export async function sparujNeboVytvorKlienta(
     zalozil: 'automat-prima',
   };
   await ulozKlientKartu(store, nova);
+  try {
+    const { pripojUtratuCekaKeKarte } = await import('./klub-utrata-ceka');
+    await pripojUtratuCekaKeKarte(store, nova);
+  } catch {
+    /* čekající útrata nesmí shodit kartu */
+  }
   return nova;
 }
 

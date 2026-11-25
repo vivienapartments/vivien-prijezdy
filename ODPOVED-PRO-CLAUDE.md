@@ -344,3 +344,21 @@ Plné URL:
 - https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/poptavka?zkouska=1&od=PETR7
 - https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-host-pred
 - https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-host-po
+
+## 2026-11-25 21:45 · Import útraty BH CSV (jen Preview, náhled)
+
+Návaznost na dávku 4–6. Ostrá / master nedotčeno. CSV zůstává v `.data/import` (necommittovat).
+
+### Pravidla náhledu
+1. Všechny přímé = zaplacené (cena po předání; Neuhrazeno/saldo se ignoruje).
+2. „anna“ + „anna tri dny“ → Anna Nirenberh (3 pobyty, 11 220 Kč).
+3. Bez jména / 10 099 Kč / poznámka místo jména → k ruční kontrole.
+4. EG.D, UNIQUE Textiles, ZŠ Český Dub → karty firem.
+5. Bez karty/kontaktu → čekající útrata; přiřadí se při příštím příjezdu / check-inu, jinak Spojit.
+6. Zápis až po potvrzení v `/prehled/klienti`.
+
+### Sdílecí odkaz náhledu
+https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/nahled-import-bh
+
+Lokálně (dev): http://localhost:3000/nahled-import-bh
+Potvrzení zápisu: `/prehled/klienti` → Náhled exportu 25. 11. → Potvrdit zápis BH CSV (až řeknete).

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import type { KlubPravidla } from '@/lib/klub-pravidla';
+import type { ImportBhNahled, UtrataCekaPolozka } from '@/lib/klub-import-bh-csv';
 
 type KartaUi = {
   id: string;
@@ -16,6 +17,15 @@ type KartaUi = {
   slevaPct: number;
 };
 
+type NahledXlsx = {
+  souhrn: { host: string; pocet: number; utrata: number; uroven: string }[];
+  primaHoste: { jmeno: string; telefon: string; email: string; utrata: number }[];
+};
+
+function kc(n: number) {
+  return `${n.toLocaleString('cs-CZ')} Kč`;
+}
+
 export function KlientiClient() {
   const [karty, setKarty] = useState<KartaUi[]>([]);
   const [pravidla, setPravidla] = useState<KlubPravidla | null>(null);
@@ -24,10 +34,10 @@ export function KlientiClient() {
   const [editDelka14, setEditDelka14] = useState('15');
   const [editOdmena1, setEditOdmena1] = useState('5');
   const [editOdmena2, setEditOdmena2] = useState('2');
-  const [nahledImport, setNahledImport] = useState<{
-    souhrn: { host: string; pocet: number; utrata: number; uroven: string }[];
-    primaHoste: { jmeno: string; telefon: string; email: string; utrata: number }[];
-  } | null>(null);
+  const [nahledImport, setNahledImport] = useState<NahledXlsx | null>(null);
+  const [nahledBh, setNahledBh] = useState<ImportBhNahled | null>(null);
+  const [utrataCeka, setUtrataCeka] = useState<UtrataCekaPolozka[]>([]);
+  const [spojVyber, setSpojVyber] = useState<Record<string, string>>({});
   const [utrataId, setUtrataId] = useState('');
   const [utrataCastka, setUtrataCastka] = useState('');
   const [utrataPozn, setUtrataPozn] = useState('');
@@ -38,9 +48,11 @@ export function KlientiClient() {
       ok?: boolean;
       karty?: KartaUi[];
       pravidla?: KlubPravidla;
+      utrataCeka?: UtrataCekaPolozka[];
     };
     if (json.ok) {
       setKarty(json.karty || []);
+      setUtrataCeka(json.utrataCeka || []);
       if (json.pravidla) {
         setPravidla(json.pravidla);
         const d7 = json.pravidla.slevaDelka.find((x) => x.odNoci === 7);
@@ -115,10 +127,10 @@ export function KlientiClient() {
     form.set('akce', 'import-nahled');
     form.set('soubor', file);
     const res = await fetch('/api/prehled/klienti', { method: 'POST', body: form });
-    const json = (await res.json()) as { ok?: boolean; nahled?: typeof nahledImport };
+    const json = (await res.json()) as { ok?: boolean; nahled?: NahledXlsx };
     if (json.ok && json.nahled) {
       setNahledImport(json.nahled);
-      setHlaska(`Náhled: ${json.nahled.souhrn.length} hostů. Zápis až po potvrzení.`);
+      setHlaska(`Náhled xlsx: ${json.nahled.souhrn.length} hostů. Zápis až po potvrzení.`);
     } else {
       setHlaska('Náhled xlsx se nepovedl.');
     }
@@ -138,6 +150,83 @@ export function KlientiClient() {
       await nacti();
     } else {
       setHlaska('Import se nezapsal (klub vypnutý?).');
+    }
+  }
+
+  async function nactiNahledBhPrime() {
+    const res = await fetch('/api/prehled/klienti', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ akce: 'import-bh-prime-nahled' }),
+    });
+    const json = (await res.json()) as { ok?: boolean; nahled?: ImportBhNahled };
+    if (json.ok && json.nahled) {
+      setNahledBh(json.nahled);
+      setHlaska(
+        `Náhled BH CSV: ${json.nahled.souhrn.length} souhrnů, ${json.nahled.kontrola.length} k kontrole. Zápis až po potvrzení.`,
+      );
+    } else {
+      setHlaska('Náhled BH CSV se nepovedl.');
+    }
+  }
+
+  async function nahledBhCsv(file: File) {
+    const form = new FormData();
+    form.set('akce', 'import-bh-csv-nahled');
+    form.set('soubor', file);
+    const res = await fetch('/api/prehled/klienti', { method: 'POST', body: form });
+    const json = (await res.json()) as { ok?: boolean; nahled?: ImportBhNahled };
+    if (json.ok && json.nahled) {
+      setNahledBh(json.nahled);
+      setHlaska(
+        `Náhled z nahraného CSV: ${json.nahled.souhrn.length} souhrnů. Zápis až po potvrzení.`,
+      );
+    } else {
+      setHlaska('Náhled CSV se nepovedl.');
+    }
+  }
+
+  async function potvrdBhCsv() {
+    if (!nahledBh) return;
+    const res = await fetch('/api/prehled/klienti', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ akce: 'import-bh-csv-potvrdit', nahled: nahledBh }),
+    });
+    const json = (await res.json()) as {
+      ok?: boolean;
+      zapsano?: number;
+      ceka?: number;
+      firmy?: number;
+    };
+    if (json.ok) {
+      setHlaska(
+        `BH import zapsán: ${json.zapsano || 0} karet, ${json.firmy || 0} firem, ${json.ceka || 0} čekajících.`,
+      );
+      setNahledBh(null);
+      await nacti();
+    } else {
+      setHlaska('BH import se nezapsal (klub vypnutý?).');
+    }
+  }
+
+  async function spojitCeka(cekaId: string) {
+    const klientId = spojVyber[cekaId];
+    if (!klientId) {
+      setHlaska('Vyberte kartu ke spojení.');
+      return;
+    }
+    const res = await fetch('/api/prehled/klienti', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ akce: 'utrata-ceka-spojit', cekaId, klientId }),
+    });
+    const json = (await res.json()) as { ok?: boolean; castka?: number };
+    if (json.ok) {
+      setHlaska(`Spojeno: ${kc(json.castka || 0)}.`);
+      await nacti();
+    } else {
+      setHlaska('Spojení se nepovedlo (klub vypnutý?).');
     }
   }
 
@@ -163,6 +252,10 @@ export function KlientiClient() {
     }
   }
 
+  const bhPriradit = nahledBh?.souhrn.filter((s) => s.akce === 'priradit') || [];
+  const bhFirmy = nahledBh?.souhrn.filter((s) => s.akce === 'firma') || [];
+  const bhCeka = nahledBh?.cekajici || [];
+
   return (
     <main className="ph" style={{ padding: '1rem', maxWidth: 720, margin: '0 auto' }}>
       <p>
@@ -172,7 +265,7 @@ export function KlientiClient() {
       </p>
       <h1 style={{ color: '#c9a84c', fontFamily: 'Georgia, serif' }}>Klienti</h1>
       <p style={{ color: '#b7aa98', fontSize: '0.9rem' }}>
-        Dávka 2 klubu. Útrata, import xlsx, párování. Hostům se nic nemění, dokud není klub zapnutý.
+        Útrata, import BH, párování. Hostům se nic nemění, dokud není klub zapnutý.
       </p>
       {hlaska ? <p style={{ color: '#c9a84c' }}>{hlaska}</p> : null}
 
@@ -213,8 +306,11 @@ export function KlientiClient() {
               />
             </label>
             <p style={{ color: '#b7aa98', margin: 0 }}>
-              Sleva úrovně od: {pravidla.slevaUrovneOd === 'po-prvnim-odjezdu' ? 'po prvním odjezdu' : 'od první poptávky'}.
-              Rezervované kódy: {pravidla.rezervovaneKody.join(', ')}.
+              Sleva úrovně od:{' '}
+              {pravidla.slevaUrovneOd === 'po-prvnim-odjezdu'
+                ? 'po prvním odjezdu'
+                : 'od první poptávky'}
+              . Rezervované kódy: {pravidla.rezervovaneKody.join(', ')}.
             </p>
             <button type="button" onClick={() => void ulozPravidla()} style={btn}>
               Uložit pravidla
@@ -255,7 +351,11 @@ export function KlientiClient() {
           </label>
           <label>
             Částka Kč{' '}
-            <input value={utrataCastka} onChange={(e) => setUtrataCastka(e.target.value)} style={inp} />
+            <input
+              value={utrataCastka}
+              onChange={(e) => setUtrataCastka(e.target.value)}
+              style={inp}
+            />
           </label>
           <label>
             Poznámka{' '}
@@ -272,9 +372,131 @@ export function KlientiClient() {
       </section>
 
       <section style={{ marginBottom: '1.4rem' }}>
+        <h2 style={{ fontSize: '1rem' }}>Import útraty BH přímé (CSV)</h2>
+        <p style={{ color: '#b7aa98', fontSize: '0.85rem' }}>
+          Export přímých rezervací. Všechny jako zaplacené. Anna / firmy / kontrola /
+          čekající. Nejdřív náhled, zápis až po potvrzení.
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+          <button type="button" onClick={() => void nactiNahledBhPrime()} style={btn}>
+            Náhled exportu 25. 11.
+          </button>
+          <input
+            type="file"
+            accept=".csv,text/csv"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void nahledBhCsv(f);
+            }}
+          />
+        </div>
+        {nahledBh ? (
+          <div style={{ marginTop: 12, color: '#efe6d8', fontSize: '0.9rem' }}>
+            <p style={{ color: '#c9a84c', marginBottom: 6 }}>
+              Přiřadit teď ({bhPriradit.length})
+            </p>
+            <ul>
+              {bhPriradit.map((s) => (
+                <li key={`p-${s.host}-${s.rezervace.join('-')}`}>
+                  {s.host} · {s.pocet} pobytů · {kc(s.utrata)} · {s.uroven}
+                </li>
+              ))}
+            </ul>
+            <p style={{ color: '#c9a84c', marginBottom: 6 }}>Firmy ({bhFirmy.length})</p>
+            <ul>
+              {bhFirmy.map((s) => (
+                <li key={`f-${s.host}`}>
+                  {s.host} · {s.pocet} pobytů · {kc(s.utrata)} · {s.uroven}
+                </li>
+              ))}
+            </ul>
+            <p style={{ color: '#c9a84c', marginBottom: 6 }}>
+              Čekající na kartu ({bhCeka.length})
+            </p>
+            <ul>
+              {bhCeka.map((s) => (
+                <li key={`c-${s.host}-${s.rezervace.join('-')}`}>
+                  {s.host} · {s.pocet} pobytů · {kc(s.utrata)} · {s.uroven}
+                </li>
+              ))}
+            </ul>
+            <p style={{ color: '#c9a84c', marginBottom: 6 }}>
+              K ruční kontrole ({nahledBh.kontrola.length})
+            </p>
+            <ul>
+              {nahledBh.kontrola.map((r) => (
+                <li key={`k-${r.rezervace}`}>
+                  {r.oznaceni || r.cilJmeno || r.rezervace} ·{' '}
+                  {r.mena === 'EUR' ? `${r.castka} €` : kc(r.castka)} · {r.duvod}
+                </li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => void potvrdBhCsv()} style={btn}>
+              Potvrdit zápis BH CSV
+            </button>
+          </div>
+        ) : null}
+      </section>
+
+      {utrataCeka.length ? (
+        <section style={{ marginBottom: '1.4rem' }}>
+          <h2 style={{ fontSize: '1rem' }}>Čekající útrata ({utrataCeka.length})</h2>
+          <p style={{ color: '#b7aa98', fontSize: '0.85rem' }}>
+            Při nejistotě spojte s kartou ručně.
+          </p>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {utrataCeka.map((u) => (
+              <li
+                key={u.id}
+                style={{
+                  borderBottom: '1px solid #3d342a',
+                  padding: '0.65rem 0',
+                  color: '#efe6d8',
+                  fontSize: '0.9rem',
+                }}
+              >
+                <strong>{u.jmenoZobrazeni}</strong> · {kc(u.castka)}
+                <br />
+                <span style={{ color: '#b7aa98', fontSize: '0.82rem' }}>
+                  rez. {u.rezervace.join(', ')}
+                </span>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                    marginTop: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <select
+                    value={spojVyber[u.id] || ''}
+                    onChange={(e) =>
+                      setSpojVyber((prev) => ({ ...prev, [u.id]: e.target.value }))
+                    }
+                    style={{ ...inp, width: '100%', maxWidth: 260 }}
+                  >
+                    <option value="">karta…</option>
+                    {karty.map((k) => (
+                      <option key={k.id} value={k.id}>
+                        {k.jmeno} {k.prijmeni} · {k.kod}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => void spojitCeka(u.id)} style={btn}>
+                    Spojit
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section style={{ marginBottom: '1.4rem' }}>
         <h2 style={{ fontSize: '1rem' }}>Import útraty z BH (xlsx)</h2>
         <p style={{ color: '#b7aa98', fontSize: '0.85rem' }}>
-          Jen řádky bez agentury / přímé. Nejdřív náhled, zápis až po potvrzení. Zároveň seznam přímých hostů pro poděkování.
+          Jen řádky bez agentury / přímé. Nejdřív náhled, zápis až po potvrzení.
         </p>
         <input
           type="file"
@@ -314,7 +536,9 @@ export function KlientiClient() {
       <section>
         <h2 style={{ fontSize: '1rem' }}>Seznam ({karty.length})</h2>
         {!karty.length ? (
-          <p style={{ color: '#b7aa98' }}>Zatím žádní klienti. Spusťte migraci nebo přijdou v dalších dávkách.</p>
+          <p style={{ color: '#b7aa98' }}>
+            Zatím žádní klienti. Spusťte migraci nebo přijdou v dalších dávkách.
+          </p>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {karty.map((k) => (
@@ -332,7 +556,8 @@ export function KlientiClient() {
                 </strong>{' '}
                 · {k.kod} · {k.typ}
                 <br />
-                {k.urovenNazev} ({k.slevaPct} %) · útrata {k.utrataKc} Kč · kredit {k.kreditKc} Kč
+                {k.urovenNazev} ({k.slevaPct} %) · útrata {k.utrataKc} Kč · kredit{' '}
+                {k.kreditKc} Kč
               </li>
             ))}
           </ul>
