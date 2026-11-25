@@ -31,12 +31,41 @@ function mail(partial: Partial<InboxMail> & Pick<InboxMail, 'messageId' | 'from'
   };
 }
 
+/** Den v Praze (YYYY-MM-DD) o N dní od teď, ať testy nepadají na skipped_past. */
+function ymdPrahaOffset(offsetDni: number): string {
+  const d = new Date(Date.now() + offsetDni * 86400000);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Prague',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+}
+
+function czZYmd(ymd: string): string {
+  const [y, m, d] = ymd.split('-');
+  return `${Number(d)}.${Number(m)}.${y}`;
+}
+
+const PRIJEZD_YMD = ymdPrahaOffset(14);
+const ODJEZD_YMD = ymdPrahaOffset(16);
+const PRIJEZD_CZ = czZYmd(PRIJEZD_YMD);
+const ODJEZD_CZ = czZYmd(ODJEZD_YMD);
+const PRIJEZD2_YMD = ymdPrahaOffset(20);
+const ODJEZD2_YMD = ymdPrahaOffset(22);
+const PRIJEZD2_CZ = czZYmd(PRIJEZD2_YMD);
+const ODJEZD2_CZ = czZYmd(ODJEZD2_YMD);
+const PRIJEZD_KRATKY_YMD = ymdPrahaOffset(10);
+const ODJEZD_KRATKY_YMD = ymdPrahaOffset(11);
+const PRIJEZD_KRATKY_CZ = czZYmd(PRIJEZD_KRATKY_YMD);
+const ODJEZD_KRATKY_CZ = czZYmd(ODJEZD_KRATKY_YMD);
+
 const BLOCK = `
 VIVIEN-DATA v1
 REZERVACE: 120260530
 APARTMAN: Pohodlí v tlumených tónech
-PRIJEZD: 16.11.2026
-ODJEZD: 18.11.2026
+PRIJEZD: ${PRIJEZD_CZ}
+ODJEZD: ${ODJEZD_CZ}
 NOCI: 2
 OSOB: 2
 EMAIL: host@example.com
@@ -271,7 +300,7 @@ Original-Message-ID: <x>
         rezervace: {
           '120260530': {
             status: 'odeslano',
-            odjezd: '2026-11-18',
+            odjezd: ODJEZD_YMD,
             emailHosta: 'host@example.com',
             processedAt: '2026-10-01T00:00:00.000Z',
             messageId: 'stary-mail',
@@ -306,9 +335,9 @@ Original-Message-ID: <x>
     'Zarezervováno',
     '6.10.2026',
     'Příjezd',
-    '20.11.2026',
+    PRIJEZD2_CZ,
     'Odjezd',
-    '22.11.2026',
+    ODJEZD2_CZ,
     'Agentura',
     'Booking.com',
     'Klient',
@@ -389,8 +418,8 @@ Original-Message-ID: <x>
         ...prazdnaRezervace(id, '2026-10-14T08:00:00.000Z'),
         stav: 'odeslano',
         apartman: 'V1',
-        prijezd: '2026-11-20',
-        odjezd: '2026-11-22',
+        prijezd: PRIJEZD2_YMD,
+        odjezd: ODJEZD2_YMD,
         noci: 2,
         osob: 2,
         jazyk: 'cs',
@@ -445,13 +474,14 @@ Original-Message-ID: <x>
     const { zapisMajitele } = await import('./rucni-pole');
     const store = tmpStore();
     const id = '100000010';
+    const odjezdDelsi = ymdPrahaOffset(25);
     const zaklad = zapisMajitele(
       {
         ...prazdnaRezervace(id, '2026-10-14T08:00:00.000Z'),
         stav: 'odeslano',
         apartman: 'V1',
-        prijezd: '2026-11-20',
-        odjezd: '2026-11-25',
+        prijezd: PRIJEZD2_YMD,
+        odjezd: odjezdDelsi,
         noci: 5,
         osob: 2,
         jazyk: 'cs',
@@ -468,16 +498,14 @@ Original-Message-ID: <x>
       interni({
         messageId: 'modifikace-termin@test',
         subject: `Vivien Apartmens Character and Atmosphere | Modifikace rezervace - #${id}`,
-        text: TELO.replaceAll('100000001', id)
-          .replace('20.11.2026', '20.11.2026')
-          .replace('22.11.2026', '22.11.2026'),
+        text: TELO.replaceAll('100000001', id),
       }),
       store,
     );
     expect(item.status).toBe('odeslano');
     const po = await store.getRezervace(id);
-    expect(po?.prijezd).toBe('2026-11-20');
-    expect(po?.odjezd).toBe('2026-11-22');
+    expect(po?.prijezd).toBe(PRIJEZD2_YMD);
+    expect(po?.odjezd).toBe(ODJEZD2_YMD);
     expect(po?.noci).toBe(2);
     expect(po?.navrhy.some((n) => n.pole === 'prijezd' || n.pole === 'odjezd' || n.pole === 'noci')).toBe(false);
     expect(po?.historie.some((h) => h.co.startsWith('Rezervace se změnila'))).toBe(true);
@@ -524,8 +552,8 @@ Original-Message-ID: <x>
         jmeno: 'Eva Dvořáková',
         telefon: '777 123 456',
         apartman: 'V3',
-        prijezd: '2026-11-16',
-        odjezd: '2026-11-18',
+        prijezd: PRIJEZD_YMD,
+        odjezd: ODJEZD_YMD,
         osob: 2,
         zdroj: 'Booking',
       },
@@ -617,8 +645,8 @@ Original-Message-ID: <x>
           'Jméno: Jan Novák',
           'E-mail: jan@example.com',
           'Telefon: 777 111 222',
-          'Příjezd: 16.11.2026',
-          'Odjezd: 18.11.2026',
+          `Příjezd: ${PRIJEZD_CZ}`,
+          `Odjezd: ${ODJEZD_CZ}`,
           'Typ ubytování: Večerní elegance',
           'Počet nocí: 2',
         ].join('\n'),
@@ -631,8 +659,8 @@ Original-Message-ID: <x>
     expect(rec?.stitek).toBe('info');
     expect(rec?.jmeno).toBe('Jan Novák');
     expect(rec?.apartman).toBe('V3');
-    expect(rec?.prijezd).toBe('2026-11-16');
-    expect(rec?.odjezd).toBe('2026-11-18');
+    expect(rec?.prijezd).toBe(PRIJEZD_YMD);
+    expect(rec?.odjezd).toBe(ODJEZD_YMD);
     expect(rec?.telefonRezervace).toBe('+420777111222');
     expect(rec?.noci).toBe(2);
   });
@@ -1084,8 +1112,8 @@ Original-Message-ID: <x>
 VIVIEN-DATA v1
 REZERVACE: 120260541
 APARTMAN: Ušlechtilý kontrast
-PRIJEZD: 14.11.2026
-ODJEZD: 15.11.2026
+PRIJEZD: ${PRIJEZD_KRATKY_CZ}
+ODJEZD: ${ODJEZD_KRATKY_CZ}
 NOCI: 1
 OSOB: 2
 EMAIL: host@example.com
@@ -1132,8 +1160,8 @@ KONEC
       jmeno: 'Vivien Apartmens Character and Atmosphere',
       krestni: 'Vivien',
       apartman: 'V1',
-      prijezd: '2026-11-01',
-      odjezd: '2026-11-02',
+      prijezd: ymdPrahaOffset(1),
+      odjezd: ymdPrahaOffset(2),
       jazyk: 'en',
       stav: 'bez_checkinu',
       stitek: 'info',
@@ -1151,8 +1179,8 @@ KONEC
 VIVIEN-DATA v1
 REZERVACE: 120269001
 APARTMAN: Ušlechtilý kontrast
-PRIJEZD: 20.11.2026
-ODJEZD: 22.11.2026
+PRIJEZD: ${PRIJEZD2_CZ}
+ODJEZD: ${ODJEZD2_CZ}
 NOCI: 2
 OSOB: 2
 EMAIL: host@example.com
@@ -1175,8 +1203,8 @@ KONEC
     expect(rec?.jmeno).toBe('Anna Nagy');
     expect(rec?.jmeno).not.toContain('Vivien');
     expect(rec?.apartman).toBe('V4');
-    expect(rec?.prijezd).toBe('2026-11-20');
-    expect(rec?.odjezd).toBe('2026-11-22');
+    expect(rec?.prijezd).toBe(PRIJEZD2_YMD);
+    expect(rec?.odjezd).toBe(ODJEZD2_YMD);
     expect(rec?.jazyk).toBe('hu');
     expect(rec?.narodnost).toBe('HUN');
     expect(rec?.casPrijezdu).toBe('16:30');
@@ -1195,8 +1223,8 @@ KONEC
       ...prazdnaRezervace('120269002', '2026-10-14T08:00:00.000Z'),
       jmeno: 'Vivien Apartmens Character and Atmosphere',
       apartman: 'V1',
-      prijezd: '2026-11-01',
-      odjezd: '2026-11-02',
+      prijezd: ymdPrahaOffset(1),
+      odjezd: ymdPrahaOffset(2),
       jazyk: 'en',
       emailHosta: 'host@example.com',
       accessPin: '9999',
@@ -1219,8 +1247,8 @@ KONEC
 VIVIEN-DATA v1
 REZERVACE: 120269002
 APARTMAN: Pohodlí v tlumených tónech
-PRIJEZD: 16.11.2026
-ODJEZD: 18.11.2026
+PRIJEZD: ${PRIJEZD_CZ}
+ODJEZD: ${ODJEZD_CZ}
 NOCI: 2
 OSOB: 2
 EMAIL: host@example.com
@@ -1252,8 +1280,8 @@ KONEC
       ...prazdnaRezervace('120269003', '2026-10-14T08:00:00.000Z'),
       jmeno: 'Vivien Apartmens Character and Atmosphere',
       apartman: 'V2',
-      prijezd: '2026-11-01',
-      odjezd: '2026-11-03',
+      prijezd: ymdPrahaOffset(1),
+      odjezd: ymdPrahaOffset(3),
       jazyk: 'cs',
       emailHosta: 'rucne@example.com',
       accessPin: '4321',
@@ -1286,8 +1314,8 @@ KONEC
     const rec = {
       ...prazdnaRezervace('120269001', '2026-10-14T08:00:00.000Z'),
       apartman: 'V4' as const,
-      prijezd: '2026-11-20',
-      odjezd: '2026-11-22',
+      prijezd: PRIJEZD2_YMD,
+      odjezd: ODJEZD2_YMD,
       jazyk: 'hu' as const,
       accessPin: '1234',
     };

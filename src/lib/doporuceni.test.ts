@@ -68,7 +68,7 @@ describe('generujKod', () => {
 });
 
 describe('doporuceni texty', () => {
-  it('všech 13 jazyků má všechny klíče', () => {
+  it('všechny jazyky mají všechny klíče', () => {
     for (const lang of GUIDE_LANGS) {
       const t = doporuceniTexty(lang);
       for (const k of DOPORUCENI_TEXT_KEYS) {

@@ -70,7 +70,7 @@ const KLICE: (keyof PoptavkaTexty)[] = [
 ];
 
 describe('poptavkaTexty', () => {
-  it('u věrnosti má všech 13 jazyků neprázdné povinné klíče', () => {
+  it('u věrnosti má všechny jazyky neprázdné povinné klíče', () => {
     expect(POPTAVKA_VERNOST_LANGS).toHaveLength(GUIDE_LANGS.length);
     for (const lang of POPTAVKA_VERNOST_LANGS) {
       const t = poptavkaTexty(lang, 'vernost');

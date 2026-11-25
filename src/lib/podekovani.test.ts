@@ -102,7 +102,7 @@ describe('podekovani', () => {
     expect(treti).toBe(pozdeji);
   });
 
-  it('všech 13 jazyků má obě verze', () => {
+  it('všechny jazyky mají obě verze', () => {
     for (const lang of GUIDE_LANGS) {
       expect(ZPRAVA_PODEKOVANI[lang].length).toBeGreaterThan(20);
       expect(ZPRAVA_PODEKOVANI_POZDEJI[lang].length).toBeGreaterThan(20);

@@ -22,7 +22,7 @@ describe('poptavka-pruvodce Discover', () => {
     expect(pruvodceText('da', 'quiz.q1.text')).toContain('lejligheden');
   });
 
-  it('všech 13 jazyků má neprázdné zobrazované klíče', async () => {
+  it('všechny jazyky mají neprázdné zobrazované klíče', async () => {
     const { QUIZ_LANGS, QUIZ_TEXTS } = await import('./poptavka-pruvodce-data');
     const keys = Object.keys(QUIZ_TEXTS.en).filter((k) => !k.includes('.body'));
     for (const lang of QUIZ_LANGS) {

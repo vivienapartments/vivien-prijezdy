@@ -171,8 +171,9 @@ describe('průvodce se otevře až po údajích', () => {
     const text = html('auto', false);
     expect(text).toContain('id="pv-brana-parkoviste"');
     expect(text).toContain('Chelčického 95/15');
-    expect(text).toContain('mapy.com/fnc/v1/route');
     expect(text).toContain('google.com/maps/dir');
+    expect(text).toContain('travelmode=driving');
+    expect(text).not.toContain('mapy.com');
     expect(text).not.toContain('id="pv-zadost-o-parkovani"');
   });
 
@@ -184,7 +185,8 @@ describe('průvodce se otevře až po údajích', () => {
     expect(sekce).toContain('class="pv-sbal"');
     expect(sekce).toContain('Rozbalit');
     expect(sekce).toContain('Sbalit');
-    expect(sekce).toContain('mapy.com/fnc/v1/showmap');
+    expect(sekce).toContain('google.com/maps');
+    expect(sekce).not.toContain('mapy.com');
     expect(text).not.toContain('id="pv-brana-parkoviste"');
   });
 
@@ -198,9 +200,10 @@ describe('průvodce se otevře až po údajích', () => {
     // Prompt 64: K domu + Dům spojené; stará kotva zůstává jako alias.
     expect(text).toContain('id="pv-pesky-parkoviste-dum"');
     expect(cast('pv-prijezd-k-domu')).toMatch(/pv-flow__card"><details class="pv-sbal"/);
-    expect(cast('pv-prijezd-k-domu')).toContain('routeType=foot_fast');
+    expect(cast('pv-prijezd-k-domu')).toContain('google.com/maps');
+    expect(cast('pv-prijezd-k-domu')).toContain('travelmode=walking');
     expect(cast('pv-prijezd-k-domu')).toContain('fasada');
-    expect(cast('pv-prijezd-k-domu')).not.toContain('mapy.com/fnc/v1/showmap');
+    expect(cast('pv-prijezd-k-domu')).not.toContain('mapy.com');
     expect(text).toContain('Rozbalit');
   });
 
