@@ -101,3 +101,20 @@ export function verifyEmailOrigin(input: OriginInput): OriginResult {
 
   return { ok: false, reason: 'Neznámý odesílatel' };
 }
+
+/**
+ * Ruční šablona TYP: PRIMA (Better Hotel → info@).
+ * Musí projít ověřením odesílatele a mít platný KLIC (i při přeposlání).
+ */
+export function overTypPrimaOdesilatel(input: OriginInput): OriginResult {
+  const base = verifyEmailOrigin(input);
+  if (!base.ok) return base;
+  if (!input.bhKlic) {
+    return { ok: false, reason: 'Chybí BH_KLIC v env' };
+  }
+  const klic = extractKlic(input.body);
+  if (!klic || klic !== input.bhKlic) {
+    return { ok: false, reason: 'TYP: PRIMA bez platného KLIC' };
+  }
+  return base;
+}

@@ -204,6 +204,33 @@ KONEC`,
     expect(r.zdroj).toBe('Booking');
   });
 
+  it('ACC_PRICE / SALDO / CHECKIN_URL bez TYP: PRIMA se také přečtou', () => {
+    const r = inspectVivienMail(
+      `VIVIEN-DATA v1
+REZERVACE: 120261101
+APARTMAN: Jemná harmonie
+PRIJEZD: 1.12.2026
+ODJEZD: 3.12.2026
+EMAIL: host@egd.cz
+OSOB: 2
+ACCESS_PIN: 4321
+ACC_PRICE: 4500 Kč
+SALDO: 500
+KUPON: VANOCE
+FAKTURA_PRO: EG.D
+ZALOZIL: Pravoslav
+CHECKIN_URL: https://example.com/checkin/xyz
+KONEC`,
+    );
+    expect(r.typPrima).toBe(false);
+    expect(r.cenaPobytu).toBe(4500);
+    expect(r.saldoKc).toBe(500);
+    expect(r.kupon).toBe('VANOCE');
+    expect(r.fakturaPro).toBe('EG.D');
+    expect(r.zalozilBh).toBe('Pravoslav');
+    expect(r.checkinUrl).toBe('https://example.com/checkin/xyz');
+  });
+
   it('mapuje národnost', () => {
     expect(langFromNarodnost('pol')).toBe('pl');
     expect(langFromNarodnost('')).toBe('en');

@@ -1379,4 +1379,128 @@ KONEC
     expect(summary.sent).toBe(1);
     expect((await store.getRezervace('120260530'))?.stav).toBe('odeslano');
   });
+
+  const BLOK_PRIMA = `
+VIVIEN-DATA v1
+REZERVACE: 120261200
+APARTMAN: Jemná harmonie
+PRIJEZD: ${PRIJEZD_CZ}
+ODJEZD: ${ODJEZD_CZ}
+NOCI: 2
+OSOB: 2
+EMAIL: prima@example.com
+NARODNOST: CZE
+ACCESS_PIN: 5555
+ACC_PRICE: 3200 Kč
+SALDO: 0
+CHECKIN_URL: https://example.com/checkin/prima
+TYP: PRIMA
+KLIC: ${BH_KLIC}
+KONEC
+`;
+
+  it('šablona TYP: PRIMA z BH uloží přímou a nic nepošle hostovi', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'prima-ok@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com; spf=pass',
+        subject: 'VIVIEN-DATA – přímá',
+        text: BLOK_PRIMA,
+      }),
+      store,
+    );
+    expect(item.status).toBe('doplneno');
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    const rec = await store.getRezervace('120261200');
+    expect(rec?.zdroj).toBe('přímá');
+    expect(rec?.zdrojCeka).toBe(false);
+    expect(rec?.cenaPobytu).toBe(3200);
+    expect(rec?.saldoKc).toBe(0);
+    expect(rec?.checkinUrl).toBe('https://example.com/checkin/prima');
+    expect(rec?.stav).toBe('bez_checkinu');
+  });
+
+  it('VIVIEN-DATA s ACC poli bez TYP: PRIMA je uloží a průvodce odešle', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const text = `
+VIVIEN-DATA v1
+REZERVACE: 120261201
+APARTMAN: Pohodlí v tlumených tónech
+PRIJEZD: ${PRIJEZD_CZ}
+ODJEZD: ${ODJEZD_CZ}
+NOCI: 2
+OSOB: 2
+EMAIL: host@example.com
+NARODNOST: CZE
+ZDROJ: Booking.com
+ACCESS_PIN: 1234
+ACC_PRICE: 4100 Kč
+SALDO: 100
+KUPON: JARO
+FAKTURA_PRO: Firma s.r.o.
+ZALOZIL: Nikol
+CHECKIN_URL: https://example.com/checkin/acc
+KLIC: ${BH_KLIC}
+KONEC
+`;
+    const item = await processOneMail(
+      mail({
+        messageId: 'acc-bez-typ@test',
+        from: 'noreply@better-hotel.com',
+        authenticationResults: 'dkim=pass header.d=better-hotel.com; spf=pass',
+        text,
+      }),
+      store,
+    );
+    expect(item.status).toBe('sent');
+    const rec = await store.getRezervace('120261201');
+    expect(rec?.cenaPobytu).toBe(4100);
+    expect(rec?.saldoKc).toBe(100);
+    expect(rec?.kupon).toBe('JARO');
+    expect(rec?.fakturaPro).toBe('Firma s.r.o.');
+    expect(rec?.zalozilBh).toBe('Nikol');
+    expect(rec?.checkinUrl).toBe('https://example.com/checkin/acc');
+  });
+
+  it('TYP: PRIMA od cizího odesílatele odmítne a neuloží', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const item = await processOneMail(
+      mail({
+        messageId: 'prima-cizi@test',
+        from: 'utocnik@example.com',
+        authenticationResults: null,
+        subject: 'VIVIEN-DATA – přímá',
+        text: BLOK_PRIMA,
+      }),
+      store,
+    );
+    expect(item.status).toBe('rejected');
+    expect(item.reason).toMatch(/Neznámý odesílatel|KLIC/i);
+    expect(sendGuestEmail).not.toHaveBeenCalled();
+    expect(await store.getRezervace('120261200')).toBeNull();
+  });
+
+  it('TYP: PRIMA bez KLIC odmítne i od majitele', async () => {
+    const { processOneMail } = await import('./process-inbox');
+    const store = tmpStore();
+    const text = BLOK_PRIMA.replace(`KLIC: ${BH_KLIC}\n`, '');
+    const item = await processOneMail(
+      mail({
+        messageId: 'prima-bez-klic@test',
+        from: `VIVIEN <${MAJITEL}>`,
+        authenticationResults: 'spf=pass smtp.mailfrom=vivienapartments.cz',
+        subject: 'VIVIEN-DATA – přímá',
+        text,
+      }),
+      store,
+    );
+    expect(item.status).toBe('rejected');
+    expect(item.reason).toMatch(/KLIC/i);
+    expect(await store.getRezervace('120261200')).toBeNull();
+  });
 });

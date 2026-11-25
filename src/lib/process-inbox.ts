@@ -4,7 +4,7 @@ import { parseBounce, stejneMessageId } from './bounce';
 import { duvod, jeBlokujici, jeVyhrada, problemEmailu, type Duvod } from './chyby';
 import { nightsBetween } from './dates';
 import { jazykZPredvolby, normalizujTelefon } from './telefon';
-import { hlavickaMaAdresu, jeMailMajitele, verifyEmailOrigin } from './email-origin';
+import { hlavickaMaAdresu, jeMailMajitele, overTypPrimaOdesilatel, verifyEmailOrigin } from './email-origin';
 import { SCHRANKA_PLNY_BEH_MIN, SCHRANKA_SPAM_MIN } from './constants';
 import {
   fetchInboxMailsOdUid,
@@ -446,18 +446,45 @@ export async function processOneMail(
     majitelPreposilaZ: process.env.MAJITEL_PREPOSILA_Z?.trim() || '',
   });
 
-  // Kampaň TYP: PRIMA (jen info@) – doplní údaje, nikdy neposílá hostovi.
-  if (ins.typPrima && ins.rezervace) {
-    if (!origin.ok) {
+  // Ruční šablona TYP: PRIMA (BH → info@). Jistá přímá. Hostovi nic neposílá.
+  if (ins.typPrima) {
+    const primaOrigin = overTypPrimaOdesilatel({
+      from: mail.from,
+      authenticationResults: mail.authenticationResults,
+      body,
+      bhKlic: process.env.BH_KLIC?.trim() || '',
+      majitelPreposilaZ: process.env.MAJITEL_PREPOSILA_Z?.trim() || '',
+    });
+    const duvod =
+      !ins.rezervace
+        ? 'TYP: PRIMA bez čísla rezervace'
+        : !primaOrigin.ok
+          ? primaOrigin.reason
+          : null;
+    if (duvod) {
+      try {
+        await upozorniMajitele(
+          store,
+          `Šablona přímá odmítnuta: ${duvod}${ins.rezervace ? ` · #${ins.rezervace}` : ''}`,
+          '/prehled',
+          { telegram: 'automat' },
+        );
+      } catch {
+        /* neblokuj */
+      }
       await store.markMessage({
         messageId: mail.messageId,
         uid: mail.uid,
         processedAt: now,
-        rezervace: ins.rezervace,
+        rezervace: ins.rezervace || undefined,
         status: 'rejected',
-        reason: origin.reason,
+        reason: duvod,
       });
-      return { status: 'rejected', reason: origin.reason, rezervace: ins.rezervace };
+      return {
+        status: 'rejected',
+        reason: duvod,
+        rezervace: ins.rezervace || undefined,
+      };
     }
     return zpracujDataPrima(mail, store, now, ins);
   }
@@ -728,7 +755,7 @@ function doplnekZInterni(u: InterniUdaje): DoplnekRezervace {
 }
 
 /**
- * Datová kampaň „přímá“ z BH (TYP: PRIMA).
+ * Ruční šablona „přímá“ z BH (TYP: PRIMA) na info@.
  * Stejná rezervace může přijít i přes běžný VIVIEN-DATA → jen doplnění, bez duplicity.
  * Hostovi se kvůli tomuto mailu nic neposílá.
  */
@@ -741,8 +768,9 @@ async function zpracujDataPrima(
   const id = ins.rezervace!;
   const prev = await store.getRezervace(id);
   const data = udajeZMailu(ins, prev);
-  if (!maRucni(prev, 'zdroj') && (ins.zdroj || data.zdroj)) {
-    data.zdroj = data.zdroj || ins.zdroj;
+  if (!maRucni(prev, 'zdroj')) {
+    // Jistá přímá (pojistka booking/airbnb/expedia už v inspect).
+    data.zdroj = data.zdroj || ins.zdroj || 'přímá';
     data.zdrojCeka = false;
     data.poplatek = poplatekProRezervaci({
       vytvoreno: ins.vytvoreno || prev?.vytvoreno,
@@ -750,17 +778,17 @@ async function zpracujDataPrima(
       rezervace: id,
     });
   }
-  // Zachovej stav (neodesílej průvodce jen kvůli datové kampani).
+  // Zachovej stav (neodesílej průvodce jen kvůli šabloně přímá).
   if (!prev) {
     data.stav = 'bez_checkinu';
     if (ins.checkinUrl) data.checkinNeniPotreba = false;
   }
   const zmeny = coSeZmenilo(prev, data);
   const veta = zmeny.length
-    ? `Doplněno z kampaně přímá: ${zmeny.join(', ')}`
+    ? `Doplněno ze šablony přímá: ${zmeny.join(', ')}`
     : prev
-      ? 'Kampaň přímá, bez změny'
-      : 'Nová rezervace z kampaně přímá (čeká na check-in)';
+      ? 'Šablona přímá, bez změny'
+      : 'Nová přímá rezervace ze šablony (čeká na check-in)';
   if (maCoUlozit(prev, data) || !prev) {
     const final = sloucit(
       id,

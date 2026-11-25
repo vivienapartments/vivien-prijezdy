@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { verifyEmailOrigin } from './email-origin';
+import { overTypPrimaOdesilatel, verifyEmailOrigin } from './email-origin';
 
 const BH_KLIC = 'test-bh-key-24chars!!ok';
 const MAJITEL = 'info@vivienapartments.cz';
@@ -43,6 +43,42 @@ describe('verifyEmailOrigin', () => {
       from: 'utocnik@example.com',
       authenticationResults: 'dkim=pass header.d=example.com',
       body: `VIVIEN-DATA v1\nKLIC: ${BH_KLIC}\nKONEC`,
+      bhKlic: BH_KLIC,
+      majitelPreposilaZ: MAJITEL,
+    });
+    expect(r.ok).toBe(false);
+  });
+});
+
+describe('overTypPrimaOdesilatel', () => {
+  it('BH + KLIC projde', () => {
+    const r = overTypPrimaOdesilatel({
+      from: 'noreply@better-hotel.com',
+      authenticationResults: 'dkim=pass header.d=better-hotel.com',
+      body: `TYP: PRIMA\nKLIC: ${BH_KLIC}\nKONEC`,
+      bhKlic: BH_KLIC,
+      majitelPreposilaZ: MAJITEL,
+    });
+    expect(r).toEqual({ ok: true, path: 1 });
+  });
+
+  it('přeposlání majitelem bez KLIC odmítne', () => {
+    const r = overTypPrimaOdesilatel({
+      from: `VIVIEN <${MAJITEL}>`,
+      authenticationResults: 'spf=pass smtp.mailfrom=vivienapartments.cz',
+      body: 'TYP: PRIMA\nREZERVACE: 1\nKONEC',
+      bhKlic: BH_KLIC,
+      majitelPreposilaZ: MAJITEL,
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.reason).toMatch(/KLIC/i);
+  });
+
+  it('cizí odesílatel odmítne', () => {
+    const r = overTypPrimaOdesilatel({
+      from: 'utocnik@example.com',
+      authenticationResults: null,
+      body: `TYP: PRIMA\nKLIC: ${BH_KLIC}\nKONEC`,
       bhKlic: BH_KLIC,
       majitelPreposilaZ: MAJITEL,
     });
