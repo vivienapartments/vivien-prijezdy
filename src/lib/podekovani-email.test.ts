@@ -53,5 +53,12 @@ describe('podekovani-email', () => {
     expect(text).toContain('#doporucit');
     expect(text).toContain('plocha=1');
     expect(text).not.toContain('Využít výhody');
+    expect(text).toContain('Nechcete od nás další e-maily? Stačí odpovědět NE.');
+  });
+
+  it('HTML má větu o odhlášení na konci', () => {
+    const html = htmlPodekovaniEmail('cs', 'https://vivien-prijezdy-six.vercel.app/abc');
+    expect(html).toContain('Nechcete od nás další e-maily? Stačí odpovědět NE.');
+    expect(html).toContain('color:#8a7f72');
   });
 });

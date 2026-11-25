@@ -1332,6 +1332,43 @@ export function PrehledClient({
     );
   }
 
+  async function ulozBezMarketingu(row: PrehledRadek, zapnout: boolean) {
+    if (ukazka) {
+      setRadky((prev) =>
+        prev.map((r) => (r.rezervace === row.rezervace ? { ...r, bezMarketingu: zapnout } : r)),
+      );
+      return;
+    }
+    setCekam(`${row.rezervace}:bez-marketingu`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        rezervace: row.rezervace,
+        akce: 'bez-marketingu',
+        stav: zapnout ? 'ano' : 'ne',
+      }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      bezMarketingu?: boolean;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Neuložilo se.');
+      return;
+    }
+    setRadky((prev) =>
+      prev.map((r) =>
+        r.rezervace === row.rezervace
+          ? { ...r, bezMarketingu: json.bezMarketingu === true }
+          : r,
+      ),
+    );
+  }
+
   async function ulozNedojezd(row: PrehledRadek, zapnout: boolean) {
     setDotazPredani(null);
     if (ukazka) {
@@ -5069,7 +5106,13 @@ export function PrehledClient({
             };
             const telDrobek = row.telefonText || row.jinyTelefonText || 'bez čísla';
             const pobytDrobek = staly && staly.poradi > 1 ? `${staly.poradi}. pobyt` : null;
-            const kontaktDrobek = [telDrobek, pobytDrobek].filter(Boolean).join(' · ');
+            const kontaktDrobek = [
+              telDrobek,
+              pobytDrobek,
+              row.bezMarketingu ? 'Nechce e-maily' : '',
+            ]
+              .filter(Boolean)
+              .join(' · ');
             const casDrobek = [
               casAktualni ? `příjezd ${casAktualni}` : 'bez času',
               odjezdCas ? `odjezd ${odjezdCas}` : null,
@@ -5294,6 +5337,16 @@ export function PrehledClient({
                   ) : null}
                   <div className="ph-mail">
                     <Pole text={row.email} />
+                  </div>
+                  <div className="ph-pole-rada">
+                    <button
+                      type="button"
+                      className={`ph-predano${row.bezMarketingu ? ' is-on' : ''}`}
+                      disabled={cekam !== null}
+                      onClick={() => void ulozBezMarketingu(row, !row.bezMarketingu)}
+                    >
+                      {row.bezMarketingu ? 'Nechce e-maily · zapnuto' : 'Nechce e-maily'}
+                    </button>
                   </div>
                   {staly && staly.poradi > 1 ? (
                     <p className="ph-staly">

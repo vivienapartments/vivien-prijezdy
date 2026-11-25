@@ -199,7 +199,7 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
                 <button
                   type="button"
                   className="ph-btn"
-                  disabled={cekam || !navrh.trim()}
+                  disabled={cekam}
                   onClick={() => void akce('nejde', { navrh: navrh.trim() })}
                 >
                   Odeslat NEJDE hostovi

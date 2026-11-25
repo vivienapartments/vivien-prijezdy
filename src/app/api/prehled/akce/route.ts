@@ -272,6 +272,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'cena-pobytu' &&
       akce !== 'poznamka-uklid' &&
       akce !== 'checkin-neni' &&
+      akce !== 'bez-marketingu' &&
       akce !== 'nedojezd' &&
       akce !== 'zrusit-nedojezd' &&
       akce !== 'mena' &&
@@ -405,6 +406,17 @@ export async function POST(request: Request): Promise<NextResponse> {
       { ok: true, checkinNeniPotreba: zapnout, stav: dalsi.stav },
       { headers: noStore },
     );
+  }
+
+  if (akce === 'bez-marketingu') {
+    const zapnout = body?.stav !== 'ne';
+    const dalsi = pridej(
+      rec,
+      zapnout ? 'Nechce e-maily' : 'E-maily zase ano',
+      { bezMarketingu: zapnout },
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, bezMarketingu: zapnout }, { headers: noStore });
   }
 
   if (akce === 'nedojezd') {
@@ -1178,6 +1190,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'podekovani-odeslat') {
+    if (rec.bezMarketingu) return chyba(400, 'Host nechce e-maily.');
     const kanalRaw = String(body?.kanal || '').trim();
     const kanal =
       kanalRaw === 'whatsapp' || kanalRaw === 'sms' || kanalRaw === 'email' ? kanalRaw : null;
@@ -1437,6 +1450,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     let odeslanoNa = komu;
     try {
       if (druh === 'podekovani') {
+        if (rec.bezMarketingu) return chyba(400, 'Host nechce e-maily.');
         const {
           htmlPodekovaniEmail,
           textPodekovaniEmail,

@@ -106,11 +106,13 @@ export function jeProPodekovani(
     predano?: string | null;
     odjezd?: string | null;
     nedojezdKdy?: string | null;
+    bezMarketingu?: boolean;
   },
   dnes: string,
   now = new Date(),
 ): boolean {
   if (r.stav === 'zruseno' || r.nedojezdKdy) return false;
+  if (r.bezMarketingu === true) return false;
   if (!r.predano || !r.odjezd) return false;
   if (r.odjezd > dnes) return false;
   const lim = posunDen(dnes, -PODEKOVANI_DNU);
@@ -126,6 +128,7 @@ export function cekaPodekovani(
     predano?: string | null;
     odjezd?: string | null;
     nedojezdKdy?: string | null;
+    bezMarketingu?: boolean;
     podekovaniKdy?: string | null;
   },
   dnes: string,
@@ -154,6 +157,7 @@ export function hosteProPodekovani<T extends {
   predano?: string | null;
   odjezd: string | null;
   nedojezdKdy?: string | null;
+  bezMarketingu?: boolean;
   apartman: string | null;
   jmeno?: string | null;
   podekovaniKdy?: string | null;
@@ -166,6 +170,7 @@ export function hosteCekajiciPodekovani<T extends {
   predano?: string | null;
   odjezd: string | null;
   nedojezdKdy?: string | null;
+  bezMarketingu?: boolean;
   apartman: string | null;
   jmeno?: string | null;
   podekovaniKdy?: string | null;
@@ -179,10 +184,12 @@ export function ukazatPodekovani(opts: {
   predano?: string | null;
   odjezd?: string | null;
   nedojezdKdy?: string | null;
+  bezMarketingu?: boolean;
   dnes: string;
   now?: Date;
 }): boolean {
   if (opts.stav === 'zruseno' || opts.nedojezdKdy || !opts.predano || !opts.odjezd) return false;
+  if (opts.bezMarketingu === true) return false;
   if (opts.odjezd > opts.dnes) return false;
   const lim = posunDen(opts.dnes, -PODEKOVANI_DNU);
   if (opts.odjezd < lim) return false;

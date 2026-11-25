@@ -87,6 +87,29 @@ export function tlacitkoPodekovani(lang: GuideLang | null): string {
   return t(TLACITKO_PODEKOVANI, jazyk(lang));
 }
 
+/** Odhlášení z dalších e-mailů. Úplný konec dopisu, malé šedé. */
+export const ODHLASENI_EMAIL: Record<GuideLang, string> = {
+  cs: 'Nechcete od nás další e-maily? Stačí odpovědět NE.',
+  en: 'Don’t want more e-mails from us? Just reply NO.',
+  de: 'Möchten Sie keine weiteren E-Mails von uns? Antworten Sie einfach mit NEIN.',
+  pl: 'Nie chcecie od nas więcej e-maili? Wystarczy odpowiedzieć NIE.',
+  uk: 'Не бажаєте більше листів від нас? Достатньо відповісти НІ.',
+  'zh-Hant': '不想再收到我們的電子郵件？回覆「NE」即可。',
+  es: '¿No quiere más correos nuestros? Basta con responder NO.',
+  fr: 'Vous ne souhaitez plus de nos e-mails ? Répondez simplement NON.',
+  it: 'Non volete più e-mail da noi? Basta rispondere NO.',
+  pt: 'Não querem mais e-mails nossos? Basta responder NÃO.',
+  sv: 'Vill ni inte ha fler e-post från oss? Svara bara NEJ.',
+  hu: 'Nem szeretne tőlünk több e-mailt? Egyszerűen válaszoljon NEM.',
+  da: 'Vil I ikke have flere e-mails fra os? Svar blot NEJ.',
+  fi: 'Ettekö halua enää sähköposteja meiltä? Vastatkaa vain EI.',
+};
+
+export function textOdhlaseniEmail(lang: GuideLang | null): string {
+  const l = jazyk(lang);
+  return ODHLASENI_EMAIL[l] || ODHLASENI_EMAIL.en;
+}
+
 /** Z odkazu průvodce `…/{token}` udělá odkaz na poptávku věrného hosta. */
 export function odkazPoptavkaVernost(odkazPruvodce: string): string {
   const raw = opravVerejnyOdkaz(odkazPruvodce.trim());
@@ -133,6 +156,8 @@ export function textPodekovaniEmail(
     '',
     `${t(expiredZavolat, l)}: ${NIKOL_PHONE}`,
     `${t(expiredZaloha, l)}: ${PARKING_OWNER_PHONE}`,
+    '',
+    textOdhlaseniEmail(l),
   ].join('\n');
 }
 
@@ -269,10 +294,15 @@ export function htmlPodekovaniEmail(
             </td>
           </tr>
           <tr>
-            <td style="padding:16px 20px 24px;">
+            <td style="padding:16px 20px 8px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 ${kontakty}
               </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 24px 22px;font-family:${sans};font-size:12px;line-height:1.45;color:#8a7f72;text-align:center;">
+              ${esc(textOdhlaseniEmail(l))}
             </td>
           </tr>
         </table>

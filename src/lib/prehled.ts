@@ -160,6 +160,8 @@ export type PrehledRadek = {
   poznamkaUklid: string | null;
   /** Online check-in se nečeká. */
   checkinNeniPotreba: boolean;
+  /** Host nechce další e-maily (poděkování / nabídky). */
+  bezMarketingu: boolean;
   /** Kdy majitel označil nedojezd. */
   nedojezdKdy: string | null;
   /** Shrnutí „Vše je připravené“ odesláno. */
@@ -950,6 +952,7 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     kontaktUlozenKdy: rec.kontaktUlozenKdy || null,
     poznamkaUklid: rec.poznamkaUklid || null,
     checkinNeniPotreba: rec.checkinNeniPotreba === true,
+    bezMarketingu: rec.bezMarketingu === true,
     nedojezdKdy: rec.nedojezdKdy || null,
     mena: rec.mena === 'EUR' || rec.mena === 'CZK' ? rec.mena : null,
     cenaPobytu: rec.cenaPobytu ?? null,

@@ -213,7 +213,6 @@ export async function POST(req: Request) {
     };
   } else if (akce === 'nejde') {
     const navrh = (body.navrh || '').trim().slice(0, 500);
-    if (!navrh) return chyba(400, 'Napište návrh.');
     zprava = textNejdeHostovi(z, navrh);
     const o = odkazZpravyHostovi(z, zprava, Boolean(body.ios));
     odkaz = o.href;

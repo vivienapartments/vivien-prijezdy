@@ -3,6 +3,7 @@
  */
 import { aptRecord } from './guide-data';
 import { formatKc } from './kalendar-texty';
+import { ceskyVokativ } from './osloveni';
 import { formatRozsahPoptavky } from './poptavka-texty';
 import type { PoptavkaKanal, PoptavkaZaznam } from './poptavka';
 import type { AptId, GuideLang } from './types';
@@ -293,27 +294,75 @@ const SLEVA: Record<GuideLang, string> = {
   fi: ' (5 % alennuksella)',
 };
 
-const NEJDE: Record<GuideLang, string> = {
-  cs: 'Dobrý den {jmeno}, děkujeme za poptávku. Termín {termin} už bohužel nemáme volný. Můžeme vám nabídnout: {navrh}. Napište nám prosím, jestli vám to vyhovuje. Nikol, VIVIEN Apartments',
-  en: 'Hello {jmeno}, thank you for your enquiry. The dates {termin} are no longer available. We can offer: {navrh}. Please let us know if that works for you. Nikol, VIVIEN Apartments',
-  de: 'Guten Tag {jmeno}, danke für Ihre Anfrage. Der Termin {termin} ist leider nicht mehr frei. Wir können Ihnen anbieten: {navrh}. Schreiben Sie uns bitte, ob Ihnen das passt. Nikol, VIVIEN Apartments',
-  pl: 'Dzień dobry {jmeno}, dziękujemy za zapytanie. Termin {termin} jest już niestety zajęty. Możemy zaproponować: {navrh}. Napiszcie nam proszę, czy Wam to odpowiada. Nikol, VIVIEN Apartments',
-  uk: 'Добрий день, {jmeno}, дякуємо за запит. Термін {termin}, на жаль, уже зайнятий. Можемо запропонувати: {navrh}. Напишіть нам, будь ласка, чи вам це підходить. Nikol, VIVIEN Apartments',
+/** Tělo NEJDE se návrhem. {pozdrav} a {termin}/{navrh} doplní textNejdeHostovi. */
+const NEJDE_S_NAVRHU: Record<GuideLang, string> = {
+  cs: '{pozdrav}\n\nděkujeme za vaši poptávku. Termín {termin} už bohužel nemáme volný. Můžeme vám nabídnout {navrh}. Dejte nám prosím vědět, jestli by vám to vyhovovalo.\n\nNikol, VIVIEN Apartments',
+  en: '{pozdrav}\n\nthank you for your enquiry. The dates {termin} are unfortunately no longer available. We can offer you {navrh}. Please let us know if that would suit you.\n\nNikol, VIVIEN Apartments',
+  de: '{pozdrav}\n\nvielen Dank für Ihre Anfrage. Der Termin {termin} ist leider nicht mehr frei. Wir können Ihnen {navrh} anbieten. Schreiben Sie uns bitte, ob Ihnen das passen würde.\n\nNikol, VIVIEN Apartments',
+  pl: '{pozdrav}\n\ndziękujemy za Wasze zapytanie. Termin {termin} jest już niestety zajęty. Możemy Wam zaproponować {navrh}. Dajcie nam proszę znać, czy Wam to odpowiada.\n\nNikol, VIVIEN Apartments',
+  uk: '{pozdrav}\n\nдякуємо за ваш запит. Термін {termin} на жаль уже зайнятий. Можемо запропонувати вам {navrh}. Дайте нам знати, будь ласка, чи вам це підходить.\n\nNikol, VIVIEN Apartments',
   'zh-Hant':
-    '{jmeno} 您好，感謝您的詢問。{termin} 的日期已滿。我們可提供：{navrh}。請告訴我們是否適合您。Nikol，VIVIEN Apartments',
-  es: 'Hola {jmeno}, gracias por su consulta. Las fechas {termin} ya no están libres. Podemos ofrecerles: {navrh}. Escríbannos si les conviene. Nikol, VIVIEN Apartments',
-  fr: 'Bonjour {jmeno}, merci pour votre demande. Les dates {termin} ne sont plus libres. Nous pouvons vous proposer : {navrh}. Dites-nous si cela vous convient. Nikol, VIVIEN Apartments',
-  it: 'Buongiorno {jmeno}, grazie per la richiesta. Le date {termin} non sono più libere. Possiamo proporvi: {navrh}. Scriveteci se va bene. Nikol, VIVIEN Apartments',
-  pt: 'Olá {jmeno}, agradecemos o vosso pedido. As datas {termin} já não estão livres. Podemos oferecer: {navrh}. Digam-nos se vos serve. Nikol, VIVIEN Apartments',
-  sv: 'Hej {jmeno}, tack för förfrågan. Datumet {termin} är tyvärr inte ledigt längre. Vi kan erbjuda: {navrh}. Skriv gärna om det passar er. Nikol, VIVIEN Apartments',
-  hu: 'Jó napot, {jmeno}! Köszönjük a megkeresést. A(z) {termin} időpont sajnos már foglalt. Ezt tudjuk ajánlani: {navrh}. Írják meg, kérjük, megfelel-e. Nikol, VIVIEN Apartments',
-  da: 'Hej {jmeno}, tak for henvendelsen. Terminen {termin} er desværre ikke ledig længere. Vi kan tilbyde: {navrh}. Skriv gerne, om det passer jer. Nikol, VIVIEN Apartments',
-  fi: 'Hyvää päivää {jmeno}, kiitos tiedustelusta. Ajankohta {termin} ei valitettavasti ole enää vapaana. Voimme tarjota: {navrh}. Kirjoittakaa meille, sopiiko se teille. Nikol, VIVIEN Apartments',
+    '{pozdrav}\n\n感謝您的詢問。{termin} 的日期已滿。我們可以提供 {navrh}。請告訴我們是否適合您。\n\nNikol，VIVIEN Apartments',
+  es: '{pozdrav}\n\ngracias por su consulta. Las fechas {termin} ya no están libres. Podemos ofrecerles {navrh}. Díganos si les convendría.\n\nNikol, VIVIEN Apartments',
+  fr: '{pozdrav}\n\nmerci pour votre demande. Les dates {termin} ne sont malheureusement plus libres. Nous pouvons vous proposer {navrh}. Dites-nous si cela vous conviendrait.\n\nNikol, VIVIEN Apartments',
+  it: '{pozdrav}\n\ngrazie per la vostra richiesta. Le date {termin} purtroppo non sono più libere. Possiamo proporvi {navrh}. Fateci sapere se vi andrebbe bene.\n\nNikol, VIVIEN Apartments',
+  pt: '{pozdrav}\n\nagradecemos o vosso pedido. As datas {termin} já não estão livres. Podemos oferecer-vos {navrh}. Digam-nos se vos convém.\n\nNikol, VIVIEN Apartments',
+  sv: '{pozdrav}\n\ntack för er förfrågan. Datumet {termin} är tyvärr inte ledigt längre. Vi kan erbjuda er {navrh}. Hör av er om det skulle passa er.\n\nNikol, VIVIEN Apartments',
+  hu: '{pozdrav}\n\nköszönjük a megkeresést. A(z) {termin} időpont sajnos már foglalt. Ezt tudjuk ajánlani: {navrh}. Írják meg, megfelelne-e Önöknek.\n\nNikol, VIVIEN Apartments',
+  da: '{pozdrav}\n\ntak for jeres henvendelse. Terminen {termin} er desværre ikke ledig længere. Vi kan tilbyde jer {navrh}. Skriv gerne, om det ville passe jer.\n\nNikol, VIVIEN Apartments',
+  fi: '{pozdrav}\n\nkiitos tiedustelustanne. Ajankohta {termin} ei valitettavasti ole enää vapaana. Voimme tarjota teille {navrh}. Kerrottehan, sopisiko se teille.\n\nNikol, VIVIEN Apartments',
+};
+
+/** Tělo NEJDE bez návrhu. */
+const NEJDE_BEZ_NAVRHU: Record<GuideLang, string> = {
+  cs: '{pozdrav}\n\nděkujeme za vaši poptávku. Termín {termin} je bohužel už obsazený. Rádi vám najdeme jiný, stačí napsat, kdy by se vám hodilo.\n\nNikol, VIVIEN Apartments',
+  en: '{pozdrav}\n\nthank you for your enquiry. The dates {termin} are unfortunately already taken. We will gladly find another for you. Just write when would suit you.\n\nNikol, VIVIEN Apartments',
+  de: '{pozdrav}\n\nvielen Dank für Ihre Anfrage. Der Termin {termin} ist leider schon belegt. Gerne finden wir einen anderen für Sie. Schreiben Sie uns einfach, wann es Ihnen passen würde.\n\nNikol, VIVIEN Apartments',
+  pl: '{pozdrav}\n\ndziękujemy za Wasze zapytanie. Termin {termin} jest niestety już zajęty. Chętnie znajdziemy inny. Wystarczy napisać, kiedy Wam pasuje.\n\nNikol, VIVIEN Apartments',
+  uk: '{pozdrav}\n\nдякуємо за ваш запит. Термін {termin} на жаль уже зайнятий. Раді знайти вам інший. Достатньо написати, коли вам було б зручно.\n\nNikol, VIVIEN Apartments',
+  'zh-Hant':
+    '{pozdrav}\n\n感謝您的詢問。{termin} 的日期已滿。我們很樂意幫您找其他日期，告訴我們什麼時候方便即可。\n\nNikol，VIVIEN Apartments',
+  es: '{pozdrav}\n\ngracias por su consulta. Las fechas {termin} ya están ocupadas. Con gusto les buscamos otras. Basta con escribirnos cuándo les vendría bien.\n\nNikol, VIVIEN Apartments',
+  fr: '{pozdrav}\n\nmerci pour votre demande. Les dates {termin} sont malheureusement déjà prises. Nous trouverons volontiers d’autres dates. Il suffit de nous écrire quand cela vous arrangerait.\n\nNikol, VIVIEN Apartments',
+  it: '{pozdrav}\n\ngrazie per la vostra richiesta. Le date {termin} purtroppo sono già occupate. Troveremo volentieri altre date. Basta scriverci quando vi starebbe bene.\n\nNikol, VIVIEN Apartments',
+  pt: '{pozdrav}\n\nagradecemos o vosso pedido. As datas {termin} já estão ocupadas. Teremos gosto em encontrar outras. Basta escrever quando vos convém.\n\nNikol, VIVIEN Apartments',
+  sv: '{pozdrav}\n\ntack för er förfrågan. Datumet {termin} är tyvärr redan upptaget. Vi hittar gärna ett annat. Skriv bara när det skulle passa er.\n\nNikol, VIVIEN Apartments',
+  hu: '{pozdrav}\n\nköszönjük a megkeresést. A(z) {termin} időpont sajnos már foglalt. Szívesen keresünk másikat. Írják meg, mikor lenne alkalmas.\n\nNikol, VIVIEN Apartments',
+  da: '{pozdrav}\n\ntak for jeres henvendelse. Terminen {termin} er desværre allerede optaget. Vi finder gerne en anden. Skriv bare, hvornår det ville passe jer.\n\nNikol, VIVIEN Apartments',
+  fi: '{pozdrav}\n\nkiitos tiedustelustanne. Ajankohta {termin} on valitettavasti jo varattu. Etsimme mielellämme toisen. Kirjoittakaa vain, milloin teille sopisi.\n\nNikol, VIVIEN Apartments',
+};
+
+const NEJDE_POZDRAV: Record<GuideLang, { sJmenem: string; bez: string }> = {
+  cs: { sJmenem: 'Dobrý den, {jmeno},', bez: 'Dobrý den,' },
+  en: { sJmenem: 'Hello, {jmeno},', bez: 'Hello,' },
+  de: { sJmenem: 'Guten Tag, {jmeno},', bez: 'Guten Tag,' },
+  pl: { sJmenem: 'Dzień dobry, {jmeno},', bez: 'Dzień dobry,' },
+  uk: { sJmenem: 'Добрий день, {jmeno},', bez: 'Добрий день,' },
+  'zh-Hant': { sJmenem: '{jmeno} 您好，', bez: '您好，' },
+  es: { sJmenem: 'Hola, {jmeno},', bez: 'Hola,' },
+  fr: { sJmenem: 'Bonjour, {jmeno},', bez: 'Bonjour,' },
+  it: { sJmenem: 'Buongiorno, {jmeno},', bez: 'Buongiorno,' },
+  pt: { sJmenem: 'Olá, {jmeno},', bez: 'Olá,' },
+  sv: { sJmenem: 'Hej, {jmeno},', bez: 'Hej,' },
+  hu: { sJmenem: 'Jó napot, {jmeno}!', bez: 'Jó napot!' },
+  da: { sJmenem: 'Hej, {jmeno},', bez: 'Hej,' },
+  fi: { sJmenem: 'Hyvää päivää, {jmeno},', bez: 'Hyvää päivää,' },
 };
 
 function krestni(jmeno: string): string {
   const casti = jmeno.trim().split(/\s+/).filter(Boolean);
-  return casti[0] || jmeno.trim() || 'host';
+  return casti[0] || jmeno.trim() || '';
+}
+
+function pozdravNejde(lang: GuideLang, jmeno: string): string {
+  const s = NEJDE_POZDRAV[lang] || NEJDE_POZDRAV.en;
+  const raw = krestni(jmeno);
+  if (!raw) return s.bez;
+  if (lang === 'cs') {
+    const vok = ceskyVokativ(raw);
+    return vok ? s.sJmenem.replace('{jmeno}', vok) : s.bez;
+  }
+  return s.sJmenem.replace('{jmeno}', raw);
 }
 
 function dopln(s: string, mapa: Record<string, string>): string {
@@ -332,7 +381,7 @@ export function textPotvrditHostovi(
   const cena = opts.cenaKc != null ? formatKc(opts.cenaKc) : '—';
   const sleva = opts.seSlevou ? SLEVA[lang] || SLEVA.en : '';
   const mapa = {
-    jmeno: krestni(z.jmeno),
+    jmeno: krestni(z.jmeno) || 'host',
     termin,
     apartman,
     cena,
@@ -345,11 +394,14 @@ export function textPotvrditHostovi(
 
 export function textNejdeHostovi(z: PoptavkaZaznam, navrh: string): string {
   const lang = z.jazyk || 'cs';
-  const s = NEJDE[lang] || NEJDE.en;
-  return dopln(s, {
-    jmeno: krestni(z.jmeno),
+  const navrhTrim = navrh.trim();
+  const sablona = navrhTrim
+    ? NEJDE_S_NAVRHU[lang] || NEJDE_S_NAVRHU.en
+    : NEJDE_BEZ_NAVRHU[lang] || NEJDE_BEZ_NAVRHU.en;
+  return dopln(sablona, {
+    pozdrav: pozdravNejde(lang, z.jmeno),
     termin: formatRozsahPoptavky(z.prijezd, z.odjezd, lang),
-    navrh: navrh.trim() || '—',
+    navrh: navrhTrim,
   });
 }
 

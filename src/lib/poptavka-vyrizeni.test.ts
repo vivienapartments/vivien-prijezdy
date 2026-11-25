@@ -59,10 +59,30 @@ describe('poptavka-vyrizeni', () => {
     expect(t).not.toContain('Napište nám');
   });
 
-  it('text NEJDE cs', () => {
+  it('text NEJDE cs s návrhem', () => {
     const t = textNejdeHostovi(baza(), '26.–28. 11. ve V2');
+    expect(t).toContain('Dobrý den, Jano,');
     expect(t).toContain('nemáme volný');
     expect(t).toContain('26.–28. 11. ve V2');
+    expect(t).toContain('Nikol, VIVIEN Apartments');
+    expect(t).toMatch(/\n\nNikol/);
+  });
+
+  it('text NEJDE cs bez návrhu', () => {
+    const t = textNejdeHostovi(baza(), '  ');
+    expect(t).toContain('je bohužel už obsazený');
+    expect(t).not.toContain('Můžeme vám nabídnout');
+  });
+
+  it('text NEJDE en bez spolehlivého oslovení drží Hello,', () => {
+    const t = textNejdeHostovi(baza({ jmeno: 'Jana', jazyk: 'en' }), '');
+    expect(t.startsWith('Hello, Jana,')).toBe(true);
+    expect(t).toContain('already taken');
+  });
+
+  it('text NEJDE cs u cizího jména jen Dobrý den,', () => {
+    const t = textNejdeHostovi(baza({ jmeno: 'Xyzqwerty' }), 'jindy');
+    expect(t.startsWith('Dobrý den,\n')).toBe(true);
   });
 
   it('připomínka se u zkoušky neposílá', () => {
