@@ -18,7 +18,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Jan Nachmilner",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": null
     },
     {
       "rezervace": "120260680",
@@ -34,7 +36,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Veronika Lancová",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": null
     },
     {
       "rezervace": "120260671",
@@ -43,14 +47,16 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "firma": "",
       "prijezd": "2026-12-04",
       "odjezd": "2026-12-06",
-      "castka": 8570,
+      "castka": 5000,
       "mena": "CZK",
       "zdroj": "Přímá rezervace",
-      "akce": "cekajici",
-      "duvod": "Jen označení – čeká na spojení",
-      "cilJmeno": "sobcak",
+      "akce": "priradit",
+      "duvod": "Cena majitele 5000 Kč (BH 8570 Kč) · Sobčák = sobcak + Peter Sobčák",
+      "cilJmeno": "Peter Sobčák",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": 8570
     },
     {
       "rezervace": "120260657",
@@ -66,7 +72,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Aneta Hovádková",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": null
     },
     {
       "rezervace": "120260643",
@@ -78,11 +86,13 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "castka": 1700,
       "mena": "CZK",
       "zdroj": "Přímá rezervace",
-      "akce": "firma",
-      "duvod": "Firma EG.D, s.r.o.",
-      "cilJmeno": "EG.D, s.r.o.",
+      "akce": "priradit",
+      "duvod": "EG.D jen proplácí – útrata hosta Dominik Hromada",
+      "cilJmeno": "Dominik Hromada",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260641",
@@ -94,11 +104,13 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "castka": 4440,
       "mena": "CZK",
       "zdroj": "Přímá rezervace",
-      "akce": "firma",
-      "duvod": "Firma EG.D, s.r.o.",
-      "cilJmeno": "EG.D, s.r.o.",
+      "akce": "priradit",
+      "duvod": "EG.D jen proplácí – útrata hosta Dominik Hromada",
+      "cilJmeno": "Dominik Hromada",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": null
     },
     {
       "rezervace": "120260638",
@@ -114,7 +126,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Firma UNIQUE Textiles, s.r.o.",
       "cilJmeno": "UNIQUE Textiles, s.r.o.",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": null
     },
     {
       "rezervace": "120260635",
@@ -130,7 +144,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez jména",
       "cilJmeno": "120260635",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260627",
@@ -139,14 +155,16 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "firma": "",
       "prijezd": "2026-12-02",
       "odjezd": "2026-12-04",
-      "castka": 7500,
+      "castka": 4400,
       "mena": "CZK",
       "zdroj": "Přímá rezervace",
-      "akce": "cekajici",
-      "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
+      "akce": "priradit",
+      "duvod": "Cena majitele 4400 Kč (BH 7500 Kč) · Sobčák = sobcak + Peter Sobčák",
       "cilJmeno": "Peter Sobčák",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": 7500
     },
     {
       "rezervace": "120260620",
@@ -162,7 +180,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Poznámka místo jména",
       "cilJmeno": "FLIDR DOHROMADY CENA 5800",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": null
     },
     {
       "rezervace": "120260619",
@@ -178,7 +198,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Poznámka místo jména",
       "cilJmeno": "FLIDR DOHROMADY CENA 5800 JSOU DVA TERMINY JESTE NA KONCI LISTOPADU",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260612",
@@ -194,7 +216,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez jména",
       "cilJmeno": "120260612",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260597",
@@ -210,7 +234,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Ruční mapování „anna tri dny“ → Anna Nirenberh",
       "cilJmeno": "Anna Nirenberh",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260594",
@@ -226,7 +252,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Ruční mapování „anna“ → Anna Nirenberh",
       "cilJmeno": "Anna Nirenberh",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260570",
@@ -238,11 +266,13 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "castka": 7900,
       "mena": "CZK",
       "zdroj": "Přímá rezervace",
-      "akce": "firma",
-      "duvod": "Firma EG.D, s.r.o.",
-      "cilJmeno": "EG.D, s.r.o.",
+      "akce": "priradit",
+      "duvod": "EG.D jen proplácí – útrata hosta Dominik Hromada",
+      "cilJmeno": "Dominik Hromada",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260556",
@@ -258,7 +288,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Firma Základní škola Český Dub",
       "cilJmeno": "Základní škola Český Dub",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260536",
@@ -274,7 +306,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Anna Nirenberh",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260524",
@@ -290,7 +324,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Poznámka místo jména",
       "cilJmeno": "RODICE TELEFON PLATBA HOTOVE",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260492",
@@ -306,7 +342,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Vilém Málek",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260478",
@@ -322,7 +360,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Nikola Fričová",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260368",
@@ -331,14 +371,16 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "firma": "",
       "prijezd": "2026-10-05",
       "odjezd": "2026-10-07",
-      "castka": 178,
-      "mena": "EUR",
+      "castka": 4367,
+      "mena": "CZK",
       "zdroj": "Web",
-      "akce": "kontrola",
-      "duvod": "Cena v eurech – převod do Kč ručně",
+      "akce": "cekajici",
+      "duvod": "Přepočet 178.26 € × 24.5 · Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Angela Pohl",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": 178
     },
     {
       "rezervace": "120260296",
@@ -354,7 +396,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Dominik Pacas",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260293",
@@ -370,7 +414,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Chueh yi Yu",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260180",
@@ -386,7 +432,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Miroslav  Mlýnek",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260160",
@@ -402,7 +450,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Dominik Prouza",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260123",
@@ -418,55 +468,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Martin Jíša",
       "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260096",
-      "jmeno": "",
-      "oznaceni": "",
-      "firma": "",
-      "prijezd": "2025-12-04",
-      "odjezd": "2025-12-05",
-      "castka": 10099,
-      "mena": "CZK",
-      "zdroj": "Přímá rezervace",
-      "akce": "kontrola",
-      "duvod": "Cena 10 099 Kč",
-      "cilJmeno": "120260096",
-      "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260093",
-      "jmeno": "",
-      "oznaceni": "",
-      "firma": "",
-      "prijezd": "2026-04-20",
-      "odjezd": "2026-04-21",
-      "castka": 1700,
-      "mena": "CZK",
-      "zdroj": "Přímá rezervace",
-      "akce": "kontrola",
-      "duvod": "Bez jména",
-      "cilJmeno": "120260093",
-      "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260090",
-      "jmeno": "",
-      "oznaceni": "",
-      "firma": "",
-      "prijezd": "2026-03-29",
-      "odjezd": "2026-03-30",
-      "castka": 10099,
-      "mena": "CZK",
-      "zdroj": "Přímá rezervace",
-      "akce": "kontrola",
-      "duvod": "Cena 10 099 Kč",
-      "cilJmeno": "120260090",
-      "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260082",
@@ -482,109 +486,185 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez karty / kontaktu – útrata čeká na příští příjezd",
       "cilJmeno": "Martin Jíša",
       "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260045",
-      "jmeno": "",
-      "oznaceni": "",
-      "firma": "",
-      "prijezd": "2026-04-06",
-      "odjezd": "2026-04-07",
-      "castka": 2490,
-      "mena": "CZK",
-      "zdroj": "Přímá rezervace",
-      "akce": "kontrola",
-      "duvod": "Bez jména",
-      "cilJmeno": "120260045",
-      "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     }
   ],
   "souhrn": [
     {
       "host": "Jan Nachmilner",
       "pocet": 1,
-      "utrata": 1640,
+      "utrata": 0,
+      "utrataCeka": 1640,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260703"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260703",
+          "prijezd": "2026-11-25",
+          "odjezd": "2026-11-26",
+          "castka": 1640,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        }
       ]
     },
     {
       "host": "Veronika Lancová",
-      "pocet": 1,
-      "utrata": 1650,
+      "pocet": 2,
+      "utrata": 0,
+      "utrataCeka": 1650,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
-        "120260680"
+        "120260680",
+        "120260665"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260680",
+          "prijezd": "2026-11-30",
+          "odjezd": "2026-12-01",
+          "castka": 1650,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        },
+        {
+          "rezervace": "120260665",
+          "prijezd": "2026-11-19",
+          "odjezd": "2026-11-20",
+          "castka": 0,
+          "stavUtraty": "zapocteno",
+          "popisek": "Booking · V1 · v rez:* (do útraty přímé ne)"
+        }
       ]
     },
     {
-      "host": "sobcak",
-      "pocet": 1,
-      "utrata": 8570,
-      "uroven": "Stálý host",
+      "host": "Peter Sobčák",
+      "pocet": 2,
+      "utrata": 0,
+      "utrataCeka": 9400,
+      "uroven": "Host",
       "klientId": null,
-      "akce": "cekajici",
+      "akce": "priradit",
       "rezervace": [
-        "120260671"
+        "120260671",
+        "120260627"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260671",
+          "prijezd": "2026-12-04",
+          "odjezd": "2026-12-06",
+          "castka": 5000,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        },
+        {
+          "rezervace": "120260627",
+          "prijezd": "2026-12-02",
+          "odjezd": "2026-12-04",
+          "castka": 4400,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        }
       ]
     },
     {
       "host": "Aneta Hovádková",
       "pocet": 1,
-      "utrata": 8500,
-      "uroven": "Stálý host",
+      "utrata": 0,
+      "utrataCeka": 8500,
+      "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260657"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260657",
+          "prijezd": "2026-12-31",
+          "odjezd": "2027-01-02",
+          "castka": 8500,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        }
       ]
     },
     {
-      "host": "EG.D, s.r.o.",
+      "host": "Dominik Hromada",
       "pocet": 3,
-      "utrata": 14040,
+      "utrata": 9600,
+      "utrataCeka": 4440,
       "uroven": "Stálý host",
       "klientId": null,
-      "akce": "firma",
+      "akce": "priradit",
       "rezervace": [
         "120260643",
         "120260641",
         "120260570"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260641",
+          "prijezd": "2026-11-23",
+          "odjezd": "2026-11-26",
+          "castka": 4440,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        },
+        {
+          "rezervace": "120260643",
+          "prijezd": "2026-11-06",
+          "odjezd": "2026-11-07",
+          "castka": 1700,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        },
+        {
+          "rezervace": "120260570",
+          "prijezd": "2026-11-01",
+          "odjezd": "2026-11-06",
+          "castka": 7900,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "UNIQUE Textiles, s.r.o.",
       "pocet": 1,
-      "utrata": 6780,
-      "uroven": "Host",
+      "utrata": 0,
+      "utrataCeka": 6780,
+      "uroven": "Partner",
       "klientId": null,
       "akce": "firma",
       "rezervace": [
         "120260638"
-      ]
-    },
-    {
-      "host": "Peter Sobčák",
-      "pocet": 1,
-      "utrata": 7500,
-      "uroven": "Host",
-      "klientId": null,
-      "akce": "cekajici",
-      "rezervace": [
-        "120260627"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260638",
+          "prijezd": "2026-12-04",
+          "odjezd": "2026-12-06",
+          "castka": 6780,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        }
       ]
     },
     {
       "host": "Anna Nirenberh",
       "pocet": 3,
       "utrata": 11220,
+      "utrataCeka": 0,
       "uroven": "Stálý host",
       "klientId": null,
       "akce": "priradit",
@@ -592,95 +672,239 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
         "120260597",
         "120260594",
         "120260536"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260597",
+          "prijezd": "2026-11-09",
+          "odjezd": "2026-11-13",
+          "castka": 8050,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        },
+        {
+          "rezervace": "120260594",
+          "prijezd": "2026-11-05",
+          "odjezd": "2026-11-06",
+          "castka": 1630,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        },
+        {
+          "rezervace": "120260536",
+          "prijezd": "2026-10-25",
+          "odjezd": "2026-10-26",
+          "castka": 1540,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Základní škola Český Dub",
       "pocet": 1,
       "utrata": 6629,
-      "uroven": "Host",
+      "utrataCeka": 0,
+      "uroven": "Partner",
       "klientId": null,
       "akce": "firma",
       "rezervace": [
         "120260556"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260556",
+          "prijezd": "2026-10-26",
+          "odjezd": "2026-10-30",
+          "castka": 6629,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Vilém Málek",
       "pocet": 1,
       "utrata": 3853,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260492"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260492",
+          "prijezd": "2026-10-16",
+          "odjezd": "2026-10-18",
+          "castka": 3853,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Nikola Fričová",
       "pocet": 1,
       "utrata": 2800,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260478"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260478",
+          "prijezd": "2026-10-24",
+          "odjezd": "2026-10-26",
+          "castka": 2800,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
+      ]
+    },
+    {
+      "host": "Angela Pohl",
+      "pocet": 1,
+      "utrata": 4367,
+      "utrataCeka": 0,
+      "uroven": "Host",
+      "klientId": null,
+      "akce": "cekajici",
+      "rezervace": [
+        "120260368"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260368",
+          "prijezd": "2026-10-05",
+          "odjezd": "2026-10-07",
+          "castka": 4367,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno · BH bylo 178"
+        }
       ]
     },
     {
       "host": "Dominik Pacas",
       "pocet": 1,
       "utrata": 6950,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260296"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260296",
+          "prijezd": "2026-07-31",
+          "odjezd": "2026-08-03",
+          "castka": 6950,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Chueh yi Yu",
       "pocet": 1,
       "utrata": 5200,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260293"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260293",
+          "prijezd": "2026-08-28",
+          "odjezd": "2026-08-30",
+          "castka": 5200,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Miroslav  Mlýnek",
       "pocet": 1,
       "utrata": 2450,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260180"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260180",
+          "prijezd": "2026-06-27",
+          "odjezd": "2026-06-28",
+          "castka": 2450,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Dominik Prouza",
       "pocet": 1,
       "utrata": 11200,
+      "utrataCeka": 0,
       "uroven": "Stálý host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260160"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260160",
+          "prijezd": "2026-08-20",
+          "odjezd": "2026-08-25",
+          "castka": 11200,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Martin Jíša",
       "pocet": 2,
       "utrata": 6400,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260123",
         "120260082"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260123",
+          "prijezd": "2026-06-10",
+          "odjezd": "2026-06-12",
+          "castka": 3200,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        },
+        {
+          "rezervace": "120260082",
+          "prijezd": "2026-05-26",
+          "odjezd": "2026-05-28",
+          "castka": 3200,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     }
   ],
@@ -699,7 +923,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez jména",
       "cilJmeno": "120260635",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260620",
@@ -715,7 +941,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Poznámka místo jména",
       "cilJmeno": "FLIDR DOHROMADY CENA 5800",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "ceka",
+      "castkaBh": null
     },
     {
       "rezervace": "120260619",
@@ -731,7 +959,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Poznámka místo jména",
       "cilJmeno": "FLIDR DOHROMADY CENA 5800 JSOU DVA TERMINY JESTE NA KONCI LISTOPADU",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260612",
@@ -747,7 +977,9 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Bez jména",
       "cilJmeno": "120260612",
       "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     },
     {
       "rezervace": "120260524",
@@ -763,249 +995,298 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "duvod": "Poznámka místo jména",
       "cilJmeno": "RODICE TELEFON PLATBA HOTOVE",
       "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260368",
-      "jmeno": "Angela Pohl",
-      "oznaceni": "Angela Pohl",
-      "firma": "",
-      "prijezd": "2026-10-05",
-      "odjezd": "2026-10-07",
-      "castka": 178,
-      "mena": "EUR",
-      "zdroj": "Web",
-      "akce": "kontrola",
-      "duvod": "Cena v eurech – převod do Kč ručně",
-      "cilJmeno": "Angela Pohl",
-      "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260096",
-      "jmeno": "",
-      "oznaceni": "",
-      "firma": "",
-      "prijezd": "2025-12-04",
-      "odjezd": "2025-12-05",
-      "castka": 10099,
-      "mena": "CZK",
-      "zdroj": "Přímá rezervace",
-      "akce": "kontrola",
-      "duvod": "Cena 10 099 Kč",
-      "cilJmeno": "120260096",
-      "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260093",
-      "jmeno": "",
-      "oznaceni": "",
-      "firma": "",
-      "prijezd": "2026-04-20",
-      "odjezd": "2026-04-21",
-      "castka": 1700,
-      "mena": "CZK",
-      "zdroj": "Přímá rezervace",
-      "akce": "kontrola",
-      "duvod": "Bez jména",
-      "cilJmeno": "120260093",
-      "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260090",
-      "jmeno": "",
-      "oznaceni": "",
-      "firma": "",
-      "prijezd": "2026-03-29",
-      "odjezd": "2026-03-30",
-      "castka": 10099,
-      "mena": "CZK",
-      "zdroj": "Přímá rezervace",
-      "akce": "kontrola",
-      "duvod": "Cena 10 099 Kč",
-      "cilJmeno": "120260090",
-      "klientId": null,
-      "klientNazev": null
-    },
-    {
-      "rezervace": "120260045",
-      "jmeno": "",
-      "oznaceni": "",
-      "firma": "",
-      "prijezd": "2026-04-06",
-      "odjezd": "2026-04-07",
-      "castka": 2490,
-      "mena": "CZK",
-      "zdroj": "Přímá rezervace",
-      "akce": "kontrola",
-      "duvod": "Bez jména",
-      "cilJmeno": "120260045",
-      "klientId": null,
-      "klientNazev": null
+      "klientNazev": null,
+      "stavUtraty": "zapocteno",
+      "castkaBh": null
     }
   ],
   "cekajici": [
     {
       "host": "Jan Nachmilner",
       "pocet": 1,
-      "utrata": 1640,
+      "utrata": 0,
+      "utrataCeka": 1640,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260703"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260703",
+          "prijezd": "2026-11-25",
+          "odjezd": "2026-11-26",
+          "castka": 1640,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        }
       ]
     },
     {
       "host": "Veronika Lancová",
-      "pocet": 1,
-      "utrata": 1650,
+      "pocet": 2,
+      "utrata": 0,
+      "utrataCeka": 1650,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
-        "120260680"
-      ]
-    },
-    {
-      "host": "sobcak",
-      "pocet": 1,
-      "utrata": 8570,
-      "uroven": "Stálý host",
-      "klientId": null,
-      "akce": "cekajici",
-      "rezervace": [
-        "120260671"
+        "120260680",
+        "120260665"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260680",
+          "prijezd": "2026-11-30",
+          "odjezd": "2026-12-01",
+          "castka": 1650,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        },
+        {
+          "rezervace": "120260665",
+          "prijezd": "2026-11-19",
+          "odjezd": "2026-11-20",
+          "castka": 0,
+          "stavUtraty": "zapocteno",
+          "popisek": "Booking · V1 · v rez:* (do útraty přímé ne)"
+        }
       ]
     },
     {
       "host": "Aneta Hovádková",
       "pocet": 1,
-      "utrata": 8500,
-      "uroven": "Stálý host",
-      "klientId": null,
-      "akce": "cekajici",
-      "rezervace": [
-        "120260657"
-      ]
-    },
-    {
-      "host": "Peter Sobčák",
-      "pocet": 1,
-      "utrata": 7500,
+      "utrata": 0,
+      "utrataCeka": 8500,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
-        "120260627"
+        "120260657"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260657",
+          "prijezd": "2026-12-31",
+          "odjezd": "2027-01-02",
+          "castka": 8500,
+          "stavUtraty": "ceka",
+          "popisek": "čeká, započítá se po odjezdu"
+        }
       ]
     },
     {
       "host": "Vilém Málek",
       "pocet": 1,
       "utrata": 3853,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260492"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260492",
+          "prijezd": "2026-10-16",
+          "odjezd": "2026-10-18",
+          "castka": 3853,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Nikola Fričová",
       "pocet": 1,
       "utrata": 2800,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260478"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260478",
+          "prijezd": "2026-10-24",
+          "odjezd": "2026-10-26",
+          "castka": 2800,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
+      ]
+    },
+    {
+      "host": "Angela Pohl",
+      "pocet": 1,
+      "utrata": 4367,
+      "utrataCeka": 0,
+      "uroven": "Host",
+      "klientId": null,
+      "akce": "cekajici",
+      "rezervace": [
+        "120260368"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260368",
+          "prijezd": "2026-10-05",
+          "odjezd": "2026-10-07",
+          "castka": 4367,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno · BH bylo 178"
+        }
       ]
     },
     {
       "host": "Dominik Pacas",
       "pocet": 1,
       "utrata": 6950,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260296"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260296",
+          "prijezd": "2026-07-31",
+          "odjezd": "2026-08-03",
+          "castka": 6950,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Chueh yi Yu",
       "pocet": 1,
       "utrata": 5200,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260293"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260293",
+          "prijezd": "2026-08-28",
+          "odjezd": "2026-08-30",
+          "castka": 5200,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Miroslav  Mlýnek",
       "pocet": 1,
       "utrata": 2450,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260180"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260180",
+          "prijezd": "2026-06-27",
+          "odjezd": "2026-06-28",
+          "castka": 2450,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Dominik Prouza",
       "pocet": 1,
       "utrata": 11200,
+      "utrataCeka": 0,
       "uroven": "Stálý host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260160"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260160",
+          "prijezd": "2026-08-20",
+          "odjezd": "2026-08-25",
+          "castka": 11200,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     },
     {
       "host": "Martin Jíša",
       "pocet": 2,
       "utrata": 6400,
+      "utrataCeka": 0,
       "uroven": "Host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
         "120260123",
         "120260082"
+      ],
+      "pobyty": [
+        {
+          "rezervace": "120260123",
+          "prijezd": "2026-06-10",
+          "odjezd": "2026-06-12",
+          "castka": 3200,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        },
+        {
+          "rezervace": "120260082",
+          "prijezd": "2026-05-26",
+          "odjezd": "2026-05-28",
+          "castka": 3200,
+          "stavUtraty": "zapocteno",
+          "popisek": "započteno"
+        }
       ]
     }
   ],
   "primaHoste": [
     {
       "jmeno": "Jan Nachmilner",
-      "utrata": 1640,
+      "utrata": 0,
       "pocet": 1
     },
     {
       "jmeno": "Veronika Lancová",
-      "utrata": 1650,
-      "pocet": 1
-    },
-    {
-      "jmeno": "sobcak",
-      "utrata": 8570,
-      "pocet": 1
-    },
-    {
-      "jmeno": "Aneta Hovádková",
-      "utrata": 8500,
-      "pocet": 1
+      "utrata": 0,
+      "pocet": 2
     },
     {
       "jmeno": "Peter Sobčák",
-      "utrata": 7500,
+      "utrata": 0,
+      "pocet": 2
+    },
+    {
+      "jmeno": "Aneta Hovádková",
+      "utrata": 0,
       "pocet": 1
+    },
+    {
+      "jmeno": "Dominik Hromada",
+      "utrata": 9600,
+      "pocet": 3
     },
     {
       "jmeno": "Anna Nirenberh",
@@ -1020,6 +1301,11 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
     {
       "jmeno": "Nikola Fričová",
       "utrata": 2800,
+      "pocet": 1
+    },
+    {
+      "jmeno": "Angela Pohl",
+      "utrata": 4367,
       "pocet": 1
     },
     {

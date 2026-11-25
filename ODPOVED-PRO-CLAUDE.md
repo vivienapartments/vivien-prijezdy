@@ -358,9 +358,9 @@ Návaznost na dávku 4–6. Ostrá / master nedotčeno. CSV zůstává v `.data/
 6. Zápis až po potvrzení v `/prehled/klienti`.
 
 ### Sdílecí odkaz náhledu
-https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/nahled-import-bh
+Bez přihlášení Vercel (`_vercel_share`, platnost 7 dní) je v chatu u majitele.  
+Oprava: middleware na Preview povoluje `/nahled-import-bh` (`e6252c0`); ostrá dál `/nahled*` schovává.
 
-Lokálně (dev): http://localhost:3000/nahled-import-bh
 Potvrzení zápisu: `/prehled/klienti` → Náhled exportu 25. 11. → Potvrdit zápis BH CSV (až řeknete).
 
 ## 2026-11-25 22:10 · Ruční karty Flídr / Sofia / EG.D (jen Preview)
@@ -385,4 +385,50 @@ Zdroj: `.data/import/rucni-klienti-2026-11-25.md` (necommittovat). Karty v Previ
 ### Sdílecí odkazy (Preview)
 - Flídr · https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-flidr
 - Sofia · https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-sofia
-- EG.D · https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-egd
+- Dominik Hromada · https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-hromada
+  (starý odkaz `ukazka-egd` vede na tutéž kartu hosta)
+
+## 2026-11-25 22:30 · Dva Vercel projekty (vivien-prijezdy vs -six)
+
+Nic jsem neodpojoval ani nemazal. Jen zjištění + návrh. Oprava padajících buildů `doporuceni` už je v gitu (`2a4b340`).
+
+### 1. Domény a odkazy pro hosty
+
+**Projekt `vivien-prijezdy`** (založen 8. 10. 2026, to je průvodce / ostrý provoz)
+- Produkční aliasy teď: `club.vivienapartments.cz`, `prijezd.vivienapartments.cz`, **`vivien-prijezdy-six.vercel.app`**, `vivien-prijezdy-pravoslav.vercel.app`
+- Preview větev: `vivien-prijezdy-git-doporuceni-pravoslav.vercel.app` (patří sem)
+
+**Projekt `vivien-prijezdy-six`** (založen 23. 11. 2026, druhý napojený na stejný GitHub)
+- Produkční alias jen typu `…-git-master-pravoslav.vercel.app` / `…-phi.vercel.app`
+- **Nevlastní** adresu `vivien-prijezdy-six.vercel.app` (ta patří projektu `vivien-prijezdy`)
+
+**Co dostávají hosté v odkazech (kód `verejna-adresa.ts`)**
+- Záloha / skutečné odkazy: **`https://vivien-prijezdy-six.vercel.app`** (průvodce, e-maily, check-in, poděkování, když se přepisuje club/prijezd)
+- Club/prijezd se v kódu pořád berou jako „ještě neběží“ a přepisují se na `…-six.vercel.app`. Přitom `club…/poptavka` už odpovídá 200. Přepis zatím nechávám, dokud to neschválíte.
+
+### 2. Kam se dnes nasazovalo a mají hosté opravy?
+
+- Push na **`master`** spouští produkci **u obou** projektů (stejný GitHub `vivienapartments/vivien-prijezdy`).
+- Hosté chodí přes aliasy projektu **`vivien-prijezdy`** (včetně `vivien-prijezdy-six.vercel.app`).
+- Poslední ostrá na tomto projektu: ~25. 11. 21:08, commit **`d681338`** (šablona přímá / ACC / KLIC).
+- Dnešní opravy na masteru (zdroj, Booking brána, NEJDE dřív, plocha dřív, …) **ano, hosté je mají** přes `vivien-prijezdy` + alias `…-six.vercel.app`.
+- Projekt `vivien-prijezdy-six` se taky staví z masteru, ale hosté na jeho vlastní URL prakticky nechodí.
+
+### 3. Proč padaly buildy `doporuceni` u obou
+
+- Oba projekty staví Preview z větve `doporuceni` (dvojitý build při každém pushi).
+- Pád: TypeScript v `api/prehled/klienti/route.ts` — `{ ok: true, ...vysledek }` když `vysledek` už má `ok` (Spojit).
+- Oprava: commit **`2a4b340`**. Poslední Preview u obou **Ready** (`7fde69d`, karty Flídr/Sofia/EG.D).
+
+### 4. Návrh sjednocení (bez změny, čekám na souhlas)
+
+1. **Nechat ostrý provoz jen na `vivien-prijezdy`.** Domény club / prijezd / `vivien-prijezdy-six.vercel.app` už na něm jsou. Nic nepřepínat najednou.
+2. U projektu **`vivien-prijezdy-six`**: po vašem ano **odpojit GitHub** (nebo vypnout automatické deploye), ať se nestaví dvakrát a nemate. Projekt zatím nemazat.
+3. Až budete chtít: v kódu přestat přepisovat `club`/`prijezd` na `…-six.vercel.app`, když obě domény ověříme end-to-end (průvodce token, e-mailové obrázky, poptávka).
+4. Mezitím při „nasaď“ dál sledovat hlavně projekt **`vivien-prijezdy`** (to je to, kam hosté reálně míří).
+
+Čekám, co z bodu 4 smím udělat.
+
+## 25. 11. 2026 večer · Opravený náhled importu BH
+Parser: Hromada (ne EG.D), barvy oranž/modrá, Sobčák 5k+4,4k, Lancová 2 pobyty, Angela EUR, cutoff 1. 5., firmy partner, karty bez tech. poznámek.
+Sdílecí odkaz náhledu je v chatu (_vercel_share, 7 dní). **Zápis až po potvrzení.**

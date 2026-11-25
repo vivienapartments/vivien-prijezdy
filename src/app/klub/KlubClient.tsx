@@ -240,7 +240,10 @@ export default function KlubClient() {
               ) : (
                 <>
                   {karta.nadchazejici.map((r, i) => (
-                    <div className="klub-radek" key={`n-${i}`}>
+                    <div
+                      className={`klub-radek${r.barva === 'ceka' ? ' klub-radek--ceka' : r.barva === 'zapocteno' ? ' klub-radek--zapocteno' : ''}`}
+                      key={`n-${i}`}
+                    >
                       <div className="klub-ik">
                         {jeFirma ? <IkUser /> : i === 0 && r.pruvodceUrl ? <IkBook /> : <IkCal />}
                       </div>
@@ -271,7 +274,10 @@ export default function KlubClient() {
                   <p className="klub-prazdne">{tx.prazdnePobyty}</p>
                 ) : (
                   karta.pobyty.map((r, i) => (
-                    <div className="klub-radek" key={`p-${i}`}>
+                    <div
+                      className={`klub-radek${r.barva === 'ceka' ? ' klub-radek--ceka' : r.barva === 'zapocteno' ? ' klub-radek--zapocteno' : ''}`}
+                      key={`p-${i}`}
+                    >
                       <div className="klub-ik">
                         <IkCal />
                       </div>

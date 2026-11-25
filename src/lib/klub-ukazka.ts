@@ -15,12 +15,17 @@ export type KlubUkazkaId =
   | 'ukazka-firma'
   | 'ukazka-flidr'
   | 'ukazka-sofia'
-  | 'ukazka-egd';
+  | 'ukazka-hromada'
+  | 'ukazka-egd'; // alias → Hromada (zpětná kompatibilita odkazu)
+
+export type KlubPobytBarva = 'zapocteno' | 'ceka' | null;
 
 export type KlubPobytRadek = {
   nadpis: string;
   podnadpis: string;
   pruvodceUrl?: string | null;
+  /** Oranžová započteno / modrá čeká po odjezdu. */
+  barva?: KlubPobytBarva;
 };
 
 export type KlubPratelRadek = {
@@ -103,8 +108,13 @@ export function jeUkazkaKlic(k: string): k is KlubUkazkaId {
     k === 'ukazka-firma' ||
     k === 'ukazka-flidr' ||
     k === 'ukazka-sofia' ||
+    k === 'ukazka-hromada' ||
     k === 'ukazka-egd'
   );
+}
+
+function normalizujUkazkaId(id: KlubUkazkaId): KlubUkazkaId {
+  return id === 'ukazka-egd' ? 'ukazka-hromada' : id;
 }
 
 /** Ruční karty 25. 11. 2026 – sdílecí náhled (data z majitele + rez:*). */
@@ -112,63 +122,78 @@ function pobytyRucniKarty(id: KlubUkazkaId): {
   nadchazejici: KlubPobytRadek[];
   pobyty: KlubPobytRadek[];
 } | null {
-  if (id === 'ukazka-flidr') {
+  const kid = normalizujUkazkaId(id);
+  if (kid === 'ukazka-flidr') {
     return {
-      nadchazejici: [],
-      pobyty: [
+      nadchazejici: [
         {
           nadpis: '24.–27. 11. 2026 · Jemná harmonie',
-          podnadpis: 'rez. 92026110903 · přímá · v rez:*',
+          podnadpis: 'čeká, započítá se po odjezdu',
+          pruvodceUrl: '/nahled',
+          barva: 'ceka',
         },
+      ],
+      pobyty: [
         {
           nadpis: '18.–19. 11. 2026 · Jemná harmonie',
-          podnadpis: 'rez. 92026110902 · přímá · v rez:*',
+          podnadpis: 'započteno',
+          barva: 'zapocteno',
         },
         {
           nadpis: 'Další pobyt · 3 600 Kč',
-          podnadpis: 'Termín v rez:* nenalezen · ručně majitel',
+          podnadpis: 'započteno',
+          barva: 'zapocteno',
         },
         {
           nadpis: 'Další pobyt · 2 900 Kč',
-          podnadpis: 'Termín v rez:* nenalezen · ručně majitel',
+          podnadpis: 'započteno',
+          barva: 'zapocteno',
         },
       ],
     };
   }
-  if (id === 'ukazka-sofia') {
+  if (kid === 'ukazka-sofia') {
     return {
       nadchazejici: [],
       pobyty: [
         {
           nadpis: '7.–8. 10. 2026 · Pohodlí v tlumených tónech',
-          podnadpis: 'RODICE TELEFON PLATBA HOTOVE · jen seznam (ne v rez:*)',
+          podnadpis: 'započteno',
+          barva: 'zapocteno',
         },
         {
-          nadpis: 'Svatba / rodiče / Booking',
-          podnadpis: 'Detaily pobytů v rez:* nenalezeny · ručně majitel',
+          nadpis: 'Svatba a rodiče',
+          podnadpis: 'započteno',
+          barva: 'zapocteno',
         },
       ],
     };
   }
-  if (id === 'ukazka-egd') {
+  if (kid === 'ukazka-hromada') {
     return {
-      nadchazejici: [],
-      pobyty: [
+      nadchazejici: [
         {
           nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
-          podnadpis: 'rez. 92026111801 · Dominik Hromada · přímá · v rez:*',
+          podnadpis: 'čeká, započítá se po odjezdu · 4 440 Kč',
+          pruvodceUrl: '/nahled',
+          barva: 'ceka',
+        },
+      ],
+      pobyty: [
+        {
+          nadpis: '6.–7. 11. 2026 · Jemná harmonie · 1 700 Kč',
+          podnadpis: 'započteno',
+          barva: 'zapocteno',
         },
         {
-          nadpis: '6.–7. 11. 2026 · Jemná harmonie',
-          podnadpis: 'BH 120260643 · 1 700 Kč · v rez:* zatím není',
-        },
-        {
-          nadpis: '1.–6. 11. 2026 · Jemná harmonie',
-          podnadpis: 'rez. 120260570 · Dominik Hromada · přímá · v rez:*',
+          nadpis: '1.–6. 11. 2026 · Jemná harmonie · 7 900 Kč',
+          podnadpis: 'započteno',
+          barva: 'zapocteno',
         },
         {
           nadpis: '19.–23. 10. 2026 · Ušlechtilý kontrast',
-          podnadpis: 'rez. 120260538 · Booking.com · v rez:* (ne do útraty)',
+          podnadpis: 'Booking · ne do útraty',
+          barva: 'zapocteno',
         },
       ],
     };
@@ -191,8 +216,7 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       jazyk: 'cs',
       utrataKc: 12300,
       rezervace: ['92026110902', '92026110903'],
-      poznamka:
-        'Adresa: Osvoboditelů 223, 767 01 Kroměříž. 4 přímé pobyty, 12 300 Kč. Recenze Google (týdenní pracovní pobyt). Dva termíny 2 900 a 3 600 Kč v rez:* nenalezeny.',
+      poznamka: '',
       zalozil: 'rucni-2026-11-25',
     });
   }
@@ -210,34 +234,25 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       jazyk: 'cs',
       utrataKc: 35000,
       rezervace: [],
-      poznamka:
-        'Adresa: Žižkova třída 1915/1b, 370 01 České Budějovice. Státní příslušnost: Ukrajina. Výjimka majitele 35 000 Kč (svatba, rodiče napřímo + Booking). Manžel taxikář – možný doporučitel. Recenze. V rez:* žádný záznam.',
+      poznamka: '',
       zalozil: 'rucni-2026-11-25',
     });
   }
-  if (id === 'ukazka-egd') {
+  if (id === 'ukazka-hromada' || id === 'ukazka-egd') {
     return kartaZaklad({
-      id: 'ukazka-egd',
-      kod: 'EGD',
-      tajnyKlic: 'ukazka-egd',
-      typ: 'firma',
-      role: ['firma', 'doporucitel'],
-      jmeno: 'EG.D',
-      prijmeni: '',
+      id: 'ukazka-hromada',
+      kod: 'HROMADA',
+      tajnyKlic: id === 'ukazka-egd' ? 'ukazka-egd' : 'ukazka-hromada',
+      typ: 'host',
+      role: ['host', 'doporucitel'],
+      jmeno: 'Dominik',
+      prijmeni: 'Hromada',
       email: 'dominik.hromada@egd.cz',
       telefon: '+420732347329',
       jazyk: 'cs',
-      utrataKc: 14040,
-      rezervace: ['120260570', '92026111801'],
-      firma: {
-        ico: '',
-        dic: '',
-        nazev: 'EG.D, s.r.o.',
-        sidlo: '',
-        platceDph: false,
-      },
-      poznamka:
-        'Kontakt Dominik Hromada. Útrata z BH přímé (1 700 + 4 440 + 7 900). Booking 120260538 jen v seznamu pobytů.',
+      utrataKc: 9600,
+      rezervace: ['120260570', '92026111801', '120260643'],
+      poznamka: '',
       zalozil: 'rucni-2026-11-25',
     });
   }
@@ -313,7 +328,9 @@ export function pohledZKarty(
   let pobyty: KlubPobytRadek[] = [];
   let pratele: KlubPratelRadek[] = [];
 
-  const rucni = ukazka ? pobytyRucniKarty(karta.tajnyKlic as KlubUkazkaId) : null;
+  const rucni = ukazka
+    ? pobytyRucniKarty(normalizujUkazkaId(karta.tajnyKlic as KlubUkazkaId))
+    : null;
   if (rucni) {
     nadchazejici = rucni.nadchazejici;
     pobyty = rucni.pobyty;

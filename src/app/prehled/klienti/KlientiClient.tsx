@@ -392,31 +392,108 @@ export function KlientiClient() {
         </div>
         {nahledBh ? (
           <div style={{ marginTop: 12, color: '#efe6d8', fontSize: '0.9rem' }}>
+            <p style={{ color: '#b7aa98', fontSize: '0.82rem' }}>
+              <span style={{ color: '#e09a3e' }}>■ započteno</span>
+              {' · '}
+              <span style={{ color: '#7eb8d8' }}>■ čeká po odjezdu</span>
+            </p>
             <p style={{ color: '#c9a84c', marginBottom: 6 }}>
               Přiřadit teď ({bhPriradit.length})
             </p>
-            <ul>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
               {bhPriradit.map((s) => (
-                <li key={`p-${s.host}-${s.rezervace.join('-')}`}>
-                  {s.host} · {s.pocet} pobytů · {kc(s.utrata)} · {s.uroven}
+                <li key={`p-${s.host}-${s.rezervace.join('-')}`} style={{ marginBottom: 10 }}>
+                  <strong>{s.host}</strong> · {s.pocet} pobytů · započteno {kc(s.utrata)}
+                  {s.utrataCeka > 0 ? ` · čeká ${kc(s.utrataCeka)}` : ''} · {s.uroven}
+                  <ul style={{ listStyle: 'none', padding: 0, marginTop: 6 }}>
+                    {(s.pobyty || []).map((p) => (
+                      <li
+                        key={p.rezervace}
+                        style={{
+                          borderLeft: `3px solid ${p.stavUtraty === 'ceka' ? '#7eb8d8' : '#e09a3e'}`,
+                          background:
+                            p.stavUtraty === 'ceka'
+                              ? 'rgba(126, 184, 216, 0.12)'
+                              : 'rgba(224, 154, 62, 0.12)',
+                          padding: '0.35rem 0.5rem',
+                          marginBottom: 4,
+                          borderRadius: 6,
+                          fontSize: '0.82rem',
+                        }}
+                      >
+                        rez. {p.rezervace} · {p.castka > 0 ? kc(p.castka) : '—'} ·{' '}
+                        {p.stavUtraty === 'ceka'
+                          ? 'čeká, započítá se po odjezdu'
+                          : p.popisek || 'započteno'}
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
             <p style={{ color: '#c9a84c', marginBottom: 6 }}>Firmy ({bhFirmy.length})</p>
-            <ul>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
               {bhFirmy.map((s) => (
-                <li key={`f-${s.host}`}>
-                  {s.host} · {s.pocet} pobytů · {kc(s.utrata)} · {s.uroven}
+                <li key={`f-${s.host}`} style={{ marginBottom: 10 }}>
+                  <strong>{s.host}</strong> · {s.pocet} pobytů · započteno {kc(s.utrata)}
+                  {s.utrataCeka > 0 ? ` · čeká ${kc(s.utrataCeka)}` : ''} · {s.uroven}
+                  <ul style={{ listStyle: 'none', padding: 0, marginTop: 6 }}>
+                    {(s.pobyty || []).map((p) => (
+                      <li
+                        key={p.rezervace}
+                        style={{
+                          borderLeft: `3px solid ${p.stavUtraty === 'ceka' ? '#7eb8d8' : '#e09a3e'}`,
+                          background:
+                            p.stavUtraty === 'ceka'
+                              ? 'rgba(126, 184, 216, 0.12)'
+                              : 'rgba(224, 154, 62, 0.12)',
+                          padding: '0.35rem 0.5rem',
+                          marginBottom: 4,
+                          borderRadius: 6,
+                          fontSize: '0.82rem',
+                        }}
+                      >
+                        rez. {p.rezervace} · {p.castka > 0 ? kc(p.castka) : '—'} ·{' '}
+                        {p.stavUtraty === 'ceka'
+                          ? 'čeká, započítá se po odjezdu'
+                          : p.popisek || 'započteno'}
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
             <p style={{ color: '#c9a84c', marginBottom: 6 }}>
               Čekající na kartu ({bhCeka.length})
             </p>
-            <ul>
+            <ul style={{ listStyle: 'none', padding: 0 }}>
               {bhCeka.map((s) => (
-                <li key={`c-${s.host}-${s.rezervace.join('-')}`}>
-                  {s.host} · {s.pocet} pobytů · {kc(s.utrata)} · {s.uroven}
+                <li key={`c-${s.host}-${s.rezervace.join('-')}`} style={{ marginBottom: 10 }}>
+                  <strong>{s.host}</strong> · {s.pocet} pobytů · započteno {kc(s.utrata)}
+                  {s.utrataCeka > 0 ? ` · čeká ${kc(s.utrataCeka)}` : ''} · {s.uroven}
+                  <ul style={{ listStyle: 'none', padding: 0, marginTop: 6 }}>
+                    {(s.pobyty || []).map((p) => (
+                      <li
+                        key={p.rezervace}
+                        style={{
+                          borderLeft: `3px solid ${p.stavUtraty === 'ceka' ? '#7eb8d8' : '#e09a3e'}`,
+                          background:
+                            p.stavUtraty === 'ceka'
+                              ? 'rgba(126, 184, 216, 0.12)'
+                              : 'rgba(224, 154, 62, 0.12)',
+                          padding: '0.35rem 0.5rem',
+                          marginBottom: 4,
+                          borderRadius: 6,
+                          fontSize: '0.82rem',
+                        }}
+                      >
+                        rez. {p.rezervace} · {p.castka > 0 ? kc(p.castka) : '—'} ·{' '}
+                        {p.stavUtraty === 'ceka'
+                          ? 'čeká, započítá se po odjezdu'
+                          : p.popisek || 'započteno'}
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
             </ul>
@@ -426,8 +503,7 @@ export function KlientiClient() {
             <ul>
               {nahledBh.kontrola.map((r) => (
                 <li key={`k-${r.rezervace}`}>
-                  {r.oznaceni || r.cilJmeno || r.rezervace} ·{' '}
-                  {r.mena === 'EUR' ? `${r.castka} €` : kc(r.castka)} · {r.duvod}
+                  {r.oznaceni || r.cilJmeno || r.rezervace} · {kc(r.castka)} · {r.duvod}
                 </li>
               ))}
             </ul>

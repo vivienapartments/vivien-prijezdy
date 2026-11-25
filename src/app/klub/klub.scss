@@ -182,6 +182,29 @@
   padding-top: 0.65rem;
 }
 
+.klub-radek--zapocteno {
+  margin: 0.25rem -0.4rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border-left: 3px solid #e09a3e;
+  background: rgba(224, 154, 62, 0.12);
+}
+
+.klub-radek--ceka {
+  margin: 0.25rem -0.4rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 8px;
+  border-left: 3px solid #7eb8d8;
+  background: rgba(126, 184, 216, 0.12);
+}
+
+.klub-radek--zapocteno + .klub-radek,
+.klub-radek--ceka + .klub-radek,
+.klub-radek + .klub-radek--zapocteno,
+.klub-radek + .klub-radek--ceka {
+  border-top: none;
+}
+
 .klub-ik {
   width: 2.5rem;
   height: 2.5rem;
