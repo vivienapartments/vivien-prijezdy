@@ -16,6 +16,7 @@ import {
   type ImportBhNahled,
 } from '@/lib/klub-import-bh-csv';
 import { KLUB_IMPORT_BH_PRIME_SEED } from '@/lib/klub-import-bh-prime-seed';
+import { seznamPreviewKlientu } from '@/lib/klub-preview-klienti';
 import {
   potvrdImportBhCsv,
   seznamUtratCeka,
@@ -122,13 +123,55 @@ export async function GET() {
   const pravidla = await zajistiVychoziPravidla(store);
   const karty = await seznamKlientu(store);
   const ceka = await seznamUtratCeka(store);
+  const previewOk =
+    process.env.VERCEL_ENV === 'preview' ||
+    process.env.NODE_ENV === 'development' ||
+    process.env.KLUB_ZKOUSKA === '1';
+  const previewKarty = previewOk
+    ? seznamPreviewKlientu().map((p) => ({
+        id: p.id,
+        kod: p.kod,
+        tajnyKlic: p.tajnyKlic,
+        jmeno: p.jmeno,
+        prijmeni: p.prijmeni,
+        typ: p.typ,
+        email: p.email,
+        telefon: p.telefon,
+        firmaNazev: p.firmaNazev,
+        utrataKc: p.utrataKc,
+        utrataCekaKc: p.utrataCekaKc,
+        kreditKc: p.kreditKc,
+        urovenNazev: p.urovenNazev,
+        slevaPct: p.slevaPct,
+        pocetPobytu: p.pocetPobytu,
+        posledniPobyt: p.posledniPobyt,
+        pristiPobyt: p.pristiPobyt,
+        praveBydli: p.praveBydli,
+        preview: true,
+      }))
+    : [];
   return NextResponse.json(
     {
       ok: true,
       klubZapnut: klubZapnut(),
       pravidla,
-      karty: karty.map((k) => verejnaKlientKarta(k, pravidla)),
+      karty: [
+        ...previewKarty,
+        ...karty
+          .filter((k) => !previewKarty.some((p) => p.kod === k.kod))
+          .map((k) => ({
+            ...verejnaKlientKarta(k, pravidla),
+            tajnyKlic: k.tajnyKlic,
+            utrataCekaKc: 0,
+            pocetPobytu: k.rezervace?.length || 0,
+            posledniPobyt: null as string | null,
+            pristiPobyt: null as string | null,
+            praveBydli: false,
+            preview: false,
+          })),
+      ],
       utrataCeka: ceka,
+      preview: previewOk,
     },
     { headers: noStore },
   );

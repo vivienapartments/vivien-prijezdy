@@ -213,12 +213,29 @@ export default function KlubClient() {
           ) : null}
           {maUroven && pokrok && !skromnyZbytek ? (
             <>
-              <div className="klub-bar" aria-hidden>
-                <span style={{ width: `${pokrok.pct}%` }} />
-              </div>
+              {(() => {
+                const ceka = karta.utrataCekaKc || 0;
+                const soucet = Math.max(1, karta.utrataKc + ceka);
+                const wGold = Math.min(100, Math.round((karta.utrataKc / soucet) * 100));
+                const wBlue = ceka > 0 ? Math.max(4, Math.round((ceka / soucet) * 100)) : 0;
+                return (
+                  <div className="klub-bar klub-bar--dual" aria-hidden>
+                    <span className="klub-bar__a" style={{ width: `${wGold}%` }} />
+                    {wBlue ? <span className="klub-bar__b" style={{ width: `${wBlue}%` }} /> : null}
+                  </div>
+                );
+              })()}
               <div className="klub-bt">
                 <span>
-                  <b>{tx.utrata(formatKc(karta.utrataKc))}</b>
+                  {tx.utrata(formatKc(karta.utrataKc))}
+                  {karta.utrataCekaKc > 0 ? (
+                    <>
+                      <br />
+                      <span className="klub-ceka-castka">
+                        + {formatKc(karta.utrataCekaKc)} po odjezdu
+                      </span>
+                    </>
+                  ) : null}
                 </span>
                 <span>
                   {pokrok.dalsiNazev && pokrok.dalsiPct != null && pokrok.chybiKc != null
@@ -233,39 +250,38 @@ export default function KlubClient() {
 
         {!jeDop ? (
           <>
-            <section className="klub-sec" style={skromnyZbytek ? undefined : undefined}>
-              <div className="klub-sn">{jeFirma ? tx.nadchazejiciFirma : tx.nadchazejici}</div>
-              {karta.nadchazejici.length === 0 ? (
-                <p className="klub-prazdne">{tx.prazdnePobyty}</p>
-              ) : (
-                <>
-                  {karta.nadchazejici.map((r, i) => (
-                    <div
-                      className={`klub-radek${r.barva === 'ceka' ? ' klub-radek--ceka' : r.barva === 'zapocteno' ? ' klub-radek--zapocteno' : ''}`}
-                      key={`n-${i}`}
+            {karta.nadchazejici.length > 0 ? (
+              <section className={`klub-sec${karta.praveBydli ? ' klub-sec--now' : ''}`}>
+                <div className={`klub-sn${karta.praveBydli ? ' klub-sn--now' : ''}`}>
+                  {karta.praveBydli
+                    ? tx.praveBydli
+                    : jeFirma
+                      ? tx.nadchazejiciFirma
+                      : tx.nadchazejici}
+                </div>
+                {karta.nadchazejici.map((r, i) => (
+                  <div className="klub-radek" key={`n-${i}`}>
+                    <div className="klub-ik">
+                      {jeFirma ? <IkUser /> : r.pruvodceUrl ? <IkBook /> : <IkCal />}
+                    </div>
+                    <div>
+                      <div className="klub-t">{r.nadpis}</div>
+                      <div className="klub-s">{r.podnadpis}</div>
+                    </div>
+                  </div>
+                ))}
+                {karta.nadchazejici.some((r) => r.pruvodceUrl) ? (
+                  <div className="klub-btns">
+                    <a
+                      className="klub-btn"
+                      href={karta.nadchazejici.find((r) => r.pruvodceUrl)?.pruvodceUrl || '#'}
                     >
-                      <div className="klub-ik">
-                        {jeFirma ? <IkUser /> : i === 0 && r.pruvodceUrl ? <IkBook /> : <IkCal />}
-                      </div>
-                      <div>
-                        <div className="klub-t">{r.nadpis}</div>
-                        <div className="klub-s">{r.podnadpis}</div>
-                      </div>
-                    </div>
-                  ))}
-                  {karta.nadchazejici.some((r) => r.pruvodceUrl) ? (
-                    <div className="klub-btns">
-                      <a
-                        className="klub-btn"
-                        href={karta.nadchazejici.find((r) => r.pruvodceUrl)?.pruvodceUrl || '#'}
-                      >
-                        {tx.mujPruvodce}
-                      </a>
-                    </div>
-                  ) : null}
-                </>
-              )}
-            </section>
+                      {tx.mujPruvodce}
+                    </a>
+                  </div>
+                ) : null}
+              </section>
+            ) : null}
 
             {!skromnyZbytek ? (
               <section className="klub-sec">
@@ -273,20 +289,35 @@ export default function KlubClient() {
                 {karta.pobyty.length === 0 ? (
                   <p className="klub-prazdne">{tx.prazdnePobyty}</p>
                 ) : (
-                  karta.pobyty.map((r, i) => (
-                    <div
-                      className={`klub-radek${r.barva === 'ceka' ? ' klub-radek--ceka' : r.barva === 'zapocteno' ? ' klub-radek--zapocteno' : ''}`}
-                      key={`p-${i}`}
-                    >
-                      <div className="klub-ik">
-                        <IkCal />
+                  <>
+                    {karta.pobyty.map((r, i) => (
+                      <div
+                        className={`klub-pobyt${r.barva === 'ceka' ? ' klub-pobyt--ceka' : ' klub-pobyt--zapocteno'}`}
+                        key={`p-${i}`}
+                      >
+                        <div>
+                          <div className="klub-t">{r.nadpis}</div>
+                          <div className="klub-s">{r.podnadpis}</div>
+                        </div>
+                        <div
+                          className={`klub-pobyt__stav${r.barva === 'ceka' ? ' is-ceka' : ' is-zap'}`}
+                        >
+                          {(r.stavText || (r.barva === 'ceka' ? 'čeká' : 'započítáno'))
+                            .split('\n')
+                            .map((radek, j) => (
+                              <span key={j}>
+                                {radek}
+                                {j === 0 && (r.stavText || '').includes('\n') ? <br /> : null}
+                              </span>
+                            ))}
+                        </div>
                       </div>
-                      <div>
-                        <div className="klub-t">{r.nadpis}</div>
-                        <div className="klub-s">{r.podnadpis}</div>
-                      </div>
+                    ))}
+                    <div className="klub-leg">
+                      <i className="is-zap" /> započítáno
+                      <i className="is-ceka" /> čeká na odjezd
                     </div>
-                  ))
+                  </>
                 )}
               </section>
             ) : null}

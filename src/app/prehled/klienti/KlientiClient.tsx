@@ -8,14 +8,26 @@ import type { ImportBhNahled, UtrataCekaPolozka } from '@/lib/klub-import-bh-csv
 type KartaUi = {
   id: string;
   kod: string;
+  tajnyKlic?: string;
   jmeno: string;
   prijmeni: string;
   typ: string;
+  email?: string;
+  telefon?: string;
+  firmaNazev?: string | null;
   utrataKc: number;
+  utrataCekaKc?: number;
   kreditKc: number;
   urovenNazev: string;
   slevaPct: number;
+  pocetPobytu?: number;
+  posledniPobyt?: string | null;
+  pristiPobyt?: string | null;
+  praveBydli?: boolean;
+  preview?: boolean;
 };
+
+type Razeni = 'utrata' | 'uroven' | 'pristi';
 
 type NahledXlsx = {
   souhrn: { host: string; pocet: number; utrata: number; uroven: string }[];
@@ -41,6 +53,9 @@ export function KlientiClient() {
   const [utrataId, setUtrataId] = useState('');
   const [utrataCastka, setUtrataCastka] = useState('');
   const [utrataPozn, setUtrataPozn] = useState('');
+  const [hledat, setHledat] = useState('');
+  const [razeni, setRazeni] = useState<Razeni>('utrata');
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   const nacti = useCallback(async () => {
     const res = await fetch('/api/prehled/klienti');
@@ -255,6 +270,34 @@ export function KlientiClient() {
   const bhPriradit = nahledBh?.souhrn.filter((s) => s.akce === 'priradit') || [];
   const bhFirmy = nahledBh?.souhrn.filter((s) => s.akce === 'firma') || [];
   const bhCeka = nahledBh?.cekajici || [];
+
+  const q = hledat.trim().toLowerCase();
+  const filtrovane = karty
+    .filter((k) => {
+      if (!q) return true;
+      const blob = [
+        k.jmeno,
+        k.prijmeni,
+        k.email,
+        k.telefon,
+        k.firmaNazev,
+        k.kod,
+        k.urovenNazev,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return blob.includes(q);
+    })
+    .slice()
+    .sort((a, b) => {
+      if (razeni === 'utrata') return (b.utrataKc || 0) - (a.utrataKc || 0);
+      if (razeni === 'uroven') return (b.slevaPct || 0) - (a.slevaPct || 0);
+      const ap = a.pristiPobyt || 'zzzz';
+      const bp = b.pristiPobyt || 'zzzz';
+      return ap.localeCompare(bp, 'cs');
+    });
+  const detail = detailId ? karty.find((k) => k.id === detailId) || null : null;
 
   return (
     <main className="ph" style={{ padding: '1rem', maxWidth: 720, margin: '0 auto' }}>
@@ -610,30 +653,155 @@ export function KlientiClient() {
       </section>
 
       <section>
-        <h2 style={{ fontSize: '1rem' }}>Seznam ({karty.length})</h2>
-        {!karty.length ? (
-          <p style={{ color: '#b7aa98' }}>
-            Zatím žádní klienti. Spusťte migraci nebo přijdou v dalších dávkách.
-          </p>
+        <h2 style={{ fontSize: '1rem', color: '#c9a84c' }}>
+          Moji klienti ({filtrovane.length})
+        </h2>
+        <p style={{ color: '#b7aa98', fontSize: '0.85rem' }}>
+          Oranžová = započtená útrata. Modrá = čeká po odjezdu. Kliknutím detail a karta
+          hosta.
+        </p>
+        <input
+          value={hledat}
+          onChange={(e) => setHledat(e.target.value)}
+          placeholder="Hledat jméno, telefon, e-mail, firmu…"
+          style={{ ...inp, width: '100%', maxWidth: 420, marginLeft: 0, marginBottom: 10 }}
+        />
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+          {(
+            [
+              ['utrata', 'Podle útraty'],
+              ['uroven', 'Podle úrovně'],
+              ['pristi', 'Podle příštího pobytu'],
+            ] as const
+          ).map(([id, pop]) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setRazeni(id)}
+              style={{
+                ...btn,
+                background: razeni === id ? '#c9a84c' : '#2a231c',
+                color: razeni === id ? '#1a1510' : '#cfc5b0',
+              }}
+            >
+              {pop}
+            </button>
+          ))}
+        </div>
+
+        {detail ? (
+          <div
+            style={{
+              border: '1px solid #3d342a',
+              borderRadius: 14,
+              padding: '0.9rem 1rem',
+              marginBottom: 14,
+              background: '#15110e',
+              color: '#efe6d8',
+            }}
+          >
+            <p style={{ marginTop: 0 }}>
+              <strong>
+                {detail.firmaNazev || `${detail.jmeno} ${detail.prijmeni}`.trim()}
+              </strong>
+              {detail.praveBydli ? (
+                <span style={{ color: '#7fb8e6', marginLeft: 8 }}>právě bydlí</span>
+              ) : null}
+            </p>
+            <p style={{ fontSize: '0.9rem', color: '#b7aa98' }}>
+              {detail.urovenNazev} · sleva {detail.slevaPct} %
+              <br />
+              <span style={{ color: '#e09a3e' }}>útrata {kc(detail.utrataKc)}</span>
+              {(detail.utrataCekaKc || 0) > 0 ? (
+                <>
+                  {' · '}
+                  <span style={{ color: '#7eb8d8' }}>
+                    čeká {kc(detail.utrataCekaKc || 0)}
+                  </span>
+                </>
+              ) : null}
+              <br />
+              kredit {kc(detail.kreditKc)} · {detail.pocetPobytu || 0} pobytů
+              <br />
+              poslední: {detail.posledniPobyt || '—'} · příští:{' '}
+              {detail.pristiPobyt || '—'}
+              {detail.telefon ? (
+                <>
+                  <br />
+                  {detail.telefon}
+                </>
+              ) : null}
+              {detail.email ? (
+                <>
+                  <br />
+                  {detail.email}
+                </>
+              ) : null}
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {detail.tajnyKlic ? (
+                <a
+                  href={`/klub?k=${encodeURIComponent(detail.tajnyKlic)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}
+                >
+                  Zobrazit kartu jako host
+                </a>
+              ) : null}
+              <button type="button" onClick={() => setDetailId(null)} style={{ ...btn, background: '#2a231c', color: '#cfc5b0' }}>
+                Zavřít detail
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {!filtrovane.length ? (
+          <p style={{ color: '#b7aa98' }}>Nikdo v seznamu neodpovídá hledání.</p>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {karty.map((k) => (
-              <li
-                key={k.id}
-                style={{
-                  borderBottom: '1px solid #3d342a',
-                  padding: '0.65rem 0',
-                  color: '#efe6d8',
-                  fontSize: '0.92rem',
-                }}
-              >
-                <strong>
-                  {k.jmeno} {k.prijmeni}
-                </strong>{' '}
-                · {k.kod} · {k.typ}
-                <br />
-                {k.urovenNazev} ({k.slevaPct} %) · útrata {k.utrataKc} Kč · kredit{' '}
-                {k.kreditKc} Kč
+            {filtrovane.map((k) => (
+              <li key={k.id} style={{ borderBottom: '1px solid #3d342a', padding: '0.7rem 0' }}>
+                <button
+                  type="button"
+                  onClick={() => setDetailId(k.id)}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    background: 'transparent',
+                    border: 0,
+                    padding: 0,
+                    color: '#efe6d8',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                  }}
+                >
+                  <strong>
+                    {k.firmaNazev || `${k.jmeno} ${k.prijmeni}`.trim()}
+                  </strong>
+                  {k.praveBydli ? (
+                    <span style={{ color: '#7fb8e6', marginLeft: 8, fontSize: '0.8rem' }}>
+                      právě bydlí
+                    </span>
+                  ) : null}
+                  <br />
+                  <span style={{ fontSize: '0.85rem', color: '#b7aa98' }}>
+                    {k.urovenNazev} · sleva {k.slevaPct} % · {k.pocetPobytu || 0} pobytů
+                    <br />
+                    <span style={{ color: '#e09a3e' }}>{kc(k.utrataKc)}</span>
+                    {(k.utrataCekaKc || 0) > 0 ? (
+                      <>
+                        {' · '}
+                        <span style={{ color: '#7eb8d8' }}>čeká {kc(k.utrataCekaKc || 0)}</span>
+                      </>
+                    ) : null}
+                    {' · '}
+                    kredit {kc(k.kreditKc)}
+                    <br />
+                    posl. {k.posledniPobyt || '—'} · příští {k.pristiPobyt || '—'}
+                  </span>
+                </button>
               </li>
             ))}
           </ul>

@@ -4,9 +4,11 @@ import { jeZkouskaKlubu, klubZapnut } from '@/lib/klub-klic';
 import {
   jeUkazkaKlic,
   pohledZKarty,
+  pohledZPreviewDetailu,
   ukazkovaKlientKarta,
   type KlubUkazkaId,
 } from '@/lib/klub-ukazka';
+import { najdiPreviewPodleKlice } from '@/lib/klub-preview-klienti';
 import { createProcessStore } from '@/lib/store';
 import type { KlientRole } from '@/lib/klient-karta';
 import { adresaKlub } from '@/lib/verejna-adresa';
@@ -43,6 +45,18 @@ export async function GET(req: Request) {
   }
 
   const base = adresaKlub();
+
+  const preview = najdiPreviewPodleKlice(k);
+  if (preview) {
+    const defaultPohled: KlientRole = preview.typ === 'firma' ? 'firma' : 'host';
+    return NextResponse.json(
+      {
+        ok: true,
+        karta: pohledZPreviewDetailu(preview, base, { pohled: pohled || defaultPohled }),
+      },
+      { headers: noStore },
+    );
+  }
 
   if (jeUkazkaKlic(k)) {
     const karta = ukazkovaKlientKarta(k as KlubUkazkaId);

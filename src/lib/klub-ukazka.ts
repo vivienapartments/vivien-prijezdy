@@ -26,6 +26,8 @@ export type KlubPobytRadek = {
   pruvodceUrl?: string | null;
   /** Oranžová započteno / modrá čeká po odjezdu. */
   barva?: KlubPobytBarva;
+  /** Text vpravo na kartě (započítáno / čeká…). */
+  stavText?: string;
 };
 
 export type KlubPratelRadek = {
@@ -56,6 +58,10 @@ export type KlubKartaPohled = {
   kreditKVyplate: number;
   kreditVyplaceno: number;
   odkazDoporuceni: string;
+  /** Čekající útrata (modrý pruh). */
+  utrataCekaKc: number;
+  /** Probíhající pobyt = nadpis „Právě u nás bydlíte“. */
+  praveBydli: boolean;
 };
 
 const UROVNE = VYCHOZI_KLUB_PRAVIDLA.urovne;
@@ -378,6 +384,7 @@ export function pohledZKarty(
   }
 
   const kreditKc = karta.kreditKc;
+  const praveBydli = nadchazejici.some((r) => /právě|bydlíte|adresa, příjezd/i.test(r.podnadpis || ''));
   return {
     ukazka,
     pohled,
@@ -401,6 +408,30 @@ export function pohledZKarty(
     kreditKVyplate: kreditKc,
     kreditVyplaceno: 0,
     odkazDoporuceni: `${base}/poptavka?od=${encodeURIComponent(karta.kod)}`,
+    utrataCekaKc: 0,
+    praveBydli,
+  };
+}
+
+/** Pohled z Preview BH seedu (opravdová data importu). */
+export function pohledZPreviewDetailu(
+  d: {
+    karta: KlientKarta;
+    nadchazejici: KlubPobytRadek[];
+    pobyty: KlubPobytRadek[];
+    utrataCekaKc: number;
+    praveBydli: boolean;
+  },
+  odkazBase: string,
+  opts?: { pohled?: KlientRole },
+): KlubKartaPohled {
+  const zaklad = pohledZKarty(d.karta, odkazBase, { ukazka: true, pohled: opts?.pohled });
+  return {
+    ...zaklad,
+    nadchazejici: d.nadchazejici,
+    pobyty: d.pobyty,
+    utrataCekaKc: d.utrataCekaKc,
+    praveBydli: d.praveBydli,
   };
 }
 

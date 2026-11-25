@@ -182,27 +182,90 @@
   padding-top: 0.65rem;
 }
 
-.klub-radek--zapocteno {
-  margin: 0.25rem -0.4rem;
-  padding: 0.45rem 0.55rem;
-  border-radius: 8px;
-  border-left: 3px solid #e09a3e;
-  background: rgba(224, 154, 62, 0.12);
+.klub-bar--dual {
+  display: flex;
+  overflow: hidden;
 }
 
-.klub-radek--ceka {
-  margin: 0.25rem -0.4rem;
-  padding: 0.45rem 0.55rem;
-  border-radius: 8px;
-  border-left: 3px solid #7eb8d8;
-  background: rgba(126, 184, 216, 0.12);
+.klub-bar__a {
+  display: block;
+  height: 100%;
+  background: #c9a84c;
 }
 
-.klub-radek--zapocteno + .klub-radek,
-.klub-radek--ceka + .klub-radek,
-.klub-radek + .klub-radek--zapocteno,
-.klub-radek + .klub-radek--ceka {
-  border-top: none;
+.klub-bar__b {
+  display: block;
+  height: 100%;
+  background: #7fb8e6;
+  opacity: 0.75;
+}
+
+.klub-ceka-castka {
+  color: #7fb8e6;
+  font-size: 0.85em;
+}
+
+.klub-sec--now {
+  border-color: #7fb8e6;
+}
+
+.klub-sn--now {
+  color: #7fb8e6;
+}
+
+.klub-pobyt {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.65rem 0.5rem 0.7rem;
+  margin: 0.4rem 0;
+  background: #211b15;
+  border-radius: 8px;
+  border-left: 3px solid #e08a3c;
+}
+
+.klub-pobyt--ceka {
+  border-left-color: #7fb8e6;
+}
+
+.klub-pobyt__stav {
+  font-size: 0.75rem;
+  text-align: right;
+  line-height: 1.25;
+  flex: none;
+  max-width: 7.5rem;
+}
+
+.klub-pobyt__stav.is-zap {
+  color: #e08a3c;
+}
+
+.klub-pobyt__stav.is-ceka {
+  color: #7fb8e6;
+}
+
+.klub-leg {
+  font-size: 0.72rem;
+  color: #a89c86;
+  margin-top: 0.55rem;
+}
+
+.klub-leg i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  margin: 0 4px 0 8px;
+  vertical-align: middle;
+}
+
+.klub-leg i.is-zap {
+  background: #e08a3c;
+}
+
+.klub-leg i.is-ceka {
+  background: #7fb8e6;
 }
 
 .klub-ik {

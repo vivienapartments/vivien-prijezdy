@@ -143,6 +143,21 @@ const NADCH = L('Nadcházející pobyt', 'Upcoming stay', {
   fi: 'Tuleva majoitus',
 });
 
+const PRAVE_BYDLI = L('Právě u nás bydlíte', 'You are staying with us', {
+  de: 'Sie wohnen gerade bei uns',
+  pl: 'Właśnie u nas mieszkacie',
+  uk: 'Саме зараз ви в нас',
+  'zh-Hant': '您目前正在入住',
+  es: 'Ahora se alojan con nosotros',
+  fr: 'Vous séjournez chez nous',
+  it: 'State soggiornando da noi',
+  pt: 'Está a ficar connosco',
+  sv: 'Ni bor hos oss just nu',
+  hu: 'Éppen nálunk tartózkodik',
+  da: 'I bor hos os lige nu',
+  fi: 'Olette juuri majoittumassa meillä',
+});
+
 const NADCH_F = L('Nadcházející pobyty', 'Upcoming stays', {
   de: 'Bevorstehende Aufenthalte',
   pl: 'Nadchodzące pobyty',
@@ -634,6 +649,7 @@ export function klubTexty(lang: GuideLang) {
     nejvyssi: t(NEJVYSSI, lang),
     nadchazejici: t(NADCH, lang),
     nadchazejiciFirma: t(NADCH_F, lang),
+    praveBydli: t(PRAVE_BYDLI, lang),
     mujPruvodce: t(MUJ_PRUVODCE, lang),
     mojePobyty: t(MOJE_POBYTY, lang),
     objednanePobyty: t(OBJ_POBYTY, lang),
