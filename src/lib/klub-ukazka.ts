@@ -340,9 +340,10 @@ export function pohledZKarty(
   if (rucni) {
     nadchazejici = rucni.nadchazejici;
     pobyty = rucni.pobyty;
-  } else if (ukazka && pohled === 'host') {
+  } else if (ukazka && pohled === 'host' && !String(karta.tajnyKlic || '').startsWith('preview-')) {
     const pred = karta.tajnyKlic === 'ukazka-host-pred';
     const jenPo = karta.tajnyKlic === 'ukazka-host-po';
+    // Fiktivní kamarádi jen u obecné ukázky hosta, ne u skutečných Preview karet.
     if (!jenPo) {
       nadchazejici = [
         {
@@ -358,11 +359,13 @@ export function pohledZKarty(
         { nadpis: '14.–16. 6. 2026', podnadpis: 'Apartmán 5' },
         { nadpis: '7.–9. 2. 2026', podnadpis: 'Apartmán 1' },
       ];
-      pratele = [
-        { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
-        { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
-        { jmeno: 'Eva · leden 2027', stav: 'čeká na pobyt' },
-      ];
+      if (karta.tajnyKlic === 'ukazka-host' || karta.tajnyKlic === 'ukazka-host-po') {
+        pratele = [
+          { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
+          { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
+          { jmeno: 'Eva · leden 2027', stav: 'čeká na pobyt' },
+        ];
+      }
     }
   } else if (ukazka && pohled === 'firma') {
     nadchazejici = [
@@ -425,13 +428,19 @@ export function pohledZPreviewDetailu(
   odkazBase: string,
   opts?: { pohled?: KlientRole },
 ): KlubKartaPohled {
-  const zaklad = pohledZKarty(d.karta, odkazBase, { ukazka: true, pohled: opts?.pohled });
+  const zaklad = pohledZKarty(d.karta, odkazBase, { ukazka: false, pohled: opts?.pohled });
   return {
     ...zaklad,
+    ukazka: true,
+    // Žádní falešní kamarádi z ukázky – Flídr nikoho nedoporučil.
+    pratele: [],
     nadchazejici: d.nadchazejici,
     pobyty: d.pobyty,
     utrataCekaKc: d.utrataCekaKc,
     praveBydli: d.praveBydli,
+    kreditCeka: 0,
+    kreditKVyplate: d.karta.kreditKc || 0,
+    kreditVyplaceno: 0,
   };
 }
 
