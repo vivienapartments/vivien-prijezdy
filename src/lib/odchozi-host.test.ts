@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CHYBA_RELAY_EMAIL,
   CHYBA_RELAY_OBSAH,
+  CHYBA_TELEFON_REZERVACE,
   druhZpravyNaOdchozi,
   overOdchoziHostovi,
   pripravTextSmsWa,
@@ -143,15 +144,43 @@ describe('odchozi-host · e-mail', () => {
 });
 
 describe('odchozi-host · SMS / WhatsApp', () => {
-  it('poděkování na telefon při relay e-mailu pustí', async () => {
+  it('poděkování na telefon z check-inu při relay e-mailu pustí', async () => {
     const r = await overOdchoziHostovi({
       kanal: 'whatsapp',
       druh: 'podekovani',
       emailCil: RELAY,
+      telefonCil: '+420777111222',
+      rezervaceRec: {
+        zdrojCeka: false,
+        telefon: '+420777111222',
+        telefonWa: '420777111222',
+        telefonRezervace: '+420777999888',
+        telefonRezervaceWa: '420777999888',
+      },
       text: 'Díky za návštěvu, v průvodci je dárek.',
       tichy: true,
     });
     expect(r.ok).toBe(true);
+  });
+
+  it('poděkování na telefon z rezervace Booking zablokuje', async () => {
+    const r = await overOdchoziHostovi({
+      kanal: 'whatsapp',
+      druh: 'podekovani',
+      emailCil: RELAY,
+      telefonCil: '+420777999888',
+      rezervaceRec: {
+        zdrojCeka: false,
+        telefon: '+420777111222',
+        telefonWa: '420777111222',
+        telefonRezervace: '+420777999888',
+        telefonRezervaceWa: '420777999888',
+      },
+      text: 'Díky za návštěvu.',
+      tichy: true,
+    });
+    expect(r.ok).toBe(false);
+    expect(r.duvod).toBe(CHYBA_TELEFON_REZERVACE);
   });
 
   it('provozní SMS s odkazem na poptávku při relay vyčistí / zablokuje', () => {
@@ -242,12 +271,22 @@ describe('odchozi-host · každý typ zprávy', () => {
     }
   });
 
-  it('SMS a WhatsApp: poděkování (marketing) na telefon při relay pustí i se slevou', () => {
+  it('SMS a WhatsApp: poděkování na telefon z check-inu pustí i se slevou', () => {
     for (const kanal of ['sms', 'whatsapp'] as const) {
       const r = pripravTextSmsWa(
         'Díky. Máte slevu 5 %: https://x.cz/poptavka?od=X',
         RELAY,
         'podekovani',
+        {
+          telefonCil: '+420777111222',
+          rezervaceRec: {
+            zdrojCeka: false,
+            telefon: '+420777111222',
+            telefonWa: '420777111222',
+            telefonRezervace: null,
+            telefonRezervaceWa: null,
+          },
+        },
       );
       expect(r.ok).toBe(true);
       void kanal;

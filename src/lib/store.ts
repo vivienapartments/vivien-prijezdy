@@ -159,6 +159,13 @@ export type RezervaceRecord = {
   telefonPuvodni: string | null;
   /** ZDROJ z Better Hotelu, jak přišel. */
   zdroj: string | null;
+  /**
+   * true = zdroj neznámý, majitel má potvrdit Přímá / Booking / Airbnb.
+   * Dokud platí: žádné obchodní zprávy, žádná útrata v klubu.
+   */
+  zdrojCeka: boolean;
+  /** Spárovaná poptávka (přímá rezervace). */
+  poptavkaId: string | null;
   /** Zkušební karta majitele. Nejde do statistik, kreditu ani obsazenosti. */
   zkusebni: boolean;
   /** Čas, který host napsal a majitel si ho sem zapsal. Tvar HH:MM. */
@@ -371,7 +378,8 @@ export type RucniPole =
   | 'accessPin'
   | 'poznamkaUklid'
   | 'cenaPobytu'
-  | 'adresaHosta';
+  | 'adresaHosta'
+  | 'zdroj';
 
 export type OdkudNavrh = 'check-in' | 'rezervace' | 'host' | 'potvrzeni';
 
@@ -449,6 +457,7 @@ const RUCNI_KLIC = new Set<RucniPole>([
   'poznamkaUklid',
   'cenaPobytu',
   'adresaHosta',
+  'zdroj',
 ]);
 
 const ODKUD = new Set<OdkudNavrh>(['check-in', 'rezervace', 'host', 'potvrzeni']);
@@ -812,6 +821,8 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     telefonWa: typeof r.telefonWa === 'string' && r.telefonWa ? r.telefonWa : null,
     telefonPuvodni: typeof r.telefonPuvodni === 'string' && r.telefonPuvodni ? r.telefonPuvodni : null,
     zdroj: typeof r.zdroj === 'string' && r.zdroj ? r.zdroj : null,
+    zdrojCeka: r.zdrojCeka === true,
+    poptavkaId: typeof r.poptavkaId === 'string' && r.poptavkaId ? r.poptavkaId : null,
     zkusebni: r.zkusebni === true || /^TEST/i.test(String(r.rezervace || '')),
     casPrijezdu:
       r.casPrijezdu === 'po20' ||
@@ -981,6 +992,8 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     telefonWa: null,
     telefonPuvodni: null,
     zdroj: null,
+    zdrojCeka: false,
+    poptavkaId: null,
     zkusebni: false,
     casPrijezdu: null,
     telefonRezervace: null,

@@ -14,6 +14,7 @@ import {
   type SchrankaMeta,
 } from './inbox-mail';
 import { jeZdrojBooking, poplatekProRezervaci } from './poplatek';
+import { rozhodniZdroj, zdrojZEmailu } from './zdroj-rezervace';
 import {
   cisloZeSubjectu,
   jePotvrzeniPredmet,
@@ -25,7 +26,7 @@ import {
 } from './potvrzeni-rezervace';
 import { posliPruvodce } from './posli-pruvodce';
 import { upozorniPoOdeslaniPruvodce } from './pruvodce-wa';
-import { vynechRucni } from './rucni-pole';
+import { maRucni, vynechRucni } from './rucni-pole';
 import { poNoveRezervaci } from './doporuceni';
 import { doplnRezervaci, type DoplnekRezervace } from './rezervace-rucne';
 import { doplnUdajeZMinulehoPobytu } from './staly-host';
@@ -239,7 +240,14 @@ function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partia
   if (ins.cenaMena && !prev?.mena) poloz('mena', ins.cenaMena);
   if (ins.vytvoreno) poloz('vytvoreno', ins.vytvoreno);
   if (ins.zdroj) poloz('zdroj', ins.zdroj);
-  const zdrojPoplatku = ins.zdroj || prev?.zdroj;
+  else if (!prev?.zdroj && !maRucni(prev, 'zdroj')) {
+    const zeMailu = zdrojZEmailu(ins.email);
+    if (zeMailu) {
+      data.zdroj = zeMailu;
+      data.zdrojCeka = false;
+    }
+  }
+  const zdrojPoplatku = (data.zdroj as string | null | undefined) || ins.zdroj || prev?.zdroj;
   if (
     ins.vytvoreno ||
     ins.zdroj ||
@@ -626,8 +634,9 @@ function udajeInterni(u: InterniUdaje, stav: RezervaceStav, prev?: RezervaceReco
     data.telefonRezervacePuvodni = u.telefonPuvodni;
   }
   if (stav === 'bez_checkinu') data.jazyk = jazykZPredvolby(u.telefon);
-  if (u.zdroj) data.zdroj = u.zdroj;
   if (u.vytvoreno) data.vytvoreno = u.vytvoreno;
+  // Zdroj: agentura / e-mail / párování poptávky řeší volající (zpracujInterni).
+  if (u.zdroj) data.zdroj = u.zdroj;
   const zdrojPoplatku = u.zdroj || prev?.zdroj;
   if (
     u.vytvoreno ||
@@ -848,7 +857,49 @@ async function zpracujInterni(mail: InboxMail, store: ProcessStore, now: string)
     stav = prev.stav;
   }
 
-  const rec = sloucit(id, prev, udajeInterni(u, stav, prev), now, historieInterni(u, stav, odeslano));
+  const data = udajeInterni(u, stav, prev);
+  if (u.druh === 'nova' || !prev?.zdroj) {
+    if (!maRucni(prev, 'zdroj')) {
+      let poptavky: Awaited<ReturnType<ProcessStore['listPoptavky']>> = [];
+      try {
+        poptavky = await store.listPoptavky();
+      } catch {
+        poptavky = [];
+      }
+      const roz = rozhodniZdroj({
+        agentura: u.zdroj, // parsujInterni už mapuje agenturu → Booking/Airbnb/přímá/null
+        email: u.email,
+        jmeno: u.jmeno,
+        prijezd: u.prijezd,
+        odjezd: u.odjezd,
+        telefon: u.telefon,
+        zdrojUz: prev?.zdroj,
+        zdrojPotvrzenRucne: maRucni(prev, 'zdroj'),
+        poptavky,
+      });
+      // Když agentura už dala Booking, rozhodniZdroj to potvrdí přes email/agenturu.
+      // Bez agentury u.zdroj je null → párování / čekání.
+      if (roz.zdroj) data.zdroj = roz.zdroj;
+      data.zdrojCeka = roz.zdrojCeka;
+      if (roz.poptavkaId) data.poptavkaId = roz.poptavkaId;
+      if (roz.telegram && !prev) {
+        try {
+          await upozorniMajitele(store, roz.telegram, '/prehled', { telegram: 'automat' });
+        } catch {
+          /* neblokuj */
+        }
+      }
+      if (roz.zdroj || roz.zdrojCeka) {
+        data.poplatek = poplatekProRezervaci({
+          vytvoreno: u.vytvoreno || prev?.vytvoreno,
+          zdroj: roz.zdroj || prev?.zdroj,
+          rezervace: id,
+        });
+      }
+    }
+  }
+
+  const rec = sloucit(id, prev, data, now, historieInterni(u, stav, odeslano));
   await store.setRezervace(id, rec);
   await zkusDoporuceniPoNove(store, prev, id);
 
