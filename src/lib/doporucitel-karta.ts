@@ -473,7 +473,7 @@ export async function aktualizujStavDoporuceniPodlePoptavky(
     if (d.stav === 'nesplnuje' || d.stav === 'vyplaceno' || d.stav === 'pripsano') return;
     if (novy === 'storno') {
       if (d.stav === 'poptavka' || d.stav === 'potvrzeno') {
-        if (d.odmena > 0 && d.stav !== 'storno') {
+        if (d.odmena > 0) {
           karta.penize.ceka = Math.max(0, karta.penize.ceka - d.odmena);
         }
         d.stav = 'storno';
