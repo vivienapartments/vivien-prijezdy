@@ -448,8 +448,8 @@ export function pohledZPreviewDetailu(
     kreditCeka: 0,
     kreditKVyplate: kreditKc,
     kreditVyplaceno: 0,
-    // BH Preview: doporučení až když bude skutečné. Teď jen útrata a pobyty.
-    skrytDoporuceni: kreditKc <= 0,
+    // Doporučit mají všichni hosté. Prázdný seznam přátel / kredit 0 je v pořádku.
+    skrytDoporuceni: false,
   };
 }
 
