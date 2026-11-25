@@ -239,7 +239,10 @@ export async function POST(req: Request) {
     if (!cekaId || !klientId) return chyba(400, 'Chybí cekaId nebo klientId.');
     const vysledek = await spojUtratuCeka(store, cekaId, klientId);
     if (!vysledek.ok) return chyba(404, 'Spojení se nepovedlo.');
-    return NextResponse.json({ ok: true, ...vysledek }, { headers: noStore });
+    return NextResponse.json(
+      { ok: true, castka: vysledek.castka },
+      { headers: noStore },
+    );
   }
 
   return chyba(400, 'Neznámá akce.');
