@@ -15,7 +15,7 @@ const V5_KRATKY: Record<GuideLang, string> = {
   sv: 'Dämpade toner',
   hu: 'Tompa tónusok',
   da: 'Dæmpede toner',
-  fi: 'Muted Tones',
+  fi: 'Hillityt sävyt',
 };
 
 export function nazevDlazdice(id: AptId, lang: GuideLang, plny: string): string {

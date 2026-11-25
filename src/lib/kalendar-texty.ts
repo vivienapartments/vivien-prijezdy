@@ -39,7 +39,7 @@ const EXTRA = {
     sv: 'Välj nu avresedagen',
     hu: 'Most válasszák ki a távozás napját',
     da: 'Vælg nu afrejsedagen',
-    fi: 'Now choose your departure day',
+    fi: 'Valitkaa nyt lähtöpäivä',
   },
   terminBezVolneho: {
     cs: 'V tomto termínu nemáme jeden apartmán volný na všechny noci.',
@@ -55,7 +55,7 @@ const EXTRA = {
     sv: 'Under dessa datum har vi ingen lägenhet ledig alla nätter.',
     hu: 'Ebben az időszakban nincs olyan apartman, amely az összes éjszakára szabad.',
     da: 'I denne periode har vi ikke én lejlighed ledig alle nætter.',
-    fi: 'For these dates we do not have one apartment free for all nights.',
+    fi: 'Tälle ajalle meillä ei ole yhtä asuntoa vapaana kaikiksi öiksi.',
   },
   ukazNejblizsi: {
     cs: 'Ukázat nejbližší volný termín',
@@ -71,7 +71,7 @@ const EXTRA = {
     sv: 'Visa närmaste lediga datum',
     hu: 'A legközelebbi szabad időpont mutatása',
     da: 'Vis nærmeste ledige dato',
-    fi: 'Show the nearest free dates',
+    fi: 'Näytä lähin vapaa ajankohta',
   },
   veTerminuObsazeno: {
     cs: 'Ve vašem termínu obsazeno',
@@ -87,7 +87,7 @@ const EXTRA = {
     sv: 'Upptaget på era datum',
     hu: 'Az önök időpontjában foglalt',
     da: 'Optaget på jeres datoer',
-    fi: 'Booked for your dates',
+    fi: 'Varattu valitsemallanne ajalla',
   },
   kdyJeVolny: {
     cs: 'Kdy je volný?',
@@ -103,7 +103,7 @@ const EXTRA = {
     sv: 'När är den ledig?',
     hu: 'Mikor szabad?',
     da: 'Hvornår er den ledig?',
-    fi: 'When is it free?',
+    fi: 'Milloin vapaana?',
   },
   aptObsazenOdeslani: {
     cs: 'Tento apartmán je ve vašem termínu obsazený.',
@@ -119,7 +119,7 @@ const EXTRA = {
     sv: 'Denna lägenhet är upptagen på era datum.',
     hu: 'Ez az apartman az önök időpontjában foglalt.',
     da: 'Denne lejlighed er optaget på jeres datoer.',
-    fi: 'This apartment is booked for your dates.',
+    fi: 'Tämä asunto on varattu valitsemallanne ajalla.',
   },
 } as const;
 

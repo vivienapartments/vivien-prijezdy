@@ -44,7 +44,7 @@ const PRES_PODLE_JAZYKA: Record<GuideLang, string> = {
   sv: 'via',
   hu: 'via',
   da: 'via',
-  fi: 'via',
+  fi: 'kautta',
 };
 
 export function fromTipKamaradovi(

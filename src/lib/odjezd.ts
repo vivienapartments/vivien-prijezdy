@@ -280,7 +280,7 @@ function vetaDluhu(lang: GuideLang, polozky: PolozkaDluhu[]): string {
     sv: `När vi tar över lägenheten gör vi upp de återstående ${castka(soucet, j)} (${vnitrni}).`,
     hu: `A lakás átvételekor rendezzük a fennmaradó ${castka(soucet, j)} összeget (${vnitrni}).`,
     da: `Når vi overtager lejligheden, afregner vi det resterende beløb ${castka(soucet, j)} (${vnitrni}).`,
-    fi: `When we take over the apartment, we will settle the remaining ${castka(soucet, j)} (${vnitrni}).`,
+    fi: `Asunnon luovutuksessa maksetaan vielä \${castka(soucet, j)} (\${vnitrni}).`,
   };
   return sablony[j];
 }
@@ -398,7 +398,7 @@ export const PREDMET_ODJEZDU: Record<GuideLang, string> = {
   sv: 'VIVIEN · Er avresa {datum}',
   hu: 'VIVIEN · Az elutazásuk {datum}',
   da: 'VIVIEN · Jeres afrejse {datum}',
-  fi: 'VIVIEN · Your departure {datum}',
+  fi: 'VIVIEN · Lähtönne {datum}',
 };
 
 export function ukazatDotazOdjezdu(opts: {

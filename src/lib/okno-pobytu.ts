@@ -586,7 +586,7 @@ const SKUPINA_DRIVE: Record<GuideLang, string> = {
   sv: 'Tidigare ankomst (vi bekräftar)',
   hu: 'Korábbi érkezés (megerősítjük)',
   da: 'Tidligere ankomst (vi bekræfter)',
-  fi: 'Earlier arrival (we will confirm)',
+  fi: 'Aikaisempi saapuminen (vahvistamme)',
 };
 
 const SKUPINA_BEZNY: Record<GuideLang, string> = {
@@ -603,7 +603,7 @@ const SKUPINA_BEZNY: Record<GuideLang, string> = {
   sv: 'Vanlig ankomst',
   hu: 'Szokásos érkezés',
   da: 'Almindelig ankomst',
-  fi: 'Standard arrival',
+  fi: 'Tavallinen saapuminen',
 };
 
 const SKUPINA_POZDNI: Record<GuideLang, string> = {
@@ -620,7 +620,7 @@ const SKUPINA_POZDNI: Record<GuideLang, string> = {
   sv: 'Sen ankomst',
   hu: 'Késői érkezés',
   da: 'Sen ankomst',
-  fi: 'Late arrival',
+  fi: 'Myöhäinen saapuminen',
 };
 
 const SKUPINA_ODJEZD: Record<GuideLang, string> = {
@@ -637,7 +637,7 @@ const SKUPINA_ODJEZD: Record<GuideLang, string> = {
   sv: 'Vanlig avresa',
   hu: 'Szokásos elutazás',
   da: 'Almindelig afrejse',
-  fi: 'Standard departure',
+  fi: 'Tavallinen lähtö',
 };
 
 const SKUPINA_POZDE: Record<GuideLang, string> = {
@@ -654,7 +654,7 @@ const SKUPINA_POZDE: Record<GuideLang, string> = {
   sv: 'Senare avresa (vi bekräftar)',
   hu: 'Későbbi távozás (megerősítjük)',
   da: 'Senere afrejse (vi bekræfter)',
-  fi: 'Later departure (we will confirm)',
+  fi: 'Myöhäisempi lähtö (vahvistamme)',
 };
 
 const POZNAMKA_DRIVE: Record<GuideLang, string> = {
@@ -671,7 +671,7 @@ const POZNAMKA_DRIVE: Record<GuideLang, string> = {
   sv: 'Vi bekräftar tidigare ankomst när lägenheten är klar.',
   hu: 'A korábbi érkezést akkor erősítjük meg, amint a lakás készen áll.',
   da: 'Vi bekræfter den tidligere ankomst, når lejligheden er klar.',
-  fi: 'We will confirm the earlier arrival once the apartment is ready.',
+  fi: 'Vahvistamme aikaisemman saapumisen, kun asunto on valmis.',
 };
 
 export function skupinaDrive(lang: GuideLang | null | undefined): string {

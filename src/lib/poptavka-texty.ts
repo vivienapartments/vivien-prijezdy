@@ -94,7 +94,7 @@ const CHYBA_TELEFON: Record<GuideLang, string> = {
   sv: 'Kontrollera telefonnumret, inklusive landsnummer.',
   hu: 'Ellenőrizzék a telefonszámot az országhívószámmal együtt.',
   da: 'Tjek telefonnummeret, inklusive landekode.',
-  fi: 'Please check the phone number, including the country code.',
+  fi: 'Tarkistakaa puhelinnumero suuntanumeroineen.',
 };
 
 const CS: PoptavkaTexty = {

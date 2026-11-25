@@ -16,7 +16,7 @@ export const ZPRAVA_OD_NAS_KROK: LText = {
   pt: 'Mensagem nossa',
   hu: 'Üzenet tőlünk',
   da: 'Besked fra os',
-  fi: 'A message from us',
+  fi: 'Viesti meiltä',
 };
 
 export const ZPRAVA_CAS_NADPIS: LText = {
@@ -33,7 +33,7 @@ export const ZPRAVA_CAS_NADPIS: LText = {
   pt: 'A vossa chegada está confirmada',
   hu: 'Érkezésük megerősítve',
   da: 'Jeres ankomst er bekræftet',
-  fi: 'Your arrival is confirmed',
+  fi: 'Saapumisenne on vahvistettu',
 };
 
 export const ZPRAVA_CAS_TEXT: LText = {
@@ -50,7 +50,7 @@ export const ZPRAVA_CAS_TEXT: LText = {
   pt: 'Contamos com a vossa chegada às {{CAS}}. Esperamo-vos à frente da casa e recebemos-vos pessoalmente.',
   hu: '{{CAS}}-ra számítunk az érkezésükre. A ház előtt várjuk Önöket, és személyesen üdvözöljük.',
   da: 'Vi regner med jeres ankomst kl. {{CAS}}. Vi venter foran huset og byder jer personligt velkommen.',
-  fi: 'We are counting on your arrival at {{CAS}}. We will wait for you in front of the house and welcome you in person.',
+  fi: 'Odotamme teitä klo {{CAS}}. Olemme vastassa talon edessä ja toivotamme teidät henkilökohtaisesti tervetulleiksi.',
 };
 
 export const ZPRAVA_CAS_SBALENA: LText = {
@@ -67,7 +67,7 @@ export const ZPRAVA_CAS_SBALENA: LText = {
   pt: 'Mensagem sobre a hora de chegada',
   hu: 'Üzenet az érkezés idejéről',
   da: 'Besked om ankomsttid',
-  fi: 'Message about arrival time',
+  fi: 'Viesti saapumisajasta',
 };
 
 export const ZPRAVA_BRANA_NADPIS: LText = {
@@ -84,7 +84,7 @@ export const ZPRAVA_BRANA_NADPIS: LText = {
   pt: 'O portão está pronto',
   hu: 'A kapu kész',
   da: 'Porten er klar',
-  fi: 'The gate is ready',
+  fi: 'Portti on valmis',
 };
 
 /** {{TELEFON}} se v UI nahradí klikatelným číslem. */
@@ -102,7 +102,7 @@ export const ZPRAVA_BRANA_TEXT: LText = {
   pt: 'O vosso número {{TELEFON}} está no portão. Abram-no com uma chamada. Lugar n.º {{STANI}}.',
   hu: 'Az Önök száma {{TELEFON}} a kapuban van. Nyissák meg hívással. A parkolóhely száma {{STANI}}.',
   da: 'Jeres nummer {{TELEFON}} er i porten. Åbn den med et opkald. Plads nr. {{STANI}}.',
-  fi: 'Your number {{TELEFON}} is in the gate. Open it with a call. Your space is no. {{STANI}}.',
+  fi: 'Numeronne {{TELEFON}} on rekisteröity porttiin. Avatkaa portti soittamalla. Paikkanne on nro {{STANI}}.',
 };
 
 export const ZPRAVA_BRANA_SBALENA: LText = {
@@ -119,7 +119,7 @@ export const ZPRAVA_BRANA_SBALENA: LText = {
   pt: 'Mensagem sobre o estacionamento',
   hu: 'Üzenet a parkolásról',
   da: 'Besked om parkering',
-  fi: 'Message about parking',
+  fi: 'Viesti pysäköinnistä',
 };
 
 export const ZPRAVA_ODJEZD_PRIJATI_NADPIS: LText = {
@@ -136,7 +136,7 @@ export const ZPRAVA_ODJEZD_PRIJATI_NADPIS: LText = {
   pt: 'Temos a vossa hora de partida',
   hu: 'Megvan a távozás ideje',
   da: 'Vi har jeres afrejsetid',
-  fi: 'We have your departure time',
+  fi: 'Lähtöaika on vastaanotettu',
 };
 
 export const ZPRAVA_ODJEZD_PRIJATI_RANO: LText = {
@@ -153,7 +153,7 @@ export const ZPRAVA_ODJEZD_PRIJATI_RANO: LText = {
   pt: 'Recebemos a hora {{CAS}}. Quando estivermos acordados, confirmamos a despedida. Sem confirmação, partam sozinhos.',
   hu: 'A {{CAS}} időpontot megkaptuk. Amikor felkeltünk, megerősítjük az elköszönést. Megerősítés nélkül egyedül távozzanak.',
   da: 'Vi har modtaget tiden {{CAS}}. Når vi er vågne, bekræfter vi farvel. Uden bekræftelse kør selv.',
-  fi: 'We have received the time {{CAS}}. When we are up, we will confirm the goodbye. Without confirmation, leave on your own.',
+  fi: 'Saimme ajan {{CAS}}. Vahvistamme hyvästelyn heti herättyämme. Jos vahvistusta ei tule, voitte lähteä itse.',
 };
 
 export const ZPRAVA_ODJEZD_PRIJATI_DEN: LText = {
@@ -170,7 +170,7 @@ export const ZPRAVA_ODJEZD_PRIJATI_DEN: LText = {
   pt: 'Recebemos a hora {{CAS}}. Confirmamos a despedida pessoal o mais cedo possível.',
   hu: 'A {{CAS}} időpontot megkaptuk. A személyes elköszönést amint lehet, megerősítjük.',
   da: 'Vi har modtaget tiden {{CAS}}. Personligt farvel bekræfter vi så snart vi kan.',
-  fi: 'We have received the time {{CAS}}. We will confirm a personal goodbye as soon as we can.',
+  fi: 'Saimme ajan {{CAS}}. Vahvistamme henkilökohtaisen hyvästelyn mahdollisimman pian.',
 };
 
 export const ZPRAVA_ODJEZD_PRIJATI_SBALENA: LText = {
@@ -187,7 +187,7 @@ export const ZPRAVA_ODJEZD_PRIJATI_SBALENA: LText = {
   pt: 'Mensagem sobre a hora de partida',
   hu: 'Üzenet a távozás idejéről',
   da: 'Besked om afrejsetid',
-  fi: 'Message about departure time',
+  fi: 'Viesti lähtöajasta',
 };
 
 export const ZPRAVA_ODJEZD_OSOBNE_NADPIS: LText = {
@@ -204,7 +204,7 @@ export const ZPRAVA_ODJEZD_OSOBNE_NADPIS: LText = {
   pt: 'A despedida está confirmada',
   hu: 'Az elköszönés megerősítve',
   da: 'Farvel er bekræftet',
-  fi: 'Goodbye is confirmed',
+  fi: 'Hyvästely on vahvistettu',
 };
 
 export const ZPRAVA_ODJEZD_OSOBNE_TEXT: LText = {
@@ -221,7 +221,7 @@ export const ZPRAVA_ODJEZD_OSOBNE_TEXT: LText = {
   pt: 'Contamos convosco às {{CAS}}. Vimos despedir-nos pessoalmente.',
   hu: '{{CAS}}-ra számítunk Önökre. Személyesen megyünk elköszönni.',
   da: 'Vi regner med jer kl. {{CAS}}. Vi kommer og siger farvel personligt.',
-  fi: 'We are counting on you at {{CAS}}. We will come to say goodbye in person.',
+  fi: 'Odotamme teitä klo {{CAS}}. Tulemme hyvästelemään teidät henkilökohtaisesti.',
 };
 
 export const ZPRAVA_ODJEZD_OSOBNE_SBALENA: LText = {
@@ -238,7 +238,7 @@ export const ZPRAVA_ODJEZD_OSOBNE_SBALENA: LText = {
   pt: 'Mensagem sobre a partida',
   hu: 'Üzenet a távozásról',
   da: 'Besked om afrejse',
-  fi: 'Message about departure',
+  fi: 'Viesti lähdöstä',
 };
 
 export const ZPRAVA_PO_20: LText = {
@@ -255,7 +255,7 @@ export const ZPRAVA_PO_20: LText = {
   pt: 'depois das 20:00',
   hu: '20:00 után',
   da: 'efter 20:00',
-  fi: 'after 20:00',
+  fi: 'klo 20:00 jälkeen',
 };
 
 export const ZPRAVA_PO_23: LText = {
@@ -272,5 +272,5 @@ export const ZPRAVA_PO_23: LText = {
   pt: 'depois das 23:00',
   hu: '23:00 után',
   da: 'efter 23:00',
-  fi: 'after 23:00',
+  fi: 'klo 23:00 jälkeen',
 };

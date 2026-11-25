@@ -15,7 +15,7 @@ export const vyhodyUvod: LText = {
   sv: 'Som tack har vi förberett 3\u00a0förmåner för er:',
   hu: 'Köszönetképpen 3\u00a0előnyt készítettünk Önöknek:',
   da: 'Som tak har vi forberedt 3\u00a0fordele til jer:',
-  fi: 'As a thank you, we have prepared 3\u00a0benefits for you:',
+  fi: 'Kiitoksena olemme valmistaneet teille 3\\u00a0etua:',
 };
 
 /** Režim další (návrat z plochy). Bez tečky. */
@@ -33,7 +33,7 @@ export const dalsiNadpis: LText = {
   sv: 'Tack för att ni kommer tillbaka till oss',
   hu: 'Köszönjük, hogy visszatérnek hozzánk',
   da: 'Tak fordi I kommer tilbage til os',
-  fi: 'Thank you for coming back to us',
+  fi: 'Kiitos, että palaatte luoksemme',
 };
 
 export const dalsiVeta: LText = {
@@ -50,7 +50,7 @@ export const dalsiVeta: LText = {
   sv: 'Vi ser fram emot er nästa vistelse.',
   hu: 'Várjuk Önöket a következő tartózkodásra.',
   da: 'Vi glæder os til jeres næste ophold.',
-  fi: 'We look forward to your next stay.',
+  fi: 'Odotamme jo seuraavaa majoitustanne.',
 };
 
 export const radek1Nadpis: LText = {
@@ -67,7 +67,7 @@ export const radek1Nadpis: LText = {
   sv: 'Boka en vistelse',
   hu: 'Szállás foglalása',
   da: 'Book et ophold',
-  fi: 'Book a stay',
+  fi: 'Varatkaa majoitus',
 };
 
 export const radek1Pod: LText = {
@@ -84,7 +84,7 @@ export const radek1Pod: LText = {
   sv: 'Er present: 5 % rabatt',
   hu: 'Ajándékuk: 5 % kedvezmény',
   da: 'Jeres gave: 5 % rabat',
-  fi: 'Your gift: 5% off',
+  fi: 'Lahjanne: 5 % alennus',
 };
 
 export const radek1Tlacitko: LText = {
@@ -101,7 +101,7 @@ export const radek1Tlacitko: LText = {
   sv: 'Boka ›',
   hu: 'Foglalás ›',
   da: 'Book ›',
-  fi: 'Book ›',
+  fi: 'Varaa ›',
 };
 
 export const radek2Nadpis: LText = {
@@ -118,7 +118,7 @@ export const radek2Nadpis: LText = {
   sv: 'Rekommendera till vänner',
   hu: 'Ajánlás ismerősöknek',
   da: 'Anbefal til venner',
-  fi: 'Recommend to friends',
+  fi: 'Suositelkaa ystäville',
 };
 
 export const radek2Pod: LText = {
@@ -135,7 +135,7 @@ export const radek2Pod: LText = {
   sv: 'Rabatt till dem, belöning till er',
   hu: 'Kedvezmény nekik, jutalom Önöknek',
   da: 'Rabat til dem, belønning til jer',
-  fi: 'A discount for them, a reward for you',
+  fi: 'Heille alennus, teille palkkio',
 };
 
 export const radek2Tlacitko: LText = {
@@ -152,7 +152,7 @@ export const radek2Tlacitko: LText = {
   sv: 'Skicka ›',
   hu: 'Küldés ›',
   da: 'Send ›',
-  fi: 'Send ›',
+  fi: 'Lähetä ›',
 };
 
 export const radek3Nadpis: LText = {
@@ -169,7 +169,7 @@ export const radek3Nadpis: LText = {
   sv: 'Lägg till på hemskärmen',
   hu: 'Kezdőképernyőre',
   da: 'Føj til hjemmeskærm',
-  fi: 'Add to home screen',
+  fi: 'Lisätkää kotinäytölle',
 };
 
 export const radek3Pod: LText = {
@@ -186,7 +186,7 @@ export const radek3Pod: LText = {
   sv: 'Nästa gång utan att leta',
   hu: 'Legközelebb keresés nélkül',
   da: 'Næste gang uden at lede',
-  fi: 'Next time without searching',
+  fi: 'Ensi kerralla ilman etsimistä',
 };
 
 export const radek3Tlacitko: LText = {
@@ -203,7 +203,7 @@ export const radek3Tlacitko: LText = {
   sv: 'Lägg till ›',
   hu: 'Hozzáadás ›',
   da: 'Tilføj ›',
-  fi: 'Add ›',
+  fi: 'Lisää ›',
 };
 
 export const blizciNadpis: LText = {
@@ -220,7 +220,7 @@ export const blizciNadpis: LText = {
   sv: 'För era nära',
   hu: 'Az Önök szeretteinek',
   da: 'Til jeres nærmeste',
-  fi: 'For people close to you',
+  fi: 'Läheisillenne',
 };
 
 export const blizciText: LText = {
@@ -237,7 +237,7 @@ export const blizciText: LText = {
   sv: 'Skicka er länk till vänner. De får rabatt och ni en belöning från oss.',
   hu: 'Küldjék el ismerőseiknek a linkjüket. Ők kedvezményt kapnak, Önök pedig jutalmat tőlünk.',
   da: 'Send jeres link til venner. De får rabat, og I får en belønning fra os.',
-  fi: 'Send your friends your link. They get a discount and you get a reward from us.',
+  fi: 'Lähettäkää ystäville oma linkkinne. He saavat alennuksen ja te palkkion meiltä.',
 };
 
 export const blizciPodrobnosti: LText = {
@@ -254,7 +254,7 @@ export const blizciPodrobnosti: LText = {
   sv: 'Detaljer',
   hu: 'Részletek',
   da: 'Detaljer',
-  fi: 'Details',
+  fi: 'Lisätietoja',
 };
 
 /** 3 řádky příkladu (rámeček Pro vaše blízké). Částky 3 800 a 200 zlatě. */
@@ -272,7 +272,7 @@ export const blizciPrikladRadek1: LText = {
   sv: 'Till exempel en vistelse för 4\u00a0000\u00a0Kč:',
   hu: 'Például 4\u00a0000\u00a0Kč-s tartózkodás:',
   da: 'For eksempel et ophold til 4\u00a0000\u00a0Kč:',
-  fi: 'For example a stay for 4\u00a0000\u00a0Kč:',
+  fi: 'Esimerkiksi 4\\u00a0000\\u00a0Kč:n majoitus:',
 };
 
 export const blizciPrikladRadek2: LText = {
@@ -289,7 +289,7 @@ export const blizciPrikladRadek2: LText = {
   sv: 'vännerna betalar 3\u00a0800\u00a0Kč,',
   hu: 'az ismerősök 3\u00a0800\u00a0Kč-t fizetnek,',
   da: 'vennerne betaler 3\u00a0800\u00a0Kč,',
-  fi: 'friends pay 3\u00a0800\u00a0Kč,',
+  fi: 'ystävät maksavat 3\\u00a0800\\u00a0Kč,',
 };
 
 export const blizciPrikladRadek3: LText = {
@@ -306,7 +306,7 @@ export const blizciPrikladRadek3: LText = {
   sv: 'ni får 200\u00a0Kč från oss.',
   hu: 'Önök tőlünk 200\u00a0Kč-t kapnak.',
   da: 'I får 200\u00a0Kč fra os.',
-  fi: 'you receive 200\u00a0Kč from us.',
+  fi: 'te saatte meiltä 200\\u00a0Kč.',
 };
 
 /** Odměna = sleva na další pobyt (ne výplata na účet). Částky 5 % a 200 Kč zlatě. */
@@ -324,7 +324,7 @@ export const blizciPrikladRadek4: LText = {
   sv: 'Till nästa vistelse har ni då 5\u00a0% rabatt och ytterligare 200\u00a0Kč.',
   hu: 'A következő tartózkodásra így 5\u00a0% kedvezményük van, és további 200\u00a0Kč.',
   da: 'Til jeres næste ophold har I så 5\u00a0% rabat og yderligere 200\u00a0Kč.',
-  fi: 'For your next stay you then have a 5\u00a0% discount and an extra 200\u00a0Kč off.',
+  fi: 'Seuraavaan majoitukseenne saatte siis 5\\u00a0% alennuksen ja lisäksi 200\\u00a0Kč:n alennuksen.',
 };
 
 /** Starší jednořádkový text (e-mail / prostý text). */
@@ -342,7 +342,7 @@ export const blizciPriklad: LText = {
   sv: 'Till exempel en vistelse för 4 000 Kč: vännerna betalar 3 800 Kč, ni får 200 Kč från oss',
   hu: 'Például 4 000 Kč-s tartózkodás: az ismerősök 3 800 Kč-t fizetnek, Önök tőlünk 200 Kč-t kapnak',
   da: 'For eksempel et ophold til 4 000 Kč: vennerne betaler 3 800 Kč, I får 200 Kč fra os',
-  fi: 'For example a stay for 4 000 Kč: friends pay 3 800 Kč, you receive 200 Kč from us',
+  fi: 'Esimerkiksi 4 000 Kč:n majoitus: ystävät maksavat 3 800 Kč, te saatte meiltä 200 Kč',
 };
 
 /** Starší poznámka (e-mail). Na stránce po odjezdu ji nahradil blizciPrikladRadek4. */
@@ -360,7 +360,7 @@ export const blizciPoznamka: LText = {
   sv: 'Till nästa vistelse har ni då 5\u00a0% rabatt och ytterligare 200\u00a0Kč.',
   hu: 'A következő tartózkodásra így 5\u00a0% kedvezményük van, és további 200\u00a0Kč.',
   da: 'Til jeres næste ophold har I så 5\u00a0% rabat og yderligere 200\u00a0Kč.',
-  fi: 'For your next stay you then have a 5\u00a0% discount and an extra 200\u00a0Kč off.',
+  fi: 'Seuraavaan majoitukseenne saatte siis 5\\u00a0% alennuksen ja lisäksi 200\\u00a0Kč:n alennuksen.',
 };
 
 export const blizciEmail: LText = {
@@ -377,7 +377,7 @@ export const blizciEmail: LText = {
   sv: 'Skicka med e-post',
   hu: 'Küldés e-mailben',
   da: 'Send med e-mail',
-  fi: 'Send by email',
+  fi: 'Lähetä sähköpostilla',
 };
 
 export const blizciWhatsapp: LText = {
@@ -394,7 +394,7 @@ export const blizciWhatsapp: LText = {
   sv: 'Skicka via WhatsApp',
   hu: 'Küldés WhatsAppon',
   da: 'Send via WhatsApp',
-  fi: 'Send via WhatsApp',
+  fi: 'Lähetä WhatsAppilla',
 };
 
 export const blizciKopie: LText = {
@@ -411,7 +411,7 @@ export const blizciKopie: LText = {
   sv: 'Kopiera länken',
   hu: 'Link másolása',
   da: 'Kopiér linket',
-  fi: 'Copy the link',
+  fi: 'Kopioi linkki',
 };
 
 export const blizciZkopirovano: LText = {
@@ -428,7 +428,7 @@ export const blizciZkopirovano: LText = {
   sv: 'Kopierat',
   hu: 'Másolva',
   da: 'Kopieret',
-  fi: 'Copied',
+  fi: 'Kopioitu',
 };
 
 export const tipEmailLabel: LText = {
@@ -445,7 +445,7 @@ export const tipEmailLabel: LText = {
   sv: 'Vännens e-post',
   hu: 'Ismerős e-mailcíme',
   da: 'Vennens e-mail',
-  fi: 'Friend’s email',
+  fi: 'Ystävän sähköposti',
 };
 
 export const tipJmenoLabel: LText = {
@@ -462,7 +462,7 @@ export const tipJmenoLabel: LText = {
   sv: 'Ert förnamn',
   hu: 'Az Önök keresztneve',
   da: 'Jeres fornavn',
-  fi: 'Your first name',
+  fi: 'Etunimenne',
 };
 
 export const tipOdeslat: LText = {
@@ -479,7 +479,7 @@ export const tipOdeslat: LText = {
   sv: 'Skicka',
   hu: 'Küldés',
   da: 'Send',
-  fi: 'Send',
+  fi: 'Lähetä',
 };
 
 export const tipSoukromi: LText = {
@@ -496,7 +496,7 @@ export const tipSoukromi: LText = {
   sv: 'Vi använder adressen bara för det här mejlet och sparar den inte.',
   hu: 'A címet csak ehhez az e-mailhez használjuk, és nem tároljuk.',
   da: 'Vi bruger adressen kun til denne e-mail og gemmer den ikke.',
-  fi: 'We use the address only for this email and do not store it.',
+  fi: 'Käytämme osoitetta vain tähän sähköpostiin emmekä tallenna sitä.',
 };
 
 export const tipOdeslano: LText = {
@@ -513,7 +513,7 @@ export const tipOdeslano: LText = {
   sv: 'Skickat. Tack för rekommendationen.',
   hu: 'Elküldve. Köszönjük az ajánlást.',
   da: 'Sendt. Tak for anbefalingen.',
-  fi: 'Sent. Thank you for the recommendation.',
+  fi: 'Lähetetty. Kiitos suosituksesta.',
 };
 
 export const tipChybaEmail: LText = {
@@ -530,7 +530,7 @@ export const tipChybaEmail: LText = {
   sv: 'Kontrollera e-postadressen.',
   hu: 'Ellenőrizzék az e-mailcímet.',
   da: 'Tjek e-mailadressen.',
-  fi: 'Check the email address.',
+  fi: 'Tarkistakaa sähköpostiosoite.',
 };
 
 export const tipLimit: LText = {
@@ -547,7 +547,7 @@ export const tipLimit: LText = {
   sv: 'Ni kan inte skicka fler tips i dag. Försök i morgon.',
   hu: 'Ma már nem küldhetők több tippek. Próbálják holnap.',
   da: 'I kan ikke sende flere tip i dag. Prøv i morgen.',
-  fi: 'You cannot send more tips today. Try again tomorrow.',
+  fi: 'Tänään ei voi lähettää enempää vinkkejä. Kokeilkaa huomenna.',
 };
 
 /** WhatsApp / kopírování: text bez odkazu (odkaz se přidá za text). */
@@ -566,7 +566,7 @@ export function tipZpravaWhatsapp(lang: GuideLang): string {
     sv: 'Hej, här är ett tips på boende i centrum av České Budějovice: VIVIEN-lägenheter, var och en med egen känsla och en fin trädgård. Med den här länken får du 5 % rabatt på första vistelsen:',
     hu: 'Szia, tippet küldök szállásra České Budějovice belvárosában: a VIVIEN apartmanok, mindegyik saját hangulattal és szép kerttel. Ezzel a linkkel az első tartózkodásra 5 % kedvezményt kapsz:',
     da: 'Hej, her er et tip til overnatning i centrum af České Budějovice: VIVIEN-lejligheder, hver med sin stemning og en fin have. Med det her link får du 5 % rabat på første ophold:',
-    fi: 'Hi, here is a tip for a stay in the centre of České Budějovice: VIVIEN apartments, each with its own atmosphere and a lovely garden. With this link you get 5% off your first stay:',
+    fi: 'Hei, lähetän vinkin majoituksesta České Budějovicen keskustassa: VIVIEN-asunnot, joissa jokaisessa on oma tunnelmansa, ja kaunis puutarha. Tämän linkin kautta saat ensimmäisestä majoituksesta 5 % alennuksen:',
   };
   return m[lang] || m.en;
 }
@@ -585,7 +585,7 @@ export const tipEmailPredmet: LText = {
   sv: 'Tips på boende i České Budějovice',
   hu: 'Szállástipp České Budějovicében',
   da: 'Tip til overnatning i České Budějovice',
-  fi: 'A tip for a stay in České Budějovice',
+  fi: 'Majoitusvinkki České Budějoviceen',
 };
 
 export function tipEmailNadpis(jmeno: string, lang: GuideLang): string {
@@ -603,7 +603,7 @@ export function tipEmailNadpis(jmeno: string, lang: GuideLang): string {
     sv: `${jmeno} skickar er ett tips`,
     hu: `${jmeno} tippet küld Önöknek`,
     da: `${jmeno} sender jer et tip`,
-    fi: `${jmeno} is sending you a tip`,
+    fi: `\${jmeno} lähettää teille vinkin`,
   };
   return (m[lang] || m.en).replace('{jmeno}', jmeno);
 }
@@ -623,7 +623,7 @@ export function tipEmailTelo(lang: GuideLang): string {
     sv: 'Hej, här är ett tips på boende i centrum av České Budějovice: VIVIEN-lägenheter, var och en med egen känsla och en fin trädgård.',
     hu: 'Szia, tippet küldök szállásra České Budějovice belvárosában: a VIVIEN apartmanok, mindegyik saját hangulattal és szép kerttel.',
     da: 'Hej, her er et tip til overnatning i centrum af České Budějovice: VIVIEN-lejligheder, hver med sin stemning og en fin have.',
-    fi: 'Hi, here is a tip for a stay in the centre of České Budějovice: VIVIEN apartments, each with its own atmosphere and a lovely garden.',
+    fi: 'Hei, lähetän vinkin majoituksesta České Budějovicen keskustassa: VIVIEN-asunnot, joissa jokaisessa on oma tunnelmansa, ja kaunis puutarha.',
   };
   return m[lang] || m.en;
 }
@@ -642,7 +642,7 @@ export const tipEmailSleva: LText = {
   sv: 'Med den här länken får du 5 % rabatt på första vistelsen.',
   hu: 'Ezzel a linkkel az első tartózkodásra 5 % kedvezményt kapsz.',
   da: 'Med det her link får du 5 % rabat på første ophold.',
-  fi: 'With this link you get 5% off your first stay.',
+  fi: 'Tämän linkin kautta saat ensimmäisestä majoituksesta 5 % alennuksen.',
 };
 
 export const tipEmailTlacitko: LText = {
@@ -659,7 +659,7 @@ export const tipEmailTlacitko: LText = {
   sv: 'Titta',
   hu: 'Megnézni',
   da: 'Se',
-  fi: 'Take a look',
+  fi: 'Katso',
 };
 
 export function tipEmailPaticka(jmeno: string, lang: GuideLang): string {
@@ -677,7 +677,7 @@ export function tipEmailPaticka(jmeno: string, lang: GuideLang): string {
     sv: `Det här tipset skickas till er via VIVIEN Apartments av ${jmeno}. Vi använde er adress bara för det här meddelandet och sparar den inte.`,
     hu: `Ezt a tippet ${jmeno} küldi Önöknek a VIVIEN Apartmentsen keresztül. A címüket csak ehhez az üzenethez használtuk, és nem tároljuk.`,
     da: `Det her tip sendes til jer via VIVIEN Apartments af ${jmeno}. Vi brugte jeres adresse kun til denne besked og gemmer den ikke.`,
-    fi: `This tip is sent to you via VIVIEN Apartments by ${jmeno}. We used your address only for this message and do not store it.`,
+    fi: `Tämän vinkin lähettää teille VIVIEN Apartmentsin kautta \${jmeno}. Käytimme osoitettanne vain tähän viestiin emmekä tallenna sitä.`,
   };
   return m[lang] || m.en;
 }
@@ -713,5 +713,5 @@ export const ogDescription: LText = {
   sv: 'Designlägenheter med trädgård i centrum',
   hu: 'Design apartmanok kerttel a belvárosban',
   da: 'Designlejligheder med have i centrum',
-  fi: 'Design apartments with a garden in the centre',
+  fi: 'Design-asuntoja ja puutarha keskustassa',
 };

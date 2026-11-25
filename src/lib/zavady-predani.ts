@@ -143,7 +143,13 @@ export function textEmailuZavad(lang: GuideLang | null | undefined, text: string
     pt: `Olá, na entrega do apartamento anotámos:\n\n${zavady}\n\n${skryta}\n\nConfirmem com o botão abaixo.`,
     hu: `Jó napot, az apartman átadásakor ezt jegyeztük fel:\n\n${zavady}\n\n${skryta}\n\nKérjük, erősítsék meg az alábbi gombbal.`,
     da: `Hej, ved overdragelsen af lejligheden noterede vi:\n\n${zavady}\n\n${skryta}\n\nBekræft gerne med knappen nedenfor.`,
-    fi: `Hello, at the apartment handover we noted:\n\n${zavady}\n\n${skryta}\n\nPlease confirm with the button below.`,
+    fi: `Hyvää päivää, asunnon luovutuksessa kirjasimme:
+
+\${zavady}
+
+\${skryta}
+
+Vahvistakaa alla olevalla painikkeella.`,
   };
   const klic = lang && lang in mapa ? lang : 'en';
   return mapa[klic as GuideLang] || mapa.en;
@@ -164,7 +170,7 @@ export function predmetEmailuZavad(lang: GuideLang | null | undefined): string {
     pt: 'VIVIEN · Notas da entrega',
     hu: 'VIVIEN · Átadási feljegyzés',
     da: 'VIVIEN · Noter fra overdragelsen',
-    fi: 'VIVIEN · Handover notes',
+    fi: 'VIVIEN · Luovutuspöytäkirja',
   };
   const klic = lang && lang in mapa ? lang : 'en';
   return mapa[klic as GuideLang] || mapa.en;
@@ -185,7 +191,7 @@ export function tlacitkoPotvrditZavady(lang: GuideLang | null | undefined): stri
     pt: 'Confirmar',
     hu: 'Megerősítés',
     da: 'Bekræft',
-    fi: 'Confirm',
+    fi: 'Vahvista',
   };
   const klic = lang && lang in mapa ? lang : 'en';
   return mapa[klic as GuideLang] || mapa.en;
@@ -237,7 +243,7 @@ export const SKRYTA_ZAVADA: Record<GuideLang, string> = {
   pt: "Este registo mostra o estado visível no momento da entrega. Não significa que mais tarde não possa surgir outra avaria oculta, nem exclui que venhamos a tratar dela.",
   hu: "A feljegyzés az átadáskor látható állapotot rögzíti. Nem jelenti azt, hogy később nem derülhet ki újabb rejtett hiba, és nem zárja ki, hogy foglalkozunk vele.",
   da: "Denne notering viser den tilstand, der var synlig ved overdragelsen. Det betyder ikke, at en anden skjult fejl ikke kan dukke op senere, og det udelukker ikke, at vi tager os af den.",
-  fi: "This record shows the condition that was visible at handover. It does not mean that another hidden defect cannot appear later, and it does not rule out that we will deal with it.",
+  fi: "Kirjaus kuvaa luovutushetkellä näkyvää kuntoa. Se ei tarkoita, ettei myöhemmin voisi ilmetä muuta piilevää vikaa, eikä sulje pois sen käsittelyä.",
 };
 
 /** Prompt 49 · předmět e-mailu hostovi, který odjel. */
@@ -255,7 +261,7 @@ export const PREDMET_PO_ODJEZDU: Record<GuideLang, string> = {
   pt: "VIVIEN · Notas após a vossa saída",
   hu: "VIVIEN · Feljegyzés távozás után",
   da: "VIVIEN · Noter efter jeres afrejse",
-  fi: "VIVIEN · Notes after your departure",
+  fi: "VIVIEN · Kirjaus lähtönne jälkeen",
 };
 
 /** Prompt 49 · úvod e-mailu po odjezdu (schváleno). */
@@ -273,7 +279,7 @@ export const UVOD_PO_ODJEZDU: Record<GuideLang, string> = {
   pt: "Olá, ao limpar o apartamento depois da vossa saída encontrámos o seguinte:",
   hu: "Jó napot, a távozásuk utáni takarításkor az apartmanban a következőt találtuk:",
   da: "Hej, da vi gjorde rent efter jeres afrejse, fandt vi følgende i lejligheden:",
-  fi: "Hello, when cleaning after your departure we found the following in the apartment:",
+  fi: "Hyvää päivää, siivotessamme lähtönne jälkeen huomasimme asunnossa seuraavaa:",
 };
 
 /** Prompt 49 · prosba o odpověď. */
@@ -291,7 +297,7 @@ export const PROSBA_PO_ODJEZDU: Record<GuideLang, string> = {
   pt: "Respondam a este e-mail e digam-nos como aconteceu.",
   hu: "Kérjük, válaszoljanak erre az e-mailre, és írják meg, hogyan történt.",
   da: "Svar gerne på denne e-mail og fortæl os, hvordan det skete.",
-  fi: "Please reply to this e-mail and let us know how it happened.",
+  fi: "Kertokaa meille vastaamalla tähän sähköpostiin, miten näin kävi.",
 };
 
 /** Prompt 49 · věta o skrytých závadách po odjezdu (schváleno). */
@@ -309,7 +315,7 @@ export const SKRYTA_PO_ODJEZDU: Record<GuideLang, string> = {
   pt: "Este registo não exclui que mais tarde possa surgir outra avaria oculta, da qual também iremos tratar.",
   hu: "A feljegyzés nem zárja ki, hogy később újabb rejtett hiba derül ki, amellyel szintén foglalkozni fogunk.",
   da: "Denne notering udelukker ikke, at en anden skjult fejl kan dukke op senere, og den tager vi os også af.",
-  fi: "This record does not rule out that another hidden defect may appear later, which we will also deal with.",
+  fi: "Kirjaus ei sulje pois sitä, että myöhemmin ilmenee muu piilevä vika, jonka myös käsittelemme.",
 };
 
 /** Podpis e-mailů se závadami. */
@@ -327,7 +333,7 @@ export const PODPIS_ZAVADY: Record<GuideLang, string> = {
   pt: "Nikol e a família VIVIEN",
   hu: "Nikol és a VIVIEN család",
   da: "Nikol og familien VIVIEN",
-  fi: "Nikol and the VIVIEN family",
+  fi: "Nikol ja VIVIEN-perhe",
 };
 
 /** Texty stránky /zavady/[token] v jazyce hosta (rec.jazyk). */

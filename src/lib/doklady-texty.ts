@@ -20,7 +20,7 @@ export const DOKLADY_ZPRAVA_CR: Record<GuideLang, string> = {
   pt: "Olá, vemo-nos em breve. Tenham à mão os documentos de identificação ou passaportes de todos os hóspedes para a entrega. Por lei registamos os dados no livro de registo de hóspedes e, com eles, pagamos a taxa turística local à cidade. Obrigado.",
   hu: "Jó napot, hamarosan találkozunk. Kérjük, az átadáshoz készítsék elő minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, és ezek alapján fizetjük be a városnak az idegenforgalmi adót. Köszönjük.",
   da: "Hej, vi ses snart. Hav alle gæsters id-kort eller pas klar til overdragelsen. Efter loven registrerer vi oplysningerne i gæsteregisteret og afregner den lokale turistafgift til byen ud fra dem. Tak.",
-  fi: "Hello, we will see you shortly. Please have the ID cards or passports of all guests ready for the handover. By law we record the details in the guest register and pay the local tourist fee to the city with them. Thank you.",
+  fi: "Hyvää päivää, näemme pian. Ottakaa luovutukseen mukaan kaikkien vieraiden henkilökortit tai passit. Lain mukaan kirjaamme tiedot majoittujien rekisteriin ja tilitämme niiden perusteella kaupungille majoitusmaksun. Kiitos.",
 };
 
 /** Zpráva „Doklady k předání“, cizinec (národnost jiná než CZE nebo neznámá a jazyk není čeština). */
@@ -38,7 +38,7 @@ export const DOKLADY_ZPRAVA_CIZINEC: Record<GuideLang, string> = {
   pt: "Olá, vemo-nos em breve. Tenham à mão os documentos de identificação ou passaportes de todos os hóspedes para a entrega. Por lei registamos os dados no livro de registo de hóspedes, pagamos com eles a taxa turística local à cidade e, no caso de hóspedes estrangeiros, comunicamo-los à polícia de estrangeiros. Obrigado.",
   hu: "Jó napot, hamarosan találkozunk. Kérjük, az átadáshoz készítsék elő minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, ezek alapján fizetjük be a városnak az idegenforgalmi adót, a külföldi vendégeket pedig bejelentjük az idegenrendészetnek. Köszönjük.",
   da: "Hej, vi ses snart. Hav alle gæsters id-kort eller pas klar til overdragelsen. Efter loven registrerer vi oplysningerne i gæsteregisteret, afregner den lokale turistafgift til byen ud fra dem og indberetter udenlandske gæster til udlændingepolitiet. Tak.",
-  fi: "Hello, we will see you shortly. Please have the ID cards or passports of all guests ready for the handover. By law we record the details in the guest register, pay the local tourist fee to the city with them and, for foreign guests, report them to the foreign police. Thank you.",
+  fi: "Hyvää päivää, näemme pian. Ottakaa luovutukseen mukaan kaikkien vieraiden henkilökortit tai passit. Lain mukaan kirjaamme tiedot majoittujien rekisteriin, tilitämme niiden perusteella kaupungille majoitusmaksun ja ilmoitamme ulkomaiset vieraat ulkomaalaispoliisille. Kiitos.",
 };
 
 /** Nadpis rámečku v průvodci (po čase a způsobu dopravy, do předání). */
@@ -56,7 +56,7 @@ export const DOKLADY_PRUVODCE_NADPIS: Record<GuideLang, string> = {
   pt: "Tenham os documentos à mão",
   hu: "Kérjük, készítsék elő az igazolványokat",
   da: "Hav jeres id klar",
-  fi: "Please have your ID ready",
+  fi: "Ottakaa henkilöllisyystodistukset valmiiksi",
 };
 
 /** Text rámečku v průvodci, host z ČR. */
@@ -74,7 +74,7 @@ export const DOKLADY_PRUVODCE_CR: Record<GuideLang, string> = {
   pt: "Na entrega verificamos o documento de identificação ou o passaporte de todos os hóspedes. Por lei registamos os dados no livro de registo de hóspedes e, com eles, pagamos a taxa turística local à cidade. Obrigado, assim a entrega é rápida.",
   hu: "Az apartman átadásakor ellenőrizzük minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, és ezek alapján fizetjük be a városnak az idegenforgalmi adót. Köszönjük, így gyors lesz az átadás.",
   da: "Ved overdragelsen tjekker vi alle gæsters id-kort eller pas. Efter loven registrerer vi oplysningerne i gæsteregisteret og afregner den lokale turistafgift til byen ud fra dem. Tak, det gør overdragelsen hurtig.",
-  fi: "At the handover we check the ID card or passport of all guests. By law we record the details in the guest register and pay the local tourist fee to the city with them. Thank you, this keeps the handover quick.",
+  fi: "Asunnon luovutuksessa tarkistamme kaikkien vieraiden henkilökortit tai passit. Lain mukaan kirjaamme tiedot majoittujien rekisteriin ja tilitämme niiden perusteella kaupungille majoitusmaksun. Kiitos, näin luovutus sujuu nopeasti.",
 };
 
 /** Text rámečku v průvodci, cizinec. */
@@ -92,7 +92,7 @@ export const DOKLADY_PRUVODCE_CIZINEC: Record<GuideLang, string> = {
   pt: "Na entrega verificamos o documento de identificação ou o passaporte de todos os hóspedes. Por lei registamos os dados no livro de registo de hóspedes, pagamos com eles a taxa turística local à cidade e, no caso de hóspedes estrangeiros, comunicamo-los à polícia de estrangeiros. Obrigado, assim a entrega é rápida.",
   hu: "Az apartman átadásakor ellenőrizzük minden vendég személyi igazolványát vagy útlevelét. Törvény szerint az adatokat bejegyezzük a vendégnyilvántartásba, ezek alapján fizetjük be a városnak az idegenforgalmi adót, a külföldi vendégeket pedig bejelentjük az idegenrendészetnek. Köszönjük, így gyors lesz az átadás.",
   da: "Ved overdragelsen tjekker vi alle gæsters id-kort eller pas. Efter loven registrerer vi oplysningerne i gæsteregisteret, afregner den lokale turistafgift til byen ud fra dem og indberetter udenlandske gæster til udlændingepolitiet. Tak, det gør overdragelsen hurtig.",
-  fi: "At the handover we check the ID card or passport of all guests. By law we record the details in the guest register, pay the local tourist fee to the city with them and, for foreign guests, report them to the foreign police. Thank you, this keeps the handover quick.",
+  fi: "Asunnon luovutuksessa tarkistamme kaikkien vieraiden henkilökortit tai passit. Lain mukaan kirjaamme tiedot majoittujien rekisteriin, tilitämme niiden perusteella kaupungille majoitusmaksun ja ilmoitamme ulkomaiset vieraat ulkomaalaispoliisille. Kiitos, näin luovutus sujuu nopeasti.",
 };
 
 export type DokladyVerze = 'CR' | 'CIZINEC';

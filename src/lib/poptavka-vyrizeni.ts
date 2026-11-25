@@ -308,7 +308,7 @@ const NEJDE: Record<GuideLang, string> = {
   sv: 'Hej {jmeno}, tack för förfrågan. Datumet {termin} är tyvärr inte ledigt längre. Vi kan erbjuda: {navrh}. Skriv gärna om det passar er. Nikol, VIVIEN Apartments',
   hu: 'Jó napot, {jmeno}! Köszönjük a megkeresést. A(z) {termin} időpont sajnos már foglalt. Ezt tudjuk ajánlani: {navrh}. Írják meg, kérjük, megfelel-e. Nikol, VIVIEN Apartments',
   da: 'Hej {jmeno}, tak for henvendelsen. Terminen {termin} er desværre ikke ledig længere. Vi kan tilbyde: {navrh}. Skriv gerne, om det passer jer. Nikol, VIVIEN Apartments',
-  fi: 'Hello {jmeno}, thank you for your enquiry. The dates {termin} are no longer available. We can offer: {navrh}. Please let us know if that works for you. Nikol, VIVIEN Apartments',
+  fi: 'Hyvää päivää {jmeno}, kiitos tiedustelusta. Ajankohta {termin} ei valitettavasti ole enää vapaana. Voimme tarjota: {navrh}. Kirjoittakaa meille, sopiiko se teille. Nikol, VIVIEN Apartments',
 };
 
 function krestni(jmeno: string): string {

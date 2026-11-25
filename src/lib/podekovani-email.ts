@@ -59,7 +59,7 @@ export const TLACITKO_PODEKOVANI: LText = {
   sv: 'Använd förmånerna',
   hu: 'Előnyök igénybevétele',
   da: 'Brug fordelene',
-  fi: 'Use your benefits',
+  fi: 'Käytä etuja',
 };
 
 function esc(s: string): string {
