@@ -228,42 +228,72 @@ export default function KlubClient() {
                   <>
                     <div className="klub-bar klub-bar--dual" aria-hidden>
                       {wOrange > 0 ? (
-                        <span className="klub-bar__a" style={{ width: `${wOrange}%` }} />
+                        <span
+                          className="klub-bar__a"
+                          style={{ width: `${wOrange}%`, background: '#e08a3c' }}
+                        />
                       ) : null}
                       {wBlue > 0 ? (
-                        <span className="klub-bar__b" style={{ width: `${wBlue}%` }} />
+                        <span
+                          className="klub-bar__b"
+                          style={{ width: `${wBlue}%`, background: '#7fb8e6' }}
+                        />
                       ) : null}
                     </div>
                     <div className="klub-bt">
                       <span>
-                        {tx.utrata(formatKc(karta.utrataKc))}
-                        {ceka > 0 ? (
+                        {karta.utrataKc > 0 ? (
                           <>
-                            <br />
-                            <span className="klub-ceka-castka">
-                              + {formatKc(ceka)} po odjezdu
-                            </span>
+                            {tx.utrata(formatKc(karta.utrataKc))}
+                            {ceka > 0 ? (
+                              <>
+                                <br />
+                                <span className="klub-ceka-castka">
+                                  + {formatKc(ceka)} po odjezdu
+                                </span>
+                              </>
+                            ) : null}
                           </>
-                        ) : null}
+                        ) : ceka > 0 ? (
+                          <span className="klub-ceka-castka">
+                            {formatKc(ceka)} po odjezdu
+                          </span>
+                        ) : (
+                          tx.utrata(formatKc(0))
+                        )}
                       </span>
                       <span>
-                        {pokrok.dalsiNazev && pokrok.dalsiPct != null && pokrok.chybiKc != null
-                          ? tx.doUrovne(
-                              pokrok.dalsiNazev,
-                              pokrok.dalsiPct,
-                              formatKc(pokrok.chybiKc),
-                            )
-                          : tx.nejvyssi}
-                        {ceka > 0 && dalsi ? (
-                          <>
-                            <br />
+                        {ceka > 0 && dalsi && pokrok.dalsiNazev && pokrok.dalsiPct != null ? (
+                          karta.utrataKc > 0 && pokrok.chybiKc != null ? (
+                            <>
+                              {tx.doUrovne(
+                                pokrok.dalsiNazev,
+                                pokrok.dalsiPct,
+                                formatKc(pokrok.chybiKc),
+                              )}
+                              <br />
+                              <span className="klub-ceka-castka">
+                                {chybiPo > 0
+                                  ? `po odjezdu jen ${formatKc(chybiPo)}`
+                                  : `po odjezdu ${pokrok.dalsiNazev}`}
+                              </span>
+                            </>
+                          ) : (
                             <span className="klub-ceka-castka">
                               {chybiPo > 0
-                                ? `po odjezdu jen ${formatKc(chybiPo)}`
+                                ? `po odjezdu do úrovně ${pokrok.dalsiNazev} (${pokrok.dalsiPct} %) jen ${formatKc(chybiPo)}`
                                 : `po odjezdu ${pokrok.dalsiNazev}`}
                             </span>
-                          </>
-                        ) : null}
+                          )
+                        ) : pokrok.dalsiNazev && pokrok.dalsiPct != null && pokrok.chybiKc != null ? (
+                          tx.doUrovne(
+                            pokrok.dalsiNazev,
+                            pokrok.dalsiPct,
+                            formatKc(pokrok.chybiKc),
+                          )
+                        ) : (
+                          tx.nejvyssi
+                        )}
                       </span>
                     </div>
                   </>
