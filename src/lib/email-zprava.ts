@@ -158,6 +158,9 @@ export async function posliEmailZpravy(opts: {
   tlacitko?: { url: string; label: string } | null;
   /** Hotové HTML (např. poděkování po odjezdu). Jinak výchozí šablona. */
   html?: string | null;
+  /** Marketing vs provoz (ochrana Booking/Airbnb relay). */
+  druh?: import('./odchozi-host').OdchoziDruh;
+  rezervace?: string | null;
 }): Promise<{ to: string; cc?: string }> {
   if (process.env.VITEST) throw new Error('V testu se e-mail neposílá.');
   const majitel = process.env.MAJITEL_EMAIL?.trim();
@@ -166,17 +169,30 @@ export async function posliEmailZpravy(opts: {
   if (!majitel) throw new Error('MAJITEL_EMAIL chybí');
   if (!user || !pass || pass.startsWith('SEM_NAPIS')) throw new Error('SMTP není vyplněné');
   const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+  const { overOdchoziHostovi } = await import('./odchozi-host');
+  const doplnit = opts.telefon !== false;
+  let text = textEmailuHostovi(opts.text, doplnit);
+  if (opts.tlacitko?.url && !opts.html) {
+    text = `${text}\n\n${opts.tlacitko.label}: ${opts.tlacitko.url}`;
+  }
+  let html = opts.html || htmlEmailuHostovi(opts.text, opts.lang, doplnit, opts.tlacitko);
+  const over = await overOdchoziHostovi({
+    kanal: 'email',
+    druh: opts.druh || 'provozni',
+    emailCil: opts.to,
+    text,
+    html,
+    rezervace: opts.rezervace,
+  });
+  if (!over.ok) throw new Error(over.duvod || 'Zpráva zablokována (relay).');
+  text = over.text || text;
+  html = over.html || html;
   const transporter = nodemailer.createTransport({
     host: 'smtp.seznam.cz',
     port: 465,
     secure: true,
     auth: { user, pass },
   });
-  const doplnit = opts.telefon !== false;
-  let text = textEmailuHostovi(opts.text, doplnit);
-  if (opts.tlacitko?.url && !opts.html) {
-    text = `${text}\n\n${opts.tlacitko.label}: ${opts.tlacitko.url}`;
-  }
   const to = testMode ? majitel : opts.to;
   const cc = testMode ? undefined : KOPIE_INFO;
   // BCC jen když majitel není stejný jako viditelná kopie (Seznam často zahodí BCC sám sobě).
@@ -189,7 +205,7 @@ export async function posliEmailZpravy(opts: {
     bcc,
     subject: testMode ? `[TEST] ${opts.subject}` : opts.subject,
     text,
-    html: opts.html || htmlEmailuHostovi(opts.text, opts.lang, doplnit, opts.tlacitko),
+    html,
   });
   return { to, cc };
 }

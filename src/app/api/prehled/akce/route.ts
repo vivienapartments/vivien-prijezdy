@@ -497,6 +497,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         lang,
         telefon: false,
         tlacitko: { url: odkaz, label: tlacitkoPotvrditZavady(lang) },
+        druh: 'provozni',
+        rezervace: id,
       });
     } catch (err) {
       const reason = err instanceof Error ? err.message : 'E-mail se nepodařilo odeslat.';
@@ -559,6 +561,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         text: textEmailuPoOdjezdu(lang, z.text),
         lang,
         telefon: false,
+        druh: 'provozni',
+        rezervace: id,
       });
     } catch (err) {
       const reason = err instanceof Error ? err.message : 'E-mail se nepodařilo odeslat.';
@@ -1496,9 +1500,12 @@ export async function POST(request: Request): Promise<NextResponse> {
           lang,
           telefon: false,
           html: htmlPodekovaniEmail(lang, url, undefined, urlDop, urlPlo, urlRez),
+          druh: 'podekovani',
+          rezervace: id,
         });
         odeslanoNa = vysledek.to;
       } else {
+        const { druhZpravyNaOdchozi } = await import('@/lib/odchozi-host');
         const vysledek = await posliEmailZpravy({
           to: komu,
           subject:
@@ -1516,6 +1523,8 @@ export async function POST(request: Request): Promise<NextResponse> {
             druh !== 'pripraveno' &&
             druh !== 'pohoda' &&
             druh !== 'shrnuti',
+          druh: druhZpravyNaOdchozi(druh),
+          rezervace: id,
         });
         odeslanoNa = vysledek.to;
       }

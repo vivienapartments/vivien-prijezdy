@@ -168,6 +168,8 @@ export async function POST(request: Request): Promise<NextResponse> {
         text: textPripraveno(lang, odkazPripraveno(odkaz)),
         lang,
         telefon: false,
+        druh: 'provozni',
+        rezervace: prijizdi.rezervace,
       });
     } catch {
       return chyba(502, 'E-mail se nepodařilo odeslat.');

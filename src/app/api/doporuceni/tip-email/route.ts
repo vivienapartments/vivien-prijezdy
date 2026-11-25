@@ -50,6 +50,20 @@ export async function POST(req: Request) {
   if (problemEmailu(email)) {
     return NextResponse.json({ ok: false, duvod: 'email' }, { status: 400, headers: noStore });
   }
+  const { overOdchoziHostovi } = await import('@/lib/odchozi-host');
+  const overTip = await overOdchoziHostovi({
+    kanal: 'email',
+    druh: 'tip-kamaradovi',
+    emailCil: email,
+    text: 'tip',
+    tichy: false,
+  });
+  if (!overTip.ok) {
+    return NextResponse.json(
+      { ok: false, duvod: 'relay', chyba: overTip.duvod },
+      { status: 400, headers: noStore },
+    );
+  }
 
   const jmeno = krestniZ(String(body.jmeno || ''));
   if (!jmeno) {

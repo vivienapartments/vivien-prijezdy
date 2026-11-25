@@ -877,12 +877,24 @@ export async function sendGuestEmail(opts: {
   if (!majitel) throw new Error('MAJITEL_EMAIL chybí');
 
   const intended = opts.input.intendedTo;
-  const to = testMode || opts.toOverride ? majitel : intended;
   const built = buildGuestEmail({
     ...opts.input,
     logoSrc: `cid:${LOGO_CID}`,
     podpisSrc: `cid:${PODPIS_CID}`,
   });
+  const { overOdchoziHostovi } = await import('./odchozi-host');
+  const over = await overOdchoziHostovi({
+    kanal: 'email',
+    druh: 'provozni',
+    emailCil: intended,
+    text: built.text,
+    html: built.html,
+    rezervace: opts.input.lang ? null : null,
+  });
+  if (!over.ok) throw new Error(over.duvod || 'Zpráva zablokována (relay).');
+  const textOut = over.text || built.text;
+  const htmlOut = over.html || built.html;
+  const to = testMode || opts.toOverride ? majitel : intended;
 
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_HESLO?.trim();
@@ -911,8 +923,8 @@ export async function sendGuestEmail(opts: {
     to,
     bcc: testMode ? undefined : majitel,
     subject: built.subject,
-    text: built.text,
-    html: built.html,
+    text: textOut,
+    html: htmlOut,
     attachments: [
       {
         filename: 'logo.png',
