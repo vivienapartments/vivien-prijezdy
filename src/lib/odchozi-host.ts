@@ -4,7 +4,6 @@
  */
 
 import { jeRelayEmail } from './staly-host';
-import { posliTelegram, type TelegramDruh } from './telegram';
 
 export type OdchoziKanal = 'email' | 'sms' | 'whatsapp';
 
@@ -109,7 +108,8 @@ async function upozorniZablokovani(vstup: OdchoziVstup, duvod: string): Promise<
   const rez = vstup.rezervace ? ` · ${vstup.rezervace}` : '';
   const text = `Zablokováno (Booking/Airbnb relay)${rez}: ${vstup.kanal}/${vstup.druh}. ${duvod}`;
   try {
-    await posliTelegram(text, 'automat' as TelegramDruh, '/prehled');
+    const { posliTelegram } = await import('./telegram');
+    await posliTelegram(text, 'automat', '/prehled');
   } catch {
     /* neházej ven */
   }
