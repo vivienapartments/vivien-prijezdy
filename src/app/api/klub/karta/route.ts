@@ -47,7 +47,11 @@ export async function GET(req: Request) {
   if (jeUkazkaKlic(k)) {
     const karta = ukazkovaKlientKarta(k as KlubUkazkaId);
     const defaultPohled: KlientRole =
-      k === 'ukazka-firma' ? 'firma' : k === 'ukazka-dop' ? 'doporucitel' : 'host';
+      k === 'ukazka-firma' || k === 'ukazka-egd'
+        ? 'firma'
+        : k === 'ukazka-dop'
+          ? 'doporucitel'
+          : 'host';
     return NextResponse.json(
       {
         ok: true,

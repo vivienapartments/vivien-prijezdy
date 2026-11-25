@@ -362,3 +362,27 @@ https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/nahled-import-bh
 
 Lokálně (dev): http://localhost:3000/nahled-import-bh
 Potvrzení zápisu: `/prehled/klienti` → Náhled exportu 25. 11. → Potvrdit zápis BH CSV (až řeknete).
+
+## 2026-11-25 22:10 · Ruční karty Flídr / Sofia / EG.D (jen Preview)
+
+Zdroj: `.data/import/rucni-klienti-2026-11-25.md` (necommittovat). Karty v Preview KV (`test:klient:*`) + sdílecí ukázky. Ostrá nedotčena. Datum narození / doklad neuloženo.
+
+### Co bylo v rez:* (jen čtení)
+**Marcel Flídr** – 2 ze 4 pobytů:
+- 18.–19. 11. 2026 · V1 Jemná harmonie · rez. 92026110902 · přímá · jazyk cs
+- 24.–27. 11. 2026 · V1 Jemná harmonie · rez. 92026110903 · přímá · jazyk en (na kartě jazyk cs dle majitele)
+- Pobyty za 2 900 Kč a 3 600 Kč v `rez:*` **nenalezeny** (ručně majitel). Útrata karty 12 300 Kč → Stálý host 6 %.
+
+**Sofia Saieshnykova** – v `rez:*` **nic** (telefon, e-mail, jméno, RODICE). Pobyt 7.–8. 10. 2026 Pohodlí (RODICE…) jen z majitele/exportu, ne z `rez:*`. Útrata 35 000 Kč (výjimka) → Stříbrný host 8 %. Jazyk cs (v rez:* nebylo).
+
+**EG.D, s.r.o.** (Dominik Hromada):
+- 1.–6. 11. 2026 · V1 · rez. 120260570 · přímá · v rez:*
+- 23.–26. 11. 2026 · V2 · rez. 92026111801 · přímá · v rez:*
+- 6.–7. 11. 2026 · V1 · BH 120260643 · v rez:* zatím není
+- 19.–23. 10. 2026 · V4 · rez. 120260538 · Booking.com · v rez:* (jen seznam, ne do útraty)
+- Útrata přímé z BH 14 040 Kč → Stálý partner 6 %. Kontakt z rez:* (telefon + e-mail Dominik).
+
+### Sdílecí odkazy (Preview)
+- Flídr · https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-flidr
+- Sofia · https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-sofia
+- EG.D · https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-egd

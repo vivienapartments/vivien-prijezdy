@@ -7,7 +7,15 @@ import type { KlientKarta, KlientRole } from './klient-karta';
 import { VYCHOZI_KLUB_PRAVIDLA, urovenZUtraty } from './klub-pravidla';
 import type { GuideLang } from './types';
 
-export type KlubUkazkaId = 'ukazka-host' | 'ukazka-host-pred' | 'ukazka-host-po' | 'ukazka-dop' | 'ukazka-firma';
+export type KlubUkazkaId =
+  | 'ukazka-host'
+  | 'ukazka-host-pred'
+  | 'ukazka-host-po'
+  | 'ukazka-dop'
+  | 'ukazka-firma'
+  | 'ukazka-flidr'
+  | 'ukazka-sofia'
+  | 'ukazka-egd';
 
 export type KlubPobytRadek = {
   nadpis: string;
@@ -76,13 +84,13 @@ function kartaZaklad(
     rezervace: cast.rezervace || [],
     firma: cast.firma ?? null,
     utrataKc,
-    utrataRucne: [],
+    utrataRucne: cast.utrataRucne || [],
     urovenId: u.id,
     kredit: cast.kredit || [],
     kreditKc: typeof cast.kreditKc === 'number' ? cast.kreditKc : 0,
     dopKodPuvod: cast.dopKodPuvod ?? null,
-    poznamka: '',
-    zalozil: 'ukazka',
+    poznamka: cast.poznamka || '',
+    zalozil: cast.zalozil || 'ukazka',
   };
 }
 
@@ -92,11 +100,147 @@ export function jeUkazkaKlic(k: string): k is KlubUkazkaId {
     k === 'ukazka-host-pred' ||
     k === 'ukazka-host-po' ||
     k === 'ukazka-dop' ||
-    k === 'ukazka-firma'
+    k === 'ukazka-firma' ||
+    k === 'ukazka-flidr' ||
+    k === 'ukazka-sofia' ||
+    k === 'ukazka-egd'
   );
 }
 
+/** Ruční karty 25. 11. 2026 – sdílecí náhled (data z majitele + rez:*). */
+function pobytyRucniKarty(id: KlubUkazkaId): {
+  nadchazejici: KlubPobytRadek[];
+  pobyty: KlubPobytRadek[];
+} | null {
+  if (id === 'ukazka-flidr') {
+    return {
+      nadchazejici: [],
+      pobyty: [
+        {
+          nadpis: '24.–27. 11. 2026 · Jemná harmonie',
+          podnadpis: 'rez. 92026110903 · přímá · v rez:*',
+        },
+        {
+          nadpis: '18.–19. 11. 2026 · Jemná harmonie',
+          podnadpis: 'rez. 92026110902 · přímá · v rez:*',
+        },
+        {
+          nadpis: 'Další pobyt · 3 600 Kč',
+          podnadpis: 'Termín v rez:* nenalezen · ručně majitel',
+        },
+        {
+          nadpis: 'Další pobyt · 2 900 Kč',
+          podnadpis: 'Termín v rez:* nenalezen · ručně majitel',
+        },
+      ],
+    };
+  }
+  if (id === 'ukazka-sofia') {
+    return {
+      nadchazejici: [],
+      pobyty: [
+        {
+          nadpis: '7.–8. 10. 2026 · Pohodlí v tlumených tónech',
+          podnadpis: 'RODICE TELEFON PLATBA HOTOVE · jen seznam (ne v rez:*)',
+        },
+        {
+          nadpis: 'Svatba / rodiče / Booking',
+          podnadpis: 'Detaily pobytů v rez:* nenalezeny · ručně majitel',
+        },
+      ],
+    };
+  }
+  if (id === 'ukazka-egd') {
+    return {
+      nadchazejici: [],
+      pobyty: [
+        {
+          nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
+          podnadpis: 'rez. 92026111801 · Dominik Hromada · přímá · v rez:*',
+        },
+        {
+          nadpis: '6.–7. 11. 2026 · Jemná harmonie',
+          podnadpis: 'BH 120260643 · 1 700 Kč · v rez:* zatím není',
+        },
+        {
+          nadpis: '1.–6. 11. 2026 · Jemná harmonie',
+          podnadpis: 'rez. 120260570 · Dominik Hromada · přímá · v rez:*',
+        },
+        {
+          nadpis: '19.–23. 10. 2026 · Ušlechtilý kontrast',
+          podnadpis: 'rez. 120260538 · Booking.com · v rez:* (ne do útraty)',
+        },
+      ],
+    };
+  }
+  return null;
+}
+
 export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
+  if (id === 'ukazka-flidr') {
+    return kartaZaklad({
+      id: 'ukazka-flidr',
+      kod: 'FLIDR',
+      tajnyKlic: 'ukazka-flidr',
+      typ: 'host',
+      role: ['host', 'doporucitel'],
+      jmeno: 'Marcel',
+      prijmeni: 'Flídr',
+      email: 'marcel.flidr@gmail.com',
+      telefon: '+420603778347',
+      jazyk: 'cs',
+      utrataKc: 12300,
+      rezervace: ['92026110902', '92026110903'],
+      poznamka:
+        'Adresa: Osvoboditelů 223, 767 01 Kroměříž. 4 přímé pobyty, 12 300 Kč. Recenze Google (týdenní pracovní pobyt). Dva termíny 2 900 a 3 600 Kč v rez:* nenalezeny.',
+      zalozil: 'rucni-2026-11-25',
+    });
+  }
+  if (id === 'ukazka-sofia') {
+    return kartaZaklad({
+      id: 'ukazka-sofia',
+      kod: 'SOFIA',
+      tajnyKlic: 'ukazka-sofia',
+      typ: 'host',
+      role: ['host', 'doporucitel'],
+      jmeno: 'Sofia',
+      prijmeni: 'Saieshnykova',
+      email: 'sofiasaeshnikova12@gmail.com',
+      telefon: '+420774053627',
+      jazyk: 'cs',
+      utrataKc: 35000,
+      rezervace: [],
+      poznamka:
+        'Adresa: Žižkova třída 1915/1b, 370 01 České Budějovice. Státní příslušnost: Ukrajina. Výjimka majitele 35 000 Kč (svatba, rodiče napřímo + Booking). Manžel taxikář – možný doporučitel. Recenze. V rez:* žádný záznam.',
+      zalozil: 'rucni-2026-11-25',
+    });
+  }
+  if (id === 'ukazka-egd') {
+    return kartaZaklad({
+      id: 'ukazka-egd',
+      kod: 'EGD',
+      tajnyKlic: 'ukazka-egd',
+      typ: 'firma',
+      role: ['firma', 'doporucitel'],
+      jmeno: 'EG.D',
+      prijmeni: '',
+      email: 'dominik.hromada@egd.cz',
+      telefon: '+420732347329',
+      jazyk: 'cs',
+      utrataKc: 14040,
+      rezervace: ['120260570', '92026111801'],
+      firma: {
+        ico: '',
+        dic: '',
+        nazev: 'EG.D, s.r.o.',
+        sidlo: '',
+        platceDph: false,
+      },
+      poznamka:
+        'Kontakt Dominik Hromada. Útrata z BH přímé (1 700 + 4 440 + 7 900). Booking 120260538 jen v seznamu pobytů.',
+      zalozil: 'rucni-2026-11-25',
+    });
+  }
   if (id === 'ukazka-firma') {
     return kartaZaklad({
       id: 'ukazka-firma',
@@ -169,7 +313,11 @@ export function pohledZKarty(
   let pobyty: KlubPobytRadek[] = [];
   let pratele: KlubPratelRadek[] = [];
 
-  if (ukazka && pohled === 'host') {
+  const rucni = ukazka ? pobytyRucniKarty(karta.tajnyKlic as KlubUkazkaId) : null;
+  if (rucni) {
+    nadchazejici = rucni.nadchazejici;
+    pobyty = rucni.pobyty;
+  } else if (ukazka && pohled === 'host') {
     const pred = karta.tajnyKlic === 'ukazka-host-pred';
     const jenPo = karta.tajnyKlic === 'ukazka-host-po';
     if (!jenPo) {
