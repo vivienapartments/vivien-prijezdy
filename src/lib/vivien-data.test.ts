@@ -157,6 +157,53 @@ KONEC`,
     expect(r.ok).toBe(false);
   });
 
+  it('TYP: PRIMA nastaví přímou a doplní ACC_PRICE / SALDO / CHECKIN_URL', () => {
+    const r = inspectVivienMail(
+      `VIVIEN-DATA v1
+REZERVACE: 120261100
+APARTMAN: Jemná harmonie
+PRIJEZD: 1.12.2026
+ODJEZD: 3.12.2026
+EMAIL: host@egd.cz
+OSOB: 2
+ACCESS_PIN: 4321
+ACC_PRICE: 4500 Kč
+SALDO: 0
+KUPON: VANOCE
+FAKTURA_PRO: EG.D
+ZALOZIL: Pravoslav
+CHECKIN_URL: https://example.com/checkin/abc
+TYP: PRIMA
+KONEC`,
+      'VIVIEN-DATA – přímá',
+    );
+    expect(r.typPrima).toBe(true);
+    expect(r.zdroj).toBe('přímá');
+    expect(r.cenaPobytu).toBe(4500);
+    expect(r.saldoKc).toBe(0);
+    expect(r.kupon).toBe('VANOCE');
+    expect(r.fakturaPro).toBe('EG.D');
+    expect(r.zalozilBh).toBe('Pravoslav');
+    expect(r.checkinUrl).toBe('https://example.com/checkin/abc');
+  });
+
+  it('TYP: PRIMA s booking e-mailem zůstane Booking', () => {
+    const r = inspectVivienMail(
+      `VIVIEN-DATA v1
+REZERVACE: 99
+APARTMAN: Jemná harmonie
+PRIJEZD: 1.12.2026
+ODJEZD: 3.12.2026
+EMAIL: x@guest.booking.com
+OSOB: 2
+ACCESS_PIN: 1111
+TYP: PRIMA
+KONEC`,
+    );
+    expect(r.typPrima).toBe(true);
+    expect(r.zdroj).toBe('Booking');
+  });
+
   it('mapuje národnost', () => {
     expect(langFromNarodnost('pol')).toBe('pl');
     expect(langFromNarodnost('')).toBe('en');

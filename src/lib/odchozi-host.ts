@@ -109,7 +109,7 @@ export type OdchoziVstup = {
   /** Karta rezervace (zdrojCeka, telefony). */
   rezervaceRec?: Pick<
     RezervaceRecord,
-    'zdrojCeka' | 'telefon' | 'telefonWa' | 'telefonRezervace' | 'telefonRezervaceWa'
+    'zdroj' | 'zdrojCeka' | 'telefon' | 'telefonWa' | 'telefonRezervace' | 'telefonRezervaceWa'
   > | null;
   text?: string;
   html?: string | null;

@@ -151,6 +151,7 @@ describe('odchozi-host · SMS / WhatsApp', () => {
       emailCil: RELAY,
       telefonCil: '+420777111222',
       rezervaceRec: {
+        zdroj: 'přímá',
         zdrojCeka: false,
         telefon: '+420777111222',
         telefonWa: '420777111222',
@@ -170,6 +171,7 @@ describe('odchozi-host · SMS / WhatsApp', () => {
       emailCil: RELAY,
       telefonCil: '+420777999888',
       rezervaceRec: {
+        zdroj: 'Booking',
         zdrojCeka: false,
         telefon: '+420777111222',
         telefonWa: '420777111222',
@@ -280,6 +282,7 @@ describe('odchozi-host · každý typ zprávy', () => {
         {
           telefonCil: '+420777111222',
           rezervaceRec: {
+            zdroj: 'přímá',
             zdrojCeka: false,
             telefon: '+420777111222',
             telefonWa: '420777111222',

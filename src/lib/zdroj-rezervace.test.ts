@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   emailJeAgenturni,
   rozhodniZdroj,
+  smíObchodniAktivita,
+  smíUtrataKlubu,
   sparujPoptavku,
   telefonJeZCheckinu,
   zdrojZEmailu,
@@ -105,5 +107,13 @@ describe('zdroj-rezervace', () => {
     expect(telefonJeZCheckinu('+420604111222', rec)).toBe(true);
     expect(telefonJeZCheckinu('420604111222', rec)).toBe(true);
     expect(telefonJeZCheckinu('+420777000999', rec)).toBe(false);
+  });
+
+  it('bez zdroje není obchodní aktivita (staré karty bez Telegramu)', () => {
+    expect(smíObchodniAktivita(null)).toBe(true);
+    expect(smíObchodniAktivita({ zdroj: null, zdrojCeka: false })).toBe(false);
+    expect(smíObchodniAktivita({ zdroj: 'přímá', zdrojCeka: false })).toBe(true);
+    expect(smíUtrataKlubu({ zdroj: 'Booking', zdrojCeka: false })).toBe(false);
+    expect(smíUtrataKlubu({ zdroj: 'přímá', zdrojCeka: false })).toBe(true);
   });
 });
