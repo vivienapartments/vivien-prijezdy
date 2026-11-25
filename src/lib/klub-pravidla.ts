@@ -81,6 +81,8 @@ export type OsobniSlevaVstup = {
   jeFirma?: boolean;
   /** doporučený kamarád na 1. pobytu */
   jeDoporucenyPrvniPobyt?: boolean;
+  /** doporučitel bez vlastního dokončeného pobytu → 5 % na první vlastní */
+  jeDoporucitelBezPobytu?: boolean;
   /** má už aspoň jeden dokončený (předaný) přímý pobyt */
   maDokoncenyPobyt?: boolean;
   utrataKc?: number;
@@ -92,6 +94,9 @@ export function slevaOsobniPct(
 ): number {
   if (vstup.jeFirma) return pravidla.slevaFirmaPct;
   if (vstup.jeDoporucenyPrvniPobyt) return pravidla.slevaDoporucenyPct;
+  if (vstup.jeDoporucitelBezPobytu && !vstup.maDokoncenyPobyt) {
+    return pravidla.slevaDoporucenyPct;
+  }
   const muzeUroven =
     pravidla.slevaUrovneOd === 'prvni-poptavka' || Boolean(vstup.maDokoncenyPobyt);
   if (!muzeUroven) return 0;

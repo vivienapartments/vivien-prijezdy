@@ -611,6 +611,22 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'predano') {
     const dalsi = zapisMajitele(rec, 'predano', { predano: new Date().toISOString() }, 'Předáno');
     await store.setRezervace(id, dalsi);
+    try {
+      const { klubZapnut } = await import('@/lib/klub-klic');
+      if (klubZapnut()) {
+        const { pridejUtratuPoPredani, sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
+        await sparujNeboVytvorKlienta(store, {
+          jmeno: dalsi.jmeno,
+          email: dalsi.emailHosta,
+          telefon: dalsi.telefon || dalsi.telefonRezervace,
+          rezervace: dalsi.rezervace,
+          jazyk: dalsi.jazyk || 'cs',
+        });
+        await pridejUtratuPoPredani(store, dalsi);
+      }
+    } catch {
+      /* klub nesmí shodit předání */
+    }
     return NextResponse.json({ ok: true, predano: dalsi.predano }, { headers: noStore });
   }
 

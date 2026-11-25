@@ -69,4 +69,14 @@ describe('klub sleva a úroveň', () => {
       }),
     ).toBe(0);
   });
+
+  it('doporučitel bez pobytu má 5 % na první vlastní', () => {
+    expect(
+      vyslednaSlevaPct({
+        noci: 3,
+        jeDoporucitelBezPobytu: true,
+        maDokoncenyPobyt: false,
+      }),
+    ).toBe(5);
+  });
 });

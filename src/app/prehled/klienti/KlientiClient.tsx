@@ -24,6 +24,13 @@ export function KlientiClient() {
   const [editDelka14, setEditDelka14] = useState('15');
   const [editOdmena1, setEditOdmena1] = useState('5');
   const [editOdmena2, setEditOdmena2] = useState('2');
+  const [nahledImport, setNahledImport] = useState<{
+    souhrn: { host: string; pocet: number; utrata: number; uroven: string }[];
+    primaHoste: { jmeno: string; telefon: string; email: string; utrata: number }[];
+  } | null>(null);
+  const [utrataId, setUtrataId] = useState('');
+  const [utrataCastka, setUtrataCastka] = useState('');
+  const [utrataPozn, setUtrataPozn] = useState('');
 
   const nacti = useCallback(async () => {
     const res = await fetch('/api/prehled/klienti');
@@ -103,6 +110,59 @@ export function KlientiClient() {
     }
   }
 
+  async function nahledXlsx(file: File) {
+    const form = new FormData();
+    form.set('akce', 'import-nahled');
+    form.set('soubor', file);
+    const res = await fetch('/api/prehled/klienti', { method: 'POST', body: form });
+    const json = (await res.json()) as { ok?: boolean; nahled?: typeof nahledImport };
+    if (json.ok && json.nahled) {
+      setNahledImport(json.nahled);
+      setHlaska(`Náhled: ${json.nahled.souhrn.length} hostů. Zápis až po potvrzení.`);
+    } else {
+      setHlaska('Náhled xlsx se nepovedl.');
+    }
+  }
+
+  async function potvrdImport() {
+    if (!nahledImport) return;
+    const res = await fetch('/api/prehled/klienti', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ akce: 'import-potvrdit', nahled: nahledImport }),
+    });
+    const json = (await res.json()) as { ok?: boolean; zapsano?: number };
+    if (json.ok) {
+      setHlaska(`Import zapsán: ${json.zapsano || 0}.`);
+      setNahledImport(null);
+      await nacti();
+    } else {
+      setHlaska('Import se nezapsal (klub vypnutý?).');
+    }
+  }
+
+  async function utrataRucne() {
+    const res = await fetch('/api/prehled/klienti', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        akce: 'utrata-rucne',
+        id: utrataId,
+        castka: Number(utrataCastka),
+        poznamka: utrataPozn || 'ruční',
+      }),
+    });
+    const json = (await res.json()) as { ok?: boolean };
+    if (json.ok) {
+      setHlaska('Útrata doplněna.');
+      setUtrataCastka('');
+      setUtrataPozn('');
+      await nacti();
+    } else {
+      setHlaska('Útrata se neuložila.');
+    }
+  }
+
   return (
     <main className="ph" style={{ padding: '1rem', maxWidth: 720, margin: '0 auto' }}>
       <p>
@@ -112,7 +172,7 @@ export function KlientiClient() {
       </p>
       <h1 style={{ color: '#c9a84c', fontFamily: 'Georgia, serif' }}>Klienti</h1>
       <p style={{ color: '#b7aa98', fontSize: '0.9rem' }}>
-        Dávka 1 klubu. Seznam a pravidla. Hostům se nic nemění, dokud není klub zapnutý.
+        Dávka 2 klubu. Útrata, import xlsx, párování. Hostům se nic nemění, dokud není klub zapnutý.
       </p>
       {hlaska ? <p style={{ color: '#c9a84c' }}>{hlaska}</p> : null}
 
@@ -173,6 +233,82 @@ export function KlientiClient() {
         <button type="button" onClick={() => void migrace()} style={btn}>
           Spustit migraci
         </button>
+      </section>
+
+      <section style={{ marginBottom: '1.4rem' }}>
+        <h2 style={{ fontSize: '1rem' }}>Ruční útrata</h2>
+        <div style={{ display: 'grid', gap: 8, color: '#efe6d8', fontSize: '0.9rem' }}>
+          <label>
+            Klient{' '}
+            <select
+              value={utrataId}
+              onChange={(e) => setUtrataId(e.target.value)}
+              style={{ ...inp, width: '100%', maxWidth: 320 }}
+            >
+              <option value="">vyberte</option>
+              {karty.map((k) => (
+                <option key={k.id} value={k.id}>
+                  {k.jmeno} {k.prijmeni} · {k.kod}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Částka Kč{' '}
+            <input value={utrataCastka} onChange={(e) => setUtrataCastka(e.target.value)} style={inp} />
+          </label>
+          <label>
+            Poznámka{' '}
+            <input
+              value={utrataPozn}
+              onChange={(e) => setUtrataPozn(e.target.value)}
+              style={{ ...inp, width: 180 }}
+            />
+          </label>
+          <button type="button" onClick={() => void utrataRucne()} style={btn}>
+            Připsat útratu
+          </button>
+        </div>
+      </section>
+
+      <section style={{ marginBottom: '1.4rem' }}>
+        <h2 style={{ fontSize: '1rem' }}>Import útraty z BH (xlsx)</h2>
+        <p style={{ color: '#b7aa98', fontSize: '0.85rem' }}>
+          Jen řádky bez agentury / přímé. Nejdřív náhled, zápis až po potvrzení. Zároveň seznam přímých hostů pro poděkování.
+        </p>
+        <input
+          type="file"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void nahledXlsx(f);
+          }}
+        />
+        {nahledImport ? (
+          <div style={{ marginTop: 12, color: '#efe6d8', fontSize: '0.9rem' }}>
+            <p>Co by se připsalo:</p>
+            <ul>
+              {nahledImport.souhrn.map((s) => (
+                <li key={s.host}>
+                  {s.host} · {s.pocet} pobytů · {s.utrata} Kč · {s.uroven}
+                </li>
+              ))}
+            </ul>
+            <p>Přímí hosté (poděkování):</p>
+            <ul>
+              {nahledImport.primaHoste.map((h) => (
+                <li key={`${h.jmeno}-${h.email}`}>
+                  {h.jmeno}
+                  {h.email ? ` · ${h.email}` : ''}
+                  {h.telefon ? ` · ${h.telefon}` : ''} · {h.utrata} Kč
+                </li>
+              ))}
+            </ul>
+            <button type="button" onClick={() => void potvrdImport()} style={btn}>
+              Potvrdit zápis
+            </button>
+          </div>
+        ) : null}
       </section>
 
       <section>
