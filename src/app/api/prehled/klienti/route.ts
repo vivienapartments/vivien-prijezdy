@@ -150,26 +150,66 @@ export async function GET() {
         preview: true,
       }))
     : [];
+
+  function normalJmeno(j: string) {
+    return (j || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+  function jeEgdFirma(k: {
+    typ?: string;
+    jmeno?: string;
+    prijmeni?: string;
+    firmaNazev?: string | null;
+    kod?: string;
+  }) {
+    const blob = `${k.firmaNazev || ''} ${k.jmeno || ''} ${k.prijmeni || ''} ${k.kod || ''}`;
+    return /eg\.?\s*d/i.test(blob) || /^egd$/i.test((k.kod || '').trim());
+  }
+  function klicOsoby(k: {
+    typ?: string;
+    jmeno?: string;
+    prijmeni?: string;
+    firmaNazev?: string | null;
+  }) {
+    if (k.typ === 'firma' || k.firmaNazev) return `f:${normalJmeno(k.firmaNazev || k.jmeno || '')}`;
+    return `h:${normalJmeno(`${k.jmeno || ''} ${k.prijmeni || ''}`)}`;
+  }
+
+  // Preview: jen seed (BH + Flídr/Sofia/Hromada). Staré KV karty EG.D / duplicity Flídr ne.
+  const kvKarty = previewOk
+    ? []
+    : karty
+        .filter((k) => !jeEgdFirma(k))
+        .map((k) => ({
+          ...verejnaKlientKarta(k, pravidla),
+          tajnyKlic: k.tajnyKlic,
+          utrataCekaKc: 0,
+          pocetPobytu: k.rezervace?.length || 0,
+          posledniPobyt: null as string | null,
+          pristiPobyt: null as string | null,
+          praveBydli: false,
+          preview: false,
+        }));
+
+  const videne = new Set<string>();
+  const sloucené = [...previewKarty, ...kvKarty].filter((k) => {
+    if (jeEgdFirma(k)) return false;
+    const key = klicOsoby(k);
+    if (videne.has(key)) return false;
+    videne.add(key);
+    return true;
+  });
+
   return NextResponse.json(
     {
       ok: true,
       klubZapnut: klubZapnut(),
       pravidla,
-      karty: [
-        ...previewKarty,
-        ...karty
-          .filter((k) => !previewKarty.some((p) => p.kod === k.kod))
-          .map((k) => ({
-            ...verejnaKlientKarta(k, pravidla),
-            tajnyKlic: k.tajnyKlic,
-            utrataCekaKc: 0,
-            pocetPobytu: k.rezervace?.length || 0,
-            posledniPobyt: null as string | null,
-            pristiPobyt: null as string | null,
-            praveBydli: false,
-            preview: false,
-          })),
-      ],
+      karty: sloucené,
       utrataCeka: ceka,
       preview: previewOk,
     },

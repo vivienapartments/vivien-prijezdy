@@ -336,6 +336,7 @@ export function seznamPreviewKlientu(): PreviewKlientDetail[] {
   const soDetail = zeSouhrnu(so.souhrn);
   soDetail.nadchazejici = so.nadchazejici;
   soDetail.pobyty = so.pobyty;
+  soDetail.pocetPobytu = Math.max(2, so.pobyty.length);
   soDetail.email = RUCNI['sofia saieshnykova'].email || '';
   soDetail.telefon = RUCNI['sofia saieshnykova'].telefon || '';
   soDetail.karta.email = soDetail.email;
@@ -343,7 +344,13 @@ export function seznamPreviewKlientu(): PreviewKlientDetail[] {
   soDetail.posledniPobyt = '7. 10.–8. 10.';
   mapa.set('sofia saieshnykova', soDetail);
 
-  cache = [...mapa.values()].sort((a, b) => b.utrataKc - a.utrataKc || a.jmeno.localeCompare(b.jmeno, 'cs'));
+  // Flídr: počet pobytů z ručního seznamu
+  const flidr = mapa.get('marcel flidr');
+  if (flidr) flidr.pocetPobytu = Math.max(4, flidr.pobyty.length);
+
+  cache = [...mapa.values()]
+    .filter((x) => !/eg\.?\s*d/i.test(`${x.firmaNazev || ''} ${x.jmeno} ${x.prijmeni}`))
+    .sort((a, b) => b.utrataKc - a.utrataKc || a.jmeno.localeCompare(b.jmeno, 'cs'));
   return cache;
 }
 
