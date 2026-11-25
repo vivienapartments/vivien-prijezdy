@@ -164,7 +164,7 @@ const casPrijezduL: LText = {
 
 const casSmsL: LText = {
   cs: 'Napsat SMS',
-  en: 'Lähettäkää tekstiviesti',
+  en: 'Send an SMS',
   de: 'SMS schreiben',
   pl: 'Napisz SMS',
   uk: 'Написати SMS',
@@ -173,7 +173,7 @@ const casSmsL: LText = {
   es: 'Escribir un SMS',
   hu: "SMS küldése",
   da: 'Send en sms',
-  fi: 'Send an SMS',
+  fi: 'Lähettäkää tekstiviesti',
   fr: "Envoyer un SMS",
   it: "Inviare un SMS",
   pt: 'Enviar uma SMS',
@@ -181,7 +181,7 @@ const casSmsL: LText = {
 
 const casWhatsappL: LText = {
   cs: 'Napsat na WhatsApp',
-  en: 'Kirjoittakaa WhatsAppiin',
+  en: 'Message on WhatsApp',
   de: 'Auf WhatsApp schreiben',
   pl: 'Napisz na WhatsApp',
   uk: 'Написати у WhatsApp',
@@ -190,7 +190,7 @@ const casWhatsappL: LText = {
   es: 'Escribir por WhatsApp',
   hu: "Írás WhatsAppon",
   da: 'Skriv på WhatsApp',
-  fi: 'Message on WhatsApp',
+  fi: 'Kirjoittakaa WhatsAppiin',
   fr: "Écrire sur WhatsApp",
   it: "Scrivere su WhatsApp",
   pt: 'Mensagem no WhatsApp',

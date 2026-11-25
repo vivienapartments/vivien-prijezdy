@@ -17,7 +17,7 @@ export type PodekovaniKanal = 'whatsapp' | 'sms' | 'email';
  */
 export const ZPRAVA_PODEKOVANI: Record<GuideLang, string> = {
   cs: 'Dobrý den, doufáme, že cesta domů proběhla v pořádku. Moc děkujeme za vaši návštěvu. V průvodci na vás čeká krátký vzkaz od nás, malý dárek na příští pobyt a také dárek pro vaše blízké.',
-  en: 'Hyvää päivää, toivomme, että kotimatka sujui hyvin. Kiitos paljon vierailustanne. Oppaassa teitä odottaa lyhyt viesti meiltä, pieni lahja seuraavaan majoitukseen ja myös lahja läheisillenne.',
+  en: 'Hello, we hope your journey home went well. Thank you so much for staying with us. In the guide there is a short note from us, a small gift for your next stay and also a gift for the people close to you.',
   de: 'Guten Tag, wir hoffen, Ihre Heimreise ist gut verlaufen. Vielen Dank für Ihren Besuch bei uns. Im Leitfaden wartet eine kurze Nachricht von uns, ein kleines Geschenk für Ihren nächsten Aufenthalt und auch ein Geschenk für Ihre Liebsten.',
   pl: 'Dzień dobry, mamy nadzieję, że podróż do domu minęła dobrze. Bardzo dziękujemy za pobyt u nas. W przewodniku czeka krótka wiadomość od nas, mały prezent na kolejny pobyt, a także prezent dla Waszych bliskich.',
   uk: 'Добрий день, сподіваємося, дорога додому минула добре. Дуже дякуємо за ваш візит до нас. У путівнику на вас чекає коротке повідомлення від нас, невеликий подарунок на наступне перебування, а також подарунок для ваших близьких.',
@@ -26,7 +26,7 @@ export const ZPRAVA_PODEKOVANI: Record<GuideLang, string> = {
   es: 'Buenos días, esperamos que el viaje de vuelta haya ido bien. Muchas gracias por su visita. En la guía les espera un breve mensaje nuestro, un pequeño detalle para la próxima estancia y también un detalle para sus seres queridos.',
   hu: 'Jó napot kívánunk, reméljük, jól telt a hazaút. Nagyon köszönjük, hogy nálunk jártak. Az útmutatóban egy rövid üzenet vár Önökre tőlünk, egy kis ajándék a következő tartózkodáshoz, és egy ajándék az Önökhöz közel állóknak is.',
   da: 'Hej, vi håber, hjemrejsen gik godt. Mange tak for jeres besøg hos os. I guiden venter en kort besked fra os, en lille gave til jeres næste ophold og også en gave til jeres nærmeste.',
-  fi: 'Hello, we hope your journey home went well. Thank you so much for staying with us. In the guide there is a short note from us, a small gift for your next stay and also a gift for the people close to you.',
+  fi: 'Hyvää päivää, toivomme, että kotimatka sujui hyvin. Kiitos paljon vierailustanne. Oppaassa teitä odottaa lyhyt viesti meiltä, pieni lahja seuraavaan majoitukseen ja myös lahja läheisillenne.',
   fr: 'Bonjour, nous espérons que votre retour s’est bien passé. Merci beaucoup pour votre séjour chez nous. Dans le guide vous attend un court message de notre part, un petit cadeau pour votre prochain séjour et aussi un cadeau pour vos proches.',
   it: 'Buongiorno, speriamo che il viaggio di ritorno sia andato bene. Grazie di cuore per il vostro soggiorno da noi. Nella guida vi aspetta un breve messaggio da parte nostra, un piccolo regalo per il prossimo soggiorno e anche un regalo per le persone a voi care.',
   pt: 'Bom dia, esperamos que a viagem de regresso tenha corrido bem. Muito obrigado pela vossa estadia connosco. No guia espera-vos uma breve mensagem nossa, um pequeno presente para a próxima estadia e também um presente para as pessoas próximas.',
@@ -39,7 +39,7 @@ export const ZPRAVA_PODEKOVANI: Record<GuideLang, string> = {
  */
 export const ZPRAVA_PODEKOVANI_POZDEJI: Record<GuideLang, string> = {
   cs: 'Dobrý den, moc děkujeme za vaši návštěvu u nás. V průvodci na vás čeká krátký vzkaz od nás, malý dárek na příští pobyt a také dárek pro vaše blízké.',
-  en: 'Hyvää päivää, kiitos paljon vierailustanne luonamme. Oppaassa teitä odottaa lyhyt viesti meiltä, pieni lahja seuraavaan majoitukseen ja myös lahja läheisillenne.',
+  en: 'Hello, thank you so much for staying with us. In the guide there is a short note from us, a small gift for your next stay and also a gift for the people close to you.',
   de: 'Guten Tag, vielen Dank für Ihren Besuch bei uns. Im Leitfaden wartet eine kurze Nachricht von uns, ein kleines Geschenk für Ihren nächsten Aufenthalt und auch ein Geschenk für Ihre Liebsten.',
   pl: 'Dzień dobry, bardzo dziękujemy za pobyt u nas. W przewodniku czeka krótka wiadomość od nas, mały prezent na kolejny pobyt, a także prezent dla Waszych bliskich.',
   uk: 'Добрий день, дуже дякуємо за ваш візит до нас. У путівнику на вас чекає коротке повідомлення від нас, невеликий подарунок на наступне перебування, а також подарунок для ваших близьких.',
@@ -51,7 +51,7 @@ export const ZPRAVA_PODEKOVANI_POZDEJI: Record<GuideLang, string> = {
   pt: 'Bom dia, muito obrigado pela vossa estadia connosco. No guia espera-vos uma breve mensagem nossa, um pequeno presente para a próxima estadia e também um presente para as pessoas próximas.',
   hu: 'Jó napot kívánunk, nagyon köszönjük, hogy nálunk jártak. Az útmutatóban egy rövid üzenet vár Önökre tőlünk, egy kis ajándék a következő tartózkodáshoz, és egy ajándék az Önökhöz közel állóknak is.',
   da: 'Hej, mange tak for jeres besøg hos os. I guiden venter en kort besked fra os, en lille gave til jeres næste ophold og også en gave til jeres nærmeste.',
-  fi: 'Hello, thank you so much for staying with us. In the guide there is a short note from us, a small gift for your next stay and also a gift for the people close to you.',
+  fi: 'Hyvää päivää, kiitos paljon vierailustanne luonamme. Oppaassa teitä odottaa lyhyt viesti meiltä, pieni lahja seuraavaan majoitukseen ja myös lahja läheisillenne.',
 };
 
 /** Předmět e-mailu. Schváleno 22. 11. 2026: VIVIEN · Děkujeme za návštěvu. */

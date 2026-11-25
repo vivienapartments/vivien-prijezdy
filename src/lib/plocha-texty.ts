@@ -3,7 +3,7 @@ import type { LText } from './types';
 /** Krátký dotaz hned po otevření průvodce. Schválil majitel 8. 11. 2026, varianta 2. */
 export const plochaDotaz: LText = {
   cs: 'Většina hostů si průvodce dá na plochu telefonu. Chcete to taky, ať příště nemusíte přes mail?',
-  en: 'Useimmat vieraat laittavat oppaan puhelimen kotinäytölle. Haluatteko tekin, jotta seuraavalla kerralla ei tarvitse mennä sähköpostin kautta?',
+  en: 'Most guests put the guide on their phone home screen. Would you like that too, so next time you do not need the email?',
   de: 'Die meisten Gäste legen den Leitfaden auf den Startbildschirm. Möchten Sie das auch, damit Sie das nächste Mal keine E-Mail brauchen?',
   pl: 'Większość gości dodaje instrukcję na ekran telefonu. Chcecie tak samo, żeby następnym razem nie szukać maila?',
   uk: 'Більшість гостей додає гід на екран телефону. Хочете так само, щоб наступного разу не шукати лист?',
@@ -12,7 +12,7 @@ export const plochaDotaz: LText = {
   es: 'La mayoría de los huéspedes pone la guía en la pantalla del teléfono. ¿Quieren hacerlo también, para no depender del correo la próxima vez?',
   hu: 'A legtöbb vendég az útmutatót a telefon kezdőképernyőjére teszi. Szeretnék így is, hogy legközelebb ne kelljen a levelet keresni?',
   da: 'De fleste gæster lægger guiden på telefonens hjemmeskærm. Vil I også det, så I næste gang ikke har brug for e-mailen?',
-  fi: 'Most guests put the guide on their phone home screen. Would you like that too, so next time you do not need the email?',
+  fi: 'Useimmat vieraat laittavat oppaan puhelimen kotinäytölle. Haluatteko tekin, jotta seuraavalla kerralla ei tarvitse mennä sähköpostin kautta?',
   fr: 'La plupart des hôtes mettent le guide sur l’écran d’accueil du téléphone. Vous aussi, pour ne plus passer par le mail la prochaine fois ?',
   it: 'La maggior parte degli ospiti mette la guida sulla schermata del telefono. Volete farlo anche voi, così la prossima volta non serve la mail?',
   pt: 'A maioria dos hóspedes põe o guia no ecrã do telemóvel. Querem o mesmo, para da próxima vez não precisarem do e-mail?',
@@ -21,7 +21,7 @@ export const plochaDotaz: LText = {
 /** Tlačítka u dotazu. Schválil majitel: B. */
 export const plochaAno: LText = {
   cs: 'Ano',
-  en: 'Kyllä',
+  en: 'Yes',
   de: 'Ja',
   pl: 'Tak',
   uk: 'Так',
@@ -30,7 +30,7 @@ export const plochaAno: LText = {
   es: 'Sí',
   hu: 'Igen',
   da: 'Ja',
-  fi: 'Yes',
+  fi: 'Kyllä',
   fr: 'Oui',
   it: 'Sì',
   pt: 'Sim',
@@ -55,7 +55,7 @@ export const plochaNe: LText = {
 
 export const plochaPozdeji: LText = {
   cs: 'Později',
-  en: 'Myöhemmin',
+  en: 'Later',
   de: 'Später',
   pl: 'Później',
   uk: 'Пізніше',
@@ -64,7 +64,7 @@ export const plochaPozdeji: LText = {
   es: 'Más tarde',
   hu: 'Később',
   da: 'Senere',
-  fi: 'Later',
+  fi: 'Myöhemmin',
   fr: 'Plus tard',
   it: 'Più tardi',
   pt: 'Mais tarde',
@@ -73,7 +73,7 @@ export const plochaPozdeji: LText = {
 /** První položka v ose, když zvolili Později. */
 export const plochaPolozkaNadpis: LText = {
   cs: 'Rychlý přístup z plochy',
-  en: 'Pikainen pääsy kotinäytöltä',
+  en: 'Quick access from the home screen',
   de: 'Schneller Zugriff vom Startbildschirm',
   pl: 'Szybki dostęp z ekranu',
   uk: 'Швидкий доступ з екрана',
@@ -82,7 +82,7 @@ export const plochaPolozkaNadpis: LText = {
   es: 'Acceso rápido desde la pantalla',
   hu: 'Gyors elérés a kezdőképernyőről',
   da: 'Hurtig adgang fra hjemmeskærmen',
-  fi: 'Quick access from the home screen',
+  fi: 'Pikainen pääsy kotinäytöltä',
   fr: 'Accès rapide depuis l’écran d’accueil',
   it: 'Accesso rapido dalla schermata Home',
   pt: 'Acesso rápido a partir do ecrã',
@@ -90,7 +90,7 @@ export const plochaPolozkaNadpis: LText = {
 
 export const plochaPolozkaVeta: LText = {
   cs: 'Přidejte si průvodce na plochu telefonu. Příště ho otevřete bez mailu.',
-  en: 'Lisätkää opas puhelimen kotinäytölle. Seuraavalla kerralla avaatte sen ilman sähköpostia.',
+  en: 'Add the guide to your phone home screen. Next time you open it without the email.',
   de: 'Legen Sie den Leitfaden auf den Startbildschirm. Beim nächsten Mal öffnen Sie ihn ohne E-Mail.',
   pl: 'Dodajcie instrukcję na ekran telefonu. Następnym razem otworzycie ją bez maila.',
   uk: 'Додайте гід на екран телефону. Наступного разу відкриєте його без листа.',
@@ -99,7 +99,7 @@ export const plochaPolozkaVeta: LText = {
   es: 'Pongan la guía en la pantalla del teléfono. La próxima vez la abren sin el correo.',
   hu: 'Tegyék az útmutatót a telefon kezdőképernyőjére. Legközelebb e-mail nélkül nyitják meg.',
   da: 'Føj guiden til telefonens hjemmeskærm. Næste gang åbner I den uden e-mailen.',
-  fi: 'Add the guide to your phone home screen. Next time you open it without the email.',
+  fi: 'Lisätkää opas puhelimen kotinäytölle. Seuraavalla kerralla avaatte sen ilman sähköpostia.',
   fr: 'Mettez le guide sur l’écran d’accueil. La prochaine fois, vous l’ouvrirez sans le mail.',
   it: 'Aggiungete la guida alla schermata del telefono. La prossima volta la aprite senza la mail.',
   pt: 'Ponham o guia no ecrã do telemóvel. Da próxima vez abrem-no sem o e-mail.',
@@ -107,7 +107,7 @@ export const plochaPolozkaVeta: LText = {
 
 export const plochaPridej: LText = {
   cs: 'Přidat na plochu',
-  en: 'Lisätkää kotinäytölle',
+  en: 'Add to home screen',
   de: 'Zum Startbildschirm',
   pl: 'Dodaj na ekran',
   uk: 'Додати на екран',
@@ -116,7 +116,7 @@ export const plochaPridej: LText = {
   es: 'Añadir a la pantalla',
   hu: 'Kezdőképernyőre',
   da: 'Føj til hjemmeskærm',
-  fi: 'Add to home screen',
+  fi: 'Lisätkää kotinäytölle',
   fr: 'Ajouter à l’écran d’accueil',
   it: 'Aggiungi alla Home',
   pt: 'Adicionar ao ecrã',
@@ -195,7 +195,7 @@ export const plochaUzMateRadek: LText = {
 
 export const plochaSkryt: LText = {
   cs: 'Už neukazovat',
-  en: 'Älkää näyttäkö enää',
+  en: 'Do not show again',
   de: 'Nicht mehr anzeigen',
   pl: 'Już nie pokazuj',
   uk: 'Більше не показувати',
@@ -204,7 +204,7 @@ export const plochaSkryt: LText = {
   es: 'No mostrar más',
   hu: 'Ne mutassa többé',
   da: 'Vis ikke igen',
-  fi: 'Do not show again',
+  fi: 'Älkää näyttäkö enää',
   fr: 'Ne plus afficher',
   it: 'Non mostrare più',
   pt: 'Não mostrar mais',
@@ -213,7 +213,7 @@ export const plochaSkryt: LText = {
 /** Stejné jako u zpráv od nás (Zobrazit / Schovat). */
 export const plochaZobrazit: LText = {
   cs: 'Zobrazit',
-  en: 'Näyttäkää',
+  en: 'Show',
   de: 'Anzeigen',
   pl: 'Pokaż',
   uk: 'Показати',
@@ -222,7 +222,7 @@ export const plochaZobrazit: LText = {
   es: 'Mostrar',
   hu: 'Megnyitás',
   da: 'Vis',
-  fi: 'Show',
+  fi: 'Näyttäkää',
   fr: 'Afficher',
   it: 'Mostra',
   pt: 'Mostrar',
@@ -247,7 +247,7 @@ export const plochaSchovat: LText = {
 
 export const plochaOverlayKrok: LText = {
   cs: 'Zpráva od nás',
-  en: 'Viesti meiltä',
+  en: 'A message from us',
   de: 'Nachricht von uns',
   pl: 'Wiadomość od nas',
   uk: 'Повідомлення від нас',
@@ -256,7 +256,7 @@ export const plochaOverlayKrok: LText = {
   es: 'Un mensaje nuestro',
   hu: 'Üzenet tőlünk',
   da: 'En besked fra os',
-  fi: 'A message from us',
+  fi: 'Viesti meiltä',
   fr: 'Un message de notre part',
   it: 'Un messaggio da noi',
   pt: 'Uma mensagem nossa',
@@ -265,7 +265,7 @@ export const plochaOverlayKrok: LText = {
 /** Starší návod Safari. U poptávky na iPhonu používáme plochaIosNedostupne*. */
 export const plochaNavodIosNadpis: LText = {
   cs: 'Na iPhonu to jde takhle',
-  en: 'iPhonessa tämä onnistuu näin',
+  en: 'On iPhone it works like this',
   de: 'Am iPhone geht es so',
   pl: 'Na iPhonie jest tak',
   uk: 'На iPhone це так',
@@ -274,7 +274,7 @@ export const plochaNavodIosNadpis: LText = {
   es: 'En el iPhone se hace así',
   hu: 'iPhone-on így megy',
   da: 'På iPhone gør I sådan her',
-  fi: 'On iPhone it works like this',
+  fi: 'iPhonessa tämä onnistuu näin',
   fr: 'Sur iPhone, voici comment faire',
   it: 'Su iPhone si fa così',
   pt: 'No iPhone faz-se assim',
@@ -282,7 +282,7 @@ export const plochaNavodIosNadpis: LText = {
 
 export const plochaNavodIosKroky: LText = {
   cs: '1. Dole v Safari klepněte na Sdílet (čtverec se šipkou nahoru uprostřed lišty).\n2. V nabídce posouvejte dolů. Hledejte „Na plochu“ nebo „Přidat na plochu“.\n3. Klepněte na to a potvrďte Přidat.\nKdyž Sdílet nevidíte, nejste v Safari. V Telegramu klepněte … a Otevřít v Safari.',
-  en: '1. Safarin alareunassa napauttakaa Jaa (neliö, jossa nuoli ylös, palkin keskellä).\n2. Vierittäkää valikkoa alas. Etsikää ”Lisää Koti-valikkoon”.\n3. Napauttakaa sitä ja vahvistakaa Lisää.\nJos ette näe Jaa-painiketta, ette ole Safarissa. Telegramissa napauttakaa … ja Avaa Safarissa.',
+  en: '1. At the bottom of Safari, tap Share (square with the arrow up in the middle of the bar).\n2. Scroll down in the sheet. Look for Add to Home Screen.\n3. Tap it and confirm Add.\nIf you do not see Share, you are not in Safari. In Telegram tap … and Open in Safari.',
   de: '1. Tippen Sie auf Teilen (Quadrat mit Pfeil nach oben).\n2. Wählen Sie Zum Home-Bildschirm.\n3. Bestätigen Sie Hinzufügen.',
   pl: '1. Dotknijcie Udostępnij (kwadrat ze strzałką w górę).\n2. Wybierzcie Na ekran początkowy.\n3. Potwierdźcie Dodaj.',
   uk: '1. Натисніть Поділитися (квадрат зі стрілкою вгору).\n2. Оберіть На початковий екран.\n3. Підтвердіть Додати.',
@@ -291,7 +291,7 @@ export const plochaNavodIosKroky: LText = {
   es: '1. Toquen Compartir (el cuadrado con la flecha hacia arriba).\n2. Elijan Añadir a pantalla de inicio.\n3. Confirmen Añadir.',
   hu: '1. Koppintsanak a Megosztás gombra (négyzet felfelé nyíllal).\n2. Válasszák a Kezdőképernyőhöz adást.\n3. Erősítsék meg a Hozzáadást.',
   da: '1. Tryk på Del (firkanten med pilen op).\n2. Vælg Føj til hjemmeskærm.\n3. Bekræft med Tilføj.',
-  fi: '1. At the bottom of Safari, tap Share (square with the arrow up in the middle of the bar).\n2. Scroll down in the sheet. Look for Add to Home Screen.\n3. Tap it and confirm Add.\nIf you do not see Share, you are not in Safari. In Telegram tap … and Open in Safari.',
+  fi: '1. Safarin alareunassa napauttakaa Jaa (neliö, jossa nuoli ylös, palkin keskellä).\n2. Vierittäkää valikkoa alas. Etsikää ”Lisää Koti-valikkoon”.\n3. Napauttakaa sitä ja vahvistakaa Lisää.\nJos ette näe Jaa-painiketta, ette ole Safarissa. Telegramissa napauttakaa … ja Avaa Safarissa.',
   fr: '1. Touchez Partager (le carré avec la flèche vers le haut).\n2. Choisissez Sur l’écran d’accueil.\n3. Confirmez Ajouter.',
   it: '1. Toccate Condividi (il quadrato con la freccia in su).\n2. Scegliete Aggiungi a Home.\n3. Confermate Aggiungi.',
   pt: '1. Toquem em Partilhar (o quadrado com a seta para cima).\n2. Escolham Adicionar ao ecrã principal.\n3. Confirmem Adicionar.',
@@ -300,7 +300,7 @@ export const plochaNavodIosKroky: LText = {
 /** iPhone: přidání na plochu z odkazu ve zprávě nejde spolehlivě. */
 export const plochaIosNedostupneNadpis: LText = {
   cs: 'Na iPhonu to teď nejde',
-  en: 'iPhonella tämä ei nyt onnistu',
+  en: 'Not available on iPhone right now',
   de: 'Am iPhone geht das jetzt nicht',
   pl: 'Na iPhonie to teraz nie działa',
   uk: 'На iPhone це зараз недоступно',
@@ -309,7 +309,7 @@ export const plochaIosNedostupneNadpis: LText = {
   es: 'En iPhone no está disponible ahora',
   hu: 'iPhone-on ez most nem elérhető',
   da: 'Virker ikke på iPhone lige nu',
-  fi: 'Not available on iPhone right now',
+  fi: 'iPhonella tämä ei nyt onnistu',
   fr: 'Indisponible sur iPhone pour le moment',
   it: 'Su iPhone non è disponibile ora',
   pt: 'No iPhone não está disponível agora',
@@ -317,7 +317,7 @@ export const plochaIosNedostupneNadpis: LText = {
 
 export const plochaIosNedostupneText: LText = {
   cs: 'Omlouváme se. Apple to z odkazu ve zprávě nebo v mailu nepovoluje. Na Androidu přidání na plochu funguje.',
-  en: 'Pahoittelemme. Apple ei salli tätä viestin tai sähköpostin linkistä. Androidilla lisääminen kotinäytölle toimii.',
+  en: 'We are sorry. Apple does not allow this from a link in a message or email. On Android, Add to Home Screen works.',
   de: 'Es tut uns leid. Apple erlaubt das aus einem Link in einer Nachricht oder E-Mail nicht. Unter Android funktioniert Zum Startbildschirm.',
   pl: 'Przepraszamy. Apple nie pozwala na to z linku w wiadomości lub mailu. Na Androidzie dodanie na ekran działa.',
   uk: 'Вибачте. Apple не дозволяє це з посилання в повідомленні чи листі. На Android додавання на екран працює.',
@@ -326,7 +326,7 @@ export const plochaIosNedostupneText: LText = {
   es: 'Lo sentimos. Apple no lo permite desde un enlace en un mensaje o correo. En Android, Añadir a pantalla de inicio funciona.',
   hu: 'Elnézést. Az Apple üzenetben vagy e-mailben lévő linkről ezt nem engedi. Androidon a kezdőképernyőre helyezés működik.',
   da: 'Vi beklager. Apple tillader det ikke fra et link i en besked eller mail. På Android virker Føj til hjemmeskærm.',
-  fi: 'We are sorry. Apple does not allow this from a link in a message or email. On Android, Add to Home Screen works.',
+  fi: 'Pahoittelemme. Apple ei salli tätä viestin tai sähköpostin linkistä. Androidilla lisääminen kotinäytölle toimii.',
   fr: 'Nous sommes désolés. Apple ne le permet pas depuis un lien dans un message ou un e-mail. Sous Android, Ajouter à l’écran d’accueil fonctionne.',
   it: 'Ci dispiace. Apple non lo consente da un link in un messaggio o in una mail. Su Android, Aggiungi a Home funziona.',
   pt: 'Pedimos desculpa. A Apple não permite isto a partir de uma ligação numa mensagem ou e-mail. No Android, Adicionar ao ecrã funciona.',
@@ -352,7 +352,7 @@ export const plochaAndroidNejdeNadpis: LText = {
 
 export const plochaAndroidNejdeText: LText = {
   cs: 'Zkuste to v prohlížeči Chrome. Otevřete odkaz znovu a klepněte Přidat na plochu.',
-  en: 'Kokeilkaa Chrome-selaimessa. Avatkaa linkki uudelleen ja napauttakaa Lisää aloitusnäytölle.',
+  en: 'Try again in the Chrome browser. Open the link again and tap Add to home screen.',
   de: 'Versuchen Sie es im Chrome-Browser. Öffnen Sie den Link erneut und tippen Sie auf Zum Startbildschirm.',
   pl: 'Spróbujcie w przeglądarce Chrome. Otwórzcie link ponownie i kliknijcie Dodaj na ekran.',
   uk: 'Спробуйте в браузері Chrome. Відкрийте посилання знову й натисніть Додати на екран.',
@@ -361,7 +361,7 @@ export const plochaAndroidNejdeText: LText = {
   es: 'Pruébenlo en el navegador Chrome. Abran el enlace otra vez y toquen Añadir a la pantalla.',
   hu: 'Próbálják meg a Chrome böngészőben. Nyissák meg újra a linket, és koppintsanak a Kezdőképernyőre gombra.',
   da: 'Prøv i browseren Chrome. Åbn linket igen, og tryk på Føj til hjemmeskærm.',
-  fi: 'Try again in the Chrome browser. Open the link again and tap Add to home screen.',
+  fi: 'Kokeilkaa Chrome-selaimessa. Avatkaa linkki uudelleen ja napauttakaa Lisää aloitusnäytölle.',
   fr: 'Essayez dans le navigateur Chrome. Rouvrez le lien et touchez Ajouter à l’écran d’accueil.',
   it: 'Provate nel browser Chrome. Riaprite il link e toccate Aggiungi alla Home.',
   pt: 'Tente no navegador Chrome. Abra o link outra vez e toque em Adicionar ao ecrã.',
@@ -369,7 +369,7 @@ export const plochaAndroidNejdeText: LText = {
 
 export const plochaNavodAndroidNadpis: LText = {
   cs: 'Na Androidu to jde takhle',
-  en: 'Androidissa tämä onnistuu näin',
+  en: 'On Android it works like this',
   de: 'Unter Android geht es so',
   pl: 'Na Androidzie jest tak',
   uk: 'На Android це так',
@@ -378,7 +378,7 @@ export const plochaNavodAndroidNadpis: LText = {
   es: 'En Android se hace así',
   hu: 'Androidon így megy',
   da: 'På Android gør I sådan her',
-  fi: 'On Android it works like this',
+  fi: 'Androidissa tämä onnistuu näin',
   fr: 'Sous Android, voici comment faire',
   it: 'Su Android si fa così',
   pt: 'No Android faz-se assim',
@@ -386,7 +386,7 @@ export const plochaNavodAndroidNadpis: LText = {
 
 export const plochaNavodAndroidKroky: LText = {
   cs: '1. Otevřete menu prohlížeče (tři tečky).\n2. Zvolte Instalovat aplikaci nebo Přidat na plochu.\n3. Potvrďte.',
-  en: '1. Avatkaa selaimen valikko (kolme pistettä).\n2. Valitkaa Asenna sovellus tai Lisää aloitusnäytölle.\n3. Vahvistakaa.',
+  en: '1. Open the browser menu (three dots).\n2. Choose Install app or Add to Home screen.\n3. Confirm.',
   de: '1. Öffnen Sie das Browser-Menü (drei Punkte).\n2. Wählen Sie App installieren oder Zum Startbildschirm.\n3. Bestätigen Sie.',
   pl: '1. Otwórzcie menu przeglądarki (trzy kropki).\n2. Wybierzcie Zainstaluj aplikację albo Dodaj do ekranu głównego.\n3. Potwierdźcie.',
   uk: '1. Відкрийте меню браузера (три крапки).\n2. Оберіть Установити програму або Додати на головний екран.\n3. Підтвердіть.',
@@ -395,7 +395,7 @@ export const plochaNavodAndroidKroky: LText = {
   es: '1. Abran el menú del navegador (tres puntos).\n2. Elijan Instalar aplicación o Añadir a pantalla de inicio.\n3. Confirmen.',
   hu: '1. Nyissák meg a böngésző menüjét (három pont).\n2. Válasszák az Alkalmazás telepítése vagy a Kezdőképernyőhöz adás lehetőséget.\n3. Erősítsék meg.',
   da: '1. Åbn browsermenuen (tre prikker).\n2. Vælg Installer app eller Føj til startskærm.\n3. Bekræft.',
-  fi: '1. Open the browser menu (three dots).\n2. Choose Install app or Add to Home screen.\n3. Confirm.',
+  fi: '1. Avatkaa selaimen valikko (kolme pistettä).\n2. Valitkaa Asenna sovellus tai Lisää aloitusnäytölle.\n3. Vahvistakaa.',
   fr: '1. Ouvrez le menu du navigateur (trois points).\n2. Choisissez Installer l’application ou Ajouter à l’écran d’accueil.\n3. Confirmez.',
   it: '1. Aprite il menu del browser (tre puntini).\n2. Scegliete Installa app oppure Aggiungi a Home.\n3. Confermate.',
   pt: '1. Abram o menu do navegador (três pontos).\n2. Escolham Instalar aplicação ou Adicionar ao ecrã principal.\n3. Confirmem.',
@@ -421,7 +421,7 @@ export const plochaChromeMenuTip: LText = {
 
 export const plochaHotovo: LText = {
   cs: 'Hotovo. Příště už nemusíte přes mail, najdete nás na ploše telefonu.',
-  en: 'Valmista. Seuraavalla kerralla ei tarvitse mennä sähköpostin kautta, löydätte meidät puhelimen kotinäytöltä.',
+  en: 'Done. Next time you will not need the email. You will find us on your phone home screen.',
   de: 'Fertig. Das nächste Mal brauchen Sie keine E-Mail. Sie finden uns auf dem Startbildschirm des Telefons.',
   pl: 'Gotowe. Następnym razem nie trzeba maila. Znajdziecie nas na ekranie telefonu.',
   uk: 'Готово. Наступного разу лист не потрібен. Знайдете нас на екрані телефону.',
@@ -430,7 +430,7 @@ export const plochaHotovo: LText = {
   es: 'Listo. La próxima vez no hace falta el correo. Nos encontrarán en la pantalla del teléfono.',
   hu: 'Kész. Legközelebb nem kell a levél. A telefon kezdőképernyőjén megtalálnak minket.',
   da: 'Færdig. Næste gang behøver I ikke e-mailen. I finder os på telefonens hjemmeskærm.',
-  fi: 'Done. Next time you will not need the email. You will find us on your phone home screen.',
+  fi: 'Valmista. Seuraavalla kerralla ei tarvitse mennä sähköpostin kautta, löydätte meidät puhelimen kotinäytöltä.',
   fr: 'C’est fait. La prochaine fois, plus besoin du mail. Vous nous trouvez sur l’écran d’accueil du téléphone.',
   it: 'Fatto. La prossima volta non serve la mail. Ci trovate sulla schermata del telefono.',
   pt: 'Feito. Da próxima vez não precisam do e-mail. Encontram-nos no ecrã do telemóvel.',

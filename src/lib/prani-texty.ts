@@ -209,7 +209,7 @@ export const PRANI_RAMECEK_ODPOVED: T = {
 
 export const PRANI_ZOBRAZIT: T = {
   cs: 'Zobrazit',
-  en: 'Näyttäkää',
+  en: 'Show',
   de: 'Anzeigen',
   pl: 'Pokaż',
   uk: 'Показати',
@@ -221,7 +221,7 @@ export const PRANI_ZOBRAZIT: T = {
   pt: 'Mostrar',
   hu: 'Megjelenítés',
   da: 'Vis',
-  fi: 'Show',
+  fi: 'Näyttäkää',
 };
 
 /** Štítek v okně: původní text hosta. */
