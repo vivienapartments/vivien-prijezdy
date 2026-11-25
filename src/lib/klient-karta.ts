@@ -284,6 +284,17 @@ export async function nactiKlientPodleKodu(
   return nactiKlientPodleId(store, map.id);
 }
 
+export async function nactiKlientPodleTajnehoKlice(
+  store: ProcessStore,
+  tajny: string,
+): Promise<KlientKarta | null> {
+  const k = (tajny || '').trim();
+  if (!k) return null;
+  const map = await getJson<{ id?: string }>(store, `klient-klic:${k}`);
+  if (!map?.id) return null;
+  return nactiKlientPodleId(store, map.id);
+}
+
 export async function seznamKlientu(store: ProcessStore): Promise<KlientKarta[]> {
   const list = (await getJson<string[]>(store, 'klient-seznam')) || [];
   const out: KlientKarta[] = [];
