@@ -190,14 +190,15 @@
 .klub-bar__a {
   display: block;
   height: 100%;
-  background: #c9a84c;
+  /* Započtená útrata – oranžová (cesta k další úrovni) */
+  background: #e08a3c;
 }
 
 .klub-bar__b {
   display: block;
   height: 100%;
+  /* Čeká po odjezdu – světle modrá */
   background: #7fb8e6;
-  opacity: 0.75;
 }
 
 .klub-ceka-castka {

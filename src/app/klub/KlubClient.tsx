@@ -214,35 +214,59 @@ export default function KlubClient() {
           {maUroven && pokrok && !skromnyZbytek ? (
             <>
               {(() => {
+                // Pruh = cesta k další úrovni (100 % = práh další úrovně).
+                // Oranžová = už započtená útrata. Modrá = čeká po odjezdu.
                 const ceka = karta.utrataCekaKc || 0;
-                const soucet = Math.max(1, karta.utrataKc + ceka);
-                const wGold = Math.min(100, Math.round((karta.utrataKc / soucet) * 100));
-                const wBlue = ceka > 0 ? Math.max(4, Math.round((ceka / soucet) * 100)) : 0;
+                const serazene = [...KLUB_UROVNE_PRO_LADDER].sort((a, b) => a.odKc - b.odKc);
+                const dalsi = serazene[pokrok.index + 1] || null;
+                const cilKc = dalsi ? dalsi.odKc : Math.max(karta.utrataKc + ceka, 1);
+                const wOrange = Math.min(100, Math.round((karta.utrataKc / cilKc) * 100));
+                const wBlue =
+                  ceka > 0 ? Math.min(100 - wOrange, Math.round((ceka / cilKc) * 100)) : 0;
+                const chybiPo = dalsi ? Math.max(0, cilKc - karta.utrataKc - ceka) : 0;
                 return (
-                  <div className="klub-bar klub-bar--dual" aria-hidden>
-                    <span className="klub-bar__a" style={{ width: `${wGold}%` }} />
-                    {wBlue ? <span className="klub-bar__b" style={{ width: `${wBlue}%` }} /> : null}
-                  </div>
+                  <>
+                    <div className="klub-bar klub-bar--dual" aria-hidden>
+                      <span className="klub-bar__a" style={{ width: `${wOrange}%` }} />
+                      {wBlue > 0 ? (
+                        <span className="klub-bar__b" style={{ width: `${wBlue}%` }} />
+                      ) : null}
+                    </div>
+                    <div className="klub-bt">
+                      <span>
+                        {tx.utrata(formatKc(karta.utrataKc))}
+                        {ceka > 0 ? (
+                          <>
+                            <br />
+                            <span className="klub-ceka-castka">
+                              + {formatKc(ceka)} po odjezdu
+                            </span>
+                          </>
+                        ) : null}
+                      </span>
+                      <span>
+                        {pokrok.dalsiNazev && pokrok.dalsiPct != null && pokrok.chybiKc != null
+                          ? tx.doUrovne(
+                              pokrok.dalsiNazev,
+                              pokrok.dalsiPct,
+                              formatKc(pokrok.chybiKc),
+                            )
+                          : tx.nejvyssi}
+                        {ceka > 0 && dalsi ? (
+                          <>
+                            <br />
+                            <span className="klub-ceka-castka">
+                              {chybiPo > 0
+                                ? `po odjezdu jen ${formatKc(chybiPo)}`
+                                : `po odjezdu ${pokrok.dalsiNazev}`}
+                            </span>
+                          </>
+                        ) : null}
+                      </span>
+                    </div>
+                  </>
                 );
               })()}
-              <div className="klub-bt">
-                <span>
-                  {tx.utrata(formatKc(karta.utrataKc))}
-                  {karta.utrataCekaKc > 0 ? (
-                    <>
-                      <br />
-                      <span className="klub-ceka-castka">
-                        + {formatKc(karta.utrataCekaKc)} po odjezdu
-                      </span>
-                    </>
-                  ) : null}
-                </span>
-                <span>
-                  {pokrok.dalsiNazev && pokrok.dalsiPct != null && pokrok.chybiKc != null
-                    ? tx.doUrovne(pokrok.dalsiNazev, pokrok.dalsiPct, formatKc(pokrok.chybiKc))
-                    : tx.nejvyssi}
-                </span>
-              </div>
               {ladder ? <div className="klub-ladder">{ladderRows}</div> : null}
             </>
           ) : null}
