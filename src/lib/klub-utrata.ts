@@ -48,9 +48,7 @@ export function jePrimaZdroj(zdroj: string | null | undefined): boolean {
 export function jeZaplacenoProUtratu(rec: Pick<RezervaceRecord, 'saldoKc' | 'zaplaceno' | 'platby'>): boolean {
   if (rec.saldoKc === 0) return true;
   if (rec.zaplaceno) return true;
-  if (Array.isArray(rec.platby) && rec.platby.some((p) => Number((p as { castka?: number }).castka || 0) > 0)) {
-    return true;
-  }
+  if (Array.isArray(rec.platby) && rec.platby.some((p) => (p.kc || 0) > 0)) return true;
   return false;
 }
 
