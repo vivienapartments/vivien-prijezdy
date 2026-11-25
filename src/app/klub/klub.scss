@@ -86,7 +86,9 @@
 .klub-bar span {
   display: block;
   height: 100%;
+  /* Jednosegmentový pruh (bez dual). Dual má vlastní barvy níže. */
   background: #c9a84c;
+  flex: 0 0 auto;
 }
 
 .klub-bt {
@@ -187,18 +189,21 @@
   overflow: hidden;
 }
 
-.klub-bar__a {
+/* Silnější než .klub-bar span, ať se barvy nepřekryjí zlatou. */
+.klub-bar--dual .klub-bar__a {
   display: block;
   height: 100%;
-  /* Započtená útrata – oranžová (cesta k další úrovni) */
+  /* Započtená útrata – oranžová (stejná jako řádek pobytu) */
   background: #e08a3c;
+  flex-shrink: 0;
 }
 
-.klub-bar__b {
+.klub-bar--dual .klub-bar__b {
   display: block;
   height: 100%;
   /* Čeká po odjezdu – světle modrá */
   background: #7fb8e6;
+  flex-shrink: 0;
 }
 
 .klub-ceka-castka {

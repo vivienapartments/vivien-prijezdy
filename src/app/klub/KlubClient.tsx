@@ -227,7 +227,9 @@ export default function KlubClient() {
                 return (
                   <>
                     <div className="klub-bar klub-bar--dual" aria-hidden>
-                      <span className="klub-bar__a" style={{ width: `${wOrange}%` }} />
+                      {wOrange > 0 ? (
+                        <span className="klub-bar__a" style={{ width: `${wOrange}%` }} />
+                      ) : null}
                       {wBlue > 0 ? (
                         <span className="klub-bar__b" style={{ width: `${wBlue}%` }} />
                       ) : null}
