@@ -62,6 +62,8 @@ export type KlubKartaPohled = {
   utrataCekaKc: number;
   /** Probíhající pobyt = nadpis „Právě u nás bydlíte“. */
   praveBydli: boolean;
+  /** Preview z BH: schovat blok doporučení, dokud není skutečný kredit / přítel. */
+  skrytDoporuceni: boolean;
 };
 
 const UROVNE = VYCHOZI_KLUB_PRAVIDLA.urovne;
@@ -340,10 +342,15 @@ export function pohledZKarty(
   if (rucni) {
     nadchazejici = rucni.nadchazejici;
     pobyty = rucni.pobyty;
-  } else if (ukazka && pohled === 'host' && !String(karta.tajnyKlic || '').startsWith('preview-')) {
+  } else if (
+    ukazka &&
+    (karta.tajnyKlic === 'ukazka-host' ||
+      karta.tajnyKlic === 'ukazka-host-pred' ||
+      karta.tajnyKlic === 'ukazka-host-po')
+  ) {
+    // Jediná povolená fiktivní ukázka (ne BH Preview karty).
     const pred = karta.tajnyKlic === 'ukazka-host-pred';
     const jenPo = karta.tajnyKlic === 'ukazka-host-po';
-    // Fiktivní kamarádi jen u obecné ukázky hosta, ne u skutečných Preview karet.
     if (!jenPo) {
       nadchazejici = [
         {
@@ -359,15 +366,13 @@ export function pohledZKarty(
         { nadpis: '14.–16. 6. 2026', podnadpis: 'Apartmán 5' },
         { nadpis: '7.–9. 2. 2026', podnadpis: 'Apartmán 1' },
       ];
-      if (karta.tajnyKlic === 'ukazka-host' || karta.tajnyKlic === 'ukazka-host-po') {
-        pratele = [
-          { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
-          { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
-          { jmeno: 'Eva · leden 2027', stav: 'čeká na pobyt' },
-        ];
-      }
+      pratele = [
+        { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
+        { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
+        { jmeno: 'Eva · leden 2027', stav: 'čeká na pobyt' },
+      ];
     }
-  } else if (ukazka && pohled === 'firma') {
+  } else if (ukazka && karta.tajnyKlic === 'ukazka-firma') {
     nadchazejici = [
       { nadpis: 'Ing. Dvořák · 1.–5. 12. 2026', podnadpis: 'Apartmán 3' },
       { nadpis: 'J. Malý · 1.–12. 12. 2026', podnadpis: 'Apartmán 4' },
@@ -378,7 +383,7 @@ export function pohledZKarty(
       { nadpis: 'Ing. Dvořák · 6.–9. 10. 2026', podnadpis: 'Apartmán 3' },
     ];
     pratele = [{ jmeno: 'Hotel Sever · listopad 2026', stav: 'přijeli ✓' }];
-  } else if (ukazka && pohled === 'doporucitel') {
+  } else if (ukazka && karta.tajnyKlic === 'ukazka-dop') {
     pratele = [
       { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
       { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
@@ -413,6 +418,7 @@ export function pohledZKarty(
     odkazDoporuceni: `${base}/poptavka?od=${encodeURIComponent(karta.kod)}`,
     utrataCekaKc: 0,
     praveBydli,
+    skrytDoporuceni: false,
   };
 }
 
@@ -429,18 +435,21 @@ export function pohledZPreviewDetailu(
   opts?: { pohled?: KlientRole },
 ): KlubKartaPohled {
   const zaklad = pohledZKarty(d.karta, odkazBase, { ukazka: false, pohled: opts?.pohled });
+  const kreditKc = d.karta.kreditKc || 0;
   return {
     ...zaklad,
     ukazka: true,
-    // Žádní falešní kamarádi z ukázky – Flídr nikoho nedoporučil.
     pratele: [],
     nadchazejici: d.nadchazejici,
     pobyty: d.pobyty,
     utrataCekaKc: d.utrataCekaKc,
     praveBydli: d.praveBydli,
+    kreditKc,
     kreditCeka: 0,
-    kreditKVyplate: d.karta.kreditKc || 0,
+    kreditKVyplate: kreditKc,
     kreditVyplaceno: 0,
+    // BH Preview: doporučení až když bude skutečné. Teď jen útrata a pobyty.
+    skrytDoporuceni: kreditKc <= 0,
   };
 }
 

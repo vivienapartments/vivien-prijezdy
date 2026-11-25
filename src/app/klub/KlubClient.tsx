@@ -342,6 +342,7 @@ export default function KlubClient() {
           </section>
         ) : null}
 
+        {!karta.skrytDoporuceni || jeDop ? (
         <section
           id="klub-dop"
           className={`klub-sec${dopOpen || jeDop ? ' is-open' : ''}${skromnyZbytek && !jeDop ? ' klub-sec--skromne' : ''}`}
@@ -431,6 +432,7 @@ export default function KlubClient() {
             )}
           </div>
         </section>
+        ) : null}
 
         {!jeDop ? (
           <div className="klub-btns">
@@ -443,9 +445,11 @@ export default function KlubClient() {
                 {tx.rezervovat}
               </a>
             )}
-            <button type="button" className="klub-btn2" onClick={scrollDop}>
-              {jeFirma ? tx.doporucitKratke : tx.doporucit}
-            </button>
+            {!karta.skrytDoporuceni ? (
+              <button type="button" className="klub-btn2" onClick={scrollDop}>
+                {jeFirma ? tx.doporucitKratke : tx.doporucit}
+              </button>
+            ) : null}
           </div>
         ) : null}
       </div>

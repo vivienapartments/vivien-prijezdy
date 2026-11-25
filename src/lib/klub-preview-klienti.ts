@@ -133,40 +133,40 @@ function flidrPobyty(): { nadchazejici: KlubPobytRadek[]; pobyty: KlubPobytRadek
     stavUtraty: 'ceka',
     popisek: 'čeká, započítá se po odjezdu',
   };
-  const hotove: ImportBhPobyt[] = [
+  const hotove: ImportBhPobyt = {
+    rezervace: '92026110902',
+    prijezd: '2026-11-18',
+    odjezd: '2026-11-19',
+    castka: 2900,
+    stavUtraty: 'zapocteno',
+    popisek: 'započítáno',
+  };
+  // 3 600 a 2 900: majitel potvrdil částky, termíny v rez:* nejsou – bez vymyšlených dat.
+  const dalsiBezTerminu: KlubPobytRadek[] = [
     {
-      rezervace: '92026110902',
-      prijezd: '2026-11-18',
-      odjezd: '2026-11-19',
-      castka: 2900,
-      stavUtraty: 'zapocteno',
-      popisek: 'započítáno',
+      nadpis: '3 600 Kč',
+      podnadpis: 'termín doplníme',
+      barva: 'zapocteno',
+      stavText: 'započítáno',
     },
     {
-      rezervace: 'flidr-3600',
-      prijezd: '2026-10-01',
-      odjezd: '2026-10-03',
-      castka: 3600,
-      stavUtraty: 'zapocteno',
-      popisek: 'započítáno',
-    },
-    {
-      rezervace: 'flidr-2900b',
-      prijezd: '2026-09-01',
-      odjezd: '2026-09-02',
-      castka: 2900,
-      stavUtraty: 'zapocteno',
-      popisek: 'započítáno',
+      nadpis: '2 900 Kč',
+      podnadpis: 'termín doplníme',
+      barva: 'zapocteno',
+      stavText: 'započítáno',
     },
   ];
   return {
-    nadchazejici: [pobytNaRadek(ceka, { pruvodce: true })],
-    pobyty: [
+    nadchazejici: [
       {
-        ...pobytNaRadek(ceka),
-        podnadpis: 'Jemná harmonie',
+        ...pobytNaRadek(ceka, { pruvodce: true }),
+        podnadpis: 'Adresa, příjezd, kódy',
       },
-      ...hotove.map((p) => ({ ...pobytNaRadek(p), podnadpis: 'Jemná harmonie' })),
+    ],
+    pobyty: [
+      { ...pobytNaRadek(ceka), podnadpis: 'Jemná harmonie' },
+      { ...pobytNaRadek(hotove), podnadpis: 'Jemná harmonie' },
+      ...dalsiBezTerminu,
     ],
     souhrn: {
       host: 'Marcel Flídr',
@@ -177,7 +177,7 @@ function flidrPobyty(): { nadchazejici: KlubPobytRadek[]; pobyty: KlubPobytRadek
       klientId: null,
       akce: 'priradit',
       rezervace: ['92026110903', '92026110902'],
-      pobyty: [ceka, ...hotove],
+      pobyty: [ceka, hotove],
     },
   };
 }
