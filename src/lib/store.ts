@@ -337,8 +337,16 @@ export type RezervaceRecord = {
   nedojezdKdy: string | null;
   /** Zobrazení plateb na kartě. Úložiště drží částky v Kč. null = Kč. */
   mena: 'CZK' | 'EUR' | null;
-  /** Celková cena pobytu z Better Hotelu (ne městský poplatek). null = ještě neznáme. */
+  /** Celková cena ubytování z Better Hotelu (ACC_PRICE / TOTAL_PRICE, ne městský poplatek). null = ještě neznáme. */
   cenaPobytu: number | null;
+  /** Zbývá zaplatit (SALDO). 0 = zaplaceno. null = neznáme. */
+  saldoKc: number | null;
+  /** Kupon z BH. */
+  kupon: string | null;
+  /** Příjemce dokladu z BH (INV_RECIPIENT). */
+  fakturaPro: string | null;
+  /** Kdo založil rezervaci v BH (ACT_USER). */
+  zalozilBh: string | null;
   /** Adresa hosta z BH check-inu (GUEST_FULL_ADDRESS). null = ještě neznáme. */
   adresaHosta: string | null;
   /** Údaje na firemní fakturu. null = host nechce / nezadal. */
@@ -378,6 +386,10 @@ export type RucniPole =
   | 'accessPin'
   | 'poznamkaUklid'
   | 'cenaPobytu'
+  | 'saldoKc'
+  | 'kupon'
+  | 'fakturaPro'
+  | 'zalozilBh'
   | 'adresaHosta'
   | 'zdroj';
 
@@ -950,6 +962,19 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       typeof r.cenaPobytu === 'number' && Number.isFinite(r.cenaPobytu) && r.cenaPobytu > 0
         ? Math.round(r.cenaPobytu * 100) / 100
         : null,
+    saldoKc:
+      typeof r.saldoKc === 'number' && Number.isFinite(r.saldoKc) && r.saldoKc >= 0
+        ? Math.round(r.saldoKc * 100) / 100
+        : null,
+    kupon: typeof r.kupon === 'string' && r.kupon.trim() ? r.kupon.trim().slice(0, 80) : null,
+    fakturaPro:
+      typeof r.fakturaPro === 'string' && r.fakturaPro.trim()
+        ? r.fakturaPro.trim().slice(0, 200)
+        : null,
+    zalozilBh:
+      typeof r.zalozilBh === 'string' && r.zalozilBh.trim()
+        ? r.zalozilBh.trim().slice(0, 80)
+        : null,
     adresaHosta:
       typeof r.adresaHosta === 'string' && r.adresaHosta.trim()
         ? r.adresaHosta.trim().slice(0, 300)
@@ -1069,6 +1094,10 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     nedojezdKdy: null,
     mena: null,
     cenaPobytu: null,
+    saldoKc: null,
+    kupon: null,
+    fakturaPro: null,
+    zalozilBh: null,
     adresaHosta: null,
     faktura: null,
     fakturaNeprebirat: false,

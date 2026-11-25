@@ -154,9 +154,15 @@ export function rozhodniZdroj(vstup: {
   };
 }
 
-/** Obchodní zprávy a klubová útrata jen když zdroj není ve stavu „čeká“. */
-export function smíObchodniAktivita(rec: Pick<RezervaceRecord, 'zdrojCeka'> | null | undefined): boolean {
-  return !rec?.zdrojCeka;
+/** Obchodní zprávy a klubová útrata jen když zdroj je potvrzený (nečeká a není prázdný). */
+export function smíObchodniAktivita(
+  rec: Pick<RezervaceRecord, 'zdrojCeka' | 'zdroj'> | null | undefined,
+): boolean {
+  // Bez karty neblokuj (např. tip kamarádovi mimo rezervaci).
+  if (!rec) return true;
+  if (rec.zdrojCeka) return false;
+  if (!rec.zdroj) return false;
+  return true;
 }
 
 /** Marketing SMS/WA jen na telefon z check-inu. */
@@ -182,8 +188,5 @@ export function telefonJeZCheckinu(
 }
 
 export function smíUtrataKlubu(rec: Pick<RezervaceRecord, 'zdrojCeka' | 'zdroj'> | null | undefined): boolean {
-  if (!rec) return false;
-  if (rec.zdrojCeka) return false;
-  if (!rec.zdroj) return false;
-  return true;
+  return smíObchodniAktivita(rec) && /přím/i.test(rec?.zdroj || '');
 }

@@ -7342,6 +7342,86 @@ export function PrehledClient({
       ) : null}
 
       {pohledDomu && !ukazka ? (
+        <section className="ph-doplnit-zdroj" style={{ margin: '1rem 0' }}>
+          <h2 style={{ fontSize: '1.05rem', marginBottom: '0.5rem' }}>
+            Doplnit zdroj
+            {radky.filter((r) => r.stav !== 'zruseno' && (r.zdrojCeka || !r.zdroj)).length
+              ? ` · ${radky.filter((r) => r.stav !== 'zruseno' && (r.zdrojCeka || !r.zdroj)).length}`
+              : ''}
+          </h2>
+          {radky.filter((r) => r.stav !== 'zruseno' && (r.zdrojCeka || !r.zdroj)).length === 0 ? (
+            <p className="ph-muted">Nic nečeká.</p>
+          ) : (
+            <ul className="ph-odjezdy">
+              {radky
+                .filter((r) => r.stav !== 'zruseno' && (r.zdrojCeka || !r.zdroj))
+                .map((row) => (
+                  <li key={`zdroj-${row.rezervace}`}>
+                    <button
+                      type="button"
+                      className="ph-dnesek__odkaz"
+                      onClick={() => otevriKartu(row.rezervace)}
+                    >
+                      {row.jmeno || 'Host'}
+                    </button>
+                    {' · '}
+                    {row.termin || 'termín?'}
+                    {row.emailDomena ? ` · ${row.emailDomena}` : ' · bez e-mailu'}
+                    <span className="ph-odjezdy__akce" style={{ display: 'inline-flex', gap: '0.35rem', flexWrap: 'wrap', marginLeft: '0.5rem' }}>
+                      {(['přímá', 'Booking', 'Airbnb'] as const).map((z) => (
+                        <button
+                          key={z}
+                          type="button"
+                          className="ph-btn ph-btn--maly"
+                          disabled={cekam === `${row.rezervace}:zdroj`}
+                          onClick={async () => {
+                            setCekam(`${row.rezervace}:zdroj`);
+                            setHlaska('');
+                            const res = await fetch('/api/prehled/akce', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                rezervace: row.rezervace,
+                                akce: 'zdroj',
+                                zdroj: z,
+                              }),
+                            });
+                            const json = (await res.json().catch(() => null)) as {
+                              ok?: boolean;
+                              error?: string;
+                              zdroj?: string;
+                            } | null;
+                            setCekam(null);
+                            if (!res.ok || !json?.ok) {
+                              setHlaska(json?.error || 'Zdroj se neuložil.');
+                              return;
+                            }
+                            setRadky((prev) =>
+                              prev.map((r) =>
+                                r.rezervace === row.rezervace
+                                  ? {
+                                      ...r,
+                                      zdroj: json.zdroj || z,
+                                      zdrojText: json.zdroj || z,
+                                      zdrojCeka: false,
+                                    }
+                                  : r,
+                              ),
+                            );
+                          }}
+                        >
+                          {z === 'přímá' ? 'Přímá' : z}
+                        </button>
+                      ))}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
+
+      {pohledDomu && !ukazka ? (
         <CoDoplnit
           radky={radky}
           dnes={dnes}

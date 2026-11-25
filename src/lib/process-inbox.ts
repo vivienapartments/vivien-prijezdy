@@ -215,6 +215,11 @@ const NAZVY_ZMENY: Partial<Record<keyof RezervaceRecord, string>> = {
   telefon: 'telefon',
   poplatek: 'poplatek',
   cenaPobytu: 'cena pobytu',
+  saldoKc: 'saldo',
+  kupon: 'kupon',
+  fakturaPro: 'příjemce dokladu',
+  zalozilBh: 'založil',
+  checkinUrl: 'odkaz check-in',
 };
 
 /** Check-in zapíše jen pole, která v mailu jsou. Co majitel uložil ručně, zůstane. */
@@ -237,10 +242,19 @@ function udajeZMailu(ins: MailInspection, prev?: RezervaceRecord | null): Partia
   poloz('accessPin', ins.accessPin);
   poloz('adresaHosta', ins.adresaHosta);
   poloz('cenaPobytu', ins.cenaPobytu);
+  if (ins.saldoKc != null) data.saldoKc = ins.saldoKc;
+  poloz('kupon', ins.kupon);
+  poloz('fakturaPro', ins.fakturaPro);
+  poloz('zalozilBh', ins.zalozilBh);
+  poloz('checkinUrl', ins.checkinUrl);
   if (ins.cenaMena && !prev?.mena) poloz('mena', ins.cenaMena);
   if (ins.vytvoreno) poloz('vytvoreno', ins.vytvoreno);
-  if (ins.zdroj) poloz('zdroj', ins.zdroj);
-  else if (!prev?.zdroj && !maRucni(prev, 'zdroj')) {
+  if (ins.zdroj) {
+    poloz('zdroj', ins.zdroj);
+    if (ins.typPrima || /přím/i.test(ins.zdroj) || jeZdrojBooking(ins.zdroj) || /airbnb/i.test(ins.zdroj)) {
+      data.zdrojCeka = false;
+    }
+  } else if (!prev?.zdroj && !maRucni(prev, 'zdroj')) {
     const zeMailu = zdrojZEmailu(ins.email);
     if (zeMailu) {
       data.zdroj = zeMailu;
@@ -431,6 +445,22 @@ export async function processOneMail(
     bhKlic: process.env.BH_KLIC?.trim() || '',
     majitelPreposilaZ: process.env.MAJITEL_PREPOSILA_Z?.trim() || '',
   });
+
+  // Kampaň TYP: PRIMA (jen info@) – doplní údaje, nikdy neposílá hostovi.
+  if (ins.typPrima && ins.rezervace) {
+    if (!origin.ok) {
+      await store.markMessage({
+        messageId: mail.messageId,
+        uid: mail.uid,
+        processedAt: now,
+        rezervace: ins.rezervace,
+        status: 'rejected',
+        reason: origin.reason,
+      });
+      return { status: 'rejected', reason: origin.reason, rezervace: ins.rezervace };
+    }
+    return zpracujDataPrima(mail, store, now, ins);
+  }
 
   if (!origin.ok) {
     if (ins.rezervace) {
@@ -695,6 +725,65 @@ function doplnekZInterni(u: InterniUdaje): DoplnekRezervace {
     zdroj: u.zdroj,
     checkinUrl: u.checkinUrl,
   };
+}
+
+/**
+ * Datová kampaň „přímá“ z BH (TYP: PRIMA).
+ * Stejná rezervace může přijít i přes běžný VIVIEN-DATA → jen doplnění, bez duplicity.
+ * Hostovi se kvůli tomuto mailu nic neposílá.
+ */
+async function zpracujDataPrima(
+  mail: InboxMail,
+  store: ProcessStore,
+  now: string,
+  ins: MailInspection,
+): Promise<ProcessItem> {
+  const id = ins.rezervace!;
+  const prev = await store.getRezervace(id);
+  const data = udajeZMailu(ins, prev);
+  if (!maRucni(prev, 'zdroj') && (ins.zdroj || data.zdroj)) {
+    data.zdroj = data.zdroj || ins.zdroj;
+    data.zdrojCeka = false;
+    data.poplatek = poplatekProRezervaci({
+      vytvoreno: ins.vytvoreno || prev?.vytvoreno,
+      zdroj: data.zdroj || prev?.zdroj,
+      rezervace: id,
+    });
+  }
+  // Zachovej stav (neodesílej průvodce jen kvůli datové kampani).
+  if (!prev) {
+    data.stav = 'bez_checkinu';
+    if (ins.checkinUrl) data.checkinNeniPotreba = false;
+  }
+  const zmeny = coSeZmenilo(prev, data);
+  const veta = zmeny.length
+    ? `Doplněno z kampaně přímá: ${zmeny.join(', ')}`
+    : prev
+      ? 'Kampaň přímá, bez změny'
+      : 'Nová rezervace z kampaně přímá (čeká na check-in)';
+  if (maCoUlozit(prev, data) || !prev) {
+    const final = sloucit(
+      id,
+      prev,
+      {
+        ...data,
+        stav: prev?.stav || 'bez_checkinu',
+      },
+      now,
+      veta,
+    );
+    await store.setRezervace(id, final);
+    await zkusDoporuceniPoNove(store, prev, id);
+  }
+  await store.markMessage({
+    messageId: mail.messageId,
+    uid: mail.uid,
+    processedAt: now,
+    rezervace: id,
+    status: 'skipped_no_data',
+    reason: 'data-prima',
+  });
+  return { rezervace: id, status: zmeny.length || !prev ? 'doplneno' : 'duplicate' };
 }
 
 async function zpracujVyzvuHotel(mail: InboxMail, store: ProcessStore, now: string): Promise<ProcessItem> {

@@ -27,10 +27,22 @@ export type VivienData = {
   telefonPuvodni: string | null;
   /** GUEST_FULL_ADDRESS z BH. null = v mailu nebyl. */
   adresaHosta: string | null;
-  /** TOTAL_PRICE z BH. null = v mailu nebyl. */
+  /** TOTAL_PRICE / ACC_PRICE z BH. null = v mailu nebyl. */
   cenaPobytu: number | null;
-  /** Měna z TOTAL_PRICE. */
+  /** Měna z TOTAL_PRICE / ACC_PRICE. */
   cenaMena: MenaFaktury | null;
+  /** SALDO_TO_PAY. 0 = zaplaceno. null = v mailu nebylo. */
+  saldoKc: number | null;
+  /** Kupon z BH. */
+  kupon: string | null;
+  /** Příjemce dokladu (INV_RECIPIENT). */
+  fakturaPro: string | null;
+  /** Kdo založil rezervaci v BH (ACT_USER). */
+  zalozilBh: string | null;
+  /** Odkaz na check-in z RES_URL_CHECKIN_RAW. */
+  checkinUrl: string | null;
+  /** TYP: PRIMA v kampani pro přímé zdroje. */
+  typPrima: boolean;
   klic: string | null;
   /** PIN apartmánu z BH (ACCESS_PIN), mění se podle pobytu. */
   accessPin: string | null;
@@ -221,7 +233,7 @@ export function parseVivienData(raw: string): ParseResult {
   const jmeno = cleanGuestFirstName(
     f.GUEST_NAME || f.JMENO || f.FIRSTNAME || f.FIRST_NAME || '',
   );
-  const cena = cenaZTotalPrice(f.TOTAL_PRICE || f.TOTALPRICE || '');
+  const doplnek = doplnkovaPoleZDat(f);
 
   return {
     ok: true,
@@ -237,11 +249,17 @@ export function parseVivienData(raw: string): ParseResult {
       jazyk: langFromNarodnost(narodnost),
       osloveni: f.OSLOVENI?.trim() || null,
       jmeno,
-      zdroj: cistyZdroj(f.ZDROJ),
+      zdroj: doplnek.zdroj,
       ...telefonZPoli(f.GUEST_PHONE, narodnost),
       adresaHosta: cleanGuestAddress(f.GUEST_FULL_ADDRESS || f.GUEST_ADDRESS || ''),
-      cenaPobytu: cena?.castka ?? null,
-      cenaMena: cena?.mena ?? null,
+      cenaPobytu: doplnek.cenaPobytu,
+      cenaMena: doplnek.cenaMena,
+      saldoKc: doplnek.saldoKc,
+      kupon: doplnek.kupon,
+      fakturaPro: doplnek.fakturaPro,
+      zalozilBh: doplnek.zalozilBh,
+      checkinUrl: doplnek.checkinUrl,
+      typPrima: doplnek.typPrima,
       klic: f.KLIC?.trim() || null,
       accessPin,
     },
@@ -323,14 +341,20 @@ export type MailInspection = {
   telefonPuvodni: string | null;
   /** GUEST_FULL_ADDRESS z BH. */
   adresaHosta: string | null;
-  /** TOTAL_PRICE z BH. */
+  /** TOTAL_PRICE / ACC_PRICE z BH. */
   cenaPobytu: number | null;
   cenaMena: MenaFaktury | null;
+  saldoKc: number | null;
+  kupon: string | null;
+  fakturaPro: string | null;
+  zalozilBh: string | null;
+  checkinUrl: string | null;
+  typPrima: boolean;
   zdroj: string | null;
   duvody: Duvod[];
 };
 
-/** TOTAL_PRICE z check-inu; prázdný merge field → null. */
+/** TOTAL_PRICE / ACC_PRICE z check-inu; prázdný merge field → null. */
 export function cenaZTotalPrice(raw: string | null | undefined): {
   castka: number;
   mena: MenaFaktury;
@@ -338,14 +362,100 @@ export function cenaZTotalPrice(raw: string | null | undefined): {
   const s = String(raw || '').trim();
   if (!s) return null;
   if (/^\([A-Z0-9_ ]+\)$/i.test(s)) return null;
-  if (/^\(?\s*TOTAL_?PRICE\s*\)?$/i.test(s)) return null;
+  if (/^\(?\s*(TOTAL_?PRICE|ACC_?PRICE)\s*\)?$/i.test(s)) return null;
   return parsujCenuBh(s);
+}
+
+/** SALDO_TO_PAY; 0 je platná hodnota (zaplaceno). */
+export function parsujSaldo(raw: string | null | undefined): number | null {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  if (/^\([A-Z0-9_ ]+\)$/i.test(s)) return null;
+  if (/^\(?\s*SALDO(_TO_PAY)?\s*\)?$/i.test(s)) return null;
+  const cisla = s.replace(/[^\d,.\-]/g, '');
+  if (!cisla) return null;
+  let normal = cisla;
+  if (cisla.includes(',') && cisla.includes('.')) {
+    normal = cisla.replace(/\./g, '').replace(',', '.');
+  } else if (cisla.includes(',')) {
+    normal = cisla.replace(',', '.');
+  }
+  const castka = Number(normal);
+  if (!Number.isFinite(castka) || castka < 0) return null;
+  return Math.round(castka * 100) / 100;
+}
+
+function cistyMergeText(raw: string | null | undefined, jmena: RegExp): string | null {
+  const s = String(raw || '').trim().replace(/\s+/g, ' ');
+  if (!s) return null;
+  if (/^\([A-Z0-9_ ]+\)$/i.test(s)) return null;
+  if (jmena.test(s)) return null;
+  if (s === '—' || s === '-' || s === '–') return null;
+  return s.slice(0, 200);
 }
 
 function cistyZdroj(raw: string | null | undefined): string | null {
   const s = (raw || '').trim();
   if (!s || /^\(?\s*ZDROJ\s*\)?$/i.test(s)) return null;
   return s;
+}
+
+export function cistyCheckinUrl(raw: string | null | undefined): string | null {
+  const s = cistyMergeText(raw, /^\(?\s*(CHECKIN_?URL|RES_URL_CHECKIN(_RAW)?)\s*\)?$/i);
+  if (!s) return null;
+  if (!/^https:\/\//i.test(s)) return null;
+  return s.slice(0, 500);
+}
+
+export function jeTypPrima(fields: Record<string, string>, subject = ''): boolean {
+  const typ = (fields.TYP || '').trim();
+  if (/^prima$/i.test(typ) || /^přímá$/i.test(typ)) return true;
+  if (/[–\-—]\s*přímá\b/i.test(subject) || /\bTYP\s*:\s*PRIMA\b/i.test(subject)) return true;
+  return false;
+}
+
+function doplnkovaPoleZDat(f: Record<string, string>, subject = ''): {
+  cenaPobytu: number | null;
+  cenaMena: MenaFaktury | null;
+  saldoKc: number | null;
+  kupon: string | null;
+  fakturaPro: string | null;
+  zalozilBh: string | null;
+  checkinUrl: string | null;
+  typPrima: boolean;
+  zdroj: string | null;
+} {
+  const typPrima = jeTypPrima(f, subject);
+  const cenaAcc = cenaZTotalPrice(f.ACC_PRICE || f.ACCPRICE || '');
+  const cenaTotal = cenaZTotalPrice(f.TOTAL_PRICE || f.TOTALPRICE || '');
+  const cena = cenaAcc || cenaTotal;
+  let zdroj = cistyZdroj(f.ZDROJ);
+  if (typPrima) {
+    // Pojistka: agenturní e-mail má přednost (Booking/Airbnb).
+    const emailRaw = (f.EMAIL || '').trim();
+    const emailMatch = emailRaw.match(/[^\s<>"]+@[^\s<>"]+/);
+    const email = (emailMatch ? emailMatch[0] : emailRaw).toLowerCase();
+    if (/booking|airbnb|expedia/.test(email)) {
+      if (/airbnb/.test(email)) zdroj = 'Airbnb';
+      else zdroj = 'Booking';
+    } else {
+      zdroj = 'přímá';
+    }
+  }
+  return {
+    cenaPobytu: cena?.castka ?? null,
+    cenaMena: cena?.mena ?? null,
+    saldoKc: parsujSaldo(f.SALDO || f.SALDO_TO_PAY || ''),
+    kupon: cistyMergeText(f.KUPON || f.COUPON || '', /^\(?\s*(KUPON|COUPON)\s*\)?$/i),
+    fakturaPro: cistyMergeText(
+      f.FAKTURA_PRO || f.INV_RECIPIENT || '',
+      /^\(?\s*(FAKTURA_?PRO|INV_?RECIPIENT)\s*\)?$/i,
+    ),
+    zalozilBh: cistyMergeText(f.ZALOZIL || f.ACT_USER || '', /^\(?\s*(ZALOZIL|ACT_?USER)\s*\)?$/i),
+    checkinUrl: cistyCheckinUrl(f.CHECKIN_URL || f.RES_URL_CHECKIN_RAW || f.RES_URL_CHECKIN || ''),
+    typPrima,
+    zdroj,
+  };
 }
 
 function telefonZPoli(
@@ -391,6 +501,12 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
       adresaHosta: null,
       cenaPobytu: null,
       cenaMena: null,
+      saldoKc: null,
+      kupon: null,
+      fakturaPro: null,
+      zalozilBh: null,
+      checkinUrl: null,
+      typPrima: /[–\-—]\s*přímá\b/i.test(subject),
       zdroj: null,
       duvody,
     };
@@ -446,7 +562,7 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
   const accessPin = cleanAccessPin(f.ACCESS_PIN || f.ACCESSPIN || '');
   if (!accessPin) duvody.push(duvod('chybi_pin'));
   const vytvoreno = parseDatumVytvoreni(f.DATE);
-  const cena = cenaZTotalPrice(f.TOTAL_PRICE || f.TOTALPRICE || '');
+  const doplnek = doplnkovaPoleZDat(f, subject);
 
   return {
     rezervace,
@@ -465,9 +581,15 @@ export function inspectVivienMail(raw: string, subject = ''): MailInspection {
     vytvoreno,
     ...telefonZPoli(f.GUEST_PHONE, narodnost),
     adresaHosta: cleanGuestAddress(f.GUEST_FULL_ADDRESS || f.GUEST_ADDRESS || ''),
-    cenaPobytu: cena?.castka ?? null,
-    cenaMena: cena?.mena ?? null,
-    zdroj: cistyZdroj(f.ZDROJ),
+    cenaPobytu: doplnek.cenaPobytu,
+    cenaMena: doplnek.cenaMena,
+    saldoKc: doplnek.saldoKc,
+    kupon: doplnek.kupon,
+    fakturaPro: doplnek.fakturaPro,
+    zalozilBh: doplnek.zalozilBh,
+    checkinUrl: doplnek.checkinUrl,
+    typPrima: doplnek.typPrima,
+    zdroj: doplnek.zdroj,
     duvody,
   };
 }

@@ -79,6 +79,12 @@ export type PrehledRadek = {
   zdrojText: string;
   /** true = majitel má potvrdit Přímá / Booking / Airbnb. */
   zdrojCeka: boolean;
+  /** Doména e-mailu (bez místní části) pro seznam Doplnit zdroj. */
+  emailDomena: string | null;
+  saldoKc: number | null;
+  kupon: string | null;
+  fakturaPro: string | null;
+  zalozilBh: string | null;
   casPrijezdu: string | null;
   casOdjezdu: string | null;
   casOdjezduZadalHost: boolean;
@@ -888,10 +894,19 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     jinyTelefonKtery: telefony.jinyKtery,
     checkinUrl: rec.checkinUrl,
     zdroj: rec.zdroj,
-    zdrojText: rec.zdrojCeka
+    zdrojText: rec.zdrojCeka || !rec.zdroj
       ? 'Zdroj neznámý'
       : chybi(zdrojText(rec.zdroj), stary),
-    zdrojCeka: Boolean(rec.zdrojCeka),
+    zdrojCeka: Boolean(rec.zdrojCeka) || !rec.zdroj,
+    emailDomena: (() => {
+      const e = (rec.emailHosta || '').trim().toLowerCase();
+      if (!e.includes('@')) return null;
+      return e.split('@').pop() || null;
+    })(),
+    saldoKc: rec.saldoKc ?? null,
+    kupon: rec.kupon,
+    fakturaPro: rec.fakturaPro,
+    zalozilBh: rec.zalozilBh,
     casPrijezdu: rec.casPrijezdu,
     casOdjezdu: rec.casOdjezdu,
     casOdjezduZadalHost: rec.casOdjezduZadalHost,
