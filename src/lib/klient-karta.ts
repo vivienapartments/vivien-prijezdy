@@ -5,7 +5,6 @@
  */
 
 import { randomBytes } from 'crypto';
-import { generujTajnyKlic, type DoporucitelKarta } from './doporucitel-karta';
 import { doporuceniKlic } from './doporuceni-klic';
 import { klubKlic } from './klub-klic';
 import {
@@ -18,6 +17,35 @@ import { jeRelayEmail } from './staly-host';
 import { normalizujTelefon } from './telefon';
 import type { ProcessStore } from './store';
 import type { GuideLang } from './types';
+
+function generujTajnyKlic(): string {
+  return randomBytes(18).toString('base64url');
+}
+
+/** Minimální tvar karty doporučitele pro migraci (kopie). */
+type DopProMigraci = {
+  kod: string;
+  tajnyKlic: string;
+  datumZalozeni: string;
+  typ: KlientTyp;
+  stav?: string;
+  jmeno?: string;
+  prijmeni?: string;
+  email?: string;
+  telefon?: string;
+  jazyk?: GuideLang;
+  rezervace?: string[];
+  firma?: {
+    ico?: string;
+    dic?: string;
+    nazev?: string;
+    sidlo?: string;
+    platceDph?: boolean;
+  } | null;
+  penize?: { kVyplate?: number };
+  poznamka?: string;
+  zalozil?: string;
+};
 
 export type KlientTyp = 'host' | 'osoba' | 'firma';
 export type KlientRole = 'host' | 'doporucitel' | 'firma';
@@ -266,27 +294,29 @@ export async function seznamKlientu(store: ProcessStore): Promise<KlientKarta[]>
   return out;
 }
 
-function dopNaKlienta(dop: DoporucitelKarta, pravidla: KlubPravidla): KlientKarta {
-  const kreditKc = Math.max(0, dop.penize.kVyplate || 0);
+function dopNaKlienta(dop: DopProMigraci, pravidla: KlubPravidla): KlientKarta {
+  const kreditKc = Math.max(0, dop.penize?.kVyplate || 0);
   const id = novyId();
+  const typ: KlientTyp =
+    dop.typ === 'firma' || dop.typ === 'host' || dop.typ === 'osoba' ? dop.typ : 'osoba';
   return prazdnaKarta({
     id,
     kod: normalizujKlientKod(dop.kod) || dop.kod.toUpperCase(),
-    tajnyKlic: dop.tajnyKlic,
-    datumZalozeni: dop.datumZalozeni,
-    typ: dop.typ,
+    tajnyKlic: dop.tajnyKlic || generujTajnyKlic(),
+    datumZalozeni: dop.datumZalozeni || new Date().toISOString(),
+    typ,
     role:
-      dop.typ === 'firma'
+      typ === 'firma'
         ? ['firma', 'doporucitel']
-        : dop.typ === 'host'
+        : typ === 'host'
           ? ['host', 'doporucitel']
           : ['doporucitel'],
     stav: dop.stav === 'zrusena' ? 'zrusena' : dop.stav === 'pozastavena' ? 'pozastavena' : 'aktivni',
-    jmeno: dop.jmeno,
-    prijmeni: dop.prijmeni,
-    email: dop.email,
-    telefon: dop.telefon,
-    jazyk: dop.jazyk,
+    jmeno: dop.jmeno || '',
+    prijmeni: dop.prijmeni || '',
+    email: dop.email || '',
+    telefon: dop.telefon || '',
+    jazyk: dop.jazyk || 'cs',
     rezervace: [...(dop.rezervace || [])],
     firma: dop.firma
       ? {
@@ -305,7 +335,7 @@ function dopNaKlienta(dop: DoporucitelKarta, pravidla: KlubPravidla): KlientKart
             {
               id: `kr${randomBytes(4).toString('hex')}`,
               castka: kreditKc,
-              vznik: dop.datumZalozeni,
+              vznik: dop.datumZalozeni || new Date().toISOString(),
               platnostDo: '',
               zdroj: 'migrace-dop',
               pouzito: 0,
@@ -338,7 +368,7 @@ export async function migrujDopNaKlienty(store: ProcessStore): Promise<MigraceVy
 
   for (const kod of list) {
     try {
-      const dop = await getDopJson<DoporucitelKarta>(store, `dop:${kod}`);
+      const dop = await getDopJson<DopProMigraci>(store, `dop:${kod}`);
       if (!dop || !dop.kod) {
         vysledek.chyby.push(`chybi:${kod}`);
         continue;
