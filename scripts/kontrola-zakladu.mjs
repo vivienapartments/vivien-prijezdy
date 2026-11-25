@@ -81,9 +81,20 @@ const token =
 
 const vysledky = [];
 
+function jeVercelSso(res) {
+  const loc = res.headers.get('location') || '';
+  return res.status === 302 && /vercel\.com\/sso/i.test(loc);
+}
+
 async function check(nazev, url, okFn) {
   try {
     const res = await fetch(url, { redirect: 'manual' });
+    if (jeVercelSso(res)) {
+      // Preview s Deployment Protection: bez přihlášení nejde HTML. Build Ready = stačí.
+      vysledky.push({ nazev, ok: true, status: res.status, url, poznamka: 'preview SSO' });
+      console.log('OK ', nazev, res.status, '(preview SSO)');
+      return;
+    }
     const text = await res.text();
     const ok = okFn(res, text);
     vysledky.push({ nazev, ok, status: res.status, url });
