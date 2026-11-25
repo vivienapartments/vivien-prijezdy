@@ -76,39 +76,28 @@ function doplnSeedKartami(seed: ImportBhNahled, karty: KlientKarta[]): ImportBhN
       duvod: r.akce === 'cekajici' ? 'Shoda jména s kartou' : r.duvod,
     };
   });
-  const mapa = new Map<string, ImportBhNahled['souhrn'][0]>();
-  for (const r of radky) {
-    if (r.akce === 'kontrola' || r.mena === 'EUR') continue;
-    const klic = r.klientId || `n:${normalJmeno(r.cilJmeno)}` || r.rezervace;
-    const cur = mapa.get(klic) || {
-      host: r.klientNazev || r.cilJmeno,
-      pocet: 0,
-      utrata: 0,
-      uroven: '',
-      klientId: r.klientId,
-      akce: r.akce,
-      rezervace: [] as string[],
-    };
-    cur.pocet += 1;
-    cur.utrata += r.castka;
-    cur.rezervace.push(r.rezervace);
-    if (r.akce === 'firma' || r.akce === 'priradit') cur.akce = r.akce;
-    mapa.set(klic, cur);
-  }
-  const souhrn = [...mapa.values()].map((s) => {
-    const puv = seed.souhrn.find(
-      (x) =>
-        normalJmeno(x.host) === normalJmeno(s.host) ||
-        x.rezervace.some((rz) => s.rezervace.includes(rz)),
+  const souhrn = seed.souhrn.map((s) => {
+    const shoda = radky.find(
+      (r) =>
+        r.akce !== 'kontrola' &&
+        (s.rezervace.includes(r.rezervace) ||
+          normalJmeno(r.cilJmeno) === normalJmeno(s.host) ||
+          normalJmeno(r.klientNazev || '') === normalJmeno(s.host)),
     );
-    return { ...s, uroven: puv?.uroven || s.uroven };
+    if (!shoda?.klientId) return s;
+    return {
+      ...s,
+      klientId: shoda.klientId,
+      host: shoda.klientNazev || s.host,
+      akce: s.akce === 'cekajici' ? ('priradit' as const) : s.akce,
+    };
   });
   return {
     ...seed,
     radky,
     souhrn,
     cekajici: souhrn.filter((s) => s.akce === 'cekajici'),
-    kontrola: radky.filter((r) => r.akce === 'kontrola' || r.mena === 'EUR'),
+    kontrola: radky.filter((r) => r.akce === 'kontrola'),
     primaHoste: souhrn
       .filter((s) => s.akce !== 'firma')
       .map((s) => ({ jmeno: s.host, utrata: s.utrata, pocet: s.pocet })),
