@@ -2948,6 +2948,7 @@ export function PrehledClient({
     return pripravTextSmsWa(text, email, druhZpravyNaOdchozi(id), {
       telefonCil: telefonCil || row.telefonWa || null,
       rezervaceRec: {
+        zdroj: row.zdroj,
         zdrojCeka: Boolean(row.zdrojCeka),
         telefon: checkinTel,
         telefonWa: row.telefonKtery === 'checkin' ? row.telefonWa : checkinTel,
