@@ -467,7 +467,7 @@ export const vstupCeka: LText = {
 
 export const vstupHotovo: LText = {
   cs: 'Apartmán je předaný.',
-  en: 'Asunto on luovutettu.',
+  en: 'The apartment has been handed over.',
   de: 'Das Apartment ist übergeben.',
   pl: 'Apartament jest przekazany.',
   uk: 'Апартаменти передано.',
@@ -476,7 +476,7 @@ export const vstupHotovo: LText = {
   es: 'El apartamento está entregado.',
   hu: 'Az apartman átadva.',
   da: 'Lejligheden er overdraget.',
-  fi: 'The apartment has been handed over.',
+  fi: 'Asunto on luovutettu.',
   fr: "L’appartement vous a été remis.",
   it: "L’appartamento vi è stato consegnato.",
   pt: 'O apartamento foi entregue.',
@@ -484,7 +484,7 @@ export const vstupHotovo: LText = {
 
 export const vstupHotovoOdkaz: LText = {
   cs: 'Kódy najdete níže.',
-  en: 'Koodit löytyvät alta.',
+  en: 'You will find the codes below.',
   de: 'Die Codes finden Sie unten.',
   pl: 'Kody znajdziecie poniżej.',
   uk: 'Коди знайдете нижче.',
@@ -493,7 +493,7 @@ export const vstupHotovoOdkaz: LText = {
   es: 'Los códigos están más abajo.',
   hu: 'A kódok lejjebb vannak.',
   da: 'Koderne finder I nedenfor.',
-  fi: 'You will find the codes below.',
+  fi: 'Koodit löytyvät alta.',
   fr: "Vous trouverez les codes ci-dessous.",
   it: "I codici li trovate qui sotto.",
   pt: 'Encontram os códigos mais abaixo.',

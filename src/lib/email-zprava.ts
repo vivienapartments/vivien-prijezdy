@@ -15,7 +15,7 @@ function jazyk(lang: GuideLang | null): GuideLang {
 
 const PRIJEZD: Record<GuideLang, string> = {
   cs: 'VIVIEN · Váš příjezd {datum}',
-  en: 'VIVIEN · Saapumisenne {datum}',
+  en: 'VIVIEN · Your arrival {datum}',
   de: 'VIVIEN · Ihre Anreise {datum}',
   pl: 'VIVIEN · Wasz przyjazd {datum}',
   uk: 'VIVIEN · Ваш приїзд {datum}',
@@ -27,11 +27,11 @@ const PRIJEZD: Record<GuideLang, string> = {
   sv: 'VIVIEN · Er ankomst {datum}',
   hu: 'VIVIEN · Az érkezésük {datum}',
   da: 'VIVIEN · Jeres ankomst {datum}',
-  fi: 'VIVIEN · Your arrival {datum}',
+  fi: 'VIVIEN · Saapumisenne {datum}',
 };
 
 const CHECKIN: Record<GuideLang, string> = {
-  cs: 'VIVIEN · Online-sisäänkirjautuminen {datum}',
+  cs: 'VIVIEN · Online check-in {datum}',
   en: 'VIVIEN · Online check-in {datum}',
   de: 'VIVIEN · Online-Check-in {datum}',
   pl: 'VIVIEN · Check-in online {datum}',
@@ -44,12 +44,12 @@ const CHECKIN: Record<GuideLang, string> = {
   sv: 'VIVIEN · Online-incheckning {datum}',
   hu: 'VIVIEN · Online bejelentkezés {datum}',
   da: 'VIVIEN · Online check-in {datum}',
-  fi: 'VIVIEN · Online check-in {datum}',
+  fi: 'VIVIEN · Online-sisäänkirjautuminen {datum}',
 };
 
 const PRUVODCE: Record<GuideLang, string> = {
   cs: 'VIVIEN · Váš průvodce {datum}',
-  en: 'VIVIEN · Oppaanne {datum}',
+  en: 'VIVIEN · Your guide {datum}',
   de: 'VIVIEN · Ihr Leitfaden {datum}',
   pl: 'VIVIEN · Wasz przewodnik {datum}',
   uk: 'VIVIEN · Ваш путівник {datum}',
@@ -61,12 +61,12 @@ const PRUVODCE: Record<GuideLang, string> = {
   sv: 'VIVIEN · Er guide {datum}',
   hu: 'VIVIEN · Az útmutatójuk {datum}',
   da: 'VIVIEN · Jeres guide {datum}',
-  fi: 'VIVIEN · Your guide {datum}',
+  fi: 'VIVIEN · Oppaanne {datum}',
 };
 
 const BRANA: Record<GuideLang, string> = {
   cs: 'VIVIEN · Údaje k bráně {datum}',
-  en: 'VIVIEN · Portin tiedot {datum}',
+  en: 'VIVIEN · Gate details {datum}',
   de: 'VIVIEN · Angaben zur Schranke {datum}',
   pl: 'VIVIEN · Dane do szlabanu {datum}',
   uk: 'VIVIEN · Дані для шлагбаума {datum}',
@@ -78,7 +78,7 @@ const BRANA: Record<GuideLang, string> = {
   sv: 'VIVIEN · Uppgifter till bommen {datum}',
   hu: 'VIVIEN · A sorompó adatai {datum}',
   da: 'VIVIEN · Oplysninger til porten {datum}',
-  fi: 'VIVIEN · Gate details {datum}',
+  fi: 'VIVIEN · Portin tiedot {datum}',
 };
 
 export function datumPobytu(ymd: string | null): string {
