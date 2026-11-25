@@ -231,7 +231,7 @@ async function pridejDoSeznamu(store: ProcessStore, kod: string): Promise<void> 
   }
 }
 
-async function ulozKartu(store: ProcessStore, karta: DoporucitelKarta): Promise<void> {
+export async function ulozKartu(store: ProcessStore, karta: DoporucitelKarta): Promise<void> {
   await setJson(store, `dop:${karta.kod}`, karta);
   await setJson(store, `dop-klic:${karta.tajnyKlic}`, { kod: karta.kod });
   await pridejDoSeznamu(store, karta.kod);

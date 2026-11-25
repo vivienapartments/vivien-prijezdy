@@ -111,7 +111,7 @@ export async function sparujNeboVytvorKlienta(
   const telefon = telefonOk(vstup.telefon);
   if (!email && !telefon) return null;
 
-  let id = (await najdiKlientIndex(store, 'tel', telefon)) || (await najdiKlientIndex(store, 'email', email));
+  const id = (await najdiKlientIndex(store, 'tel', telefon)) || (await najdiKlientIndex(store, 'email', email));
   if (id) {
     const exist = await nactiKlientPodleId(store, id);
     if (exist) {
