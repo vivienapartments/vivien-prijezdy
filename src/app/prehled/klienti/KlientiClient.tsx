@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import type { KlubPravidla } from '@/lib/klub-pravidla';
 
@@ -105,9 +106,9 @@ export function KlientiClient() {
   return (
     <main className="ph" style={{ padding: '1rem', maxWidth: 720, margin: '0 auto' }}>
       <p>
-        <a href="/prehled" style={{ color: '#c9a84c' }}>
+        <Link href="/prehled" style={{ color: '#c9a84c' }}>
           ← Zpět do přehledu
-        </a>
+        </Link>
       </p>
       <h1 style={{ color: '#c9a84c', fontFamily: 'Georgia, serif' }}>Klienti</h1>
       <p style={{ color: '#b7aa98', fontSize: '0.9rem' }}>
