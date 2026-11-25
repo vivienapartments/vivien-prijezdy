@@ -1,9 +1,54 @@
 import { posunDen } from './brana';
+import { problemEmailu } from './chyby';
+import { jeRelayEmail } from './staly-host';
 import { isDepartureExpired } from './token';
 import type { GuideLang } from './types';
 
 /** Kolik dní po odjezdu zůstane host v seznamu poděkování. */
 export const PODEKOVANI_DNU = 14;
+
+/** Chyba API / hláška, když by poděkování šlo na zástupnou adresu Booking/Airbnb. */
+export const CHYBA_PODEKOVANI_RELAY =
+  'Zástupná adresa Booking/Airbnb – chybí skutečný e-mail';
+
+/**
+ * Skutečný e-mail pro poděkování (ne relay Booking/Airbnb).
+ * Preferuje e-mail hosta, pak e-mail z faktury v průvodci, pak návrh z check-inu.
+ */
+export function skutecnyEmailProPodekovani(vstup: {
+  emailHosta?: string | null;
+  email?: string | null;
+  faktura?: { email?: string | null } | null;
+  navrhy?: { pole: string; hodnota: string }[] | null;
+}): string | null {
+  const kandidati: string[] = [];
+  const hlavni = (vstup.emailHosta || vstup.email || '').trim();
+  if (hlavni) kandidati.push(hlavni);
+  const fakturaEmail = (vstup.faktura?.email || '').trim();
+  if (fakturaEmail) kandidati.push(fakturaEmail);
+  for (const n of vstup.navrhy || []) {
+    if (n.pole === 'emailHosta' && n.hodnota) kandidati.push(n.hodnota.trim());
+  }
+  for (const raw of kandidati) {
+    if (!raw || !raw.includes('@')) continue;
+    if (problemEmailu(raw)) continue;
+    if (jeRelayEmail(raw)) continue;
+    return raw;
+  }
+  return null;
+}
+
+/** Je hlavní e-mail na kartě zástupné (Booking/Airbnb) a chybí skutečný? */
+export function chybiSkutecnyEmailPodekovani(vstup: {
+  emailHosta?: string | null;
+  email?: string | null;
+  faktura?: { email?: string | null } | null;
+  navrhy?: { pole: string; hodnota: string }[] | null;
+}): boolean {
+  if (skutecnyEmailProPodekovani(vstup)) return false;
+  const hlavni = (vstup.emailHosta || vstup.email || '').trim();
+  return Boolean(hlavni && jeRelayEmail(hlavni));
+}
 
 /** Denní upomínka majiteli (Praha). */
 export const HODINA_PODEKOVANI = 17;

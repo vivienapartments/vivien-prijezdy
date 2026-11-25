@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  chybiSkutecnyEmailPodekovani,
   hledejProPodekovani,
   hosteProPodekovani,
   jeProPodekovani,
   muzePodekovatKdykoliv,
   odkazSmsPodekovani,
+  skutecnyEmailProPodekovani,
   textPushPodekovani,
   textPodekovani,
   ukazatPodekovani,
@@ -144,5 +146,32 @@ describe('podekovani', () => {
     expect(
       hledejProPodekovani([stary], { telefon: '777111' }, '2026-11-20', now).map((r) => r.rezervace),
     ).toEqual(['8']);
+  });
+
+  it('relay Booking/Airbnb se na poděkování nepoužije', () => {
+    expect(
+      skutecnyEmailProPodekovani({ emailHosta: 'x@guest.booking.com' }),
+    ).toBeNull();
+    expect(
+      chybiSkutecnyEmailPodekovani({ emailHosta: 'x@guest.booking.com' }),
+    ).toBe(true);
+    expect(skutecnyEmailProPodekovani({ emailHosta: 'host@gmail.com' })).toBe(
+      'host@gmail.com',
+    );
+  });
+
+  it('skutečný e-mail z faktury / návrhu má přednost před relay', () => {
+    expect(
+      skutecnyEmailProPodekovani({
+        emailHosta: 'x@guest.airbnb.com',
+        faktura: { email: 'ucetni@firma.cz' },
+      }),
+    ).toBe('ucetni@firma.cz');
+    expect(
+      skutecnyEmailProPodekovani({
+        emailHosta: 'x@guest.booking.com',
+        navrhy: [{ pole: 'emailHosta', hodnota: 'host@seznam.cz' }],
+      }),
+    ).toBe('host@seznam.cz');
   });
 });

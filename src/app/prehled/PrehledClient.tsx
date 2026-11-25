@@ -63,9 +63,11 @@ import {
 import { cekaPotvrzeniRozlouceni, ROZLOUCENI_ZPET_DNY } from '@/lib/odjezd-potvrzeni';
 import { jeProPohodu, textPohody } from '@/lib/pohoda';
 import {
+  chybiSkutecnyEmailPodekovani,
   hledejProPodekovani,
   hosteProPodekovani,
   odkazSmsPodekovani,
+  skutecnyEmailProPodekovani,
   stitekPodekovaniKanalu,
   textPodekovani,
   type PodekovaniKanal,
@@ -6771,7 +6773,8 @@ export function PrehledClient({
                   textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
                 const wa = row.telefonWa;
                 const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
-                const email = row.email.includes('@') ? row.email : '';
+                const emailSkutecny = skutecnyEmailProPodekovani(row);
+                const jenRelayEmail = chybiSkutecnyEmailPodekovani(row);
                 const odjezdText = row.odjezd
                   ? `${Number(row.odjezd.slice(8, 10))}. ${Number(row.odjezd.slice(5, 7))}.`
                   : '';
@@ -6787,10 +6790,12 @@ export function PrehledClient({
                       <span>{` · Poděkování odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
                     ) : null}
                     <span className="ph-podekovani-email-radek">
-                      {email ? (
+                      {emailSkutecny ? (
                         <>
-                          E-mail hosta: <span className="ph-tel">{email}</span>
+                          E-mail hosta: <span className="ph-tel">{emailSkutecny}</span>
                         </>
+                      ) : jenRelayEmail ? (
+                        'Chybí skutečný e-mail (Booking/Airbnb)'
                       ) : (
                         'Bez e-mailu'
                       )}
@@ -6815,7 +6820,7 @@ export function PrehledClient({
                           SMS
                         </a>
                       ) : null}
-                      {email ? (
+                      {emailSkutecny ? (
                         <button
                           type="button"
                           className="ph-wa"
@@ -6837,14 +6842,14 @@ export function PrehledClient({
                         </button>
                       ) : null}
                     </span>
-                    {dotazPodekovani === row.rezervace ? (
+                    {dotazPodekovani === row.rezervace && emailSkutecny ? (
                       <div
                         id={`podekovani-email-${row.rezervace}`}
                         className="ph-predano-dotaz ph-predano-dotaz--email"
                       >
                         <p>E-mail půjde na</p>
                         <p className="ph-podekovani-email-cil">
-                          <span className="ph-tel">{email}</span>
+                          <span className="ph-tel">{emailSkutecny}</span>
                         </p>
                         <p>
                           Kopie na <span className="ph-tel">info@vivienapartments.cz</span>
@@ -6891,7 +6896,8 @@ export function PrehledClient({
                   textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
                 const wa = row.telefonWa;
                 const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
-                const email = row.email.includes('@') ? row.email : '';
+                const emailSkutecny = skutecnyEmailProPodekovani(row);
+                const jenRelayEmail = chybiSkutecnyEmailPodekovani(row);
                 const odjezdText = row.odjezd
                   ? `${Number(row.odjezd.slice(8, 10))}. ${Number(row.odjezd.slice(5, 7))}.`
                   : '';
@@ -6907,10 +6913,12 @@ export function PrehledClient({
                       <span>{` · Poděkování odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
                     ) : null}
                     <span className="ph-podekovani-email-radek">
-                      {email ? (
+                      {emailSkutecny ? (
                         <>
-                          E-mail hosta: <span className="ph-tel">{email}</span>
+                          E-mail hosta: <span className="ph-tel">{emailSkutecny}</span>
                         </>
+                      ) : jenRelayEmail ? (
+                        'Chybí skutečný e-mail (Booking/Airbnb)'
                       ) : (
                         'Bez e-mailu'
                       )}
@@ -6935,7 +6943,7 @@ export function PrehledClient({
                           SMS
                         </a>
                       ) : null}
-                      {email ? (
+                      {emailSkutecny ? (
                         <button
                           type="button"
                           className="ph-wa"
@@ -6957,14 +6965,14 @@ export function PrehledClient({
                         </button>
                       ) : null}
                     </span>
-                    {dotazPodekovani === row.rezervace ? (
+                    {dotazPodekovani === row.rezervace && emailSkutecny ? (
                       <div
                         id={`podekovani-email-${row.rezervace}`}
                         className="ph-predano-dotaz ph-predano-dotaz--email"
                       >
                         <p>E-mail půjde na</p>
                         <p className="ph-podekovani-email-cil">
-                          <span className="ph-tel">{email}</span>
+                          <span className="ph-tel">{emailSkutecny}</span>
                         </p>
                         <p>
                           Kopie na <span className="ph-tel">info@vivienapartments.cz</span>
@@ -7452,7 +7460,8 @@ export function PrehledClient({
                   textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
                 const wa = row.telefonWa;
                 const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
-                const email = row.email.includes('@') ? row.email : '';
+                const emailSkutecny = skutecnyEmailProPodekovani(row);
+                const jenRelayEmail = chybiSkutecnyEmailPodekovani(row);
                 return (
                   <li key={row.rezervace} className="is-hotovo">
                     <button type="button" className="ph-dnesek__odkaz" onClick={() => otevriKartu(row.rezervace)}>
@@ -7464,10 +7473,12 @@ export function PrehledClient({
                       <span>{` · Poděkování odesláno ${odeslano}${kanalStitek ? ` · ${kanalStitek}` : ''}`}</span>
                     ) : null}
                     <span className="ph-podekovani-email-radek">
-                      {email ? (
+                      {emailSkutecny ? (
                         <>
-                          E-mail hosta: <span className="ph-tel">{email}</span>
+                          E-mail hosta: <span className="ph-tel">{emailSkutecny}</span>
                         </>
+                      ) : jenRelayEmail ? (
+                        'Chybí skutečný e-mail (Booking/Airbnb)'
                       ) : (
                         'Bez e-mailu'
                       )}
@@ -7492,7 +7503,7 @@ export function PrehledClient({
                           SMS
                         </a>
                       ) : null}
-                      {email ? (
+                      {emailSkutecny ? (
                         <button
                           type="button"
                           className="ph-wa"
@@ -7512,14 +7523,14 @@ export function PrehledClient({
                         Vrátit
                       </button>
                     </span>
-                    {dotazPodekovani === row.rezervace ? (
+                    {dotazPodekovani === row.rezervace && emailSkutecny ? (
                       <div
                         id={`podekovani-email-${row.rezervace}`}
                         className="ph-predano-dotaz ph-predano-dotaz--email"
                       >
                         <p>E-mail půjde na</p>
                         <p className="ph-podekovani-email-cil">
-                          <span className="ph-tel">{email}</span>
+                          <span className="ph-tel">{emailSkutecny}</span>
                         </p>
                         <p>
                           Kopie na <span className="ph-tel">info@vivienapartments.cz</span>. Poslat znovu?

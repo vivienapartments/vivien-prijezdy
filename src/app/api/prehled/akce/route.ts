@@ -1195,6 +1195,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     const kanal =
       kanalRaw === 'whatsapp' || kanalRaw === 'sms' || kanalRaw === 'email' ? kanalRaw : null;
     if (!kanal) return chyba(400, 'Vyberte kanál.');
+    if (kanal === 'email') {
+      const {
+        CHYBA_PODEKOVANI_RELAY,
+        chybiSkutecnyEmailPodekovani,
+        skutecnyEmailProPodekovani,
+      } = await import('@/lib/podekovani');
+      if (!skutecnyEmailProPodekovani(rec)) {
+        return chyba(
+          400,
+          chybiSkutecnyEmailPodekovani(rec) ? CHYBA_PODEKOVANI_RELAY : 'Host nemá e-mail.',
+        );
+      }
+    }
     const ted = new Date().toISOString();
     const stitek = kanal === 'whatsapp' ? 'WhatsApp' : kanal === 'sms' ? 'SMS' : 'E-mail';
     const veta = rec.podekovaniKdy
@@ -1445,7 +1458,22 @@ export async function POST(request: Request): Promise<NextResponse> {
       await store.setRezervace(id, pridej(sJazykem, `${prefix}: ${zprava.nazev}`, patch));
       return NextResponse.json({ ok: true, nazev: zprava.nazev }, { headers: noStore });
     }
-    const komu = (rec.emailHosta || '').trim();
+    let komu = (rec.emailHosta || '').trim();
+    if (druh === 'podekovani') {
+      const {
+        CHYBA_PODEKOVANI_RELAY,
+        chybiSkutecnyEmailPodekovani,
+        skutecnyEmailProPodekovani,
+      } = await import('@/lib/podekovani');
+      const skutecny = skutecnyEmailProPodekovani(rec);
+      if (!skutecny) {
+        return chyba(
+          400,
+          chybiSkutecnyEmailPodekovani(rec) ? CHYBA_PODEKOVANI_RELAY : 'Host nemá e-mail.',
+        );
+      }
+      komu = skutecny;
+    }
     if (!komu || problemEmailu(komu)) return chyba(400, 'Host nemá e-mail.');
     let odeslanoNa = komu;
     try {
