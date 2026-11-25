@@ -316,7 +316,7 @@ const NEJDE_S_NAVRHU: Record<GuideLang, string> = {
 /** Tělo NEJDE bez návrhu. */
 const NEJDE_BEZ_NAVRHU: Record<GuideLang, string> = {
   cs: '{pozdrav}\n\nděkujeme za vaši poptávku. Termín {termin} je bohužel už obsazený. Rádi vám najdeme jiný, stačí napsat, kdy by se vám hodilo.\n\nNikol, VIVIEN Apartments',
-  en: '{pozdrav}\n\nthank you for your enquiry. The dates {termin} are unfortunately already taken. We will gladly find another for you. Just write when would suit you.\n\nNikol, VIVIEN Apartments',
+  en: '{pozdrav}\n\nthank you for your enquiry. The dates {termin} are unfortunately already taken. We\'d be glad to find you other dates – just let us know what would suit you.\n\nNikol, VIVIEN Apartments',
   de: '{pozdrav}\n\nvielen Dank für Ihre Anfrage. Der Termin {termin} ist leider schon belegt. Gerne finden wir einen anderen für Sie. Schreiben Sie uns einfach, wann es Ihnen passen würde.\n\nNikol, VIVIEN Apartments',
   pl: '{pozdrav}\n\ndziękujemy za Wasze zapytanie. Termin {termin} jest niestety już zajęty. Chętnie znajdziemy inny. Wystarczy napisać, kiedy Wam pasuje.\n\nNikol, VIVIEN Apartments',
   uk: '{pozdrav}\n\nдякуємо за ваш запит. Термін {termin} на жаль уже зайнятий. Раді знайти вам інший. Достатньо написати, коли вам було б зручно.\n\nNikol, VIVIEN Apartments',

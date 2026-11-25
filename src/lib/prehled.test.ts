@@ -139,6 +139,7 @@ describe('tlačítka v přehledu', () => {
     const bez = poplatekNahled({ poplatek: 'ne', noci: 2, osob: 2, cas: '21:10', vyjezdy: [{ castka: 300 }], zaplaceno: false });
     expect(bez.text).toBe('Poplatek ne');
     expect(bez.rozpis).toBeNull();
+    // 21:10 = po domluvě (ne pevných 300 Kč). Součet = městský 200 + výjezd 300.
     const rozpis = poplatekNahled({
       poplatek: 'ano',
       noci: 2,
@@ -147,9 +148,9 @@ describe('tlačítka v přehledu', () => {
       vyjezdy: [{ castka: 300 }],
       zaplaceno: false,
     });
-    expect(rozpis.text).toBe('Poplatek 800 Kč');
+    expect(rozpis.text).toBe('Poplatek 500 Kč');
     expect(rozpis.rozpis).toBe(
-      '2 osoby × 2 noci × 50 Kč = 200 Kč · pozdní příjezd 21:10 = 300 Kč · opakovaný výjezd 300 Kč',
+      '2 osoby × 2 noci × 50 Kč = 200 Kč · pozdní příjezd 21:10 po domluvě · opakovaný výjezd 300 Kč',
     );
     expect(rozpis.stav).toBe('nevybráno');
     expect(
@@ -176,6 +177,7 @@ describe('tlačítka v přehledu', () => {
     expect(domluva.uplny).toBe(false);
     expect(domluva.radky[1]?.text).toBe('po domluvě');
     expect(domluva.soucet).toBe(200);
+    // Skutečný čas 21:45 = po 21:00 → po domluvě (ne pevná částka).
     const skutecny = rozpisPlateb({
       poplatek: 'ano',
       noci: 2,
@@ -184,9 +186,10 @@ describe('tlačítka v přehledu', () => {
       skutecny: '21:45',
       vyjezdy: [],
     });
-    expect(skutecny.radky[1]?.text).toBe('400\u00A0Kč');
-    expect(skutecny.radky[1]?.dovetek).toBe('odhad 200\u00A0Kč');
-    expect(skutecny.soucet).toBe(600);
+    expect(skutecny.radky[1]?.text).toBe('po domluvě');
+    expect(skutecny.radky[1]?.dovetek).toBe('');
+    expect(skutecny.soucet).toBe(200);
+    expect(skutecny.uplny).toBe(false);
     const rucni = rozpisPlateb({
       poplatek: 'ano',
       noci: 2,
@@ -198,7 +201,18 @@ describe('tlačítka v přehledu', () => {
     });
     expect(rucni.radky[1]?.text).toBe('50\u00A0Kč');
     expect(rucni.soucet).toBe(250);
-    expect(rucni.navrhKc).toBe(400);
+    // 21:45 = po domluvě → žádný automatický návrh částky
+    expect(rucni.navrhKc).toBeNull();
+    const rucniSNavrhem = rozpisPlateb({
+      poplatek: 'ano',
+      noci: 2,
+      osob: 2,
+      cas: '20:00',
+      skutecny: '20:45',
+      rucni: 50,
+      vyjezdy: [],
+    });
+    expect(rucniSNavrhem.navrhKc).toBe(200);
     expect(vetaChyby({ stav: 'neodeslano', telefonNejisty: false, jinyTelefonNejisty: false })).toBe(
       'Průvodce se neodeslal.',
     );

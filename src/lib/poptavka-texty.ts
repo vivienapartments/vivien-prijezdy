@@ -289,7 +289,7 @@ function ymdNaUtc(ymd: string): Date | null {
   return new Date(Date.UTC(y, m - 1, d));
 }
 
-/** Datum YMD → lokalizovaný zápis (cs: 12. 12. 2026). */
+/** Datum YMD → lokalizovaný zápis (cs: 12. 12. 2026, en: 12 Dec 2026). */
 export function formatDatumPoptavky(ymd: string, lang: GuideLang): string {
   const dt = ymdNaUtc(ymd);
   if (!dt) return ymd;
@@ -297,7 +297,7 @@ export function formatDatumPoptavky(ymd: string, lang: GuideLang): string {
   try {
     return new Intl.DateTimeFormat(poptavkaLocale(lang), {
       day: 'numeric',
-      month: 'numeric',
+      month: lang === 'cs' ? 'numeric' : 'short',
       year: 'numeric',
       timeZone: 'UTC',
     }).format(dt);
@@ -307,9 +307,10 @@ export function formatDatumPoptavky(ymd: string, lang: GuideLang): string {
 }
 
 /**
- * Rozsah příjezd–odjezd pro souhrn (věrnost).
+ * Rozsah příjezd–odjezd pro souhrn (věrnost / NEJDE).
  * Stejný měsíc zkrátí, jiný měsíc obě data se společným rokem, jiný rok obě celá.
- * Ostatní jazyky přes Intl formatRange; cs přesně podle zvyku s mezerami.
+ * cs přesně podle zvyku s mezerami. Ostatní jazyky: den + zkratka měsíce (en-GB: 10–12 Dec 2026),
+ * ať 10/12 není dvojznačné.
  */
 export function formatRozsahPoptavky(od: string, doYmd: string, lang: GuideLang): string {
   const a = ymdNaUtc(od);
@@ -331,7 +332,7 @@ export function formatRozsahPoptavky(od: string, doYmd: string, lang: GuideLang)
   try {
     const fmt = new Intl.DateTimeFormat(locale, {
       day: 'numeric',
-      month: 'numeric',
+      month: 'short',
       year: 'numeric',
       timeZone: 'UTC',
     });
@@ -363,7 +364,7 @@ export function formatRozsahPoptavkyBezRoku(od: string, doYmd: string, lang: Gui
     try {
       const fmt = new Intl.DateTimeFormat(poptavkaLocale(lang), {
         day: 'numeric',
-        month: 'numeric',
+        month: 'short',
         timeZone: 'UTC',
       });
       if (typeof fmt.formatRange === 'function') return fmt.formatRange(a, b);

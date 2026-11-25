@@ -1553,7 +1553,7 @@ export const expiredDopis: LText = {
 
 export const expiredPodpis: LText = {
   cs: 'Nikol a rodina VIVIEN',
-  en: 'Nikol ja VIVIEN-perhe',
+  en: 'Nikol and the VIVIEN family',
   de: 'Nikol und Familie VIVIEN',
   pl: 'Nikol i rodzina VIVIEN',
   uk: 'Nikol і родина VIVIEN',
@@ -1562,10 +1562,10 @@ export const expiredPodpis: LText = {
   es: 'Nikol y la familia VIVIEN',
   hu: 'Nikol és a VIVIEN család',
   da: 'Nikol og familien VIVIEN',
-  fi: 'Nikol & the VIVIEN family',
+  fi: 'Nikol ja VIVIEN-perhe',
   fr: 'Nikol et la famille VIVIEN',
   it: 'Nikol e la famiglia VIVIEN',
-  pt: 'Nikol & a família VIVIEN',
+  pt: 'Nikol e a família VIVIEN',
 };
 
 /** Schváleno majitelem 21. 11. 2026 (PROMPT-76): dárek na příští pobyt, sleva 5 %. */

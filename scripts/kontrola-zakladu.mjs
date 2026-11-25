@@ -1,7 +1,17 @@
 /**
- * Kontrola základů po nasazení (produkce i Preview).
- * Použití: node scripts/kontrola-zakladu.mjs https://…
- * Volitelně 2. argument: hotový token TESTPOMAJ2. Jinak se složí z .env.local.
+ * Kontrola základů po nasazení (produkce / Preview / localhost).
+ *
+ * Použití:
+ *   node scripts/kontrola-zakladu.mjs https://…
+ *   node scripts/kontrola-zakladu.mjs http://localhost:3011
+ * Volitelně 2. argument: hotový token TESTPOMAJ2.
+ *
+ * Preview s Deployment Protection:
+ *   VERCEL_AUTOMATION_BYPASS_SECRET v .env.local (nebo env)
+ *   → hlavička x-vercel-protection-bypass
+ *
+ * Volby:
+ *   --bez-testu   jen HTTP, bez npm test
  */
 import fs from 'fs';
 import path from 'path';
@@ -33,11 +43,21 @@ function nactiEnv(soubor) {
 
 nactiEnv(path.join(root, '.env.local'));
 
-const base = (process.argv[2] || '').replace(/\/$/, '');
-if (!base.startsWith('https://') && !base.startsWith('http://localhost')) {
+const args = process.argv.slice(2).filter((a) => a !== '--bez-testu');
+const bezTestu = process.argv.includes('--bez-testu');
+const base = (args[0] || '').replace(/\/$/, '');
+if (!base.startsWith('https://') && !base.startsWith('http://localhost') && !base.startsWith('http://127.0.0.1')) {
   console.error('Chybí základní URL (https://… nebo http://localhost:…).');
   process.exit(1);
 }
+
+const bypass = (process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '').trim();
+const fetchHeaders = bypass
+  ? {
+      'x-vercel-protection-bypass': bypass,
+      'x-vercel-set-bypass-cookie': 'true',
+    }
+  : {};
 
 function createToken(payload) {
   const secret = process.env.PRUVODCE_TOKEN_SECRET?.trim();
@@ -65,7 +85,7 @@ function ymdPraha(offsetDni) {
   }).format(d);
 }
 
-const tokenArg = (process.argv[3] || '').trim();
+const tokenArg = (args[1] || '').trim();
 const token =
   tokenArg ||
   createToken({
@@ -83,16 +103,32 @@ const vysledky = [];
 
 function jeVercelSso(res) {
   const loc = res.headers.get('location') || '';
-  return res.status === 302 && /vercel\.com\/sso/i.test(loc);
+  return (res.status === 401 || res.status === 302) && /vercel\.com\/sso|authentication required/i.test(loc + (res.statusText || ''));
 }
 
 async function check(nazev, url, okFn) {
   try {
-    const res = await fetch(url, { redirect: 'manual' });
-    if (jeVercelSso(res)) {
-      // Preview s Deployment Protection: bez přihlášení nejde HTML. Build Ready = stačí.
-      vysledky.push({ nazev, ok: true, status: res.status, url, poznamka: 'preview SSO' });
-      console.log('OK ', nazev, res.status, '(preview SSO)');
+    const res = await fetch(url, { redirect: 'manual', headers: fetchHeaders });
+    if (jeVercelSso(res) && !bypass) {
+      vysledky.push({
+        nazev,
+        ok: false,
+        status: res.status,
+        url,
+        chyba: 'Preview SSO. Doplň VERCEL_AUTOMATION_BYPASS_SECRET, nebo spusť proti localhost.',
+      });
+      console.log('FAIL', nazev, res.status, '(SSO bez bypass)');
+      return;
+    }
+    if (jeVercelSso(res) && bypass) {
+      vysledky.push({
+        nazev,
+        ok: false,
+        status: res.status,
+        url,
+        chyba: 'SSO i s bypass (token špatný nebo neplatí pro tuhle URL).',
+      });
+      console.log('FAIL', nazev, res.status, '(SSO i s bypass)');
       return;
     }
     const text = await res.text();
@@ -104,6 +140,8 @@ async function check(nazev, url, okFn) {
     console.log('FAIL', nazev, e?.message || e);
   }
 }
+
+console.log('Základ:', base, bypass ? '(s bypass)' : '(bez bypass)');
 
 await check(`/{token TESTPOMAJ2}`, `${base}/${token}`, (res, text) => {
   if (res.status !== 200) return false;
@@ -135,20 +173,27 @@ await check('/poptavka?t=…', `${base}/poptavka?t=${encodeURIComponent(token)}`
 });
 
 await check('/prehled', `${base}/prehled`, (res) => {
-  // 200 přihlášení, 307/302 redirect na login, 401 = taky „žije“
   return res.status === 200 || res.status === 401 || res.status === 302 || res.status === 307;
 });
 
-console.log('Spouštím npm test…');
-const test = spawnSync('npm', ['test'], { cwd: root, encoding: 'utf8', shell: true });
-const testOk = test.status === 0;
-vysledky.push({ nazev: 'npm test', ok: testOk, status: test.status });
-if (!testOk) {
-  console.log(test.stdout || '');
-  console.log(test.stderr || '');
+if (!bezTestu) {
+  console.log('Spouštím npm test…');
+  const test = spawnSync('npm', ['test'], { cwd: root, encoding: 'utf8', shell: true });
+  const testOk = test.status === 0;
+  vysledky.push({ nazev: 'npm test', ok: testOk, status: test.status });
+  if (!testOk) {
+    const out = `${test.stdout || ''}\n${test.stderr || ''}`;
+    const failLines = out
+      .split(/\r?\n/)
+      .filter((l) => /FAIL |Test Files|Tests /.test(l))
+      .slice(0, 40);
+    console.log(failLines.join('\n'));
+  }
+  console.log(testOk ? 'OK  npm test' : 'FAIL npm test');
+} else {
+  console.log('npm test přeskočen (--bez-testu)');
 }
-console.log(testOk ? 'OK  npm test' : 'FAIL npm test');
 
 const vseOk = vysledky.every((v) => v.ok);
-console.log(JSON.stringify({ base, tokenPrefix: token.slice(0, 24) + '…', vysledky, vseOk }, null, 2));
+console.log(JSON.stringify({ base, bypass: Boolean(bypass), tokenPrefix: token.slice(0, 24) + '…', vysledky, vseOk }, null, 2));
 process.exit(vseOk ? 0 : 1);

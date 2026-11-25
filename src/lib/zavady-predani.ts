@@ -321,7 +321,7 @@ export const SKRYTA_PO_ODJEZDU: Record<GuideLang, string> = {
 /** Podpis e-mailů se závadami. */
 export const PODPIS_ZAVADY: Record<GuideLang, string> = {
   cs: "Nikol a rodina VIVIEN",
-  en: "Nikol ja VIVIEN-perhe",
+  en: "Nikol and the VIVIEN family",
   de: "Nikol und Familie VIVIEN",
   pl: "Nikol i rodzina VIVIEN",
   uk: "Nikol і родина VIVIEN",

@@ -68,7 +68,7 @@ function textHosta(tabulka: Record<GuideLang, string>, lang: GuideLang | null): 
 /** Podpis pod každou zprávou. Čeština, angličtina a němčina jsou dané. */
 const PODPIS: Record<JazykZpravy, string> = {
   cs: 'Nikol a rodina VIVIEN',
-  en: 'Nikol ja VIVIEN-perhe',
+  en: 'Nikol and the VIVIEN family',
   de: 'Nikol und Familie VIVIEN',
   pl: 'Nikol i rodzina VIVIEN',
   uk: 'Nikol і родина VIVIEN',

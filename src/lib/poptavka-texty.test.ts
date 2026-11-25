@@ -71,7 +71,7 @@ const KLICE: (keyof PoptavkaTexty)[] = [
 
 describe('poptavkaTexty', () => {
   it('u věrnosti má všech 13 jazyků neprázdné povinné klíče', () => {
-    expect(POPTAVKA_VERNOST_LANGS).toHaveLength(13);
+    expect(POPTAVKA_VERNOST_LANGS).toHaveLength(GUIDE_LANGS.length);
     for (const lang of POPTAVKA_VERNOST_LANGS) {
       const t = poptavkaTexty(lang, 'vernost');
       for (const k of KLICE) {
@@ -116,11 +116,15 @@ describe('poptavkaTexty', () => {
     );
   });
 
-  it('rozsah termínu v jiném jazyku přes formatRange', () => {
+  it('rozsah termínu v jiném jazyku přes formatRange se zkratkou měsíce', () => {
+    const en = formatRozsahPoptavky('2026-12-10', '2026-12-12', 'en');
+    expect(en).toMatch(/10\s*[–-]\s*12 Dec 2026/);
+    expect(en).not.toMatch(/\d+\/\d+\/\d+/);
     const de = formatRozsahPoptavky('2026-11-23', '2026-11-28', 'de');
     expect(de).toMatch(/23/);
     expect(de).toMatch(/28/);
     expect(de).toContain('2026');
+    expect(de.toLowerCase()).toMatch(/nov|dez/);
   });
 
   it('GUIDE_LANGS pokrývá věrnostní mapu', () => {

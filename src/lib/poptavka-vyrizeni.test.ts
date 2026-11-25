@@ -74,10 +74,13 @@ describe('poptavka-vyrizeni', () => {
     expect(t).not.toContain('Můžeme vám nabídnout');
   });
 
-  it('text NEJDE en bez spolehlivého oslovení drží Hello,', () => {
+  it('text NEJDE en bez návrhu má britské datum a novou větu', () => {
     const t = textNejdeHostovi(baza({ jmeno: 'Jana', jazyk: 'en' }), '');
     expect(t.startsWith('Hello, Jana,')).toBe(true);
     expect(t).toContain('already taken');
+    expect(t).toMatch(/10\s*[–-]\s*12 Dec 2026/);
+    expect(t).toContain("We'd be glad to find you other dates");
+    expect(t).not.toMatch(/10\/12\/2026/);
   });
 
   it('text NEJDE cs u cizího jména jen Dobrý den,', () => {
