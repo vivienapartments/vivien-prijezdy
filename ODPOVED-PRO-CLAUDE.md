@@ -319,3 +319,28 @@ Nasazeno na master `d681338` (ostrá). Zdroj na `doporuceni` `f77b51b`.
 - **Šablona „přímá“** (`TYP: PRIMA`): ručně z BH na info@ = jistá přímá. Cizí odesílatel nebo bez platného KLIC → odmítnout + Telegram. Hostovi nic.
 - Automatická kampaň v BH je **vypnutá** (neumí jen info@). Do hovoru s BH zítra zůstává ruční odeslání.
 - Klub dávka 3 **není** na master.
+
+## 2026-11-25 21:30 · PROMPT-KLUB-DAVKA-4-6 (jen Preview)
+
+Preview `doporuceni` hash `8fa4d14` (opravy buildu v řadě od `691ba96`). Ostrá / master **nedotčeno**. Testy 633/633.
+
+### Co je hotové (KLUB_ZAPNUTO=1 na Preview)
+- **Dávka 4:** sleva v poptávce = max(délka, osobní) z `klub:pravidla`; text „Na tento pobyt máte slevu X %“ + důvod; kredit „Použít kredit“. Při `KLUB_ZAPNUTO=0` staré 5 %.
+- **Dávka 5:** odměna 5 % / 2 % (12 měs.), zneužití → nesplňuje, kredit 24 měs. + upozornění měsíc před, `KLUB_VYPLATY` pro výplatu firem; Podrobnosti 5 %+2 %.
+- **Dávka 6:** karta při potvrzené přímé (ne až předání); před příjezdem skromná karta + Můj průvodce; po odjezdu `/{token}` → `/klub?k=…` když karta existuje.
+
+### Sdílecí odkazy (Preview větev)
+Základ: https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app  
+(Vercel SSO / přihlášení týmu. Heslo přehledu beze změny.)
+
+1. Poptávka věrného · 3 noci: vyberte 3 noci → má být 0 % (bez úrovně) nebo podle karty · `/poptavka?zkouska=1`
+2. Poptávka věrného · 8 nocí: stejný odkaz, vyberte 8 nocí → sleva 10 % za délku · `/poptavka?zkouska=1`
+3. Poptávka doporučeného · `/poptavka?zkouska=1&od=PETR7` (5 % na 1. pobyt)
+4. Karta hosta před příjezdem · `/klub?k=ukazka-host-pred`
+5. Karta hosta po odjezdu · `/klub?k=ukazka-host-po`
+
+Plné URL:
+- https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/poptavka?zkouska=1
+- https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/poptavka?zkouska=1&od=PETR7
+- https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-host-pred
+- https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app/klub?k=ukazka-host-po
