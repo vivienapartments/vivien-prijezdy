@@ -230,6 +230,9 @@ const STAVY: { id: '' | Stav; text: string }[] = [
 
 type ZpetKam = { zalozka: Zalozka; y: number };
 
+/** Vrstvy historie, ať šipka Zpět v telefonu nejde rovnou z aplikace. */
+type HistVivien = { vivien?: 'base' | 'karta' | 'sekce' | 'poptavka'; id?: string };
+
 type Props = {
   rows: PrehledRadek[];
   dnes: string;
@@ -446,6 +449,12 @@ export function PrehledClient({
   const [vybrana, setVybrana] = useState<string | null>(null);
   const [dotazVratitOdjezd, setDotazVratitOdjezd] = useState<string | null>(null);
   const zalozkaNactena = useRef(false);
+  const vybranaRef = useRef<string | null>(null);
+  const detailSekceRef = useRef<Record<string, DetailSekceId[]>>({});
+  const zpetKamRef = useRef<ZpetKam | null>(null);
+  const histHloubkaRef = useRef(0);
+  const zpetPresHistoriiRef = useRef(false);
+  const poptavkaIdRef = useRef<string | null>(null);
   const [filtrDoplnit, setFiltrDoplnit] = useState<FiltrDoplnit>('vse');
   const [otevriDoplnitSignal, setOtevriDoplnitSignal] = useState(0);
   const [odjeliOtevreno, setOdjeliOtevreno] = useState(false);
@@ -524,24 +533,123 @@ export function PrehledClient({
   const [poptavkaId, setPoptavkaId] = useState<string | null>(null);
 
   useEffect(() => {
+    vybranaRef.current = vybrana;
+  }, [vybrana]);
+  useEffect(() => {
+    detailSekceRef.current = detailSekce;
+  }, [detailSekce]);
+  useEffect(() => {
+    zpetKamRef.current = zpetKam;
+  }, [zpetKam]);
+  useEffect(() => {
+    poptavkaIdRef.current = poptavkaId;
+  }, [poptavkaId]);
+
+  useEffect(() => {
     setRadky(rows);
     setSloty(nactiBranu(brana));
     setBranaOk(branaPotvrzena);
   }, [rows, brana, branaPotvrzena]);
 
+  function nactiPoptavkuZUrl() {
+    try {
+      const q = new URLSearchParams(window.location.search);
+      const id = (q.get('poptavka') || '').trim();
+      setPoptavkaId(id || null);
+    } catch {
+      setPoptavkaId(null);
+    }
+  }
+
+  function zavriKartuBezHistorie() {
+    const kam = zpetKamRef.current;
+    const id = vybranaRef.current;
+    setZpetKam(null);
+    setVybrana(null);
+    histHloubkaRef.current = 0;
+    if (id) {
+      setDetailSekce((prev) => ({ ...prev, [id]: [] }));
+    }
+    if (kam) {
+      setZalozka(kam.zalozka);
+      requestAnimationFrame(() => {
+        try {
+          window.scrollTo(0, kam.y);
+        } catch {
+          /* scroll */
+        }
+      });
+    }
+  }
+
+  function hashRezervace(): string {
+    try {
+      return window.location.hash.replace(/^#/, '').trim().split(/[?&]/)[0].trim();
+    } catch {
+      return '';
+    }
+  }
+
+  function histStav(): HistVivien | null {
+    try {
+      return (window.history.state as HistVivien | null) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Sekce na kartě: při otevření přidá vrstvu historie, při sbalení ji sundá. */
+  function nastavSekceKarty(cislo: string, dalsi: DetailSekceId[]) {
+    setDetailSekce((prev) => ({ ...prev, [cislo]: dalsi }));
+    try {
+      const st = histStav();
+      if (dalsi.length > 0) {
+        if (st?.vivien !== 'sekce' || st?.id !== cislo) {
+          window.history.pushState({ vivien: 'sekce', id: cislo }, '', `#${cislo}`);
+          histHloubkaRef.current = Math.max(2, histHloubkaRef.current + 1);
+        }
+      } else if (st?.vivien === 'sekce' && st?.id === cislo) {
+        window.history.replaceState({ vivien: 'karta', id: cislo }, '', `#${cislo}`);
+        histHloubkaRef.current = 1;
+      }
+    } catch {
+      /* historie */
+    }
+  }
+
   useEffect(() => {
-    function nactiPoptavkuZUrl() {
-      try {
+    nactiPoptavkuZUrl();
+    function onPopstate() {
+      nactiPoptavkuZUrl();
+      if (zpetPresHistoriiRef.current) {
+        zpetPresHistoriiRef.current = false;
+        zavriKartuBezHistorie();
+        return;
+      }
+      const st = histStav();
+      const hashId = hashRezervace();
+      const id = vybranaRef.current;
+      const sekce = id ? detailSekceRef.current[id] || [] : [];
+
+      if (poptavkaIdRef.current && st?.vivien !== 'poptavka') {
         const q = new URLSearchParams(window.location.search);
-        const id = (q.get('poptavka') || '').trim();
-        setPoptavkaId(id || null);
-      } catch {
-        setPoptavkaId(null);
+        if (!(q.get('poptavka') || '').trim()) {
+          setPoptavkaId(null);
+        }
+      }
+
+      if (id && sekce.length > 0 && (st?.vivien === 'karta' || hashId === id)) {
+        setDetailSekce((prev) => ({ ...prev, [id]: [] }));
+        histHloubkaRef.current = 1;
+        return;
+      }
+
+      if (id && (!hashId || hashId !== id || !st?.vivien || st.vivien === 'base')) {
+        zavriKartuBezHistorie();
       }
     }
-    nactiPoptavkuZUrl();
-    window.addEventListener('popstate', nactiPoptavkuZUrl);
-    return () => window.removeEventListener('popstate', nactiPoptavkuZUrl);
+    window.addEventListener('popstate', onPopstate);
+    return () => window.removeEventListener('popstate', onPopstate);
   }, []);
 
   function rozbalDetailKarty(cislo: string) {
@@ -560,6 +668,7 @@ export function PrehledClient({
       cislo.startsWith('odjezdy')
     )
       return;
+    const uzNaKarte = vybrana === cislo;
     setZpetKam((prev) => {
       if (zalozka === 'hledat' && vybrana === cislo) return prev;
       try {
@@ -572,8 +681,14 @@ export function PrehledClient({
     rozbalDetailKarty(cislo);
     setZalozka('hledat');
     try {
-      if (typeof window !== 'undefined' && window.location.hash !== `#${cislo}`) {
-        window.history.replaceState(null, '', `#${cislo}`);
+      if (typeof window !== 'undefined') {
+        if (!uzNaKarte) {
+          window.history.pushState({ vivien: 'karta', id: cislo }, '', `#${cislo}`);
+          histHloubkaRef.current = 1;
+        } else if (window.location.hash !== `#${cislo}`) {
+          window.history.replaceState({ vivien: 'karta', id: cislo }, '', `#${cislo}`);
+          histHloubkaRef.current = Math.max(1, histHloubkaRef.current);
+        }
       }
     } catch {
       /* hash */
@@ -588,26 +703,25 @@ export function PrehledClient({
   }
 
   function zpetZKarty() {
-    const kam = zpetKam;
-    setZpetKam(null);
-    setVybrana(null);
+    const n = histHloubkaRef.current;
+    if (n > 0 && typeof window !== 'undefined') {
+      zpetPresHistoriiRef.current = true;
+      histHloubkaRef.current = 0;
+      try {
+        window.history.go(-n);
+        return;
+      } catch {
+        zpetPresHistoriiRef.current = false;
+      }
+    }
     try {
       if (typeof window !== 'undefined' && window.location.hash) {
-        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        window.history.replaceState({ vivien: 'base' }, '', window.location.pathname + window.location.search);
       }
     } catch {
       /* hash */
     }
-    if (kam) {
-      setZalozka(kam.zalozka);
-      requestAnimationFrame(() => {
-        try {
-          window.scrollTo(0, kam.y);
-        } catch {
-          /* scroll */
-        }
-      });
-    }
+    zavriKartuBezHistorie();
   }
 
   function praniZUrl(url: string): string | null {
@@ -639,10 +753,8 @@ export function PrehledClient({
 
   function otevriFakturu(rezervace: string) {
     otevriKartu(rezervace);
-    setDetailSekce((prev) => {
-      const cur = prev[rezervace] || [];
-      return { ...prev, [rezervace]: cur.includes('faktura') ? cur : [...cur, 'faktura'] };
-    });
+    const cur = detailSekceRef.current[rezervace] || [];
+    nastavSekceKarty(rezervace, cur.includes('faktura') ? cur : [...cur, 'faktura']);
   }
 
   function otevriPrani(rezervace: string, vlakno?: string | null) {
@@ -653,10 +765,8 @@ export function PrehledClient({
       return;
     }
     otevriKartu(rezervace);
-    setDetailSekce((prev) => {
-      const cur = prev[rezervace] || [];
-      return { ...prev, [rezervace]: cur.includes('prani') ? cur : [...cur, 'prani'] };
-    });
+    const cur = detailSekceRef.current[rezervace] || [];
+    nastavSekceKarty(rezervace, cur.includes('prani') ? cur : [...cur, 'prani']);
     if (vlakno) {
       setPraniFocus((prev) => ({ ...prev, [rezervace]: vlakno }));
       requestAnimationFrame(() => {
@@ -797,12 +907,24 @@ export function PrehledClient({
       setVybrana(id);
       rozbalDetailKarty(id);
       setZalozka('hledat');
+      try {
+        const st = histStav();
+        if (!st?.vivien) {
+          const zaklad = window.location.pathname + window.location.search;
+          const plna = `${zaklad}#${raw}`;
+          window.history.replaceState({ vivien: 'base' }, '', zaklad);
+          window.history.pushState({ vivien: 'karta', id }, '', plna);
+          histHloubkaRef.current = 1;
+        } else if (st.vivien !== 'karta' && st.vivien !== 'sekce') {
+          window.history.replaceState({ vivien: 'karta', id }, '', `#${id}`);
+          histHloubkaRef.current = Math.max(1, histHloubkaRef.current);
+        }
+      } catch {
+        /* historie */
+      }
       const prani = praniZUrl(window.location.href) || praniZUrl(`#${raw}`);
       if (prani) {
-        setDetailSekce((prev) => {
-          const cur = prev[id] || [];
-          return { ...prev, [id]: cur.includes('prani') ? cur : [...cur, 'prani'] };
-        });
+        nastavSekceKarty(id, ['prani']);
         setPraniFocus((prev) => ({ ...prev, [id]: prani }));
         requestAnimationFrame(() => {
           try {
@@ -4940,14 +5062,11 @@ export function PrehledClient({
             const otevrene = detailSekce[row.rezervace] || [];
             const jeOtevrena = (id: DetailSekceId) => otevrene.includes(id);
             const vseOtevrene = DETAIL_SEKCE_VSE.every((id) => otevrene.includes(id));
-            const prepni = (id: DetailSekceId) =>
-              setDetailSekce((prev) => {
-                const cur = prev[row.rezervace] || [];
-                return {
-                  ...prev,
-                  [row.rezervace]: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id],
-                };
-              });
+            const prepni = (id: DetailSekceId) => {
+              const cur = detailSekce[row.rezervace] || [];
+              const dalsi = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+              nastavSekceKarty(row.rezervace, dalsi);
+            };
             const telDrobek = row.telefonText || row.jinyTelefonText || 'bez čísla';
             const pobytDrobek = staly && staly.poradi > 1 ? `${staly.poradi}. pobyt` : null;
             const kontaktDrobek = [telDrobek, pobytDrobek].filter(Boolean).join(' · ');
@@ -4997,10 +5116,7 @@ export function PrehledClient({
                   type="button"
                   className="ph-sekce-vse"
                   onClick={() =>
-                    setDetailSekce((prev) => ({
-                      ...prev,
-                      [row.rezervace]: vseOtevrene ? [] : [...DETAIL_SEKCE_VSE],
-                    }))
+                    nastavSekceKarty(row.rezervace, vseOtevrene ? [] : [...DETAIL_SEKCE_VSE])
                   }
                 >
                   {vseOtevrene ? 'Sbalit vše' : 'Rozbalit vše'}
@@ -5934,7 +6050,16 @@ export function PrehledClient({
             try {
               const u = new URL(window.location.href);
               u.searchParams.delete('poptavka');
-              window.history.replaceState({}, '', u.pathname + u.search + u.hash);
+              const st = histStav();
+              if (st?.vivien === 'poptavka') {
+                window.history.back();
+              } else {
+                window.history.replaceState(
+                  { vivien: 'base' },
+                  '',
+                  u.pathname + u.search + u.hash,
+                );
+              }
             } catch {
               /* */
             }
