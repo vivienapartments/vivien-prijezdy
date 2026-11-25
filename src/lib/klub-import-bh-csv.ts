@@ -79,10 +79,14 @@ const ANNA_MAP: Record<string, string> = {
   'anna tri dny': 'Anna Nirenberh',
 };
 
-/** Ruční ceny Sobčák (majitel 25. 11. 2026). */
-const SOBCAK_CENA: Record<string, number> = {
+/**
+ * Ruční ceny z účtování / průvodce mají přednost před BH Cena.
+ * Majitel 25. 11. 2026: Sobčák + Hromada probíhající 1 450 Kč (BH 4 440).
+ */
+const CENA_MAJITELE: Record<string, number> = {
   '120260671': 5000,
   '120260627': 4400,
+  '120260641': 1450,
 };
 
 const EUR_KURZ_ZALOHA = 24.5;
@@ -268,9 +272,9 @@ export function nahledImportuBhCsv(
     let castkaBh: number | null = null;
     let duvodCena = '';
 
-    if (SOBCAK_CENA[rezervace] != null) {
+    if (CENA_MAJITELE[rezervace] != null) {
       castkaBh = castka;
-      castka = SOBCAK_CENA[rezervace];
+      castka = CENA_MAJITELE[rezervace];
       mena = 'CZK';
       duvodCena = `Cena majitele ${castka} Kč (BH ${castkaBh} Kč)`;
     } else if (mena === 'EUR') {

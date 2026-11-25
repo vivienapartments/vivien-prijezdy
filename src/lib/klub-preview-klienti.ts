@@ -45,6 +45,8 @@ const RUCNI: Record<
   'dominik hromada': {
     email: 'dominik.hromada@egd.cz',
     telefon: '+420732347329',
+    // Účtování / průvodce 25. 11.: 1 450 Kč (ne BH 4 440).
+    utrataCeka: 1450,
   },
   'marcel flidr': {
     email: 'marcel.flidr@gmail.com',

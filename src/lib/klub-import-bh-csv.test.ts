@@ -54,8 +54,9 @@ describe('klub-import-bh-csv', () => {
     expect(hromada).toBeTruthy();
     expect(hromada!.akce).toBe('priradit');
     expect(hromada!.utrata).toBe(9600);
+    expect(hromada!.utrataCeka).toBe(1450);
     expect(hromada!.uroven).toBe('Stálý host');
-    expect(hromada!.pobyty.some((p) => p.stavUtraty === 'ceka')).toBe(true);
+    expect(hromada!.pobyty.some((p) => p.stavUtraty === 'ceka' && p.castka === 1450)).toBe(true);
 
     // Sobčák: jeden host, ceny majitele, oba budoucí = modře
     const sobcak = nahled.souhrn.find((s) => /sobčák|sobcak/i.test(s.host));

@@ -101,16 +101,16 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "firma": "EG.D, s.r.o.",
       "prijezd": "2026-11-23",
       "odjezd": "2026-11-26",
-      "castka": 4440,
+      "castka": 1450,
       "mena": "CZK",
       "zdroj": "Přímá rezervace",
       "akce": "priradit",
-      "duvod": "EG.D jen proplácí – útrata hosta Dominik Hromada",
+      "duvod": "Cena majitele 1450 Kč (BH 4440 Kč) · EG.D jen proplácí – útrata hosta Dominik Hromada",
       "cilJmeno": "Dominik Hromada",
       "klientId": null,
       "klientNazev": null,
       "stavUtraty": "ceka",
-      "castkaBh": null
+      "castkaBh": 4440
     },
     {
       "rezervace": "120260638",
@@ -602,7 +602,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "host": "Dominik Hromada",
       "pocet": 3,
       "utrata": 9600,
-      "utrataCeka": 4440,
+      "utrataCeka": 1450,
       "uroven": "Stálý host",
       "klientId": null,
       "akce": "priradit",
@@ -616,7 +616,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
           "rezervace": "120260641",
           "prijezd": "2026-11-23",
           "odjezd": "2026-11-26",
-          "castka": 4440,
+          "castka": 1450,
           "stavUtraty": "ceka",
           "popisek": "čeká, započítá se po odjezdu"
         },

@@ -182,7 +182,7 @@ function pobytyRucniKarty(id: KlubUkazkaId): {
       nadchazejici: [
         {
           nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
-          podnadpis: 'čeká, započítá se po odjezdu · 4 440 Kč',
+          podnadpis: 'čeká, započítá se po odjezdu · 1 450 Kč',
           pruvodceUrl: '/nahled',
           barva: 'ceka',
         },
@@ -392,6 +392,10 @@ export function pohledZKarty(
   }
 
   const kreditKc = karta.kreditKc;
+  const kidUkazka = ukazka ? normalizujUkazkaId(karta.tajnyKlic as KlubUkazkaId) : null;
+  // Hromada: probíhající pobyt = cena z účtování (1 450), ne BH 4 440.
+  const utrataCekaUkazka =
+    kidUkazka === 'ukazka-hromada' || kidUkazka === 'ukazka-egd' ? 1450 : 0;
   const praveBydli = nadchazejici.some((r) => /právě|bydlíte|adresa, příjezd/i.test(r.podnadpis || ''));
   return {
     ukazka,
@@ -416,7 +420,7 @@ export function pohledZKarty(
     kreditKVyplate: kreditKc,
     kreditVyplaceno: 0,
     odkazDoporuceni: `${base}/poptavka?od=${encodeURIComponent(karta.kod)}`,
-    utrataCekaKc: 0,
+    utrataCekaKc: utrataCekaUkazka,
     praveBydli,
     skrytDoporuceni: false,
   };
