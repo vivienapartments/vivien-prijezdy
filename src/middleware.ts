@@ -2,8 +2,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  if (process.env.NODE_ENV === 'production' && request.nextUrl.pathname.startsWith('/nahled')) {
-    return new NextResponse('Not Found', { status: 404 });
+  const cestaMw = request.nextUrl.pathname;
+  // Vývojové /nahled* na ostré schovat. Na Preview povolit jen import BH (sdílecí odkaz).
+  if (process.env.NODE_ENV === 'production' && cestaMw.startsWith('/nahled')) {
+    const previewImport =
+      process.env.VERCEL_ENV === 'preview' &&
+      (cestaMw === '/nahled-import-bh' || cestaMw.startsWith('/nahled-import-bh/'));
+    if (!previewImport) {
+      return new NextResponse('Not Found', { status: 404 });
+    }
   }
 
   const response = NextResponse.next();
