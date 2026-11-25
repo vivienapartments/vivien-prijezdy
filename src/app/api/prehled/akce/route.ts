@@ -169,6 +169,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     poznamka?: string;
     zpusobUhrady?: string;
     kanal?: string;
+    zdroj?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
     const jak = jeJak(body.jak);
@@ -274,6 +275,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'poznamka-uklid' &&
       akce !== 'checkin-neni' &&
       akce !== 'bez-marketingu' &&
+      akce !== 'zdroj' &&
       akce !== 'nedojezd' &&
       akce !== 'zrusit-nedojezd' &&
       akce !== 'mena' &&
