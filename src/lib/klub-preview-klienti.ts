@@ -51,8 +51,9 @@ const RUCNI: Record<
   'marcel flidr': {
     email: 'marcel.flidr@gmail.com',
     telefon: '+420603778347',
-    utrata: 12300,
-    utrataCeka: 0,
+    // 12 300 celkem; probíhající 24.–27. 11. = 2 900 (s 18.–19. dohromady 5 800).
+    utrata: 9400,
+    utrataCeka: 2900,
   },
   'sofia saieshnykova': {
     email: 'sofiasaeshnikova12@gmail.com',
@@ -131,7 +132,7 @@ function flidrPobyty(): { nadchazejici: KlubPobytRadek[]; pobyty: KlubPobytRadek
     rezervace: '92026110903',
     prijezd: '2026-11-24',
     odjezd: '2026-11-27',
-    castka: 0,
+    castka: 2900,
     stavUtraty: 'ceka',
     popisek: 'čeká, započítá se po odjezdu',
   };
@@ -173,8 +174,8 @@ function flidrPobyty(): { nadchazejici: KlubPobytRadek[]; pobyty: KlubPobytRadek
     souhrn: {
       host: 'Marcel Flídr',
       pocet: 4,
-      utrata: 12300,
-      utrataCeka: 0,
+      utrata: 9400,
+      utrataCeka: 2900,
       uroven: 'Stálý host',
       klientId: null,
       akce: 'priradit',

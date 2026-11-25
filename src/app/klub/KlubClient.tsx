@@ -214,8 +214,8 @@ export default function KlubClient() {
           {maUroven && pokrok && !skromnyZbytek ? (
             <>
               {(() => {
-                // Verze 2 (legenda barev): zlatá = odbydlené, modrá = tento/čekající, šedá = zbývá.
-                // Bez čísel útraty po krajích. X v legendě = kolik zbývá po odjezdu.
+                // Verze 2: zlatá = odbydlené, modrá = tento/čekající, šedá = zbývá.
+                // Pruh jako gradient (nejde přebarvit jednou barvou z CSS).
                 const ceka = karta.utrataCekaKc || 0;
                 const serazene = [...KLUB_UROVNE_PRO_LADDER].sort((a, b) => a.odKc - b.odKc);
                 const aktualni = serazene[pokrok.index] || serazene[0];
@@ -227,14 +227,14 @@ export default function KlubClient() {
                     : dalsi.nazevHost
                   : null;
                 const cilKc = dalsi ? dalsi.odKc : Math.max(karta.utrataKc + ceka, 1);
-                const wGold = Math.min(100, Math.round((karta.utrataKc / cilKc) * 1000) / 10);
-                const wBlue =
-                  ceka > 0
-                    ? Math.min(100 - wGold, Math.round((ceka / cilKc) * 1000) / 10)
-                    : 0;
-                const chybiPo = dalsi
-                  ? Math.max(0, cilKc - karta.utrataKc - ceka)
-                  : 0;
+                const pGold = Math.min(100, (karta.utrataKc / cilKc) * 100);
+                const pBlue = ceka > 0 ? Math.min(100 - pGold, (ceka / cilKc) * 100) : 0;
+                const pEnd = pGold + pBlue;
+                const chybiPo = dalsi ? Math.max(0, cilKc - karta.utrataKc - ceka) : 0;
+                const barBg =
+                  pEnd <= 0
+                    ? '#3d342a'
+                    : `linear-gradient(to right, #c9a84c 0%, #c9a84c ${pGold}%, #7fb8e6 ${pGold}%, #7fb8e6 ${pEnd}%, #3d342a ${pEnd}%, #3d342a 100%)`;
                 return (
                   <>
                     <div className="klub-pruh-urovne">
@@ -247,25 +247,24 @@ export default function KlubClient() {
                           : tx.nejvyssi}
                       </span>
                     </div>
-                    <div className="klub-bar klub-bar--dual" aria-hidden>
-                      {wGold > 0 ? (
-                        <span
-                          className="klub-bar__a"
-                          style={{ width: `${wGold}%`, background: '#c9a84c' }}
-                        />
-                      ) : null}
-                      {wBlue > 0 ? (
-                        <span
-                          className="klub-bar__b"
-                          style={{ width: `${wBlue}%`, background: '#7fb8e6' }}
-                        />
-                      ) : null}
-                    </div>
-                    <div className="klub-pruh-leg" aria-hidden>
-                      <i className="is-zap" />
-                      <i className="is-ceka" />
-                      <i className="is-zbyva" />
-                      <span>{tx.pruhLegenda(formatKc(chybiPo))}</span>
+                    <div
+                      className="klub-bar klub-bar--tri"
+                      style={{ background: barBg }}
+                      aria-hidden
+                    />
+                    <div className="klub-pruh-leg">
+                      <span className="klub-pruh-leg__pol">
+                        <i className="is-zap" aria-hidden />
+                        {tx.pruhVasePobyty}
+                      </span>
+                      <span className="klub-pruh-leg__pol">
+                        <i className="is-ceka" aria-hidden />
+                        {tx.pruhTentoPobyt}
+                      </span>
+                      <span className="klub-pruh-leg__pol">
+                        <i className="is-zbyva" aria-hidden />
+                        {tx.pruhZbyva(formatKc(chybiPo))}
+                      </span>
                     </div>
                   </>
                 );

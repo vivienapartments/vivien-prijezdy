@@ -60,25 +60,50 @@ const SLEVA = L(
   },
 );
 
-/** Legenda pod pruhem: vaše pobyty · tento pobyt · zbývá X Kč */
-const PRUH_LEG = L(
-  'vaše pobyty · tento pobyt · zbývá {kc}',
-  'your stays · this stay · {kc} left',
-  {
-    de: 'Ihre Aufenthalte · dieser Aufenthalt · es fehlen {kc}',
-    pl: 'wasze pobyty · ten pobyt · brakuje {kc}',
-    uk: 'ваші проживання · це проживання · лишається {kc}',
-    'zh-Hant': '您的住宿 · 本次住宿 · 還差 {kc}',
-    es: 'sus estancias · esta estancia · faltan {kc}',
-    fr: 'vos séjours · ce séjour · il reste {kc}',
-    it: 'i vostri soggiorni · questo soggiorno · mancano {kc}',
-    pt: 'as vossas estadias · esta estadia · faltam {kc}',
-    sv: 'era vistelser · denna vistelse · {kc} kvar',
-    hu: 'az Ön tartózkodásai · ez a tartózkodás · még {kc}',
-    da: 'jeres ophold · dette ophold · {kc} mangler',
-    fi: 'majoituksenne · tämä majoitus · jäljellä {kc}',
-  },
-);
+const PRUH_VASE = L('vaše pobyty', 'your stays', {
+  de: 'Ihre Aufenthalte',
+  pl: 'wasze pobyty',
+  uk: 'ваші проживання',
+  'zh-Hant': '您的住宿',
+  es: 'sus estancias',
+  fr: 'vos séjours',
+  it: 'i vostri soggiorni',
+  pt: 'as vossas estadias',
+  sv: 'era vistelser',
+  hu: 'az Ön tartózkodásai',
+  da: 'jeres ophold',
+  fi: 'majoituksenne',
+});
+
+const PRUH_TENTO = L('tento pobyt', 'this stay', {
+  de: 'dieser Aufenthalt',
+  pl: 'ten pobyt',
+  uk: 'це проживання',
+  'zh-Hant': '本次住宿',
+  es: 'esta estancia',
+  fr: 'ce séjour',
+  it: 'questo soggiorno',
+  pt: 'esta estadia',
+  sv: 'denna vistelse',
+  hu: 'ez a tartózkodás',
+  da: 'dette ophold',
+  fi: 'tämä majoitus',
+});
+
+const PRUH_ZBYVA = L('zbývá {kc}', '{kc} left', {
+  de: 'es fehlen {kc}',
+  pl: 'brakuje {kc}',
+  uk: 'лишається {kc}',
+  'zh-Hant': '還差 {kc}',
+  es: 'faltan {kc}',
+  fr: 'il reste {kc}',
+  it: 'mancano {kc}',
+  pt: 'faltam {kc}',
+  sv: '{kc} kvar',
+  hu: 'még {kc}',
+  da: '{kc} mangler',
+  fi: 'jäljellä {kc}',
+});
 
 const DOP_POPIS = L(
   'Doporučitel · doporučujete VIVIEN přátelům a známým.',
@@ -666,7 +691,9 @@ export function klubTexty(lang: GuideLang) {
     utrata: (kc: string) => fill(t(UTRATA, lang), { kc }),
     doUrovne: (nazev: string, pct: number, kc: string) =>
       fill(t(DO_UROVNE, lang), { nazev, pct: String(pct), kc }),
-    pruhLegenda: (kc: string) => fill(t(PRUH_LEG, lang), { kc }),
+    pruhVasePobyty: t(PRUH_VASE, lang),
+    pruhTentoPobyt: t(PRUH_TENTO, lang),
+    pruhZbyva: (kc: string) => fill(t(PRUH_ZBYVA, lang), { kc }),
     nejvyssi: t(NEJVYSSI, lang),
     nadchazejici: t(NADCH, lang),
     nadchazejiciFirma: t(NADCH_F, lang),
