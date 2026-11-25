@@ -247,3 +247,73 @@ Tři nové texty (vykání), 13 jazyků:
 | da | Ledige datoer: {apt} | Nærmeste ledige dato: {termin} | Vælg denne dato |
 
 fi = en (stejně jako jinde).
+
+## 2026-11-25 18:30 · Booking relay · kompletní ochrana + seznam míst
+
+Centrální brána `src/lib/odchozi-host.ts` (`overOdchoziHostovi` / `pripravTextSmsWa`):
+- marketing na relay e-mail = zákaz + Telegram `automat`
+- provoz na relay = vyčistit slevu (více jazyků) a odkazy `/poptavka`, `/klub`, `/doporucitel`, `?od=`, `#doporucit`; nejde-li, zákaz + Telegram
+- SMS/WhatsApp marketing (poděkování) na telefon při relay e-mailu = povolit (nejde přes schránku Booking)
+- SMS/WhatsApp provoz při relay = stejné čištění obsahu
+
+### Seznam míst, odkud aplikace hostům píše
+
+| Místo | Kanál | Co | Ohlídání |
+|---|---|---|---|
+| Automat / inbox → `posliPruvodce` → `sendGuestEmail` | e-mail | průvodce (souhrn + tlačítko) | `odchozi-host` druh `provozni` |
+| Přehled menu zpráv → `posliEmailZpravy` | e-mail | check-in, brána, odjezd, pohoda, shrnutí, připraveno… | `odchozi-host` přes `druhZpravyNaOdchozi` (jen `podekovani` = marketing) |
+| Přehled poděkování e-mailem | e-mail | po odjezdu se slevou / doporučením | nejdřív skutečný e-mail (`podekovani.ts`); pak brána druh `podekovani` |
+| Přehled WhatsApp / SMS (odkaz wa.me / sms:) | WA / SMS | stejné menu zpráv | API `akce` + `PrehledClient` přes `pripravTextSmsWa` / `overOdchoziHostovi` |
+| Přehled poděkování WA / SMS | WA / SMS | marketing na telefon | povolené (ne přes relay schránku) |
+| Závady předání / po odjezdu | e-mail | `posliEmailZpravy` provozni | brána `provozni` |
+| Úklid → apartmán připravený | e-mail | `posliEmailZpravy` | brána `provozni` |
+| Doklad / faktura hostovi | e-mail | `posliEmailDokladu` | brána `provozni` |
+| Tip kamarádovi | e-mail | `/api/doporuceni/tip-email` | brána druh `tip-kamaradovi` |
+| Upozornění majiteli (Telegram / e-mail na info) | ne host | `upozorneni.ts` | netýká se relay |
+
+Testy: `odchozi-host.test.ts` včetně každého typu z menu (e-mail / SMS / WA). npm test 597/597.
+
+Klub na master nešel (zůstává Preview / `doporuceni`).
+
+### Preview /prehled/klienti
+- Záloha migrace: `.data/zalohy-klub/dop-2026-11-25T17-24-37-873Z.json` (0 klíčů `dop*`). Migraci v UI spustí majitel po přihlášení.
+- Sdílecí odkaz (Vercel Share, 7 dní, bez Vercel SSO; heslo přehledu `ADMIN_HESLO` zůstává):
+  (odkaz předán majiteli v chatu, platnost 7 dní)
+
+
+## 2026-11-25 20:23 · PROMPT-ZDROJ-A-PRIME-REZERVACE · hotovo a nasazeno
+
+Nasazeno na master `ac4707b` (Vercel ostrá). Testy 596/596. Klubové UI zůstává jen Preview; na master jen brána + zdroj + přehled.
+
+### Co běží
+1. Obchodní e-mail nikam, kde adresa obsahuje booking / airbnb / expedia. WA/SMS marketing jen na telefon z check-inu.
+2. Zdroj: Agentura / e-mail → Booking|Airbnb; spárování s poptávkou → přímá; jinak Telegram + volba Přímá/Booking/Airbnb v přehledu. Dokud čeká: žádné obchodní zprávy.
+3. Úrovně klubu „Bronzový host“ / „… partner“ zůstávají na větvi `doporuceni` (soubor klub-pravidla na master není).
+
+### Ostrá data `rez:*` (211 karet)
+- Booking 145, Airbnb 21, přímá 7, prázdný zdroj 38.
+- Prázdný zdroj: 28 bez e-mailu, jinak gmail.com (4), seznam.cz (4), centrum.cz (1), egd.cz (1). Pole Agentura v kartách `rez:*` dnes není uložené (zdroj se bere z parsování interního mailu).
+- Ruční BH rezervace dnes často končí s prázdným `zdroj` (včetně firemních domén jako egd.cz). Nový tok je má spárovat s poptávkou nebo se zeptat.
+
+### Návrh příznaku pro šablonu BH (přímý host)
+Nejlépe: do pole **Agentura** v Better Hotelu napsat pevně `přímá` (nebo `VIVIEN`). Aplikace to už čte a nastaví zdroj přímá bez Telegramu.
+Záloha: pevné slovo `VIVIEN-PRIMA` v textu šablony (předmět nebo první řádek těla) — když BH Agenturu nepůjde spolehlivě vyplnit, doplníme čtení z textu.
+Typ ceny je slabší (mění se, hůř se čte).
+
+## 2026-11-25 21:01 · PROMPT-DATA-PRIMA-A-KLUB-DAVKA-2
+
+### Body 1–2 (ostrá, master `c490d03` / `6aa367a`)
+- `TYP: PRIMA` + ACC pole, Doplnit zdroj, Telegram jen u nových. Check-in odkaz v přehledu pro ruční odeslání.
+
+### Bod 3 (jen Preview `doporuceni` `c333923` + `ed4c30c`, `KLUB_ZAPNUTO`)
+- Párování / založení `klient:*` při předání (přímá + kontakt).
+- Útrata z ACC_PRICE po předání, když SALDO 0 nebo platba v aplikaci; ruční doplnění v `/prehled/klienti`.
+- Import xlsx: náhled → potvrzení; seznam přímých hostů pro poděkování.
+- Doporučitel bez pobytu: 5 % na první vlastní pobyt.
+
+## 2026-11-25 21:07 · BH šablony večer (doplnění dávky 2)
+
+- **VIVIEN-DATA v1** (automat po check-inu → info@): čte ACC_PRICE, SALDO, KUPON, FAKTURA_PRO, ZALOZIL, CHECKIN_URL i **bez** `TYP: PRIMA`. Staré maily bez těchto řádků fungují dál.
+- **Šablona „přímá“** (`TYP: PRIMA`): ručně z BH na info@ = jistá přímá. Cizí odesílatel nebo bez platného KLIC → odmítnout + Telegram. Hostovi nic.
+- Automatická kampaň v BH je **vypnutá** (neumí jen info@). Do hovoru s BH zítra zůstává ruční odeslání.
+- Klub dávka 3 **není** na master.
