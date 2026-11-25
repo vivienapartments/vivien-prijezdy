@@ -77,6 +77,8 @@ export type PrehledRadek = {
   /** Surový zdroj z BH (Booking, Airbnb…). Pro text zprávy o check-inu. */
   zdroj: string | null;
   zdrojText: string;
+  /** true = majitel má potvrdit Přímá / Booking / Airbnb. */
+  zdrojCeka: boolean;
   casPrijezdu: string | null;
   casOdjezdu: string | null;
   casOdjezduZadalHost: boolean;
@@ -886,7 +888,10 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     jinyTelefonKtery: telefony.jinyKtery,
     checkinUrl: rec.checkinUrl,
     zdroj: rec.zdroj,
-    zdrojText: chybi(zdrojText(rec.zdroj), stary),
+    zdrojText: rec.zdrojCeka
+      ? 'Zdroj neznámý'
+      : chybi(zdrojText(rec.zdroj), stary),
+    zdrojCeka: Boolean(rec.zdrojCeka),
     casPrijezdu: rec.casPrijezdu,
     casOdjezdu: rec.casOdjezdu,
     casOdjezduZadalHost: rec.casOdjezduZadalHost,

@@ -2931,10 +2931,30 @@ export function PrehledClient({
     row: PrehledRadek,
     text: string,
     druhZpravy?: string,
+    telefonCil?: string | null,
   ): { ok: true; text: string } | { ok: false; duvod: string } {
     const email = row.email.includes('@') ? row.email : '';
     const id = druhZpravy ?? volba[row.rezervace] ?? '';
-    return pripravTextSmsWa(text, email, druhZpravyNaOdchozi(id));
+    const checkinTel =
+      row.telefonKtery === 'checkin' || row.telefonWa
+        ? row.telefonWa || row.telefonText
+        : null;
+    const rezervaceTel =
+      row.jinyTelefonKtery === 'rezervace'
+        ? row.jinyTelefonWa || row.jinyTelefonText
+        : row.telefonKtery === 'rezervace'
+          ? row.telefonWa || row.telefonText
+          : null;
+    return pripravTextSmsWa(text, email, druhZpravyNaOdchozi(id), {
+      telefonCil: telefonCil || row.telefonWa || null,
+      rezervaceRec: {
+        zdrojCeka: Boolean(row.zdrojCeka),
+        telefon: checkinTel,
+        telefonWa: row.telefonKtery === 'checkin' ? row.telefonWa : checkinTel,
+        telefonRezervace: rezervaceTel,
+        telefonRezervaceWa: row.jinyTelefonWa,
+      },
+    });
   }
 
   async function oznacKanal(
@@ -5806,9 +5826,56 @@ export function PrehledClient({
                       <Pole text={row.jazykText} />
                     </div>
                   ) : null}
-                  {row.zdrojText ? (
+                  {row.zdrojText || row.zdrojCeka ? (
                     <div className="ph-zdroj">
-                      <Pole text={row.zdrojText} />
+                      <Pole text={row.zdrojText || 'Zdroj neznámý'} />
+                      <div className="ph-zdroj-volba" style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.35rem' }}>
+                        {(['přímá', 'Booking', 'Airbnb'] as const).map((z) => (
+                          <button
+                            key={z}
+                            type="button"
+                            className="ph-btn ph-btn--maly"
+                            disabled={cekam === `${row.rezervace}:zdroj`}
+                            onClick={async () => {
+                              setCekam(`${row.rezervace}:zdroj`);
+                              setHlaska('');
+                              const res = await fetch('/api/prehled/akce', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  rezervace: row.rezervace,
+                                  akce: 'zdroj',
+                                  zdroj: z,
+                                }),
+                              });
+                              const json = (await res.json().catch(() => null)) as {
+                                ok?: boolean;
+                                error?: string;
+                                zdroj?: string;
+                              } | null;
+                              setCekam(null);
+                              if (!res.ok || !json?.ok) {
+                                setHlaska(json?.error || 'Zdroj se neuložil.');
+                                return;
+                              }
+                              setRadky((prev) =>
+                                prev.map((r) =>
+                                  r.rezervace === row.rezervace
+                                    ? {
+                                        ...r,
+                                        zdroj: json.zdroj || z,
+                                        zdrojText: json.zdroj || z,
+                                        zdrojCeka: false,
+                                      }
+                                    : r,
+                                ),
+                              );
+                            }}
+                          >
+                            {z === 'přímá' ? 'Přímá' : z}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   ) : null}
                   {row.doporucilJmeno ? (

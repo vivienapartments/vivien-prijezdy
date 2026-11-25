@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { normalizujCasPrijezdu } from '@/lib/cas-prijezdu';
+import { poplatekProRezervaci } from '@/lib/poplatek';
 import { zkontrolujCheckinOdkaz } from '@/lib/checkin-odkaz';
 import { duvod, jeVyhrada, problemEmailu } from '@/lib/chyby';
 import { nightsBetween } from '@/lib/dates';
@@ -417,6 +418,36 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
     await store.setRezervace(id, dalsi);
     return NextResponse.json({ ok: true, bezMarketingu: zapnout }, { headers: noStore });
+  }
+
+  if (akce === 'zdroj') {
+    const raw = String(body?.zdroj || '').trim();
+    const mapa: Record<string, string> = {
+      prima: 'přímá',
+      přímá: 'přímá',
+      booking: 'Booking',
+      airbnb: 'Airbnb',
+    };
+    const zdroj =
+      mapa[raw.toLowerCase()] ||
+      (/booking/i.test(raw) ? 'Booking' : /airbnb/i.test(raw) ? 'Airbnb' : /přím|prima/i.test(raw) ? 'přímá' : '');
+    if (!zdroj) return chyba(400, 'Zdroj musí být Přímá, Booking nebo Airbnb.');
+    const dalsi = zapisMajitele(
+      rec,
+      'zdroj',
+      {
+        zdroj,
+        zdrojCeka: false,
+        poplatek: poplatekProRezervaci({
+          vytvoreno: rec.vytvoreno,
+          zdroj,
+          rezervace: rec.rezervace,
+        }),
+      },
+      `Zdroj: ${zdroj}`,
+    );
+    await store.setRezervace(id, dalsi);
+    return NextResponse.json({ ok: true, zdroj, zdrojCeka: false }, { headers: noStore });
   }
 
   if (akce === 'nedojezd') {

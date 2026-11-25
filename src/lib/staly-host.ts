@@ -26,15 +26,11 @@ export type StalyHostInfo = {
   fakturaZMinula: FakturaUdaje | null;
 };
 
+/** Jakákoli adresa obsahující booking / airbnb / expedia (bez ohledu na doménu). */
 export function jeRelayEmail(email: string): boolean {
   const e = email.trim().toLowerCase();
-  return (
-    e.endsWith('@guest.booking.com') ||
-    e.includes('@guest.airbnb.') ||
-    e.endsWith('@m.airbnb.com') ||
-    e.includes('@guest.expedia.') ||
-    e.endsWith('@messages.airbnb.com')
-  );
+  if (!e.includes('@')) return false;
+  return /booking|airbnb|expedia/.test(e);
 }
 
 function normalizujEmail(email: string | null | undefined): string | null {

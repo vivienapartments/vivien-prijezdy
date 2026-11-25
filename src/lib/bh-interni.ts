@@ -3,6 +3,7 @@ import { parsujCenuBh, type MenaFaktury } from './faktura-doklad';
 import { normalizujTelefon } from './telefon';
 import type { AptId } from './types';
 import { aptFromCzechName } from './vivien-data';
+import { zdrojZAgentury as zdrojZAgenturySdilene } from './zdroj-rezervace';
 
 export type InterniDruh = 'nova' | 'zmena' | 'zruseni';
 
@@ -135,12 +136,7 @@ function datum(raw: string | null): string | null {
 }
 
 function zdrojZAgentury(raw: string | null): string | null {
-  const s = (raw || '').trim();
-  if (!s) return null;
-  if (/booking/i.test(s)) return 'Booking';
-  if (/air\s*bn/i.test(s)) return 'Airbnb';
-  if (/přím|prim[aá]|direct|^web$|recepce/i.test(s)) return 'přímá';
-  return s;
+  return zdrojZAgenturySdilene(raw);
 }
 
 function jmenoZKlienta(raw: string | null): { jmeno: string | null; krestni: string | null } {
