@@ -7,7 +7,7 @@ import type { KlientKarta, KlientRole } from './klient-karta';
 import { VYCHOZI_KLUB_PRAVIDLA, urovenZUtraty } from './klub-pravidla';
 import type { GuideLang } from './types';
 
-export type KlubUkazkaId = 'ukazka-host' | 'ukazka-dop' | 'ukazka-firma';
+export type KlubUkazkaId = 'ukazka-host' | 'ukazka-host-pred' | 'ukazka-host-po' | 'ukazka-dop' | 'ukazka-firma';
 
 export type KlubPobytRadek = {
   nadpis: string;
@@ -87,7 +87,13 @@ function kartaZaklad(
 }
 
 export function jeUkazkaKlic(k: string): k is KlubUkazkaId {
-  return k === 'ukazka-host' || k === 'ukazka-dop' || k === 'ukazka-firma';
+  return (
+    k === 'ukazka-host' ||
+    k === 'ukazka-host-pred' ||
+    k === 'ukazka-host-po' ||
+    k === 'ukazka-dop' ||
+    k === 'ukazka-firma'
+  );
 }
 
 export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
@@ -124,16 +130,17 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       kreditKc: 690,
     });
   }
+  const hostId = id === 'ukazka-host-pred' || id === 'ukazka-host-po' ? id : 'ukazka-host';
   return kartaZaklad({
-    id: 'ukazka-host',
+    id: hostId,
     kod: 'JANA4',
-    tajnyKlic: 'ukazka-host',
+    tajnyKlic: hostId,
     typ: 'host',
     role: ['host', 'doporucitel'],
     jmeno: 'Jana',
     prijmeni: 'Nováková',
-    utrataKc: 23600,
-    kreditKc: 460,
+    utrataKc: id === 'ukazka-host-pred' ? 0 : 23600,
+    kreditKc: id === 'ukazka-host-pred' ? 0 : 460,
   });
 }
 
@@ -163,23 +170,29 @@ export function pohledZKarty(
   let pratele: KlubPratelRadek[] = [];
 
   if (ukazka && pohled === 'host') {
-    nadchazejici = [
-      {
-        nadpis: '12.–15. 3. 2027 · Apartmán 2',
-        podnadpis: 'Adresa, příjezd, kódy',
-        pruvodceUrl: `${base}/nahled`,
-      },
-    ];
-    pobyty = [
-      { nadpis: '2.–5. 10. 2026', podnadpis: 'Apartmán 2' },
-      { nadpis: '14.–16. 6. 2026', podnadpis: 'Apartmán 5' },
-      { nadpis: '7.–9. 2. 2026', podnadpis: 'Apartmán 1' },
-    ];
-    pratele = [
-      { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
-      { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
-      { jmeno: 'Eva · leden 2027', stav: 'čeká na pobyt' },
-    ];
+    const pred = karta.tajnyKlic === 'ukazka-host-pred';
+    const jenPo = karta.tajnyKlic === 'ukazka-host-po';
+    if (!jenPo) {
+      nadchazejici = [
+        {
+          nadpis: '12.–15. 3. 2027 · Apartmán 2',
+          podnadpis: 'Adresa, příjezd, kódy',
+          pruvodceUrl: `${base}/nahled`,
+        },
+      ];
+    }
+    if (!pred) {
+      pobyty = [
+        { nadpis: '2.–5. 10. 2026', podnadpis: 'Apartmán 2' },
+        { nadpis: '14.–16. 6. 2026', podnadpis: 'Apartmán 5' },
+        { nadpis: '7.–9. 2. 2026', podnadpis: 'Apartmán 1' },
+      ];
+      pratele = [
+        { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
+        { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
+        { jmeno: 'Eva · leden 2027', stav: 'čeká na pobyt' },
+      ];
+    }
   } else if (ukazka && pohled === 'firma') {
     nadchazejici = [
       { nadpis: 'Ing. Dvořák · 1.–5. 12. 2026', podnadpis: 'Apartmán 3' },
