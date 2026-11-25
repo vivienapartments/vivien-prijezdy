@@ -184,26 +184,76 @@
   padding-top: 0.65rem;
 }
 
+.klub-pruh-urovne {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  font-size: 0.82rem;
+  color: #cfc5b0;
+}
+
+.klub-pruh-urovne__dalsi {
+  color: #c9a84c;
+  text-align: right;
+}
+
 .klub-bar--dual {
   display: flex;
   overflow: hidden;
 }
 
-/* Silnější než .klub-bar span, ať se barvy nepřekryjí zlatou. */
+/* Silnější než .klub-bar span. Zlatá = odbydlené, modrá = tento/čekající, šedá = track. */
 .klub-bar--dual .klub-bar__a {
   display: block;
   height: 100%;
-  /* Započtená útrata – oranžová (stejná jako řádek pobytu) */
-  background: #e08a3c;
+  background: #c9a84c;
   flex-shrink: 0;
 }
 
 .klub-bar--dual .klub-bar__b {
   display: block;
   height: 100%;
-  /* Čeká po odjezdu – světle modrá */
   background: #7fb8e6;
   flex-shrink: 0;
+}
+
+.klub-pruh-leg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.35rem;
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: #a89c86;
+  text-align: left;
+}
+
+.klub-pruh-leg i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  vertical-align: middle;
+  flex: none;
+}
+
+.klub-pruh-leg i.is-zap {
+  background: #c9a84c;
+}
+
+.klub-pruh-leg i.is-ceka {
+  background: #7fb8e6;
+}
+
+.klub-pruh-leg i.is-zbyva {
+  background: #3d342a;
+  box-shadow: inset 0 0 0 1px #5a4c3a;
+}
+
+.klub-pruh-leg span {
+  margin-left: 0.15rem;
 }
 
 .klub-ceka-castka {

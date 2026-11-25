@@ -214,23 +214,44 @@ export default function KlubClient() {
           {maUroven && pokrok && !skromnyZbytek ? (
             <>
               {(() => {
-                // Pruh = cesta k další úrovni (100 % = práh další úrovně).
-                // Oranžová = už započtená útrata. Modrá = čeká po odjezdu.
+                // Verze 2 (legenda barev): zlatá = odbydlené, modrá = tento/čekající, šedá = zbývá.
+                // Bez čísel útraty po krajích. X v legendě = kolik zbývá po odjezdu.
                 const ceka = karta.utrataCekaKc || 0;
                 const serazene = [...KLUB_UROVNE_PRO_LADDER].sort((a, b) => a.odKc - b.odKc);
+                const aktualni = serazene[pokrok.index] || serazene[0];
                 const dalsi = serazene[pokrok.index + 1] || null;
+                const nazevTed = jeFirma ? aktualni.nazevFirma : aktualni.nazevHost;
+                const nazevDalsi = dalsi
+                  ? jeFirma
+                    ? dalsi.nazevFirma
+                    : dalsi.nazevHost
+                  : null;
                 const cilKc = dalsi ? dalsi.odKc : Math.max(karta.utrataKc + ceka, 1);
-                const wOrange = Math.min(100, Math.round((karta.utrataKc / cilKc) * 100));
+                const wGold = Math.min(100, Math.round((karta.utrataKc / cilKc) * 1000) / 10);
                 const wBlue =
-                  ceka > 0 ? Math.min(100 - wOrange, Math.round((ceka / cilKc) * 100)) : 0;
-                const chybiPo = dalsi ? Math.max(0, cilKc - karta.utrataKc - ceka) : 0;
+                  ceka > 0
+                    ? Math.min(100 - wGold, Math.round((ceka / cilKc) * 1000) / 10)
+                    : 0;
+                const chybiPo = dalsi
+                  ? Math.max(0, cilKc - karta.utrataKc - ceka)
+                  : 0;
                 return (
                   <>
+                    <div className="klub-pruh-urovne">
+                      <span className="klub-pruh-urovne__ted">
+                        {nazevTed} · {aktualni.slevaPct} %
+                      </span>
+                      <span className="klub-pruh-urovne__dalsi">
+                        {nazevDalsi && dalsi
+                          ? `${nazevDalsi} · ${dalsi.slevaPct} %`
+                          : tx.nejvyssi}
+                      </span>
+                    </div>
                     <div className="klub-bar klub-bar--dual" aria-hidden>
-                      {wOrange > 0 ? (
+                      {wGold > 0 ? (
                         <span
                           className="klub-bar__a"
-                          style={{ width: `${wOrange}%`, background: '#e08a3c' }}
+                          style={{ width: `${wGold}%`, background: '#c9a84c' }}
                         />
                       ) : null}
                       {wBlue > 0 ? (
@@ -240,61 +261,11 @@ export default function KlubClient() {
                         />
                       ) : null}
                     </div>
-                    <div className="klub-bt">
-                      <span>
-                        {karta.utrataKc > 0 ? (
-                          <>
-                            {tx.utrata(formatKc(karta.utrataKc))}
-                            {ceka > 0 ? (
-                              <>
-                                <br />
-                                <span className="klub-ceka-castka">
-                                  + {formatKc(ceka)} po odjezdu
-                                </span>
-                              </>
-                            ) : null}
-                          </>
-                        ) : ceka > 0 ? (
-                          <span className="klub-ceka-castka">
-                            {formatKc(ceka)} po odjezdu
-                          </span>
-                        ) : (
-                          tx.utrata(formatKc(0))
-                        )}
-                      </span>
-                      <span>
-                        {ceka > 0 && dalsi && pokrok.dalsiNazev && pokrok.dalsiPct != null ? (
-                          karta.utrataKc > 0 && pokrok.chybiKc != null ? (
-                            <>
-                              {tx.doUrovne(
-                                pokrok.dalsiNazev,
-                                pokrok.dalsiPct,
-                                formatKc(pokrok.chybiKc),
-                              )}
-                              <br />
-                              <span className="klub-ceka-castka">
-                                {chybiPo > 0
-                                  ? `po odjezdu jen ${formatKc(chybiPo)}`
-                                  : `po odjezdu ${pokrok.dalsiNazev}`}
-                              </span>
-                            </>
-                          ) : (
-                            <span className="klub-ceka-castka">
-                              {chybiPo > 0
-                                ? `po odjezdu do úrovně ${pokrok.dalsiNazev} (${pokrok.dalsiPct} %) jen ${formatKc(chybiPo)}`
-                                : `po odjezdu ${pokrok.dalsiNazev}`}
-                            </span>
-                          )
-                        ) : pokrok.dalsiNazev && pokrok.dalsiPct != null && pokrok.chybiKc != null ? (
-                          tx.doUrovne(
-                            pokrok.dalsiNazev,
-                            pokrok.dalsiPct,
-                            formatKc(pokrok.chybiKc),
-                          )
-                        ) : (
-                          tx.nejvyssi
-                        )}
-                      </span>
+                    <div className="klub-pruh-leg" aria-hidden>
+                      <i className="is-zap" />
+                      <i className="is-ceka" />
+                      <i className="is-zbyva" />
+                      <span>{tx.pruhLegenda(formatKc(chybiPo))}</span>
                     </div>
                   </>
                 );

@@ -42,21 +42,41 @@ const KLUB = L('VIVIEN Klub', 'VIVIEN Club', {
 });
 
 const SLEVA = L(
-  'Vaše sleva na přímé rezervace: {pct} %',
-  'Your discount on direct bookings: {pct} %',
+  'Sleva na váš další pobyt: {pct} %',
+  'Discount on your next stay: {pct} %',
   {
-    de: 'Ihr Rabatt auf Direktbuchungen: {pct} %',
-    pl: 'Wasz rabat na bezpośrednie rezerwacje: {pct} %',
-    uk: 'Ваша знижка на прямі бронювання: {pct} %',
-    'zh-Hant': '您的直接預訂折扣：{pct} %',
-    es: 'Su descuento en reservas directas: {pct} %',
-    fr: 'Votre réduction sur les réservations directes : {pct} %',
-    it: 'Il vostro sconto sulle prenotazioni dirette: {pct} %',
-    pt: 'O vosso desconto em reservas diretas: {pct} %',
-    sv: 'Er rabatt på direkta bokningar: {pct} %',
-    hu: 'Az Ön kedvezménye közvetlen foglalásokra: {pct} %',
-    da: 'Jeres rabat på direkte bookinger: {pct} %',
-    fi: 'Alennuksenne suoriin varauksiin: {pct} %',
+    de: 'Rabatt auf Ihren nächsten Aufenthalt: {pct} %',
+    pl: 'Rabat na kolejny pobyt: {pct} %',
+    uk: 'Знижка на ваше наступне перебування: {pct} %',
+    'zh-Hant': '您下次住宿的折扣：{pct} %',
+    es: 'Descuento en su próxima estancia: {pct} %',
+    fr: 'Réduction sur votre prochain séjour : {pct} %',
+    it: 'Sconto sul prossimo soggiorno: {pct} %',
+    pt: 'Desconto na próxima estadia: {pct} %',
+    sv: 'Rabatt på er nästa vistelse: {pct} %',
+    hu: 'Kedvezmény a következő tartózkodásra: {pct} %',
+    da: 'Rabat på jeres næste ophold: {pct} %',
+    fi: 'Alennus seuraavasta majoituksesta: {pct} %',
+  },
+);
+
+/** Legenda pod pruhem: vaše pobyty · tento pobyt · zbývá X Kč */
+const PRUH_LEG = L(
+  'vaše pobyty · tento pobyt · zbývá {kc}',
+  'your stays · this stay · {kc} left',
+  {
+    de: 'Ihre Aufenthalte · dieser Aufenthalt · es fehlen {kc}',
+    pl: 'wasze pobyty · ten pobyt · brakuje {kc}',
+    uk: 'ваші проживання · це проживання · лишається {kc}',
+    'zh-Hant': '您的住宿 · 本次住宿 · 還差 {kc}',
+    es: 'sus estancias · esta estancia · faltan {kc}',
+    fr: 'vos séjours · ce séjour · il reste {kc}',
+    it: 'i vostri soggiorni · questo soggiorno · mancano {kc}',
+    pt: 'as vossas estadias · esta estadia · faltam {kc}',
+    sv: 'era vistelser · denna vistelse · {kc} kvar',
+    hu: 'az Ön tartózkodásai · ez a tartózkodás · még {kc}',
+    da: 'jeres ophold · dette ophold · {kc} mangler',
+    fi: 'majoituksenne · tämä majoitus · jäljellä {kc}',
   },
 );
 
@@ -641,11 +661,12 @@ function fill(tpl: string, map: Record<string, string>): string {
 export function klubTexty(lang: GuideLang) {
   return {
     klub: t(KLUB, lang),
-    sleva: (pct: number) => fill(t(SLEVA, lang), { pct: String(pct) }),
+    sleva: (pct: number) => fill(t(SLEVA, lang), { pct: String(Math.max(5, pct || 0)) }),
     dopPopis: t(DOP_POPIS, lang),
     utrata: (kc: string) => fill(t(UTRATA, lang), { kc }),
     doUrovne: (nazev: string, pct: number, kc: string) =>
       fill(t(DO_UROVNE, lang), { nazev, pct: String(pct), kc }),
+    pruhLegenda: (kc: string) => fill(t(PRUH_LEG, lang), { kc }),
     nejvyssi: t(NEJVYSSI, lang),
     nadchazejici: t(NADCH, lang),
     nadchazejiciFirma: t(NADCH_F, lang),
