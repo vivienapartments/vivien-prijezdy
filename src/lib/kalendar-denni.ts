@@ -385,6 +385,7 @@ export function nejlevnejsiVolnyPobyt(
   prijezd: string,
   odjezd: string,
   kandidati?: AptId[],
+  slevaPct: number = POPTAVKA_SLEVA_PCT,
 ): CenaPobytu | null {
   const apty = (kandidati && kandidati.length ? kandidati : aptyVolneVeTerminu(mapa, prijezd, odjezd)).filter(
     (id) => aptyVolneVeTerminu(mapa, prijezd, odjezd).includes(id),
@@ -393,7 +394,7 @@ export function nejlevnejsiVolnyPobyt(
   for (const apt of apty) {
     const suma = cenaApartmanuZaPobyt(mapa, apt, prijezd, odjezd);
     if (suma == null) continue;
-    const seSlevou = slevaPctCastka(suma);
+    const seSlevou = slevaPct > 0 ? slevaPctCastka(suma, slevaPct) : suma;
     if (!best || suma < best.suma) best = { apt, suma, seSlevou };
   }
   return best;

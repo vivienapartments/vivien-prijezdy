@@ -313,6 +313,8 @@ Typ ceny je slabší (mění se, hůř se čte).
 
 ## 2026-11-25 21:07 · BH šablony večer (doplnění dávky 2)
 
+Nasazeno na master `d681338` (ostrá). Zdroj na `doporuceni` `f77b51b`.
+
 - **VIVIEN-DATA v1** (automat po check-inu → info@): čte ACC_PRICE, SALDO, KUPON, FAKTURA_PRO, ZALOZIL, CHECKIN_URL i **bez** `TYP: PRIMA`. Staré maily bez těchto řádků fungují dál.
 - **Šablona „přímá“** (`TYP: PRIMA`): ručně z BH na info@ = jistá přímá. Cizí odesílatel nebo bez platného KLIC → odmítnout + Telegram. Hostovi nic.
 - Automatická kampaň v BH je **vypnutá** (neumí jen info@). Do hovoru s BH zítra zůstává ruční odeslání.

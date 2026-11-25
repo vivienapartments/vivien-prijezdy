@@ -237,6 +237,10 @@ async function ulozIndexy(store: ProcessStore, karta: KlientKarta): Promise<void
   if (em) await setJson(store, `klient-index:email:${em}`, { id: karta.id });
   const ico = (karta.firma?.ico || '').replace(/\D/g, '');
   if (ico) await setJson(store, `klient-index:ico:${ico}`, { id: karta.id });
+  for (const rez of karta.rezervace || []) {
+    const id = String(rez || '').trim();
+    if (id) await setJson(store, `klient-index:rez:${id}`, { id: karta.id });
+  }
 }
 
 export async function ulozKlientKartu(store: ProcessStore, karta: KlientKarta): Promise<void> {

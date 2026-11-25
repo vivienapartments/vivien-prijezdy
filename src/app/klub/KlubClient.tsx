@@ -176,7 +176,8 @@ export default function KlubClient() {
 
   const prijeli = pocetPrijeli(karta.pratele);
   const maNadchazejici = karta.nadchazejici.length > 0;
-  const skromnyZbytek = maNadchazejici && !jeDop;
+  /** Před příjezdem / během pobytu: nahoře průvodce, zbytek skromně. Po odjezdu celá karta. */
+  const skromnyZbytek = maNadchazejici && karta.pobyty.length === 0 && !jeDop;
 
   const ladderRows = [...KLUB_UROVNE_PRO_LADDER]
     .sort((a, b) => a.odKc - b.odKc)
@@ -200,15 +201,17 @@ export default function KlubClient() {
         {!jeDop ? <img className="klub-foto" src={FOTO} alt="" /> : null}
         <div className="klub-hl">
           <h1 className="klub-jm">{karta.jmenoZobrazeni}</h1>
-          {maUroven ? (
+          {maUroven && !skromnyZbytek ? (
             <button type="button" className="klub-lv" onClick={() => setLadder((v) => !v)}>
               {tx.klub} · <b>{karta.urovenNazev}</b> <i>i</i>
             </button>
           ) : null}
-          <div className="klub-sl">
-            {jeDop ? tx.dopPopis : tx.sleva(karta.slevaPct)}
-          </div>
-          {maUroven && pokrok ? (
+          {!skromnyZbytek ? (
+            <div className="klub-sl">
+              {jeDop ? tx.dopPopis : tx.sleva(karta.slevaPct)}
+            </div>
+          ) : null}
+          {maUroven && pokrok && !skromnyZbytek ? (
             <>
               <div className="klub-bar" aria-hidden>
                 <span style={{ width: `${pokrok.pct}%` }} />
@@ -261,28 +264,30 @@ export default function KlubClient() {
               )}
             </section>
 
-            <section className="klub-sec">
-              <div className="klub-sn">{jeFirma ? tx.objednanePobyty : tx.mojePobyty}</div>
-              {karta.pobyty.length === 0 ? (
-                <p className="klub-prazdne">{tx.prazdnePobyty}</p>
-              ) : (
-                karta.pobyty.map((r, i) => (
-                  <div className="klub-radek" key={`p-${i}`}>
-                    <div className="klub-ik">
-                      <IkCal />
+            {!skromnyZbytek ? (
+              <section className="klub-sec">
+                <div className="klub-sn">{jeFirma ? tx.objednanePobyty : tx.mojePobyty}</div>
+                {karta.pobyty.length === 0 ? (
+                  <p className="klub-prazdne">{tx.prazdnePobyty}</p>
+                ) : (
+                  karta.pobyty.map((r, i) => (
+                    <div className="klub-radek" key={`p-${i}`}>
+                      <div className="klub-ik">
+                        <IkCal />
+                      </div>
+                      <div>
+                        <div className="klub-t">{r.nadpis}</div>
+                        <div className="klub-s">{r.podnadpis}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="klub-t">{r.nadpis}</div>
-                      <div className="klub-s">{r.podnadpis}</div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </section>
+                  ))
+                )}
+              </section>
+            ) : null}
           </>
         ) : null}
 
-        {jeFirma ? (
+        {jeFirma && !skromnyZbytek ? (
           <section className="klub-sec">
             <div className="klub-sn">{tx.fakturace}</div>
             <div className="klub-fu">
@@ -302,7 +307,8 @@ export default function KlubClient() {
 
         <section
           id="klub-dop"
-          className={`klub-sec${dopOpen || jeDop ? ' is-open' : ''}`}
+          className={`klub-sec${dopOpen || jeDop ? ' is-open' : ''}${skromnyZbytek && !jeDop ? ' klub-sec--skromne' : ''}`}
+          hidden={skromnyZbytek && !jeDop ? true : undefined}
         >
           {jeDop ? (
             <div className="klub-sn">{tx.mojeDoporuceni}</div>

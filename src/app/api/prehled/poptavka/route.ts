@@ -268,6 +268,26 @@ export async function POST(req: Request) {
 
   seznam[i] = z;
   await store.ulozPoptavky(seznam);
+
+  // Dávka 6: karta klienta hned při potvrzené přímé poptávce (ne až při předání).
+  if (z.stav === 'potvrzeno') {
+    try {
+      const { klubZapnut } = await import('@/lib/klub-klic');
+      if (klubZapnut()) {
+        const { sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
+        await sparujNeboVytvorKlienta(store, {
+          jmeno: z.jmeno,
+          email: null,
+          telefon: z.telefon,
+          rezervace: z.rezervace || null,
+          jazyk: z.jazyk || 'cs',
+        });
+      }
+    } catch {
+      /* klub nesmí shodit potvrzení */
+    }
+  }
+
   return NextResponse.json(
     { ok: true, poptavka: detailJson(z, cena.text), odkaz, zprava },
     { headers: noStore },

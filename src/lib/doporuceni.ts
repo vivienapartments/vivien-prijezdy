@@ -188,7 +188,7 @@ async function unikarniKod(store: ProcessStore): Promise<string> {
   throw new Error('Nepodařilo se vygenerovat unikátní kód doporučení');
 }
 
-async function seznamDoporuceniIds(store: ProcessStore): Promise<string[]> {
+export async function seznamDoporuceniIds(store: ProcessStore): Promise<string[]> {
   const raw = await getJson<string[]>(store, 'doporuceni:seznam');
   if (!Array.isArray(raw)) return [];
   return raw.filter((x): x is string => typeof x === 'string');

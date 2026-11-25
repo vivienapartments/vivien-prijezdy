@@ -69,14 +69,16 @@ export function usePoptavkaKalendar() {
     odjezd: string,
     apts: AptId[],
     libovolny: boolean,
-    seSlevou: boolean,
+    /** 0 = bez slevy; jinak % (klub nebo pevných 5). */
+    slevaPct: number,
   ): CenaPobytu | null {
     if (!prijezd || !odjezd) return null;
     if (terminPresPlnyDen(dny, prijezd, odjezd, bezApt)) return null;
+    const pct = Math.max(0, Math.round(slevaPct));
     if (libovolny || apts.length === 0) {
-      const best = nejlevnejsiVolnyPobyt(dny, prijezd, odjezd);
+      const best = nejlevnejsiVolnyPobyt(dny, prijezd, odjezd, undefined, pct || 0);
       if (!best) return null;
-      return seSlevou ? best : { ...best, seSlevou: best.suma };
+      return pct > 0 ? best : { ...best, seSlevou: best.suma };
     }
     if (apts.length === 1) {
       const suma = cenaApartmanuZaPobyt(dny, apts[0], prijezd, odjezd);
@@ -84,10 +86,10 @@ export function usePoptavkaKalendar() {
       return {
         apt: apts[0],
         suma,
-        seSlevou: seSlevou ? slevaPctCastka(suma) : suma,
+        seSlevou: pct > 0 ? slevaPctCastka(suma, pct) : suma,
       };
     }
-    return nejlevnejsiVolnyPobyt(dny, prijezd, odjezd, apts);
+    return nejlevnejsiVolnyPobyt(dny, prijezd, odjezd, apts, pct || 0);
   }
 
   const aptObsazenyVeTerminu = useCallback(

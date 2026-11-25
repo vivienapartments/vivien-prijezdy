@@ -60,6 +60,21 @@ import { VyberJazyka } from './VyberJazyka';
 import { formatKc, kalendarTexty, radekVolnychVTerminu, tvarNoci } from '@/lib/kalendar-texty';
 import { nociPobytu } from '@/lib/kalendar-denni';
 import { uvodVysledkuVolne, vysledekTexty } from '@/lib/poptavka-vysledek-texty';
+import {
+  slevaDelkaPct,
+  vyslednaSlevaPct,
+  VYCHOZI_KLUB_PRAVIDLA,
+} from '@/lib/klub-pravidla';
+import {
+  cenaPoKreditu,
+  textSlevyPobytu,
+  type SlevaDuvod,
+} from '@/lib/klub-poptavka-sleva';
+import {
+  PRAZDNY_KLUB_POPTAVKA,
+  type KlubPoptavkaKontext,
+} from '@/lib/klub-poptavka-kontext';
+import { POPTAVKA_SLEVA_PCT } from '@/lib/poptavka';
 import './poptavka.scss';
 
 const GUIDE_LANG_SET = new Set<string>(GUIDE_LANGS);
@@ -76,6 +91,8 @@ export type PoptavkaVstupni = {
   telefon: string;
   /** Zkouška: nic se neukládá. */
   suchyBeh?: boolean;
+  /** Klub (dávka 4). Při vypnutém klubu se ignoruje. */
+  klub?: KlubPoptavkaKontext;
 };
 
 type Krok = 'termin' | 'zpusob' | 'apartmany' | 'pruvodce' | 'kontakt';
@@ -90,11 +107,12 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const vernost = props.zdroj === 'vernost' || props.zdroj === 'doporucitel';
   const doporucitel = props.zdroj === 'doporucitel';
   const suchyBeh = Boolean(props.suchyBeh);
+  const klub = props.klub || PRAZDNY_KLUB_POPTAVKA;
   const [lang, setLang] = useState<GuideLang>(props.lang);
   const kal = usePoptavkaKalendar();
   const firma = props.zdroj === 'firma';
   const ukazCeny = kal.cenyZapnuto && !firma;
-  const slevaCesty = props.zdroj === 'vernost' || props.zdroj === 'doporucitel';
+  const [pouzitKredit, setPouzitKredit] = useState(false);
   const t = poptavkaTexty(lang, props.zdroj, kal.cenyZapnuto);
   const kt = kalendarTexty(lang);
   const uiDop = doporucitel ? doporucitelUiTexty(lang) : null;
@@ -103,6 +121,47 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [krok, setKrok] = useState<Krok>('termin');
   const [prijezd, setPrijezd] = useState('');
   const [odjezd, setOdjezd] = useState('');
+  const noci = useMemo(
+    () => (prijezd && odjezd ? nociPobytu(prijezd, odjezd).length : 0),
+    [prijezd, odjezd],
+  );
+  const slevaInfo = useMemo(() => {
+    if (klub.zapnuto) {
+      const jeDoporucenyPrvniPobyt = doporucitel && !klub.maDokoncenyPobyt;
+      const pct = vyslednaSlevaPct(
+        {
+          noci: noci || 1,
+          prijezd: prijezd || null,
+          jeFirma: klub.jeFirma || firma,
+          jeDoporucenyPrvniPobyt,
+          jeDoporucitelBezPobytu: klub.jeDoporucitelBezPobytu && props.zdroj === 'vernost',
+          maDokoncenyPobyt: klub.maDokoncenyPobyt,
+          utrataKc: klub.utrataKc,
+        },
+        VYCHOZI_KLUB_PRAVIDLA,
+      );
+      const delka = slevaDelkaPct(noci || 1, VYCHOZI_KLUB_PRAVIDLA);
+      let duvod: SlevaDuvod = null;
+      if (pct > 0) {
+        if (delka >= pct && delka > 0) duvod = 'delka';
+        else if (klub.jeFirma || firma) duvod = 'firma';
+        else if (jeDoporucenyPrvniPobyt) duvod = 'doporuceny';
+        else if (klub.jeDoporucitelBezPobytu) duvod = 'doporucitel';
+        else if (klub.maDokoncenyPobyt) duvod = 'staly';
+        else duvod = 'cesta';
+      }
+      return { pct, duvod, text: textSlevyPobytu(pct, duvod) };
+    }
+    // Bez klubu: sleva v ceně jen věrný / doporučený (firma má text, ne výpočet ceny).
+    const pct = vernost ? POPTAVKA_SLEVA_PCT : 0;
+    return {
+      pct,
+      duvod: (vernost ? 'cesta' : null) as SlevaDuvod,
+      text: t.sleva || '',
+    };
+  }, [klub, noci, prijezd, doporucitel, firma, vernost, props.zdroj, t.sleva]);
+  const slevaPct = slevaInfo.pct;
+  const slevaCesty = slevaPct > 0;
   const [zpusob, setZpusob] = useState<'doporucit' | 'vybrat' | 'pruvodce' | null>(null);
   const [apts, setApts] = useState<AptId[]>([]);
   const [jmeno, setJmeno] = useState(props.jmeno);
@@ -400,12 +459,12 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         jazyk: lang,
         cenaKc: (() => {
           if (!ukazCeny || !prijezd || !odjezd) return null;
-          const c = kal.cenaProVyber(prijezd, odjezd, apts, libovolny, slevaCesty);
+          const c = kal.cenaProVyber(prijezd, odjezd, apts, libovolny, slevaPct);
           return c ? (slevaCesty ? c.seSlevou : c.suma) : null;
         })(),
         cenaSeSlevou: slevaCesty && ukazCeny,
       }),
-    [props, jmeno, telefon, prijezd, odjezd, apts, libovolny, dopravaOdeslat, poznamka, lang, ukazCeny, slevaCesty, kal],
+    [props, jmeno, telefon, prijezd, odjezd, apts, libovolny, dopravaOdeslat, poznamka, lang, ukazCeny, slevaCesty, slevaPct, kal],
   );
 
   const wa = odkazWaPoptavky(zprava);
@@ -472,12 +531,12 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
 
   const cenaVyberu =
     ukazCeny && prijezd && odjezd
-      ? kal.cenaProVyber(prijezd, odjezd, apts, libovolny, slevaCesty)
+      ? kal.cenaProVyber(prijezd, odjezd, apts, libovolny, slevaPct)
       : null;
   const nociPocet = prijezd && odjezd ? nociPobytu(prijezd, odjezd).length : 0;
   const cenaGalerie =
     ukazCeny && prijezd && odjezd && galerieAptId
-      ? kal.cenaProVyber(prijezd, odjezd, [galerieAptId], false, slevaCesty)
+      ? kal.cenaProVyber(prijezd, odjezd, [galerieAptId], false, slevaPct)
       : null;
 
   function telefonOk(rawIn?: string): boolean {
@@ -530,6 +589,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           honeypot,
           kanal,
           zkouska: suchyBeh || undefined,
+          slevaPct: slevaPct > 0 ? slevaPct : undefined,
+          pouzitKredit: pouzitKredit || undefined,
+          kreditKc: pouzitKredit ? klub.kreditKc : undefined,
         }),
       });
       const json = (await res.json()) as {
@@ -755,7 +817,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
               <p className="pp__firma">{t.firmaRadek.replace('{firma}', props.firmaNazev)}</p>
             ) : null}
             {!hotovo ? <p className="pp__uvod">{t.uvod}</p> : null}
-            {t.sleva ? <p className="pp__sleva">{t.sleva}</p> : null}
+            {slevaInfo.text ? <p className="pp__sleva">{slevaInfo.text}</p> : null}
           </>
         ) : null}
         {vernost && !hotovo && krok === 'termin' ? (
@@ -948,7 +1010,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                               const fotkyApt = galerieUrls(webLang, a);
                               const cenaApt =
                                 ukazCeny && prijezd && odjezd
-                                  ? kal.cenaProVyber(prijezd, odjezd, [id], false, slevaCesty)
+                                  ? kal.cenaProVyber(prijezd, odjezd, [id], false, slevaPct)
                                   : null;
                               return (
                                 <div
@@ -1135,7 +1197,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     const obs = prijezd && odjezd ? kal.aptObsazenyVeTerminu(a.id, prijezd, odjezd) : false;
                     const cenaApt =
                       ukazCeny && prijezd && odjezd && !obs
-                        ? kal.cenaProVyber(prijezd, odjezd, [a.id], false, slevaCesty)
+                        ? kal.cenaProVyber(prijezd, odjezd, [a.id], false, slevaPct)
                         : null;
                     return (
                       <button
@@ -1242,6 +1304,25 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     </p>
                   </>
                 )}
+                {klub.zapnuto && slevaInfo.text ? (
+                  <p className="pp__sleva pp__sleva--kontakt">{slevaInfo.text}</p>
+                ) : null}
+                {klub.zapnuto && klub.kreditKc > 0 ? (
+                  <label className="pp__kredit">
+                    <input
+                      type="checkbox"
+                      checked={pouzitKredit}
+                      onChange={(e) => setPouzitKredit(e.target.checked)}
+                    />
+                    {`Použít kredit (${klub.kreditKc}\u00a0Kč)`}
+                    {pouzitKredit && ukazCeny && cenaVyberu ? (
+                      <span className="pp__kredit-po">
+                        {' '}
+                        → {formatKc(cenaPoKreditu(cenaVyberu.seSlevou, klub.kreditKc, true))}
+                      </span>
+                    ) : null}
+                  </label>
+                ) : null}
                 {kontaktZKarty ? (
                   <div className="pp__kontakt-z-karty">
                     <p className="pp__kontakt-z-karty-jmeno">{jmeno || props.jmeno}</p>

@@ -13,6 +13,7 @@ import { createProcessStore } from '@/lib/store';
 import { parseSignedToken } from '@/lib/token';
 import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
 import { verejnaAdresa } from '@/lib/verejna-adresa';
+import { nactiKlubPoptavkaKontext, PRAZDNY_KLUB_POPTAVKA } from '@/lib/klub-poptavka-kontext';
 import { PoptavkaForm } from './PoptavkaForm';
 
 type Props = {
@@ -135,6 +136,24 @@ export default async function PoptavkaPage({ searchParams }: Props) {
     lang = q.lang as GuideLang;
   }
 
+  let klub = PRAZDNY_KLUB_POPTAVKA;
+  try {
+    const store = createProcessStore();
+    let email: string | null = null;
+    if (rezervace) {
+      const rec = await store.getRezervace(rezervace);
+      email = rec?.emailHosta || null;
+    }
+    klub = await nactiKlubPoptavkaKontext(store, {
+      zdroj,
+      rezervace,
+      email,
+      telefon,
+    });
+  } catch {
+    klub = PRAZDNY_KLUB_POPTAVKA;
+  }
+
   return (
     <PoptavkaForm
       lang={lang}
@@ -147,6 +166,7 @@ export default async function PoptavkaPage({ searchParams }: Props) {
       jmeno={jmeno}
       telefon={telefon}
       suchyBeh={suchyBeh}
+      klub={klub}
     />
   );
 }

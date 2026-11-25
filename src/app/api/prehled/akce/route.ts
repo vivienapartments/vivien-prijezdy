@@ -615,6 +615,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       const { klubZapnut } = await import('@/lib/klub-klic');
       if (klubZapnut()) {
         const { pridejUtratuPoPredani, sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
+        const { pridejOdmenuPoPredani } = await import('@/lib/klub-odmena');
         await sparujNeboVytvorKlienta(store, {
           jmeno: dalsi.jmeno,
           email: dalsi.emailHosta,
@@ -623,6 +624,11 @@ export async function POST(request: Request): Promise<NextResponse> {
           jazyk: dalsi.jazyk || 'cs',
         });
         await pridejUtratuPoPredani(store, dalsi);
+        try {
+          await pridejOdmenuPoPredani(store, dalsi);
+        } catch {
+          /* odměna nesmí shodit předání */
+        }
       }
     } catch {
       /* klub nesmí shodit předání */

@@ -66,6 +66,32 @@
   font-size: 1.02rem;
 }
 
+.pp__sleva--kontakt {
+  margin: 0.5rem 0 0.75rem;
+  text-align: left;
+}
+
+.pp__kredit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.9rem;
+  color: #e8dfd0;
+  font-size: 0.95rem;
+}
+
+.pp__kredit input {
+  accent-color: #c9a84c;
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.pp__kredit-po {
+  color: #c9a84c;
+  font-weight: 600;
+}
+
 .pp__chyba {
   color: #e8a0a0;
 }

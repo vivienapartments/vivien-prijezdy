@@ -309,22 +309,22 @@ export const blizciPrikladRadek3: LText = {
   fi: 'te saatte meiltä 200\\u00a0Kč.',
 };
 
-/** Odměna = sleva na další pobyt (ne výplata na účet). Částky 5 % a 200 Kč zlatě. */
+/** Odměna doporučiteli: 5 % z 1. pobytu kamaráda + 2 % z dalších přímých (12 měsíců). */
 export const blizciPrikladRadek4: LText = {
-  cs: 'Na váš další pobyt tak máte slevu 5\u00a0% a k tomu slevu dalších 200\u00a0Kč.',
-  en: 'For your next stay you then have a 5\u00a0% discount and an extra 200\u00a0Kč off.',
-  de: 'Für Ihren nächsten Aufenthalt haben Sie so 5\u00a0% Rabatt und zusätzlich 200\u00a0Kč.',
-  pl: 'Na kolejny pobyt macie wtedy zniżkę 5\u00a0% i dodatkowo 200\u00a0Kč.',
-  uk: 'На наступне перебування так маєте знижку 5\u00a0% і ще знижку 200\u00a0Kč.',
-  'zh-Hant': '下次入住因此享有 5\u00a0% 折扣，外加 200\u00a0Kč。',
-  es: 'Para su próxima estancia tienen así un 5\u00a0% de descuento y 200\u00a0Kč más.',
-  fr: 'Pour votre prochain séjour vous avez ainsi 5\u00a0% de réduction et 200\u00a0Kč de plus.',
-  it: 'Per il prossimo soggiorno avete così lo sconto del 5\u00a0% e altri 200\u00a0Kč.',
-  pt: 'Na próxima estadia ficam assim com 5\u00a0% de desconto e mais 200\u00a0Kč.',
-  sv: 'Till nästa vistelse har ni då 5\u00a0% rabatt och ytterligare 200\u00a0Kč.',
-  hu: 'A következő tartózkodásra így 5\u00a0% kedvezményük van, és további 200\u00a0Kč.',
-  da: 'Til jeres næste ophold har I så 5\u00a0% rabat og yderligere 200\u00a0Kč.',
-  fi: 'Seuraavaan majoitukseenne saatte siis 5\\u00a0% alennuksen ja lisäksi 200\\u00a0Kč:n alennuksen.',
+  cs: 'Za první přímý pobyt kamaráda dostanete 5\u00a0% jako kredit. Za další přímé pobyty do 12 měsíců od jeho prvního pobytu 2\u00a0%.',
+  en: 'For a friend’s first direct stay you get 5\u00a0% as credit. For further direct stays within 12 months of their first stay, 2\u00a0%.',
+  de: 'Für den ersten direkten Aufenthalt eines Freundes erhalten Sie 5\u00a0% als Guthaben. Für weitere direkte Aufenthalte innerhalb von 12 Monaten nach dem ersten 2\u00a0%.',
+  pl: 'Za pierwszy bezpośredni pobyt znajomego dostaniecie 5\u00a0% jako kredyt. Za kolejne bezpośrednie pobyty w ciągu 12 miesięcy od pierwszego 2\u00a0%.',
+  uk: 'За перше пряме перебування друга отримаєте 5\u00a0% як кредит. За наступні прямі протягом 12 місяців від першого 2\u00a0%.',
+  'zh-Hant': '親友首次直接入住可得 5\u00a0% 點數；自其首次起 12 個月內再次直接入住可得 2\u00a0%。',
+  es: 'Por la primera estancia directa de un amigo reciben 5\u00a0% como crédito. Por más estancias directas en 12 meses desde la primera, 2\u00a0%.',
+  fr: 'Pour le premier séjour direct d’un ami vous recevez 5\u00a0% en crédit. Pour d’autres séjours directs dans les 12 mois après le premier, 2\u00a0%.',
+  it: 'Per il primo soggiorno diretto di un amico ricevete il 5\u00a0% come credito. Per altri soggiorni diretti entro 12 mesi dal primo, il 2\u00a0%.',
+  pt: 'Pela primeira estadia direta de um amigo recebem 5\u00a0% em crédito. Por outras estadias diretas em 12 meses após a primeira, 2\u00a0%.',
+  sv: 'För en väns första direkta vistelse får ni 5\u00a0% som kredit. För fler direkta vistelser inom 12 månader från den första 2\u00a0%.',
+  hu: 'Ismerősük első közvetlen tartózkodásáért 5\u00a0% kreditet kapnak. További közvetlen tartózkodásokért az elsőtől számított 12 hónapon belül 2\u00a0%.',
+  da: 'For en vens første direkte ophold får I 5\u00a0% som kredit. For flere direkte ophold inden for 12 måneder fra det første 2\u00a0%.',
+  fi: 'Ystävän ensimmäisestä suorasta majoituksesta saatte 5\\u00a0% krediittiä. Lisäsuorista majoituksista 12 kuukauden sisällä ensimmäisestä 2\\u00a0%.',
 };
 
 /** Starší jednořádkový text (e-mail / prostý text). */

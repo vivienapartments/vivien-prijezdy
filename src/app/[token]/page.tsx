@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Guide } from '@/components/Guide';
 import { OtevreniBeacon } from '@/components/OtevreniBeacon';
 import { Expired } from '@/components/Expired';
 import { nightsBetween } from '@/lib/dates';
 import { kodyProHosta } from '@/lib/kody-pruvodce';
+import { klubZapnut } from '@/lib/klub-klic';
 import { oknoProHosta } from '@/lib/okno-pobytu';
 import { poplatekZTokenu } from '@/lib/poplatek';
 import { loadSecrets } from '@/lib/secrets';
@@ -65,6 +66,27 @@ export default async function TokenPage({ params }: Props) {
     rec?.jazyk && GUIDE_LANGS.includes(rec.jazyk) ? rec.jazyk : (l as GuideLang);
   const denPlatnosti = denPlatnostiPruvodce(d, rec?.odjezd);
   if (isDepartureExpired(denPlatnosti)) {
+    // Dávka 6: po odjezdu ikona na ploše → karta klubu (starý start_url /{token} dál funguje).
+    if (klubZapnut() && rec) {
+      try {
+        const { klubKlic } = await import('@/lib/klub-klic');
+        const raw = await store.getKv(klubKlic(`klient-index:rez:${rec.rezervace}`));
+        if (raw) {
+          const o = JSON.parse(raw) as { id?: string };
+          if (o.id) {
+            const { nactiKlientPodleId } = await import('@/lib/klient-karta');
+            const k = await nactiKlientPodleId(store, o.id);
+            if (k?.tajnyKlic && k.stav === 'aktivni') {
+              redirect(`/klub?k=${encodeURIComponent(k.tajnyKlic)}`);
+            }
+          }
+        }
+      } catch (err) {
+        // redirect() hází speciální chybu – musí projít ven.
+        if (err && typeof err === 'object' && 'digest' in err) throw err;
+        /* spadni na Expired */
+      }
+    }
     return <Expired lang={lang} token={decodeURIComponent(token)} />;
   }
 
