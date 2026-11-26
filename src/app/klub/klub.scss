@@ -1,9 +1,23 @@
+/* Karta klubu – tón podle úrovně, kartička, tlačítka B/C.
+   Barvy ze schválených náhledů (PROMPT-KARTA-TLACITKA-A-STAVY). */
+
 .klub-page {
+  --acc: #cbbfa6;
+  --bg: #1d1b17;
+  --mid: #3b372f;
+  --tile: #2b2822;
+  --tb: #7d7462;
+  --tx: #efe7d6;
+  --sec: #a39a88;
+  --modra: #4580b8;
+  --seda-ceka: #a89c86;
+  --pruvodce: #c9a84c;
+
   min-height: 100dvh;
   margin: 0;
   padding: 0 0 2rem;
   background: #0d0b0a;
-  color: #e8dfc8;
+  color: var(--tx);
   font-family: var(--font-body, 'DM Sans'), system-ui, sans-serif;
   display: flex;
   flex-direction: column;
@@ -12,99 +26,186 @@
 
 .klub-shell {
   width: min(26rem, 100%);
-  background: #1c1712;
+  background: var(--bg);
   border-radius: 22px;
   overflow: hidden;
   margin: 0.75rem 0.75rem 0;
-  border: 1px solid #3d342a;
-  padding-bottom: 1.25rem;
+  border: 1px solid var(--mid);
+  padding: 12px 12px 1.25rem;
+  box-sizing: border-box;
 }
 
-.klub-foto {
-  width: 100%;
-  height: 130px;
-  object-fit: cover;
-  display: block;
-  background: #231d17;
+/* —— Kartička —— */
+.klub-karticka {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  padding: 14px 16px;
+  height: 126px;
+  box-sizing: border-box;
+  color: #1c1712;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  text-align: right;
 }
 
-.klub-hl {
-  padding: 1rem 1.25rem 0.25rem;
+.klub-karticka__vtisk {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  left: -50px;
+  top: -18px;
+  -webkit-mask: url(/klub/va-logo-vtisk-maska.png) center / contain no-repeat;
+  mask: url(/klub/va-logo-vtisk-maska.png) center / contain no-repeat;
+  pointer-events: none;
+}
+
+.klub-karticka__vtisk--tmavy {
+  background: #000;
+  opacity: 0.2;
+  transform: translate(1.2px, 1.2px);
+}
+
+.klub-karticka__vtisk--svetly {
+  background: #fff;
+  opacity: 0.32;
+  transform: translate(-0.8px, -0.8px);
+}
+
+.klub-karticka__vtisk--zaklad {
+  background: #000;
+  opacity: 0.05;
+}
+
+.klub-karticka__k1 {
+  position: relative;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.klub-karticka__k2 {
+  position: relative;
+  font-family: var(--font-display, 'Cormorant Garamond'), Georgia, serif;
+  font-size: 27px;
+  line-height: 1.15;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.klub-karticka__k3 {
+  position: relative;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.klub-karticka__k4 {
+  position: relative;
+  font-size: 11px;
+}
+
+.klub-karticka__k4 b {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Modrý rámeček „Tímto pobytem…“ */
+.klub-up {
+  margin: 9px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--modra);
+  background: #121c26;
+  border: 1px solid #4580b899;
+  border-radius: 8px;
+  padding: 5px 7px;
+  line-height: 1.35;
   text-align: center;
 }
 
-.klub-jm {
-  margin: 0;
-  font-family: var(--font-display, 'Cormorant Garamond'), Georgia, serif;
-  font-weight: 500;
-  font-size: 2rem;
-  color: #f3ecdd;
-  line-height: 1.15;
+.klub-up b {
+  color: var(--acc);
+  font-weight: 700;
 }
 
-.klub-lv {
-  margin-top: 0.25rem;
-  color: #c9a84c;
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: inline-flex;
-  gap: 0.4rem;
-  align-items: center;
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  color: inherit;
+.klub-hl {
+  padding: 0.15rem 0.25rem 0.25rem;
+  text-align: center;
 }
 
-.klub-lv i {
-  font-style: normal;
-  border: 1px solid #c9a84c;
-  border-radius: 50%;
-  width: 1rem;
-  height: 1rem;
-  font-size: 0.65rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.klub-pruh-urovne {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.82rem;
+  color: var(--sec);
 }
 
-.klub-sl {
-  margin-top: 0.55rem;
-  font-size: 0.9rem;
-  color: #cfc5b0;
+.klub-pruh-urovne__dalsi {
+  color: var(--acc);
+  text-align: right;
 }
 
 .klub-bar {
-  height: 8px;
-  background: #3d342a;
+  height: 6px;
+  background: var(--mid);
   border-radius: 4px;
-  margin: 0.55rem 0 0.45rem;
+  margin: 4px 0 5px;
   overflow: hidden;
 }
 
 .klub-bar--tri {
-  /* Barvy jdou z inline gradientu: zlatá / modrá / šedá. */
-  background: #3d342a;
+  background: var(--mid);
 }
 
-.klub-bt {
+.klub-pruh-leg {
   display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.78rem;
-  color: #a89c86;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.85rem;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  color: var(--sec);
   text-align: left;
+  justify-content: center;
 }
 
-.klub-bt b {
-  color: #f3ecdd;
-  font-weight: 500;
+.klub-pruh-leg__pol {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+
+.klub-pruh-leg i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex: none;
+}
+
+.klub-pruh-leg i.is-zap {
+  background: var(--acc);
+}
+
+.klub-pruh-leg i.is-ceka {
+  background: var(--seda-ceka);
+}
+
+.klub-pruh-leg i.is-probiha {
+  background: var(--modra);
+}
+
+.klub-pruh-leg i.is-zbyva {
+  background: var(--mid);
+  box-shadow: inset 0 0 0 1px var(--tb);
 }
 
 .klub-ladder {
   margin: 0.75rem 0 0;
-  border: 1px solid #3d342a;
+  border: 1px solid var(--mid);
   border-radius: 14px;
   overflow: hidden;
   text-align: left;
@@ -116,7 +217,8 @@
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   font-size: 0.85rem;
-  border-top: 1px solid #2e2720;
+  border-top: 1px solid var(--mid);
+  color: var(--sec);
 }
 
 .klub-ladder div:first-child {
@@ -124,23 +226,27 @@
 }
 
 .klub-ladder .is-me {
-  background: #2a2219;
-  color: #c9a84c;
+  background: var(--tile);
+  color: var(--acc);
 }
 
 .klub-ladder .is-done {
-  color: #a89c86;
+  color: var(--sec);
 }
 
 .klub-sec {
-  margin: 1rem 1.1rem 0;
-  border: 1px solid #3d342a;
-  border-radius: 16px;
-  padding: 0.75rem 0.9rem;
+  margin-top: 10px;
+  border: 1px solid var(--mid);
+  border-radius: 13px;
+  padding: 9px 11px;
+}
+
+.klub-sec--now {
+  border-color: var(--modra);
 }
 
 .klub-sec.is-open {
-  border-color: #6b5a3c;
+  border-color: var(--tb);
 }
 
 .klub-sn {
@@ -148,10 +254,16 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #a89c86;
+  color: var(--sec);
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.klub-sn--now {
+  color: var(--modra);
+  font-weight: 700;
+  font-size: 11px;
 }
 
 .klub-sn button {
@@ -177,74 +289,34 @@
 }
 
 .klub-radek + .klub-radek {
-  border-top: 1px solid #3d342a;
+  border-top: 1px solid var(--mid);
   padding-top: 0.65rem;
 }
 
-.klub-pruh-urovne {
+.klub-ik {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--tb);
+  border-radius: 10px;
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-top: 0.85rem;
-  font-size: 0.82rem;
-  color: #cfc5b0;
-}
-
-.klub-pruh-urovne__dalsi {
-  color: #c9a84c;
-  text-align: right;
-}
-
-.klub-pruh-leg {
-  display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem 0.85rem;
-  margin-top: 0.35rem;
-  font-size: 0.72rem;
-  color: #a89c86;
-  text-align: left;
-}
-
-.klub-pruh-leg__pol {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  white-space: nowrap;
-}
-
-.klub-pruh-leg i {
-  display: inline-block;
-  width: 9px;
-  height: 9px;
-  border-radius: 2px;
+  justify-content: center;
   flex: none;
+  color: var(--acc);
 }
 
-.klub-pruh-leg i.is-zap {
-  background: #c9a84c;
+.klub-ik svg {
+  stroke: var(--acc);
 }
 
-.klub-pruh-leg i.is-ceka {
-  background: #7fb8e6;
+.klub-t {
+  font-size: 0.95rem;
+  color: var(--tx);
 }
 
-.klub-pruh-leg i.is-zbyva {
-  background: #5a4c3a;
-}
-
-.klub-ceka-castka {
-  color: #7fb8e6;
-  font-size: 0.85em;
-}
-
-.klub-sec--now {
-  border-color: #7fb8e6;
-}
-
-.klub-sn--now {
-  color: #7fb8e6;
+.klub-s {
+  font-size: 0.82rem;
+  color: var(--sec);
 }
 
 .klub-pobyt {
@@ -254,13 +326,27 @@
   gap: 0.75rem;
   padding: 0.5rem 0.65rem 0.5rem 0.7rem;
   margin: 0.4rem 0;
-  background: #211b15;
+  background: var(--tile);
   border-radius: 8px;
-  border-left: 3px solid #e08a3c;
+  border-left: 3px solid var(--acc);
 }
 
 .klub-pobyt--ceka {
-  border-left-color: #7fb8e6;
+  border-left-color: var(--seda-ceka);
+}
+
+.klub-pobyt--probiha {
+  border-left-color: var(--modra);
+}
+
+.klub-pobyt--storno {
+  border-left-color: var(--seda-ceka);
+  opacity: 0.75;
+}
+
+.klub-pobyt--storno .klub-t {
+  text-decoration: line-through;
+  color: var(--seda-ceka);
 }
 
 .klub-pobyt__stav {
@@ -269,19 +355,27 @@
   line-height: 1.25;
   flex: none;
   max-width: 7.5rem;
-}
-
-.klub-pobyt__stav.is-zap {
-  color: #e08a3c;
+  color: var(--acc);
+  font-weight: 600;
 }
 
 .klub-pobyt__stav.is-ceka {
-  color: #7fb8e6;
+  color: var(--seda-ceka);
+}
+
+.klub-pobyt__stav.is-probiha {
+  color: var(--modra);
+  font-size: 11px;
+}
+
+.klub-pobyt__stav.is-storno {
+  color: var(--seda-ceka);
+  text-decoration: line-through;
 }
 
 .klub-leg {
   font-size: 0.72rem;
-  color: #a89c86;
+  color: var(--sec);
   margin-top: 0.55rem;
 }
 
@@ -295,197 +389,223 @@
 }
 
 .klub-leg i.is-zap {
-  background: #e08a3c;
+  background: var(--acc);
 }
 
 .klub-leg i.is-ceka {
-  background: #7fb8e6;
+  background: var(--seda-ceka);
 }
 
-.klub-ik {
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 1px solid #5a4c3a;
-  border-radius: 10px;
+.klub-leg i.is-probiha {
+  background: var(--modra);
+}
+
+/* Můj průvodce – vždy značková zlatá */
+.klub-btn-pruvodce {
+  display: block;
+  text-align: center;
+  border-radius: 20px;
+  padding: 9px;
+  font-size: 13px;
+  background: var(--pruvodce);
+  color: #1a1510;
+  font-weight: 700;
+  margin-top: 8px;
+  text-decoration: none;
+}
+
+/* Verze B – vedle sebe pod průvodcem */
+.klub-duo {
+  display: flex;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.klub-vB {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  border-radius: 20px;
+  padding: 9px 4px;
+  font-size: 12.5px;
+  background: var(--tile);
+  border: 1px solid var(--tb);
+  color: var(--tx);
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.klub-vB svg {
   flex: none;
-  color: #c9a84c;
+  stroke: var(--tx);
 }
 
-.klub-t {
-  font-size: 0.95rem;
-  color: #f3ecdd;
-}
-
-.klub-s {
-  font-size: 0.8rem;
-  color: #a89c86;
-  margin-top: 0.15rem;
-}
-
-.klub-p {
+/* Verze C – dlaždice */
+.klub-vC {
+  flex: 1;
   display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  font-size: 0.9rem;
-  padding: 0.5rem 0;
-  border-top: 1px solid #2e2720;
-  color: #e8dfc8;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-radius: 13px;
+  padding: 9px 4px;
+  background: var(--tile);
+  border: 1px solid var(--tb);
+  color: var(--tx);
+  text-decoration: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
 }
 
-.klub-p:first-of-type {
-  border-top: 0;
+.klub-vC svg {
+  stroke: var(--tx);
+  margin-bottom: 2px;
 }
 
-.klub-p span:last-child {
-  color: #a89c86;
-  text-align: right;
+.klub-vC b {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.klub-vC i {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--sec);
 }
 
 .klub-kr {
   display: flex;
-  gap: 0.6rem;
+  gap: 7px;
+  margin: 0.5rem 0;
 }
 
-.klub-kr > div {
+.klub-kr div {
   flex: 1;
   text-align: center;
-  background: #231d17;
-  border-radius: 12px;
-  padding: 0.65rem 0.25rem;
+  background: var(--tile);
+  border-radius: 9px;
+  padding: 6px;
 }
 
 .klub-kr b {
   display: block;
-  font-size: 1.15rem;
-  color: #c9a84c;
+  color: var(--acc);
   font-weight: 500;
+  font-size: 15px;
 }
 
 .klub-kr span {
-  font-size: 0.75rem;
-  color: #a89c86;
+  font-size: 10px;
+  color: var(--sec);
 }
 
 .klub-sub {
-  margin: 1rem 0 0.5rem;
   font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #a89c86;
+  letter-spacing: 0.06em;
+  color: var(--sec);
+  margin: 0.75rem 0 0.35rem;
 }
 
 .klub-odk {
-  font-size: 0.9rem;
-  background: #231d17;
-  border-radius: 10px;
-  padding: 0.65rem;
+  font-size: 12px;
+  background: var(--tile);
+  border-radius: 8px;
+  padding: 7px;
   text-align: center;
-  color: #f3ecdd;
+  color: var(--tx);
   word-break: break-all;
 }
 
-.klub-fu {
-  font-size: 0.88rem;
-  line-height: 1.5;
-  color: #cfc5b0;
-  text-align: left;
-}
-
 .klub-btns {
-  margin: 0.9rem 1.1rem 0;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  margin: 0.75rem 0.15rem 0;
 }
 
 .klub-sec .klub-btns {
-  margin: 0.65rem 0 0;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 .klub-btn,
 .klub-btn2 {
   display: block;
-  width: 100%;
   text-align: center;
-  border-radius: 24px;
-  padding: 0.75rem;
+  border-radius: 20px;
+  padding: 0.7rem 1rem;
   font-size: 0.95rem;
-  font-family: inherit;
-  cursor: pointer;
   text-decoration: none;
-  box-sizing: border-box;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .klub-btn {
-  background: #c9a84c;
+  background: var(--pruvodce);
   color: #1a1510;
   font-weight: 700;
-  border: 0;
 }
 
 .klub-btn2 {
-  border: 1px solid #5a4c3a;
-  background: none;
-  color: #e8dfc8;
+  background: transparent;
+  border: 1px solid var(--tb);
+  color: var(--tx);
+}
+
+.klub-fu {
+  font-size: 0.9rem;
+  color: var(--tx);
+  line-height: 1.45;
 }
 
 .klub-prazdne {
-  margin: 0;
   font-size: 0.88rem;
-  line-height: 1.45;
-  color: #a89c86;
-  text-align: left;
+  color: var(--sec);
+  margin: 0.35rem 0;
+}
+
+.klub-roz {
+  margin-top: 0.25rem;
+}
+
+.klub-sip {
+  stroke: var(--acc);
+}
+
+.klub-chyba {
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--sec);
 }
 
 .klub-toast {
   position: fixed;
   left: 50%;
-  bottom: 1.5rem;
-  transform: translateX(-50%);
+  bottom: 1.25rem;
+  transform: translateX(-50%) translateY(120%);
   background: #2a2219;
-  border: 1px solid #c9a84c;
   color: #f3ecdd;
+  border: 1px solid #5a4c3a;
+  border-radius: 12px;
   padding: 0.65rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s;
-  z-index: 20;
-  max-width: min(22rem, 90vw);
-  text-align: center;
+  transition: 0.25s ease;
+  z-index: 40;
+  max-width: 90vw;
 }
 
 .klub-toast.is-on {
   opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-.klub-chyba {
-  width: min(26rem, 100%);
-  margin: 2rem 1rem;
-  padding: 1.25rem;
-  border: 1px solid #3d342a;
-  border-radius: 16px;
-  background: #1c1712;
-  text-align: center;
-  color: #cfc5b0;
-}
-
-.klub-roz {
+.klub-sec--skromne {
   display: none;
-}
-
-.klub-sec.is-open .klub-roz {
-  display: block;
-}
-
-.klub-sip {
-  transition: transform 0.2s;
-}
-
-.klub-sec.is-open .klub-sip {
-  transform: rotate(180deg);
 }

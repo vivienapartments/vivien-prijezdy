@@ -11,6 +11,7 @@ export type KlubUkazkaId =
   | 'ukazka-host'
   | 'ukazka-host-pred'
   | 'ukazka-host-po'
+  | 'ukazka-host-up'
   | 'ukazka-dop'
   | 'ukazka-firma'
   | 'ukazka-flidr'
@@ -18,7 +19,7 @@ export type KlubUkazkaId =
   | 'ukazka-hromada'
   | 'ukazka-egd'; // alias → Hromada (zpětná kompatibilita odkazu)
 
-export type KlubPobytBarva = 'zapocteno' | 'ceka' | null;
+export type KlubPobytBarva = 'zapocteno' | 'ceka' | 'probiha' | 'storno' | null;
 
 export type KlubPobytRadek = {
   nadpis: string;
@@ -112,6 +113,7 @@ export function jeUkazkaKlic(k: string): k is KlubUkazkaId {
     k === 'ukazka-host' ||
     k === 'ukazka-host-pred' ||
     k === 'ukazka-host-po' ||
+    k === 'ukazka-host-up' ||
     k === 'ukazka-dop' ||
     k === 'ukazka-firma' ||
     k === 'ukazka-flidr' ||
@@ -136,25 +138,31 @@ function pobytyRucniKarty(id: KlubUkazkaId): {
       nadchazejici: [
         {
           nadpis: '24.–27. 11. 2026 · Jemná harmonie',
-          podnadpis: 'čeká, započítá se po odjezdu',
+          podnadpis: 'Adresa, příjezd, kódy',
           pruvodceUrl: '/nahled',
-          barva: 'ceka',
+          barva: 'probiha',
         },
       ],
       pobyty: [
         {
+          nadpis: '24.–27. 11. 2026',
+          podnadpis: 'Jemná harmonie',
+          barva: 'probiha',
+          stavText: 'započítáno',
+        },
+        {
           nadpis: '18.–19. 11. 2026 · Jemná harmonie',
-          podnadpis: 'započteno',
+          podnadpis: 'započítáno',
           barva: 'zapocteno',
         },
         {
           nadpis: 'Další pobyt · 3 600 Kč',
-          podnadpis: 'započteno',
+          podnadpis: 'započítáno',
           barva: 'zapocteno',
         },
         {
           nadpis: 'Další pobyt · 2 900 Kč',
-          podnadpis: 'započteno',
+          podnadpis: 'započítáno',
           barva: 'zapocteno',
         },
       ],
@@ -182,20 +190,26 @@ function pobytyRucniKarty(id: KlubUkazkaId): {
       nadchazejici: [
         {
           nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
-          podnadpis: 'čeká, započítá se po odjezdu · 1 450 Kč',
+          podnadpis: 'Adresa, příjezd, kódy',
           pruvodceUrl: '/nahled',
-          barva: 'ceka',
+          barva: 'probiha',
         },
       ],
       pobyty: [
         {
+          nadpis: '23.–26. 11. 2026',
+          podnadpis: 'Zlatá rovnováha · 1 450 Kč',
+          barva: 'probiha',
+          stavText: 'započítáno',
+        },
+        {
           nadpis: '6.–7. 11. 2026 · Jemná harmonie · 1 700 Kč',
-          podnadpis: 'započteno',
+          podnadpis: 'započítáno',
           barva: 'zapocteno',
         },
         {
           nadpis: '1.–6. 11. 2026 · Jemná harmonie · 7 900 Kč',
-          podnadpis: 'započteno',
+          podnadpis: 'započítáno',
           barva: 'zapocteno',
         },
         {
@@ -297,7 +311,24 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       kreditKc: 690,
     });
   }
-  const hostId = id === 'ukazka-host-pred' || id === 'ukazka-host-po' ? id : 'ukazka-host';
+  if (id === 'ukazka-host-up') {
+    return kartaZaklad({
+      id: 'ukazka-host-up',
+      kod: 'JANA4',
+      tajnyKlic: 'ukazka-host-up',
+      typ: 'host',
+      role: ['host', 'doporucitel'],
+      jmeno: 'Jana',
+      prijmeni: 'Ukázková',
+      // 9 600 + probíhající 7 000 → Bronzový
+      utrataKc: 9600,
+      kreditKc: 0,
+    });
+  }
+  const hostId =
+    id === 'ukazka-host-pred' || id === 'ukazka-host-po' || id === 'ukazka-host'
+      ? id
+      : 'ukazka-host';
   return kartaZaklad({
     id: hostId,
     kod: 'JANA4',
@@ -306,8 +337,9 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
     role: ['host', 'doporucitel'],
     jmeno: 'Jana',
     prijmeni: 'Nováková',
-    utrataKc: id === 'ukazka-host-pred' ? 0 : 23600,
-    kreditKc: id === 'ukazka-host-pred' ? 0 : 460,
+    // ukazka-host = bydlí, bez změny úrovně (9 600 + 1 450)
+    utrataKc: id === 'ukazka-host-pred' ? 0 : id === 'ukazka-host' ? 9600 : 23600,
+    kreditKc: id === 'ukazka-host-pred' || id === 'ukazka-host' ? 0 : 460,
   });
 }
 
@@ -346,26 +378,99 @@ export function pohledZKarty(
     ukazka &&
     (karta.tajnyKlic === 'ukazka-host' ||
       karta.tajnyKlic === 'ukazka-host-pred' ||
-      karta.tajnyKlic === 'ukazka-host-po')
+      karta.tajnyKlic === 'ukazka-host-po' ||
+      karta.tajnyKlic === 'ukazka-host-up')
   ) {
-    // Jediná povolená fiktivní ukázka (ne BH Preview karty).
     const pred = karta.tajnyKlic === 'ukazka-host-pred';
     const jenPo = karta.tajnyKlic === 'ukazka-host-po';
-    if (!jenPo) {
+    const bydli = karta.tajnyKlic === 'ukazka-host' || karta.tajnyKlic === 'ukazka-host-up';
+    const up = karta.tajnyKlic === 'ukazka-host-up';
+    if (bydli) {
       nadchazejici = [
         {
-          nadpis: '12.–15. 3. 2027 · Apartmán 2',
+          nadpis: up
+            ? '23.–26. 11. 2026 · Zlatá rovnováha'
+            : '23.–26. 11. 2026 · Zlatá rovnováha',
           podnadpis: 'Adresa, příjezd, kódy',
           pruvodceUrl: `${base}/nahled`,
+          barva: 'probiha',
+        },
+      ];
+      pobyty = [
+        {
+          nadpis: '23.–26. 11. 2026',
+          podnadpis: up ? '7 000 Kč' : '1 450 Kč',
+          barva: 'probiha',
+          stavText: 'započítáno',
+        },
+        {
+          nadpis: '6.–7. 11. 2026',
+          podnadpis: 'započítáno',
+          barva: 'zapocteno',
+          stavText: 'započítáno',
+        },
+        {
+          nadpis: '1.–5. 11. 2026',
+          podnadpis: 'započítáno',
+          barva: 'zapocteno',
+          stavText: 'započítáno',
+        },
+      ];
+    } else if (!jenPo) {
+      nadchazejici = [
+        {
+          nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
+          podnadpis: 'Za 4 dny · adresa, příjezd, kódy',
+          pruvodceUrl: `${base}/nahled`,
+          barva: 'ceka',
+          stavText: 'čeká',
+        },
+      ];
+    }
+    if (jenPo) {
+      pobyty = [
+        {
+          nadpis: '23.–26. 11. 2026',
+          podnadpis: 'započítáno',
+          barva: 'zapocteno',
+          stavText: 'započítáno',
+        },
+        {
+          nadpis: '6.–7. 11. 2026',
+          podnadpis: 'započítáno',
+          barva: 'zapocteno',
+          stavText: 'započítáno',
+        },
+        {
+          nadpis: '1.–5. 11. 2026',
+          podnadpis: 'započítáno',
+          barva: 'zapocteno',
+          stavText: 'započítáno',
+        },
+      ];
+    } else if (pred) {
+      pobyty = [
+        {
+          nadpis: '23.–26. 11. 2026',
+          podnadpis: '1 450 Kč',
+          barva: 'ceka',
+          stavText: 'čeká',
+        },
+        {
+          nadpis: '6.–7. 11. 2026',
+          podnadpis: 'započítáno',
+          barva: 'zapocteno',
+          stavText: 'započítáno',
+        },
+        {
+          nadpis: '1.–5. 11. 2026',
+          podnadpis: 'započítáno',
+          barva: 'zapocteno',
+          stavText: 'započítáno',
         },
       ];
     }
     if (!pred) {
-      pobyty = [
-        { nadpis: '2.–5. 10. 2026', podnadpis: 'Apartmán 2' },
-        { nadpis: '14.–16. 6. 2026', podnadpis: 'Apartmán 5' },
-        { nadpis: '7.–9. 2. 2026', podnadpis: 'Apartmán 1' },
-      ];
       pratele = [
         { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
         { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
@@ -393,10 +498,25 @@ export function pohledZKarty(
 
   const kreditKc = karta.kreditKc;
   const kidUkazka = ukazka ? normalizujUkazkaId(karta.tajnyKlic as KlubUkazkaId) : null;
-  // Hromada: probíhající pobyt = cena z účtování (1 450), ne BH 4 440.
   const utrataCekaUkazka =
-    kidUkazka === 'ukazka-hromada' || kidUkazka === 'ukazka-egd' ? 1450 : 0;
-  const praveBydli = nadchazejici.some((r) => /právě|bydlíte|adresa, příjezd/i.test(r.podnadpis || ''));
+    kidUkazka === 'ukazka-hromada' || kidUkazka === 'ukazka-egd'
+      ? 1450
+      : kidUkazka === 'ukazka-host'
+        ? 1450
+        : kidUkazka === 'ukazka-host-up'
+          ? 7000
+          : kidUkazka === 'ukazka-flidr'
+            ? 2900
+            : kidUkazka === 'ukazka-host-pred'
+              ? 1450
+              : 0;
+  const praveBydli =
+    kidUkazka === 'ukazka-host' ||
+    kidUkazka === 'ukazka-host-up' ||
+    kidUkazka === 'ukazka-hromada' ||
+    kidUkazka === 'ukazka-egd' ||
+    kidUkazka === 'ukazka-flidr' ||
+    nadchazejici.some((r) => r.barva === 'probiha');
   return {
     ukazka,
     pohled,

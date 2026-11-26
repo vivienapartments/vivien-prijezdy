@@ -14,16 +14,27 @@ describe('klub-ukazka', () => {
     expect(jeUkazkaKlic('abc')).toBe(false);
   });
 
-  it('host má úroveň, slevu a nadcházející pobyt s průvodcem', () => {
+  it('host bydlí bez změny úrovně (Věrný 6 %)', () => {
     const k = ukazkovaKlientKarta('ukazka-host');
     const p = pohledZKarty(k, 'https://example.com', { ukazka: true, pohled: 'host' });
     expect(p.pohled).toBe('host');
     expect(p.jmenoZobrazeni).toContain('Jana');
-    expect(p.slevaPct).toBe(7);
-    expect(p.urovenNazev).toMatch(/Bronz/i);
+    expect(p.slevaPct).toBe(6);
+    expect(p.urovenNazev).toMatch(/Věrný/i);
+    expect(p.praveBydli).toBe(true);
+    expect(p.utrataCekaKc).toBe(1450);
     expect(p.nadchazejici[0]?.pruvodceUrl).toContain('/nahled');
     expect(p.pobyty.length).toBeGreaterThan(0);
     expect(p.odkazDoporuceni).toContain('od=JANA4');
+  });
+
+  it('host-up během pobytu posune na Bronzový', () => {
+    const k = ukazkovaKlientKarta('ukazka-host-up');
+    const p = pohledZKarty(k, 'https://example.com', { ukazka: true, pohled: 'host' });
+    expect(p.utrataKc).toBe(9600);
+    expect(p.utrataCekaKc).toBe(7000);
+    expect(p.praveBydli).toBe(true);
+    expect(jeUkazkaKlic('ukazka-host-up')).toBe(true);
   });
 
   it('doporučitel nemá pobyty, má přátele a kredit', () => {

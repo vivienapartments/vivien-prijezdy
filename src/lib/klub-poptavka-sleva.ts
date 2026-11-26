@@ -36,7 +36,7 @@ export type SlevaPoptavkyVysledek = {
 
 const DUVOD_TEXT: Record<Exclude<SlevaDuvod, null>, string> = {
   delka: 'za délku pobytu',
-  staly: 'jako stálý host',
+  staly: 'jako věrný host',
   doporuceny: 'jako doporučený host',
   firma: 'pro firmu',
   doporucitel: 'jako doporučitel na první pobyt',

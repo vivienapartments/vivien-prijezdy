@@ -603,7 +603,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 3,
       "utrata": 9600,
       "utrataCeka": 1450,
-      "uroven": "Stálý host",
+      "uroven": "Věrný host",
       "klientId": null,
       "akce": "priradit",
       "rezervace": [
@@ -665,7 +665,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 3,
       "utrata": 11220,
       "utrataCeka": 0,
-      "uroven": "Stálý host",
+      "uroven": "Věrný host",
       "klientId": null,
       "akce": "priradit",
       "rezervace": [
@@ -859,7 +859,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 11200,
       "utrataCeka": 0,
-      "uroven": "Stálý host",
+      "uroven": "Věrný host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1213,7 +1213,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 11200,
       "utrataCeka": 0,
-      "uroven": "Stálý host",
+      "uroven": "Věrný host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [

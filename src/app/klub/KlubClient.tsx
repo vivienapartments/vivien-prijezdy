@@ -1,9 +1,16 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { tipZpravaWhatsapp } from '@/lib/doporuceni-komplet-texty';
 import { formatKc } from '@/lib/kalendar-texty';
 import { klubTexty } from '@/lib/klub-texty';
+import { textPosunUrovne, urovenBehemPobytu } from '@/lib/klub-behem-pobytu';
+import {
+  kartickaGradient,
+  KLUB_MODRA,
+  KLUB_SEDA_CEKA,
+  tonZUrovneId,
+} from '@/lib/klub-uroven-ton';
 import {
   KLUB_UROVNE_PRO_LADDER,
   pokrokUrovne,
@@ -12,11 +19,9 @@ import {
 import type { GuideLang } from '@/lib/types';
 import './klub.scss';
 
-const FOTO = '/poptavka/doporuceny-zahrada-vecer.webp';
-
 function IkCal() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#c9a84c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <rect x="3.5" y="5" width="17" height="15" rx="2" />
       <path d="M3.5 10h17M8 3v4M16 3v4" />
     </svg>
@@ -25,16 +30,26 @@ function IkCal() {
 
 function IkUser() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#c9a84c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <circle cx="12" cy="8" r="3.5" />
       <path d="M5 20c1-4 4-6 7-6s6 2 7 6" />
     </svg>
   );
 }
 
+function IkUserPlus() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3.5 19c.8-3.2 3.2-5 5.5-5s4.7 1.8 5.5 5" />
+      <path d="M17 8v6M14 11h6" />
+    </svg>
+  );
+}
+
 function IkBook() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#c9a84c" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z" />
       <path d="M4 5.5V21" />
     </svg>
@@ -43,7 +58,7 @@ function IkBook() {
 
 function Sipka() {
   return (
-    <svg className="klub-sip" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#c9a84c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <svg className="klub-sip" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M6 9l6 6 6-6" />
     </svg>
   );
@@ -51,6 +66,11 @@ function Sipka() {
 
 function pocetPrijeli(pratele: { stav: string }[]): number {
   return pratele.filter((p) => /přijel|přijela|přijeli|✓/i.test(p.stav)).length;
+}
+
+function barvaPobytu(barva: string | null | undefined): string {
+  if (barva === 'ceka' || barva === 'probiha' || barva === 'storno') return barva;
+  return 'zapocteno';
 }
 
 export default function KlubClient() {
@@ -114,13 +134,24 @@ export default function KlubClient() {
   const jeFirma = karta?.pohled === 'firma';
   const maUroven = !jeDop;
 
+  const behem = useMemo(() => {
+    if (!karta) return null;
+    return urovenBehemPobytu({
+      utrataKc: karta.utrataKc,
+      probihajiciKc: karta.praveBydli ? karta.utrataCekaKc || 0 : 0,
+      praveBydli: karta.praveBydli,
+      jeFirma,
+    });
+  }, [karta, jeFirma]);
+
   const pokrok = useMemo(() => {
-    if (!karta || !maUroven) return null;
-    return pokrokUrovne(karta.utrataKc, { pohled: karta.pohled });
-  }, [karta, maUroven]);
+    if (!karta || !maUroven || !behem) return null;
+    return pokrokUrovne(behem.zobrazena.id === karta.urovenId ? karta.utrataKc : behem.ocekavanaUtrataKc, {
+      pohled: karta.pohled,
+    });
+  }, [karta, maUroven, behem]);
 
   const odkaz = karta?.odkazDoporuceni || '';
-
   const ukazToast = useCallback((msg: string) => setToast(msg), []);
 
   const kopie = useCallback(async () => {
@@ -166,7 +197,7 @@ export default function KlubClient() {
     );
   }
 
-  if (!karta || chyba) {
+  if (!karta || chyba || !behem) {
     return (
       <main className="klub-page">
         <div className="klub-chyba">{tx.zadnaKarta}</div>
@@ -176,107 +207,213 @@ export default function KlubClient() {
 
   const prijeli = pocetPrijeli(karta.pratele);
   const maNadchazejici = karta.nadchazejici.length > 0;
-  /** Před příjezdem / během pobytu: nahoře průvodce, zbytek skromně. Po odjezdu celá karta. */
   const skromnyZbytek = maNadchazejici && karta.pobyty.length === 0 && !jeDop;
+  const maPobytyHosta = karta.pobyty.length > 0 || karta.utrataKc > 0;
+  const predPrvnim = !jeFirma && !jeDop && !maPobytyHosta && !karta.praveBydli;
+  const verzeB = Boolean(
+    !jeDop && (karta.praveBydli || maNadchazejici),
+  );
+  const verzeC = !verzeB;
 
-  const ladderRows = [...KLUB_UROVNE_PRO_LADDER]
-    .sort((a, b) => a.odKc - b.odKc)
-    .map((u, i) => {
-      const nazev = jeFirma ? u.nazevFirma : u.nazevHost;
-      const jeMe = u.id === karta.urovenId;
-      const done = (pokrok?.index ?? 0) > i;
+  const ton = tonZUrovneId(jeDop ? 'host' : behem.zobrazena.id);
+  const slevaPct = Math.max(5, behem.slevaPct);
+  const urovenNazevKarticka = jeDop
+    ? tx.doporucitelUroven
+    : jeFirma
+      ? behem.zobrazena.nazevFirma
+      : behem.zobrazena.nazevHost;
+  const posun = behem.posuneUroven
+    ? textPosunUrovne(behem.zobrazena, jeFirma)
+    : null;
+
+  const serazene = [...KLUB_UROVNE_PRO_LADDER].sort((a, b) => a.odKc - b.odKc);
+  const idxZobr = serazene.findIndex((u) => u.id === behem.zobrazena.id);
+  const aktualni = serazene[idxZobr >= 0 ? idxZobr : 0];
+  const dalsi = serazene[(idxZobr >= 0 ? idxZobr : 0) + 1] || null;
+  const nazevTed = jeFirma ? aktualni.nazevFirma : aktualni.nazevHost;
+  const nazevDalsi = dalsi ? (jeFirma ? dalsi.nazevFirma : dalsi.nazevHost) : null;
+
+  const ceka = karta.utrataCekaKc || 0;
+  const utrataGold = karta.utrataKc;
+  const stayKc = ceka > 0 ? ceka : 0;
+  const stayJeProbiha = karta.praveBydli && stayKc > 0;
+  const stayJeNadchazejici = !karta.praveBydli && maNadchazejici && stayKc > 0;
+  const cilKc = behem.posuneUroven
+    ? Math.max(behem.ocekavanaUtrataKc, 1)
+    : dalsi
+      ? dalsi.odKc
+      : Math.max(utrataGold + (stayJeProbiha ? stayKc : 0), 1);
+
+  let pGold = Math.min(100, (utrataGold / cilKc) * 100);
+  let pStay = 0;
+  if (behem.posuneUroven) {
+    pGold = Math.min(100, (utrataGold / cilKc) * 100);
+    pStay = Math.min(100 - pGold, (stayKc / cilKc) * 100);
+  } else if (stayJeProbiha || stayJeNadchazejici) {
+    pStay = Math.min(100 - pGold, (stayKc / cilKc) * 100);
+  }
+  const pEnd = pGold + pStay;
+  const chybiPo = behem.posuneUroven
+    ? 0
+    : dalsi
+      ? Math.max(0, cilKc - utrataGold - (stayJeProbiha ? stayKc : 0))
+      : 0;
+
+  const stayColor = stayJeProbiha ? KLUB_MODRA : stayJeNadchazejici ? KLUB_SEDA_CEKA : ton.acc;
+  const barBg =
+    pEnd <= 0
+      ? ton.mid
+      : `linear-gradient(to right, ${ton.acc} 0%, ${ton.acc} ${pGold}%, ${stayColor} ${pGold}%, ${stayColor} ${pEnd}%, ${ton.mid} ${pEnd}%, ${ton.mid} 100%)`;
+
+  const pageStyle = {
+    '--acc': ton.acc,
+    '--bg': ton.bg,
+    '--mid': ton.mid,
+    '--tile': ton.tile,
+    '--tb': ton.tb,
+    '--tx': ton.tx,
+    '--sec': ton.sec,
+  } as CSSProperties;
+
+  const ladderRows = serazene.map((u, i) => {
+    const nazev = jeFirma ? u.nazevFirma : u.nazevHost;
+    const jeMe = u.id === behem.zobrazena.id;
+    const done = (idxZobr >= 0 ? idxZobr : 0) > i;
+    return (
+      <div key={u.id} className={jeMe ? 'is-me' : done ? 'is-done' : undefined}>
+        <span>
+          {nazev} · {u.slevaPct} %
+        </span>
+        <span>{formatKc(u.odKc)}</span>
+      </div>
+    );
+  });
+
+  const tlacitkaB = (
+    <div className="klub-duo">
+      <a className="klub-vB" href={poptavkaUrl}>
+        <IkCal />
+        {jeFirma ? tx.tlacObjednat : tx.tlacRezervovat}
+      </a>
+      <button type="button" className="klub-vB" onClick={scrollDop}>
+        <IkUserPlus />
+        {tx.tlacDoporucit}
+      </button>
+    </div>
+  );
+
+  const tlacitkaC = (() => {
+    if (jeDop) {
       return (
-        <div key={u.id} className={jeMe ? 'is-me' : done ? 'is-done' : undefined}>
-          <span>
-            {nazev} · {u.slevaPct} %
-          </span>
-          <span>{formatKc(u.odKc)}</span>
+        <div className="klub-duo">
+          <button type="button" className="klub-vC" onClick={scrollDop}>
+            <IkUserPlus />
+            <b>{tx.tlacDoporucit}</b>
+            <i>{tx.tlacPritel}</i>
+          </button>
+          <a className="klub-vC" href={poptavkaUrl}>
+            <IkCal />
+            <b>{tx.tlacProSebe}</b>
+            <i>{tx.tlacPrvni}</i>
+          </a>
         </div>
       );
-    });
+    }
+    if (jeFirma) {
+      return (
+        <div className="klub-duo">
+          <a className="klub-vC" href={poptavkaUrl}>
+            <IkCal />
+            <b>{tx.tlacObjednat}</b>
+            <i>{tx.tlacKolega(slevaPct)}</i>
+          </a>
+          <button type="button" className="klub-vC" onClick={scrollDop}>
+            <IkUserPlus />
+            <b>{tx.tlacDoporucit}</b>
+            <i>{tx.tlacFirma5}</i>
+          </button>
+        </div>
+      );
+    }
+    return (
+      <div className="klub-duo">
+        <a className="klub-vC" href={poptavkaUrl}>
+          <IkCal />
+          <b>{tx.tlacRezervovat}</b>
+          <i>{tx.tlacDalsiPobyt(slevaPct)}</i>
+        </a>
+        <button type="button" className="klub-vC" onClick={scrollDop}>
+          <IkUserPlus />
+          <b>{tx.tlacDoporucit}</b>
+          <i>{tx.tlacPritel}</i>
+        </button>
+      </div>
+    );
+  })();
 
   return (
-    <main className="klub-page">
+    <main className="klub-page" data-uroven={ton.id} style={pageStyle}>
       <div className="klub-shell">
-        {!jeDop ? <img className="klub-foto" src={FOTO} alt="" /> : null}
-        <div className="klub-hl">
-          <h1 className="klub-jm">{karta.jmenoZobrazeni}</h1>
-          {maUroven && !skromnyZbytek ? (
-            <button type="button" className="klub-lv" onClick={() => setLadder((v) => !v)}>
-              {tx.klub} · <b>{karta.urovenNazev}</b> <i>i</i>
-            </button>
-          ) : null}
-          {!skromnyZbytek ? (
-            <div className="klub-sl">
-              {jeDop ? tx.dopPopis : tx.sleva(karta.slevaPct)}
-            </div>
-          ) : null}
-          {maUroven && pokrok && !skromnyZbytek ? (
-            <>
-              {(() => {
-                // Verze 2: zlatá = odbydlené, modrá = tento/čekající, šedá = zbývá.
-                // Pruh jako gradient (nejde přebarvit jednou barvou z CSS).
-                const ceka = karta.utrataCekaKc || 0;
-                const serazene = [...KLUB_UROVNE_PRO_LADDER].sort((a, b) => a.odKc - b.odKc);
-                const aktualni = serazene[pokrok.index] || serazene[0];
-                const dalsi = serazene[pokrok.index + 1] || null;
-                const nazevTed = jeFirma ? aktualni.nazevFirma : aktualni.nazevHost;
-                const nazevDalsi = dalsi
-                  ? jeFirma
-                    ? dalsi.nazevFirma
-                    : dalsi.nazevHost
-                  : null;
-                const cilKc = dalsi ? dalsi.odKc : Math.max(karta.utrataKc + ceka, 1);
-                const pGold = Math.min(100, (karta.utrataKc / cilKc) * 100);
-                const pBlue = ceka > 0 ? Math.min(100 - pGold, (ceka / cilKc) * 100) : 0;
-                const pEnd = pGold + pBlue;
-                const chybiPo = dalsi ? Math.max(0, cilKc - karta.utrataKc - ceka) : 0;
-                const barBg =
-                  pEnd <= 0
-                    ? '#3d342a'
-                    : `linear-gradient(to right, #c9a84c 0%, #c9a84c ${pGold}%, #7fb8e6 ${pGold}%, #7fb8e6 ${pEnd}%, #3d342a ${pEnd}%, #3d342a 100%)`;
-                return (
-                  <>
-                    <div className="klub-pruh-urovne">
-                      <span className="klub-pruh-urovne__ted">
-                        {nazevTed} · {aktualni.slevaPct} %
-                      </span>
-                      <span className="klub-pruh-urovne__dalsi">
-                        {nazevDalsi && dalsi
-                          ? `${nazevDalsi} · ${dalsi.slevaPct} %`
-                          : tx.nejvyssi}
-                      </span>
-                    </div>
-                    <div
-                      className="klub-bar klub-bar--tri"
-                      style={{ background: barBg }}
-                      aria-hidden
-                    />
-                    <div className="klub-pruh-leg">
-                      <span className="klub-pruh-leg__pol">
-                        <i className="is-zap" aria-hidden />
-                        {tx.pruhVasePobyty}
-                      </span>
-                      <span className="klub-pruh-leg__pol">
-                        <i className="is-ceka" aria-hidden />
-                        {tx.pruhTentoPobyt}
-                      </span>
-                      <span className="klub-pruh-leg__pol">
-                        <i className="is-zbyva" aria-hidden />
-                        {tx.pruhZbyva(formatKc(chybiPo))}
-                      </span>
-                    </div>
-                  </>
-                );
-              })()}
-              {ladder ? <div className="klub-ladder">{ladderRows}</div> : null}
-            </>
-          ) : null}
+        <div className="klub-karticka" style={{ background: kartickaGradient(ton) }}>
+          <span className="klub-karticka__vtisk klub-karticka__vtisk--tmavy" aria-hidden />
+          <span className="klub-karticka__vtisk klub-karticka__vtisk--svetly" aria-hidden />
+          <span className="klub-karticka__vtisk klub-karticka__vtisk--zaklad" aria-hidden />
+          <div className="klub-karticka__k1">VIVIEN KLUB</div>
+          <div className="klub-karticka__k2">{urovenNazevKarticka}</div>
+          <div className="klub-karticka__k3">{karta.jmenoZobrazeni}</div>
+          <div className="klub-karticka__k4">
+            {predPrvnim ? tx.slevaTento : tx.slevaKarticka}{' '}
+            <b>{slevaPct} %</b>
+          </div>
         </div>
+
+        {posun ? (
+          <div className="klub-up">
+            Tímto pobytem jste <b>{posun.nadpis}</b>. {slevaPct} % platí už pro rezervaci, kterou
+            uděláte teď.
+          </div>
+        ) : null}
+
+        {maUroven && !skromnyZbytek ? (
+          <div className="klub-hl">
+            <div className="klub-pruh-urovne">
+              <button type="button" className="klub-pruh-urovne__ted" onClick={() => setLadder((v) => !v)} style={{ background: 'none', border: 0, padding: 0, color: 'inherit', font: 'inherit', cursor: 'pointer' }}>
+                {nazevTed} · {aktualni.slevaPct} %
+              </button>
+              <span className="klub-pruh-urovne__dalsi">
+                {behem.posuneUroven && posun
+                  ? posun.legendaOk
+                  : nazevDalsi && dalsi
+                    ? `${nazevDalsi} · ${dalsi.slevaPct} %`
+                    : tx.nejvyssi}
+              </span>
+            </div>
+            <div className="klub-bar klub-bar--tri" style={{ background: barBg }} aria-hidden />
+            <div className="klub-pruh-leg">
+              <span className="klub-pruh-leg__pol">
+                <i className="is-zap" aria-hidden />
+                {tx.pruhVasePobyty}
+              </span>
+              {stayJeProbiha || stayJeNadchazejici ? (
+                <span className="klub-pruh-leg__pol">
+                  <i className={stayJeProbiha ? 'is-probiha' : 'is-ceka'} aria-hidden />
+                  {stayJeProbiha ? tx.pruhTentoPobyt : tx.pruhNadchazejici}
+                </span>
+              ) : null}
+              <span className="klub-pruh-leg__pol">
+                <i className="is-zbyva" aria-hidden />
+                {behem.posuneUroven && posun
+                  ? posun.legendaOk
+                  : tx.pruhZbyva(formatKc(chybiPo))}
+              </span>
+            </div>
+            {ladder ? <div className="klub-ladder">{ladderRows}</div> : null}
+          </div>
+        ) : null}
 
         {!jeDop ? (
           <>
-            {karta.nadchazejici.length > 0 ? (
+            {maNadchazejici ? (
               <section className={`klub-sec${karta.praveBydli ? ' klub-sec--now' : ''}`}>
                 <div className={`klub-sn${karta.praveBydli ? ' klub-sn--now' : ''}`}>
                   {karta.praveBydli
@@ -297,15 +434,14 @@ export default function KlubClient() {
                   </div>
                 ))}
                 {karta.nadchazejici.some((r) => r.pruvodceUrl) ? (
-                  <div className="klub-btns">
-                    <a
-                      className="klub-btn"
-                      href={karta.nadchazejici.find((r) => r.pruvodceUrl)?.pruvodceUrl || '#'}
-                    >
-                      {tx.mujPruvodce}
-                    </a>
-                  </div>
+                  <a
+                    className="klub-btn-pruvodce"
+                    href={karta.nadchazejici.find((r) => r.pruvodceUrl)?.pruvodceUrl || '#'}
+                  >
+                    {tx.mujPruvodce}
+                  </a>
                 ) : null}
+                {verzeB ? tlacitkaB : null}
               </section>
             ) : null}
 
@@ -316,32 +452,46 @@ export default function KlubClient() {
                   <p className="klub-prazdne">{tx.prazdnePobyty}</p>
                 ) : (
                   <>
-                    {karta.pobyty.map((r, i) => (
-                      <div
-                        className={`klub-pobyt${r.barva === 'ceka' ? ' klub-pobyt--ceka' : ' klub-pobyt--zapocteno'}`}
-                        key={`p-${i}`}
-                      >
-                        <div>
-                          <div className="klub-t">{r.nadpis}</div>
-                          <div className="klub-s">{r.podnadpis}</div>
-                        </div>
-                        <div
-                          className={`klub-pobyt__stav${r.barva === 'ceka' ? ' is-ceka' : ' is-zap'}`}
-                        >
-                          {(r.stavText || (r.barva === 'ceka' ? 'čeká' : 'započítáno'))
-                            .split('\n')
-                            .map((radek, j) => (
+                    {karta.pobyty.map((r, i) => {
+                      const b = barvaPobytu(r.barva as string);
+                      const stav =
+                        r.stavText ||
+                        (b === 'ceka'
+                          ? 'čeká'
+                          : b === 'storno'
+                            ? 'zrušeno'
+                            : 'započítáno');
+                      return (
+                        <div className={`klub-pobyt klub-pobyt--${b}`} key={`p-${i}`}>
+                          <div>
+                            <div className="klub-t">{r.nadpis}</div>
+                            <div className="klub-s">{r.podnadpis}</div>
+                          </div>
+                          <div
+                            className={`klub-pobyt__stav${
+                              b === 'ceka'
+                                ? ' is-ceka'
+                                : b === 'probiha'
+                                  ? ' is-probiha'
+                                  : b === 'storno'
+                                    ? ' is-storno'
+                                    : ''
+                            }`}
+                          >
+                            {stav.split('\n').map((radek, j) => (
                               <span key={j}>
                                 {radek}
-                                {j === 0 && (r.stavText || '').includes('\n') ? <br /> : null}
+                                {j === 0 && stav.includes('\n') ? <br /> : null}
                               </span>
                             ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <div className="klub-leg">
                       <i className="is-zap" /> započítáno
-                      <i className="is-ceka" /> čeká na odjezd
+                      <i className="is-probiha" /> právě bydlí
+                      <i className="is-ceka" /> čeká
                     </div>
                   </>
                 )}
@@ -369,115 +519,99 @@ export default function KlubClient() {
         ) : null}
 
         {!karta.skrytDoporuceni || jeDop ? (
-        <section
-          id="klub-dop"
-          className={`klub-sec${dopOpen || jeDop ? ' is-open' : ''}${skromnyZbytek && !jeDop ? ' klub-sec--skromne' : ''}`}
-          hidden={skromnyZbytek && !jeDop ? true : undefined}
-        >
-          {jeDop ? (
-            <div className="klub-sn">{tx.mojeDoporuceni}</div>
-          ) : (
-            <div className="klub-sn">
-              <button type="button" onClick={() => setDopOpen((v) => !v)}>
-                <span>{tx.doporuceni}</span>
-                <Sipka />
-              </button>
-            </div>
-          )}
-          {!jeDop ? (
-            <div className="klub-kr">
-              <div>
-                <b>{prijeli}</b>
-                <span>{tx.pratelePrijeli}</span>
-              </div>
-              <div>
-                <b>{formatKc(karta.kreditKc)}</b>
-                <span>{tx.vasKredit}</span>
-              </div>
-            </div>
-          ) : null}
-          <div className="klub-roz">
-            <div className="klub-sub">{tx.mujOdkaz}</div>
-            <div className="klub-odk">{odkaz}</div>
-            <div className="klub-btns">
-              <button type="button" className="klub-btn" onClick={emailTip}>
-                {tx.poslatEmail}
-              </button>
-              <button type="button" className="klub-btn2" onClick={whatsapp}>
-                {tx.poslatWa}
-              </button>
-              <button type="button" className="klub-btn2" onClick={kopie}>
-                {tx.kopirovat}
-              </button>
-            </div>
-            <div className="klub-sub">{tx.pratele}</div>
-            {karta.pratele.length === 0 ? (
-              <p className="klub-prazdne">{tx.prazdnePratele}</p>
+          <section
+            id="klub-dop"
+            className={`klub-sec${dopOpen || jeDop ? ' is-open' : ''}${skromnyZbytek && !jeDop ? ' klub-sec--skromne' : ''}`}
+            hidden={skromnyZbytek && !jeDop ? true : undefined}
+          >
+            {jeDop ? (
+              <div className="klub-sn">{tx.mojeDoporuceni}</div>
             ) : (
-              karta.pratele.map((p, i) => (
-                <div className="klub-radek" key={`f-${i}`}>
-                  <div className="klub-ik">
-                    <IkUser />
-                  </div>
-                  <div>
-                    <div className="klub-t">{p.jmeno}</div>
-                    <div className="klub-s">{p.stav}</div>
-                  </div>
-                </div>
-              ))
+              <div className="klub-sn">
+                <button type="button" onClick={() => setDopOpen((v) => !v)}>
+                  <span>{tx.doporuceni}</span>
+                  <Sipka />
+                </button>
+              </div>
             )}
-            <div className="klub-sub">{tx.kredit}</div>
-            {karta.kreditKc <= 0 && karta.kreditCeka <= 0 ? (
-              <p className="klub-prazdne">{tx.prazdneKredit}</p>
-            ) : (
-              <>
-                <div className="klub-kr">
-                  <div>
-                    <b>{formatKc(karta.kreditCeka)}</b>
-                    <span>{tx.ceka}</span>
-                  </div>
-                  <div>
-                    <b>{formatKc(karta.kreditKVyplate)}</b>
-                    <span>{tx.kVyplate}</span>
-                  </div>
-                  <div>
-                    <b>{formatKc(karta.kreditVyplaceno)}</b>
-                    <span>{tx.vyplaceno}</span>
-                  </div>
+            {!jeDop ? (
+              <div className="klub-kr">
+                <div>
+                  <b>{prijeli}</b>
+                  <span>{tx.pratelePrijeli}</span>
                 </div>
-                <div className="klub-btns">
-                  <button
-                    type="button"
-                    className="klub-btn"
-                    onClick={() => ukazToast(tx.vyplataOk)}
-                  >
-                    {tx.pozadat}
-                  </button>
+                <div>
+                  <b>{formatKc(karta.kreditKc)}</b>
+                  <span>{tx.vasKredit}</span>
                 </div>
-              </>
-            )}
-          </div>
-        </section>
+              </div>
+            ) : null}
+            <div className="klub-roz">
+              <div className="klub-sub">{tx.mujOdkaz}</div>
+              <div className="klub-odk">{odkaz}</div>
+              <div className="klub-btns">
+                <button type="button" className="klub-btn" onClick={emailTip}>
+                  {tx.poslatEmail}
+                </button>
+                <button type="button" className="klub-btn2" onClick={whatsapp}>
+                  {tx.poslatWa}
+                </button>
+                <button type="button" className="klub-btn2" onClick={kopie}>
+                  {tx.kopirovat}
+                </button>
+              </div>
+              <div className="klub-sub">{tx.pratele}</div>
+              {karta.pratele.length === 0 ? (
+                <p className="klub-prazdne">{tx.prazdnePratele}</p>
+              ) : (
+                karta.pratele.map((p, i) => (
+                  <div className="klub-radek" key={`f-${i}`}>
+                    <div className="klub-ik">
+                      <IkUser />
+                    </div>
+                    <div>
+                      <div className="klub-t">{p.jmeno}</div>
+                      <div className="klub-s">{p.stav}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div className="klub-sub">{tx.kredit}</div>
+              {karta.kreditKc <= 0 && karta.kreditCeka <= 0 ? (
+                <p className="klub-prazdne">{tx.prazdneKredit}</p>
+              ) : (
+                <>
+                  <div className="klub-kr">
+                    <div>
+                      <b>{formatKc(karta.kreditCeka)}</b>
+                      <span>{tx.ceka}</span>
+                    </div>
+                    <div>
+                      <b>{formatKc(karta.kreditKVyplate)}</b>
+                      <span>{tx.kVyplate}</span>
+                    </div>
+                    <div>
+                      <b>{formatKc(karta.kreditVyplaceno)}</b>
+                      <span>{tx.vyplaceno}</span>
+                    </div>
+                  </div>
+                  <div className="klub-btns">
+                    <button
+                      type="button"
+                      className="klub-btn"
+                      onClick={() => ukazToast(tx.vyplataOk)}
+                    >
+                      {tx.pozadat}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
         ) : null}
 
-        {!jeDop ? (
-          <div className="klub-btns">
-            {jeFirma ? (
-              <a className="klub-btn" href={poptavkaUrl}>
-                {tx.objednat}
-              </a>
-            ) : (
-              <a className="klub-btn" href={poptavkaUrl}>
-                {tx.rezervovat}
-              </a>
-            )}
-            {!karta.skrytDoporuceni ? (
-              <button type="button" className="klub-btn2" onClick={scrollDop}>
-                {jeFirma ? tx.doporucitKratke : tx.doporucit}
-              </button>
-            ) : null}
-          </div>
-        ) : null}
+        {verzeC ? <div style={{ marginTop: 10 }}>{tlacitkaC}</div> : null}
+        {verzeB && !maNadchazejici ? <div style={{ marginTop: 10 }}>{tlacitkaB}</div> : null}
       </div>
       <div className={`klub-toast${toast ? ' is-on' : ''}`} role="status">
         {toast}

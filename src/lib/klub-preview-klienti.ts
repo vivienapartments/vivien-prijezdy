@@ -117,13 +117,15 @@ function rozdelJmeno(host: string, firma: boolean): { jmeno: string; prijmeni: s
 }
 
 function pobytNaRadek(p: ImportBhPobyt, opts?: { pruvodce?: boolean }): KlubPobytRadek {
-  const ceka = p.stavUtraty === 'ceka';
+  const prave = jePrave(p);
+  const ceka = p.stavUtraty === 'ceka' && !prave;
+  const barva = prave ? 'probiha' : ceka ? 'ceka' : 'zapocteno';
   return {
     nadpis: formatTermin(p),
     podnadpis: p.castka > 0 ? `${p.castka.toLocaleString('cs-CZ')} Kč` : p.popisek || '',
     pruvodceUrl: opts?.pruvodce ? '/nahled' : null,
-    barva: ceka ? 'ceka' : 'zapocteno',
-    stavText: ceka ? 'čeká\nzapočítá se po odjezdu' : 'započítáno',
+    barva,
+    stavText: ceka ? 'čeká' : 'započítáno',
   };
 }
 
@@ -176,7 +178,7 @@ function flidrPobyty(): { nadchazejici: KlubPobytRadek[]; pobyty: KlubPobytRadek
       pocet: 4,
       utrata: 9400,
       utrataCeka: 2900,
-      uroven: 'Stálý host',
+      uroven: 'Věrný host',
       klientId: null,
       akce: 'priradit',
       rezervace: ['92026110903', '92026110902'],

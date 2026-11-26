@@ -16,7 +16,7 @@ describe('klub poptávka sleva', () => {
   it('text slevy s důvodem', () => {
     expect(textSlevyPobytu(10, 'delka')).toContain('10 %');
     expect(textSlevyPobytu(10, 'delka')).toContain('délku');
-    expect(textSlevyPobytu(8, 'staly')).toContain('stálý');
+    expect(textSlevyPobytu(8, 'staly')).toContain('věrný');
     expect(textSlevyPobytu(0, null)).toBe('');
   });
 

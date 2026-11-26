@@ -60,6 +60,202 @@ const SLEVA = L(
   },
 );
 
+/** Na kartičce (malé písmeno). */
+const SLEVA_KARTICKA = L('sleva na další pobyt', 'discount on next stay', {
+  de: 'Rabatt auf den nächsten Aufenthalt',
+  pl: 'rabat na kolejny pobyt',
+  uk: 'знижка на наступне перебування',
+  'zh-Hant': '下次住宿折扣',
+  es: 'descuento en la próxima estancia',
+  fr: 'réduction sur le prochain séjour',
+  it: 'sconto sul prossimo soggiorno',
+  pt: 'desconto na próxima estadia',
+  sv: 'rabatt på nästa vistelse',
+  hu: 'kedvezmény a következő tartózkodásra',
+  da: 'rabat på næste ophold',
+  fi: 'alennus seuraavasta majoituksesta',
+});
+
+const SLEVA_TENTO = L('sleva na tento pobyt', 'discount on this stay', {
+  de: 'Rabatt auf diesen Aufenthalt',
+  pl: 'rabat na ten pobyt',
+  uk: 'знижка на це перебування',
+  'zh-Hant': '本次住宿折扣',
+  es: 'descuento en esta estancia',
+  fr: 'réduction sur ce séjour',
+  it: 'sconto su questo soggiorno',
+  pt: 'desconto nesta estadia',
+  sv: 'rabatt på denna vistelse',
+  hu: 'kedvezmény erre a tartózkodásra',
+  da: 'rabat på dette ophold',
+  fi: 'alennus tästä majoituksesta',
+});
+
+const PRUH_NADCHAZEJICI = L('nadcházející pobyt', 'upcoming stay', {
+  de: 'nächster Aufenthalt',
+  pl: 'nadchodzący pobyt',
+  uk: 'майбутнє проживання',
+  'zh-Hant': '即將到來的住宿',
+  es: 'próxima estancia',
+  fr: 'séjour à venir',
+  it: 'prossimo soggiorno',
+  pt: 'próxima estadia',
+  sv: 'kommande vistelse',
+  hu: 'közelgő tartózkodás',
+  da: 'kommende ophold',
+  fi: 'tuleva majoitus',
+});
+
+const TLAC_REZ = L('Rezervovat', 'Book', {
+  de: 'Buchen',
+  pl: 'Zarezerwuj',
+  uk: 'Забронювати',
+  'zh-Hant': '預訂',
+  es: 'Reservar',
+  fr: 'Réserver',
+  it: 'Prenota',
+  pt: 'Reservar',
+  sv: 'Boka',
+  hu: 'Foglalás',
+  da: 'Book',
+  fi: 'Varaa',
+});
+
+const TLAC_DOP = L('Doporučit', 'Recommend', {
+  de: 'Empfehlen',
+  pl: 'Poleć',
+  uk: 'Рекомендувати',
+  'zh-Hant': '推薦',
+  es: 'Recomendar',
+  fr: 'Recommander',
+  it: 'Consiglia',
+  pt: 'Recomendar',
+  sv: 'Rekommendera',
+  hu: 'Ajánlás',
+  da: 'Anbefal',
+  fi: 'Suosittele',
+});
+
+const TLAC_DALSI = L('další pobyt · {pct} %', 'next stay · {pct} %', {
+  de: 'nächster Aufenthalt · {pct} %',
+  pl: 'kolejny pobyt · {pct} %',
+  uk: 'наступне перебування · {pct} %',
+  'zh-Hant': '下次住宿 · {pct} %',
+  es: 'próxima estancia · {pct} %',
+  fr: 'prochain séjour · {pct} %',
+  it: 'prossimo soggiorno · {pct} %',
+  pt: 'próxima estadia · {pct} %',
+  sv: 'nästa vistelse · {pct} %',
+  hu: 'következő tartózkodás · {pct} %',
+  da: 'næste ophold · {pct} %',
+  fi: 'seuraava majoitus · {pct} %',
+});
+
+const TLAC_PRITEL = L('přítel má 5 %', 'friend gets 5 %', {
+  de: 'Freund erhält 5 %',
+  pl: 'przyjaciel ma 5 %',
+  uk: 'друг має 5 %',
+  'zh-Hant': '友人享 5 %',
+  es: 'el amigo tiene 5 %',
+  fr: 'l’ami a 5 %',
+  it: 'l’amico ha il 5 %',
+  pt: 'o amigo tem 5 %',
+  sv: 'vännen får 5 %',
+  hu: 'a barát 5 %-ot kap',
+  da: 'vennen får 5 %',
+  fi: 'ystävä saa 5 %',
+});
+
+const TLAC_OBJ = L('Objednat pobyt', 'Book a stay', {
+  de: 'Aufenthalt bestellen',
+  pl: 'Zamów pobyt',
+  uk: 'Замовити проживання',
+  'zh-Hant': '預訂住宿',
+  es: 'Encargar estancia',
+  fr: 'Commander un séjour',
+  it: 'Ordina soggiorno',
+  pt: 'Encomendar estadia',
+  sv: 'Beställ vistelse',
+  hu: 'Tartózkodás rendelése',
+  da: 'Bestil ophold',
+  fi: 'Tilaa majoitus',
+});
+
+const TLAC_KOLEGA = L('pro kolegu · {pct} %', 'for a colleague · {pct} %', {
+  de: 'für Kollegen · {pct} %',
+  pl: 'dla kolegi · {pct} %',
+  uk: 'для колеги · {pct} %',
+  'zh-Hant': '給同事 · {pct} %',
+  es: 'para un colega · {pct} %',
+  fr: 'pour un collègue · {pct} %',
+  it: 'per un collega · {pct} %',
+  pt: 'para um colega · {pct} %',
+  sv: 'för kollega · {pct} %',
+  hu: 'kollégának · {pct} %',
+  da: 'til kollega · {pct} %',
+  fi: 'kollegalle · {pct} %',
+});
+
+const TLAC_FIRMA5 = L('firma má 5 %', 'company gets 5 %', {
+  de: 'Firma erhält 5 %',
+  pl: 'firma ma 5 %',
+  uk: 'фірма має 5 %',
+  'zh-Hant': '公司享 5 %',
+  es: 'la empresa tiene 5 %',
+  fr: 'l’entreprise a 5 %',
+  it: 'l’azienda ha il 5 %',
+  pt: 'a empresa tem 5 %',
+  sv: 'företaget får 5 %',
+  hu: 'a cég 5 %-ot kap',
+  da: 'firmaet får 5 %',
+  fi: 'yritys saa 5 %',
+});
+
+const TLAC_PRO_SEBE = L('Rezervovat pro sebe', 'Book for yourself', {
+  de: 'Für sich selbst buchen',
+  pl: 'Zarezerwuj dla siebie',
+  uk: 'Забронювати для себе',
+  'zh-Hant': '為自己預訂',
+  es: 'Reservar para usted',
+  fr: 'Réserver pour vous',
+  it: 'Prenota per voi',
+  pt: 'Reservar para si',
+  sv: 'Boka för dig själv',
+  hu: 'Foglalás magának',
+  da: 'Book til dig selv',
+  fi: 'Varaa itsellesi',
+});
+
+const TLAC_PRVNI = L('váš 1. pobyt 5 %', 'your 1st stay 5 %', {
+  de: 'Ihr 1. Aufenthalt 5 %',
+  pl: 'Twój 1. pobyt 5 %',
+  uk: 'ваш 1. перебування 5 %',
+  'zh-Hant': '您的首次住宿 5 %',
+  es: 'su 1.ª estancia 5 %',
+  fr: 'votre 1er séjour 5 %',
+  it: 'il vostro 1° soggiorno 5 %',
+  pt: 'a vossa 1.ª estadia 5 %',
+  sv: 'er 1:a vistelse 5 %',
+  hu: 'az Ön 1. tartózkodása 5 %',
+  da: 'jeres 1. ophold 5 %',
+  fi: '1. majoituksenne 5 %',
+});
+
+const DOPORUCITEL_UROVEN = L('Doporučitel', 'Referrer', {
+  de: 'Empfehler',
+  pl: 'Polecający',
+  uk: 'Рекомендатель',
+  'zh-Hant': '推薦人',
+  es: 'Recomendador',
+  fr: 'Parrain',
+  it: 'Segnalatore',
+  pt: 'Recomendador',
+  sv: 'Rekommendatör',
+  hu: 'Ajánló',
+  da: 'Anbefaler',
+  fi: 'Suosittelija',
+});
+
 const PRUH_VASE = L('vaše pobyty', 'your stays', {
   de: 'Ihre Aufenthalte',
   pl: 'wasze pobyty',
@@ -687,13 +883,26 @@ export function klubTexty(lang: GuideLang) {
   return {
     klub: t(KLUB, lang),
     sleva: (pct: number) => fill(t(SLEVA, lang), { pct: String(Math.max(5, pct || 0)) }),
+    slevaKarticka: t(SLEVA_KARTICKA, lang),
+    slevaTento: t(SLEVA_TENTO, lang),
     dopPopis: t(DOP_POPIS, lang),
     utrata: (kc: string) => fill(t(UTRATA, lang), { kc }),
     doUrovne: (nazev: string, pct: number, kc: string) =>
       fill(t(DO_UROVNE, lang), { nazev, pct: String(pct), kc }),
     pruhVasePobyty: t(PRUH_VASE, lang),
     pruhTentoPobyt: t(PRUH_TENTO, lang),
+    pruhNadchazejici: t(PRUH_NADCHAZEJICI, lang),
     pruhZbyva: (kc: string) => fill(t(PRUH_ZBYVA, lang), { kc }),
+    tlacRezervovat: t(TLAC_REZ, lang),
+    tlacDoporucit: t(TLAC_DOP, lang),
+    tlacDalsiPobyt: (pct: number) => fill(t(TLAC_DALSI, lang), { pct: String(pct) }),
+    tlacPritel: t(TLAC_PRITEL, lang),
+    tlacObjednat: t(TLAC_OBJ, lang),
+    tlacKolega: (pct: number) => fill(t(TLAC_KOLEGA, lang), { pct: String(pct) }),
+    tlacFirma5: t(TLAC_FIRMA5, lang),
+    tlacProSebe: t(TLAC_PRO_SEBE, lang),
+    tlacPrvni: t(TLAC_PRVNI, lang),
+    doporucitelUroven: t(DOPORUCITEL_UROVEN, lang),
     nejvyssi: t(NEJVYSSI, lang),
     nadchazejici: t(NADCH, lang),
     nadchazejiciFirma: t(NADCH_F, lang),
