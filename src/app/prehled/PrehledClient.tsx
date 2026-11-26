@@ -1312,15 +1312,16 @@ export function PrehledClient({
     setDotazBezKarty(null);
     setCekam(`${row.rezervace}:klub-karta`);
     if (ukazka) {
-      const zkouska = row.rezervace === 'TESTKARTY' || /pravoslav/i.test(row.jmeno || '');
-      const odkaz = `${window.location.origin}/klub?k=${zkouska ? 'ukazka-pravoslav' : 'ukazka-booking-karta'}`;
-      const jmeno = (row.jmeno || '').trim() || 'Host';
-      const krestni = jmeno.split(/\s+/)[0] || '';
-      const booking = /booking|airbnb|expedia/i.test(`${row.zdroj || ''} ${row.email || ''}`);
-      const text = booking
-        ? `Dobrý den, ${krestni}, vítejte u nás. Tady je vaše karta VIVIEN Klubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: ${odkaz}`
-        : `Dobrý den, ${krestni}, vítejte u nás. Tady je karta VIVIEN Klubu s průvodcem: ${odkaz}`;
-      /** Zkouška vždy na majitele (ne na číslo z ukázky). */
+      /** Jedna fiktivní karta. Localhost → Preview HTTPS (telefon jinak neotevře localhost). */
+      const host = window.location.hostname;
+      const lokalne = host === 'localhost' || host === '127.0.0.1';
+      const base = lokalne
+        ? 'https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app'
+        : window.location.origin;
+      const odkaz = `${base}/klub?k=zkouska-pravoslav-karta`;
+      const jmeno = (row.jmeno || '').trim() || 'Pravoslav Tomek';
+      const krestni = jmeno.split(/\s+/)[0] || 'Pravoslav';
+      const text = `Dobrý den, ${krestni}, vítejte u nás. Tady je karta VIVIEN Klubu s průvodcem: ${odkaz}`;
       setOknoKarty({
         rezervace: row.rezervace,
         jmeno,

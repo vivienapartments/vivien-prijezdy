@@ -1189,6 +1189,12 @@ export class FileProcessStore implements ProcessStore {
   }
 
   async setRezervace(id: string, record: RezervaceRecord): Promise<void> {
+    const { smiZapisovatRezervaci } = await import('./klub-klic');
+    if (!smiZapisovatRezervaci(id)) {
+      throw new Error(
+        'Na Preview/local se ostré rezervace nemění. Zkoušejte jen fiktivní hosty (TEST…).',
+      );
+    }
     const data = this.read();
     data.rezervace[id] = record;
     this.write(data);
@@ -1486,8 +1492,8 @@ export class UpstashProcessStore implements ProcessStore {
 
   private rezKey(id: string): string {
     const cid = id.trim();
-    /** Preview: zkušební karty (ID začíná TEST) jen do test:rez:, ostré rez: se nemění. */
-    if (process.env.VERCEL_ENV === 'preview' && /^TEST/i.test(cid)) {
+    /** Fiktivní rezervace (ID začíná TEST) vždy do test:rez:, nikdy do ostrých rez:. */
+    if (/^TEST/i.test(cid)) {
       return `test:rez:${cid}`;
     }
     return `rez:${cid}`;
@@ -1569,6 +1575,12 @@ export class UpstashProcessStore implements ProcessStore {
   }
 
   async setRezervace(id: string, record: RezervaceRecord): Promise<void> {
+    const { smiZapisovatRezervaci } = await import('./klub-klic');
+    if (!smiZapisovatRezervaci(id)) {
+      throw new Error(
+        'Na Preview/local se ostré rezervace nemění. Zkoušejte jen fiktivní hosty (TEST…).',
+      );
+    }
     const telo = JSON.stringify(record);
     const klic = this.rezKey(id);
     if (record.zavadyPredani || record.zavadyPoOdjezdu) {
@@ -1592,9 +1604,9 @@ export class UpstashProcessStore implements ProcessStore {
   async listRezervace(): Promise<RezervaceEntry[]> {
     if (this.seznam) return this.seznam;
     const keys = await this.scanKeys('rez:*');
-    /** Preview: přidej zkušební karty, ostré rez:* se jen čtou. */
-    const testKeys =
-      process.env.VERCEL_ENV === 'preview' ? await this.scanKeys('test:rez:*') : [];
+    /** Preview/local: přidej fiktivní TEST karty (test:rez:*). Ostré rez:* se na Preview/local jen čtou. */
+    const { jeZkusebniProstredi } = await import('./klub-klic');
+    const testKeys = jeZkusebniProstredi() ? await this.scanKeys('test:rez:*') : [];
     const vse = [...keys, ...testKeys];
     const hodnoty = await this.hodnotyKlicu(vse);
     const out: RezervaceEntry[] = [];

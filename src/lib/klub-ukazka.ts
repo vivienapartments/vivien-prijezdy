@@ -741,15 +741,19 @@ export function pohledZKarty(
       ];
     } else if (bydli || pred || jenPo || maxi) {
       if (bydli) {
+        /** Pravoslav: jedna zkušební karta (ne /nahled). */
         const pruvodce =
-          kid === 'ukazka-pravoslav' ? `${base}/nahled?predano=1` : `${base}/nahled`;
+          kid === 'ukazka-pravoslav'
+            ? `${base}/klub?k=zkouska-pravoslav-karta`
+            : `${base}/nahled`;
         nadchazejici = [
           {
             nadpis:
               kid === 'ukazka-pravoslav'
                 ? '26.–28. 11. 2026 · Jemná harmonie'
                 : '23.–26. 11. 2026 · Zlatá rovnováha',
-            podnadpis: 'Adresa, příjezd, kódy',
+            podnadpis:
+              kid === 'ukazka-pravoslav' ? 'Otevřít kartu se zkušebním průvodcem' : 'Adresa, příjezd, kódy',
             pruvodceUrl: pruvodce,
             barva: 'probiha',
           },

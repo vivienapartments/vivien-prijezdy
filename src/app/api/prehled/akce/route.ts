@@ -177,8 +177,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     const ids = Array.isArray(body.ids) ? body.ids.map((x) => (typeof x === 'string' ? x.trim() : '')).filter(Boolean) : [];
     if (!jak || !kdo || !ids.length) return chyba(400, 'Chybí platba.');
     const store = createProcessStore();
+    const { smiZapisovatRezervaci } = await import('@/lib/klub-klic');
     let pocet = 0;
     for (const cislo of ids) {
+      if (!smiZapisovatRezervaci(cislo)) continue;
       const zaznam = await store.getRezervace(cislo);
       if (!zaznam) continue;
       const dalsi = zaplatDruhy(zaznam, ['vse'], jak, kdo);
@@ -289,6 +291,13 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const store = createProcessStore();
+  const { smiZapisovatRezervaci } = await import('@/lib/klub-klic');
+  if (!smiZapisovatRezervaci(id) && akce !== 'doporuceni-seznam') {
+    return chyba(
+      403,
+      'Na Preview a lokálně se ostré rezervace nemění. Zkoušejte jen fiktivního hosta (TESTKARTY / Pravoslav).',
+    );
+  }
   const rec = await store.getRezervace(id);
   if (!rec) return chyba(404, 'Rezervace v přehledu není.');
 
@@ -649,8 +658,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   async function pripravOdkazKartyKlubu() {
-    const { klubZapnut, klubKlic } = await import('@/lib/klub-klic');
-    if (!klubZapnut() && process.env.NODE_ENV !== 'development') {
+    const { klubKlic, klubPovolenProZkousku } = await import('@/lib/klub-klic');
+    if (!klubPovolenProZkousku()) {
       return { chyba: 'Klub je vypnutý.' as const };
     }
     const { sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
@@ -706,10 +715,17 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
     const emailInfo = emailProKartu({ emailHosta: rec.emailHosta });
     /** Jen telefon z check-inu (ne z rezervace Bookingu). */
-    const telefonWa =
+    const telefonWaRaw =
       (rec.telefonWa && String(rec.telefonWa).replace(/\D/g, '')) ||
       (rec.telefon && String(rec.telefon).replace(/\D/g, '')) ||
       null;
+    const { cileOdeslaniKarty } = await import('@/lib/klub-karta-predana');
+    const cile = cileOdeslaniKarty({
+      email: emailInfo.email,
+      emailRelay: emailInfo.relay,
+      telefonWa: telefonWaRaw,
+    });
+    const telefonWa = cile.telefonWa;
     const maTelefon = Boolean(telefonWa && telefonWa.length >= 9);
 
     if (akce === 'klub-karta-pripravit') {
@@ -720,12 +736,13 @@ export async function POST(request: Request): Promise<NextResponse> {
           odkaz: pripraveno.odkaz,
           zprava,
           booking,
-          email: emailInfo.email,
-          emailRelay: emailInfo.relay,
-          emailPoznamka: emailInfo.relayPoznamka,
+          email: cile.email,
+          emailRelay: cile.emailRelay,
+          emailPoznamka: cile.emailPoznamka || emailInfo.relayPoznamka,
           telefonWa: maTelefon ? telefonWa : null,
           telefonText: rec.telefon || null,
           kartaPredana: rec.kartaPredana,
+          testRezim: cile.test,
         },
         { headers: noStore },
       );
@@ -739,10 +756,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     if ((kanal === 'whatsapp' || kanal === 'sms') && !maTelefon) {
       return chyba(400, 'Chybí telefon z check-inu.');
     }
-    if (kanal === 'email' && emailInfo.relay) {
+    if (kanal === 'email' && cile.emailRelay) {
       return chyba(400, 'adresa z Bookingu');
     }
-    if (kanal === 'email' && !emailInfo.email) {
+    if (kanal === 'email' && !cile.email) {
       return chyba(400, 'Chybí e-mail z check-inu.');
     }
 
@@ -750,7 +767,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       const over = await overOdchoziHostovi({
         kanal,
         druh: 'klub',
-        emailCil: emailInfo.email,
+        emailCil: cile.email,
         telefonCil: telefonWa,
         text: zprava,
         rezervaceRec: rec,
@@ -761,11 +778,11 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     let emailOdeslan = false;
     let mailto: string | null = null;
-    if (kanal === 'email' && emailInfo.email) {
+    if (kanal === 'email' && cile.email) {
       const over = await overOdchoziHostovi({
         kanal: 'email',
         druh: 'klub',
-        emailCil: emailInfo.email,
+        emailCil: cile.email,
         text: zprava,
         rezervaceRec: rec,
         rezervace: id,
@@ -774,7 +791,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       try {
         const { posliEmailZpravy } = await import('@/lib/email-zprava');
         await posliEmailZpravy({
-          to: emailInfo.email,
+          to: cile.email,
           subject: 'VIVIEN Klub',
           text: over.text || zprava,
           lang,
@@ -785,7 +802,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         emailOdeslan = true;
       } catch {
         mailto = mailtoKarty({
-          email: emailInfo.email,
+          email: cile.email,
           zprava,
           odkaz: pripraveno.odkaz,
         });
