@@ -130,7 +130,7 @@ export const vstupPravidloVop = {
   } as LText,
   odkaz: {
     cs: 'všeobecnými obchodními podmínkami (VOP)',
-    en: 'yleiset sopimusehdot',
+    en: 'General Terms and Conditions',
     de: 'Allgemeinen Geschäftsbedingungen (AGB)',
     pl: 'ogólnym warunkom handlowym',
     uk: 'загальними умовами надання послуг',
@@ -139,7 +139,7 @@ export const vstupPravidloVop = {
     es: 'condiciones generales',
     hu: 'általános szerződési feltételek (ÁSZF)',
     da: 'generelle vilkår',
-    fi: 'General Terms and Conditions',
+    fi: 'yleiset sopimusehdot',
     fr: 'conditions générales',
     it: 'condizioni generali',
     pt: 'condições gerais',

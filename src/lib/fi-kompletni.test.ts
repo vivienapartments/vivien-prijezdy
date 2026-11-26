@@ -84,3 +84,40 @@ describe('fi kompletní (dávka 2)', () => {
     expect(PODPIS_ZAVADY.fi).not.toBe(PODPIS_ZAVADY.en);
   });
 });
+
+describe('en/fi nejsou přehozené (regrese)', () => {
+  it('en v texts nemá finské znaky ani typické FI nadpisy', async () => {
+    const texts = await import('./texts');
+    const fiZnaky = /[äöÄÖ]/;
+    const fiNadpis =
+      /\b(Piilottakaa|avatkaa|Sulkekaa|Talomme|Puutarhan|Sopimusehdot|Majoituksen|Hiljaisuus|Huomaavaisuus|Tulen jalan|Tulen autolla|min jalan|Juna \/ bussi|Vain majoitukseen|Tupakointi kielletty)\b/;
+
+    function projdi(hodnota: unknown, cesta: string) {
+      if (!hodnota || typeof hodnota !== 'object') return;
+      const o = hodnota as Record<string, unknown>;
+      if (typeof o.en === 'string') {
+        expect(o.en, `${cesta}.en`).not.toMatch(fiZnaky);
+        expect(o.en, `${cesta}.en`).not.toMatch(fiNadpis);
+      }
+      if (typeof o.fi === 'string' && typeof o.en === 'string') {
+        const fi = o.fi;
+        const en = o.en;
+        if (fi !== 'WiFi' && en !== 'WiFi') {
+          if (/\b(Hide|Show|House|Garden|Terms and conditions|Quiet in the evening|Morning and evening)\b/.test(fi)) {
+            expect(fi, `${cesta}.fi vypadá anglicky`).not.toMatch(
+              /\b(Hide|Show|House|Garden|Terms and conditions|Quiet in the evening|Morning and evening)\b/,
+            );
+          }
+        }
+      }
+      for (const [k, v] of Object.entries(o)) {
+        if (v && typeof v === 'object') projdi(v, `${cesta}.${k}`);
+      }
+    }
+
+    for (const [jmeno, hodnota] of Object.entries(texts)) {
+      if (jmeno === 'default') continue;
+      projdi(hodnota, jmeno);
+    }
+  });
+});

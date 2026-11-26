@@ -4,7 +4,7 @@ type T = Record<GuideLang, string>;
 
 export const PRANI_NADPIS: T = {
   cs: 'Prostor pro vaše přání',
-  en: 'Tila toiveillenne',
+  en: 'A space for your wishes',
   de: 'Raum für Ihre Wünsche',
   pl: 'Miejsce na Wasze życzenia',
   uk: 'Простір для ваших побажань',
@@ -16,7 +16,7 @@ export const PRANI_NADPIS: T = {
   pt: 'Um espaço para os vossos pedidos',
   hu: 'Hely az önök kívánságainak',
   da: 'Plads til jeres ønsker',
-  fi: 'A space for your wishes',
+  fi: 'Tila toiveillenne',
 };
 
 /** Věta pod nadpisem sbalené dlaždice (Prompt 64). */
