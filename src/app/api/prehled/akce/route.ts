@@ -282,7 +282,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'doporuceni-spojit' &&
       akce !== 'doporuceni-priradit' &&
       akce !== 'doporuceni-seznam' &&
-      akce !== 'klub-poslat-kartu')
+      akce !== 'klub-poslat-kartu' &&
+      akce !== 'klub-karta-pripravit')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -647,22 +648,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, predano: dalsi.predano }, { headers: noStore });
   }
 
-  if (akce === 'klub-poslat-kartu') {
+  async function pripravOdkazKartyKlubu() {
     const { klubZapnut, klubKlic } = await import('@/lib/klub-klic');
     if (!klubZapnut() && process.env.NODE_ENV !== 'development') {
-      return chyba(400, 'Klub je vypnutý.');
-    }
-    const wa =
-      (rec.telefonWa && String(rec.telefonWa).replace(/\D/g, '')) ||
-      (rec.telefon && String(rec.telefon).replace(/\D/g, '')) ||
-      '';
-    if (!wa || wa.length < 9) {
-      return chyba(400, 'Chybí telefon z check-inu.');
+      return { chyba: 'Klub je vypnutý.' as const };
     }
     const { sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
     const { nactiKlientPodleId } = await import('@/lib/klient-karta');
     const { adresaKlub } = await import('@/lib/verejna-adresa');
-    const { zpravaWaPoslatKartu } = await import('@/lib/klub-pozdravy');
     let karta = null as Awaited<ReturnType<typeof nactiKlientPodleId>>;
     const raw = await store.getKv(klubKlic(`klient-index:rez:${id}`));
     if (raw) {
@@ -682,18 +675,134 @@ export async function POST(request: Request): Promise<NextResponse> {
         jazyk: rec.jazyk || 'cs',
       });
     }
-    if (!karta?.tajnyKlic) return chyba(500, 'Kartu se nepodařilo připravit.');
+    if (!karta?.tajnyKlic) return { chyba: 'Kartu se nepodařilo připravit.' as const };
     const odkaz = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`;
-    const krestni = (rec.jmeno || '').trim().split(/\s+/)[0] || '';
-    const booking = /booking|airbnb|expedia/i.test(`${rec.zdroj || ''} ${rec.emailHosta || ''}`);
+    return { odkaz, tajnyKlic: karta.tajnyKlic };
+  }
+
+  if (akce === 'klub-karta-pripravit' || akce === 'klub-poslat-kartu') {
+    const {
+      emailProKartu,
+      jeBookingZdroj,
+      sestavZpravuKarty,
+      mailtoKarty,
+      pridejKanalKartaPredana,
+      jeKartaPredanaKanal,
+    } = await import('@/lib/klub-karta-predana');
+    const pripraveno = await pripravOdkazKartyKlubu();
+    if ('chyba' in pripraveno) return chyba(400, pripraveno.chyba);
+    const krestni = (rec.jmeno || rec.krestni || '').trim().split(/\s+/)[0] || '';
+    const booking = jeBookingZdroj(rec.zdroj, rec.emailHosta);
     const lang = (rec.jazyk || 'cs') as import('@/lib/types').GuideLang;
-    const zprava = zpravaWaPoslatKartu(lang, {
+    const zprava = sestavZpravuKarty({
+      lang,
       krestniJmeno: krestni,
-      odkaz,
+      odkaz: pripraveno.odkaz,
       booking,
     });
+    const emailInfo = emailProKartu({ emailHosta: rec.emailHosta });
+    /** Jen telefon z check-inu (ne z rezervace Bookingu). */
+    const telefonWa =
+      (rec.telefonWa && String(rec.telefonWa).replace(/\D/g, '')) ||
+      (rec.telefon && String(rec.telefon).replace(/\D/g, '')) ||
+      null;
+    const maTelefon = Boolean(telefonWa && telefonWa.length >= 9);
+
+    if (akce === 'klub-karta-pripravit') {
+      return NextResponse.json(
+        {
+          ok: true,
+          jmeno: rec.jmeno || krestni || 'Host',
+          odkaz: pripraveno.odkaz,
+          zprava,
+          booking,
+          email: emailInfo.email,
+          emailRelay: emailInfo.relay,
+          emailPoznamka: emailInfo.relayPoznamka,
+          telefonWa: maTelefon ? telefonWa : null,
+          telefonText: rec.telefon || null,
+          kartaPredana: rec.kartaPredana,
+        },
+        { headers: noStore },
+      );
+    }
+
+    const kanalRaw = typeof body?.kanal === 'string' ? body.kanal.trim() : '';
+    if (!jeKartaPredanaKanal(kanalRaw)) return chyba(400, 'Chybí kanál.');
+    const kanal = kanalRaw;
+    const { overOdchoziHostovi } = await import('@/lib/odchozi-host');
+
+    if ((kanal === 'whatsapp' || kanal === 'sms') && !maTelefon) {
+      return chyba(400, 'Chybí telefon z check-inu.');
+    }
+    if (kanal === 'email' && emailInfo.relay) {
+      return chyba(400, 'adresa z Bookingu');
+    }
+    if (kanal === 'email' && !emailInfo.email) {
+      return chyba(400, 'Chybí e-mail z check-inu.');
+    }
+
+    if (kanal === 'whatsapp' || kanal === 'sms') {
+      const over = await overOdchoziHostovi({
+        kanal,
+        druh: 'klub',
+        emailCil: emailInfo.email,
+        telefonCil: telefonWa,
+        text: zprava,
+        rezervaceRec: rec,
+        rezervace: id,
+      });
+      if (!over.ok) return chyba(400, over.duvod || 'Zpráva nejde odeslat.');
+    }
+
+    let emailOdeslan = false;
+    let mailto: string | null = null;
+    if (kanal === 'email' && emailInfo.email) {
+      const over = await overOdchoziHostovi({
+        kanal: 'email',
+        druh: 'klub',
+        emailCil: emailInfo.email,
+        text: zprava,
+        rezervaceRec: rec,
+        rezervace: id,
+      });
+      if (!over.ok) return chyba(400, over.duvod || 'E-mail nejde odeslat.');
+      try {
+        const { posliEmailZpravy } = await import('@/lib/email-zprava');
+        await posliEmailZpravy({
+          to: emailInfo.email,
+          subject: 'VIVIEN Klub',
+          text: over.text || zprava,
+          lang,
+          druh: 'klub',
+          rezervace: id,
+          tlacitko: { url: pripraveno.odkaz, label: 'Otevřít moji kartu' },
+        });
+        emailOdeslan = true;
+      } catch {
+        mailto = mailtoKarty({
+          email: emailInfo.email,
+          zprava,
+          odkaz: pripraveno.odkaz,
+        });
+      }
+    }
+
+    const dalsiPredana = pridejKanalKartaPredana(rec.kartaPredana, kanal);
+    const ulozeno = pridej(rec, `Karta poslána (${kanal})`, { kartaPredana: dalsiPredana });
+    await store.setRezervace(id, ulozeno);
+
     return NextResponse.json(
-      { ok: true, telefonWa: wa, zprava, odkaz },
+      {
+        ok: true,
+        odkaz: pripraveno.odkaz,
+        zprava,
+        telefonWa: maTelefon ? telefonWa : null,
+        emailOdeslan,
+        mailto,
+        kartaPredana: dalsiPredana,
+        kanal,
+      },
       { headers: noStore },
     );
   }

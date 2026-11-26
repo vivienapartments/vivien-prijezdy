@@ -34,6 +34,7 @@ import { PoptavkaDetail } from './PoptavkaDetail';
 import { cekaWhatsAppPoPruvodci } from '@/lib/pruvodce-wa-stav';
 import { textSchvaleniOdjezduOdeslat } from '@/lib/odjezd-souhlas';
 import { odkazWhatsAppPrehled, zpravyMenu } from '@/lib/whatsapp-zprava';
+import { textKartaPoslana } from '@/lib/klub-karta-predana';
 import { chybejiciKroky } from '@/lib/vstup-pruvodce';
 import {
   CAS_PO_23,
@@ -528,6 +529,19 @@ export function PrehledClient({
   const [dotazOdjezd, setDotazOdjezd] = useState<string | null>(null);
   const [dotazPohoda, setDotazPohoda] = useState<string | null>(null);
   const [dotazPrestoPrijezd, setDotazPrestoPrijezd] = useState<string | null>(null);
+  /** Okno „Předáno – poslat kartu“ (PROMPT 5b). */
+  const [oknoKarty, setOknoKarty] = useState<{
+    rezervace: string;
+    jmeno: string;
+    odkaz: string;
+    zprava: string;
+    email: string | null;
+    emailRelay: boolean;
+    emailPoznamka: string | null;
+    telefonWa: string | null;
+    emailOdeslan: boolean;
+    predana: { kdy: string; kanaly: ('email' | 'whatsapp' | 'sms' | 'kopie')[] } | null;
+  } | null>(null);
   const [poplatekOtevren, setPoplatekOtevren] = useState<Record<string, boolean>>({});
   /** V detailu karty: které skupiny jsou rozbalené (může jich být víc, včetně všech). */
   const [detailSekce, setDetailSekce] = useState<Record<string, DetailSekceId[]>>({});
@@ -1270,50 +1284,192 @@ export function PrehledClient({
     setDotazPredani(null);
   }
 
-  /** WhatsApp s odkazem na kartu (check-in číslo). Nikdy přes Booking zprávy. */
-  async function poslatKartuKlubWa(row: PrehledRadek) {
-    const telefonWa =
-      row.telefonKtery === 'checkin'
-        ? row.telefonWa
-        : row.jinyTelefonKtery === 'checkin'
-          ? row.jinyTelefonWa
-          : row.telefonWa;
-    if (!telefonWa) {
-      setHlaska('Chybí telefon z check-inu.');
-      return;
-    }
+  /** Okno „Předáno – poslat kartu“: náhled + kanály (PROMPT 5b). */
+  async function otevriOknoKarty(row: PrehledRadek) {
+    setHlaska('');
+    setCekam(`${row.rezervace}:klub-karta`);
     if (ukazka) {
       const odkaz = `${window.location.origin}/klub?k=ukazka-booking-karta`;
-      const jmeno = (row.jmeno || '').trim().split(/\s+/)[0] || '';
+      const jmeno = (row.jmeno || '').trim() || 'Host';
+      const krestni = jmeno.split(/\s+/)[0] || '';
       const booking = /booking|airbnb|expedia/i.test(`${row.zdroj || ''} ${row.email || ''}`);
       const text = booking
-        ? `Dobrý den, ${jmeno}, vítejte u nás. Tady je vaše karta VIVIEN Klubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: ${odkaz}`
-        : `Dobrý den, ${jmeno}, vítejte u nás. Tady je váš průvodce a karta VIVIEN Klubu: ${odkaz}`;
-      window.open(odkazWhatsAppPrehled(telefonWa, text, navigator.userAgent), '_blank');
+        ? `Dobrý den, ${krestni}, vítejte u nás. Tady je vaše karta VIVIEN Klubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: ${odkaz}`
+        : `Dobrý den, ${krestni}, vítejte u nás. Tady je váš průvodce a karta VIVIEN Klubu: ${odkaz}`;
+      const relay = /booking|airbnb|expedia/i.test(row.email || '');
+      const telefonWa =
+        row.telefonKtery === 'checkin'
+          ? row.telefonWa
+          : row.jinyTelefonKtery === 'checkin'
+            ? row.jinyTelefonWa
+            : row.telefonWa;
+      setOknoKarty({
+        rezervace: row.rezervace,
+        jmeno,
+        odkaz,
+        zprava: text,
+        email: row.email || null,
+        emailRelay: relay,
+        emailPoznamka: relay ? 'adresa z Bookingu' : null,
+        telefonWa: telefonWa || null,
+        emailOdeslan: false,
+        predana: row.kartaPredana,
+      });
+      setCekam(null);
       return;
     }
-    setCekam(`${row.rezervace}:klub-karta`);
-    setHlaska('');
     const res = await fetch('/api/prehled/akce', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rezervace: row.rezervace, akce: 'klub-poslat-kartu' }),
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'klub-karta-pripravit' }),
     });
     const json = (await res.json().catch(() => null)) as {
       ok?: boolean;
       error?: string;
-      telefonWa?: string;
+      jmeno?: string;
+      odkaz?: string;
       zprava?: string;
+      email?: string | null;
+      emailRelay?: boolean;
+      emailPoznamka?: string | null;
+      telefonWa?: string | null;
+      kartaPredana?: { kdy: string; kanaly: ('email' | 'whatsapp' | 'sms' | 'kopie')[] } | null;
     } | null;
     setCekam(null);
-    if (!res.ok || !json?.ok || !json.zprava) {
-      setHlaska(json?.error || 'Odkaz na kartu se nepřipravil.');
+    if (!res.ok || !json?.ok || !json.odkaz || !json.zprava) {
+      setHlaska(json?.error || 'Kartu se nepodařilo připravit.');
       return;
     }
-    window.open(
-      odkazWhatsAppPrehled(json.telefonWa || telefonWa, json.zprava, navigator.userAgent),
-      '_blank',
+    setOknoKarty({
+      rezervace: row.rezervace,
+      jmeno: json.jmeno || row.jmeno || 'Host',
+      odkaz: json.odkaz,
+      zprava: json.zprava,
+      email: json.email || null,
+      emailRelay: Boolean(json.emailRelay),
+      emailPoznamka: json.emailPoznamka || null,
+      telefonWa: json.telefonWa || null,
+      emailOdeslan: false,
+      predana: json.kartaPredana || row.kartaPredana,
+    });
+    if (json.email && !json.emailRelay) {
+      void kanalKarty(row, 'email', {
+        odkaz: json.odkaz,
+        zprava: json.zprava,
+        telefonWa: json.telefonWa || null,
+      });
+    }
+  }
+
+  async function kanalKarty(
+    row: PrehledRadek,
+    kanal: 'email' | 'whatsapp' | 'sms' | 'kopie',
+    hotove?: { odkaz: string; zprava: string; telefonWa: string | null },
+  ) {
+    const odkaz = hotove?.odkaz || oknoKarty?.odkaz || '';
+    const zprava = hotove?.zprava || oknoKarty?.zprava || '';
+    const telefonWa = hotove?.telefonWa ?? oknoKarty?.telefonWa ?? null;
+
+    if (ukazka) {
+      if (kanal === 'whatsapp' && telefonWa) {
+        window.open(odkazWhatsAppPrehled(telefonWa, zprava, navigator.userAgent), '_blank');
+      } else if (kanal === 'sms' && telefonWa) {
+        window.location.href = smsOdkaz(`+${telefonWa}`, zprava, jeIos(navigator.userAgent));
+      } else if (kanal === 'kopie' && odkaz) {
+        try {
+          await navigator.clipboard.writeText(odkaz);
+        } catch {
+          /* ignore */
+        }
+      } else if (kanal === 'email' && oknoKarty?.email && !oknoKarty.emailRelay) {
+        const mailto = `mailto:${encodeURIComponent(oknoKarty.email)}?subject=${encodeURIComponent('VIVIEN Klub')}&body=${encodeURIComponent(zprava)}`;
+        window.location.href = mailto;
+      }
+      const kdy = new Date().toISOString();
+      setOknoKarty((prev) =>
+        prev && prev.rezervace === row.rezervace
+          ? {
+              ...prev,
+              predana: {
+                kdy,
+                kanaly: [...new Set([...(prev.predana?.kanaly || []), kanal])],
+              },
+            }
+          : prev,
+      );
+      setRadky((prev) =>
+        prev.map((r) =>
+          r.rezervace === row.rezervace
+            ? {
+                ...r,
+                kartaPredana: {
+                  kdy,
+                  kanaly: [...new Set([...(r.kartaPredana?.kanaly || []), kanal])],
+                },
+              }
+            : r,
+        ),
+      );
+      return;
+    }
+
+    setCekam(`${row.rezervace}:klub-${kanal}`);
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'klub-poslat-kartu', kanal }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      mailto?: string | null;
+      emailOdeslan?: boolean;
+      telefonWa?: string | null;
+      zprava?: string;
+      odkaz?: string;
+      kartaPredana?: { kdy: string; kanaly: ('email' | 'whatsapp' | 'sms' | 'kopie')[] };
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok) {
+      setHlaska(json?.error || 'Odeslání karty se nepovedlo.');
+      return;
+    }
+    if (kanal === 'whatsapp' && (json.telefonWa || telefonWa)) {
+      window.open(
+        odkazWhatsAppPrehled(json.telefonWa || telefonWa!, json.zprava || zprava, navigator.userAgent),
+        '_blank',
+      );
+    } else if (kanal === 'sms' && (json.telefonWa || telefonWa)) {
+      window.location.href = smsOdkaz(
+        `+${json.telefonWa || telefonWa}`,
+        json.zprava || zprava,
+        jeIos(navigator.userAgent),
+      );
+    } else if (kanal === 'kopie' && (json.odkaz || odkaz)) {
+      try {
+        await navigator.clipboard.writeText(json.odkaz || odkaz);
+      } catch {
+        /* ignore */
+      }
+    } else if (kanal === 'email' && json.mailto) {
+      window.location.href = json.mailto;
+    }
+    setOknoKarty((prev) =>
+      prev && prev.rezervace === row.rezervace
+        ? {
+            ...prev,
+            emailOdeslan: json.emailOdeslan ? true : prev.emailOdeslan,
+            predana: json.kartaPredana || prev.predana,
+          }
+        : prev,
     );
+    if (json.kartaPredana) {
+      setRadky((prev) =>
+        prev.map((r) =>
+          r.rezervace === row.rezervace ? { ...r, kartaPredana: json.kartaPredana! } : r,
+        ),
+      );
+    }
   }
 
   function otevriDotazPredani(row: PrehledRadek) {
@@ -5152,16 +5308,107 @@ export function PrehledClient({
             {!predaniDotazJeNedojezd ? predaniDotaz : null}
           </>
         ) : null}
-        {predanoKdy &&
-        (row.telefonKtery === 'checkin' ? row.telefonWa : row.jinyTelefonKtery === 'checkin' ? row.jinyTelefonWa : row.telefonWa) ? (
-          <button
-            type="button"
-            className="ph-nova-predani"
-            disabled={cekam !== null}
-            onClick={() => void poslatKartuKlubWa(row)}
-          >
-            Předáno – poslat kartu
-          </button>
+        {predanoKdy ? (
+          <>
+            <button
+              type="button"
+              className="ph-nova-predani"
+              disabled={cekam !== null}
+              onClick={() => void otevriOknoKarty(row)}
+            >
+              {row.kartaPredana ? 'Poslat kartu znovu' : 'Předáno – poslat kartu'}
+            </button>
+            {row.kartaPredana
+              ? (() => {
+                  const stitek = textKartaPoslana(
+                    row.kartaPredana,
+                    hodinaPraha(row.kartaPredana.kdy),
+                  );
+                  return stitek ? <p className="ph-karta-poslana">{stitek}</p> : null;
+                })()
+              : null}
+            {oknoKarty && oknoKarty.rezervace === row.rezervace ? (
+              <div className="ph-okno ph-okno--karta" role="dialog" aria-label="Poslat kartu">
+                <p>
+                  <strong>{oknoKarty.jmeno}</strong>
+                </p>
+                <p className="ph-okno__kontakty">
+                  {oknoKarty.email ? (
+                    <span>
+                      {oknoKarty.email}
+                      {oknoKarty.emailRelay || oknoKarty.emailPoznamka
+                        ? ` (${oknoKarty.emailPoznamka || 'adresa z Bookingu'})`
+                        : ''}
+                    </span>
+                  ) : (
+                    <span>bez e-mailu z check-inu</span>
+                  )}
+                  {' · '}
+                  {oknoKarty.telefonWa ? (
+                    <span>+{oknoKarty.telefonWa}</span>
+                  ) : (
+                    <span>bez telefonu z check-inu</span>
+                  )}
+                </p>
+                <p className="ph-okno__nahled">{oknoKarty.zprava}</p>
+                <p className="ph-okno__odkaz">
+                  <a href={oknoKarty.odkaz} target="_blank" rel="noreferrer">
+                    {oknoKarty.odkaz.replace(/^https?:\/\//, '')}
+                  </a>
+                </p>
+                {oknoKarty.emailOdeslan ? (
+                  <p className="ph-okno__stav">✓ E-mail odeslán</p>
+                ) : null}
+                <div className="ph-okno__akce">
+                  <button
+                    type="button"
+                    disabled={cekam !== null || !oknoKarty.telefonWa}
+                    title={!oknoKarty.telefonWa ? 'Chybí telefon z check-inu' : undefined}
+                    onClick={() => void kanalKarty(row, 'whatsapp')}
+                  >
+                    WhatsApp
+                  </button>
+                  <button
+                    type="button"
+                    disabled={cekam !== null || !oknoKarty.telefonWa}
+                    title={!oknoKarty.telefonWa ? 'Chybí telefon z check-inu' : undefined}
+                    onClick={() => void kanalKarty(row, 'sms')}
+                  >
+                    SMS
+                  </button>
+                  <button
+                    type="button"
+                    disabled={
+                      cekam !== null ||
+                      !oknoKarty.email ||
+                      oknoKarty.emailRelay ||
+                      oknoKarty.emailOdeslan
+                    }
+                    title={
+                      oknoKarty.emailRelay
+                        ? 'adresa z Bookingu'
+                        : !oknoKarty.email
+                          ? 'Chybí e-mail z check-inu'
+                          : undefined
+                    }
+                    onClick={() => void kanalKarty(row, 'email')}
+                  >
+                    E-mail
+                  </button>
+                  <button
+                    type="button"
+                    disabled={cekam !== null}
+                    onClick={() => void kanalKarty(row, 'kopie')}
+                  >
+                    Kopírovat odkaz
+                  </button>
+                  <button type="button" onClick={() => setOknoKarty(null)}>
+                    Zavřít
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </>
         ) : null}
         {jazykNahore ? <div className="ph-znovu">{jazykSelect}</div> : null}
         <div className="ph-nova-rada">

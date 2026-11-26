@@ -82,20 +82,42 @@ Pošli až po dokončení `PROMPT-KARTA-TLACITKA-A-STAVY.md`.
   - do útraty ani kreditu se nepočítá.
 - Poděkování mu jde jen na skutečný e-mail z průvodce. Bez něj nic.
 
-## 6. Přidat na plochu – na kartě vždy, úplně dole, chytře
-Vzor `nahled-plocha-uz-ma-3-verze.html`, **sloupce A a B1** (starý `nahled-karta-plocha.html` neplatí). Používej stávající logiku plochy (manifest na token, detekce instalace).
-- **A · Karta otevřená v prohlížeči, na tomto telefonu ještě není na ploše** (sloupec A, schváleno):
-  - řádek úplně dole na kartě (pod Doporučením), stejný tvar jako B1: ikona telefonu s plusem | text | „Přidat ›“;
-  - zlatý rámeček `#c9a84c`, pozadí `--tile`;
-  - tučně „Přidat VIVIEN na plochu“, pod ním „Příště kartu i průvodce otevřete jedním klepnutím.“;
-  - spustí náš průvodce přidáním (iPhone a Android kroky, které už máme).
-- **B · Otevřeno v prohlížeči, ale tento telefon už ikonu má** (sloupec **B1 · Tlumený rámeček**):
-  - stejný tvar jako A, tlumený rámeček `--tb` a barvy `--sec`;
-  - ikona sdílení | „Poslat do dalšího telefonu“ | „Poslat ›“;
-  - pod nadpisem: „✓ Na tomto telefonu máte VIVIEN na ploše.“ (fajfka je v podtextu, ne zvlášť nad řádkem).
-- **C · Otevřeno z ikony na ploše:** řádek A ani text o „máte na ploše“ nejsou vidět. Dole zůstává jen „Poslat do dalšího telefonu“ (stejný tvar jako B1, bez podtextu s fajfkou).
-- „Poslat do dalšího telefonu“ otevře sdílení odkazu na kartu: WhatsApp, SMS, kopírovat. Druhý telefon si pak kartu přidá na plochu sám. Odkaz je tajný, takže u sdílení je věta „Pošlete jen svým blízkým“.
-- Stav se pozná na každém telefonu zvlášť. Jeden člověk může mít ikonu na více telefonech.
+
+## 5b. Okno „Předáno – poslat kartu“ (dodatek 26. 11. 16:10)
+- Klepnutí v přehledu u pobytu otevře okno:
+  - jméno a kontakty z check-inu,
+  - náhled zprávy s odkazem `/klub?k=…`,
+  - tlačítka **WhatsApp** (`wa.me`), **SMS** (`sms:`) a **E-mail** (odešle aplikace přes SMTP; dokud nefunguje, `mailto:`),
+  - „Kopírovat odkaz“.
+- Jen kontakty z check-inu a vše přes `odchozi-host.ts`:
+  - relay adresu booking/airbnb/expedia nejde vybrat (neaktivní, s poznámkou „adresa z Bookingu“);
+  - bez telefonu jsou WhatsApp a SMS neaktivní.
+- Text podle typu hosta (13 jazyků), viz bod 5.
+- Po odeslání se uloží `kartaPredana` (čas a kanál) a v přehledu je „Karta poslána · WhatsApp 15:42“. Poslat jde znovu i jiným kanálem.
+- U Booking hosta karta ukáže klub **až po `kartaPredana`**. Do té doby vypadá jako neutrální průvodce. Odkaz z Bookingu zůstává bez klubu navždy.
+- Testy:
+  - před předáním bez klubu;
+  - po předání Host + 5 %;
+  - relay e-mail nejde vybrat;
+  - bez telefonu jsou WhatsApp a SMS neaktivní.
+
+## 6. Přidat na plochu – na kartě vždy, úplně dole (finální podoba 26. 11.)
+Vzor `nahled-plocha-uz-ma-3-verze.html`: sloupec **A** a sloupec **B1**. Ostatní sloupce neplatí. Používej stávající logiku plochy (manifest na token, detekce instalace).
+- Vždy jeden uzavřený obdélník **úplně dole na kartě**, pod Doporučením: zaoblení 13px, ikona vlevo, nadpis a pod ním věta uvnitř rámečku, akce vpravo.
+- Žádné přerušované rámečky, žádná kulatá tlačítka, žádný text mimo rámeček.
+- **A · Tento telefon ještě nemá ikonu:** rámeček zlatý `#c9a84c`, pozadí `--tile`, zlatá ikona telefonu s plusem.
+  - Nadpis tučně: „Přidat VIVIEN na plochu“.
+  - Věta: „Příště kartu i průvodce otevřete jedním klepnutím.“
+  - Vpravo zlatě „Přidat ›“.
+  - Klepnutí spustí náš průvodce přidáním (iPhone a Android).
+- **B1 · Tento telefon už ikonu má, nebo je karta otevřená z ikony:** stejný tvar a velikost, ale tlumený.
+  - Rámeček `--tb`, pozadí `--tile`.
+  - Ikona sdílení v barvě `--sec`.
+  - Nadpis normálním písmem: „Poslat do dalšího telefonu“.
+  - Věta: „✓ Na tomto telefonu máte VIVIEN na ploše.“
+  - Vpravo šedě „Poslat ›“.
+  - Klepnutí otevře sdílení odkazu na kartu (WhatsApp, SMS, kopírovat) s větou „Pošlete jen svým blízkým“.
+- Stav se pozná na každém telefonu zvlášť.
 
 ## 7. Testy
 - Přímý host:
@@ -107,5 +129,5 @@ Vzor `nahled-plocha-uz-ma-3-verze.html`, **sloupce A a B1** (starý `nahled-kart
   - e-mail nikdy na relay adresu.
 - `bezMarketingu` → žádný e-mail.
 - Host přes Booking: odkaz z Bookingu nikdy neukáže klub; po „Předáno – poslat kartu“ jde WhatsApp jen na číslo z check-inu.
-- Plocha: stav A / B / C podle zařízení.
+- Plocha: stav A nebo B1 podle zařízení.
 - Klub vypnutý → všechno jako dnes.

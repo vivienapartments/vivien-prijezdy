@@ -83,8 +83,22 @@ export async function GET(req: Request) {
     );
   }
 
+  /** Booking host: klub až po kartaPredana (PROMPT 5b). */
+  let bookingRezim: 'bez-klubu' | 'po-ubytovani' | null = null;
+  for (const rezId of karta.rezervace || []) {
+    const rec = await store.getRezervace(rezId);
+    if (!rec) continue;
+    const { jeBookingZdroj } = await import('@/lib/klub-karta-predana');
+    if (!jeBookingZdroj(rec.zdroj, rec.emailHosta)) continue;
+    bookingRezim = rec.kartaPredana?.kdy ? 'po-ubytovani' : 'bez-klubu';
+    break;
+  }
+
   return NextResponse.json(
-    { ok: true, karta: pohledZKarty(karta, base, { ukazka: false, pohled }) },
+    {
+      ok: true,
+      karta: pohledZKarty(karta, base, { ukazka: false, pohled, bookingRezim }),
+    },
     { headers: noStore },
   );
 }

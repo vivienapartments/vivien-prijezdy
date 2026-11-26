@@ -182,6 +182,11 @@ export type RezervaceRecord = {
   podekovaniKdy: string | null;
   /** Kanál posledního poděkování. */
   podekovaniKanal: 'whatsapp' | 'sms' | 'email' | null;
+  /**
+   * Kdy a jakými kanály majitel poslal kartu klubu (PROMPT-PODEKOVANI 5b).
+   * null = ještě ne. U Booking hosta klub na kartě až po tomto.
+   */
+  kartaPredana: { kdy: string; kanaly: ('email' | 'whatsapp' | 'sms' | 'kopie')[] } | null;
   /** Kdy majitel odeslal shrnutí „Vše je připravené“. */
   shrnutiKdy: string | null;
   /** Kanál posledního shrnutí. */
@@ -851,6 +856,19 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
       r.podekovaniKanal === 'whatsapp' || r.podekovaniKanal === 'sms' || r.podekovaniKanal === 'email'
         ? r.podekovaniKanal
         : null,
+    kartaPredana: (() => {
+      const raw = r.kartaPredana;
+      if (!raw || typeof raw !== 'object') return null;
+      const o = raw as { kdy?: unknown; kanaly?: unknown };
+      if (typeof o.kdy !== 'string' || !o.kdy) return null;
+      const kanaly = Array.isArray(o.kanaly)
+        ? o.kanaly.filter(
+            (k): k is 'email' | 'whatsapp' | 'sms' | 'kopie' =>
+              k === 'email' || k === 'whatsapp' || k === 'sms' || k === 'kopie',
+          )
+        : [];
+      return { kdy: o.kdy, kanaly };
+    })(),
     shrnutiKdy: typeof r.shrnutiKdy === 'string' && r.shrnutiKdy ? r.shrnutiKdy : null,
     shrnutiKanal:
       r.shrnutiKanal === 'whatsapp' ||
@@ -1070,6 +1088,7 @@ export function prazdnaRezervace(id: string, cas: string): RezervaceRecord {
     pohodaDotaz: null,
     podekovaniKdy: null,
     podekovaniKanal: null,
+    kartaPredana: null,
     shrnutiKdy: null,
     shrnutiKanal: null,
     shrnutiOtisk: null,

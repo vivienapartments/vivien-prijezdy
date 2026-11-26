@@ -51,6 +51,22 @@ describe('klub-ukazka', () => {
     expect(p.utrataCekaKc).toBe(16000);
     expect(p.praveBydli).toBe(true);
     expect(jeUkazkaKlic('ukazka-host-up')).toBe(true);
+    const probiha = p.pobyty.find((r) => r.barva === 'probiha');
+    expect(probiha?.podnadpis || '').not.toMatch(/16\s*000|Kč/);
+  });
+
+  it('bookingRezim z opts (po kartaPredana)', () => {
+    const pred = pohledZKarty(ukazkovaKlientKarta('ukazka-host'), 'https://example.com', {
+      ukazka: true,
+      bookingRezim: 'bez-klubu',
+    });
+    expect(pred.bookingRezim).toBe('bez-klubu');
+    const po = pohledZKarty(ukazkovaKlientKarta('ukazka-host'), 'https://example.com', {
+      ukazka: true,
+      bookingRezim: 'po-ubytovani',
+    });
+    expect(po.bookingRezim).toBe('po-ubytovani');
+    expect(po.slevaPct).toBe(5);
   });
 
   it('15 situací z průletu má ukázkové klíče', () => {

@@ -470,7 +470,12 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
 export function pohledZKarty(
   karta: KlientKarta,
   odkazBase: string,
-  opts?: { ukazka?: boolean; pohled?: KlientRole },
+  opts?: {
+    ukazka?: boolean;
+    pohled?: KlientRole;
+    /** Booking: bez-klubu / po-ubytovani (po kartaPredana). */
+    bookingRezim?: KlubKartaPohled['bookingRezim'];
+  },
 ): KlubKartaPohled {
   const u = urovenZUtraty(karta.utrataKc);
   const pohled: KlientRole =
@@ -730,7 +735,7 @@ export function pohledZKarty(
         pobyty = [
           {
             nadpis: '23.–26. 11. 2026',
-            podnadpis: up ? '16 000 Kč' : '1 450 Kč',
+            podnadpis: up ? '' : '1 450 Kč',
             barva: 'probiha',
             stavText: 'započítáno',
           },
@@ -844,11 +849,13 @@ export function pohledZKarty(
     nadchazejici.some((r) => r.barva === 'probiha');
 
   const bookingRezim: KlubKartaPohled['bookingRezim'] =
-    kidUkazka === 'ukazka-booking-pred' || kidUkazka === 'ukazka-booking-bydli'
-      ? 'bez-klubu'
-      : kidUkazka === 'ukazka-booking-karta' || kidUkazka === 'ukazka-booking-po'
-        ? 'po-ubytovani'
-        : null;
+    opts?.bookingRezim != null
+      ? opts.bookingRezim
+      : kidUkazka === 'ukazka-booking-pred' || kidUkazka === 'ukazka-booking-bydli'
+        ? 'bez-klubu'
+        : kidUkazka === 'ukazka-booking-karta' || kidUkazka === 'ukazka-booking-po'
+          ? 'po-ubytovani'
+          : null;
 
   const slevaPct =
     bookingRezim === 'po-ubytovani' ? 5 : u.slevaPct;

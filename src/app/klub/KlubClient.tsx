@@ -273,9 +273,19 @@ export default function KlubClient() {
 
   const serazene = [...KLUB_UROVNE_PRO_LADDER].sort((a, b) => a.odKc - b.odKc);
   const idxZobr = serazene.findIndex((u) => u.id === behem.zobrazena.id);
+  const idxOfic = serazene.findIndex((u) => u.id === behem.oficielni.id);
   const aktualni = serazene[idxZobr >= 0 ? idxZobr : 0];
+  const oficUroven = serazene[idxOfic >= 0 ? idxOfic : 0];
   const dalsi = serazene[(idxZobr >= 0 ? idxZobr : 0) + 1] || null;
-  const nazevTed = jeFirma ? aktualni.nazevFirma : aktualni.nazevHost;
+  /** Při posunu úrovně vlevo odkud jde (oficiální), ne kam míří. */
+  const nazevTed = behem.posuneUroven
+    ? jeFirma
+      ? oficUroven.nazevFirma
+      : oficUroven.nazevHost
+    : jeFirma
+      ? aktualni.nazevFirma
+      : aktualni.nazevHost;
+  const pctTed = behem.posuneUroven ? oficUroven.slevaPct : aktualni.slevaPct;
   const nazevDalsi = dalsi ? (jeFirma ? dalsi.nazevFirma : dalsi.nazevHost) : null;
 
   const ceka = karta.utrataCekaKc || 0;
@@ -713,7 +723,7 @@ export default function KlubClient() {
                   cursor: 'pointer',
                 }}
               >
-                {nazevTed} · {aktualni.slevaPct} %
+                {nazevTed} · {pctTed} %
               </button>
               <span className="klub-pruh-urovne__dalsi">
                 {behem.posuneUroven && posun
@@ -735,10 +745,12 @@ export default function KlubClient() {
                   {stayJeProbiha ? tx.pruhTentoPobyt : tx.pruhNadchazejici}
                 </span>
               ) : null}
-              <span className="klub-pruh-leg__pol">
-                <i className="is-zbyva" aria-hidden />
-                {behem.posuneUroven && posun ? posun.legendaOk : tx.pruhZbyva(formatKc(chybiPo))}
-              </span>
+              {!behem.posuneUroven ? (
+                <span className="klub-pruh-leg__pol">
+                  <i className="is-zbyva" aria-hidden />
+                  {tx.pruhZbyva(formatKc(chybiPo))}
+                </span>
+              ) : null}
             </div>
             {ladder ? <div className="klub-ladder">{ladderRows}</div> : null}
           </div>

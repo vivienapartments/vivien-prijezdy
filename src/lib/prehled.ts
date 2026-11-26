@@ -170,6 +170,8 @@ export type PrehledRadek = {
   checkinNeniPotreba: boolean;
   /** Host nechce další e-maily (poděkování / nabídky). */
   bezMarketingu: boolean;
+  /** Poslání karty klubu (čas + kanály). */
+  kartaPredana: { kdy: string; kanaly: ('email' | 'whatsapp' | 'sms' | 'kopie')[] } | null;
   /** Kdy majitel označil nedojezd. */
   nedojezdKdy: string | null;
   /** Shrnutí „Vše je připravené“ odesláno. */
@@ -973,6 +975,9 @@ export function radekZRezervace(rec: RezervaceRecord): PrehledRadek {
     poznamkaUklid: rec.poznamkaUklid || null,
     checkinNeniPotreba: rec.checkinNeniPotreba === true,
     bezMarketingu: rec.bezMarketingu === true,
+    kartaPredana: rec.kartaPredana
+      ? { kdy: rec.kartaPredana.kdy, kanaly: [...rec.kartaPredana.kanaly] }
+      : null,
     nedojezdKdy: rec.nedojezdKdy || null,
     mena: rec.mena === 'EUR' || rec.mena === 'CZK' ? rec.mena : null,
     cenaPobytu: rec.cenaPobytu ?? null,

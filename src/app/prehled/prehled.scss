@@ -1834,6 +1834,44 @@
   }
 }
 
+.ph-okno--karta {
+  .ph-okno__nahled {
+    font-size: 0.92rem;
+    color: var(--sec, #a89c86);
+    white-space: pre-wrap;
+  }
+
+  .ph-okno__odkaz a {
+    color: #c9a84c;
+    word-break: break-all;
+  }
+
+  .ph-okno__stav {
+    color: #c9a84c;
+  }
+
+  .ph-okno__akce {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+
+    button + button {
+      margin-left: 0;
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.ph-karta-poslana {
+  margin: 0.35rem 0 0;
+  font-size: 0.88rem;
+  color: var(--sec, #a89c86);
+}
+
 .ph-dnesek {
   margin: 0 0 1.4rem;
   padding: 0.9rem 0.85rem 1rem;
