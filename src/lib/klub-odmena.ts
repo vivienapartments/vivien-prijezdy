@@ -1,6 +1,6 @@
 /**
  * Odměna doporučiteli (dávka 5): 5 % první přímý pobyt kamaráda,
- * 2 % další přímé do 12 měsíců od jeho 1. pobytu. Zneužití → nesplňuje.
+ * 2 % další přímé do 24 měsíců od jeho 1. pobytu. Zneužití → nesplňuje.
  */
 
 import { createHash, randomBytes } from 'crypto';

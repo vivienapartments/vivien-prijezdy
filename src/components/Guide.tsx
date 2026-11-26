@@ -348,11 +348,16 @@ export type GuideProps = {
   onZpravaPrectena?: (id: ZpravaOdNas['id']) => void;
   /** Uložené údaje na firemní fakturu. */
   faktura?: FakturaUdaje | null;
+  /**
+   * true = jazyk známe (Booking/Airbnb / uložený v kartě).
+   * false = nejdřív výběr jazyka, pak nabídka plochy.
+   */
+  jazykZnamy?: boolean;
 };
 
 export function Guide({
   apt,
-  lang,
+  lang: langPocatecni,
   secrets,
   stay,
   kody = null,
@@ -373,7 +378,12 @@ export function Guide({
   zpravyOdNas = [],
   onZpravaPrectena,
   faktura = null,
+  jazykZnamy = true,
 }: GuideProps) {
+  const [lang, setLang] = useState(langPocatecni);
+  useEffect(() => {
+    setLang(langPocatecni);
+  }, [langPocatecni]);
   const [prijezd, setPrijezd] = useState<Prijezd | null>(initialPrijezd);
   const [lokalne, setLokalne] = useState<VstupHodnoty | null>(null);
   const [wifiQr, setWifiQr] = useState<string | null>(null);
@@ -392,6 +402,8 @@ export function Guide({
     token: vstup?.token ?? null,
     /** Zprávy od nás (předání…) mají přednost. */
     blokovano: zpravyLokal.length > 0,
+    jazykZnamy,
+    onJazyk: setLang,
   });
   const ubytovan = Boolean(vstup?.ubytovan);
   const odDnePrijezdu = Boolean(prijezdDen && /^\d{4}-\d{2}-\d{2}$/.test(prijezdDen) && dnesDen >= prijezdDen);

@@ -5,7 +5,8 @@
  * Vzor: nahled-plocha-uz-ma-3-verze.html sloupce A a B1.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { t } from '@/lib/i18n';
 import {
   klubPlochaAAkce,
@@ -17,10 +18,21 @@ import {
   klubPlochaSdileniUpozorneni,
 } from '@/lib/klub-podekovani-texty';
 import {
+  jeAndroid,
+  jeIos,
   jePwaNainstalovana,
   jeStandalone,
   nactiPlochaStav,
+  posliPlochaNaServer,
+  ulozPlochaStav,
 } from '@/lib/plocha';
+import {
+  plochaChromeMenuTip,
+  plochaNavodIosKroky,
+  plochaNavodIosNadpis,
+  plochaPridej,
+  plochaZavrit,
+} from '@/lib/plocha-texty';
 import type { GuideLang } from '@/lib/types';
 import { PridejNaPlochu } from './PridejNaPlochu';
 import './klub-plocha-radek.scss';
@@ -33,6 +45,20 @@ type Props = {
   token: string;
   odkazKarty: string;
 };
+
+/** Windows zkratka .url do Stažených (když prohlížeč nenabídne instalaci PWA). */
+function stahniZkratkuPc(url: string) {
+  const telo = `[InternetShortcut]\r\nURL=${url}\r\n`;
+  const blob = new Blob([telo], { type: 'application/octet-stream' });
+  const href = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = 'VIVIEN Klub.url';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(href), 1500);
+}
 
 function IkTelefonPlus() {
   return (
@@ -56,6 +82,16 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
   const [stav, setStav] = useState<Stav>('A');
   const [sdileni, setSdileni] = useState(false);
   const [spustPridej, setSpustPridej] = useState<(() => void) | null>(null);
+  /**
+   * Návod jen iPhone (rozhodnuto: Android nikdy návod, BIP / Chrome).
+   * pc = výběr tlačítek v náhledu na počítači.
+   * chrome = tip menu (Android bez BIP).
+   * zkratka = PC: stažená .url zkratka do Stažených.
+   */
+  const [navod, setNavod] = useState<'nic' | 'ios' | 'pc' | 'chrome' | 'zkratka'>('nic');
+  const [portalOk, setPortalOk] = useState(false);
+  /** Ref, ať setTimeout po klepnutí PC nevidí starou hodnotu ze state. */
+  const volbaPcRef = useRef(false);
 
   const prepocitej = useCallback(async () => {
     if (jeStandalone()) {
@@ -72,11 +108,62 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
     void prepocitej();
   }, [prepocitej]);
 
+  useEffect(() => {
+    setPortalOk(typeof document !== 'undefined');
+  }, []);
+
   /** Stabilní callback – jinak PridejNaPlochu v useEffect spustí nekonečnou smyčku setState. */
   const onReady = useCallback((spust: () => void) => {
     setSpustPridej(() => spust);
   }, []);
   const onUzMate = useCallback(() => setStav('B'), []);
+  const onTipChrome = useCallback(() => {
+    if (volbaPcRef.current) {
+      volbaPcRef.current = false;
+      const url =
+        odkazKarty.startsWith('http')
+          ? odkazKarty
+          : `${window.location.origin}/klub?k=${encodeURIComponent(token)}`;
+      stahniZkratkuPc(url);
+      ulozPlochaStav(token, 'hotovo');
+      posliPlochaNaServer(token);
+      setNavod('zkratka');
+      setStav('B');
+      return;
+    }
+    setNavod('chrome');
+  }, [odkazKarty, token]);
+
+  const klepPridej = useCallback(() => {
+    /** Android: jen instalace, bez návodu. iPhone: návod Safari. */
+    if (jeIos()) {
+      setNavod('ios');
+      return;
+    }
+    if (jeAndroid()) {
+      setNavod('nic');
+      spustPridej?.();
+      return;
+    }
+    /** Počítač (náhled): tlačítka Android / PC / iPhone / Zavřít. */
+    setNavod('pc');
+  }, [spustPridej]);
+
+  const spustAndroid = useCallback(() => {
+    volbaPcRef.current = false;
+    setNavod('nic');
+    window.setTimeout(() => {
+      spustPridej?.();
+    }, 0);
+  }, [spustPridej]);
+
+  const spustPc = useCallback(() => {
+    volbaPcRef.current = true;
+    setNavod('nic');
+    window.setTimeout(() => {
+      spustPridej?.();
+    }, 0);
+  }, [spustPridej]);
 
   const poslat = useCallback(async () => {
     const url = odkazKarty;
@@ -108,27 +195,106 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
     }
   };
 
+  const overlay =
+    navod !== 'nic' && portalOk
+      ? createPortal(
+          <div
+            className="klub-plocha-navod"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="klub-plocha-navod-h"
+          >
+            <div className="klub-plocha-navod__karta">
+              {navod === 'ios' ? (
+                <>
+                  <h2 className="klub-plocha-navod__h" id="klub-plocha-navod-h">
+                    {t(plochaNavodIosNadpis, lang)}
+                  </h2>
+                  <p className="klub-plocha-navod__text">
+                    {t(plochaNavodIosKroky, lang)
+                      .split('\n')
+                      .map((radek, i) => (
+                        <span key={i} className="klub-plocha-navod__radek">
+                          {radek}
+                        </span>
+                      ))}
+                  </p>
+                </>
+              ) : null}
+              {navod === 'chrome' ? (
+                <>
+                  <h2 className="klub-plocha-navod__h" id="klub-plocha-navod-h">
+                    {t(plochaPridej, lang)}
+                  </h2>
+                  <p className="klub-plocha-navod__tip">{t(plochaChromeMenuTip, lang)}</p>
+                </>
+              ) : null}
+              {navod === 'zkratka' ? (
+                <>
+                  <h2 className="klub-plocha-navod__h" id="klub-plocha-navod-h">
+                    {t(plochaPridej, lang)}
+                  </h2>
+                  <p className="klub-plocha-navod__text">
+                    Zkratka je ve Stažených souborech. Přetáhněte ji na plochu.
+                  </p>
+                </>
+              ) : null}
+              {navod === 'pc' ? (
+                <>
+                  <h2 className="klub-plocha-navod__h" id="klub-plocha-navod-h">
+                    {t(plochaPridej, lang)}
+                  </h2>
+                  <button
+                    type="button"
+                    className="klub-plocha-navod__ok"
+                    onClick={spustAndroid}
+                  >
+                    Přidat na plochu Android
+                  </button>
+                  <button type="button" className="klub-plocha-navod__ok" onClick={spustPc}>
+                    Přidat na plochu PC
+                  </button>
+                  <button
+                    type="button"
+                    className="klub-plocha-navod__vedlejsi"
+                    onClick={() => setNavod('ios')}
+                  >
+                    Ukázat návod pro iPhone
+                  </button>
+                </>
+              ) : null}
+              <button
+                type="button"
+                className={navod === 'ios' ? 'klub-plocha-navod__ok' : 'klub-plocha-navod__zavrit'}
+                onClick={() => setNavod('nic')}
+              >
+                {t(plochaZavrit, lang)}
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <div className="klub-plocha">
-      {/* Skrytý helper pro BIP / iOS návod */}
+      {/* Skrytý helper jen pro BIP / manifest. Návod je v portálu výše. */}
       <div className="klub-plocha__helper" aria-hidden>
         <PridejNaPlochu
           lang={lang}
           token={token}
+          manifestHref={`/klub/manifest.webmanifest?k=${encodeURIComponent(token)}`}
           jenMobil
           skrytTlacitko
           onReady={onReady}
           onHotovo={prepocitej}
           onUzMate={onUzMate}
+          onTipChrome={onTipChrome}
         />
       </div>
 
       {stav === 'A' ? (
-        <button
-          type="button"
-          className="klub-plocha__r klub-plocha__r--A"
-          onClick={() => spustPridej?.()}
-        >
+        <button type="button" className="klub-plocha__r klub-plocha__r--A" onClick={klepPridej}>
           <IkTelefonPlus />
           <div>
             <b>{t(klubPlochaANadpis, lang)}</b>
@@ -173,6 +339,8 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
           </button>
         </div>
       ) : null}
+
+      {overlay}
     </div>
   );
 }

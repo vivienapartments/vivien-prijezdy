@@ -119,3 +119,121 @@
   font-size: 12px;
   cursor: pointer;
 }
+
+/* Návod přes celou obrazovku (portál), ať ho clip helper neschová */
+.klub-plocha-navod {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(12, 10, 8, 0.72);
+  box-sizing: border-box;
+}
+
+.klub-plocha-navod__karta {
+  width: min(22rem, 100%);
+  max-height: min(90dvh, 36rem);
+  overflow: auto;
+  padding: 1.15rem 1.1rem 1.2rem;
+  border-radius: 16px;
+  border: 1px solid #c9a84c;
+  background: #1c1712;
+  color: #efe6d8;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.klub-plocha-navod__h {
+  margin: 0 0 0.65rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #c9a84c;
+}
+
+.klub-plocha-navod__sub {
+  margin: 0 0 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: #efe6d8;
+}
+
+.klub-plocha-navod__text {
+  margin: 0 0 0.75rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #e8dfc8;
+  text-align: left;
+}
+
+.klub-plocha-navod__radek {
+  display: block;
+}
+
+.klub-plocha-navod__radek + .klub-plocha-navod__radek {
+  margin-top: 0.35rem;
+}
+
+.klub-plocha-navod__tip {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px dashed rgba(201, 168, 76, 0.45);
+  background: rgba(201, 168, 76, 0.08);
+  font-size: 0.88rem;
+  color: #c9a84c;
+}
+
+.klub-plocha-navod__ok {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.55rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #c9a84c;
+  color: #1c1712;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.klub-plocha-navod__ok:last-child,
+.klub-plocha-navod__zavrit:last-child {
+  margin-bottom: 0;
+}
+
+.klub-plocha-navod__vedlejsi {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.55rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid #c9a84c;
+  border-radius: 999px;
+  background: transparent;
+  color: #c9a84c;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.klub-plocha-navod__zavrit {
+  display: block;
+  width: 100%;
+  margin: 0.15rem 0 0;
+  padding: 0.55rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #c4b8a4;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}

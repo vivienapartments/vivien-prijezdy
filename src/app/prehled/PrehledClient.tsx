@@ -115,6 +115,7 @@ import {
   type Zalozka,
 } from '@/lib/zalozky';
 import { jeIos, nactiBranu, smsOdkaz, stavParkovani, type BranaSlot } from '@/lib/brana';
+import { jeBookingZdroj } from '@/lib/klub-karta-predana';
 import { APT_IDS, GUIDE_LANGS, LANG_LABELS, type AptId, type GuideLang } from '@/lib/types';
 import {
   jmenoKdoZavad,
@@ -1311,69 +1312,75 @@ export function PrehledClient({
     setHlaska('');
     setDotazBezKarty(null);
     setCekam(`${row.rezervace}:klub-karta`);
-    if (ukazka) {
-      /** Jedna fiktivní karta. Localhost → Preview HTTPS (telefon jinak neotevře localhost). */
-      const host = window.location.hostname;
-      const lokalne = host === 'localhost' || host === '127.0.0.1';
-      const base = lokalne
-        ? 'https://vivien-prijezdy-git-doporuceni-pravoslav.vercel.app'
-        : window.location.origin;
-      const odkaz = `${base}/klub?k=zkouska-pravoslav-karta`;
-      const jmeno = (row.jmeno || '').trim() || 'Pravoslav Tomek';
-      const krestni = jmeno.split(/\s+/)[0] || 'Pravoslav';
-      const text = `Dobrý den, ${krestni}, vítejte u nás. Tady je karta VIVIEN Klubu s průvodcem: ${odkaz}`;
+    try {
+      if (ukazka) {
+        /**
+         * Zkouška Poslat kartu: Booking/Airbnb → karta po ubytování (Host 5 %),
+         * přímý → Karel Věrný. Odkaz na stejný origin (localhost:3001).
+         */
+        const booking = jeBookingZdroj(row.zdroj, row.email);
+        const base = window.location.origin.replace(/\/$/, '');
+        const odkaz = booking
+          ? `${base}/klub?k=test-anna-booking-po-ubytovani`
+          : `${base}/klub?k=test-karel-verny`;
+        const jmeno = (row.jmeno || '').trim() || (booking ? 'Anna Svobodová' : 'Karel Věrný');
+        const krestni = jmeno.split(/\s+/)[0] || (booking ? 'Anna' : 'Karel');
+        const text = booking
+          ? `Dobrý den, ${krestni}, vítejte u nás. Tady je vaše karta VIVIEN Klubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: ${odkaz}`
+          : `Dobrý den, ${krestni}, vítejte u nás. Tady je karta VIVIEN Klubu s průvodcem: ${odkaz}`;
+        setOknoKarty({
+          rezervace: row.rezervace,
+          jmeno,
+          odkaz,
+          zprava: text,
+          email: 'info@vivienapartments.cz',
+          emailRelay: false,
+          emailPoznamka: booking ? 'zkouška Booking' : 'zkouška',
+          telefonWa: '420777702272',
+          emailOdeslan: false,
+          predana: row.kartaPredana,
+          testRezim: true,
+        });
+        return;
+      }
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: row.rezervace, akce: 'klub-karta-pripravit' }),
+      });
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        error?: string;
+        jmeno?: string;
+        odkaz?: string;
+        zprava?: string;
+        email?: string | null;
+        emailRelay?: boolean;
+        emailPoznamka?: string | null;
+        telefonWa?: string | null;
+        kartaPredana?: { kdy: string; kanaly: ('email' | 'whatsapp' | 'sms' | 'kopie')[] } | null;
+        testRezim?: boolean;
+      } | null;
+      if (!res.ok || !json?.ok || !json.odkaz || !json.zprava) {
+        setHlaska(json?.error || 'Kartu se nepodařilo připravit.');
+        return;
+      }
       setOknoKarty({
         rezervace: row.rezervace,
-        jmeno,
-        odkaz,
-        zprava: text,
-        email: 'info@vivienapartments.cz',
-        emailRelay: false,
-        emailPoznamka: 'zkouška',
-        telefonWa: '420777702272',
+        jmeno: json.jmeno || row.jmeno || 'Host',
+        odkaz: json.odkaz,
+        zprava: json.zprava,
+        email: json.email || null,
+        emailRelay: Boolean(json.emailRelay),
+        emailPoznamka: json.emailPoznamka || null,
+        telefonWa: json.telefonWa || null,
         emailOdeslan: false,
-        predana: row.kartaPredana,
-        testRezim: true,
+        predana: json.kartaPredana || row.kartaPredana,
+        testRezim: Boolean(json.testRezim),
       });
+    } finally {
       setCekam(null);
-      return;
     }
-    const res = await fetch('/api/prehled/akce', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rezervace: row.rezervace, akce: 'klub-karta-pripravit' }),
-    });
-    const json = (await res.json().catch(() => null)) as {
-      ok?: boolean;
-      error?: string;
-      jmeno?: string;
-      odkaz?: string;
-      zprava?: string;
-      email?: string | null;
-      emailRelay?: boolean;
-      emailPoznamka?: string | null;
-      telefonWa?: string | null;
-      kartaPredana?: { kdy: string; kanaly: ('email' | 'whatsapp' | 'sms' | 'kopie')[] } | null;
-      testRezim?: boolean;
-    } | null;
-    setCekam(null);
-    if (!res.ok || !json?.ok || !json.odkaz || !json.zprava) {
-      setHlaska(json?.error || 'Kartu se nepodařilo připravit.');
-      return;
-    }
-    setOknoKarty({
-      rezervace: row.rezervace,
-      jmeno: json.jmeno || row.jmeno || 'Host',
-      odkaz: json.odkaz,
-      zprava: json.zprava,
-      email: json.email || null,
-      emailRelay: Boolean(json.emailRelay),
-      emailPoznamka: json.emailPoznamka || null,
-      telefonWa: json.telefonWa || null,
-      emailOdeslan: false,
-      predana: json.kartaPredana || row.kartaPredana,
-      testRezim: Boolean(json.testRezim),
-    });
   }
 
   /** Ubytovat bez poslání karty (příjezd). */
@@ -1499,6 +1506,11 @@ export function PrehledClient({
   }
 
   function otevriDotazPredani(row: PrehledRadek) {
+    /** Ukázka: rovnou Poslat kartu (bez večerního příplatku), ať jde vyzkoušet Booking. */
+    if (ukazka) {
+      void otevriOknoKarty(row);
+      return;
+    }
     const casNaMiste = naMisteRadku(row) ? hodinaPraha(naMisteRadku(row)!) : null;
     const casTed = hodinaPraha(new Date().toISOString());
     const dotaz = dotazPriplatkuPriPredani({
@@ -8055,6 +8067,13 @@ export function PrehledClient({
                   <p className="ph-okno__kontakty">
                     Kam poslat odkaz na kartu s průvodcem. Po odeslání uvidí host kódy.
                   </p>
+                  {oknoKarty.testRezim && oknoKarty.odkaz ? (
+                    <p className="ph-okno__kontakty">
+                      <a href={oknoKarty.odkaz} target="_blank" rel="noopener noreferrer">
+                        Otevřít kartu, kterou host uvidí
+                      </a>
+                    </p>
+                  ) : null}
                   <div className="ph-okno__akce">
                     <button
                       type="button"

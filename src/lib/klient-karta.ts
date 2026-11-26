@@ -103,6 +103,12 @@ export type KlientKarta = {
   slevaKontrola: SlevaKontrolaStav | null;
   /** ISO – první otevření poděkování na kartě. */
   podekovaniVidel: string | null;
+  /** Id textu poděkování (1 / 2 / d1–d5) pro aktuální pobyt. */
+  podekovaniVarianta: string | null;
+  /** Klíč pobytu, ke kterému patří podekovaniVarianta. */
+  podekovaniVariantaPobyt: string | null;
+  /** Předchozí varianta (ať se u 3+ neopakuje hned po sobě). */
+  podekovaniVariantaPred: string | null;
 };
 
 export type MigraceVysledek = {
@@ -214,6 +220,12 @@ function prazdnaKarta(
     slevaKontrola: cast.slevaKontrola ?? null,
     podekovaniVidel:
       typeof cast.podekovaniVidel === 'string' ? cast.podekovaniVidel : null,
+    podekovaniVarianta:
+      typeof cast.podekovaniVarianta === 'string' ? cast.podekovaniVarianta : null,
+    podekovaniVariantaPobyt:
+      typeof cast.podekovaniVariantaPobyt === 'string' ? cast.podekovaniVariantaPobyt : null,
+    podekovaniVariantaPred:
+      typeof cast.podekovaniVariantaPred === 'string' ? cast.podekovaniVariantaPred : null,
   };
 }
 

@@ -64,6 +64,12 @@ export default async function TokenPage({ params }: Props) {
   const rec = await store.getRezervace(r);
   const lang: GuideLang =
     rec?.jazyk && GUIDE_LANGS.includes(rec.jazyk) ? rec.jazyk : (l as GuideLang);
+  const { jazykHostaJeZnamy } = await import('@/lib/jazyk-hosta');
+  const jazykZnamy = jazykHostaJeZnamy({
+    jazyk: rec?.jazyk,
+    zdroj: rec?.zdroj,
+    email: rec?.emailHosta,
+  });
   const denPlatnosti = denPlatnostiPruvodce(d, rec?.odjezd);
   if (isDepartureExpired(denPlatnosti)) {
     // Dávka 6: po odjezdu ikona na ploše → karta klubu (starý start_url /{token} dál funguje).
@@ -116,6 +122,7 @@ export default async function TokenPage({ params }: Props) {
       <Guide
         apt={apt}
         lang={lang}
+        jazykZnamy={jazykZnamy}
         secrets={secrets}
         stay={stay}
         kody={kodyProHosta(predano, apt, pin, lang)}

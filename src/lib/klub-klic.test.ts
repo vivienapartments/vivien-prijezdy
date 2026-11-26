@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   jeZkusebniProstredi,
+  smiSahatNaKvKlic,
   smiZapisovatRezervaci,
 } from './klub-klic';
 
@@ -30,5 +31,14 @@ describe('klub-klic ochrana ostrých rezervací', () => {
     expect(jeZkusebniProstredi()).toBe(false);
     expect(smiZapisovatRezervaci('120260626')).toBe(true);
     expect(smiZapisovatRezervaci('TESTKARTY')).toBe(true);
+  });
+
+  it('na Preview nečte ostré rez:/klient: klíče', () => {
+    vi.stubEnv('VERCEL_ENV', 'preview');
+    vi.stubEnv('NODE_ENV', 'production');
+    expect(smiSahatNaKvKlic('rez:120260626')).toBe(false);
+    expect(smiSahatNaKvKlic('klient:abc')).toBe(false);
+    expect(smiSahatNaKvKlic('test:rez:TESTKARTY')).toBe(true);
+    expect(smiSahatNaKvKlic('test:klient:abc')).toBe(true);
   });
 });

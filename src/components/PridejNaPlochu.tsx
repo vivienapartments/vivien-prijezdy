@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { t } from '@/lib/i18n';
 import {
   jeAndroid,
@@ -32,6 +33,8 @@ type Props = {
   lang: GuideLang;
   /** Token odkazu hosta → skutečný manifest `/{token}/manifest.webmanifest`. */
   token?: string | null;
+  /** Vlastní cesta k manifestu (např. karta klubu `/klub/manifest.webmanifest?k=`). */
+  manifestHref?: string | null;
   /** Jen telefon. Na PC se tlačítko neukáže (výzva z ?plocha=1 ano). */
   jenMobil?: boolean;
   /** Menší / tišší (např. dole u poděkování). */
@@ -49,6 +52,8 @@ type Props = {
   onUzMate?: () => void;
   /** Řádek 3: spustí instalaci rovnou, bez našeho překryvu. */
   onReady?: (spust: () => void) => void;
+  /** Když Chrome nenabídne BIP (typicky PC náhled), ať rodič ukáže tip. */
+  onTipChrome?: () => void;
   nazev?: string;
   shortNazev?: string;
 };
@@ -78,6 +83,7 @@ function jeMobilZarizeni(): boolean {
 export function PridejNaPlochu({
   lang,
   token = null,
+  manifestHref = null,
   jenMobil = true,
   tichy = false,
   nahled = false,
@@ -87,6 +93,7 @@ export function PridejNaPlochu({
   onHotovo,
   onUzMate,
   onReady,
+  onTipChrome,
   shortNazev = 'VIVIEN',
 }: Props) {
   const [ready, setReady] = useState(false);
@@ -96,8 +103,18 @@ export function PridejNaPlochu({
   const [vchrome, setVchrome] = useState(false);
   const [hlaska, setHlaska] = useState<'nic' | 'ios'>('nic');
   const [tipChrome, setTipChrome] = useState(false);
+  const [portalOk, setPortalOk] = useState(false);
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
   const tt = useCallback((map: LText) => t(map, lang), [lang]);
+
+  useEffect(() => {
+    setPortalOk(typeof document !== 'undefined');
+  }, []);
+
+  const ukazTipChrome = useCallback(() => {
+    setTipChrome(true);
+    onTipChrome?.();
+  }, [onTipChrome]);
 
   const oznacHotovo = useCallback(() => {
     ulozPlochaStav(token, 'hotovo');
@@ -141,8 +158,8 @@ export function PridejNaPlochu({
       otevriStejnouStrankuVChrome({ plocha: true });
       return;
     }
-    setTipChrome(true);
-  }, [ios, token, onVyzvaZmena, onHotovo, onUzMate, oznacHotovo]);
+    ukazTipChrome();
+  }, [ios, token, onVyzvaZmena, onHotovo, onUzMate, oznacHotovo, ukazTipChrome]);
 
   useEffect(() => {
     setStandalone(jeStandalone());
@@ -168,16 +185,16 @@ export function PridejNaPlochu({
       onHotovo?.();
     })();
 
-    const manifestHref = hrefManifestu(token);
+    const href = (manifestHref || '').trim() || hrefManifestu(token);
     let link = document.querySelector<HTMLLinkElement>('link[data-vivien-pridej-manifest]');
-    if (manifestHref) {
+    if (href) {
       if (!link) {
         link = document.createElement('link');
         link.rel = 'manifest';
         link.setAttribute('data-vivien-pridej-manifest', '1');
         document.head.appendChild(link);
       }
-      link.href = manifestHref;
+      link.href = href;
     } else if (link) {
       link.remove();
     }
@@ -228,7 +245,7 @@ export function PridejNaPlochu({
       window.removeEventListener('beforeinstallprompt', onBip);
       window.removeEventListener('appinstalled', onAppInstalled);
     };
-  }, [token, shortNazev, onHotovo, onVyzvaZmena, oznacHotovo]);
+  }, [token, manifestHref, shortNazev, onHotovo, onVyzvaZmena, oznacHotovo]);
 
   useEffect(() => {
     if (!ready) return;
@@ -247,21 +264,78 @@ export function PridejNaPlochu({
     }
     setTipChrome(false);
     const tmr = window.setTimeout(() => {
-      if (!deferred.current) setTipChrome(true);
+      if (!deferred.current) ukazTipChrome();
     }, 3000);
     return () => window.clearTimeout(tmr);
-  }, [vyzva, ready]);
+  }, [vyzva, ready, ukazTipChrome]);
 
   function zavritVyzvu() {
     onVyzvaZmena?.(false);
   }
 
   if (!nahled && (!ready || standalone)) return null;
-  if (!nahled && !vyzva && jenMobil && !mobil && hlaska === 'nic') return null;
+  /** Na PC skryj volné tlačítko, ale překryv (iOS návod / tip Chrome) po klepnutí z karty ukaž. */
+  if (!nahled && !vyzva && jenMobil && !mobil && hlaska === 'nic' && !tipChrome) return null;
 
   const ukazTlacitko = !skrytTlacitko && !vyzva && hlaska === 'nic';
   const ukazVyzvu = vyzva && hlaska === 'nic';
   const tlacitkoText = vchrome ? tt(plochaDokoncit) : tt(plochaPridej);
+  /** Překryvy vždy do body. Jinak je clip u skrytého helperu na kartě schová. */
+  const prekryvy =
+    portalOk &&
+    createPortal(
+      <>
+        {ukazVyzvu ? (
+          <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
+            <div className="pv-pridej-karta">
+              <button
+                type="button"
+                className="pv-pridej-zlato"
+                onClick={() => void spustInstalaci()}
+              >
+                {tlacitkoText}
+              </button>
+              {tipChrome ? <p className="pv-pridej-tip">{tt(plochaChromeMenuTip)}</p> : null}
+              <button type="button" className="pv-pridej-zavrit-link" onClick={zavritVyzvu}>
+                {tt(plochaZavrit)}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {hlaska === 'ios' ? (
+          <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
+            <div className="pv-pridej-karta">
+              <h2 className="pv-pridej-nadpis">{tt(plochaNavodIosNadpis)}</h2>
+              <p className="pv-pridej-text">
+                {tt(plochaNavodIosKroky)
+                  .split('\n')
+                  .map((radek, i) => (
+                    <span key={i} className="pv-pridej-radek">
+                      {radek}
+                    </span>
+                  ))}
+              </p>
+              <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
+                {tt(plochaZavrit)}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {tipChrome && !ukazVyzvu && hlaska === 'nic' && !onTipChrome ? (
+          <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
+            <div className="pv-pridej-karta">
+              <p className="pv-pridej-tip">{tt(plochaChromeMenuTip)}</p>
+              <button type="button" className="pv-pridej-ok" onClick={() => setTipChrome(false)}>
+                {tt(plochaZavrit)}
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </>,
+      document.body,
+    );
 
   return (
     <>
@@ -274,44 +348,7 @@ export function PridejNaPlochu({
           {tt(plochaPridej)}
         </button>
       ) : null}
-
-      {ukazVyzvu ? (
-        <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
-          <div className="pv-pridej-karta">
-            <button
-              type="button"
-              className="pv-pridej-zlato"
-              onClick={() => void spustInstalaci()}
-            >
-              {tlacitkoText}
-            </button>
-            {tipChrome ? <p className="pv-pridej-tip">{tt(plochaChromeMenuTip)}</p> : null}
-            <button type="button" className="pv-pridej-zavrit-link" onClick={zavritVyzvu}>
-              {tt(plochaZavrit)}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      {hlaska === 'ios' ? (
-        <div className="pv-pridej-overlay" role="dialog" aria-modal="true">
-          <div className="pv-pridej-karta">
-            <h2 className="pv-pridej-nadpis">{tt(plochaNavodIosNadpis)}</h2>
-            <p className="pv-pridej-text">
-              {tt(plochaNavodIosKroky)
-                .split('\n')
-                .map((radek, i) => (
-                  <span key={i} className="pv-pridej-radek">
-                    {radek}
-                  </span>
-                ))}
-            </p>
-            <button type="button" className="pv-pridej-ok" onClick={() => setHlaska('nic')}>
-              {tt(plochaZavrit)}
-            </button>
-          </div>
-        </div>
-      ) : null}
+      {prekryvy}
     </>
   );
 }

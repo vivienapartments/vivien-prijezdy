@@ -32,6 +32,20 @@ export function smiZapisovatRezervaci(id: string): boolean {
   return !jeZkusebniProstredi();
 }
 
+/**
+ * Na Preview/local se ostré klíče (rez:, klient:…, klub:…) nesmí číst ani zapisovat.
+ * Povolené jsou jen klíče s předponou `test:` a ostatní nesouvisející (např. limity tipů).
+ */
+export function smiSahatNaKvKlic(key: string): boolean {
+  if (!jeZkusebniProstredi()) return true;
+  const k = String(key || '').trim();
+  if (!k) return false;
+  if (k.startsWith('test:')) return true;
+  if (k.startsWith('rez:')) return false;
+  if (KLUB_PREFIXY.some((p) => k === p || k.startsWith(p))) return false;
+  return true;
+}
+
 /** Klíč s `test:` na Preview a lokálně. */
 export function klubKlic(raw: string): string {
   const k = raw.trim();

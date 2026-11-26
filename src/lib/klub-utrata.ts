@@ -161,6 +161,9 @@ export async function sparujNeboVytvorKlienta(
     slevaBehem: [],
     slevaKontrola: null,
     podekovaniVidel: null,
+    podekovaniVarianta: null,
+    podekovaniVariantaPobyt: null,
+    podekovaniVariantaPred: null,
   };
   await ulozKlientKartu(store, nova);
   try {

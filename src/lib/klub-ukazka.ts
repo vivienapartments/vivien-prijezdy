@@ -82,6 +82,10 @@ export type KlubKartaPohled = {
   skrytDoporuceni: boolean;
   /** ISO prvního otevření poděkování; null = ještě neviděl. */
   podekovaniVidel: string | null;
+  /** Uložená varianta poděkování (1 / 2 / d1–d5). */
+  podekovaniVarianta: string | null;
+  podekovaniVariantaPobyt: string | null;
+  podekovaniVariantaPred: string | null;
   /**
    * Booking/Airbnb první pobyt:
    * bez-klubu = odkaz z Bookingu (jen průvodce),
@@ -138,6 +142,9 @@ function kartaZaklad(
     slevaBehem: cast.slevaBehem || [],
     slevaKontrola: cast.slevaKontrola ?? null,
     podekovaniVidel: cast.podekovaniVidel ?? null,
+    podekovaniVarianta: cast.podekovaniVarianta ?? null,
+    podekovaniVariantaPobyt: cast.podekovaniVariantaPobyt ?? null,
+    podekovaniVariantaPred: cast.podekovaniVariantaPred ?? null,
   };
 }
 
@@ -940,6 +947,9 @@ export function pohledZKarty(
     praveBydli,
     skrytDoporuceni: false,
     podekovaniVidel: karta.podekovaniVidel,
+    podekovaniVarianta: karta.podekovaniVarianta ?? null,
+    podekovaniVariantaPobyt: karta.podekovaniVariantaPobyt ?? null,
+    podekovaniVariantaPred: karta.podekovaniVariantaPred ?? null,
     bookingRezim,
     krestniJmeno: karta.jmeno || '',
     posledniOdjezdYmd,
@@ -949,7 +959,7 @@ export function pohledZKarty(
   };
 }
 
-/** Pohled z Preview BH seedu (opravdová data importu). */
+/** Pohled z Preview BH seedu / TEST hostů. */
 export function pohledZPreviewDetailu(
   d: {
     karta: KlientKarta;
@@ -957,28 +967,42 @@ export function pohledZPreviewDetailu(
     pobyty: KlubPobytRadek[];
     utrataCekaKc: number;
     praveBydli: boolean;
+    pratele?: KlubPratelRadek[];
+    bookingRezim?: KlubKartaPohled['bookingRezim'];
   },
   odkazBase: string,
   opts?: { pohled?: KlientRole },
 ): KlubKartaPohled {
-  const zaklad = pohledZKarty(d.karta, odkazBase, { ukazka: false, pohled: opts?.pohled });
+  const zaklad = pohledZKarty(d.karta, odkazBase, {
+    ukazka: false,
+    pohled: opts?.pohled,
+    bookingRezim: d.bookingRezim ?? null,
+  });
   const kreditKc = d.karta.kreditKc || 0;
+  const bookingRezim = d.bookingRezim ?? null;
+  const testJmeno =
+    d.karta.tajnyKlic?.startsWith('test-') && d.karta.typ !== 'firma'
+      ? `TEST ${d.karta.jmeno} ${d.karta.prijmeni}`.trim()
+      : null;
   return {
     ...zaklad,
     ukazka: true,
-    pratele: [],
+    jmenoZobrazeni: testJmeno || zaklad.jmenoZobrazeni,
+    pratele: d.pratele || [],
     nadchazejici: d.nadchazejici,
     pobyty: d.pobyty,
     utrataCekaKc: d.utrataCekaKc,
     praveBydli: d.praveBydli,
-    kreditKc,
+    kreditKc: bookingRezim ? 0 : kreditKc,
     kreditCeka: 0,
-    kreditKVyplate: kreditKc,
+    kreditKVyplate: bookingRezim ? 0 : kreditKc,
     kreditVyplaceno: 0,
-    // Doporučit mají všichni hosté. Prázdný seznam přátel / kredit 0 je v pořádku.
     skrytDoporuceni: false,
     podekovaniVidel: d.karta.podekovaniVidel,
-    bookingRezim: null,
+    podekovaniVarianta: d.karta.podekovaniVarianta ?? null,
+    podekovaniVariantaPobyt: d.karta.podekovaniVariantaPobyt ?? null,
+    podekovaniVariantaPred: d.karta.podekovaniVariantaPred ?? null,
+    bookingRezim,
     krestniJmeno: d.karta.jmeno || '',
     posledniOdjezdYmd: null,
     pristiPrijezdYmd: null,

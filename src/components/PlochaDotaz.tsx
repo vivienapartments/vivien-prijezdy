@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { t } from '@/lib/i18n';
+import { klicJazykHostaPotvrzen } from '@/lib/jazyk-hosta';
 import {
   jeIos,
   jeStandalone,
@@ -11,7 +12,13 @@ import {
   type PlochaStav,
 } from '@/lib/plocha';
 import * as PT from '@/lib/plocha-texty';
+import {
+  doporucitelUiTexty,
+  POPTAVKA_JAZYKY,
+  vlajkaJazyka,
+} from '@/lib/poptavka-doporucitel-ui';
 import type { GuideLang } from '@/lib/types';
+import { GUIDE_LANGS, LANG_LABELS } from '@/lib/types';
 
 function jeMobilZarizeni(): boolean {
   if (typeof window === 'undefined') return false;
@@ -36,11 +43,17 @@ type Opts = {
   blokovano?: boolean;
   /** Jen telefon. Na PC se okno neukáže (kromě ?plocha=okno). */
   jenMobil?: boolean;
+  /**
+   * true = jazyk známe (Booking/Airbnb / uložený), na jazyk se neptáme.
+   * false = nejdřív výběr jazyka, pak nabídka plochy.
+   */
+  jazykZnamy?: boolean;
+  onJazyk?: (lang: GuideLang) => void;
 };
 
 /**
  * Okno přes celou obrazovku, jako u osobního předání / zpráv.
- * Nejdřív Ano / Později. Po Později box v průvodci.
+ * Když neznáme jazyk: nejdřív jazyk, pak Ano / Později na plochu.
  */
 export function usePlochaDotaz({
   lang,
@@ -49,18 +62,66 @@ export function usePlochaDotaz({
   vypnuto = false,
   blokovano = false,
   jenMobil = true,
+  jazykZnamy = true,
+  onJazyk,
 }: Opts): { overlay: ReactNode; krok: ReactNode; posunOsy: number } {
   const [stav, setStav] = useState<PlochaStav>('nic');
   const [ready, setReady] = useState(false);
   /** nic = hlavní dotaz; ios = krátký návod Safari; null = zavřeno */
   const [poAno, setPoAno] = useState<'nic' | 'ios' | null>(null);
   const [hotovoHlaska, setHotovoHlaska] = useState(false);
+  const [jazykOk, setJazykOk] = useState(true);
+  const [jazykVolba, setJazykVolba] = useState<GuideLang>(lang);
+  /**
+   * Dočasný jazyk jen pro návod „Přidat na plochu“ (pomoc majitele u Fina aj.).
+   * null = jazyk hosta. Celý průvodce ani uložený jazyk se nemění.
+   */
+  const [navodLang, setNavodLang] = useState<GuideLang | null>(null);
   const deferred = useRef<BeforeInstallPromptEvent | null>(null);
-  const tt = (map: Parameters<typeof t>[0]) => t(map, lang);
+  const plochaLang = navodLang ?? lang;
+  const tt = (map: Parameters<typeof t>[0]) => t(map, plochaLang);
+
+  useEffect(() => {
+    setJazykVolba(lang);
+    setNavodLang(null);
+  }, [lang]);
+
+  function vratJazykHosta() {
+    setNavodLang(null);
+  }
+
+  function volbaNavodu(next: GuideLang) {
+    setNavodLang(next === lang ? null : next);
+  }
+
+  const vyberJazykaNavodu = (
+    <label className="pv-plocha-navod-jazyk">
+      <span className="pv-plocha-navod-jazyk__stitek">Jazyk návodu</span>
+      <span className="pv-plocha-navod-jazyk__ramecek">
+        <span className="pv-plocha-navod-jazyk__hodnota" aria-hidden="true">
+          {LANG_LABELS[plochaLang]}
+          <b>▾</b>
+        </span>
+        <select
+          className="pv-plocha-navod-jazyk__select"
+          value={plochaLang}
+          aria-label="Jazyk návodu Přidat na plochu"
+          onChange={(e) => volbaNavodu(e.target.value as GuideLang)}
+        >
+          {GUIDE_LANGS.map((l) => (
+            <option key={l} value={l}>
+              {LANG_LABELS[l]}
+            </option>
+          ))}
+        </select>
+      </span>
+    </label>
+  );
 
   useEffect(() => {
     if (vypnuto || jeStandalone()) {
       setStav('hotovo');
+      setJazykOk(true);
       setReady(true);
       return;
     }
@@ -71,6 +132,17 @@ export function usePlochaDotaz({
         ulozPlochaStav(rezervace, 'nic');
         setStav('nic');
         setPoAno(null);
+        const silaJazyk = q.get('jazyk') === '1' || jazykZnamy === false;
+        if (silaJazyk) {
+          try {
+            sessionStorage.removeItem(klicJazykHostaPotvrzen(rezervace));
+          } catch {
+            /* ss */
+          }
+          setJazykOk(false);
+        } else {
+          setJazykOk(true);
+        }
         setReady(true);
         return;
       }
@@ -79,12 +151,24 @@ export function usePlochaDotaz({
     }
     if (jenMobil && !jeMobilZarizeni()) {
       setStav('hotovo');
+      setJazykOk(true);
       setReady(true);
       return;
     }
     setStav(nactiPlochaStav(rezervace));
+    if (jazykZnamy) {
+      setJazykOk(true);
+    } else {
+      let ok = false;
+      try {
+        ok = sessionStorage.getItem(klicJazykHostaPotvrzen(rezervace)) === '1';
+      } catch {
+        /* ss */
+      }
+      setJazykOk(ok);
+    }
     setReady(true);
-  }, [rezervace, vypnuto, jenMobil]);
+  }, [rezervace, vypnuto, jenMobil, jazykZnamy]);
 
   useEffect(() => {
     if (vypnuto || jeStandalone()) return;
@@ -191,6 +275,7 @@ export function usePlochaDotaz({
         if (volba.outcome === 'accepted') {
           uloz('hotovo');
           setPoAno(null);
+          vratJazykHosta();
           setHotovoHlaska(true);
           return;
         }
@@ -205,11 +290,31 @@ export function usePlochaDotaz({
   function naPozdeji() {
     uloz('později');
     setPoAno(null);
+    vratJazykHosta();
   }
 
   function naSkryt() {
     uloz('skryto');
     setPoAno(null);
+    vratJazykHosta();
+  }
+
+  function potvrdJazyk() {
+    const vybrany = GUIDE_LANGS.includes(jazykVolba) ? jazykVolba : 'cs';
+    try {
+      sessionStorage.setItem(klicJazykHostaPotvrzen(rezervace), '1');
+    } catch {
+      /* ss */
+    }
+    onJazyk?.(vybrany);
+    if (token) {
+      void fetch('/api/pruvodce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, akce: 'jazyk', jazyk: vybrany }),
+      }).catch(() => undefined);
+    }
+    setJazykOk(true);
   }
 
   if (!ready || vypnuto || stav === 'hotovo' || stav === 'skryto') {
@@ -230,25 +335,60 @@ export function usePlochaDotaz({
     return { overlay, krok: null, posunOsy: 0 };
   }
 
-  const ukazOverlay = !blokovano && (stav === 'nic' || poAno != null);
-  const ukazKrok = stav === 'později' && poAno == null;
+  const ukazOverlay = !blokovano && (stav === 'nic' || poAno != null || !jazykOk);
+  const ukazKrok = stav === 'později' && poAno == null && jazykOk;
+  const uiJazyk = doporucitelUiTexty(jazykVolba);
 
   const overlay = ukazOverlay ? (
     <div className="pv-zprava-overlay" role="dialog" aria-modal="true" aria-labelledby="pv-plocha-dotaz">
       <div className="pv-zprava-overlay__karta pv-zprava-overlay__karta--prani">
         <p className="pv-zprava-overlay__krok">{tt(PT.plochaOverlayKrok)}</p>
-        {poAno === 'ios' ? (
+        {!jazykOk ? (
+          <>
+            <h3 className="pv-zprava-overlay__nadpis" id="pv-plocha-dotaz">
+              {uiJazyk.vyberteJazyk}
+            </h3>
+            <label className="pv-plocha-jazyk">
+              <span className="pv-plocha-jazyk__nahled" aria-hidden="true">
+                {vlajkaJazyka(jazykVolba)} {uiJazyk.nazevJazyka}
+                <b>▾</b>
+              </span>
+              <select
+                className="pv-plocha-jazyk__select"
+                value={jazykVolba}
+                onChange={(e) => setJazykVolba(e.target.value as GuideLang)}
+              >
+                {POPTAVKA_JAZYKY.map((l) => (
+                  <option key={l} value={l}>
+                    {vlajkaJazyka(l)} {doporucitelUiTexty(l).nazevJazyka}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button type="button" className="pv-zprava-overlay__btn" onClick={potvrdJazyk}>
+              {jazykVolba === 'cs'
+                ? 'Pokračovat'
+                : jazykVolba === 'de'
+                  ? 'Weiter'
+                  : jazykVolba === 'pl'
+                    ? 'Dalej'
+                    : 'Continue'}
+            </button>
+          </>
+        ) : poAno === 'ios' ? (
           <>
             <h3 className="pv-zprava-overlay__nadpis" id="pv-plocha-dotaz">
               {tt(PT.plochaNavodIosNadpis)}
             </h3>
             <p className="pv-zprava-overlay__text pv-plocha-navod">{tt(PT.plochaNavodIosKroky)}</p>
+            {vyberJazykaNavodu}
             <button
               type="button"
               className="pv-zprava-overlay__btn"
               onClick={() => {
                 uloz('později');
                 setPoAno(null);
+                vratJazykHosta();
               }}
             >
               {tt(PT.plochaZavrit)}
@@ -260,6 +400,7 @@ export function usePlochaDotaz({
               {tt(PT.plochaPolozkaNadpis)}
             </h3>
             <p className="pv-zprava-overlay__text">{tt(PT.plochaDotaz)}</p>
+            {vyberJazykaNavodu}
             <div className="pv-plocha-dotaz__btns">
               <button type="button" className="pv-zprava-overlay__btn" onClick={() => void spustInstalaci()}>
                 {tt(PT.plochaAno)}
@@ -286,6 +427,7 @@ export function usePlochaDotaz({
         <button type="button" className="pv-plocha-polozka__skryt" onClick={naSkryt}>
           {tt(PT.plochaSkryt)}
         </button>
+        {vyberJazykaNavodu}
       </div>
     </div>
   ) : null;

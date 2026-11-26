@@ -9,13 +9,16 @@ import {
 import { VYCHOZI_KLUB_PRAVIDLA } from './klub-pravidla';
 
 describe('klub odměna doporučiteli', () => {
-  it('5 % první, 2 % další do 12 měsíců', () => {
+  it('5 % první, 2 % další do 24 měsíců', () => {
     expect(pctOdmenyProPobyt(true, null, '2026-12-01', VYCHOZI_KLUB_PRAVIDLA)).toBe(5);
     expect(
       pctOdmenyProPobyt(false, '2026-01-15', '2026-06-01', VYCHOZI_KLUB_PRAVIDLA),
     ).toBe(2);
     expect(
-      pctOdmenyProPobyt(false, '2026-01-15', '2027-03-01', VYCHOZI_KLUB_PRAVIDLA),
+      pctOdmenyProPobyt(false, '2026-01-15', '2027-06-01', VYCHOZI_KLUB_PRAVIDLA),
+    ).toBe(2);
+    expect(
+      pctOdmenyProPobyt(false, '2026-01-15', '2028-03-01', VYCHOZI_KLUB_PRAVIDLA),
     ).toBe(0);
   });
 

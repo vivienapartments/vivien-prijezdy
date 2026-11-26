@@ -190,6 +190,9 @@ export async function potvrdImportBhCsv(
           slevaBehem: [],
           slevaKontrola: null,
           podekovaniVidel: null,
+          podekovaniVarianta: null,
+          podekovaniVariantaPobyt: null,
+          podekovaniVariantaPred: null,
         };
         await ulozKlientKartu(store, nova);
         klientId = nova.id;

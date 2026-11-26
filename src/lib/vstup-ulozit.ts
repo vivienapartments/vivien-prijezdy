@@ -137,6 +137,25 @@ export async function ulozVstupHosta(
 
   const vsechny = async () => (await store.listRezervace()).map((e) => e.record);
 
+  /** Host si zvolil jazyk (když jsme ho nevěděli). */
+  if (telo.akce === 'jazyk') {
+    const jazyk = (telo.jazyk || '').trim();
+    if (!GUIDE_LANGS.includes(jazyk as (typeof GUIDE_LANGS)[number])) {
+      return { ok: false, duvod: 'cas' };
+    }
+    if (rec.jazyk === jazyk) {
+      return { ok: true, uroven: urovenZRezervace(rec) };
+    }
+    const casUlozeni = new Date().toISOString();
+    const zapis: RezervaceRecord = {
+      ...rec,
+      jazyk: jazyk as RezervaceRecord['jazyk'],
+      hostUlozeni: [...(rec.hostUlozeni || []), casUlozeni].slice(-20),
+    };
+    await store.setRezervace(id, zapis);
+    return { ok: true, uroven: urovenZRezervace(zapis) };
+  }
+
   if (telo.akce === 'okno') {
     const vse = await vsechny();
     const now = new Date();

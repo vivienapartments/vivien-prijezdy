@@ -7,6 +7,7 @@ import { KLUB_IMPORT_BH_PRIME_SEED } from './klub-import-bh-prime-seed';
 import type { ImportBhPobyt, ImportBhSouhrn } from './klub-import-bh-csv';
 import type { KlientKarta, KlientRole, KlientTyp } from './klient-karta';
 import { urovenZUtraty } from './klub-pravidla';
+import { najdiTestHostaPodleKlice } from './klub-test-hoste';
 import type { KlubPobytRadek } from './klub-ukazka';
 
 export type PreviewKlientRadek = {
@@ -296,6 +297,9 @@ function zeSouhrnu(s: ImportBhSouhrn): PreviewKlientDetail {
           }
         : null,
     podekovaniVidel: null,
+    podekovaniVarianta: null,
+    podekovaniVariantaPobyt: null,
+    podekovaniVariantaPred: null,
   };
 
   const posledni = odbydlene[0] || null;
@@ -376,6 +380,9 @@ export function seznamPreviewKlientu(): PreviewKlientDetail[] {
 
 export function najdiPreviewPodleKlice(k: string): PreviewKlientDetail | null {
   const key = (k || '').trim();
+  if (key.startsWith('test-')) {
+    return najdiTestHostaPodleKlice(key);
+  }
   if (!key.startsWith('preview-') && !key.startsWith('ukazka-')) return null;
   const seznam = seznamPreviewKlientu();
   if (key === 'ukazka-hromada' || key === 'ukazka-egd') {

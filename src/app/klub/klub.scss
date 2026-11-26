@@ -321,19 +321,52 @@
 
 .klub-pobyt {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.32rem 0.55rem 0.32rem 0.6rem;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.4rem 0.55rem 0.38rem 0.6rem;
   margin: 0.22rem 0;
   background: var(--tile);
   border-radius: 7px;
   border-left: 3px solid var(--acc);
 }
 
-.klub-pobyt .klub-t {
-  font-size: 0.88rem;
+.klub-pobyt__horn,
+.klub-pobyt__dol {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.klub-pobyt__termin {
+  font-size: 0.82rem;
   line-height: 1.25;
+  color: var(--tx);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.klub-pobyt__kc {
+  font-size: 0.82rem;
+  line-height: 1.25;
+  color: var(--tx);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  margin-left: auto;
+}
+
+.klub-pobyt__apt {
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8rem;
+  line-height: 1.25;
+  color: var(--tx);
+  white-space: nowrap;
+}
+
+.klub-pobyt__pod {
+  margin: 0;
 }
 
 .klub-pobyt--ceka {
@@ -349,19 +382,21 @@
   opacity: 0.75;
 }
 
-.klub-pobyt--storno .klub-t {
+.klub-pobyt--storno .klub-pobyt__termin,
+.klub-pobyt--storno .klub-pobyt__apt,
+.klub-pobyt--storno .klub-pobyt__kc {
   text-decoration: line-through;
   color: var(--seda-ceka);
 }
 
 .klub-pobyt__stav {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-align: right;
   line-height: 1.25;
-  flex: none;
-  max-width: 7.5rem;
   color: var(--acc);
   font-weight: 600;
+  white-space: nowrap;
+  flex: none;
 }
 
 .klub-pobyt__stav.is-ceka {
@@ -370,7 +405,6 @@
 
 .klub-pobyt__stav.is-probiha {
   color: var(--modra);
-  font-size: 11px;
 }
 
 .klub-pobyt__stav.is-storno {
@@ -480,6 +514,106 @@
   font-style: normal;
   font-size: 10px;
   color: var(--sec);
+}
+
+/* „i“ u Doporučit – láká ke kliknutí, pod ním příklad / pravidla */
+.klub-dop-info {
+  margin-top: 8px;
+}
+
+.klub-dop-info__btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px dashed color-mix(in srgb, var(--pruvodce, #c9a84c) 70%, transparent);
+  background: color-mix(in srgb, var(--pruvodce, #c9a84c) 8%, transparent);
+  color: var(--tx);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.klub-dop-info__btn.is-open {
+  border-style: solid;
+  border-color: var(--pruvodce, #c9a84c);
+  color: var(--pruvodce, #c9a84c);
+}
+
+.klub-dop-info__i {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px solid var(--pruvodce, #c9a84c);
+  background: color-mix(in srgb, var(--pruvodce, #c9a84c) 18%, transparent);
+  color: var(--pruvodce, #c9a84c);
+  font-size: 13px;
+  font-weight: 800;
+  font-style: italic;
+  line-height: 1;
+  animation: klub-dop-i-pulse 2.4s ease-in-out infinite;
+}
+
+.klub-dop-info__btn.is-open .klub-dop-info__i {
+  animation: none;
+  background: var(--pruvodce, #c9a84c);
+  color: #1c1712;
+}
+
+.klub-dop-info__veta {
+  flex: 1;
+  font-weight: 600;
+}
+
+.klub-dop-info__sip {
+  flex: none;
+  font-style: normal;
+  color: var(--sec);
+  font-size: 11px;
+}
+
+.klub-dop-priklad {
+  margin-top: 8px;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 1px solid #6b5a3a;
+  background: #2a231b;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e8dfc8;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.klub-dop-priklad p {
+  margin: 0;
+}
+
+.klub-dop-priklad p + p {
+  margin-top: 0.45rem;
+}
+
+.klub-dop-priklad__pozn {
+  font-size: 12px;
+  color: var(--sec, #a39a88);
+  font-style: italic;
+}
+
+@keyframes klub-dop-i-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--pruvodce, #c9a84c) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--pruvodce, #c9a84c) 0%, transparent);
+  }
 }
 
 .klub-kr {

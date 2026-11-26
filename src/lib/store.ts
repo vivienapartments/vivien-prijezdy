@@ -1184,8 +1184,11 @@ export class FileProcessStore implements ProcessStore {
   }
 
   async getRezervace(id: string): Promise<RezervaceRecord | null> {
-    const raw = this.read().rezervace[id];
-    return raw ? asRezervace(id, raw) : null;
+    const { jeZkusebniProstredi } = await import('./klub-klic');
+    const cid = id.trim();
+    if (jeZkusebniProstredi() && !/^TEST/i.test(cid)) return null;
+    const raw = this.read().rezervace[cid];
+    return raw ? asRezervace(cid, raw) : null;
   }
 
   async setRezervace(id: string, record: RezervaceRecord): Promise<void> {
@@ -1201,7 +1204,10 @@ export class FileProcessStore implements ProcessStore {
   }
 
   async listRezervace(): Promise<RezervaceEntry[]> {
+    const { jeZkusebniProstredi } = await import('./klub-klic');
+    const jenTest = jeZkusebniProstredi();
     return Object.entries(this.read().rezervace)
+      .filter(([id]) => !jenTest || /^TEST/i.test(id))
       .map(([id, record]) => ({ id, record: asRezervace(id, record) }))
       .filter((row): row is RezervaceEntry => Boolean(row.record));
   }
@@ -1405,23 +1411,26 @@ export class FileProcessStore implements ProcessStore {
   }
 
   async getKv(key: string): Promise<string | null> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
-    if (!k) return null;
+    if (!k || !smiSahatNaKvKlic(k)) return null;
     const v = this.read().kv?.[k];
     return typeof v === 'string' ? v : null;
   }
 
   async setKv(key: string, value: string): Promise<void> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
-    if (!k) return;
+    if (!k || !smiSahatNaKvKlic(k)) return;
     const data = this.read();
     data.kv = { ...(data.kv || {}), [k]: value };
     this.write(data);
   }
 
   async setKvNx(key: string, value: string, _ttlSec?: number): Promise<boolean> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
-    if (!k) return false;
+    if (!k || !smiSahatNaKvKlic(k)) return false;
     const data = this.read();
     if (data.kv?.[k] != null && data.kv[k] !== '') return false;
     data.kv = { ...(data.kv || {}), [k]: value };
@@ -1430,8 +1439,9 @@ export class FileProcessStore implements ProcessStore {
   }
 
   async delKv(key: string): Promise<void> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
-    if (!k) return;
+    if (!k || !smiSahatNaKvKlic(k)) return;
     const data = this.read();
     if (!data.kv || !(k in data.kv)) return;
     const dalsi = { ...data.kv };
@@ -1569,9 +1579,15 @@ export class UpstashProcessStore implements ProcessStore {
   }
 
   async getRezervace(id: string): Promise<RezervaceRecord | null> {
-    const v = await this.cmd<string | null>('GET', this.rezKey(id));
+    const { jeZkusebniProstredi } = await import('./klub-klic');
+    const cid = id.trim();
+    /** Preview/local: ostré rezervace se nečtou. */
+    if (jeZkusebniProstredi() && !/^TEST/i.test(cid)) {
+      return null;
+    }
+    const v = await this.cmd<string | null>('GET', this.rezKey(cid));
     if (!v) return null;
-    return asRezervace(id, JSON.parse(v));
+    return asRezervace(cid, JSON.parse(v));
   }
 
   async setRezervace(id: string, record: RezervaceRecord): Promise<void> {
@@ -1603,11 +1619,11 @@ export class UpstashProcessStore implements ProcessStore {
 
   async listRezervace(): Promise<RezervaceEntry[]> {
     if (this.seznam) return this.seznam;
-    const keys = await this.scanKeys('rez:*');
-    /** Preview/local: přidej fiktivní TEST karty (test:rez:*). Ostré rez:* se na Preview/local jen čtou. */
     const { jeZkusebniProstredi } = await import('./klub-klic');
-    const testKeys = jeZkusebniProstredi() ? await this.scanKeys('test:rez:*') : [];
-    const vse = [...keys, ...testKeys];
+    /** Preview/local: jen fiktivní test:rez:*. Ostrá se nečte. */
+    const vse = jeZkusebniProstredi()
+      ? await this.scanKeys('test:rez:*')
+      : await this.scanKeys('rez:*');
     const hodnoty = await this.hodnotyKlicu(vse);
     const out: RezervaceEntry[] = [];
     for (let i = 0; i < vse.length; i += 1) {
@@ -1937,21 +1953,24 @@ export class UpstashProcessStore implements ProcessStore {
   }
 
   async getKv(key: string): Promise<string | null> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
-    if (!k) return null;
+    if (!k || !smiSahatNaKvKlic(k)) return null;
     const v = await this.cmd<string | null>('GET', k);
     return typeof v === 'string' ? v : null;
   }
 
   async setKv(key: string, value: string): Promise<void> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
-    if (!k) return;
+    if (!k || !smiSahatNaKvKlic(k)) return;
     await this.cmd('SET', k, value);
   }
 
   async setKvNx(key: string, value: string, ttlSec?: number): Promise<boolean> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
-    if (!k) return false;
+    if (!k || !smiSahatNaKvKlic(k)) return false;
     const res =
       typeof ttlSec === 'number' && ttlSec > 0
         ? await this.cmd<string | null>('SET', k, value, 'EX', Math.floor(ttlSec), 'NX')
@@ -1960,8 +1979,9 @@ export class UpstashProcessStore implements ProcessStore {
   }
 
   async delKv(key: string): Promise<void> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
-    if (!k) return;
+    if (!k || !smiSahatNaKvKlic(k)) return;
     await this.cmd('DEL', k);
   }
 }

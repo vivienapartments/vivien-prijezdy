@@ -9,6 +9,7 @@ import {
   type KlubUkazkaId,
 } from '@/lib/klub-ukazka';
 import { najdiPreviewPodleKlice } from '@/lib/klub-preview-klienti';
+import { nadpisPobytuKlub } from '@/lib/klub-termin-format';
 import { createProcessStore } from '@/lib/store';
 import type { KlientRole } from '@/lib/klient-karta';
 import { adresaKlub } from '@/lib/verejna-adresa';
@@ -48,11 +49,30 @@ export async function GET(req: Request) {
 
   const preview = najdiPreviewPodleKlice(k);
   if (preview) {
-    const defaultPohled: KlientRole = preview.typ === 'firma' ? 'firma' : 'host';
+    const role = preview.karta?.role || [];
+    const defaultPohled: KlientRole =
+      pohled ||
+      (preview.typ === 'firma' || role.includes('firma')
+        ? 'firma'
+        : role.includes('doporucitel') && !role.includes('host')
+          ? 'doporucitel'
+          : 'host');
+    const testExtra = preview as {
+      pratele?: import('@/lib/klub-ukazka').KlubPratelRadek[];
+      bookingRezim?: 'bez-klubu' | 'po-ubytovani' | null;
+    };
     return NextResponse.json(
       {
         ok: true,
-        karta: pohledZPreviewDetailu(preview, base, { pohled: pohled || defaultPohled }),
+        karta: pohledZPreviewDetailu(
+          {
+            ...preview,
+            pratele: testExtra.pratele || [],
+            bookingRezim: testExtra.bookingRezim ?? null,
+          },
+          base,
+          { pohled: defaultPohled },
+        ),
       },
       { headers: noStore },
     );
@@ -99,21 +119,30 @@ export async function GET(req: Request) {
       bookingRezim = rec.kartaPredana?.kdy ? 'po-ubytovani' : 'bez-klubu';
     }
     const apt = rec.apartman || 'Apartmán';
-    const nadpis = `${rec.prijezd}–${rec.odjezd} · ${apt}`;
+    const castka =
+      typeof rec.cenaPobytu === 'number' && rec.cenaPobytu > 0 ? rec.cenaPobytu : null;
+    const nadpisBox = nadpisPobytuKlub(rec.prijezd, rec.odjezd, apt);
+    const nadpisSeznam = nadpisPobytuKlub(rec.prijezd, rec.odjezd, apt, castka);
     const pruvodceUrl = odkazNaPruvodce(rec);
     const probiha = rec.prijezd <= dnes && rec.odjezd > dnes;
     const ceka = rec.prijezd > dnes;
     if (probiha || ceka) {
       nadchazejici.push({
-        nadpis,
+        nadpis: nadpisBox,
         podnadpis: 'Adresa, příjezd, kódy',
         pruvodceUrl,
         barva: probiha ? 'probiha' : 'ceka',
         stavText: probiha ? 'započítáno' : 'čeká',
       });
+      pobyty.push({
+        nadpis: nadpisSeznam,
+        podnadpis: '',
+        barva: probiha ? 'probiha' : 'ceka',
+        stavText: probiha ? 'započítáno' : 'čeká',
+      });
     } else {
       pobyty.push({
-        nadpis,
+        nadpis: nadpisSeznam,
         podnadpis: '',
         barva: 'zapocteno',
         stavText: 'započítáno',
@@ -124,7 +153,7 @@ export async function GET(req: Request) {
   const kartaPohled = pohledZKarty(karta, base, { ukazka: false, pohled, bookingRezim });
   if (nadchazejici.length || pobyty.length) {
     kartaPohled.nadchazejici = nadchazejici;
-    kartaPohled.pobyty = [...pobyty, ...kartaPohled.pobyty];
+    kartaPohled.pobyty = pobyty;
     kartaPohled.praveBydli = nadchazejici.some((r) => r.barva === 'probiha');
   }
 

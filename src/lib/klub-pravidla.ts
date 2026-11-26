@@ -48,7 +48,7 @@ export const VYCHOZI_KLUB_PRAVIDLA: KlubPravidla = {
   slevaUrovneOd: 'po-prvnim-odjezdu',
   odmenaPrvniPct: 5,
   odmenaDalsiPct: 2,
-  odmenaDalsiMesicu: 12,
+  odmenaDalsiMesicu: 24,
   kreditPlatnostMesicu: 24,
   vyplataMesice: [1, 7],
   specialniTerminy: [],

@@ -235,12 +235,12 @@ export function pozdravDalsiOtevreni(
 ): string | null {
   const jmeno = osloveniProPozdrav(lang, opts.krestniJmeno);
   if (opts.dnesOdjezdPredPredanim) return t(klubPozdravDnesOdjezd, lang);
-  if (opts.praveBydli && opts.bookingKlub) {
+  /** Právě bydlí: vždy „Vítejte u nás, Karle.“ (5. pád). */
+  if (opts.praveBydli) {
     return jmeno
       ? vypln(t(klubPozdravVitejte, lang), { jmeno })
       : t(klubPozdravVitejteBez, lang);
   }
-  if (opts.praveBydli) return null;
   const dnes = ymdDnesPraha();
   if (opts.pristiPrijezdYmd) {
     const n = dnyMezi(dnes, opts.pristiPrijezdYmd);

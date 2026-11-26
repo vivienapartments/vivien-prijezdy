@@ -1,7 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { tipZpravaWhatsapp } from '@/lib/doporuceni-komplet-texty';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+import {
+  blizciPrikladRadek1,
+  blizciPrikladRadek2,
+  blizciPrikladRadek3,
+  blizciPrikladRadek4,
+  blizciPrikladUvod,
+  tipZpravaWhatsapp,
+} from '@/lib/doporuceni-komplet-texty';
 import { formatKc } from '@/lib/kalendar-texty';
 import { klubTexty } from '@/lib/klub-texty';
 import { textPosunUrovne, urovenBehemPobytu } from '@/lib/klub-behem-pobytu';
@@ -20,13 +27,20 @@ import type { GuideLang } from '@/lib/types';
 import { KlubPlochaRadek } from '@/components/KlubPlochaRadek';
 import {
   klubATadyKarta,
-  klubPruvodcePo,
   klubRamecekPoOdjezduPred,
   klubRamecekPoOdjezduZa,
 } from '@/lib/klub-podekovani-texty';
 import { klubBookingRamecekPo, pozdravDalsiOtevreni } from '@/lib/klub-pozdravy';
 import { t as tLang } from '@/lib/i18n';
-import { expiredDopis, expiredNadpis, expiredPodpis } from '@/lib/texts';
+import {
+  klicPoslednihoDokonceneho,
+  parsePodekovaniQuery,
+  pocetDokoncenePobyty,
+  textyPodekovaniVarianty,
+  vyberPodekovaniId,
+  type PodekovaniVariantaId,
+} from '@/lib/klub-podekovani-varianty';
+import { expiredPodpis } from '@/lib/texts';
 import './klub.scss';
 
 function IkCal() {
@@ -81,6 +95,25 @@ function podnadpisPobytu(r: { podnadpis?: string; stavText?: string }): string |
   return pod;
 }
 
+/** „26.–30. 11. 2026 · Ušlechtilý kontrast · 15 000 Kč“ → sloupce. */
+function rozdelNadpisPobytu(nadpis: string): { termin: string; apt: string; castka: string } {
+  const parts = (nadpis || '')
+    .split(' · ')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (parts.length >= 3 && /\d/.test(parts[parts.length - 1]) && /Kč/i.test(parts[parts.length - 1])) {
+    return {
+      termin: parts[0],
+      apt: parts.slice(1, -1).join(' · '),
+      castka: parts[parts.length - 1],
+    };
+  }
+  if (parts.length === 2) {
+    return { termin: parts[0], apt: parts[1], castka: '' };
+  }
+  return { termin: nadpis || '', apt: '', castka: '' };
+}
+
 export default function KlubClient() {
   const [klic, setKlic] = useState('');
   const [karta, setKarta] = useState<KlubKartaPohled | null>(null);
@@ -88,8 +121,11 @@ export default function KlubClient() {
   const [nacitam, setNacitam] = useState(true);
   const [ladder, setLadder] = useState(false);
   const [dopOpen, setDopOpen] = useState(false);
+  /** Pravidla doporučení pod zlatým „i“ (stejný příklad jako po odjezdu). */
+  const [dopPravidla, setDopPravidla] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [ukazPodekovani, setUkazPodekovani] = useState(false);
+  const [podekovaniId, setPodekovaniId] = useState<PodekovaniVariantaId>('1');
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -124,12 +160,57 @@ export default function KlubClient() {
             (poOdjezdu && !json.karta.podekovaniVidel && !json.karta.ukazka) ||
             (json.karta.ukazka && demoPrvni);
           setUkazPodekovani(Boolean(prvni));
-          if (prvni && !json.karta.ukazka) {
-            void fetch('/api/klub/podekovani-videl', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ k: json.karta.tajnyKlic }),
-            }).catch(() => undefined);
+          if (prvni) {
+            const qPodek = parsePodekovaniQuery(q.get('podekovani'));
+            const pobytKlic = klicPoslednihoDokonceneho(json.karta.pobyty);
+            const pocet = pocetDokoncenePobyty(json.karta.pobyty);
+            let id: PodekovaniVariantaId | null = qPodek;
+            if (!id && json.karta.podekovaniVariantaPobyt === pobytKlic && json.karta.podekovaniVarianta) {
+              id = json.karta.podekovaniVarianta as PodekovaniVariantaId;
+            }
+            if (!id && typeof window !== 'undefined') {
+              try {
+                const raw = localStorage.getItem(`vivien-klub-podekovani:${json.karta.tajnyKlic}`);
+                if (raw) {
+                  const j = JSON.parse(raw) as { pobyt?: string; id?: string };
+                  if (j.pobyt === pobytKlic && j.id) id = j.id as PodekovaniVariantaId;
+                }
+              } catch {
+                /* paměť */
+              }
+            }
+            if (!id) {
+              const pred =
+                (json.karta.podekovaniVariantaPred as PodekovaniVariantaId | null) ||
+                (json.karta.podekovaniVariantaPobyt !== pobytKlic
+                  ? (json.karta.podekovaniVarianta as PodekovaniVariantaId | null)
+                  : null);
+              id = vyberPodekovaniId({
+                pocetDokoncene: pocet,
+                seed: `${json.karta.tajnyKlic}|${pobytKlic}|${pocet}`,
+                predchoziId: pred,
+              });
+            }
+            setPodekovaniId(id);
+            try {
+              localStorage.setItem(
+                `vivien-klub-podekovani:${json.karta.tajnyKlic}`,
+                JSON.stringify({ pobyt: pobytKlic, id }),
+              );
+            } catch {
+              /* paměť */
+            }
+            if (!json.karta.ukazka) {
+              void fetch('/api/klub/podekovani-videl', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  k: json.karta.tajnyKlic,
+                  varianta: id,
+                  pobytKlic,
+                }),
+              }).catch(() => undefined);
+            }
           }
         } else {
           setKarta(null);
@@ -344,22 +425,54 @@ export default function KlubClient() {
     );
   });
 
+  const infoDoporuceni =
+    !karta.skrytDoporuceni || jeDop ? (
+      <div className="klub-dop-info">
+        <button
+          type="button"
+          className={`klub-dop-info__btn${dopPravidla ? ' is-open' : ''}`}
+          aria-expanded={dopPravidla}
+          onClick={() => setDopPravidla((v) => !v)}
+        >
+          <span className="klub-dop-info__i" aria-hidden="true">
+            i
+          </span>
+          <span className="klub-dop-info__veta">{tLang(blizciPrikladUvod, lang)}</span>
+          <em className="klub-dop-info__sip" aria-hidden="true">
+            {dopPravidla ? '⌃' : '⌄'}
+          </em>
+        </button>
+        {dopPravidla ? (
+          <div className="klub-dop-priklad">
+            <p>{tLang(blizciPrikladRadek1, lang)}</p>
+            <p>{tLang(blizciPrikladRadek2, lang)}</p>
+            <p>{tLang(blizciPrikladRadek3, lang)}</p>
+            <p className="klub-dop-priklad__pozn">{tLang(blizciPrikladRadek4, lang)}</p>
+          </div>
+        ) : null}
+      </div>
+    ) : null;
+
   const tlacitkaB = (
-    <div className="klub-duo">
-      <a className="klub-vB" href={poptavkaUrl}>
-        <IkCal />
-        {bookingKlub ? 'Rezervovat napřímo' : jeFirma ? tx.tlacObjednat : tx.tlacRezervovat}
-      </a>
-      <button type="button" className="klub-vB" onClick={scrollDop}>
-        <IkUserPlus />
-        {tx.tlacDoporucit}
-      </button>
-    </div>
+    <>
+      <div className="klub-duo">
+        <a className="klub-vB" href={poptavkaUrl}>
+          <IkCal />
+          {bookingKlub ? 'Rezervovat napřímo' : jeFirma ? tx.tlacObjednat : tx.tlacRezervovat}
+        </a>
+        <button type="button" className="klub-vB" onClick={scrollDop}>
+          <IkUserPlus />
+          {tx.tlacDoporucit}
+        </button>
+      </div>
+      {infoDoporuceni}
+    </>
   );
 
   const tlacitkaC = (() => {
+    let duo: ReactNode;
     if (jeDop) {
-      return (
+      duo = (
         <div className="klub-duo">
           <button type="button" className="klub-vC" onClick={scrollDop}>
             <IkUserPlus />
@@ -373,9 +486,8 @@ export default function KlubClient() {
           </a>
         </div>
       );
-    }
-    if (jeFirma) {
-      return (
+    } else if (jeFirma) {
+      duo = (
         <div className="klub-duo">
           <a className="klub-vC" href={poptavkaUrl}>
             <IkCal />
@@ -389,20 +501,27 @@ export default function KlubClient() {
           </button>
         </div>
       );
+    } else {
+      duo = (
+        <div className="klub-duo">
+          <a className="klub-vC" href={poptavkaUrl}>
+            <IkCal />
+            <b>{bookingKlub ? 'Rezervovat napřímo' : tx.tlacRezervovat}</b>
+            <i>{tx.tlacDalsiPobyt(slevaPct)}</i>
+          </a>
+          <button type="button" className="klub-vC" onClick={scrollDop}>
+            <IkUserPlus />
+            <b>{tx.tlacDoporucit}</b>
+            <i>{tx.tlacPritel}</i>
+          </button>
+        </div>
+      );
     }
     return (
-      <div className="klub-duo">
-        <a className="klub-vC" href={poptavkaUrl}>
-          <IkCal />
-          <b>{bookingKlub ? 'Rezervovat napřímo' : tx.tlacRezervovat}</b>
-          <i>{tx.tlacDalsiPobyt(slevaPct)}</i>
-        </a>
-        <button type="button" className="klub-vC" onClick={scrollDop}>
-          <IkUserPlus />
-          <b>{tx.tlacDoporucit}</b>
-          <i>{tx.tlacPritel}</i>
-        </button>
-      </div>
+      <>
+        {duo}
+        {infoDoporuceni}
+      </>
     );
   })();
 
@@ -536,25 +655,30 @@ export default function KlubClient() {
               (b === 'ceka' ? 'čeká' : b === 'storno' ? 'zrušeno' : 'započítáno');
             const pod = podnadpisPobytu(r);
             const nepocita = /nepočítá/i.test(stav);
+            const dil = rozdelNadpisPobytu(r.nadpis);
             return (
               <div className={`klub-pobyt klub-pobyt--${b}`} key={`p-${i}`}>
-                <div>
-                  <div className="klub-t">{r.nadpis}</div>
-                  {pod ? <div className="klub-s">{pod}</div> : null}
+                <div className="klub-pobyt__horn">
+                  <div className="klub-pobyt__termin">{dil.termin}</div>
+                  {dil.castka ? <div className="klub-pobyt__kc">{dil.castka}</div> : null}
                 </div>
-                <div
-                  className={`klub-pobyt__stav${
-                    nepocita || b === 'ceka'
-                      ? ' is-ceka'
-                      : b === 'probiha'
-                        ? ' is-probiha'
-                        : b === 'storno'
-                          ? ' is-storno'
-                          : ''
-                  }`}
-                >
-                  {stav}
+                <div className="klub-pobyt__dol">
+                  <div className="klub-pobyt__apt">{dil.apt || r.nadpis}</div>
+                  <div
+                    className={`klub-pobyt__stav${
+                      nepocita || b === 'ceka'
+                        ? ' is-ceka'
+                        : b === 'probiha'
+                          ? ' is-probiha'
+                          : b === 'storno'
+                            ? ' is-storno'
+                            : ''
+                    }`}
+                  >
+                    {stav}
+                  </div>
                 </div>
+                {pod ? <div className="klub-s klub-pobyt__pod">{pod}</div> : null}
               </div>
             );
           })
@@ -601,17 +725,21 @@ export default function KlubClient() {
                       pruvodceUrl: url,
                     },
                   ]
-              ).map((r, i) => (
-                <div className="klub-radek" key={`n-${i}`}>
-                  <div className="klub-ik">
-                    {jeFirma ? <IkUser /> : <IkCal />}
+              ).map((r, i) => {
+                const pod =
+                  karta.praveBydli || !(r.podnadpis || '').trim() ? null : r.podnadpis.trim();
+                return (
+                  <div className="klub-radek" key={`n-${i}`}>
+                    <div className="klub-ik">
+                      {jeFirma ? <IkUser /> : <IkCal />}
+                    </div>
+                    <div>
+                      <div className="klub-t">{r.nadpis}</div>
+                      {pod ? <div className="klub-s">{pod}</div> : null}
+                    </div>
                   </div>
-                  <div>
-                    <div className="klub-t">{r.nadpis}</div>
-                    <div className="klub-s">{r.podnadpis}</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               <a className="klub-btn-pruvodce" href={url}>
                 {tx.mujPruvodce}
               </a>
@@ -629,6 +757,7 @@ export default function KlubClient() {
             </span>
             <em>›</em>
           </a>
+          {/* Plocha níž: hlavní nabídka je při otevření z mailu, tady jen připomínka. */}
           {plocha}
         </div>
         <div className={`klub-toast${toast ? ' is-on' : ''}`} role="status">
@@ -652,8 +781,8 @@ export default function KlubClient() {
               width={600}
               height={280}
             />
-            <h2>{tLang(expiredNadpis, lang)}</h2>
-            <p>{tLang(expiredDopis, lang)}</p>
+            <h2>{textyPodekovaniVarianty(podekovaniId, lang).nadpis}</h2>
+            <p>{textyPodekovaniVarianty(podekovaniId, lang).dopis}</p>
             <p className="klub-podekovani-prvni__podpis">{tLang(expiredPodpis, lang)}</p>
             <button
               type="button"
@@ -769,15 +898,20 @@ export default function KlubClient() {
                   ? tx.nadchazejiciFirma
                   : tx.nadchazejici}
             </div>
-            {karta.nadchazejici.map((r, i) => (
-              <div className="klub-radek" key={`n-${i}`}>
-                <div className="klub-ik">{jeFirma ? <IkUser /> : <IkCal />}</div>
-                <div>
-                  <div className="klub-t">{r.nadpis}</div>
-                  <div className="klub-s">{r.podnadpis}</div>
+            {karta.nadchazejici.map((r, i) => {
+              /** Po předání už „Adresa, příjezd, kódy“ netřeba. Jen před příjezdem. */
+              const pod =
+                karta.praveBydli || !(r.podnadpis || '').trim() ? null : r.podnadpis.trim();
+              return (
+                <div className="klub-radek" key={`n-${i}`}>
+                  <div className="klub-ik">{jeFirma ? <IkUser /> : <IkCal />}</div>
+                  <div>
+                    <div className="klub-t">{r.nadpis}</div>
+                    {pod ? <div className="klub-s">{pod}</div> : null}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {karta.nadchazejici.some((r) => r.pruvodceUrl) ? (
               <a
                 className="klub-btn-pruvodce"
@@ -790,14 +924,12 @@ export default function KlubClient() {
           </section>
         ) : null}
 
-        {verzeC && !jeDop ? (
-          <a className="klub-pruvodce-po" href={pruvodceUrl}>
-            <span>{tLang(klubPruvodcePo, lang)}</span>
-            <em>›</em>
-          </a>
-        ) : null}
-
         {verzeB && !maNadchazejici ? <div className="klub-tlac-pod-pruhem">{tlacitkaB}</div> : null}
+
+        {/* Při bydlení / předání: Plocha hned pod „Právě u nás bydlíte“, ať to host nepřehlédne. */}
+        {verzeB ? plocha : null}
+
+        {/* Po odjezdu průvodce neotevíráme (zůstává poděkování / karta). */}
 
         {/* 6. Moje pobyty */}
         {sekcePobyty}
@@ -823,8 +955,8 @@ export default function KlubClient() {
         {/* 7. Doporučení */}
         {sekceDoporuceni}
 
-        {/* 8. Plocha */}
-        {plocha}
+        {/* 8. Plocha (po odjezdu / bez probíhajícího pobytu) */}
+        {!verzeB ? plocha : null}
       </div>
       <div className={`klub-toast${toast ? ' is-on' : ''}`} role="status">
         {toast}

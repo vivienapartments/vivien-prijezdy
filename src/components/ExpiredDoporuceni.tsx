@@ -10,6 +10,7 @@ import {
   blizciPrikladRadek2,
   blizciPrikladRadek3,
   blizciPrikladRadek4,
+  blizciPrikladUvod,
   blizciText,
   blizciWhatsapp,
   blizciZkopirovano,
@@ -201,15 +202,18 @@ export function ExpiredDoporuceni({
 
       {ukazPodrobnosti ? (
         <div className="pv-exp__blizci-priklad">
-          <span className="pv-exp__blizci-priklad-radek">{t(blizciPrikladRadek1, lang)}</span>
+          <span className="pv-exp__blizci-priklad-radek">{t(blizciPrikladUvod, lang)}</span>
           <span className="pv-exp__blizci-priklad-radek">
-            {zlatCastky(t(blizciPrikladRadek2, lang), ['3\u00a0800\u00a0Kč'])}
+            {zlatCastky(t(blizciPrikladRadek1, lang), ['4\u00a0000\u00a0Kč', '3\u00a0800\u00a0Kč'])}
           </span>
           <span className="pv-exp__blizci-priklad-radek">
-            {zlatCastky(t(blizciPrikladRadek3, lang), ['200\u00a0Kč'])}
+            {zlatCastky(t(blizciPrikladRadek2, lang), ['190\u00a0Kč'])}
           </span>
           <span className="pv-exp__blizci-priklad-radek">
-            {zlatCastky(t(blizciPrikladRadek4, lang), ['5\u00a0%', '200\u00a0Kč'])}
+            {zlatCastky(t(blizciPrikladRadek3, lang), ['2\u00a0%'])}
+          </span>
+          <span className="pv-exp__blizci-priklad-radek pv-exp__blizci-priklad-radek--pozn">
+            {t(blizciPrikladRadek4, lang)}
           </span>
         </div>
       ) : null}
