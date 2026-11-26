@@ -208,8 +208,10 @@ export default function KlubClient() {
   const prijeli = pocetPrijeli(karta.pratele);
   const maNadchazejici = karta.nadchazejici.length > 0;
   const skromnyZbytek = maNadchazejici && karta.pobyty.length === 0 && !jeDop;
-  const maPobytyHosta = karta.pobyty.length > 0 || karta.utrataKc > 0;
-  const predPrvnim = !jeFirma && !jeDop && !maPobytyHosta && !karta.praveBydli;
+  const maDokoncenePobyty =
+    karta.utrataKc > 0 ||
+    karta.pobyty.some((p) => p.barva === 'zapocteno' || p.barva === 'probiha');
+  const predPrvnim = !jeFirma && !jeDop && !maDokoncenePobyty && !karta.praveBydli;
   const verzeB = Boolean(
     !jeDop && (karta.praveBydli || maNadchazejici),
   );
