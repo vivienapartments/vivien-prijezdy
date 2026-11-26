@@ -691,7 +691,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       jeKartaPredanaKanal,
     } = await import('@/lib/klub-karta-predana');
     const pripraveno = await pripravOdkazKartyKlubu();
-    if ('chyba' in pripraveno) return chyba(400, pripraveno.chyba);
+    if ('chyba' in pripraveno) {
+      if (!pripraveno.chyba) return chyba(404, 'Rezervace v přehledu není.');
+      return chyba(400, pripraveno.chyba);
+    }
     const krestni = (rec.jmeno || rec.krestni || '').trim().split(/\s+/)[0] || '';
     const booking = jeBookingZdroj(rec.zdroj, rec.emailHosta);
     const lang = (rec.jazyk || 'cs') as import('@/lib/types').GuideLang;
