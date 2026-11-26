@@ -1,10 +1,19 @@
 /**
- * Okno „Předáno – poslat kartu“ (PROMPT-PODEKOVANI-KLUB bod 5b).
+ * Okno „Ubytováno – poslat kartu“ (PROMPT-PODEKOVANI-KLUB bod 5b).
+ * Příjezd: klíče. Útrata až po převzetí zpět (odjezd).
  */
 
 import { jeRelayEmail } from './staly-host';
 import { zpravaWaPoslatKartu } from './klub-pozdravy';
 import type { GuideLang } from './types';
+
+/** Zkouška: e-maily karty na info@, WhatsApp/SMS na toto číslo. */
+export const TEST_KARTA_EMAIL = 'info@vivienapartments.cz';
+export const TEST_KARTA_TEL = '420777702272';
+
+export function jeTestRezimKarty(): boolean {
+  return (process.env.TEST_REZIM ?? '1') !== '0';
+}
 
 export type KartaPredanaKanal = 'email' | 'whatsapp' | 'sms' | 'kopie';
 
@@ -75,6 +84,36 @@ export function emailProKartu(vstup: {
     };
   }
   return { email: raw, relay: false, relayPoznamka: null };
+}
+
+/** Cíle pro odeslání karty: v testu vždy info@ a +420 777 702 272. */
+export function cileOdeslaniKarty(vstup: {
+  email: string | null;
+  emailRelay: boolean;
+  telefonWa: string | null;
+}): {
+  email: string | null;
+  emailRelay: boolean;
+  telefonWa: string | null;
+  test: boolean;
+  emailPoznamka: string | null;
+} {
+  if (!jeTestRezimKarty()) {
+    return {
+      email: vstup.email,
+      emailRelay: vstup.emailRelay,
+      telefonWa: vstup.telefonWa,
+      test: false,
+      emailPoznamka: null,
+    };
+  }
+  return {
+    email: TEST_KARTA_EMAIL,
+    emailRelay: false,
+    telefonWa: TEST_KARTA_TEL,
+    test: true,
+    emailPoznamka: 'zkouška',
+  };
 }
 
 export function sestavZpravuKarty(opts: {

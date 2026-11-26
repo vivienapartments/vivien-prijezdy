@@ -332,7 +332,14 @@ async function oznacAutomatickeOdjezdy(store: ProcessStore, list: RezervaceRecor
     if (jeVDnesnichOdjezdech(record, dnes, now) || record.prevzatoKdy || record.odjezd !== dnes || record.stav === 'zruseno') continue;
     const cerstvy = (await store.getRezervace(record.rezervace)) || record;
     if (cerstvy.prevzatoKdy || cerstvy.odjezd !== dnes) continue;
-    await store.setRezervace(record.rezervace, oznacPrevzeti(cerstvy, now, true));
+    const dalsi = oznacPrevzeti(cerstvy, now, true);
+    await store.setRezervace(record.rezervace, dalsi);
+    try {
+      const { pridejKlubPoPrevzeti } = await import('./klub-utrata');
+      await pridejKlubPoPrevzeti(store, dalsi);
+    } catch {
+      /* klub nesmí shodit automatické převzetí */
+    }
     n += 1;
   }
   return n;

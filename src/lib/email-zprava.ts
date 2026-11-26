@@ -161,6 +161,8 @@ export async function posliEmailZpravy(opts: {
   /** Marketing vs provoz (ochrana Booking/Airbnb relay). */
   druh?: import('./odchozi-host').OdchoziDruh;
   rezervace?: string | null;
+  /** V TEST_REZIM místo MAJITEL_EMAIL (např. info@ u karty klubu). */
+  testCil?: string | null;
 }): Promise<{ to: string; cc?: string }> {
   if (process.env.VITEST) throw new Error('V testu se e-mail neposílá.');
   const majitel = process.env.MAJITEL_EMAIL?.trim();
@@ -193,7 +195,8 @@ export async function posliEmailZpravy(opts: {
     secure: true,
     auth: { user, pass },
   });
-  const to = testMode ? majitel : opts.to;
+  const testCil = (opts.testCil || '').trim();
+  const to = testMode ? testCil || majitel : opts.to;
   const cc = testMode ? undefined : KOPIE_INFO;
   // BCC jen když majitel není stejný jako viditelná kopie (Seznam často zahodí BCC sám sobě).
   const bcc =

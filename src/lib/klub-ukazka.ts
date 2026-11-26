@@ -31,7 +31,8 @@ export type KlubUkazkaId =
   | 'ukazka-booking-pred'
   | 'ukazka-booking-bydli'
   | 'ukazka-booking-karta'
-  | 'ukazka-booking-po';
+  | 'ukazka-booking-po'
+  | 'ukazka-pravoslav';
 
 export type KlubPobytBarva = 'zapocteno' | 'ceka' | 'probiha' | 'storno' | null;
 
@@ -164,7 +165,8 @@ export function jeUkazkaKlic(k: string): k is KlubUkazkaId {
     k === 'ukazka-booking-pred' ||
     k === 'ukazka-booking-bydli' ||
     k === 'ukazka-booking-karta' ||
-    k === 'ukazka-booking-po'
+    k === 'ukazka-booking-po' ||
+    k === 'ukazka-pravoslav'
   );
 }
 
@@ -421,6 +423,21 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       podekovaniVidel: id === 'ukazka-booking-po' ? '2026-11-24T10:00:00.000Z' : null,
     });
   }
+  if (id === 'ukazka-pravoslav') {
+    return kartaZaklad({
+      id: 'ukazka-pravoslav',
+      kod: 'PRAV1',
+      tajnyKlic: 'ukazka-pravoslav',
+      typ: 'host',
+      role: ['host'],
+      jmeno: 'Pravoslav',
+      prijmeni: 'Tomek',
+      email: 'info@vivienapartments.cz',
+      telefon: '+420777702272',
+      utrataKc: 10000,
+      kreditKc: 0,
+    });
+  }
   if (id === 'ukazka-host-up') {
     return kartaZaklad({
       id: 'ukazka-host-up',
@@ -507,7 +524,7 @@ export function pohledZKarty(
     const kid = normalizujUkazkaId(karta.tajnyKlic);
     const pred = kid === 'ukazka-host-pred' || kid === 'ukazka-host-maxi-pred';
     const jenPo = kid === 'ukazka-host-po' || kid === 'ukazka-host-maxi-po';
-    const bydli = kid === 'ukazka-host' || kid === 'ukazka-host-up';
+    const bydli = kid === 'ukazka-host' || kid === 'ukazka-host-up' || kid === 'ukazka-pravoslav';
     const up = kid === 'ukazka-host-up';
     const maxi = kid === 'ukazka-host-maxi-po' || kid === 'ukazka-host-maxi-pred';
     const bookingKid =
@@ -724,18 +741,23 @@ export function pohledZKarty(
       ];
     } else if (bydli || pred || jenPo || maxi) {
       if (bydli) {
+        const pruvodce =
+          kid === 'ukazka-pravoslav' ? `${base}/nahled?predano=1` : `${base}/nahled`;
         nadchazejici = [
           {
-            nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
+            nadpis:
+              kid === 'ukazka-pravoslav'
+                ? '26.–28. 11. 2026 · Jemná harmonie'
+                : '23.–26. 11. 2026 · Zlatá rovnováha',
             podnadpis: 'Adresa, příjezd, kódy',
-            pruvodceUrl: `${base}/nahled`,
+            pruvodceUrl: pruvodce,
             barva: 'probiha',
           },
         ];
         pobyty = [
           {
-            nadpis: '23.–26. 11. 2026',
-            podnadpis: up ? '' : '1 450 Kč',
+            nadpis: kid === 'ukazka-pravoslav' ? '26.–28. 11. 2026' : '23.–26. 11. 2026',
+            podnadpis: kid === 'ukazka-pravoslav' ? '4 500 Kč' : up ? '' : '1 450 Kč',
             barva: 'probiha',
             stavText: 'započítáno',
           },
@@ -839,6 +861,7 @@ export function pohledZKarty(
   const praveBydli =
     kidUkazka === 'ukazka-host' ||
     kidUkazka === 'ukazka-host-up' ||
+    kidUkazka === 'ukazka-pravoslav' ||
     kidUkazka === 'ukazka-hromada' ||
     kidUkazka === 'ukazka-egd' ||
     kidUkazka === 'ukazka-flidr' ||

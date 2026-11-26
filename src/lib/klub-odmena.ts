@@ -149,7 +149,7 @@ export function kredityBlizkoVyprseni(
 }
 
 /**
- * Po předání přímého pobytu kamaráda: připiš odměnu doporučiteli (kredit).
+ * Po převzetí zpět (odjezd) přímého pobytu kamaráda: připiš odměnu doporučiteli (kredit).
  * Storno nic. Booking/Airbnb nic.
  */
 export async function pridejOdmenuPoPredani(
@@ -157,7 +157,7 @@ export async function pridejOdmenuPoPredani(
   rec: RezervaceRecord,
 ): Promise<{ ok: boolean; castka: number; kod: string | null; duvod?: string }> {
   if (!klubZapnut()) return { ok: false, castka: 0, kod: null, duvod: 'vypnuto' };
-  if (!rec.predano) return { ok: false, castka: 0, kod: null, duvod: 'bez-predani' };
+  if (!rec.prevzatoKdy) return { ok: false, castka: 0, kod: null, duvod: 'bez-prevzeti' };
   if (!jePrimaZdroj(rec.zdroj)) return { ok: false, castka: 0, kod: null, duvod: 'ne-prima' };
 
   const kartaKod = (await najdiKodDoporuciteleProRezervaci(store, rec)) || '';

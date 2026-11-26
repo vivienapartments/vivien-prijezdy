@@ -36,14 +36,28 @@ function ostráNeboZaloha(url: string): string {
   return url;
 }
 
+/** Na Preview vždy adresa tohoto nasazení (test data nejsou na ostré). */
+function adresaPreviewNasazeni(): string | null {
+  if (process.env.VERCEL_ENV !== 'preview') return null;
+  const u = (process.env.VERCEL_URL || process.env.NEXT_PUBLIC_VERCEL_URL || '')
+    .trim()
+    .replace(/^https?:\/\//, '');
+  if (!u) return null;
+  return `https://${u}`;
+}
+
 /** Poptávka, tip kamarádovi, klub na ploše. Env: NEXT_PUBLIC_KLUB_URL nebo NEXT_PUBLIC_BASE_URL. */
 export function adresaKlub(): string {
+  const preview = adresaPreviewNasazeni();
+  if (preview) return preview;
   const z = zEnv('NEXT_PUBLIC_KLUB_URL') || zEnv('NEXT_PUBLIC_BASE_URL');
   return ostráNeboZaloha(z);
 }
 
 /** Průvodce z e-mailu. Env: PRUVODCE_BASE_URL. */
 export function adresaPrujezd(): string {
+  const preview = adresaPreviewNasazeni();
+  if (preview) return preview;
   return ostráNeboZaloha(zEnv('PRUVODCE_BASE_URL'));
 }
 

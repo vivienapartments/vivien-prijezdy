@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  TEST_KARTA_EMAIL,
+  TEST_KARTA_TEL,
+  cileOdeslaniKarty,
   emailProKartu,
   jeBookingZdroj,
   pridejKanalKartaPredana,
@@ -89,4 +92,33 @@ describe('klub-karta-predana (PROMPT 5b)', () => {
     expect(jeBookingZdroj('přímá', 'x@guest.airbnb.com')).toBe(true);
     expect(jeBookingZdroj('přímá', 'anna@example.com')).toBe(false);
   });
+
+  it('ve zkoušce jde karta na info@ a +420 777 702 272', () => {
+    vi.stubEnv('TEST_REZIM', '1');
+    const c = cileOdeslaniKarty({
+      email: 'host@example.com',
+      emailRelay: false,
+      telefonWa: '420604692573',
+    });
+    expect(c.test).toBe(true);
+    expect(c.email).toBe(TEST_KARTA_EMAIL);
+    expect(c.telefonWa).toBe(TEST_KARTA_TEL);
+    expect(c.emailRelay).toBe(false);
+  });
+
+  it('mimo zkoušku zůstane e-mail a telefon hosta', () => {
+    vi.stubEnv('TEST_REZIM', '0');
+    const c = cileOdeslaniKarty({
+      email: 'host@example.com',
+      emailRelay: false,
+      telefonWa: '420604692573',
+    });
+    expect(c.test).toBe(false);
+    expect(c.email).toBe('host@example.com');
+    expect(c.telefonWa).toBe('420604692573');
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });

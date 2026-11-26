@@ -1,12 +1,18 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   castkaUtratyZRezervace,
   jePrimaZdroj,
   jeZaplacenoProUtratu,
   nahledImportuUtratyXlsx,
+  smíPripsatUtratu,
 } from './klub-utrata';
 import { VYCHOZI_KLUB_PRAVIDLA } from './klub-pravidla';
+import type { RezervaceRecord } from './store';
 import * as XLSX from 'xlsx';
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe('klub-utrata', () => {
   it('pozná přímý zdroj a zaplacení', () => {
@@ -16,6 +22,27 @@ describe('klub-utrata', () => {
     expect(jeZaplacenoProUtratu({ saldoKc: 500, zaplaceno: null, platby: [] })).toBe(false);
     expect(jeZaplacenoProUtratu({ saldoKc: null, zaplaceno: '2026-11-01', platby: [] })).toBe(true);
     expect(castkaUtratyZRezervace({ cenaPobytu: 4500.4 })).toBe(4500);
+  });
+
+  it('útrata až po převzetí zpět, ne po ubytování', () => {
+    vi.stubEnv('KLUB_ZAPNUTO', '1');
+    const zaklad = {
+      predano: '2026-11-26T14:00:00.000Z',
+      prevzatoKdy: null,
+      zdroj: 'přímá',
+      zdrojCeka: false,
+      saldoKc: 0,
+      zaplaceno: null,
+      platby: [],
+      cenaPobytu: 5000,
+    } as unknown as RezervaceRecord;
+    expect(smíPripsatUtratu(zaklad)).toBe(false);
+    expect(
+      smíPripsatUtratu({
+        ...zaklad,
+        prevzatoKdy: '2026-11-28T10:00:00.000Z',
+      }),
+    ).toBe(true);
   });
 
   it('náhled xlsx bere jen přímé řádky', () => {

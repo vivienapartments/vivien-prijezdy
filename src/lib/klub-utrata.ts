@@ -1,5 +1,5 @@
 /**
- * Útrata klubu (dávka 2): párování rezervace → klient:*, připsání po předání,
+ * Útrata klubu (dávka 2): párování rezervace → klient:*, připsání po převzetí zpět (odjezd),
  * náhled importu z BH xlsx (jen přímé).
  */
 
@@ -61,7 +61,8 @@ export function castkaUtratyZRezervace(rec: Pick<RezervaceRecord, 'cenaPobytu'>)
 
 export function smíPripsatUtratu(rec: RezervaceRecord): boolean {
   if (!klubZapnut()) return false;
-  if (!rec.predano) return false;
+  /** Útrata až po odjezdu (převzetí / předání zpět), ne při příjezdu. */
+  if (!rec.prevzatoKdy) return false;
   if (!smíUtrataKlubu(rec)) return false;
   if (!jePrimaZdroj(rec.zdroj)) return false;
   if (!jeZaplacenoProUtratu(rec)) return false;
@@ -200,6 +201,31 @@ export async function pridejUtratuPoPredani(
   }
   await ulozKlientKartu(store, klient);
   return { ok: true, castka, klientId: klient.id };
+}
+
+/**
+ * Po převzetí apartmánu zpět (odjezd): spáruj klienta, připiš útratu a odměnu.
+ * Volá se z ručního i automatického převzetí. Nesmí shodit převzetí.
+ */
+export async function pridejKlubPoPrevzeti(
+  store: ProcessStore,
+  rec: RezervaceRecord,
+): Promise<void> {
+  if (!klubZapnut()) return;
+  await sparujNeboVytvorKlienta(store, {
+    jmeno: rec.jmeno,
+    email: rec.emailHosta,
+    telefon: rec.telefon || rec.telefonRezervace,
+    rezervace: rec.rezervace,
+    jazyk: rec.jazyk || 'cs',
+  });
+  await pridejUtratuPoPredani(store, rec);
+  try {
+    const { pridejOdmenuPoPredani } = await import('./klub-odmena');
+    await pridejOdmenuPoPredani(store, rec);
+  } catch {
+    /* odměna nesmí shodit převzetí */
+  }
 }
 
 export async function pridejUtratuRucne(

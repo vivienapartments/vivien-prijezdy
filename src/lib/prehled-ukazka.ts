@@ -10,6 +10,41 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
   const zitra = posunDen(dnes, 1);
   const pozitri = posunDen(dnes, 2);
 
+  /** Zkouška odeslání karty: WhatsApp/SMS/e-mail na majitele. */
+  const pravoslavZkouska: RezervaceRecord = {
+    ...prazdnaRezervace('TESTKARTY', `${dnes}T08:00:00.000Z`),
+    apartman: 'V1',
+    prijezd: dnes,
+    odjezd: posunDen(dnes, 2),
+    noci: 2,
+    osob: 2,
+    jazyk: 'cs',
+    jmeno: 'Pravoslav Tomek',
+    krestni: 'Pravoslav',
+    narodnost: 'CZE',
+    emailHosta: 'info@vivienapartments.cz',
+    accessPin: '1234',
+    vytvoreno: dnes,
+    poplatek: 'ano',
+    stav: 'odeslano',
+    telefon: '+420777702272',
+    telefonWa: '420777702272',
+    telefonPuvodni: '777 702 272',
+    zdroj: 'přímá',
+    casPrijezdu: '15:00',
+    casZadalHost: true,
+    souhlasPravidel: { kdy: `${dnes}T10:00:00.000Z`, jazyk: 'cs', verze: verzeAktualni() },
+    zpusobPrijezdu: 'auto',
+    telefonBrana: '+420777702272',
+    spz: '1C27022',
+    branaRegistrovano: `${dnes}T10:05:00.000Z`,
+    otevrenoPocet: 2,
+    otevrenoPoprve: `${dnes}T10:00:00.000Z`,
+    otevrenoNaposled: `${dnes}T11:00:00.000Z`,
+    predano: null,
+    cenaPobytu: 4500,
+  };
+
   const otevrel: RezervaceRecord = {
     ...prazdnaRezervace('9001', '2026-10-11T06:00:00.000Z'),
     apartman: 'V1',
@@ -540,6 +575,7 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
   };
 
   return [
+    pravoslavZkouska,
     luisa,
     ceka,
     otevrel,

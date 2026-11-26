@@ -85,19 +85,53 @@ export async function GET(req: Request) {
 
   /** Booking host: klub až po kartaPredana (PROMPT 5b). */
   let bookingRezim: 'bez-klubu' | 'po-ubytovani' | null = null;
+  const { jeBookingZdroj } = await import('@/lib/klub-karta-predana');
+  const { odkazNaPruvodce } = await import('@/lib/posli-pruvodce');
+  const { denPraha } = await import('@/lib/brana');
+  const dnes = denPraha(new Date());
+  const nadchazejici: import('@/lib/klub-ukazka').KlubPobytRadek[] = [];
+  const pobyty: import('@/lib/klub-ukazka').KlubPobytRadek[] = [];
+
   for (const rezId of karta.rezervace || []) {
     const rec = await store.getRezervace(rezId);
-    if (!rec) continue;
-    const { jeBookingZdroj } = await import('@/lib/klub-karta-predana');
-    if (!jeBookingZdroj(rec.zdroj, rec.emailHosta)) continue;
-    bookingRezim = rec.kartaPredana?.kdy ? 'po-ubytovani' : 'bez-klubu';
-    break;
+    if (!rec || !rec.prijezd || !rec.odjezd) continue;
+    if (bookingRezim == null && jeBookingZdroj(rec.zdroj, rec.emailHosta)) {
+      bookingRezim = rec.kartaPredana?.kdy ? 'po-ubytovani' : 'bez-klubu';
+    }
+    const apt = rec.apartman || 'Apartmán';
+    const nadpis = `${rec.prijezd}–${rec.odjezd} · ${apt}`;
+    const pruvodceUrl = odkazNaPruvodce(rec);
+    const probiha = rec.prijezd <= dnes && rec.odjezd > dnes;
+    const ceka = rec.prijezd > dnes;
+    if (probiha || ceka) {
+      nadchazejici.push({
+        nadpis,
+        podnadpis: 'Adresa, příjezd, kódy',
+        pruvodceUrl,
+        barva: probiha ? 'probiha' : 'ceka',
+        stavText: probiha ? 'započítáno' : 'čeká',
+      });
+    } else {
+      pobyty.push({
+        nadpis,
+        podnadpis: '',
+        barva: 'zapocteno',
+        stavText: 'započítáno',
+      });
+    }
+  }
+
+  const kartaPohled = pohledZKarty(karta, base, { ukazka: false, pohled, bookingRezim });
+  if (nadchazejici.length || pobyty.length) {
+    kartaPohled.nadchazejici = nadchazejici;
+    kartaPohled.pobyty = [...pobyty, ...kartaPohled.pobyty];
+    kartaPohled.praveBydli = nadchazejici.some((r) => r.barva === 'probiha');
   }
 
   return NextResponse.json(
     {
       ok: true,
-      karta: pohledZKarty(karta, base, { ukazka: false, pohled, bookingRezim }),
+      karta: kartaPohled,
     },
     { headers: noStore },
   );

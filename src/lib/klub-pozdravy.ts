@@ -174,7 +174,7 @@ export const klubWaKartaBooking: LText = {
 };
 
 export const klubWaKartaPrima: LText = {
-  cs: 'Dobrý den, {jmeno}, vítejte u nás. Tady je váš průvodce a karta VIVIEN Klubu: {odkaz}',
+  cs: 'Dobrý den, {jmeno}, vítejte u nás. Tady je karta VIVIEN Klubu s průvodcem: {odkaz}',
   en: 'Hello {jmeno}, welcome. Here is your guide and VIVIEN Club card: {odkaz}',
   de: 'Guten Tag, {jmeno}, willkommen. Hier sind Ihr Guide und Ihre VIVIEN-Club-Karte: {odkaz}',
   pl: 'Dzień dobry, {jmeno}, witamy. Oto Wasz przewodnik i karta VIVIEN Klubu: {odkaz}',
