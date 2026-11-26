@@ -621,13 +621,13 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'predano') {
-    const dalsi = zapisMajitele(rec, 'predano', { predano: new Date().toISOString() }, 'Předáno');
+    /** Příjezd: klíče / kódy. Útrata až při převzetí zpět (prevzato). */
+    const dalsi = zapisMajitele(rec, 'predano', { predano: new Date().toISOString() }, 'Ubytováno');
     await store.setRezervace(id, dalsi);
     try {
       const { klubZapnut } = await import('@/lib/klub-klic');
       if (klubZapnut()) {
-        const { pridejUtratuPoPredani, sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
-        const { pridejOdmenuPoPredani } = await import('@/lib/klub-odmena');
+        const { sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
         await sparujNeboVytvorKlienta(store, {
           jmeno: dalsi.jmeno,
           email: dalsi.emailHosta,
@@ -635,15 +635,9 @@ export async function POST(request: Request): Promise<NextResponse> {
           rezervace: dalsi.rezervace,
           jazyk: dalsi.jazyk || 'cs',
         });
-        await pridejUtratuPoPredani(store, dalsi);
-        try {
-          await pridejOdmenuPoPredani(store, dalsi);
-        } catch {
-          /* odměna nesmí shodit předání */
-        }
       }
     } catch {
-      /* klub nesmí shodit předání */
+      /* klub nesmí shodit ubytování */
     }
     return NextResponse.json({ ok: true, predano: dalsi.predano }, { headers: noStore });
   }
@@ -667,6 +661,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       }
     }
     if (!karta) {
+      if (!rec) return { chyba: 'Rezervace v přehledu není.' as const };
       karta = await sparujNeboVytvorKlienta(store, {
         jmeno: rec.jmeno,
         email: rec.emailHosta,
@@ -683,11 +678,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'klub-karta-pripravit' || akce === 'klub-poslat-kartu') {
     const {
       emailProKartu,
+      cileOdeslaniKarty,
       jeBookingZdroj,
       sestavZpravuKarty,
       mailtoKarty,
       pridejKanalKartaPredana,
       jeKartaPredanaKanal,
+      TEST_KARTA_EMAIL,
+      TEST_KARTA_TEL,
     } = await import('@/lib/klub-karta-predana');
     const pripraveno = await pripravOdkazKartyKlubu();
     if ('chyba' in pripraveno) return chyba(400, pripraveno.chyba);
@@ -702,11 +700,22 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
     const emailInfo = emailProKartu({ emailHosta: rec.emailHosta });
     /** Jen telefon z check-inu (ne z rezervace Bookingu). */
-    const telefonWa =
+    const telefonWaSkutecny =
       (rec.telefonWa && String(rec.telefonWa).replace(/\D/g, '')) ||
       (rec.telefon && String(rec.telefon).replace(/\D/g, '')) ||
       null;
-    const maTelefon = Boolean(telefonWa && telefonWa.length >= 9);
+    const maTelefonSkutecny = Boolean(telefonWaSkutecny && telefonWaSkutecny.length >= 9);
+    const cile = cileOdeslaniKarty({
+      email: emailInfo.email,
+      emailRelay: emailInfo.relay,
+      telefonWa: maTelefonSkutecny ? telefonWaSkutecny : null,
+    });
+    const emailCil = cile.email;
+    const emailRelayCil = cile.emailRelay;
+    const telefonWaCil = cile.telefonWa;
+    const maTelefonCil = Boolean(telefonWaCil && telefonWaCil.length >= 9);
+    const emailPoznamka =
+      cile.emailPoznamka || emailInfo.relayPoznamka;
 
     if (akce === 'klub-karta-pripravit') {
       return NextResponse.json(
@@ -716,12 +725,13 @@ export async function POST(request: Request): Promise<NextResponse> {
           odkaz: pripraveno.odkaz,
           zprava,
           booking,
-          email: emailInfo.email,
-          emailRelay: emailInfo.relay,
-          emailPoznamka: emailInfo.relayPoznamka,
-          telefonWa: maTelefon ? telefonWa : null,
+          email: emailCil,
+          emailRelay: emailRelayCil,
+          emailPoznamka,
+          telefonWa: maTelefonCil ? telefonWaCil : null,
           telefonText: rec.telefon || null,
           kartaPredana: rec.kartaPredana,
+          testRezim: cile.test,
         },
         { headers: noStore },
       );
@@ -732,22 +742,22 @@ export async function POST(request: Request): Promise<NextResponse> {
     const kanal = kanalRaw;
     const { overOdchoziHostovi } = await import('@/lib/odchozi-host');
 
-    if ((kanal === 'whatsapp' || kanal === 'sms') && !maTelefon) {
+    if ((kanal === 'whatsapp' || kanal === 'sms') && !maTelefonCil) {
       return chyba(400, 'Chybí telefon z check-inu.');
     }
-    if (kanal === 'email' && emailInfo.relay) {
+    if (kanal === 'email' && emailRelayCil) {
       return chyba(400, 'adresa z Bookingu');
     }
-    if (kanal === 'email' && !emailInfo.email) {
+    if (kanal === 'email' && !emailCil) {
       return chyba(400, 'Chybí e-mail z check-inu.');
     }
 
-    if (kanal === 'whatsapp' || kanal === 'sms') {
+    if (!cile.test && (kanal === 'whatsapp' || kanal === 'sms')) {
       const over = await overOdchoziHostovi({
         kanal,
         druh: 'klub',
         emailCil: emailInfo.email,
-        telefonCil: telefonWa,
+        telefonCil: telefonWaSkutecny,
         text: zprava,
         rezervaceRec: rec,
         rezervace: id,
@@ -757,31 +767,36 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     let emailOdeslan = false;
     let mailto: string | null = null;
-    if (kanal === 'email' && emailInfo.email) {
-      const over = await overOdchoziHostovi({
-        kanal: 'email',
-        druh: 'klub',
-        emailCil: emailInfo.email,
-        text: zprava,
-        rezervaceRec: rec,
-        rezervace: id,
-      });
-      if (!over.ok) return chyba(400, over.duvod || 'E-mail nejde odeslat.');
+    if (kanal === 'email' && emailCil) {
+      let textProMail = zprava;
+      if (!cile.test) {
+        const over = await overOdchoziHostovi({
+          kanal: 'email',
+          druh: 'klub',
+          emailCil: emailInfo.email,
+          text: zprava,
+          rezervaceRec: rec,
+          rezervace: id,
+        });
+        if (!over.ok) return chyba(400, over.duvod || 'E-mail nejde odeslat.');
+        textProMail = over.text || zprava;
+      }
       try {
         const { posliEmailZpravy } = await import('@/lib/email-zprava');
         await posliEmailZpravy({
-          to: emailInfo.email,
+          to: cile.test ? TEST_KARTA_EMAIL : emailInfo.email!,
           subject: 'VIVIEN Klub',
-          text: over.text || zprava,
+          text: textProMail,
           lang,
           druh: 'klub',
           rezervace: id,
           tlacitko: { url: pripraveno.odkaz, label: 'Otevřít moji kartu' },
+          testCil: cile.test ? TEST_KARTA_EMAIL : null,
         });
         emailOdeslan = true;
       } catch {
         mailto = mailtoKarty({
-          email: emailInfo.email,
+          email: cile.test ? TEST_KARTA_EMAIL : emailCil,
           zprava,
           odkaz: pripraveno.odkaz,
         });
@@ -797,11 +812,12 @@ export async function POST(request: Request): Promise<NextResponse> {
         ok: true,
         odkaz: pripraveno.odkaz,
         zprava,
-        telefonWa: maTelefon ? telefonWa : null,
+        telefonWa: maTelefonCil ? telefonWaCil : cile.test ? TEST_KARTA_TEL : null,
         emailOdeslan,
         mailto,
         kartaPredana: dalsiPredana,
         kanal,
+        testRezim: cile.test,
       },
       { headers: noStore },
     );
@@ -1075,6 +1091,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (akce === 'prevzato') {
     const dalsi = oznacPrevzeti(rec);
     await store.setRezervace(id, dalsi);
+    try {
+      const { pridejKlubPoPrevzeti } = await import('@/lib/klub-utrata');
+      await pridejKlubPoPrevzeti(store, dalsi);
+    } catch {
+      /* klub nesmí shodit převzetí */
+    }
     const apt = dalsi.apartman || 'Apartmán';
     try {
       await upozorniUklid(store, `${apt} převzato, můžete uklízet`, '/uklid');
