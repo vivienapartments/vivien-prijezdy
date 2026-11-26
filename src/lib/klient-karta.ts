@@ -101,6 +101,8 @@ export type KlientKarta = {
   slevaBehem: SlevaBehemZaznam[];
   /** Upozornění majiteli po stornu / nepředání. */
   slevaKontrola: SlevaKontrolaStav | null;
+  /** ISO – první otevření poděkování na kartě. */
+  podekovaniVidel: string | null;
 };
 
 export type MigraceVysledek = {
@@ -210,6 +212,8 @@ function prazdnaKarta(
     zalozil: cast.zalozil || '',
     slevaBehem: Array.isArray(cast.slevaBehem) ? cast.slevaBehem : [],
     slevaKontrola: cast.slevaKontrola ?? null,
+    podekovaniVidel:
+      typeof cast.podekovaniVidel === 'string' ? cast.podekovaniVidel : null,
   };
 }
 

@@ -1,0 +1,121 @@
+/* Vzor nahled-plocha-uz-ma-3-verze.html · A a B1 */
+
+.klub-plocha {
+  margin-top: 14px;
+}
+
+.klub-plocha__helper {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.klub-plocha__r {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0;
+  padding: 11px 12px;
+  border-radius: 13px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  box-sizing: border-box;
+  background: var(--tile);
+}
+
+.klub-plocha__r svg {
+  flex: none;
+}
+
+.klub-plocha__r div {
+  flex: 1;
+  min-width: 0;
+}
+
+.klub-plocha__r b {
+  display: block;
+  font-size: 12.5px;
+  line-height: 1.25;
+}
+
+.klub-plocha__r span {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.klub-plocha__r i {
+  font-style: normal;
+  font-size: 11.5px;
+  white-space: nowrap;
+  flex: none;
+}
+
+/* A · zlatý rámeček */
+.klub-plocha__r--A {
+  border: 1px solid #c9a84c;
+  color: #c9a84c;
+}
+
+.klub-plocha__r--A b {
+  color: var(--tx);
+  font-weight: 700;
+}
+
+.klub-plocha__r--A span {
+  color: var(--sec);
+}
+
+.klub-plocha__r--A i {
+  color: #c9a84c;
+}
+
+/* B1 · tlumený rámeček */
+.klub-plocha__r--B1 {
+  border: 1px solid var(--tb);
+  color: var(--sec);
+}
+
+.klub-plocha__r--B1 b {
+  color: var(--tx);
+  font-weight: normal;
+}
+
+.klub-plocha__r--B1 span {
+  color: var(--sec);
+}
+
+.klub-plocha__r--B1 i {
+  color: var(--sec);
+}
+
+.klub-plocha__share {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--tb);
+  background: var(--tile);
+  color: var(--sec);
+  font-size: 12px;
+}
+
+.klub-plocha__share p {
+  margin: 0 0 8px;
+}
+
+.klub-plocha__share button {
+  margin: 0 6px 6px 0;
+  padding: 7px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--tb);
+  background: transparent;
+  color: var(--tx);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}

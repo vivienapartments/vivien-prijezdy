@@ -609,3 +609,81 @@
 .klub-sec--skromne {
   display: none;
 }
+
+/* Po odjezdu: nenápadný průvodce (přerušovaný rámeček jako plocha) */
+.klub-pruvodce-po {
+  display: block;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 13px;
+  border: 1px dashed var(--tb);
+  color: var(--sec);
+  font-size: 12px;
+  text-decoration: none;
+  text-align: center;
+  background: transparent;
+}
+
+.klub-pruvodce-po:hover {
+  color: var(--tx);
+}
+
+.klub-podekovani-prvni {
+  margin: 0 0 14px;
+  text-align: center;
+}
+
+.klub-podekovani-prvni h2 {
+  margin: 0 0 10px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.45rem;
+  font-weight: 400;
+  color: #c9a84c;
+}
+
+.klub-podekovani-prvni p {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--tx);
+  text-align: justify;
+  hyphens: auto;
+}
+
+.klub-podekovani-prvni__podpis {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  color: #c9a84c !important;
+  text-align: center !important;
+}
+
+.klub-podekovani-prvni__sip {
+  display: block;
+  width: 100%;
+  margin: 12px 0 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--sec);
+  cursor: pointer;
+}
+
+.klub-ramecek-po {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--tile);
+  border: 1px solid var(--tb);
+  color: var(--tx);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.klub-ramecek-po b {
+  color: var(--acc);
+  font-weight: 700;
+}

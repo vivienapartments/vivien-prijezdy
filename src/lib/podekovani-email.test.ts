@@ -61,4 +61,34 @@ describe('podekovani-email', () => {
     expect(html).toContain('Nechcete od nás další e-maily? Stačí odpovědět NE.');
     expect(html).toContain('color:#8a7f72');
   });
+
+  it('s klubem má PNG kartičku a Otevřít moji kartu', () => {
+    const html = htmlPodekovaniEmail(
+      'cs',
+      'https://vivien-prijezdy-six.vercel.app/abc',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        odkazKarty: 'https://vivien-prijezdy-six.vercel.app/klub?k=ukazka-host-po',
+        jmeno: 'Jana Nováková',
+        urovenId: 'staly',
+        urovenNazev: 'Věrný host',
+        slevaPct: 6,
+        urovenNova: true,
+        dalsiNazev: 'Bronzový host',
+        dalsiPct: 7,
+        chybiKc: 6400,
+        pruhPct: 60,
+      },
+    );
+    expect(html).toContain('karticka-staly.png');
+    expect(html).toContain('Otevřít moji kartu');
+    expect(html).toContain('Váš pobyt jsme započítali');
+    expect(html).toContain('Tímto pobytem máte úroveň');
+    expect(html).toContain('Jana Nováková');
+    expect(html).toContain('/klub?k=ukazka-host-po');
+    expect(html).not.toContain('Jako poděkování jsme pro vás připravili 3');
+  });
 });

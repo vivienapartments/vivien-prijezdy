@@ -295,6 +295,7 @@ function zeSouhrnu(s: ImportBhSouhrn): PreviewKlientDetail {
             duvod: 'zkontrolovat slevu',
           }
         : null,
+    podekovaniVidel: null,
   };
 
   const posledni = odbydlene[0] || null;

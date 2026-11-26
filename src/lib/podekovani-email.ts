@@ -21,7 +21,44 @@ import {
 } from './texts';
 import type { GuideLang, LText } from './types';
 
+import {
+  klubBookingPodekovani5,
+  klubDoUrovneSablona,
+  klubNejvyssiUroven,
+  klubOtevritKartu,
+  klubPodekovaniUvod,
+  klubRadek1Nadpis,
+  klubRadek1PodPred,
+  klubRadek1PodZa,
+  klubRadek2Nadpis,
+  klubRadek2Pod,
+  klubRadek3Nadpis,
+  klubRadek3Pod,
+  klubTimtoUrovniPred,
+  klubVaseUrovenPred,
+  klubZapocitali,
+  vyplnSablonu,
+} from './klub-podekovani-texty';
 import { OSTRA_ADRESA_ZALOHA, opravVerejnyOdkaz } from './verejna-adresa';
+
+/** Volitelný klubový blok pod oddělovací čárou (jen když je klub zapnutý). */
+export type PodekovaniKlubEmail = {
+  odkazKarty: string;
+  jmeno: string;
+  urovenId: string;
+  urovenNazev: string;
+  slevaPct: number;
+  jeFirma?: boolean;
+  /** Úroveň se tímto pobytem změnila. */
+  urovenNova?: boolean;
+  /** Host přes Booking / Airbnb – bez „započítali“. */
+  booking?: boolean;
+  dalsiNazev?: string | null;
+  dalsiPct?: number | null;
+  chybiKc?: number | null;
+  /** 0–100 vyplnění pruhu. */
+  pruhPct?: number;
+};
 
 /** Obrázky v e-mailu přes stálou vercel.app, dokud běží i club. */
 const OSTRA_ASSET = OSTRA_ADRESA_ZALOHA;
@@ -130,6 +167,7 @@ export function textPodekovaniEmail(
   odkazDoporucit?: string,
   odkazPlocha?: string,
   odkazRezervovat?: string,
+  klub?: PodekovaniKlubEmail | null,
 ): string {
   const l = jazyk(lang);
   const url = opravVerejnyOdkaz(odkaz.trim());
@@ -138,27 +176,70 @@ export function textPodekovaniEmail(
   const urlPlo = opravVerejnyOdkaz(
     odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`,
   );
-  return [
+  const radky: string[] = [
     t(expiredNadpis, l),
     '',
     t(expiredDopis, l),
     '',
     t(expiredPodpis, l),
     '',
-    t(vyhodyUvod, l),
-    '',
-    `1. ${t(radek1Nadpis, l)}. ${t(radek1Pod, l)}`,
-    urlRez,
-    `2. ${t(radek2Nadpis, l)}. ${t(radek2Pod, l)}`,
-    urlDop,
-    `3. ${t(radek3Nadpis, l)}. ${t(radek3Pod, l)}`,
-    urlPlo,
-    '',
+  ];
+  if (klub) {
+    if (klub.booking) {
+      radky.push(t(klubBookingPodekovani5, l), '');
+    } else {
+      radky.push(t(klubZapocitali, l));
+      const urovenRadek = klub.urovenNova
+        ? `${t(klubTimtoUrovniPred, l)} ${klub.urovenNazev}.`
+        : `${t(klubVaseUrovenPred, l)} ${klub.urovenNazev}.`;
+      radky.push(urovenRadek, '', klub.jmeno, '');
+    }
+    if (klub.dalsiNazev && klub.chybiKc != null && klub.dalsiPct != null) {
+      radky.push(
+        vyplnSablonu(t(klubDoUrovneSablona, l), {
+          nazev: klub.dalsiNazev,
+          pct: klub.dalsiPct,
+          kc: klub.chybiKc.toLocaleString('cs-CZ'),
+        }),
+        '',
+      );
+    } else if (!klub.dalsiNazev) {
+      radky.push(t(klubNejvyssiUroven, l), '');
+    }
+    radky.push(
+      t(klubPodekovaniUvod, l),
+      '',
+      `1. ${t(klubRadek1Nadpis, l)}. ${t(klubRadek1PodPred, l)} ${klub.slevaPct} ${t(klubRadek1PodZa, l)}`,
+      urlRez,
+      `2. ${t(klubRadek2Nadpis, l)}. ${t(klubRadek2Pod, l)}`,
+      urlDop,
+      `3. ${t(klubRadek3Nadpis, l)}. ${t(klubRadek3Pod, l)}`,
+      urlPlo,
+      '',
+      t(klubOtevritKartu, l),
+      opravVerejnyOdkaz(klub.odkazKarty),
+      '',
+    );
+  } else {
+    radky.push(
+      t(vyhodyUvod, l),
+      '',
+      `1. ${t(radek1Nadpis, l)}. ${t(radek1Pod, l)}`,
+      urlRez,
+      `2. ${t(radek2Nadpis, l)}. ${t(radek2Pod, l)}`,
+      urlDop,
+      `3. ${t(radek3Nadpis, l)}. ${t(radek3Pod, l)}`,
+      urlPlo,
+      '',
+    );
+  }
+  radky.push(
     `${t(expiredZavolat, l)}: ${NIKOL_PHONE}`,
     `${t(expiredZaloha, l)}: ${PARKING_OWNER_PHONE}`,
     '',
     textOdhlaseniEmail(l),
-  ].join('\n');
+  );
+  return radky.join('\n');
 }
 
 function telNbsp(s: string): string {
@@ -211,8 +292,70 @@ function radekVyhody(
 </tr>`;
 }
 
+function klubHtmlBlok(
+  l: GuideLang,
+  klub: PodekovaniKlubEmail,
+  asset: string,
+  sans: string,
+  serif: string,
+  urlRez: string,
+  urlDop: string,
+  urlPlo: string,
+  ikKal: string,
+  ikDarek: string,
+  ikTel: string,
+): string {
+  const partner = Boolean(klub.jeFirma);
+  const karticka = `${asset}/email/karticka-${esc(klub.urovenId)}${partner ? '-partner' : ''}.png`;
+  const urlKarta = opravVerejnyOdkaz(klub.odkazKarty).replaceAll('"', '%22');
+  let urovenHtml: string;
+  if (klub.booking) {
+    urovenHtml = `<p style="margin:0;font-family:${sans};font-size:15px;line-height:1.45;color:#e8dfc8;text-align:center;">${slevaNbsp(esc(t(klubBookingPodekovani5, l)))}</p>`;
+  } else {
+    const zlaty = klub.urovenNova
+      ? `${esc(t(klubTimtoUrovniPred, l))} ${esc(klub.urovenNazev)}.`
+      : `${esc(t(klubVaseUrovenPred, l))} ${esc(klub.urovenNazev)}.`;
+    urovenHtml = `<p style="margin:0;font-family:${sans};font-size:15px;line-height:1.45;color:#e8dfc8;text-align:center;">${esc(t(klubZapocitali, l))}<br><span style="color:#c9a84c;font-weight:700;">${zlaty}</span></p>`;
+  }
+  let pruhHtml = '';
+  if (klub.dalsiNazev && klub.chybiKc != null && klub.dalsiPct != null) {
+    const text = vyplnSablonu(t(klubDoUrovneSablona, l), {
+      nazev: klub.dalsiNazev,
+      pct: klub.dalsiPct,
+      kc: klub.chybiKc.toLocaleString('cs-CZ'),
+    });
+    const pctBar = Math.max(4, Math.min(100, Math.round(klub.pruhPct ?? 50)));
+    pruhHtml = `<p style="margin:14px 0 6px;font-family:${sans};font-size:13px;color:#cbbba8;text-align:center;">${slevaNbsp(esc(text))}</p>
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 8px;"><tr><td style="background:#3d342a;border-radius:4px;height:8px;">
+<table role="presentation" width="${pctBar}%" cellspacing="0" cellpadding="0"><tr><td style="background:#c9a84c;height:8px;border-radius:4px;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+</td></tr></table>`;
+  } else if (!klub.dalsiNazev) {
+    pruhHtml = `<p style="margin:14px 0 8px;font-family:${sans};font-size:13px;color:#cbbba8;text-align:center;">${esc(t(klubNejvyssiUroven, l))}</p>`;
+  }
+  const pod1 = `${t(klubRadek1PodPred, l)} ${klub.slevaPct} ${t(klubRadek1PodZa, l)}`;
+  const vyhody = [
+    radekVyhody(ikKal, t(klubRadek1Nadpis, l), pod1, '›', urlRez, sans),
+    radekVyhody(ikDarek, t(klubRadek2Nadpis, l), t(klubRadek2Pod, l), '›', urlDop, sans),
+    radekVyhody(ikTel, t(klubRadek3Nadpis, l), t(klubRadek3Pod, l), '›', urlPlo, sans),
+  ].join('');
+  return `
+<tr><td style="padding:12px 24px 4px;"><div style="border-top:1px solid #3d342a;height:1px;font-size:0;">&nbsp;</div></td></tr>
+<tr><td style="padding:14px 24px 8px;">${urovenHtml}</td></tr>
+<tr><td style="padding:8px 24px 0;text-align:center;">
+  <img src="${karticka}" width="520" alt="VIVIEN Klub" style="display:block;width:100%;max-width:520px;height:auto;border:0;margin:0 auto;border-radius:14px;">
+  <div style="font-family:${serif};font-size:16px;color:#e8dfc8;padding-top:8px;">${esc(klub.jmeno)}</div>
+</td></tr>
+<tr><td style="padding:4px 24px 4px;">${pruhHtml}</td></tr>
+<tr><td style="padding:10px 24px 4px;font-family:${serif};font-size:16px;font-style:italic;color:#e8dfc8;text-align:center;">${esc(t(klubPodekovaniUvod, l))}</td></tr>
+<tr><td style="padding:4px 16px 8px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${vyhody}</table></td></tr>
+<tr><td style="padding:10px 24px 6px;text-align:center;">
+  <a href="${urlKarta}" style="display:inline-block;background:#c9a84c;color:#1a1510;font-family:${sans};font-size:16px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:22px;">${esc(t(klubOtevritKartu, l))}</a>
+</td></tr>`;
+}
+
 /**
- * HTML e-mail po odjezdu: hlavička-jpg, 3 klikací řádky se zlatou šipkou, bez CTA tlačítka.
+ * HTML e-mail po odjezdu: hlavička-jpg, 3 klikací řádky.
+ * S `klub` přibude kartička PNG a tlačítko na kartu (PROMPT-PODEKOVANI-KLUB).
  * Obrázky vždy z ostré produkce.
  */
 export function htmlPodekovaniEmail(
@@ -222,6 +365,7 @@ export function htmlPodekovaniEmail(
   odkazDoporucit?: string,
   odkazPlocha?: string,
   odkazRezervovat?: string,
+  klub?: PodekovaniKlubEmail | null,
 ): string {
   const l = jazyk(lang);
   const asset = OSTRA_ASSET;
@@ -241,17 +385,33 @@ export function htmlPodekovaniEmail(
   );
   const urlDop = opravVerejnyOdkaz(odkazDoporucit || `${url}#doporucit`).replaceAll('"', '%22');
   const urlPlo = opravVerejnyOdkaz(
-    odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`,
+    odkazPlocha || (klub ? klub.odkazKarty : `${url}${url.includes('?') ? '&' : '?'}plocha=1`),
   ).replaceAll('"', '%22');
   const serif = "Georgia,'Times New Roman',serif";
   const sans = "Arial,Helvetica,sans-serif";
   const kontakty = `<tr>${tlacitkoTelefonu(ikHovor, t(expiredZavolat, l), NIKOL_PHONE, sans)}${tlacitkoTelefonu(ikHovor, t(expiredZaloha, l), PARKING_OWNER_PHONE, sans)}</tr>`;
 
-  const vyhody = [
-    radekVyhody(ikKal, t(radek1Nadpis, l), t(radek1Pod, l), t(radek1Tlacitko, l), urlRez, sans),
-    radekVyhody(ikDarek, t(radek2Nadpis, l), t(radek2Pod, l), t(radek2Tlacitko, l), urlDop, sans),
-    radekVyhody(ikTel, t(radek3Nadpis, l), t(radek3Pod, l), t(radek3Tlacitko, l), urlPlo, sans),
-  ].join('');
+  const klubBlok = klub
+    ? klubHtmlBlok(l, klub, asset, sans, serif, urlRez, urlDop, urlPlo, ikKal, ikDarek, ikTel)
+    : '';
+  const klasickeVyhody = klub
+    ? ''
+    : `<tr>
+            <td style="padding:6px 24px 10px;font-family:${serif};font-size:16px;font-style:italic;color:#e8dfc8;text-align:center;">
+              ${uvod}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:4px 16px 8px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                ${[
+                  radekVyhody(ikKal, t(radek1Nadpis, l), t(radek1Pod, l), t(radek1Tlacitko, l), urlRez, sans),
+                  radekVyhody(ikDarek, t(radek2Nadpis, l), t(radek2Pod, l), t(radek2Tlacitko, l), urlDop, sans),
+                  radekVyhody(ikTel, t(radek3Nadpis, l), t(radek3Pod, l), t(radek3Tlacitko, l), urlPlo, sans),
+                ].join('')}
+              </table>
+            </td>
+          </tr>`;
 
   return `<!DOCTYPE html>
 <html lang="${l}">
@@ -281,18 +441,8 @@ export function htmlPodekovaniEmail(
               ${podpis}
             </td>
           </tr>
-          <tr>
-            <td style="padding:6px 24px 10px;font-family:${serif};font-size:16px;font-style:italic;color:#e8dfc8;text-align:center;">
-              ${uvod}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:4px 16px 8px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                ${vyhody}
-              </table>
-            </td>
-          </tr>
+          ${klasickeVyhody}
+          ${klubBlok}
           <tr>
             <td style="padding:16px 20px 8px;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">

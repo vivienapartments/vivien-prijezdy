@@ -74,6 +74,8 @@ export type KlubKartaPohled = {
   praveBydli: boolean;
   /** Preview z BH: schovat blok doporučení, dokud není skutečný kredit / přítel. */
   skrytDoporuceni: boolean;
+  /** ISO prvního otevření poděkování; null = ještě neviděl. */
+  podekovaniVidel: string | null;
 };
 
 const UROVNE = VYCHOZI_KLUB_PRAVIDLA.urovne;
@@ -116,6 +118,7 @@ function kartaZaklad(
     zalozil: cast.zalozil || 'ukazka',
     slevaBehem: cast.slevaBehem || [],
     slevaKontrola: cast.slevaKontrola ?? null,
+    podekovaniVidel: cast.podekovaniVidel ?? null,
   };
 }
 
@@ -767,6 +770,7 @@ export function pohledZKarty(
     utrataCekaKc: utrataCekaUkazka,
     praveBydli,
     skrytDoporuceni: false,
+    podekovaniVidel: karta.podekovaniVidel,
   };
 }
 
@@ -798,6 +802,7 @@ export function pohledZPreviewDetailu(
     kreditVyplaceno: 0,
     // Doporučit mají všichni hosté. Prázdný seznam přátel / kredit 0 je v pořádku.
     skrytDoporuceni: false,
+    podekovaniVidel: d.karta.podekovaniVidel,
   };
 }
 

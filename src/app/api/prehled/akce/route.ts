@@ -1571,15 +1571,71 @@ export async function POST(request: Request): Promise<NextResponse> {
         const url = odkaz || '';
         if (!url) return chyba(400, 'Chybí odkaz na průvodce.');
         const urlRez = odkazPoptavkaVernost(url);
-        const urlDop = `${url}#doporucit`;
-        const urlPlo = `${url}${url.includes('?') ? '&' : '?'}plocha=1`;
+        let urlDop = `${url}#doporucit`;
+        let urlPlo = `${url}${url.includes('?') ? '&' : '?'}plocha=1`;
+        let klubEmail: import('@/lib/podekovani-email').PodekovaniKlubEmail | null = null;
+        try {
+          const { klubZapnut, klubKlic } = await import('@/lib/klub-klic');
+          if (klubZapnut()) {
+            const { nactiKlientPodleId } = await import('@/lib/klient-karta');
+            const { urovenZUtraty } = await import('@/lib/klub-pravidla');
+            const { pokrokUrovne } = await import('@/lib/klub-ukazka');
+            let k = null as Awaited<ReturnType<typeof nactiKlientPodleId>>;
+            const rezId = String(rec.rezervace || id || '').trim();
+            if (rezId) {
+              const raw = await store.getKv(klubKlic(`klient-index:rez:${rezId}`));
+              if (raw) {
+                try {
+                  const o = JSON.parse(raw) as { id?: string };
+                  if (o.id) k = await nactiKlientPodleId(store, o.id);
+                } catch {
+                  /* ignore */
+                }
+              }
+            }
+            if (k) {
+              const u = urovenZUtraty(k.utrataKc);
+              const pokrok = pokrokUrovne(k.utrataKc, {
+                pohled: k.typ === 'firma' ? 'firma' : 'host',
+              });
+              const base =
+                (process.env.NEXT_PUBLIC_BASE_URL || '').replace(/\/$/, '') ||
+                'https://vivien-prijezdy-six.vercel.app';
+              const odkazKarty = `${base}/klub?k=${encodeURIComponent(k.tajnyKlic)}`;
+              urlDop = `${odkazKarty}#klub-dop`;
+              urlPlo = `${odkazKarty}?plocha=1`;
+              const booking = /booking|airbnb|expedia/i.test(
+                `${rec.zdroj || ''} ${rec.emailHosta || ''}`,
+              );
+              klubEmail = {
+                odkazKarty,
+                jmeno:
+                  k.typ === 'firma' && k.firma?.nazev
+                    ? k.firma.nazev
+                    : `${k.jmeno} ${k.prijmeni}`.trim() || k.kod,
+                urovenId: u.id,
+                urovenNazev: k.typ === 'firma' ? u.nazevFirma : u.nazevHost,
+                slevaPct: booking ? 5 : u.slevaPct,
+                jeFirma: k.typ === 'firma',
+                urovenNova: true,
+                booking,
+                dalsiNazev: pokrok.dalsiNazev,
+                dalsiPct: pokrok.dalsiPct,
+                chybiKc: pokrok.chybiKc,
+                pruhPct: pokrok.pct,
+              };
+            }
+          }
+        } catch {
+          klubEmail = null;
+        }
         const vysledek = await posliEmailZpravy({
           to: komu,
           subject: predmetZpravy('podekovani', lang, rec.odjezd),
-          text: textPodekovaniEmail(lang, url, urlDop, urlPlo, urlRez),
+          text: textPodekovaniEmail(lang, url, urlDop, urlPlo, urlRez, klubEmail),
           lang,
           telefon: false,
-          html: htmlPodekovaniEmail(lang, url, undefined, urlDop, urlPlo, urlRez),
+          html: htmlPodekovaniEmail(lang, url, undefined, urlDop, urlPlo, urlRez, klubEmail),
           druh: 'podekovani',
           rezervace: id,
         });

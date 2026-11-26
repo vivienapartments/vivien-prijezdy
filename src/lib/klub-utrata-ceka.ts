@@ -189,6 +189,7 @@ export async function potvrdImportBhCsv(
           zalozil: 'import-bh-csv',
           slevaBehem: [],
           slevaKontrola: null,
+          podekovaniVidel: null,
         };
         await ulozKlientKartu(store, nova);
         klientId = nova.id;

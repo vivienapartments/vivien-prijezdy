@@ -17,6 +17,10 @@ import {
   type KlubKartaPohled,
 } from '@/lib/klub-ukazka';
 import type { GuideLang } from '@/lib/types';
+import { KlubPlochaRadek } from '@/components/KlubPlochaRadek';
+import { klubATadyKarta, klubPruvodcePo, klubRamecekPoOdjezduPred, klubRamecekPoOdjezduZa } from '@/lib/klub-podekovani-texty';
+import { t as tLang } from '@/lib/i18n';
+import { expiredDopis, expiredNadpis, expiredPodpis } from '@/lib/texts';
 import './klub.scss';
 
 function IkCal() {
@@ -81,6 +85,7 @@ export default function KlubClient() {
   const [ladder, setLadder] = useState(false);
   const [dopOpen, setDopOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [ukazPodekovani, setUkazPodekovani] = useState(false);
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -104,6 +109,24 @@ export default function KlubClient() {
           setKarta(json.karta);
           setDopOpen(json.karta.pohled === 'doporucitel');
           setChyba(null);
+          const q = new URLSearchParams(window.location.search);
+          const demoPrvni = q.get('prvni') === '1';
+          const poOdjezdu =
+            !json.karta.praveBydli &&
+            (json.karta.pobyty?.length || 0) > 0 &&
+            !(json.karta.nadchazejici?.length > 0);
+          const prvni =
+            demoPrvni ||
+            (poOdjezdu && !json.karta.podekovaniVidel && !json.karta.ukazka) ||
+            (demoPrvni && json.karta.ukazka);
+          setUkazPodekovani(Boolean(prvni || (json.karta.ukazka && demoPrvni)));
+          if (prvni && !json.karta.ukazka) {
+            void fetch('/api/klub/podekovani-videl', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ k: json.karta.tajnyKlic }),
+            }).catch(() => undefined);
+          }
         } else {
           setKarta(null);
           setChyba(json.chyba || 'missing');
@@ -356,6 +379,25 @@ export default function KlubClient() {
   return (
     <main className="klub-page" data-uroven={ton.id} style={pageStyle}>
       <div className="klub-shell">
+        {ukazPodekovani ? (
+          <div className="klub-podekovani-prvni">
+            <h2>{tLang(expiredNadpis, lang)}</h2>
+            <p>{tLang(expiredDopis, lang)}</p>
+            <p className="klub-podekovani-prvni__podpis">{tLang(expiredPodpis, lang)}</p>
+            <button
+              type="button"
+              className="klub-podekovani-prvni__sip"
+              onClick={() => {
+                document.getElementById('klub-karta-kotva')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              {tLang(klubATadyKarta, lang)}
+            </button>
+          </div>
+        ) : null}
+
+        <div id="klub-karta-kotva" />
+
         <div className="klub-karticka" style={{ background: kartickaGradient(ton) }}>
           <span className="klub-karticka__vtisk klub-karticka__vtisk--tmavy" aria-hidden />
           <span className="klub-karticka__vtisk klub-karticka__vtisk--svetly" aria-hidden />
@@ -368,6 +410,13 @@ export default function KlubClient() {
             <b>{slevaPct} %</b>
           </div>
         </div>
+
+        {ukazPodekovani && verzeC ? (
+          <div className="klub-ramecek-po">
+            {tLang(klubRamecekPoOdjezduPred, lang)} <b>{urovenNazevKarticka}</b>.{' '}
+            {tLang(klubRamecekPoOdjezduZa, lang)} <b>{slevaPct}&nbsp;%</b>.
+          </div>
+        ) : null}
 
         {posun ? (
           <div className="klub-up">
@@ -614,6 +663,32 @@ export default function KlubClient() {
 
         {verzeC ? <div style={{ marginTop: 10 }}>{tlacitkaC}</div> : null}
         {verzeB && !maNadchazejici ? <div style={{ marginTop: 10 }}>{tlacitkaB}</div> : null}
+
+        {/* Po odjezdu: nenápadný průvodce (bod 4) */}
+        {verzeC && !jeDop
+          ? (() => {
+              const url =
+                karta.pobyty.find((p) => p.pruvodceUrl)?.pruvodceUrl ||
+                karta.nadchazejici.find((p) => p.pruvodceUrl)?.pruvodceUrl ||
+                '/nahled';
+              return (
+                <a className="klub-pruvodce-po" href={url}>
+                  {tLang(klubPruvodcePo, lang)}
+                </a>
+              );
+            })()
+          : null}
+
+        {/* Bod 6: A / B1 / C úplně dole (nahled-plocha-uz-ma-3-verze) */}
+        <KlubPlochaRadek
+          lang={lang}
+          token={karta.tajnyKlic}
+          odkazKarty={
+            typeof window !== 'undefined'
+              ? `${window.location.origin}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`
+              : `/klub?k=${encodeURIComponent(karta.tajnyKlic)}`
+          }
+        />
       </div>
       <div className={`klub-toast${toast ? ' is-on' : ''}`} role="status">
         {toast}
