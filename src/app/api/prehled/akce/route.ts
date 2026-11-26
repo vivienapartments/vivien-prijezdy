@@ -460,6 +460,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     const kdy = new Date().toISOString();
     const dalsi = pridej(rec, 'Nedojezd', { nedojezdKdy: kdy, casOdjezduPushCeka: null });
     await store.setRezervace(id, dalsi);
+    try {
+      const { zkusSlevaKontroluPoNepredani } = await import('@/lib/klub-sleva-kontrola');
+      await zkusSlevaKontroluPoNepredani(store, {
+        rezervaceId: rec.rezervace || id,
+        email: rec.emailHosta,
+        telefon: rec.telefon || rec.telefonRezervace,
+      });
+    } catch {
+      /* klub nesmí shodit nedojezd */
+    }
     return NextResponse.json({ ok: true, nedojezdKdy: kdy }, { headers: noStore });
   }
 

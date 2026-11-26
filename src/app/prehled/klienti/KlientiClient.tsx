@@ -25,6 +25,7 @@ type KartaUi = {
   pristiPobyt?: string | null;
   praveBydli?: boolean;
   preview?: boolean;
+  zkontrolovatSlevu?: boolean;
 };
 
 type Razeni = 'utrata' | 'uroven' | 'pristi';
@@ -707,6 +708,9 @@ export function KlientiClient() {
               {detail.praveBydli ? (
                 <span style={{ color: '#7fb8e6', marginLeft: 8 }}>právě bydlí</span>
               ) : null}
+              {detail.zkontrolovatSlevu ? (
+                <span style={{ color: '#e08a6a', marginLeft: 8 }}>zkontrolovat slevu</span>
+              ) : null}
             </p>
             <p style={{ fontSize: '0.9rem', color: '#b7aa98' }}>
               {detail.urovenNazev} · sleva {detail.slevaPct} %
@@ -783,6 +787,11 @@ export function KlientiClient() {
                   {k.praveBydli ? (
                     <span style={{ color: '#7fb8e6', marginLeft: 8, fontSize: '0.8rem' }}>
                       právě bydlí
+                    </span>
+                  ) : null}
+                  {k.zkontrolovatSlevu ? (
+                    <span style={{ color: '#e08a6a', marginLeft: 8, fontSize: '0.8rem' }}>
+                      zkontrolovat slevu
                     </span>
                   ) : null}
                   <br />

@@ -147,6 +147,9 @@ export async function slevaPoptavkyProHosta(
     telefon?: string | null;
     /** Už má doporučení (cesta ?od=) a ještě nemá vlastní pobyt. */
     jeDoporucenyPrvniPobyt?: boolean;
+    /** Probíhající pobyt → sleva z očekávané úrovně. */
+    praveBydli?: boolean;
+    probihajiciKc?: number;
   },
   pravidlaIn?: KlubPravidla,
 ): Promise<SlevaPoptavkyVysledek> {
@@ -169,6 +172,9 @@ export async function slevaPoptavkyProHosta(
     jeDoporucitelBezPobytu,
     maDokoncenyPobyt,
     utrataKc: klient?.utrataKc || 0,
+    // Probíhající pobyt: očekávaná úroveň (útrata + cena probíhajícího).
+    praveBydli: Boolean(vstup.praveBydli),
+    probihajiciKc: Math.max(0, Math.round(vstup.probihajiciKc || 0)),
   };
   const pct = vyslednaSlevaPct(
     { ...osobniVstup, noci: vstup.noci, prijezd: vstup.prijezd },

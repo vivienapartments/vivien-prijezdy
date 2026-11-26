@@ -13,6 +13,7 @@ import {
   VYCHOZI_KLUB_PRAVIDLA,
   type KlubPravidla,
 } from './klub-pravidla';
+import type { SlevaBehemZaznam, SlevaKontrolaStav } from './klub-sleva-kontrola';
 import { jeRelayEmail } from './staly-host';
 import { normalizujTelefon } from './telefon';
 import type { ProcessStore } from './store';
@@ -96,6 +97,10 @@ export type KlientKarta = {
   dopKodPuvod: string | null;
   poznamka: string;
   zalozil: string;
+  /** Rezervace se slevou z očekávané úrovně během pobytu. */
+  slevaBehem: SlevaBehemZaznam[];
+  /** Upozornění majiteli po stornu / nepředání. */
+  slevaKontrola: SlevaKontrolaStav | null;
 };
 
 export type MigraceVysledek = {
@@ -203,6 +208,8 @@ function prazdnaKarta(
     dopKodPuvod: cast.dopKodPuvod ?? null,
     poznamka: cast.poznamka || '',
     zalozil: cast.zalozil || '',
+    slevaBehem: Array.isArray(cast.slevaBehem) ? cast.slevaBehem : [],
+    slevaKontrola: cast.slevaKontrola ?? null,
   };
 }
 
@@ -435,5 +442,7 @@ export function verejnaKlientKarta(k: KlientKarta, pravidla: KlubPravidla) {
     telefon: k.telefon,
     firmaNazev: k.firma?.nazev || null,
     dopKodPuvod: k.dopKodPuvod,
+    zkontrolovatSlevu: Boolean(k.slevaKontrola?.aktivni),
+    slevaKontrola: k.slevaKontrola,
   };
 }

@@ -157,6 +157,8 @@ export async function sparujNeboVytvorKlienta(
     dopKodPuvod: null,
     poznamka: '',
     zalozil: 'automat-prima',
+    slevaBehem: [],
+    slevaKontrola: null,
   };
   await ulozKlientKartu(store, nova);
   try {

@@ -187,6 +187,8 @@ export async function potvrdImportBhCsv(
           dopKodPuvod: null,
           poznamka: 'import-bh-csv',
           zalozil: 'import-bh-csv',
+          slevaBehem: [],
+          slevaKontrola: null,
         };
         await ulozKlientKartu(store, nova);
         klientId = nova.id;

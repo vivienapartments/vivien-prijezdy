@@ -86,6 +86,12 @@ export type OsobniSlevaVstup = {
   /** má už aspoň jeden dokončený (předaný) přímý pobyt */
   maDokoncenyPobyt?: boolean;
   utrataKc?: number;
+  /**
+   * Probíhající pobyt: očekávaná útrata = útrata + cena probíhajícího.
+   * Nová rezervace během pobytu dostane slevu z očekávané úrovně.
+   */
+  probihajiciKc?: number;
+  praveBydli?: boolean;
 };
 
 export function slevaOsobniPct(
@@ -100,7 +106,12 @@ export function slevaOsobniPct(
   const muzeUroven =
     pravidla.slevaUrovneOd === 'prvni-poptavka' || Boolean(vstup.maDokoncenyPobyt);
   if (!muzeUroven) return 0;
-  return urovenZUtraty(vstup.utrataKc || 0, pravidla).slevaPct;
+  const utrata = Math.max(0, Math.round(vstup.utrataKc || 0));
+  const probihajici =
+    vstup.praveBydli && (vstup.probihajiciKc || 0) > 0
+      ? Math.max(0, Math.round(vstup.probihajiciKc || 0))
+      : 0;
+  return urovenZUtraty(utrata + probihajici, pravidla).slevaPct;
 }
 
 export type VyslednaSlevaVstup = OsobniSlevaVstup & {

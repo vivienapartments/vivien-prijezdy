@@ -12,8 +12,17 @@ export type KlubUkazkaId =
   | 'ukazka-host-pred'
   | 'ukazka-host-po'
   | 'ukazka-host-up'
+  | 'ukazka-host-maxi-po'
+  | 'ukazka-host-maxi-pred'
+  | 'ukazka-novy'
+  | 'ukazka-dop-host-pred'
+  | 'ukazka-dop-host-bydli'
+  | 'ukazka-dop-host-po'
   | 'ukazka-dop'
+  | 'ukazka-dop-a-host'
   | 'ukazka-firma'
+  | 'ukazka-firma-pred'
+  | 'ukazka-firma-bydli'
   | 'ukazka-flidr'
   | 'ukazka-sofia'
   | 'ukazka-hromada'
@@ -105,6 +114,8 @@ function kartaZaklad(
     dopKodPuvod: cast.dopKodPuvod ?? null,
     poznamka: cast.poznamka || '',
     zalozil: cast.zalozil || 'ukazka',
+    slevaBehem: cast.slevaBehem || [],
+    slevaKontrola: cast.slevaKontrola ?? null,
   };
 }
 
@@ -114,8 +125,17 @@ export function jeUkazkaKlic(k: string): k is KlubUkazkaId {
     k === 'ukazka-host-pred' ||
     k === 'ukazka-host-po' ||
     k === 'ukazka-host-up' ||
+    k === 'ukazka-host-maxi-po' ||
+    k === 'ukazka-host-maxi-pred' ||
+    k === 'ukazka-novy' ||
+    k === 'ukazka-dop-host-pred' ||
+    k === 'ukazka-dop-host-bydli' ||
+    k === 'ukazka-dop-host-po' ||
     k === 'ukazka-dop' ||
+    k === 'ukazka-dop-a-host' ||
     k === 'ukazka-firma' ||
+    k === 'ukazka-firma-pred' ||
+    k === 'ukazka-firma-bydli' ||
     k === 'ukazka-flidr' ||
     k === 'ukazka-sofia' ||
     k === 'ukazka-hromada' ||
@@ -278,17 +298,19 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       zalozil: 'rucni-2026-11-25',
     });
   }
-  if (id === 'ukazka-firma') {
+  if (id === 'ukazka-firma' || id === 'ukazka-firma-pred' || id === 'ukazka-firma-bydli') {
+    const firmaUtrata =
+      id === 'ukazka-firma-pred' ? 0 : id === 'ukazka-firma-bydli' ? 18000 : 41500;
     return kartaZaklad({
-      id: 'ukazka-firma',
+      id,
       kod: 'STAVBYJIH',
-      tajnyKlic: 'ukazka-firma',
+      tajnyKlic: id,
       typ: 'firma',
       role: ['firma', 'doporucitel'],
       jmeno: 'Stavby',
       prijmeni: 'Jih',
-      utrataKc: 41500,
-      kreditKc: 460,
+      utrataKc: firmaUtrata,
+      kreditKc: id === 'ukazka-firma' ? 460 : 0,
       firma: {
         ico: '12345678',
         dic: '',
@@ -311,6 +333,50 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       kreditKc: 690,
     });
   }
+  if (id === 'ukazka-dop-a-host') {
+    return kartaZaklad({
+      id: 'ukazka-dop-a-host',
+      kod: 'PETR7',
+      tajnyKlic: 'ukazka-dop-a-host',
+      typ: 'host',
+      role: ['host', 'doporucitel'],
+      jmeno: 'Petr',
+      prijmeni: 'Svoboda',
+      utrataKc: 9600,
+      kreditKc: 690,
+    });
+  }
+  if (id === 'ukazka-novy') {
+    return kartaZaklad({
+      id: 'ukazka-novy',
+      kod: 'NOVY1',
+      tajnyKlic: 'ukazka-novy',
+      typ: 'host',
+      role: ['host'],
+      jmeno: 'Adam',
+      prijmeni: 'Nový',
+      utrataKc: 0,
+      kreditKc: 0,
+    });
+  }
+  if (
+    id === 'ukazka-dop-host-pred' ||
+    id === 'ukazka-dop-host-bydli' ||
+    id === 'ukazka-dop-host-po'
+  ) {
+    return kartaZaklad({
+      id,
+      kod: 'LUCIE5',
+      tajnyKlic: id,
+      typ: 'host',
+      role: ['host'],
+      jmeno: 'Lucie',
+      prijmeni: 'Doporučená',
+      utrataKc: id === 'ukazka-dop-host-po' ? 4500 : 0,
+      kreditKc: 0,
+      dopKodPuvod: 'petr7',
+    });
+  }
   if (id === 'ukazka-host-up') {
     return kartaZaklad({
       id: 'ukazka-host-up',
@@ -320,9 +386,22 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       role: ['host', 'doporucitel'],
       jmeno: 'Jana',
       prijmeni: 'Ukázková',
-      // 9 600 + probíhající 7 000 → Bronzový
-      utrataKc: 9600,
+      // Stříbrný 25 000 + probíhající 16 000 → Zlatý
+      utrataKc: 25000,
       kreditKc: 0,
+    });
+  }
+  if (id === 'ukazka-host-maxi-po' || id === 'ukazka-host-maxi-pred') {
+    return kartaZaklad({
+      id,
+      kod: 'JANA4',
+      tajnyKlic: id,
+      typ: 'host',
+      role: ['host', 'doporucitel'],
+      jmeno: 'Jana',
+      prijmeni: 'Nováková',
+      utrataKc: 62000,
+      kreditKc: 460,
     });
   }
   const hostId =
@@ -338,7 +417,8 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
     jmeno: 'Jana',
     prijmeni: 'Nováková',
     // ukazka-host = bydlí, bez změny úrovně (9 600 + 1 450)
-    utrataKc: id === 'ukazka-host-pred' ? 0 : id === 'ukazka-host' ? 9600 : 23600,
+    // ukazka-host-pred = Věrný s minulými pobyty, čeká
+    utrataKc: id === 'ukazka-host' ? 9600 : id === 'ukazka-host-pred' ? 9600 : 23600,
     kreditKc: id === 'ukazka-host-pred' || id === 'ukazka-host' ? 0 : 460,
   });
 }
@@ -374,126 +454,262 @@ export function pohledZKarty(
   if (rucni) {
     nadchazejici = rucni.nadchazejici;
     pobyty = rucni.pobyty;
-  } else if (
-    ukazka &&
-    (karta.tajnyKlic === 'ukazka-host' ||
-      karta.tajnyKlic === 'ukazka-host-pred' ||
-      karta.tajnyKlic === 'ukazka-host-po' ||
-      karta.tajnyKlic === 'ukazka-host-up')
-  ) {
-    const pred = karta.tajnyKlic === 'ukazka-host-pred';
-    const jenPo = karta.tajnyKlic === 'ukazka-host-po';
-    const bydli = karta.tajnyKlic === 'ukazka-host' || karta.tajnyKlic === 'ukazka-host-up';
-    const up = karta.tajnyKlic === 'ukazka-host-up';
-    if (bydli) {
+  } else if (ukazka && jeUkazkaKlic(karta.tajnyKlic)) {
+    const kid = normalizujUkazkaId(karta.tajnyKlic);
+    const pred = kid === 'ukazka-host-pred' || kid === 'ukazka-host-maxi-pred';
+    const jenPo = kid === 'ukazka-host-po' || kid === 'ukazka-host-maxi-po';
+    const bydli = kid === 'ukazka-host' || kid === 'ukazka-host-up';
+    const up = kid === 'ukazka-host-up';
+    const maxi = kid === 'ukazka-host-maxi-po' || kid === 'ukazka-host-maxi-pred';
+
+    if (kid === 'ukazka-novy') {
       nadchazejici = [
         {
-          nadpis: up
-            ? '23.–26. 11. 2026 · Zlatá rovnováha'
-            : '23.–26. 11. 2026 · Zlatá rovnováha',
-          podnadpis: 'Adresa, příjezd, kódy',
-          pruvodceUrl: `${base}/nahled`,
-          barva: 'probiha',
-        },
-      ];
-      pobyty = [
-        {
-          nadpis: '23.–26. 11. 2026',
-          podnadpis: up ? '7 000 Kč' : '1 450 Kč',
-          barva: 'probiha',
-          stavText: 'započítáno',
-        },
-        {
-          nadpis: '6.–7. 11. 2026',
-          podnadpis: 'započítáno',
-          barva: 'zapocteno',
-          stavText: 'započítáno',
-        },
-        {
-          nadpis: '1.–5. 11. 2026',
-          podnadpis: 'započítáno',
-          barva: 'zapocteno',
-          stavText: 'započítáno',
-        },
-      ];
-    } else if (!jenPo) {
-      nadchazejici = [
-        {
-          nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
-          podnadpis: 'Za 4 dny · adresa, příjezd, kódy',
+          nadpis: '10.–12. 12. 2026 · Jemná harmonie',
+          podnadpis: 'Za 14 dní · adresa, příjezd, kódy',
           pruvodceUrl: `${base}/nahled`,
           barva: 'ceka',
           stavText: 'čeká',
         },
       ];
-    }
-    if (jenPo) {
       pobyty = [
         {
-          nadpis: '23.–26. 11. 2026',
-          podnadpis: 'započítáno',
-          barva: 'zapocteno',
-          stavText: 'započítáno',
-        },
-        {
-          nadpis: '6.–7. 11. 2026',
-          podnadpis: 'započítáno',
-          barva: 'zapocteno',
-          stavText: 'započítáno',
-        },
-        {
-          nadpis: '1.–5. 11. 2026',
-          podnadpis: 'započítáno',
-          barva: 'zapocteno',
-          stavText: 'započítáno',
-        },
-      ];
-    } else if (pred) {
-      pobyty = [
-        {
-          nadpis: '23.–26. 11. 2026',
-          podnadpis: '1 450 Kč',
+          nadpis: '10.–12. 12. 2026',
+          podnadpis: '3 200 Kč',
           barva: 'ceka',
           stavText: 'čeká',
         },
-        {
-          nadpis: '6.–7. 11. 2026',
-          podnadpis: 'započítáno',
-          barva: 'zapocteno',
-          stavText: 'započítáno',
-        },
-        {
-          nadpis: '1.–5. 11. 2026',
-          podnadpis: 'započítáno',
-          barva: 'zapocteno',
-          stavText: 'započítáno',
-        },
       ];
-    }
-    if (!pred) {
+    } else if (
+      kid === 'ukazka-dop-host-pred' ||
+      kid === 'ukazka-dop-host-bydli' ||
+      kid === 'ukazka-dop-host-po'
+    ) {
+      const dBydli = kid === 'ukazka-dop-host-bydli';
+      const dPo = kid === 'ukazka-dop-host-po';
+      if (dBydli) {
+        nadchazejici = [
+          {
+            nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
+            podnadpis: 'Adresa, příjezd, kódy',
+            pruvodceUrl: `${base}/nahled`,
+            barva: 'probiha',
+          },
+        ];
+        pobyty = [
+          {
+            nadpis: '23.–26. 11. 2026',
+            podnadpis: '4 500 Kč',
+            barva: 'probiha',
+            stavText: 'započítáno',
+          },
+        ];
+      } else if (dPo) {
+        pobyty = [
+          {
+            nadpis: '23.–26. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+        ];
+      } else {
+        nadchazejici = [
+          {
+            nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
+            podnadpis: 'Za 4 dny · adresa, příjezd, kódy',
+            pruvodceUrl: `${base}/nahled`,
+            barva: 'ceka',
+            stavText: 'čeká',
+          },
+        ];
+        pobyty = [
+          {
+            nadpis: '23.–26. 11. 2026',
+            podnadpis: '4 500 Kč',
+            barva: 'ceka',
+            stavText: 'čeká',
+          },
+        ];
+      }
+    } else if (
+      kid === 'ukazka-firma' ||
+      kid === 'ukazka-firma-pred' ||
+      kid === 'ukazka-firma-bydli'
+    ) {
+      if (kid === 'ukazka-firma-pred') {
+        nadchazejici = [
+          { nadpis: 'Ing. Dvořák · 1.–5. 12. 2026', podnadpis: 'Apartmán 3', barva: 'ceka' },
+        ];
+        pobyty = [
+          {
+            nadpis: 'Ing. Dvořák · 1.–5. 12. 2026',
+            podnadpis: 'Apartmán 3',
+            barva: 'ceka',
+            stavText: 'čeká',
+          },
+        ];
+      } else if (kid === 'ukazka-firma-bydli') {
+        nadchazejici = [
+          {
+            nadpis: 'Ing. Dvořák · 23.–26. 11. 2026',
+            podnadpis: 'Apartmán 3',
+            barva: 'probiha',
+          },
+        ];
+        pobyty = [
+          {
+            nadpis: 'Ing. Dvořák · 23.–26. 11. 2026',
+            podnadpis: 'Apartmán 3 · 8 000 Kč',
+            barva: 'probiha',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: 'P. Král · 20.–31. 10. 2026',
+            podnadpis: 'Apartmán 1',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+        ];
+      } else {
+        nadchazejici = [
+          { nadpis: 'Ing. Dvořák · 1.–5. 12. 2026', podnadpis: 'Apartmán 3' },
+          { nadpis: 'J. Malý · 1.–12. 12. 2026', podnadpis: 'Apartmán 4' },
+        ];
+        pobyty = [
+          {
+            nadpis: 'Ing. Dvořák · 3.–7. 11. 2026',
+            podnadpis: 'Apartmán 3',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: 'P. Král · 20.–31. 10. 2026',
+            podnadpis: 'Apartmán 1',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: 'Ing. Dvořák · 6.–9. 10. 2026',
+            podnadpis: 'Apartmán 3',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+        ];
+      }
+      pratele = [{ jmeno: 'Hotel Sever · listopad 2026', stav: 'přijeli ✓' }];
+    } else if (kid === 'ukazka-dop' || kid === 'ukazka-dop-a-host') {
+      if (kid === 'ukazka-dop-a-host') {
+        pobyty = [
+          {
+            nadpis: '6.–7. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: '1.–5. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+        ];
+      }
       pratele = [
         { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
         { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
-        { jmeno: 'Eva · leden 2027', stav: 'čeká na pobyt' },
+        { jmeno: 'Tomáš · prosinec 2026', stav: 'čeká na pobyt' },
       ];
+    } else if (bydli || pred || jenPo || maxi) {
+      if (bydli) {
+        nadchazejici = [
+          {
+            nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
+            podnadpis: 'Adresa, příjezd, kódy',
+            pruvodceUrl: `${base}/nahled`,
+            barva: 'probiha',
+          },
+        ];
+        pobyty = [
+          {
+            nadpis: '23.–26. 11. 2026',
+            podnadpis: up ? '16 000 Kč' : '1 450 Kč',
+            barva: 'probiha',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: '6.–7. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: '1.–5. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+        ];
+      } else if (pred) {
+        nadchazejici = [
+          {
+            nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
+            podnadpis: 'Za 4 dny · adresa, příjezd, kódy',
+            pruvodceUrl: `${base}/nahled`,
+            barva: 'ceka',
+            stavText: 'čeká',
+          },
+        ];
+        pobyty = [
+          {
+            nadpis: '23.–26. 11. 2026',
+            podnadpis: '1 450 Kč',
+            barva: 'ceka',
+            stavText: 'čeká',
+          },
+          {
+            nadpis: '6.–7. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: '1.–5. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+        ];
+      } else if (jenPo) {
+        pobyty = [
+          {
+            nadpis: '23.–26. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: '6.–7. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+          {
+            nadpis: '1.–5. 11. 2026',
+            podnadpis: 'započítáno',
+            barva: 'zapocteno',
+            stavText: 'započítáno',
+          },
+        ];
+      }
+      if (!pred || maxi) {
+        pratele = [
+          { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
+          { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
+          { jmeno: 'Eva · leden 2027', stav: 'čeká na pobyt' },
+        ];
+      }
     }
-  } else if (ukazka && karta.tajnyKlic === 'ukazka-firma') {
-    nadchazejici = [
-      { nadpis: 'Ing. Dvořák · 1.–5. 12. 2026', podnadpis: 'Apartmán 3' },
-      { nadpis: 'J. Malý · 1.–12. 12. 2026', podnadpis: 'Apartmán 4' },
-    ];
-    pobyty = [
-      { nadpis: 'Ing. Dvořák · 3.–7. 11. 2026', podnadpis: 'Apartmán 3' },
-      { nadpis: 'P. Král · 20.–31. 10. 2026', podnadpis: 'Apartmán 1' },
-      { nadpis: 'Ing. Dvořák · 6.–9. 10. 2026', podnadpis: 'Apartmán 3' },
-    ];
-    pratele = [{ jmeno: 'Hotel Sever · listopad 2026', stav: 'přijeli ✓' }];
-  } else if (ukazka && karta.tajnyKlic === 'ukazka-dop') {
-    pratele = [
-      { jmeno: 'Martin · říjen 2026', stav: 'přijel ✓' },
-      { jmeno: 'Lucie · listopad 2026', stav: 'přijela ✓' },
-      { jmeno: 'Tomáš · prosinec 2026', stav: 'čeká na pobyt' },
-    ];
   }
 
   const kreditKc = karta.kreditKc;
@@ -504,18 +720,26 @@ export function pohledZKarty(
       : kidUkazka === 'ukazka-host'
         ? 1450
         : kidUkazka === 'ukazka-host-up'
-          ? 7000
+          ? 16000
           : kidUkazka === 'ukazka-flidr'
             ? 2900
-            : kidUkazka === 'ukazka-host-pred'
+            : kidUkazka === 'ukazka-host-pred' || kidUkazka === 'ukazka-host-maxi-pred'
               ? 1450
-              : 0;
+              : kidUkazka === 'ukazka-dop-host-bydli'
+                ? 4500
+                : kidUkazka === 'ukazka-firma-bydli'
+                  ? 8000
+                  : kidUkazka === 'ukazka-firma-pred' || kidUkazka === 'ukazka-novy'
+                    ? 0
+                    : 0;
   const praveBydli =
     kidUkazka === 'ukazka-host' ||
     kidUkazka === 'ukazka-host-up' ||
     kidUkazka === 'ukazka-hromada' ||
     kidUkazka === 'ukazka-egd' ||
     kidUkazka === 'ukazka-flidr' ||
+    kidUkazka === 'ukazka-dop-host-bydli' ||
+    kidUkazka === 'ukazka-firma-bydli' ||
     nadchazejici.some((r) => r.barva === 'probiha');
   return {
     ukazka,

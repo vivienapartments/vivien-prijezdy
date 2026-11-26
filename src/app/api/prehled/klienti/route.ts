@@ -147,6 +147,7 @@ export async function GET() {
         posledniPobyt: p.posledniPobyt,
         pristiPobyt: p.pristiPobyt,
         praveBydli: p.praveBydli,
+        zkontrolovatSlevu: Boolean(p.zkontrolovatSlevu),
         preview: true,
       }))
     : [];

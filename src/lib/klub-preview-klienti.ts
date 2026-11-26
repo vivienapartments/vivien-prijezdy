@@ -28,6 +28,7 @@ export type PreviewKlientRadek = {
   posledniPobyt: string | null;
   pristiPobyt: string | null;
   praveBydli: boolean;
+  zkontrolovatSlevu?: boolean;
 };
 
 export type PreviewKlientDetail = PreviewKlientRadek & {
@@ -282,6 +283,18 @@ function zeSouhrnu(s: ImportBhSouhrn): PreviewKlientDetail {
     dopKodPuvod: null,
     poznamka: '',
     zalozil: 'preview-bh-2026-11-25',
+    slevaBehem: [],
+    // Demo: po stornu probíhajícího pobytu, když mezitím vznikla vyšší sleva.
+    slevaKontrola:
+      slug(s.host) === 'marcel-flidr'
+        ? {
+            aktivni: true,
+            slevaPctUdelena: 7,
+            oficielniSlevaPct: 6,
+            rezervaceId: 'DEMO-SLEVA',
+            duvod: 'zkontrolovat slevu',
+          }
+        : null,
   };
 
   const posledni = odbydlene[0] || null;
@@ -306,6 +319,7 @@ function zeSouhrnu(s: ImportBhSouhrn): PreviewKlientDetail {
     posledniPobyt: posledni ? formatTermin(posledni) : null,
     pristiPobyt: pristi ? formatTermin(pristi) : null,
     praveBydli: Boolean(prave),
+    zkontrolovatSlevu: Boolean(karta.slevaKontrola?.aktivni),
     karta,
     nadchazejici,
     pobyty,
