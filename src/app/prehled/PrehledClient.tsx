@@ -1270,6 +1270,52 @@ export function PrehledClient({
     setDotazPredani(null);
   }
 
+  /** WhatsApp s odkazem na kartu (check-in číslo). Nikdy přes Booking zprávy. */
+  async function poslatKartuKlubWa(row: PrehledRadek) {
+    const telefonWa =
+      row.telefonKtery === 'checkin'
+        ? row.telefonWa
+        : row.jinyTelefonKtery === 'checkin'
+          ? row.jinyTelefonWa
+          : row.telefonWa;
+    if (!telefonWa) {
+      setHlaska('Chybí telefon z check-inu.');
+      return;
+    }
+    if (ukazka) {
+      const odkaz = `${window.location.origin}/klub?k=ukazka-booking-karta`;
+      const jmeno = (row.jmeno || '').trim().split(/\s+/)[0] || '';
+      const booking = /booking|airbnb|expedia/i.test(`${row.zdroj || ''} ${row.email || ''}`);
+      const text = booking
+        ? `Dobrý den, ${jmeno}, vítejte u nás. Tady je vaše karta VIVIEN Klubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: ${odkaz}`
+        : `Dobrý den, ${jmeno}, vítejte u nás. Tady je váš průvodce a karta VIVIEN Klubu: ${odkaz}`;
+      window.open(odkazWhatsAppPrehled(telefonWa, text, navigator.userAgent), '_blank');
+      return;
+    }
+    setCekam(`${row.rezervace}:klub-karta`);
+    setHlaska('');
+    const res = await fetch('/api/prehled/akce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rezervace: row.rezervace, akce: 'klub-poslat-kartu' }),
+    });
+    const json = (await res.json().catch(() => null)) as {
+      ok?: boolean;
+      error?: string;
+      telefonWa?: string;
+      zprava?: string;
+    } | null;
+    setCekam(null);
+    if (!res.ok || !json?.ok || !json.zprava) {
+      setHlaska(json?.error || 'Odkaz na kartu se nepřipravil.');
+      return;
+    }
+    window.open(
+      odkazWhatsAppPrehled(json.telefonWa || telefonWa, json.zprava, navigator.userAgent),
+      '_blank',
+    );
+  }
+
   function otevriDotazPredani(row: PrehledRadek) {
     const casNaMiste = naMisteRadku(row) ? hodinaPraha(naMisteRadku(row)!) : null;
     const casTed = hodinaPraha(new Date().toISOString());
@@ -5105,6 +5151,17 @@ export function PrehledClient({
             {predaniTlacitko}
             {!predaniDotazJeNedojezd ? predaniDotaz : null}
           </>
+        ) : null}
+        {predanoKdy &&
+        (row.telefonKtery === 'checkin' ? row.telefonWa : row.jinyTelefonKtery === 'checkin' ? row.jinyTelefonWa : row.telefonWa) ? (
+          <button
+            type="button"
+            className="ph-nova-predani"
+            disabled={cekam !== null}
+            onClick={() => void poslatKartuKlubWa(row)}
+          >
+            Předáno – poslat kartu
+          </button>
         ) : null}
         {jazykNahore ? <div className="ph-znovu">{jazykSelect}</div> : null}
         <div className="ph-nova-rada">

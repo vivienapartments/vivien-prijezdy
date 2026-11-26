@@ -323,12 +323,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.65rem 0.5rem 0.7rem;
-  margin: 0.4rem 0;
+  gap: 0.55rem;
+  padding: 0.32rem 0.55rem 0.32rem 0.6rem;
+  margin: 0.22rem 0;
   background: var(--tile);
-  border-radius: 8px;
+  border-radius: 7px;
   border-left: 3px solid var(--acc);
+}
+
+.klub-pobyt .klub-t {
+  font-size: 0.88rem;
+  line-height: 1.25;
 }
 
 .klub-pobyt--ceka {
@@ -610,27 +615,129 @@
   display: none;
 }
 
-/* Po odjezdu: nenápadný průvodce (přerušovaný rámeček jako plocha) */
+/* Po odjezdu: stejný plný tlumený obdélník jako plocha B1 */
 .klub-pruvodce-po {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-top: 12px;
-  padding: 10px 12px;
+  padding: 11px 12px;
   border-radius: 13px;
-  border: 1px dashed var(--tb);
+  border: 1px solid var(--tb);
   color: var(--sec);
-  font-size: 12px;
+  font-size: 12.5px;
   text-decoration: none;
-  text-align: center;
-  background: transparent;
+  background: var(--tile);
+  box-sizing: border-box;
+}
+
+.klub-pruvodce-po span {
+  flex: 1;
+  min-width: 0;
+  color: var(--tx);
+  line-height: 1.3;
+}
+
+.klub-pruvodce-po em {
+  font-style: normal;
+  color: var(--sec);
+  flex: none;
 }
 
 .klub-pruvodce-po:hover {
   color: var(--tx);
 }
 
+.klub-tlac-pod-pruhem {
+  margin-top: 10px;
+}
+
+.klub-pozdrav {
+  margin: 0 0 12px;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--sec);
+  text-align: center;
+}
+
+.klub-bez {
+  text-align: center;
+  margin: 0 0 14px;
+}
+
+.klub-bez__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--tb);
+  color: var(--acc);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.klub-bez__znacka {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sec);
+}
+
+.klub-bez__jmeno {
+  margin-top: 6px;
+  font-size: 1.15rem;
+  color: var(--tx);
+}
+
+.klub-plocha-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 11px 12px;
+  border-radius: 13px;
+  border: 1px solid var(--tb);
+  background: var(--tile);
+  color: var(--tx);
+  text-decoration: none;
+  font-size: 12.5px;
+}
+
+.klub-plocha-link em {
+  font-style: normal;
+  color: var(--sec);
+  margin-left: auto;
+  flex: none;
+}
+
+.klub-plocha-link span,
+.klub-plocha-link__jedna {
+  flex: 1;
+  min-width: 0;
+  font-style: normal;
+  line-height: 1.3;
+}
+
+.klub-plocha-link--radek .klub-plocha-link__jedna {
+  display: block;
+}
+
 .klub-podekovani-prvni {
   margin: 0 0 14px;
   text-align: center;
+}
+
+.klub-podekovani-prvni__foto {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin: 0 0 14px;
+  object-fit: cover;
 }
 
 .klub-podekovani-prvni h2 {
@@ -671,8 +778,9 @@
   cursor: pointer;
 }
 
+/* Stejná mezera nahoře i dole jako mezi rámečkem a „Právě u nás bydlíte“. */
 .klub-ramecek-po {
-  margin: 0 0 10px;
+  margin: 10px 0;
   padding: 8px 10px;
   border-radius: 10px;
   background: var(--tile);

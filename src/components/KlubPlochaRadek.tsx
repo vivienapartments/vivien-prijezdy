@@ -72,6 +72,12 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
     void prepocitej();
   }, [prepocitej]);
 
+  /** Stabilní callback – jinak PridejNaPlochu v useEffect spustí nekonečnou smyčku setState. */
+  const onReady = useCallback((spust: () => void) => {
+    setSpustPridej(() => spust);
+  }, []);
+  const onUzMate = useCallback(() => setStav('B'), []);
+
   const poslat = useCallback(async () => {
     const url = odkazKarty;
     const text = `${t(klubPlochaSdileniUpozorneni, lang)}\n${url}`;
@@ -111,9 +117,9 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
           token={token}
           jenMobil
           skrytTlacitko
-          onReady={(spust) => setSpustPridej(() => spust)}
+          onReady={onReady}
           onHotovo={prepocitej}
-          onUzMate={() => setStav('B')}
+          onUzMate={onUzMate}
         />
       </div>
 

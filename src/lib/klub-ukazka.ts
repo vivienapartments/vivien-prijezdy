@@ -5,6 +5,7 @@
 
 import type { KlientKarta, KlientRole } from './klient-karta';
 import { VYCHOZI_KLUB_PRAVIDLA, urovenZUtraty } from './klub-pravidla';
+import { klubVyplatyZapnuto } from './klub-odmena';
 import type { GuideLang } from './types';
 
 export type KlubUkazkaId =
@@ -26,7 +27,11 @@ export type KlubUkazkaId =
   | 'ukazka-flidr'
   | 'ukazka-sofia'
   | 'ukazka-hromada'
-  | 'ukazka-egd'; // alias → Hromada (zpětná kompatibilita odkazu)
+  | 'ukazka-egd' // alias → Hromada (zpětná kompatibilita odkazu)
+  | 'ukazka-booking-pred'
+  | 'ukazka-booking-bydli'
+  | 'ukazka-booking-karta'
+  | 'ukazka-booking-po';
 
 export type KlubPobytBarva = 'zapocteno' | 'ceka' | 'probiha' | 'storno' | null;
 
@@ -76,6 +81,19 @@ export type KlubKartaPohled = {
   skrytDoporuceni: boolean;
   /** ISO prvního otevření poděkování; null = ještě neviděl. */
   podekovaniVidel: string | null;
+  /**
+   * Booking/Airbnb první pobyt:
+   * bez-klubu = odkaz z Bookingu (jen průvodce),
+   * po-ubytovani = karta z WhatsAppu (Host 5 %),
+   * null = běžná přímá karta.
+   */
+  bookingRezim: 'bez-klubu' | 'po-ubytovani' | null;
+  krestniJmeno: string;
+  posledniOdjezdYmd: string | null;
+  pristiPrijezdYmd: string | null;
+  dnesOdjezdPredPredanim: boolean;
+  /** Firmy: výplata jen když KLUB_VYPLATY=1. Osoby nikdy. */
+  vyplatyZapnuto: boolean;
 };
 
 const UROVNE = VYCHOZI_KLUB_PRAVIDLA.urovne;
@@ -142,7 +160,11 @@ export function jeUkazkaKlic(k: string): k is KlubUkazkaId {
     k === 'ukazka-flidr' ||
     k === 'ukazka-sofia' ||
     k === 'ukazka-hromada' ||
-    k === 'ukazka-egd'
+    k === 'ukazka-egd' ||
+    k === 'ukazka-booking-pred' ||
+    k === 'ukazka-booking-bydli' ||
+    k === 'ukazka-booking-karta' ||
+    k === 'ukazka-booking-po'
   );
 }
 
@@ -380,6 +402,25 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       dopKodPuvod: 'petr7',
     });
   }
+  if (
+    id === 'ukazka-booking-pred' ||
+    id === 'ukazka-booking-bydli' ||
+    id === 'ukazka-booking-karta' ||
+    id === 'ukazka-booking-po'
+  ) {
+    return kartaZaklad({
+      id,
+      kod: 'ANNA5',
+      tajnyKlic: id,
+      typ: 'host',
+      role: ['host'],
+      jmeno: 'Anna',
+      prijmeni: 'Králová',
+      utrataKc: 0,
+      kreditKc: 0,
+      podekovaniVidel: id === 'ukazka-booking-po' ? '2026-11-24T10:00:00.000Z' : null,
+    });
+  }
   if (id === 'ukazka-host-up') {
     return kartaZaklad({
       id: 'ukazka-host-up',
@@ -464,8 +505,61 @@ export function pohledZKarty(
     const bydli = kid === 'ukazka-host' || kid === 'ukazka-host-up';
     const up = kid === 'ukazka-host-up';
     const maxi = kid === 'ukazka-host-maxi-po' || kid === 'ukazka-host-maxi-pred';
+    const bookingKid =
+      kid === 'ukazka-booking-pred' ||
+      kid === 'ukazka-booking-bydli' ||
+      kid === 'ukazka-booking-karta' ||
+      kid === 'ukazka-booking-po';
 
-    if (kid === 'ukazka-novy') {
+    if (bookingKid) {
+      const bBydli = kid === 'ukazka-booking-bydli' || kid === 'ukazka-booking-karta';
+      const bPo = kid === 'ukazka-booking-po';
+      if (bBydli) {
+        nadchazejici = [
+          {
+            nadpis: '20.–23. 11. 2026 · Zlatá rovnováha',
+            podnadpis: 'Adresa, příjezd, kódy',
+            pruvodceUrl: `${base}/nahled`,
+            barva: 'probiha',
+          },
+        ];
+        pobyty = [
+          {
+            nadpis: '20.–23. 11. 2026 · přes Booking',
+            podnadpis: '',
+            barva: 'probiha',
+            stavText: 'nepočítá se',
+          },
+        ];
+      } else if (bPo) {
+        pobyty = [
+          {
+            nadpis: '20.–23. 11. 2026 · přes Booking',
+            podnadpis: '',
+            barva: 'ceka',
+            stavText: 'nepočítá se',
+          },
+        ];
+      } else {
+        nadchazejici = [
+          {
+            nadpis: '20.–23. 11. 2026 · Zlatá rovnováha',
+            podnadpis: 'adresa, příjezd, kódy',
+            pruvodceUrl: `${base}/nahled`,
+            barva: 'ceka',
+            stavText: 'čeká',
+          },
+        ];
+        pobyty = [
+          {
+            nadpis: '20.–23. 11. 2026 · přes Booking',
+            podnadpis: '',
+            barva: 'ceka',
+            stavText: 'nepočítá se',
+          },
+        ];
+      }
+    } else if (kid === 'ukazka-novy') {
       nadchazejici = [
         {
           nadpis: '10.–12. 12. 2026 · Jemná harmonie',
@@ -732,9 +826,11 @@ export function pohledZKarty(
                 ? 4500
                 : kidUkazka === 'ukazka-firma-bydli'
                   ? 8000
-                  : kidUkazka === 'ukazka-firma-pred' || kidUkazka === 'ukazka-novy'
+                  : kidUkazka === 'ukazka-booking-karta'
                     ? 0
-                    : 0;
+                    : kidUkazka === 'ukazka-firma-pred' || kidUkazka === 'ukazka-novy'
+                      ? 0
+                      : 0;
   const praveBydli =
     kidUkazka === 'ukazka-host' ||
     kidUkazka === 'ukazka-host-up' ||
@@ -743,7 +839,46 @@ export function pohledZKarty(
     kidUkazka === 'ukazka-flidr' ||
     kidUkazka === 'ukazka-dop-host-bydli' ||
     kidUkazka === 'ukazka-firma-bydli' ||
+    kidUkazka === 'ukazka-booking-bydli' ||
+    kidUkazka === 'ukazka-booking-karta' ||
     nadchazejici.some((r) => r.barva === 'probiha');
+
+  const bookingRezim: KlubKartaPohled['bookingRezim'] =
+    kidUkazka === 'ukazka-booking-pred' || kidUkazka === 'ukazka-booking-bydli'
+      ? 'bez-klubu'
+      : kidUkazka === 'ukazka-booking-karta' || kidUkazka === 'ukazka-booking-po'
+        ? 'po-ubytovani'
+        : null;
+
+  const slevaPct =
+    bookingRezim === 'po-ubytovani' ? 5 : u.slevaPct;
+  const urovenNazev =
+    bookingRezim === 'po-ubytovani'
+      ? 'Host'
+      : pohled === 'firma'
+        ? u.nazevFirma
+        : u.nazevHost;
+  const urovenId = bookingRezim === 'po-ubytovani' ? 'host' : u.id;
+
+  let posledniOdjezdYmd: string | null = null;
+  let pristiPrijezdYmd: string | null = null;
+  if (kidUkazka === 'ukazka-host-po' || kidUkazka === 'ukazka-host-maxi-po' || kidUkazka === 'ukazka-booking-po') {
+    posledniOdjezdYmd = '2026-11-23';
+  } else if (kidUkazka === 'ukazka-host-pred' || kidUkazka === 'ukazka-booking-pred') {
+    // Dnes je 26. 11. 2026 → „za 5 dní“ k 1. 12.
+    pristiPrijezdYmd = '2026-12-01';
+  }
+
+  // U řádků pobytů nenechávat „započítáno“ v podnadpisu (stav je vpravo).
+  pobyty = pobyty.map((r) => {
+    const stav = (r.stavText || '').trim();
+    const pod = (r.podnadpis || '').trim();
+    if (!pod || pod === stav || /^započítáno$/i.test(pod)) {
+      return { ...r, podnadpis: pod.startsWith('přes ') || pod.includes('Booking') ? pod : '' };
+    }
+    return r;
+  });
+
   return {
     ukazka,
     pohled,
@@ -751,26 +886,32 @@ export function pohledZKarty(
     jazyk: karta.jazyk,
     kod: karta.kod,
     tajnyKlic: karta.tajnyKlic,
-    utrataKc: karta.utrataKc,
-    kreditKc,
-    slevaPct: u.slevaPct,
-    urovenId: u.id,
-    urovenNazev: pohled === 'firma' ? u.nazevFirma : u.nazevHost,
+    utrataKc: bookingRezim ? 0 : karta.utrataKc,
+    kreditKc: bookingRezim ? 0 : kreditKc,
+    slevaPct,
+    urovenId,
+    urovenNazev,
     role: karta.role,
     firmaNazev: karta.firma?.nazev || null,
     firmaIco: karta.firma?.ico || null,
     firmaSidlo: karta.firma?.sidlo || null,
     nadchazejici,
     pobyty,
-    pratele,
-    kreditCeka: Math.round(kreditKc / 2),
-    kreditKVyplate: kreditKc,
+    pratele: bookingRezim ? [] : pratele,
+    kreditCeka: bookingRezim ? 0 : Math.round(kreditKc / 2),
+    kreditKVyplate: bookingRezim ? 0 : kreditKc,
     kreditVyplaceno: 0,
     odkazDoporuceni: `${base}/poptavka?od=${encodeURIComponent(karta.kod)}`,
-    utrataCekaKc: utrataCekaUkazka,
+    utrataCekaKc: bookingRezim === 'po-ubytovani' && praveBydli ? 0 : utrataCekaUkazka,
     praveBydli,
     skrytDoporuceni: false,
     podekovaniVidel: karta.podekovaniVidel,
+    bookingRezim,
+    krestniJmeno: karta.jmeno || '',
+    posledniOdjezdYmd,
+    pristiPrijezdYmd,
+    dnesOdjezdPredPredanim: false,
+    vyplatyZapnuto: pohled === 'firma' && klubVyplatyZapnuto(),
   };
 }
 
@@ -803,6 +944,12 @@ export function pohledZPreviewDetailu(
     // Doporučit mají všichni hosté. Prázdný seznam přátel / kredit 0 je v pořádku.
     skrytDoporuceni: false,
     podekovaniVidel: d.karta.podekovaniVidel,
+    bookingRezim: null,
+    krestniJmeno: d.karta.jmeno || '',
+    posledniOdjezdYmd: null,
+    pristiPrijezdYmd: null,
+    dnesOdjezdPredPredanim: false,
+    vyplatyZapnuto: (opts?.pohled || d.karta.typ) === 'firma' && klubVyplatyZapnuto(),
   };
 }
 

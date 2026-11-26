@@ -281,7 +281,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'mena' &&
       akce !== 'doporuceni-spojit' &&
       akce !== 'doporuceni-priradit' &&
-      akce !== 'doporuceni-seznam')
+      akce !== 'doporuceni-seznam' &&
+      akce !== 'klub-poslat-kartu')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
@@ -644,6 +645,57 @@ export async function POST(request: Request): Promise<NextResponse> {
       /* klub nesmí shodit předání */
     }
     return NextResponse.json({ ok: true, predano: dalsi.predano }, { headers: noStore });
+  }
+
+  if (akce === 'klub-poslat-kartu') {
+    const { klubZapnut, klubKlic } = await import('@/lib/klub-klic');
+    if (!klubZapnut() && process.env.NODE_ENV !== 'development') {
+      return chyba(400, 'Klub je vypnutý.');
+    }
+    const wa =
+      (rec.telefonWa && String(rec.telefonWa).replace(/\D/g, '')) ||
+      (rec.telefon && String(rec.telefon).replace(/\D/g, '')) ||
+      '';
+    if (!wa || wa.length < 9) {
+      return chyba(400, 'Chybí telefon z check-inu.');
+    }
+    const { sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
+    const { nactiKlientPodleId } = await import('@/lib/klient-karta');
+    const { adresaKlub } = await import('@/lib/verejna-adresa');
+    const { zpravaWaPoslatKartu } = await import('@/lib/klub-pozdravy');
+    let karta = null as Awaited<ReturnType<typeof nactiKlientPodleId>>;
+    const raw = await store.getKv(klubKlic(`klient-index:rez:${id}`));
+    if (raw) {
+      try {
+        const o = JSON.parse(raw) as { id?: string };
+        if (o.id) karta = await nactiKlientPodleId(store, o.id);
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!karta) {
+      karta = await sparujNeboVytvorKlienta(store, {
+        jmeno: rec.jmeno,
+        email: rec.emailHosta,
+        telefon: rec.telefon || rec.telefonRezervace,
+        rezervace: rec.rezervace,
+        jazyk: rec.jazyk || 'cs',
+      });
+    }
+    if (!karta?.tajnyKlic) return chyba(500, 'Kartu se nepodařilo připravit.');
+    const odkaz = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`;
+    const krestni = (rec.jmeno || '').trim().split(/\s+/)[0] || '';
+    const booking = /booking|airbnb|expedia/i.test(`${rec.zdroj || ''} ${rec.emailHosta || ''}`);
+    const lang = (rec.jazyk || 'cs') as import('@/lib/types').GuideLang;
+    const zprava = zpravaWaPoslatKartu(lang, {
+      krestniJmeno: krestni,
+      odkaz,
+      booking,
+    });
+    return NextResponse.json(
+      { ok: true, telefonWa: wa, zprava, odkaz },
+      { headers: noStore },
+    );
   }
 
   if (akce === 'zrusit-predani') {

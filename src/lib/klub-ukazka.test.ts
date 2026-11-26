@@ -11,7 +11,23 @@ describe('klub-ukazka', () => {
     expect(jeUkazkaKlic('ukazka-host')).toBe(true);
     expect(jeUkazkaKlic('ukazka-dop')).toBe(true);
     expect(jeUkazkaKlic('ukazka-firma')).toBe(true);
+    expect(jeUkazkaKlic('ukazka-booking-pred')).toBe(true);
+    expect(jeUkazkaKlic('ukazka-booking-po')).toBe(true);
     expect(jeUkazkaKlic('abc')).toBe(false);
+  });
+
+  it('booking před = bez klubu, po ubytování = Host 5 %', () => {
+    const pred = pohledZKarty(ukazkovaKlientKarta('ukazka-booking-pred'), 'https://example.com', {
+      ukazka: true,
+    });
+    expect(pred.bookingRezim).toBe('bez-klubu');
+    const karta = pohledZKarty(ukazkovaKlientKarta('ukazka-booking-karta'), 'https://example.com', {
+      ukazka: true,
+    });
+    expect(karta.bookingRezim).toBe('po-ubytovani');
+    expect(karta.slevaPct).toBe(5);
+    expect(karta.urovenNazev).toBe('Host');
+    expect(karta.pobyty[0]?.stavText).toMatch(/nepočítá/i);
   });
 
   it('host bydlí bez změny úrovně (Věrný 6 %)', () => {

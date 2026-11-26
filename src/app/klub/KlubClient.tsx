@@ -18,7 +18,13 @@ import {
 } from '@/lib/klub-ukazka';
 import type { GuideLang } from '@/lib/types';
 import { KlubPlochaRadek } from '@/components/KlubPlochaRadek';
-import { klubATadyKarta, klubPruvodcePo, klubRamecekPoOdjezduPred, klubRamecekPoOdjezduZa } from '@/lib/klub-podekovani-texty';
+import {
+  klubATadyKarta,
+  klubPruvodcePo,
+  klubRamecekPoOdjezduPred,
+  klubRamecekPoOdjezduZa,
+} from '@/lib/klub-podekovani-texty';
+import { klubBookingRamecekPo, pozdravDalsiOtevreni } from '@/lib/klub-pozdravy';
 import { t as tLang } from '@/lib/i18n';
 import { expiredDopis, expiredNadpis, expiredPodpis } from '@/lib/texts';
 import './klub.scss';
@@ -51,15 +57,6 @@ function IkUserPlus() {
   );
 }
 
-function IkBook() {
-  return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z" />
-      <path d="M4 5.5V21" />
-    </svg>
-  );
-}
-
 function Sipka() {
   return (
     <svg className="klub-sip" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -75,6 +72,13 @@ function pocetPrijeli(pratele: { stav: string }[]): number {
 function barvaPobytu(barva: string | null | undefined): string {
   if (barva === 'ceka' || barva === 'probiha' || barva === 'storno') return barva;
   return 'zapocteno';
+}
+
+function podnadpisPobytu(r: { podnadpis?: string; stavText?: string }): string | null {
+  const pod = (r.podnadpis || '').trim();
+  const stav = (r.stavText || '').trim();
+  if (!pod || pod === stav || /^započítáno$/i.test(pod)) return null;
+  return pod;
 }
 
 export default function KlubClient() {
@@ -118,8 +122,8 @@ export default function KlubClient() {
           const prvni =
             demoPrvni ||
             (poOdjezdu && !json.karta.podekovaniVidel && !json.karta.ukazka) ||
-            (demoPrvni && json.karta.ukazka);
-          setUkazPodekovani(Boolean(prvni || (json.karta.ukazka && demoPrvni)));
+            (json.karta.ukazka && demoPrvni);
+          setUkazPodekovani(Boolean(prvni));
           if (prvni && !json.karta.ukazka) {
             void fetch('/api/klub/podekovani-videl', {
               method: 'POST',
@@ -155,17 +159,35 @@ export default function KlubClient() {
   const tx = useMemo(() => klubTexty(lang), [lang]);
   const jeDop = karta?.pohled === 'doporucitel';
   const jeFirma = karta?.pohled === 'firma';
-  const maUroven = !jeDop;
+  const bookingBez = karta?.bookingRezim === 'bez-klubu';
+  const bookingKlub = karta?.bookingRezim === 'po-ubytovani';
+  const maUroven = !jeDop && !bookingBez && !bookingKlub;
 
   const behem = useMemo(() => {
     if (!karta) return null;
+    if (bookingKlub) {
+      const hostUroven = {
+        id: 'host',
+        nazevHost: 'Host',
+        nazevFirma: 'Partner',
+        slevaPct: 5,
+        odKc: 0,
+      };
+      return {
+        oficielni: hostUroven,
+        zobrazena: hostUroven,
+        slevaPct: 5,
+        posuneUroven: false,
+        ocekavanaUtrataKc: 0,
+      };
+    }
     return urovenBehemPobytu({
       utrataKc: karta.utrataKc,
       probihajiciKc: karta.praveBydli ? karta.utrataCekaKc || 0 : 0,
       praveBydli: karta.praveBydli,
       jeFirma,
     });
-  }, [karta, jeFirma]);
+  }, [karta, jeFirma, bookingKlub]);
 
   const pokrok = useMemo(() => {
     if (!karta || !maUroven || !behem) return null;
@@ -234,22 +256,20 @@ export default function KlubClient() {
   const maDokoncenePobyty =
     karta.utrataKc > 0 ||
     karta.pobyty.some((p) => p.barva === 'zapocteno' || p.barva === 'probiha');
-  const predPrvnim = !jeFirma && !jeDop && !maDokoncenePobyty && !karta.praveBydli;
-  const verzeB = Boolean(
-    !jeDop && (karta.praveBydli || maNadchazejici),
-  );
+  const predPrvnim = !jeFirma && !jeDop && !maDokoncenePobyty && !karta.praveBydli && !bookingKlub;
+  const verzeB = Boolean(!jeDop && (karta.praveBydli || maNadchazejici));
   const verzeC = !verzeB;
 
-  const ton = tonZUrovneId(jeDop ? 'host' : behem.zobrazena.id);
-  const slevaPct = Math.max(5, behem.slevaPct);
+  const ton = tonZUrovneId(jeDop ? 'host' : bookingKlub ? 'host' : behem.zobrazena.id);
+  const slevaPct = bookingKlub ? 5 : Math.max(5, behem.slevaPct);
   const urovenNazevKarticka = jeDop
     ? tx.doporucitelUroven
-    : jeFirma
-      ? behem.zobrazena.nazevFirma
-      : behem.zobrazena.nazevHost;
-  const posun = behem.posuneUroven
-    ? textPosunUrovne(behem.zobrazena, jeFirma)
-    : null;
+    : bookingKlub
+      ? 'Host'
+      : jeFirma
+        ? behem.zobrazena.nazevFirma
+        : behem.zobrazena.nazevHost;
+  const posun = !bookingKlub && behem.posuneUroven ? textPosunUrovne(behem.zobrazena, jeFirma) : null;
 
   const serazene = [...KLUB_UROVNE_PRO_LADDER].sort((a, b) => a.odKc - b.odKc);
   const idxZobr = serazene.findIndex((u) => u.id === behem.zobrazena.id);
@@ -318,7 +338,7 @@ export default function KlubClient() {
     <div className="klub-duo">
       <a className="klub-vB" href={poptavkaUrl}>
         <IkCal />
-        {jeFirma ? tx.tlacObjednat : tx.tlacRezervovat}
+        {bookingKlub ? 'Rezervovat napřímo' : jeFirma ? tx.tlacObjednat : tx.tlacRezervovat}
       </a>
       <button type="button" className="klub-vB" onClick={scrollDop}>
         <IkUserPlus />
@@ -364,7 +384,7 @@ export default function KlubClient() {
       <div className="klub-duo">
         <a className="klub-vC" href={poptavkaUrl}>
           <IkCal />
-          <b>{tx.tlacRezervovat}</b>
+          <b>{bookingKlub ? 'Rezervovat napřímo' : tx.tlacRezervovat}</b>
           <i>{tx.tlacDalsiPobyt(slevaPct)}</i>
         </a>
         <button type="button" className="klub-vC" onClick={scrollDop}>
@@ -376,11 +396,252 @@ export default function KlubClient() {
     );
   })();
 
+  const pruvodceUrl =
+    karta.pobyty.find((p) => p.pruvodceUrl)?.pruvodceUrl ||
+    karta.nadchazejici.find((p) => p.pruvodceUrl)?.pruvodceUrl ||
+    '/nahled';
+
+  const pozdrav = !ukazPodekovani
+    ? pozdravDalsiOtevreni(lang, {
+        krestniJmeno: karta.krestniJmeno || karta.jmenoZobrazeni.split(/\s+/)[0] || '',
+        posledniOdjezdYmd: karta.posledniOdjezdYmd,
+        pristiPrijezdYmd: karta.pristiPrijezdYmd,
+        dnesOdjezdPredPredanim: karta.dnesOdjezdPredPredanim,
+        praveBydli: karta.praveBydli,
+        bookingKlub,
+      })
+    : null;
+
+  const ukazVyplatu = jeFirma && karta.vyplatyZapnuto;
+
+  const sekceDoporuceni =
+    !karta.skrytDoporuceni || jeDop ? (
+      <section
+        id="klub-dop"
+        className={`klub-sec${dopOpen || jeDop ? ' is-open' : ''}${skromnyZbytek && !jeDop ? ' klub-sec--skromne' : ''}`}
+        hidden={skromnyZbytek && !jeDop ? true : undefined}
+      >
+        {jeDop ? (
+          <div className="klub-sn">{tx.mojeDoporuceni}</div>
+        ) : (
+          <div className="klub-sn">
+            <button type="button" onClick={() => setDopOpen((v) => !v)}>
+              <span>{tx.doporuceni}</span>
+              <Sipka />
+            </button>
+          </div>
+        )}
+        {!jeDop ? (
+          <div className="klub-kr">
+            <div>
+              <b>{prijeli}</b>
+              <span>{tx.pratelePrijeli}</span>
+            </div>
+            <div>
+              <b>{formatKc(karta.kreditKc)}</b>
+              <span>{tx.vasKredit}</span>
+            </div>
+          </div>
+        ) : null}
+        {dopOpen || jeDop ? (
+          <div className="klub-roz">
+            <div className="klub-sub">{tx.mujOdkaz}</div>
+            <div className="klub-odk">{odkaz}</div>
+            <div className="klub-btns">
+              <button type="button" className="klub-btn" onClick={emailTip}>
+                {tx.poslatEmail}
+              </button>
+              <button type="button" className="klub-btn2" onClick={whatsapp}>
+                {tx.poslatWa}
+              </button>
+              <button type="button" className="klub-btn2" onClick={kopie}>
+                {tx.kopirovat}
+              </button>
+            </div>
+            <div className="klub-sub">{tx.pratele}</div>
+            {karta.pratele.length === 0 ? (
+              <p className="klub-prazdne">{tx.prazdnePratele}</p>
+            ) : (
+              karta.pratele.map((p, i) => (
+                <div className="klub-radek" key={`f-${i}`}>
+                  <div className="klub-ik">
+                    <IkUser />
+                  </div>
+                  <div>
+                    <div className="klub-t">{p.jmeno}</div>
+                    <div className="klub-s">{p.stav}</div>
+                  </div>
+                </div>
+              ))
+            )}
+            <div className="klub-sub">{tx.kredit}</div>
+            {karta.kreditKc <= 0 && karta.kreditCeka <= 0 ? (
+              <p className="klub-prazdne">{tx.prazdneKredit}</p>
+            ) : ukazVyplatu ? (
+              <>
+                <div className="klub-kr">
+                  <div>
+                    <b>{formatKc(karta.kreditCeka)}</b>
+                    <span>{tx.ceka}</span>
+                  </div>
+                  <div>
+                    <b>{formatKc(karta.kreditKVyplate)}</b>
+                    <span>{tx.kVyplate}</span>
+                  </div>
+                  <div>
+                    <b>{formatKc(karta.kreditVyplaceno)}</b>
+                    <span>{tx.vyplaceno}</span>
+                  </div>
+                </div>
+                <div className="klub-btns">
+                  <button type="button" className="klub-btn" onClick={() => ukazToast(tx.vyplataOk)}>
+                    {tx.pozadat}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="klub-kr">
+                <div>
+                  <b>{formatKc(karta.kreditKc)}</b>
+                  <span>{tx.vasKredit}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : null}
+      </section>
+    ) : null;
+
+  const sekcePobyty =
+    !jeDop && !skromnyZbytek ? (
+      <section className="klub-sec">
+        <div className="klub-sn">{jeFirma ? tx.objednanePobyty : tx.mojePobyty}</div>
+        {karta.pobyty.length === 0 ? (
+          <p className="klub-prazdne">{tx.prazdnePobyty}</p>
+        ) : (
+          karta.pobyty.map((r, i) => {
+            const b = barvaPobytu(r.barva as string);
+            const stav =
+              r.stavText ||
+              (b === 'ceka' ? 'čeká' : b === 'storno' ? 'zrušeno' : 'započítáno');
+            const pod = podnadpisPobytu(r);
+            const nepocita = /nepočítá/i.test(stav);
+            return (
+              <div className={`klub-pobyt klub-pobyt--${b}`} key={`p-${i}`}>
+                <div>
+                  <div className="klub-t">{r.nadpis}</div>
+                  {pod ? <div className="klub-s">{pod}</div> : null}
+                </div>
+                <div
+                  className={`klub-pobyt__stav${
+                    nepocita || b === 'ceka'
+                      ? ' is-ceka'
+                      : b === 'probiha'
+                        ? ' is-probiha'
+                        : b === 'storno'
+                          ? ' is-storno'
+                          : ''
+                  }`}
+                >
+                  {stav}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </section>
+    ) : null;
+
+  const plocha = (
+    <KlubPlochaRadek
+      lang={lang}
+      token={karta.tajnyKlic}
+      odkazKarty={
+        typeof window !== 'undefined'
+          ? `${window.location.origin}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`
+          : `/klub?k=${encodeURIComponent(karta.tajnyKlic)}`
+      }
+    />
+  );
+
+  /* —— Booking odkaz z Bookingu: jen průvodce, bez klubu —— */
+  if (bookingBez) {
+    const radek = karta.nadchazejici[0] || karta.pobyty[0];
+    const url = radek?.pruvodceUrl || pruvodceUrl;
+    return (
+      <main className="klub-page" data-uroven="host" style={pageStyle}>
+        <div className="klub-shell">
+          {pozdrav ? <p className="klub-pozdrav">{pozdrav}</p> : null}
+          <div className="klub-bez">
+            <div className="klub-bez__logo">VA</div>
+            <div className="klub-bez__znacka">VIVIEN APARTMENTS</div>
+            <div className="klub-bez__jmeno">{karta.jmenoZobrazeni}</div>
+          </div>
+          {maNadchazejici || karta.praveBydli ? (
+            <section className={`klub-sec${karta.praveBydli ? ' klub-sec--now' : ''}`}>
+              <div className={`klub-sn${karta.praveBydli ? ' klub-sn--now' : ''}`}>
+                {karta.praveBydli ? tx.praveBydli : tx.nadchazejici}
+              </div>
+              {(karta.nadchazejici.length
+                ? karta.nadchazejici
+                : [
+                    {
+                      nadpis: radek?.nadpis || '',
+                      podnadpis: radek?.podnadpis || '',
+                      pruvodceUrl: url,
+                    },
+                  ]
+              ).map((r, i) => (
+                <div className="klub-radek" key={`n-${i}`}>
+                  <div className="klub-ik">
+                    {jeFirma ? <IkUser /> : <IkCal />}
+                  </div>
+                  <div>
+                    <div className="klub-t">{r.nadpis}</div>
+                    <div className="klub-s">{r.podnadpis}</div>
+                  </div>
+                </div>
+              ))}
+              <a className="klub-btn-pruvodce" href={url}>
+                {tx.mujPruvodce}
+              </a>
+            </section>
+          ) : null}
+          <a
+            className="klub-plocha-link klub-plocha-link--radek"
+            href="https://wa.me/420604692573"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="klub-plocha-link__jedna">
+              Napište nám · WhatsApp{' '}
+              <span style={{ whiteSpace: 'nowrap' }}>604&nbsp;692&nbsp;573</span>
+            </span>
+            <em>›</em>
+          </a>
+          {plocha}
+        </div>
+        <div className={`klub-toast${toast ? ' is-on' : ''}`} role="status">
+          {toast}
+        </div>
+      </main>
+    );
+  }
+
+  void pokrok;
+
   return (
     <main className="klub-page" data-uroven={ton.id} style={pageStyle}>
       <div className="klub-shell">
         {ukazPodekovani ? (
           <div className="klub-podekovani-prvni">
+            <img
+              className="klub-podekovani-prvni__foto"
+              src="/email/hlavicka-po-odjezdu.jpg"
+              alt=""
+              width={600}
+              height={280}
+            />
             <h2>{tLang(expiredNadpis, lang)}</h2>
             <p>{tLang(expiredDopis, lang)}</p>
             <p className="klub-podekovani-prvni__podpis">{tLang(expiredPodpis, lang)}</p>
@@ -394,10 +655,13 @@ export default function KlubClient() {
               {tLang(klubATadyKarta, lang)}
             </button>
           </div>
+        ) : pozdrav ? (
+          <p className="klub-pozdrav">{pozdrav}</p>
         ) : null}
 
         <div id="klub-karta-kotva" />
 
+        {/* 1. Kartička */}
         <div className="klub-karticka" style={{ background: kartickaGradient(ton) }}>
           <span className="klub-karticka__vtisk klub-karticka__vtisk--tmavy" aria-hidden />
           <span className="klub-karticka__vtisk klub-karticka__vtisk--svetly" aria-hidden />
@@ -406,29 +670,49 @@ export default function KlubClient() {
           <div className="klub-karticka__k2">{urovenNazevKarticka}</div>
           <div className="klub-karticka__k3">{karta.jmenoZobrazeni}</div>
           <div className="klub-karticka__k4">
-            {predPrvnim ? tx.slevaTento : tx.slevaKarticka}{' '}
+            {bookingKlub
+              ? 'sleva na další přímý pobyt'
+              : predPrvnim
+                ? tx.slevaTento
+                : tx.slevaKarticka}{' '}
             <b>{slevaPct} %</b>
           </div>
         </div>
 
-        {ukazPodekovani && verzeC ? (
+        {/* 2. Rámeček jen když říká něco nového */}
+        {posun ? (
+          <div className="klub-ramecek-po">
+            Tímto pobytem jste <b>{posun.nadpis}</b>. {slevaPct}&nbsp;% platí už pro rezervaci,
+            kterou uděláte teď.
+          </div>
+        ) : null}
+        {ukazPodekovani && verzeC && !bookingKlub && !posun ? (
           <div className="klub-ramecek-po">
             {tLang(klubRamecekPoOdjezduPred, lang)} <b>{urovenNazevKarticka}</b>.{' '}
             {tLang(klubRamecekPoOdjezduZa, lang)} <b>{slevaPct}&nbsp;%</b>.
           </div>
         ) : null}
-
-        {posun ? (
-          <div className="klub-up">
-            Tímto pobytem jste <b>{posun.nadpis}</b>. {slevaPct} % platí už pro rezervaci, kterou
-            uděláte teď.
-          </div>
+        {ukazPodekovani && verzeC && bookingKlub ? (
+          <div className="klub-ramecek-po">{tLang(klubBookingRamecekPo, lang)}</div>
         ) : null}
 
+        {/* 3. Pruh úrovně */}
         {maUroven && !skromnyZbytek ? (
           <div className="klub-hl">
             <div className="klub-pruh-urovne">
-              <button type="button" className="klub-pruh-urovne__ted" onClick={() => setLadder((v) => !v)} style={{ background: 'none', border: 0, padding: 0, color: 'inherit', font: 'inherit', cursor: 'pointer' }}>
+              <button
+                type="button"
+                className="klub-pruh-urovne__ted"
+                onClick={() => setLadder((v) => !v)}
+                style={{
+                  background: 'none',
+                  border: 0,
+                  padding: 0,
+                  color: 'inherit',
+                  font: 'inherit',
+                  cursor: 'pointer',
+                }}
+              >
                 {nazevTed} · {aktualni.slevaPct} %
               </button>
               <span className="klub-pruh-urovne__dalsi">
@@ -453,103 +737,58 @@ export default function KlubClient() {
               ) : null}
               <span className="klub-pruh-leg__pol">
                 <i className="is-zbyva" aria-hidden />
-                {behem.posuneUroven && posun
-                  ? posun.legendaOk
-                  : tx.pruhZbyva(formatKc(chybiPo))}
+                {behem.posuneUroven && posun ? posun.legendaOk : tx.pruhZbyva(formatKc(chybiPo))}
               </span>
             </div>
             {ladder ? <div className="klub-ladder">{ladderRows}</div> : null}
           </div>
         ) : null}
 
-        {!jeDop ? (
-          <>
-            {maNadchazejici ? (
-              <section className={`klub-sec${karta.praveBydli ? ' klub-sec--now' : ''}`}>
-                <div className={`klub-sn${karta.praveBydli ? ' klub-sn--now' : ''}`}>
-                  {karta.praveBydli
-                    ? tx.praveBydli
-                    : jeFirma
-                      ? tx.nadchazejiciFirma
-                      : tx.nadchazejici}
-                </div>
-                {karta.nadchazejici.map((r, i) => (
-                  <div className="klub-radek" key={`n-${i}`}>
-                    <div className="klub-ik">
-                      {jeFirma ? <IkUser /> : r.pruvodceUrl ? <IkBook /> : <IkCal />}
-                    </div>
-                    <div>
-                      <div className="klub-t">{r.nadpis}</div>
-                      <div className="klub-s">{r.podnadpis}</div>
-                    </div>
-                  </div>
-                ))}
-                {karta.nadchazejici.some((r) => r.pruvodceUrl) ? (
-                  <a
-                    className="klub-btn-pruvodce"
-                    href={karta.nadchazejici.find((r) => r.pruvodceUrl)?.pruvodceUrl || '#'}
-                  >
-                    {tx.mujPruvodce}
-                  </a>
-                ) : null}
-                {verzeB ? tlacitkaB : null}
-              </section>
-            ) : null}
+        {/* 4. Tlačítka C hned pod pruhem */}
+        {verzeC ? <div className="klub-tlac-pod-pruhem">{tlacitkaC}</div> : null}
 
-            {!skromnyZbytek ? (
-              <section className="klub-sec">
-                <div className="klub-sn">{jeFirma ? tx.objednanePobyty : tx.mojePobyty}</div>
-                {karta.pobyty.length === 0 ? (
-                  <p className="klub-prazdne">{tx.prazdnePobyty}</p>
-                ) : (
-                  <>
-                    {karta.pobyty.map((r, i) => {
-                      const b = barvaPobytu(r.barva as string);
-                      const stav =
-                        r.stavText ||
-                        (b === 'ceka'
-                          ? 'čeká'
-                          : b === 'storno'
-                            ? 'zrušeno'
-                            : 'započítáno');
-                      return (
-                        <div className={`klub-pobyt klub-pobyt--${b}`} key={`p-${i}`}>
-                          <div>
-                            <div className="klub-t">{r.nadpis}</div>
-                            <div className="klub-s">{r.podnadpis}</div>
-                          </div>
-                          <div
-                            className={`klub-pobyt__stav${
-                              b === 'ceka'
-                                ? ' is-ceka'
-                                : b === 'probiha'
-                                  ? ' is-probiha'
-                                  : b === 'storno'
-                                    ? ' is-storno'
-                                    : ''
-                            }`}
-                          >
-                            {stav.split('\n').map((radek, j) => (
-                              <span key={j}>
-                                {radek}
-                                {j === 0 && stav.includes('\n') ? <br /> : null}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div className="klub-leg">
-                      <i className="is-zap" /> započítáno
-                      <i className="is-probiha" /> právě bydlí
-                      <i className="is-ceka" /> čeká
-                    </div>
-                  </>
-                )}
-              </section>
+        {/* 5. Průvodce / právě bydlí (B) */}
+        {!jeDop && maNadchazejici ? (
+          <section className={`klub-sec${karta.praveBydli ? ' klub-sec--now' : ''}`}>
+            <div className={`klub-sn${karta.praveBydli ? ' klub-sn--now' : ''}`}>
+              {karta.praveBydli
+                ? tx.praveBydli
+                : jeFirma
+                  ? tx.nadchazejiciFirma
+                  : tx.nadchazejici}
+            </div>
+            {karta.nadchazejici.map((r, i) => (
+              <div className="klub-radek" key={`n-${i}`}>
+                <div className="klub-ik">{jeFirma ? <IkUser /> : <IkCal />}</div>
+                <div>
+                  <div className="klub-t">{r.nadpis}</div>
+                  <div className="klub-s">{r.podnadpis}</div>
+                </div>
+              </div>
+            ))}
+            {karta.nadchazejici.some((r) => r.pruvodceUrl) ? (
+              <a
+                className="klub-btn-pruvodce"
+                href={karta.nadchazejici.find((r) => r.pruvodceUrl)?.pruvodceUrl || '#'}
+              >
+                {tx.mujPruvodce}
+              </a>
             ) : null}
-          </>
+            {verzeB ? tlacitkaB : null}
+          </section>
         ) : null}
+
+        {verzeC && !jeDop ? (
+          <a className="klub-pruvodce-po" href={pruvodceUrl}>
+            <span>{tLang(klubPruvodcePo, lang)}</span>
+            <em>›</em>
+          </a>
+        ) : null}
+
+        {verzeB && !maNadchazejici ? <div className="klub-tlac-pod-pruhem">{tlacitkaB}</div> : null}
+
+        {/* 6. Moje pobyty */}
+        {sekcePobyty}
 
         {jeFirma && !skromnyZbytek ? (
           <section className="klub-sec">
@@ -569,126 +808,11 @@ export default function KlubClient() {
           </section>
         ) : null}
 
-        {!karta.skrytDoporuceni || jeDop ? (
-          <section
-            id="klub-dop"
-            className={`klub-sec${dopOpen || jeDop ? ' is-open' : ''}${skromnyZbytek && !jeDop ? ' klub-sec--skromne' : ''}`}
-            hidden={skromnyZbytek && !jeDop ? true : undefined}
-          >
-            {jeDop ? (
-              <div className="klub-sn">{tx.mojeDoporuceni}</div>
-            ) : (
-              <div className="klub-sn">
-                <button type="button" onClick={() => setDopOpen((v) => !v)}>
-                  <span>{tx.doporuceni}</span>
-                  <Sipka />
-                </button>
-              </div>
-            )}
-            {!jeDop ? (
-              <div className="klub-kr">
-                <div>
-                  <b>{prijeli}</b>
-                  <span>{tx.pratelePrijeli}</span>
-                </div>
-                <div>
-                  <b>{formatKc(karta.kreditKc)}</b>
-                  <span>{tx.vasKredit}</span>
-                </div>
-              </div>
-            ) : null}
-            <div className="klub-roz">
-              <div className="klub-sub">{tx.mujOdkaz}</div>
-              <div className="klub-odk">{odkaz}</div>
-              <div className="klub-btns">
-                <button type="button" className="klub-btn" onClick={emailTip}>
-                  {tx.poslatEmail}
-                </button>
-                <button type="button" className="klub-btn2" onClick={whatsapp}>
-                  {tx.poslatWa}
-                </button>
-                <button type="button" className="klub-btn2" onClick={kopie}>
-                  {tx.kopirovat}
-                </button>
-              </div>
-              <div className="klub-sub">{tx.pratele}</div>
-              {karta.pratele.length === 0 ? (
-                <p className="klub-prazdne">{tx.prazdnePratele}</p>
-              ) : (
-                karta.pratele.map((p, i) => (
-                  <div className="klub-radek" key={`f-${i}`}>
-                    <div className="klub-ik">
-                      <IkUser />
-                    </div>
-                    <div>
-                      <div className="klub-t">{p.jmeno}</div>
-                      <div className="klub-s">{p.stav}</div>
-                    </div>
-                  </div>
-                ))
-              )}
-              <div className="klub-sub">{tx.kredit}</div>
-              {karta.kreditKc <= 0 && karta.kreditCeka <= 0 ? (
-                <p className="klub-prazdne">{tx.prazdneKredit}</p>
-              ) : (
-                <>
-                  <div className="klub-kr">
-                    <div>
-                      <b>{formatKc(karta.kreditCeka)}</b>
-                      <span>{tx.ceka}</span>
-                    </div>
-                    <div>
-                      <b>{formatKc(karta.kreditKVyplate)}</b>
-                      <span>{tx.kVyplate}</span>
-                    </div>
-                    <div>
-                      <b>{formatKc(karta.kreditVyplaceno)}</b>
-                      <span>{tx.vyplaceno}</span>
-                    </div>
-                  </div>
-                  <div className="klub-btns">
-                    <button
-                      type="button"
-                      className="klub-btn"
-                      onClick={() => ukazToast(tx.vyplataOk)}
-                    >
-                      {tx.pozadat}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
-        ) : null}
+        {/* 7. Doporučení */}
+        {sekceDoporuceni}
 
-        {verzeC ? <div style={{ marginTop: 10 }}>{tlacitkaC}</div> : null}
-        {verzeB && !maNadchazejici ? <div style={{ marginTop: 10 }}>{tlacitkaB}</div> : null}
-
-        {/* Po odjezdu: nenápadný průvodce (bod 4) */}
-        {verzeC && !jeDop
-          ? (() => {
-              const url =
-                karta.pobyty.find((p) => p.pruvodceUrl)?.pruvodceUrl ||
-                karta.nadchazejici.find((p) => p.pruvodceUrl)?.pruvodceUrl ||
-                '/nahled';
-              return (
-                <a className="klub-pruvodce-po" href={url}>
-                  {tLang(klubPruvodcePo, lang)}
-                </a>
-              );
-            })()
-          : null}
-
-        {/* Bod 6: A / B1 / C úplně dole (nahled-plocha-uz-ma-3-verze) */}
-        <KlubPlochaRadek
-          lang={lang}
-          token={karta.tajnyKlic}
-          odkazKarty={
-            typeof window !== 'undefined'
-              ? `${window.location.origin}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`
-              : `/klub?k=${encodeURIComponent(karta.tajnyKlic)}`
-          }
-        />
+        {/* 8. Plocha */}
+        {plocha}
       </div>
       <div className={`klub-toast${toast ? ' is-on' : ''}`} role="status">
         {toast}
