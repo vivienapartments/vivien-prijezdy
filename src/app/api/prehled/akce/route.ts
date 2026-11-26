@@ -828,16 +828,23 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (akce === 'uz-zaplaceno') {
-    const surovy = String(body?.castka ?? '').trim().replace(',', '.');
+    const surovy = String(body?.castka ?? '')
+      .trim()
+      .replace(/\s+/g, '')
+      .replace(',', '.');
     const kc = Math.round(Number(surovy));
     if (!Number.isFinite(kc) || kc < 1 || kc > 100_000) return chyba(400, 'Napište částku v Kč.');
     const jak = jeJak(body?.jak) || 'prevod';
     const kdo = body?.kdo === 'nikol' ? 'nikol' : 'pravoslav';
     const poznamka = String(body?.text ?? '').trim().slice(0, 200);
     const pred = polozkyZRezervace(rec);
-    if (!pred.length) return chyba(400, 'Teď není co započítat.');
+    if (!pred.length) {
+      return chyba(400, 'Na kartě už není otevřený dluh. Cenu na doklad změňte u Faktury (Uložit cenu).');
+    }
     const dalsi = zaplatCastku(rec, kc, jak, kdo, poznamka || null);
-    if (dalsi === rec) return chyba(400, 'Teď není co započítat.');
+    if (dalsi === rec) {
+      return chyba(400, 'Na kartě už není otevřený dluh. Cenu na doklad změňte u Faktury (Uložit cenu).');
+    }
     await store.setRezervace(id, dalsi);
     return NextResponse.json(
       {

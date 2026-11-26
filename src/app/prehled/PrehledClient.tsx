@@ -2568,10 +2568,15 @@ export function PrehledClient({
     row: PrehledRadek,
     castka: string,
     text: string,
-  ): Promise<{ ok: boolean }> {
-    const surovy = castka.trim().replace(',', '.');
-    const kc = Math.round(Number(surovy));
-    if (!Number.isFinite(kc) || kc < 1) return { ok: false };
+  ): Promise<{ ok: boolean; error?: string }> {
+    const surovy = castka.trim().replace(/\s+/g, '').replace(',', '.');
+    let kc = Math.round(Number(surovy));
+    if (!Number.isFinite(kc) || kc < 1) {
+      return { ok: false, error: 'Napište částku bez mezer (např. 1034 nebo 1034,46).' };
+    }
+    if (row.mena === 'EUR') {
+      kc = Math.round(kc * KURZ_EUR_KC);
+    }
     if (ukazka) {
       const zive = polozkyKarty(row);
       let zbyva = kc;
@@ -2589,7 +2594,12 @@ export function PrehledClient({
         nove.push({ druh: p.druh, kc: cast, jak: 'prevod', kdo: 'pravoslav', kdy });
         zbyva -= cast;
       }
-      if (!nove.length) return { ok: false };
+      if (!nove.length) {
+        return {
+          ok: false,
+          error: 'Na kartě už není otevřený dluh. Cenu na doklad změňte u Faktury (Uložit cenu).',
+        };
+      }
       const platbyRadku = [...(row.platby || []), ...nove];
       const po = zive
         .map((p) => {
@@ -2629,8 +2639,9 @@ export function PrehledClient({
     } | null;
     setCekam(null);
     if (!res.ok || !json?.ok) {
-      setHlaska(json?.error || 'Částku se nepodařilo zapsat.');
-      return { ok: false };
+      const error = json?.error || 'Částku se nepodařilo zapsat.';
+      setHlaska(error);
+      return { ok: false, error };
     }
     zapisPlatbyRadku(row.rezervace, json.platby || [], json.zaplaceno ?? null, json.dluh || '', polozkyKarty(row));
     return { ok: true };
@@ -5258,6 +5269,7 @@ export function PrehledClient({
                   <HostUzZaplatilPole
                     key={`${row.rezervace}-uz-zaplaceno`}
                     disabled={cekam !== null}
+                    mena={row.mena === 'EUR' ? 'EUR' : 'CZK'}
                     onUloz={(castka, text) => ulozUzZaplaceno(row, castka, text)}
                   />
                   <div className="ph-pole-rada">
@@ -5586,6 +5598,10 @@ export function PrehledClient({
                     userAgent={userAgent}
                     onZmena={zmenFakturu}
                     onCenaPobytu={zmenCenuPobytu}
+                    onMena={(rezervace, mena) => {
+                      const r = radky.find((x) => x.rezervace === rezervace);
+                      if (r) void ulozMena(r, mena);
+                    }}
                     onHlaska={setHlaska}
                   />
                 </DetailSekce>
@@ -5740,6 +5756,7 @@ export function PrehledClient({
                   <HostUzZaplatilPole
                     key={`${row.rezervace}-uz-zaplaceno-penize`}
                     disabled={cekam !== null}
+                    mena={menaKarty}
                     onUloz={(castka, text) => ulozUzZaplaceno(row, castka, text)}
                   />
                   {skutecnyPrijezdPole}
@@ -6492,6 +6509,10 @@ export function PrehledClient({
           userAgent={userAgent}
           onZmena={zmenFakturu}
           onCenaPobytu={zmenCenuPobytu}
+          onMena={(rezervace, mena) => {
+            const r = radky.find((x) => x.rezervace === rezervace);
+            if (r) void ulozMena(r, mena);
+          }}
           onHlaska={setHlaska}
           onOtevriKartu={otevriKartu}
           vychoziOtevreno={fakturyFocus}
@@ -7445,6 +7466,10 @@ export function PrehledClient({
           userAgent={userAgent}
           onZmena={zmenFakturu}
           onCenaPobytu={zmenCenuPobytu}
+          onMena={(rezervace, mena) => {
+            const r = radky.find((x) => x.rezervace === rezervace);
+            if (r) void ulozMena(r, mena);
+          }}
           onHlaska={setHlaska}
           onOtevriKartu={otevriKartu}
           jen="pozdeji"
@@ -7797,30 +7822,35 @@ export function PrehledClient({
 
 function HostUzZaplatilPole({
   disabled,
+  mena = 'CZK',
   onUloz,
 }: {
   disabled?: boolean;
-  onUloz: (castka: string, text: string) => Promise<{ ok: boolean }>;
+  mena?: MenaPlateb;
+  onUloz: (castka: string, text: string) => Promise<{ ok: boolean; error?: string }>;
 }) {
   const [castka, setCastka] = useState('');
   const [text, setText] = useState('');
   const [stav, setStav] = useState<'nic' | 'ok' | 'chyba'>('nic');
+  const [chyba, setChyba] = useState('');
+  const jeEur = mena === 'EUR';
 
   return (
     <div className="ph-cas ph-pole">
       <span>Host už zaplatil</span>
       <span className="ph-pole-rada">
         <input
-          inputMode="numeric"
+          inputMode="decimal"
           autoComplete="off"
-          placeholder="Kč"
+          placeholder={jeEur ? '€' : 'Kč'}
           value={castka}
           disabled={disabled}
           onChange={(e) => {
             setCastka(e.target.value);
             setStav('nic');
+            setChyba('');
           }}
-          aria-label="Už zaplacená částka v Kč"
+          aria-label={jeEur ? 'Už zaplacená částka v eurech' : 'Už zaplacená částka v Kč'}
         />
         <button
           type="button"
@@ -7830,10 +7860,12 @@ function HostUzZaplatilPole({
             const vysledek = await onUloz(castka, text);
             if (!vysledek.ok) {
               setStav('chyba');
+              setChyba(vysledek.error || 'Nezapsáno, zkuste znovu.');
               return;
             }
             setCastka('');
             setText('');
+            setChyba('');
             setStav('ok');
           }}
         >
@@ -7848,11 +7880,12 @@ function HostUzZaplatilPole({
         onChange={(e) => {
           setText(e.target.value);
           setStav('nic');
+          setChyba('');
         }}
         aria-label="Poznámka k už zaplacené částce"
       />
       {stav === 'ok' ? <span className="ph-ulozeno">Zapsáno ✓</span> : null}
-      {stav === 'chyba' ? <span className="ph-neulozeno">Nezapsáno, zkuste znovu</span> : null}
+      {stav === 'chyba' ? <span className="ph-neulozeno">{chyba}</span> : null}
     </div>
   );
 }
