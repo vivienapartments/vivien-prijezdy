@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { jeIos, smsOdkaz } from '@/lib/brana';
 import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
 
@@ -67,6 +67,7 @@ export function DoporuciteleClient() {
     telefon: string;
     email: string;
   } | null>(null);
+  const autoZadostRef = useRef<string | null>(null);
 
   const nacti = useCallback(async () => {
     const res = await fetch('/api/prehled/doporucitele');
@@ -86,6 +87,26 @@ export function DoporuciteleClient() {
   useEffect(() => {
     void nacti();
   }, [nacti]);
+
+  /** První nová žádost se otevře sama ke zpracování. */
+  useEffect(() => {
+    if (editace || novy) return;
+    const prvni = pozvanky.find((p) => p.stav === 'ke_schvaleni' && p.udaje);
+    if (!prvni) {
+      autoZadostRef.current = null;
+      return;
+    }
+    if (autoZadostRef.current === prvni.klic) return;
+    autoZadostRef.current = prvni.klic;
+    const u = prvni.udaje || {};
+    setEditace({
+      klic: prvni.klic,
+      jmeno: u.jmeno || '',
+      prijmeni: u.prijmeni || '',
+      telefon: u.telefon || '',
+      email: u.email || '',
+    });
+  }, [pozvanky, editace, novy]);
 
   function odkazPozvanky(klic: string): string {
     return `${window.location.origin}/doporucitel/pozvanka?p=${encodeURIComponent(klic)}`;
@@ -218,17 +239,18 @@ export function DoporuciteleClient() {
         chyba?: string;
         odkazKarta?: string;
         tajnyKlic?: string;
+        emailPoslan?: boolean;
+        telefon?: string | null;
       };
       if (!res.ok || !json.ok) {
         setHlaska(json.chyba || 'Schválení se nepovedlo.');
         return;
       }
       setEditace(null);
-      setHlaska(
-        json.odkazKarta
-          ? `Schváleno. Odkaz na kartu: ${json.odkazKarta}`
-          : 'Schváleno. Karta je hotová.',
-      );
+      const casti = ['Schváleno.'];
+      if (json.emailPoslan) casti.push('Odkaz na kartu mu odešel e-mailem.');
+      else if (json.odkazKarta) casti.push(`Odkaz na kartu: ${json.odkazKarta}`);
+      setHlaska(casti.join(' '));
       await nacti();
     } finally {
       setCekam(false);
@@ -436,6 +458,9 @@ export function DoporuciteleClient() {
         </Link>
       </p>
       <h1 style={{ color: '#c9a84c', fontFamily: 'Georgia, serif', fontWeight: 500 }}>Doporučitelé</h1>
+      <p style={{ color: '#b7aa98', fontSize: '0.9rem', textAlign: 'justify', hyphens: 'auto' }}>
+        Nejdřív pozvete. On vyplní. Pak tady zpracujete žádost a teprve po OK mu odejde karta.
+      </p>
       {hlaska ? <p style={{ color: '#c9a84c' }}>{hlaska}</p> : null}
 
       <button
@@ -445,6 +470,7 @@ export function DoporuciteleClient() {
           setNovy(true);
           setHlaska(null);
           setDetail(null);
+          setEditace(null);
         }}
         style={{ marginBottom: '1rem' }}
       >
@@ -453,7 +479,13 @@ export function DoporuciteleClient() {
 
       {keSchvaleni.length > 0 ? (
         <section style={{ marginBottom: '1rem' }}>
-          <h2 style={{ fontSize: '1rem', color: '#ff8a80' }}>Ke schválení ({keSchvaleni.length})</h2>
+          <h2 style={{ fontSize: '1.15rem', color: '#ff8a80' }}>
+            Nové žádosti ({keSchvaleni.length})
+          </h2>
+          <p style={{ color: '#b7aa98', fontSize: '0.85rem', marginTop: 0 }}>
+            Otevřete žádost, případně upravte údaje, pak Uložit a schválit. Teprve potom mu odejde
+            odkaz na kartu.
+          </p>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {keSchvaleni.map((p) => {
               const u = p.udaje;

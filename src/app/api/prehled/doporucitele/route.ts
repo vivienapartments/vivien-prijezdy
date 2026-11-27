@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import {
+  jmenoDoporucitele,
   nactiKartuPodleKodu,
   nactiPozvanku,
   nactiPravidla,
@@ -19,8 +20,10 @@ import {
   type UdajeDoporucitele,
 } from '@/lib/doporucitel-karta';
 import {
+  htmlKartaDoporuciteleSchvalena,
   htmlPozvankaDoporucitele,
   predmetPozvankaDoporucitele,
+  textKartaDoporuciteleSchvalena,
   textPozvankaDoporucitele,
 } from '@/lib/doporucitel-pozvanka-email';
 import { prehledPrihlasen } from '@/lib/prehled-session';
@@ -128,12 +131,40 @@ export async function POST(req: Request) {
       /* */
     }
     const odkazKarta = `${base}/doporucitel?k=${encodeURIComponent(karta.tajnyKlic)}`;
+    let emailPoslan = false;
+    const user = process.env.SMTP_USER?.trim();
+    const pass = process.env.SMTP_HESLO?.trim();
+    if (karta.email && user && pass && !pass.startsWith('SEM_NAPIS')) {
+      try {
+        const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+        const majitel = process.env.MAJITEL_EMAIL?.trim();
+        const jmeno = jmenoDoporucitele(karta);
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.seznam.cz',
+          port: 465,
+          secure: true,
+          auth: { user, pass },
+        });
+        await transporter.sendMail({
+          from: `VIVIEN Apartments <${user}>`,
+          to: testMode && majitel ? majitel : karta.email,
+          subject: testMode ? '[TEST] Vaše karta VIVIEN Club' : 'Vaše karta VIVIEN Club',
+          text: textKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
+          html: htmlKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
+        });
+        emailPoslan = true;
+      } catch {
+        /* karta je hotová i bez mailu */
+      }
+    }
     return NextResponse.json(
       {
         ok: true,
         karta: verejnaKartaProUi(karta),
         tajnyKlic: karta.tajnyKlic,
         odkazKarta,
+        emailPoslan,
+        telefon: karta.telefon || null,
       },
       { headers: noStore },
     );
@@ -146,20 +177,7 @@ export async function POST(req: Request) {
   }
 
   if (akce === 'novy') {
-    const typ = (String(body.typ || 'osoba') as DoporucitelTyp) || 'osoba';
-    const jmeno = String(body.jmeno || '').trim();
-    if (!jmeno) return chyba(400, 'Chybí jméno.');
-    const langRaw = String(body.jazyk || 'cs');
-    const jazyk: GuideLang = GUIDE_LANGS.includes(langRaw as GuideLang) ? (langRaw as GuideLang) : 'cs';
-    const karta = await zalozKartuMajitel(store, {
-      typ: typ === 'firma' || typ === 'host' ? typ : 'osoba',
-      jmeno,
-      prijmeni: String(body.prijmeni || ''),
-      email: String(body.email || ''),
-      telefon: String(body.telefon || ''),
-      jazyk,
-    });
-    return NextResponse.json({ ok: true, karta: verejnaKartaProUi(karta), tajnyKlic: karta.tajnyKlic }, { headers: noStore });
+    return chyba(400, 'Kartu nezakládejte rovnou. Použijte Nový doporučitel → on vyplní → vy schválíte.');
   }
 
   if (akce === 'vyplaceno') {

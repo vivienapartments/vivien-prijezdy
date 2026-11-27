@@ -113,7 +113,6 @@ export default function PozvankaDoporucitelePage() {
         ok?: boolean;
         duvod?: string;
         cekaNaSchvaleni?: boolean;
-        kartaKlic?: string;
       };
       if (!res.ok || !json.ok) {
         setHlaska(
@@ -124,10 +123,7 @@ export default function PozvankaDoporucitelePage() {
         if (json.duvod === 'vyplneno') setStav('ke_schvaleni');
         return;
       }
-      if (json.kartaKlic) {
-        window.location.href = `/doporucitel?k=${encodeURIComponent(json.kartaKlic)}`;
-        return;
-      }
+      /** Nikdy rovnou karta. Čeká na schválení v přehledu. */
       setStav('diky');
     } catch {
       setHlaska('Odeslání se nepovedlo. Zkuste to znovu.');

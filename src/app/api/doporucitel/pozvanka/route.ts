@@ -5,7 +5,7 @@ import {
   nactiPozvanku,
   schvalPozvanku,
   vyplnPozvanku,
-  zalozKartuZeZkousky,
+  zalozPozvanku,
   type UdajeDoporucitele,
 } from '@/lib/doporucitel-karta';
 import { jeZkusebniProstredi } from '@/lib/klub-klic';
@@ -70,16 +70,14 @@ export async function POST(req: Request) {
   const zkouska = body.zkouska === true || body.zkouska === '1';
   const store = createProcessStore();
 
-  if (zkouska) {
+  /** Nikdy rovnou karta. Vždy žádost ke schválení (i zkouška). */
+  let p = String(body.p || '').trim();
+  if (zkouska && !p) {
     if (!jeZkusebniProstredi()) return chyba(400, 'zkouska');
-    const karta = await zalozKartuZeZkousky(store, udaje);
-    return NextResponse.json(
-      { ok: true, hotovo: true, kartaKlic: karta.tajnyKlic, kod: karta.kod },
-      { headers: noStore },
-    );
+    const pozZk = await zalozPozvanku(store, 'zkouska');
+    p = pozZk.klic;
   }
 
-  const p = String(body.p || '').trim();
   const poz = await nactiPozvanku(store, p);
   if (!poz) return chyba(404, 'odkaz');
   if (poz.stav === 'ke_schvaleni' || poz.stav === 'vyplnena') return chyba(409, 'vyplneno');
