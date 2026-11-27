@@ -38,7 +38,8 @@ type KartaUi = {
   firma?: { nazev: string } | null;
   jazyk: GuideLang;
   penize: { ceka: number; kVyplate: number; vyplacenoCelkem: number };
-  doporuceni: { krestniJmenoKamarada: string; datumPoptavky: string; stav: string }[];
+  statistiky?: { poptavky: number; potvrzene: number; probehle: number };
+  doporuceni: { krestniJmenoKamarada: string; datumPoptavky: string; stav: string; odmena?: number }[];
 };
 
 function mesic(iso: string): string {
@@ -90,6 +91,9 @@ export default function DoporucitelKartaPage() {
   const odkaz = karta
     ? `${baseProTip()}/poptavka?od=${encodeURIComponent(karta.kod)}&lang=${encodeURIComponent(lang)}`
     : '';
+  const rezervovatUrl = karta
+    ? `${baseProTip()}/poptavka?od=${encodeURIComponent(karta.kod)}&lang=${encodeURIComponent(lang)}&pro=sebe`
+    : '/poptavka';
 
   const whatsapp = useCallback(() => {
     if (!odkaz) return;
@@ -152,7 +156,7 @@ export default function DoporucitelKartaPage() {
   if (!pripraveno || !klic) {
     return (
       <main className="dop-page">
-        <div className="dop-karta">
+        <div className="dop-klub">
           <p className="dop-lead">{pripraveno ? 'Chybí odkaz na kartu.' : 'Načítám…'}</p>
         </div>
       </main>
@@ -162,100 +166,121 @@ export default function DoporucitelKartaPage() {
   if (!karta) {
     return (
       <main className="dop-page">
-        <div className="dop-karta">
+        <div className="dop-klub">
           <p className="dop-lead">{chyba || 'Načítám…'}</p>
         </div>
       </main>
     );
   }
 
+  const celeJmeno =
+    karta.typ === 'firma' && karta.firma?.nazev
+      ? karta.firma.nazev
+      : `${karta.jmeno} ${karta.prijmeni || ''}`.trim();
+  const probehle = karta.statistiky?.probehle ?? karta.doporuceni.filter((d) => d.stav === 'pobyt-probehl' || d.stav === 'vyplaceno' || d.stav === 'pripsano').length;
+
   return (
-    <main className="dop-page">
-      <div className="dop-karta">
-        <h1 className="dop-h1">Moje doporučení</h1>
-        <p className="dop-lead">
-          {karta.jmeno} {karta.prijmeni || ''}
-          {karta.typ === 'firma' && karta.firma?.nazev ? ` (${karta.firma.nazev})` : ''}
-        </p>
-        <p className="dop-lead">Váš odkaz pro lidi, které chcete pozvat</p>
-        <p className="dop-odkaz">{odkaz.replace('&lang=', '\n&lang=')}</p>
-        <p className="dop-lead dop-lead--blok">
-          Když někdo přes tento odkaz pošle poptávku, uvidíme, že jde od vás.
-        </p>
-        <div className="dop-radky" style={{ flexDirection: 'column' }}>
-          <button type="button" onClick={() => setUkazEmail((v) => !v)}>
+    <main className="dop-page" lang={lang}>
+      <div className="dop-shell">
+        <div className="dop-klub">
+          <div className="dop-karticka">
+            <div className="k1">VIVIEN CLUB</div>
+            <div className="k2">{celeJmeno}</div>
+            <div className="k3">Doporučitel</div>
+          </div>
+
+          <div className="dop-duo">
+            <button type="button" className="dop-vC" onClick={() => setUkazEmail(false)}>
+              <b>Doporučit</b>
+              <i>přítel má 5 %</i>
+            </button>
+            <a className="dop-vC" href={rezervovatUrl}>
+              <b>Rezervovat pro sebe</b>
+              <i>váš 1. pobyt 5 %</i>
+            </a>
+          </div>
+
+          <p className="dop-sub">Váš odkaz pro klienty</p>
+          <div className="dop-odkaz">{odkaz}</div>
+
+          <button type="button" className="dop-cta" onClick={() => setUkazEmail((v) => !v)}>
             {t(blizciEmail, lang)}
           </button>
-          <button type="button" onClick={whatsapp}>
+          <button type="button" className="dop-cta2" onClick={whatsapp}>
             {t(blizciWhatsapp, lang)}
           </button>
-          <button type="button" onClick={() => void kopie()}>
+          <button type="button" className="dop-cta3" onClick={() => void kopie()}>
             {t(blizciKopie, lang)}
           </button>
-        </div>
-        {ukazEmail ? (
-          <form
-            className="dop-form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              void tipEmail();
-            }}
-          >
-            <label>
-              {t(tipEmailLabel, lang)}
-              <input type="email" value={emailKam} onChange={(e) => setEmailKam(e.target.value)} required />
-            </label>
-            <label>
-              {t(tipJmenoLabel, lang)}
-              <input value={jmeno} onChange={(e) => setJmeno(e.target.value)} required />
-            </label>
-            <button type="submit" className="dop-cta" disabled={cekam}>
-              {t(tipOdeslat, lang)}
+
+          {ukazEmail ? (
+            <form
+              className="dop-form"
+              style={{ marginTop: 12 }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                void tipEmail();
+              }}
+            >
+              <label>
+                {t(tipEmailLabel, lang)}
+                <input type="email" value={emailKam} onChange={(e) => setEmailKam(e.target.value)} required />
+              </label>
+              <label>
+                {t(tipJmenoLabel, lang)}
+                <input value={jmeno} onChange={(e) => setJmeno(e.target.value)} required />
+              </label>
+              <button type="submit" className="dop-cta" disabled={cekam}>
+                {t(tipOdeslat, lang)}
+              </button>
+              <p className="dop-muted">{t(tipSoukromi, lang)}</p>
+            </form>
+          ) : null}
+
+          <div className="dop-stat">
+            <div>
+              <strong>{probehle}</strong>
+              <span>přijeli</span>
+            </div>
+            <div>
+              <strong>{karta.penize.ceka}</strong>
+              <span>Kč čeká</span>
+            </div>
+            <div>
+              <strong>{karta.penize.kVyplate}</strong>
+              <span>k výplatě</span>
+            </div>
+          </div>
+
+          <p className="dop-sub">Přátelé</p>
+          <ul className="dop-list">
+            {karta.doporuceni.length === 0 ? <li>Zatím nikdo nepřišel.</li> : null}
+            {karta.doporuceni.map((d, i) => (
+              <li key={`${d.krestniJmenoKamarada}-${i}`}>
+                <span>
+                  {d.krestniJmenoKamarada || 'host'} · {mesic(d.datumPoptavky)}
+                </span>
+                <span className="st">
+                  {typeof d.odmena === 'number' && d.odmena > 0 ? `${d.odmena} Kč` : d.stav}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {karta.penize.kVyplate > 0 ? (
+            <button type="button" className="dop-cta" disabled={cekam} onClick={() => void pozadatVyplatu()}>
+              Požádat o výplatu
             </button>
-            <p className="dop-lead" style={{ fontSize: '0.8rem' }}>
-              {t(tipSoukromi, lang)}
-            </p>
-          </form>
-        ) : null}
+          ) : null}
 
-        <div className="dop-stat">
-          <div>
-            <strong>{karta.penize.ceka}</strong>
-            čeká
-          </div>
-          <div>
-            <strong>{karta.penize.kVyplate}</strong>
-            k výplatě
-          </div>
-          <div>
-            <strong>{karta.penize.vyplacenoCelkem}</strong>
-            vyplaceno
-          </div>
+          <p className="dop-muted" style={{ marginTop: '1rem' }}>
+            <Link href="/doporucitel/registrace" style={{ color: '#c9a84c' }}>
+              Podmínky programu
+            </Link>
+          </p>
+          {hlaska ? <p className="dop-hlaska">{hlaska}</p> : null}
+          {chyba ? <p className="dop-hlaska">{chyba}</p> : null}
         </div>
-
-        <h2 className="dop-h1" style={{ fontSize: '1.25rem' }}>
-          Přátelé
-        </h2>
-        <ul className="dop-list">
-          {karta.doporuceni.length === 0 ? <li>Zatím nikdo nepřišel.</li> : null}
-          {karta.doporuceni.map((d, i) => (
-            <li key={`${d.krestniJmenoKamarada}-${i}`}>
-              {d.krestniJmenoKamarada || 'host'} · {mesic(d.datumPoptavky)} · {d.stav}
-            </li>
-          ))}
-        </ul>
-
-        {karta.penize.kVyplate > 0 ? (
-          <button type="button" className="dop-cta" disabled={cekam} onClick={() => void pozadatVyplatu()}>
-            Požádat o výplatu
-          </button>
-        ) : null}
-
-        <p className="dop-lead" style={{ marginTop: '1rem', fontSize: '0.8rem' }}>
-          <Link href="/doporucitel/registrace">Podmínky programu</Link>
-        </p>
-        {hlaska ? <p className="dop-hlaska">{hlaska}</p> : null}
-        {chyba ? <p className="dop-hlaska">{chyba}</p> : null}
       </div>
     </main>
   );

@@ -99,16 +99,6 @@ export type DoporucitelKarta = {
   zalozil: string;
 };
 
-export type PozvankaDoporucitele = {
-  klic: string;
-  datum: string;
-  /** Poznámka majitele, než si člověk údaje vyplní. */
-  poznamka: string;
-  /** ceka = odkaz poslaný; ke_schvaleni = vyplnil, čeká na vás; vyplnena = schváleno / karta hotová */
-  stav: 'ceka' | 'ke_schvaleni' | 'vyplnena';
-  kod: string | null;
-};
-
 export type UdajeDoporucitele = {
   typ: 'osoba' | 'firma';
   jmeno: string;
@@ -118,7 +108,20 @@ export type UdajeDoporucitele = {
   jazyk: GuideLang;
   firmaNazev?: string;
   firmaIco?: string;
+  firmaSidlo?: string;
   novinky?: boolean;
+};
+
+export type PozvankaDoporucitele = {
+  klic: string;
+  datum: string;
+  /** Poznámka majitele, než si člověk údaje vyplní. */
+  poznamka: string;
+  /** ceka = odkaz poslaný; ke_schvaleni = vyplnil, čeká na vás; vyplnena = schváleno / karta hotová */
+  stav: 'ceka' | 'ke_schvaleni' | 'vyplnena';
+  kod: string | null;
+  /** Údaje z formuláře, dokud neschválíte. */
+  udaje?: UdajeDoporucitele;
 };
 
 export type DoporucitelPravidla = {
@@ -369,7 +372,7 @@ function kartaZUdaju(
             ico: (vstup.firmaIco || '').trim(),
             dic: '',
             nazev: (vstup.firmaNazev || '').trim(),
-            sidlo: '',
+            sidlo: (vstup.firmaSidlo || '').trim(),
             platceDph: false,
           }
         : null,
@@ -472,20 +475,54 @@ export async function seznamPozvanek(store: ProcessStore): Promise<PozvankaDopor
   return out;
 }
 
-/** Člověk vyplnil pozvánku. Podruhé už karta nevznikne. */
+/** Člověk vyplnil pozvánku. Karta vznikne až po vašem schválení. */
+export async function vyplnPozvanku(
+  store: ProcessStore,
+  klicRaw: string,
+  vstup: UdajeDoporucitele,
+): Promise<PozvankaDoporucitele | null> {
+  const poz = await nactiPozvanku(store, klicRaw);
+  if (!poz || poz.stav !== 'ceka') return null;
+  const dalsi: PozvankaDoporucitele = {
+    ...poz,
+    stav: 'ke_schvaleni',
+    udaje: vstup,
+  };
+  await setJson(store, `dop-pozvanka:${poz.klic}`, dalsi);
+  return dalsi;
+}
+
+/** Schválíte (případně po úpravě údajů). Vznikne karta. */
+export async function schvalPozvanku(
+  store: ProcessStore,
+  klicRaw: string,
+  uprava?: Partial<UdajeDoporucitele>,
+): Promise<DoporucitelKarta | null> {
+  const poz = await nactiPozvanku(store, klicRaw);
+  if (!poz || poz.stav !== 'ke_schvaleni' || !poz.udaje) return null;
+  const vstup: UdajeDoporucitele = { ...poz.udaje, ...uprava };
+  const karta = kartaZUdaju(await volnyKod(store), vstup, 'majitel', 'pozvanka');
+  if (poz.poznamka) karta.poznamka = poz.poznamka;
+  await ulozKartu(store, karta);
+  const hotovo: PozvankaDoporucitele = {
+    ...poz,
+    stav: 'vyplnena',
+    kod: karta.kod,
+    udaje: vstup,
+  };
+  await setJson(store, `dop-pozvanka:${poz.klic}`, hotovo);
+  return karta;
+}
+
+/** @deprecated Použij vyplnPozvanku + schvalPozvanku. Zůstává pro staré testy. */
 export async function dokonciPozvanku(
   store: ProcessStore,
   klicRaw: string,
   vstup: UdajeDoporucitele,
 ): Promise<DoporucitelKarta | null> {
-  const poz = await nactiPozvanku(store, klicRaw);
-  if (!poz || poz.stav !== 'ceka') return null;
-  const karta = kartaZUdaju(await volnyKod(store), vstup, 'majitel', 'pozvanka');
-  if (poz.poznamka) karta.poznamka = poz.poznamka;
-  await ulozKartu(store, karta);
-  const hotovo: PozvankaDoporucitele = { ...poz, stav: 'vyplnena', kod: karta.kod };
-  await setJson(store, `dop-pozvanka:${poz.klic}`, hotovo);
-  return karta;
+  const poz = await vyplnPozvanku(store, klicRaw, vstup);
+  if (!poz) return null;
+  return schvalPozvanku(store, poz.klic);
 }
 
 export function jmenoDoporucitele(karta: DoporucitelKarta): string {

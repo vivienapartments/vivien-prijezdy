@@ -23,11 +23,22 @@ type Pravidla = {
   minVyplata: number;
 };
 
+type Udaje = {
+  typ?: 'osoba' | 'firma';
+  jmeno?: string;
+  prijmeni?: string;
+  email?: string;
+  telefon?: string;
+  jazyk?: string;
+  firmaNazev?: string;
+};
+
 type Pozvanka = {
   klic: string;
   poznamka: string;
   stav: 'ceka' | 'ke_schvaleni' | 'vyplnena';
   kod: string | null;
+  udaje?: Udaje;
 };
 
 const ZPRAVA_VYCHOZI =
@@ -49,6 +60,13 @@ export function DoporuciteleClient() {
   const [zprava, setZprava] = useState(ZPRAVA_VYCHOZI);
   const [cekam, setCekam] = useState(false);
   const [hlaska, setHlaska] = useState<string | null>(null);
+  const [editace, setEditace] = useState<{
+    klic: string;
+    jmeno: string;
+    prijmeni: string;
+    telefon: string;
+    email: string;
+  } | null>(null);
 
   const nacti = useCallback(async () => {
     const res = await fetch('/api/prehled/doporucitele');
@@ -120,20 +138,97 @@ export function DoporuciteleClient() {
       const dig = jenCisliceTel(telefon);
       const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 
-      if (kanal === 'whatsapp') {
+      if (kanal === 'email') {
+        const mailRes = await fetch('/api/prehled/doporucitele', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            akce: 'poslat-email',
+            email: email.trim(),
+            klic: json.pozvanka.klic,
+          }),
+        });
+        const mailJson = (await mailRes.json()) as {
+          ok?: boolean;
+          poslano?: boolean;
+          mailto?: boolean;
+          odkaz?: string;
+        };
+        if (!mailRes.ok || !mailJson.ok) {
+          setHlaska('E-mail se nepodařilo odeslat.');
+          return;
+        }
+        if (mailJson.mailto) {
+          const mailto = `mailto:${encodeURIComponent(email.trim())}?subject=${encodeURIComponent('Doporučení VIVIEN')}&body=${encodeURIComponent(text)}`;
+          window.location.href = mailto;
+          setHlaska('Otevřel se e-mail v telefonu (bez HTML vzhledu). Na ostře odejde hezký mail.');
+        } else {
+          setHlaska('E-mail s fotkou a tlačítkem je odeslaný. Otevře stejnou stránku jako WhatsApp.');
+        }
+      } else if (kanal === 'whatsapp') {
         window.open(odkazWhatsAppPrehled(dig, text, ua), '_blank');
-      } else if (kanal === 'sms') {
-        window.location.href = smsOdkaz(`+${dig}`, text, jeIos(ua));
+        setHlaska('WhatsApp je otevřený. Odkaz vede na stejnou stránku vyplnění jako e-mail.');
       } else {
-        const mailto = `mailto:${encodeURIComponent(email.trim())}?subject=${encodeURIComponent('Doporučení VIVIEN')}&body=${encodeURIComponent(text)}`;
-        window.location.href = mailto;
+        window.location.href = smsOdkaz(`+${dig}`, text, jeIos(ua));
+        setHlaska('SMS je připravená. Odkaz vede na stejnou stránku vyplnění.');
       }
 
-      setHlaska('Odkaz je připravený a zpráva se otevírá.');
       setNovy(false);
       setTelefon('');
       setEmail('');
       setZprava(ZPRAVA_VYCHOZI);
+      await nacti();
+    } finally {
+      setCekam(false);
+    }
+  }
+
+  function otevriSchvaleni(p: Pozvanka) {
+    const u = p.udaje || {};
+    setEditace({
+      klic: p.klic,
+      jmeno: u.jmeno || '',
+      prijmeni: u.prijmeni || '',
+      telefon: u.telefon || '',
+      email: u.email || '',
+    });
+  }
+
+  async function schvalit() {
+    if (!editace) return;
+    setCekam(true);
+    setHlaska(null);
+    try {
+      const res = await fetch('/api/prehled/doporucitele', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          akce: 'schvalit',
+          klic: editace.klic,
+          udaje: {
+            jmeno: editace.jmeno.trim(),
+            prijmeni: editace.prijmeni.trim(),
+            telefon: editace.telefon.trim(),
+            email: editace.email.trim(),
+          },
+        }),
+      });
+      const json = (await res.json()) as {
+        ok?: boolean;
+        chyba?: string;
+        odkazKarta?: string;
+        tajnyKlic?: string;
+      };
+      if (!res.ok || !json.ok) {
+        setHlaska(json.chyba || 'Schválení se nepovedlo.');
+        return;
+      }
+      setEditace(null);
+      setHlaska(
+        json.odkazKarta
+          ? `Schváleno. Odkaz na kartu: ${json.odkazKarta}`
+          : 'Schváleno. Karta je hotová.',
+      );
       await nacti();
     } finally {
       setCekam(false);
@@ -360,12 +455,187 @@ export function DoporuciteleClient() {
         <section style={{ marginBottom: '1rem' }}>
           <h2 style={{ fontSize: '1rem', color: '#ff8a80' }}>Ke schválení ({keSchvaleni.length})</h2>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-            {keSchvaleni.map((p) => (
-              <li key={p.klic} style={{ padding: '0.45rem 0', borderBottom: '1px solid #2c2520', fontSize: '0.9rem' }}>
-                {p.poznamka || 'Vyplněná pozvánka'} · čeká na vás
-              </li>
-            ))}
+            {keSchvaleni.map((p) => {
+              const u = p.udaje;
+              const jmeno =
+                u?.jmeno || u?.prijmeni
+                  ? `${u?.jmeno || ''} ${u?.prijmeni || ''}`.trim()
+                  : p.poznamka || 'Vyplněná pozvánka';
+              return (
+                <li key={p.klic} style={{ padding: '0.55rem 0', borderBottom: '1px solid #2c2520' }}>
+                  <strong>{jmeno}</strong>
+                  {u?.email ? <span style={{ color: '#b7aa98', fontSize: '0.85rem' }}> · {u.email}</span> : null}
+                  <div style={{ marginTop: 8 }}>
+                    <button
+                      type="button"
+                      className="ph-btn"
+                      onClick={() => otevriSchvaleni(p)}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: 18,
+                        border: 0,
+                        background: '#c9a84c',
+                        color: '#1a1510',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Upravit a schválit
+                    </button>
+                    {u?.telefon ? (
+                      <a
+                        href={`tel:${String(u.telefon).replace(/\s+/g, '')}`}
+                        style={{
+                          marginLeft: 8,
+                          padding: '8px 14px',
+                          borderRadius: 18,
+                          border: '1px solid #6a4034',
+                          color: '#d4a08a',
+                          textDecoration: 'none',
+                          display: 'inline-block',
+                        }}
+                      >
+                        Zavolat
+                      </a>
+                    ) : null}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
+        </section>
+      ) : null}
+
+      {editace ? (
+        <section
+          style={{
+            marginBottom: '1.2rem',
+            border: '1px solid #3d342a',
+            borderRadius: 14,
+            padding: '12px 14px',
+            background: '#15110e',
+          }}
+        >
+          <h2 style={{ marginTop: 0, fontSize: '1.1rem', color: '#c9a84c' }}>Ke schválení</h2>
+          <p style={{ color: '#b7aa98', fontSize: '0.9rem' }}>
+            Když má něco špatně, upravte to tady. Pak zavolejte nebo rovnou schvalte.
+          </p>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: '0.82rem', color: '#b7aa98' }}>
+            Jméno
+            <input
+              value={editace.jmeno}
+              onChange={(e) => setEditace({ ...editace, jmeno: e.target.value })}
+              style={{
+                display: 'block',
+                width: '100%',
+                marginTop: 4,
+                padding: 10,
+                borderRadius: 10,
+                border: '1px solid #3d342a',
+                background: '#1c1712',
+                color: '#efe6d8',
+              }}
+            />
+          </label>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: '0.82rem', color: '#b7aa98' }}>
+            Příjmení
+            <input
+              value={editace.prijmeni}
+              onChange={(e) => setEditace({ ...editace, prijmeni: e.target.value })}
+              style={{
+                display: 'block',
+                width: '100%',
+                marginTop: 4,
+                padding: 10,
+                borderRadius: 10,
+                border: '1px solid #3d342a',
+                background: '#1c1712',
+                color: '#efe6d8',
+              }}
+            />
+          </label>
+          <label style={{ display: 'block', marginBottom: 8, fontSize: '0.82rem', color: '#b7aa98' }}>
+            Telefon
+            <input
+              value={editace.telefon}
+              onChange={(e) => setEditace({ ...editace, telefon: e.target.value })}
+              style={{
+                display: 'block',
+                width: '100%',
+                marginTop: 4,
+                padding: 10,
+                borderRadius: 10,
+                border: '1px solid #3d342a',
+                background: '#1c1712',
+                color: '#efe6d8',
+                whiteSpace: 'nowrap',
+              }}
+            />
+          </label>
+          <label style={{ display: 'block', marginBottom: 12, fontSize: '0.82rem', color: '#b7aa98' }}>
+            E-mail
+            <input
+              value={editace.email}
+              onChange={(e) => setEditace({ ...editace, email: e.target.value })}
+              style={{
+                display: 'block',
+                width: '100%',
+                marginTop: 4,
+                padding: 10,
+                borderRadius: 10,
+                border: '1px solid #3d342a',
+                background: '#1c1712',
+                color: '#efe6d8',
+              }}
+            />
+          </label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              type="button"
+              disabled={cekam}
+              onClick={() => void schvalit()}
+              style={{
+                flex: 1,
+                padding: 12,
+                borderRadius: 16,
+                border: 0,
+                background: '#c9a84c',
+                color: '#1a1510',
+                fontWeight: 700,
+              }}
+            >
+              Uložit a schválit
+            </button>
+            <a
+              href={editace.telefon ? `tel:${editace.telefon.replace(/\s+/g, '')}` : undefined}
+              style={{
+                flex: 1,
+                padding: 12,
+                borderRadius: 16,
+                border: '1px solid #6a4034',
+                color: '#d4a08a',
+                textAlign: 'center',
+                textDecoration: 'none',
+                fontWeight: 700,
+              }}
+            >
+              Zavolat
+            </a>
+          </div>
+          <button
+            type="button"
+            onClick={() => setEditace(null)}
+            style={{
+              marginTop: 8,
+              width: '100%',
+              padding: 10,
+              borderRadius: 16,
+              border: '1px solid #3d342a',
+              background: 'transparent',
+              color: '#b7aa98',
+            }}
+          >
+            Zrušit
+          </button>
         </section>
       ) : null}
 

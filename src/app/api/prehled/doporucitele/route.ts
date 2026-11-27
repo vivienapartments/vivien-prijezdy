@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 import {
   nactiKartuPodleKodu,
+  nactiPozvanku,
   nactiPravidla,
   potvrdVyplaceno,
+  schvalPozvanku,
   seznamKaret,
   seznamPozvanek,
   ulozPravidla,
@@ -13,10 +16,17 @@ import {
   type DoporuceniNaKarteStav,
   type DoporucitelPravidla,
   type DoporucitelTyp,
+  type UdajeDoporucitele,
 } from '@/lib/doporucitel-karta';
+import {
+  htmlPozvankaDoporucitele,
+  predmetPozvankaDoporucitele,
+  textPozvankaDoporucitele,
+} from '@/lib/doporucitel-pozvanka-email';
 import { prehledPrihlasen } from '@/lib/prehled-session';
 import { createProcessStore } from '@/lib/store';
 import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
+import { adresaKlub } from '@/lib/verejna-adresa';
 
 export const runtime = 'nodejs';
 const noStore = { 'Cache-Control': 'no-store' };
@@ -62,6 +72,77 @@ export async function POST(req: Request) {
     const poznamka = String(body.poznamka || '').trim().slice(0, 80);
     const pozvanka = await zalozPozvanku(store, poznamka);
     return NextResponse.json({ ok: true, pozvanka }, { headers: noStore });
+  }
+
+  if (akce === 'poslat-email') {
+    const email = String(body.email || '').trim().toLowerCase();
+    if (!email || !email.includes('@')) return chyba(400, 'Chybí e-mail.');
+    let klic = String(body.klic || '').trim();
+    if (!klic) {
+      const poz = await zalozPozvanku(store, email.slice(0, 80));
+      klic = poz.klic;
+    }
+    let base = adresaKlub();
+    try {
+      const u = new URL(req.url);
+      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') base = u.origin;
+    } catch {
+      /* veřejná */
+    }
+    const odkaz = `${base}/doporucitel/pozvanka?p=${encodeURIComponent(klic)}`;
+    const user = process.env.SMTP_USER?.trim();
+    const pass = process.env.SMTP_HESLO?.trim();
+    if (!user || !pass || pass.startsWith('SEM_NAPIS')) {
+      return NextResponse.json({ ok: true, klic, odkaz, poslano: false, mailto: true }, { headers: noStore });
+    }
+    const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+    const majitel = process.env.MAJITEL_EMAIL?.trim();
+    const text = textPozvankaDoporucitele(odkaz);
+    const html = htmlPozvankaDoporucitele(odkaz);
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.seznam.cz',
+      port: 465,
+      secure: true,
+      auth: { user, pass },
+    });
+    await transporter.sendMail({
+      from: `VIVIEN Apartments <${user}>`,
+      to: testMode && majitel ? majitel : email,
+      subject: predmetPozvankaDoporucitele(testMode),
+      text,
+      html,
+    });
+    return NextResponse.json({ ok: true, klic, odkaz, poslano: true }, { headers: noStore });
+  }
+
+  if (akce === 'schvalit') {
+    const klic = String(body.klic || '').trim();
+    const uprava = (body.udaje || undefined) as Partial<UdajeDoporucitele> | undefined;
+    const karta = await schvalPozvanku(store, klic, uprava);
+    if (!karta) return chyba(404, 'Pozvánka ke schválení není.');
+    let base = adresaKlub();
+    try {
+      const u = new URL(req.url);
+      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') base = u.origin;
+    } catch {
+      /* */
+    }
+    const odkazKarta = `${base}/doporucitel?k=${encodeURIComponent(karta.tajnyKlic)}`;
+    return NextResponse.json(
+      {
+        ok: true,
+        karta: verejnaKartaProUi(karta),
+        tajnyKlic: karta.tajnyKlic,
+        odkazKarta,
+      },
+      { headers: noStore },
+    );
+  }
+
+  if (akce === 'detail-pozvanky') {
+    const poz = await nactiPozvanku(store, String(body.klic || ''));
+    if (!poz) return chyba(404, 'Pozvánka nenalezena.');
+    return NextResponse.json({ ok: true, pozvanka: poz }, { headers: noStore });
   }
 
   if (akce === 'novy') {

@@ -1,12 +1,98 @@
 .dop-page {
   min-height: 100dvh;
   margin: 0;
-  padding: 1rem;
+  padding: 0.85rem;
   background: #0d0b0a;
   color: #efe6d8;
   font-family: var(--font-body, 'DM Sans'), system-ui, sans-serif;
   display: flex;
   justify-content: center;
+}
+
+.dop-shell {
+  width: min(26rem, 100%);
+}
+
+.dop-klub {
+  background: #1f1a13;
+  border: 1px solid #40352a;
+  border-radius: 22px;
+  padding: 12px;
+  color: #f2dfc0;
+}
+
+.dop-karticka {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  height: 126px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #d9b88a 0%, #d9b88ad9 50%, #2c2516 150%);
+  color: #1c1712;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  text-align: right;
+  margin-bottom: 12px;
+}
+
+.dop-karticka .k1 {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
+.dop-karticka .k2 {
+  margin-top: 18px;
+  font-family: var(--font-display, 'Cormorant Garamond'), Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.dop-karticka .k3 {
+  margin-top: 4px;
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.dop-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0 8px;
+}
+
+.dop-duo.is-ghost {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.dop-vC {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-height: 78px;
+  padding: 12px 12px 10px;
+  border-radius: 14px;
+  border: 1px solid #8c7352;
+  background: #30271c;
+  color: #f2dfc0;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.dop-vC b {
+  font-size: 0.95rem;
+  color: #d9b88a;
+}
+
+.dop-vC i {
+  font-style: normal;
+  font-size: 0.78rem;
+  color: #a8977d;
+  line-height: 1.3;
 }
 
 .dop-karta {
@@ -28,7 +114,7 @@
 
 .dop-lead {
   margin: 0 0 1rem;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   line-height: 1.45;
   color: #e6dccb;
   text-align: center;
@@ -108,9 +194,43 @@
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  text-align: center;
+  text-decoration: none;
 }
 
-.dop-cta:disabled {
+.dop-cta2 {
+  display: block;
+  width: 100%;
+  margin-top: 0.55rem;
+  padding: 0.75rem;
+  border: 1px solid #c9a84c;
+  border-radius: 22px;
+  background: transparent;
+  color: #c9a84c;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.dop-cta3 {
+  display: block;
+  width: 100%;
+  margin-top: 0.55rem;
+  padding: 0.7rem;
+  border: 1px solid #3d342a;
+  border-radius: 22px;
+  background: #15110e;
+  color: #e8dfc8;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.dop-cta:disabled,
+.dop-cta2:disabled,
+.dop-cta3:disabled {
   opacity: 0.55;
 }
 
@@ -133,6 +253,16 @@
   line-height: 1.4;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+  background: #15110e;
+  border: 1px solid #40352a;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.dop-sub {
+  margin: 14px 0 6px;
+  font-size: 0.85rem;
+  color: #a8977d;
 }
 
 .dop-stat {
@@ -143,17 +273,22 @@
 }
 
 .dop-stat div {
-  border: 1px solid #3d342a;
-  border-radius: 10px;
+  border: 1px solid #40352a;
+  border-radius: 12px;
   padding: 0.6rem 0.4rem;
   text-align: center;
-  background: #15110e;
+  background: #30271c;
 }
 
 .dop-stat strong {
   display: block;
-  color: #c9a84c;
+  color: #d9b88a;
   font-size: 1.1rem;
+}
+
+.dop-stat span {
+  font-size: 0.72rem;
+  color: #a8977d;
 }
 
 .dop-list {
@@ -163,7 +298,23 @@
 }
 
 .dop-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
   padding: 0.55rem 0;
-  border-bottom: 1px solid #2c2520;
+  border-bottom: 1px solid #40352a;
   font-size: 0.9rem;
+}
+
+.dop-list .st {
+  color: #a8977d;
+  font-size: 0.8rem;
+}
+
+.dop-muted {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  color: #a8977d;
+  text-align: center;
+  line-height: 1.4;
 }
