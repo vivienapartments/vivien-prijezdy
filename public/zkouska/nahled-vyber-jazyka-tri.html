@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>3 návrhy · výběr jazyka</title>
+  <style>
+    :root {
+      --bg: #0d0b0a;
+      --gold: #c9a84c;
+      --cream: #f5efe3;
+      --muted: #cbbba8;
+      --field: #241e18;
+      --line: #5a4e40;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #070605;
+      color: var(--cream);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    h1.top {
+      margin: 0;
+      padding: 14px 16px 6px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-weight: 500;
+      font-size: 1.15rem;
+      color: var(--gold);
+      text-align: center;
+    }
+    p.lead {
+      margin: 0 16px 14px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .wrap {
+      display: grid;
+      gap: 18px;
+      padding: 0 12px 40px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .navrh {
+      border: 1px solid #3d342a;
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    .navrh-hlava {
+      padding: 10px 12px;
+      background: #16120e;
+      border-bottom: 1px solid #2a231c;
+      font-size: 0.82rem;
+      color: var(--gold);
+      letter-spacing: 0.02em;
+    }
+    .navrh-hlava b { color: var(--cream); font-weight: 700; }
+    .phone {
+      padding: 0 0 18px;
+      text-align: center;
+    }
+    .hero {
+      height: 120px;
+      background:
+        linear-gradient(to bottom, rgba(13,11,10,0) 40%, var(--bg) 100%),
+        #1a1510 url('/poptavka/doporuceny-zahrada-vecer.webp') center 45% / cover no-repeat;
+    }
+    .logo {
+      width: 52px;
+      height: 52px;
+      margin: -26px auto 8px;
+      border-radius: 50%;
+      display: block;
+      background: #1c1712;
+      border: 1px solid var(--gold);
+    }
+    .tit {
+      margin: 0 0 12px;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--gold);
+    }
+    .btn {
+      display: block;
+      width: calc(100% - 32px);
+      margin: 14px auto 0;
+      padding: 0.85rem 1rem;
+      border: 0;
+      border-radius: 999px;
+      background: var(--gold);
+      color: #1a1510;
+      font: inherit;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    /* 1 · Úzká roletka, text + šipka u sebe uprostřed */
+    .v1-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin: 0 auto;
+      padding: 0.55rem 0.85rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--field);
+      color: var(--cream);
+      font-size: 0.95rem;
+    }
+    .v1-field b { color: var(--gold); font-weight: 500; }
+
+    /* 2 · Krátký rámeček přesně podle textu (fit) */
+    .v2-field {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin: 0 auto;
+      min-width: 9.5rem;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--field);
+      color: var(--cream);
+      font-size: 0.95rem;
+    }
+    .v2-field b { color: var(--gold); font-weight: 500; margin-left: auto; }
+
+    /* 3 · Pod nadpisem jako jemný odkaz-výběr, bez širokého boxu */
+    .v3-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin: 0 auto;
+      padding: 0.25rem 0.15rem;
+      border: 0;
+      border-bottom: 1px solid var(--gold);
+      background: transparent;
+      color: var(--cream);
+      font-size: 1.05rem;
+    }
+    .v3-field b { color: var(--gold); font-weight: 500; }
+
+    .pozn {
+      margin: 10px 16px 0;
+      font-size: 0.78rem;
+      color: #8a7f72;
+      line-height: 1.35;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1 class="top">3 návrhy · jen políčko jazyka</h1>
+  <p class="lead">Tlačítko Pokračovat zůstává jako dřív (široké). Mění se jen výběr jazyka. Napište 1, 2 nebo 3.</p>
+
+  <div class="wrap">
+    <section class="navrh">
+      <div class="navrh-hlava"><b>1 · Pilulka</b> · text a šipka u sebe uprostřed</div>
+      <div class="phone">
+        <div class="hero"></div>
+        <img class="logo" src="/pruvodce/va-logo-192.png" alt="" />
+        <h2 class="tit">Vyberte jazyk</h2>
+        <div class="v1-field" aria-hidden="true">cz Čeština <b>▾</b></div>
+        <button type="button" class="btn">Pokračovat</button>
+        <p class="pozn">Úzká zlatá pilulka. Nic nezeje prázdnem vpravo.</p>
+      </div>
+    </section>
+
+    <section class="navrh">
+      <div class="navrh-hlava"><b>2 · Krátký rámeček</b> · jen tak široký, kolik text potřebuje</div>
+      <div class="phone">
+        <div class="hero"></div>
+        <img class="logo" src="/pruvodce/va-logo-192.png" alt="" />
+        <h2 class="tit">Vyberte jazyk</h2>
+        <div class="v2-field" aria-hidden="true"><span>cz Čeština</span><b>▾</b></div>
+        <button type="button" class="btn">Pokračovat</button>
+        <p class="pozn">Malý obdélník uprostřed. Šipka hned u textu, ne na konci řádku.</p>
+      </div>
+    </section>
+
+    <section class="navrh">
+      <div class="navrh-hlava"><b>3 · Podtržený výběr</b> · bez širokého boxu</div>
+      <div class="phone">
+        <div class="hero"></div>
+        <img class="logo" src="/pruvodce/va-logo-192.png" alt="" />
+        <h2 class="tit">Vyberte jazyk</h2>
+        <div class="v3-field" aria-hidden="true">cz Čeština <b>▾</b></div>
+        <button type="button" class="btn">Pokračovat</button>
+        <p class="pozn">Nejlitejší. Jazyk jako volba pod nadpisem, tlačítko zůstane hlavní.</p>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
