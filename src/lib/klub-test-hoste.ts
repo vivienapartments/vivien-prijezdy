@@ -35,6 +35,8 @@ type Spec = {
   zdroj?: string;
   predano?: boolean;
   kartaPredana?: boolean;
+  email?: string;
+  telefon?: string;
 };
 
 function radek(
@@ -477,6 +479,32 @@ const SPECS: Spec[] = [
     predano: true,
     kartaPredana: true,
   },
+  {
+    tajnyKlic: 'test-tomek-pravoslav',
+    jmeno: 'Tomek',
+    prijmeni: 'Pravoslav',
+    situac: 'Zkouška majitele · po odjezdu (přímá)',
+    utrataKc: 9000,
+    utrataCekaKc: 0,
+    kreditKc: 0,
+    praveBydli: false,
+    nadchazejici: [],
+    pobyty: [
+      radek('2026-11-20', '2026-11-23', 'V1', { kc: 4500 }),
+      radek('2026-10-01', '2026-10-03', 'V2', { kc: 4500 }),
+    ],
+    pratele: [],
+    rezervaceId: 'TESTTOMEK',
+    apt: 'V1',
+    prijezd: '2026-11-20',
+    odjezd: '2026-11-23',
+    cenaTed: 4500,
+    zdroj: 'přímá',
+    predano: true,
+    kartaPredana: true,
+    email: 'info@vivienapartments.cz',
+    telefon: '+420777702272',
+  },
 ];
 
 function zeSpec(s: Spec) {
@@ -493,8 +521,8 @@ function zeSpec(s: Spec) {
     stav: 'aktivni',
     jmeno: s.jmeno,
     prijmeni: s.prijmeni,
-    email: 'info@vivienapartments.cz',
-    telefon: '+420777702272',
+    email: s.email || 'info@vivienapartments.cz',
+    telefon: s.telefon || '+420600000000',
     jazyk: 'cs',
     rezervace: [s.rezervaceId],
     firma: s.firmaNazev

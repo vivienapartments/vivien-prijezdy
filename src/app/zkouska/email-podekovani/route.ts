@@ -10,20 +10,20 @@ export function GET(req: Request) {
   const barvaRaw = (u.searchParams.get('barva') || u.searchParams.get('v') || 'stribrna').toLowerCase();
   const zlata = barvaRaw === 'zlata' || barvaRaw === '2' || barvaRaw === 'zlaty';
   const asset = `${u.protocol}//${u.host}`;
-  const odkazKarty = `${asset}/klub?k=test-anna-booking-po`;
+  const odkazKarty = `${asset}/klub?k=test-tomek-pravoslav`;
 
   const klub = {
     odkazKarty,
-    jmeno: 'Anna Šťastná',
-    urovenId: 'host',
-    urovenNazev: 'Náš host',
-    slevaPct: 5,
-    booking: true,
+    jmeno: 'Tomek Pravoslav',
+    urovenId: 'staly',
+    urovenNazev: 'Věrný host',
+    slevaPct: 6,
+    booking: false,
     urovenNova: false,
-    dalsiNazev: 'Věrný host',
-    dalsiPct: 6,
-    chybiKc: 8000,
-    pruhPct: 5,
+    dalsiNazev: 'Bronzový host',
+    dalsiPct: 7,
+    chybiKc: 3000,
+    pruhPct: 60,
     kartaReprezentacni: true,
     textPodKartou: 'Pro hosty máme nový VIVIEN Klub. Klepněte na kartu a uvidíte své výhody.',
     navrhKarty: 1 as const,
