@@ -1684,6 +1684,20 @@ export async function POST(request: Request): Promise<NextResponse> {
         vystraha: false,
       };
     }
+    // Hledání na Domů najde i starší odjezdy (mimo 14 dní). Menu je neukáže, ale poslat musí jít.
+    if (!zprava && druh === 'podekovani') {
+      const { muzePodekovatKdykoliv, textPodekovani } = await import('@/lib/podekovani');
+      if (muzePodekovatKdykoliv(rec, dnesAkce)) {
+        const { NAZEV } = await import('@/lib/whatsapp-zprava');
+        zprava = {
+          id: 'podekovani',
+          nazev: NAZEV.podekovani,
+          text: textPodekovani(lang, odkaz ? odkaz.split('#')[0] : null, rec.odjezd, dnesAkce),
+          vychozi: false,
+          vystraha: false,
+        };
+      }
+    }
     if (!zprava) return chyba(400, 'Tahle zpráva teď nejde poslat.');
     const ted = new Date().toISOString();
     const kanalShrnuti =
