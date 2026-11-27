@@ -109,11 +109,32 @@ function rozdelNadpisPobytu(nadpis: string): { termin: string; apt: string; cast
   return { termin: nadpis || '', apt: '', castka: '' };
 }
 
+const PLOCHA_KLIC = 'vivien-club-karta-klic';
+
+function nactiKlicZUrlNeboPameti(): string {
+  if (typeof window === 'undefined') return '';
+  const zUrl = (new URLSearchParams(window.location.search).get('k') || '').trim();
+  if (zUrl) return zUrl;
+  // Ikona na ploše někdy otevře /klub bez ?k= → vezmi poslední úspěšnou kartu.
+  try {
+    return (localStorage.getItem(PLOCHA_KLIC) || '').trim();
+  } catch {
+    return '';
+  }
+}
+
+function ulozKlicProPlochu(k: string) {
+  const v = k.trim();
+  if (!v) return;
+  try {
+    localStorage.setItem(PLOCHA_KLIC, v);
+  } catch {
+    /* paměť */
+  }
+}
+
 export default function KlubClient() {
-  const [klic, setKlic] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return (new URLSearchParams(window.location.search).get('k') || '').trim();
-  });
+  const [klic, setKlic] = useState(() => nactiKlicZUrlNeboPameti());
   const [karta, setKarta] = useState<KlubKartaPohled | null>(null);
   const [chyba, setChyba] = useState<string | null>(null);
   const [nacitam, setNacitam] = useState(true);
@@ -127,8 +148,16 @@ export default function KlubClient() {
   const [ukazPodekovani, setUkazPodekovani] = useState(false);
   const [podekovaniId, setPodekovaniId] = useState<PodekovaniVariantaId>('1');
   useEffect(() => {
-    const p = new URLSearchParams(window.location.search);
-    setKlic((p.get('k') || '').trim());
+    const nacteny = nactiKlicZUrlNeboPameti();
+    setKlic(nacteny);
+    // Když ikona otevřela /klub bez k, doplň ho do adresy (ať jde sdílet / obnovit).
+    if (nacteny && typeof window !== 'undefined') {
+      const u = new URL(window.location.href);
+      if (!(u.searchParams.get('k') || '').trim()) {
+        u.searchParams.set('k', nacteny);
+        window.history.replaceState(null, '', `${u.pathname}?${u.searchParams.toString()}${u.hash}`);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -150,6 +179,7 @@ export default function KlubClient() {
         if (!alive) return;
         if (json.ok && json.karta) {
           setKarta(json.karta);
+          ulozKlicProPlochu(json.karta.tajnyKlic || klic);
           setDopOpen(json.karta.pohled === 'doporucitel');
           setChyba(null);
           const q = new URLSearchParams(window.location.search);

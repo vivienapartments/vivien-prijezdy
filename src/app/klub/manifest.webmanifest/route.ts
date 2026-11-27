@@ -24,6 +24,7 @@ export async function GET(req: Request) {
       return OSTRA;
     }
   })();
+  /** Query v start_url musí zůstat: ikona na ploše jinak otevře /klub bez k = „kartu nejde otevřít“. */
   const cesta = `/klub?k=${encodeURIComponent(k)}`;
   const manifestUrl = `${origin}/klub/manifest.webmanifest?k=${encodeURIComponent(k)}`;
   /** Oddělit od Adminu. Vždy Club, nikdy Klub. Preview = vyvíjen. */
@@ -32,13 +33,16 @@ export async function GET(req: Request) {
   const kratce = zkouska ? 'Club vyvíjen' : 'VIVIEN Club';
 
   const telo = {
-    id: `/klub#${encodeURIComponent(k)}`,
+    id: `club:${encodeURIComponent(k)}`,
     name: nazev,
     short_name: kratce,
     description: 'Karta VIVIEN Clubu',
     start_url: cesta,
-    /** Jen /klub, ať se neplete s Adminem (/prehled). */
-    scope: '/klub',
+    /**
+     * Scope celý web: ikona musí umět /klub?k=… i /api/klub/….
+     * Od Adminu (/prehled) se liší jménem a id.
+     */
+    scope: '/',
     display: 'standalone',
     background_color: '#1c1712',
     theme_color: '#1c1712',

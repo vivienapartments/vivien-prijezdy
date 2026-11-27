@@ -259,7 +259,7 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
           lang={lang}
           token={token}
           manifestHref={`/klub/manifest.webmanifest?k=${encodeURIComponent(token)}`}
-          swScope="/klub"
+          swScope="/"
           shortNazev="VIVIEN Club"
           jenMobil
           skrytTlacitko
