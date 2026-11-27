@@ -1926,6 +1926,13 @@
   color: var(--sec, #a89c86);
 }
 
+.ph-predano-dotaz--karta {
+  a {
+    color: var(--color-gold, #c9a84c);
+    word-break: break-all;
+  }
+}
+
 .ph-karta-overlay {
   position: fixed;
   inset: 0;

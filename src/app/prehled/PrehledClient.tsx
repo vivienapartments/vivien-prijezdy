@@ -4092,6 +4092,96 @@ export function PrehledClient({
         Předat apartmán
       </button>
     );
+    /** Kam poslat kartu: hned pod tlačítkem (ne až po odchodu z karty). */
+    const kanalKartyPodTlacitkem =
+      oknoKarty?.rezervace === row.rezervace ? (
+        <div className="ph-predano-dotaz ph-predano-dotaz--karta">
+          <p>
+            <strong>Předat · {oknoKarty.jmeno}</strong>
+          </p>
+          <p>Kam poslat odkaz na kartu s průvodcem. Po odeslání uvidí host kódy.</p>
+          {oknoKarty.testRezim && oknoKarty.odkaz ? (
+            <p>
+              <a href={oknoKarty.odkaz} target="_blank" rel="noopener noreferrer">
+                Otevřít kartu, kterou host uvidí
+              </a>
+            </p>
+          ) : null}
+          <div className="ph-predano-dotaz__ctyrka" role="group" aria-label="Kam poslat kartu">
+            <div className="ph-potvrzeni__akce">
+              <button
+                type="button"
+                disabled={cekam !== null || !oknoKarty.telefonWa}
+                title={!oknoKarty.telefonWa ? 'Chybí telefon z check-inu' : undefined}
+                onClick={() => void kanalKarty(row, 'whatsapp')}
+              >
+                WhatsApp
+              </button>
+              <button
+                type="button"
+                disabled={cekam !== null || !oknoKarty.telefonWa}
+                title={!oknoKarty.telefonWa ? 'Chybí telefon z check-inu' : undefined}
+                onClick={() => void kanalKarty(row, 'sms')}
+              >
+                SMS
+              </button>
+            </div>
+            <div className="ph-potvrzeni__akce">
+              <button
+                type="button"
+                disabled={
+                  cekam !== null || !oknoKarty.email || oknoKarty.emailRelay || oknoKarty.emailOdeslan
+                }
+                title={
+                  oknoKarty.emailRelay
+                    ? 'adresa z Bookingu'
+                    : !oknoKarty.email
+                      ? 'Chybí e-mail z check-inu'
+                      : undefined
+                }
+                onClick={() => void kanalKarty(row, 'email')}
+              >
+                E-mail
+              </button>
+              {!predanoRadku(row) ? (
+                <button type="button" disabled={cekam !== null} onClick={() => void predaniBezKarty(row)}>
+                  Předat bez karty
+                </button>
+              ) : (
+                <button type="button" onClick={() => zavriOknoKarty(row)}>
+                  Zavřít
+                </button>
+              )}
+            </div>
+            {!predanoRadku(row) ? (
+              <div className="ph-potvrzeni__akce">
+                <button type="button" className="ph-predano-dotaz__zrusit" onClick={() => zavriOknoKarty(row)}>
+                  Zavřít
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : cekam === `${row.rezervace}:klub-karta` ? (
+        <p className="ph-karta-poslana">Připravuji kartu…</p>
+      ) : dotazBezKarty === row.rezervace ? (
+        <div className="ph-predano-dotaz">
+          <p>
+            <strong>Předat bez karty?</strong>
+          </p>
+          <p>
+            Host uvidí kódy v průvodci. Kartu mu teď nepošlete. Útrata se započítá až při předání zpět.
+          </p>
+          <div className="ph-potvrzeni__akce">
+            <button type="button" disabled={cekam !== null} onClick={() => void predaniBezKarty(row)}>
+              Ano, předat bez karty
+            </button>
+            <button type="button" className="ph-predano-dotaz__zrusit" onClick={() => setDotazBezKarty(null)}>
+              Ne, jen zavřít
+            </button>
+          </div>
+        </div>
+      ) : null;
     const predaniDotazDruh = dotazPredani?.id === row.rezervace ? dotazPredani.druh : null;
     const predaniDotazJeNedojezd =
       predaniDotazDruh === 'nedojezd' || predaniDotazDruh === 'vratit-nedojezd';
@@ -5399,6 +5489,7 @@ export function PrehledClient({
           <>
             {predaniTlacitko}
             {!predaniDotazJeNedojezd ? predaniDotaz : null}
+            {kanalKartyPodTlacitkem}
           </>
         ) : null}
         {predanoKdy ? (
@@ -5411,6 +5502,7 @@ export function PrehledClient({
             >
               {row.kartaPredana ? 'Poslat kartu znovu' : 'Poslat kartu'}
             </button>
+            {kanalKartyPodTlacitkem}
             {row.kartaPredana
               ? (() => {
                   const stitek = textKartaPoslana(
@@ -5806,6 +5898,7 @@ export function PrehledClient({
                     <>
                       {predaniTlacitko}
                       {!predaniDotazJeNedojezd ? predaniDotaz : null}
+                      {kanalKartyPodTlacitkem}
                     </>
                   )}
                   {ukazZavady ? zavadyBlok : <p className="ph-hlaska">Zatím bez závad.</p>}
@@ -8132,7 +8225,8 @@ export function PrehledClient({
         />
       ) : null}
       {pohledDomu ? <KalendarPrehled /> : null}
-      {oknoKarty
+      {/* Záloha: když okno zůstane otevřené mimo kartu hosta (na kartě je volba pod tlačítkem). */}
+      {oknoKarty && vybrana !== oknoKarty.rezervace
         ? (() => {
             const row =
               radky.find((r) => r.rezervace === oknoKarty.rezervace) ||
@@ -8207,7 +8301,7 @@ export function PrehledClient({
             );
           })()
         : null}
-      {dotazBezKarty
+      {dotazBezKarty && vybrana !== dotazBezKarty
         ? (() => {
             const row =
               radky.find((r) => r.rezervace === dotazBezKarty) ||
