@@ -20,7 +20,6 @@ import {
 } from '@/lib/klub-uroven-ton';
 import {
   KLUB_UROVNE_PRO_LADDER,
-  pokrokUrovne,
   type KlubKartaPohled,
 } from '@/lib/klub-ukazka';
 import type { GuideLang } from '@/lib/types';
@@ -155,6 +154,7 @@ export default function KlubClient() {
           setChyba(null);
           const q = new URLSearchParams(window.location.search);
           const demoPrvni = q.get('prvni') === '1';
+          const chcePlochu = q.get('plocha') === '1';
           const poOdjezdu =
             !json.karta.praveBydli &&
             (json.karta.pobyty?.length || 0) > 0 &&
@@ -165,7 +165,8 @@ export default function KlubClient() {
             (json.karta.ukazka && demoPrvni);
           setUkazPodekovani(Boolean(prvni));
           // Bez poděkování (např. z mailu): detaily rovnou otevřené, jde zase sbalit.
-          setDetailyOpen(Boolean(poOdjezdu && !prvni));
+          // ?plocha=1 z e-mailu: detaily otevřít hned, ať se namountuje Přidat na plochu.
+          setDetailyOpen(Boolean((poOdjezdu && !prvni) || chcePlochu));
           if (prvni) {
             const qPodek = parsePodekovaniQuery(q.get('podekovani'));
             const pobytKlic = klicPoslednihoDokonceneho(json.karta.pobyty);
@@ -251,7 +252,8 @@ export default function KlubClient() {
   const jeFirma = karta?.pohled === 'firma';
   const bookingBez = karta?.bookingRezim === 'bez-klubu';
   const bookingKlub = karta?.bookingRezim === 'po-ubytovani';
-  const maUroven = !jeDop && !bookingBez && !bookingKlub;
+  /** Pruh úrovně i u Bookingu po ubytování (Náš host → Věrný). Bez klubu (ještě bydlí přes Booking) pruh ne. */
+  const maUroven = !jeDop && !bookingBez;
 
   const behem = useMemo(() => {
     if (!karta) return null;
@@ -278,13 +280,6 @@ export default function KlubClient() {
       jeFirma,
     });
   }, [karta, jeFirma, bookingKlub]);
-
-  const pokrok = useMemo(() => {
-    if (!karta || !maUroven || !behem) return null;
-    return pokrokUrovne(behem.zobrazena.id === karta.urovenId ? karta.utrataKc : behem.ocekavanaUtrataKc, {
-      pohled: karta.pohled,
-    });
-  }, [karta, maUroven, behem]);
 
   const odkaz = karta?.odkazDoporuceni || '';
   const ukazToast = useCallback((msg: string) => setToast(msg), []);
@@ -806,8 +801,6 @@ export default function KlubClient() {
       </main>
     );
   }
-
-  void pokrok;
 
   return (
     <main className="klub-page" data-uroven={ton.id} style={pageStyle}>

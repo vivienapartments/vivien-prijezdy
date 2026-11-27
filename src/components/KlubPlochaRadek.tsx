@@ -31,6 +31,7 @@ import {
   plochaNavodIosKroky,
   plochaNavodIosNadpis,
   plochaPridej,
+  plochaUzMate,
   plochaZavrit,
 } from '@/lib/plocha-texty';
 import type { GuideLang } from '@/lib/types';
@@ -45,6 +46,16 @@ type Props = {
   token: string;
   odkazKarty: string;
 };
+
+/** Odkaz z e-mailu „Přidat na plochu“ (`?plocha=1`). */
+function chcePlochuZUrl(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('plocha') === '1';
+  } catch {
+    return false;
+  }
+}
 
 /** Windows zkratka .url do Stažených (když prohlížeč nenabídne instalaci PWA). */
 function stahniZkratkuPc(url: string) {
@@ -92,16 +103,21 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
   const [portalOk, setPortalOk] = useState(false);
   /** Ref, ať setTimeout po klepnutí PC nevidí starou hodnotu ze state. */
   const volbaPcRef = useRef(false);
+  /** Z e-mailu (?plocha=1): zlatý překryv jako u průvodce po odjezdu. */
+  const [zMailu, setZMailu] = useState(false);
+  const [stavHotov, setStavHotov] = useState(false);
 
   const prepocitej = useCallback(async () => {
     if (jeStandalone()) {
       setStav('C');
+      setStavHotov(true);
       return;
     }
     const lokal = nactiPlochaStav(token);
     const nainst = await jePwaNainstalovana();
     if (nainst || lokal === 'hotovo') setStav('B');
     else setStav('A');
+    setStavHotov(true);
   }, [token]);
 
   useEffect(() => {
@@ -110,13 +126,24 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
 
   useEffect(() => {
     setPortalOk(typeof document !== 'undefined');
+    if (chcePlochuZUrl()) setZMailu(true);
   }, []);
 
   /** Stabilní callback – jinak PridejNaPlochu v useEffect spustí nekonečnou smyčku setState. */
   const onReady = useCallback((spust: () => void) => {
     setSpustPridej(() => spust);
   }, []);
-  const onUzMate = useCallback(() => setStav('B'), []);
+  const onUzMate = useCallback(() => {
+    setStav('B');
+    setZMailu(false);
+  }, []);
+  const onVyzvaZmena = useCallback((otevreno: boolean) => {
+    if (!otevreno) setZMailu(false);
+  }, []);
+  const onHotovoZMailu = useCallback(() => {
+    setZMailu(false);
+    void prepocitej();
+  }, [prepocitej]);
   const onTipChrome = useCallback(() => {
     if (volbaPcRef.current) {
       volbaPcRef.current = false;
@@ -129,10 +156,14 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
       posliPlochaNaServer(token);
       setNavod('zkratka');
       setStav('B');
+      setZMailu(false);
       return;
     }
     setNavod('chrome');
   }, [odkazKarty, token]);
+
+  const vyzvaZMailu = zMailu && stavHotov && stav === 'A';
+  const uzMateZMailu = zMailu && stavHotov && (stav === 'B' || stav === 'C');
 
   const klepPridej = useCallback(() => {
     /** Android: jen instalace, bez návodu. iPhone: návod Safari. */
@@ -276,9 +307,36 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
         )
       : null;
 
+  const uzMateOverlay =
+    uzMateZMailu && portalOk
+      ? createPortal(
+          <div
+            className="klub-plocha-navod"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="klub-plocha-uz-h"
+          >
+            <div className="klub-plocha-navod__karta">
+              <p className="klub-plocha-navod__text" id="klub-plocha-uz-h">
+                {t(plochaUzMate, lang)}
+              </p>
+              <button
+                type="button"
+                className="klub-plocha-navod__ok"
+                onClick={() => setZMailu(false)}
+              >
+                {t(plochaZavrit, lang)}
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <div className="klub-plocha">
-      {/* Skrytý helper jen pro BIP / manifest. Návod je v portálu výše. */}
+      {/* Skrytý helper jen pro BIP / manifest. Návod je v portálu výše.
+          Z e-mailu (?plocha=1) ukáže zlatý překryv Přidat na plochu. */}
       <div className="klub-plocha__helper" aria-hidden>
         <PridejNaPlochu
           lang={lang}
@@ -286,8 +344,10 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
           manifestHref={`/klub/manifest.webmanifest?k=${encodeURIComponent(token)}`}
           jenMobil
           skrytTlacitko
+          vyzva={vyzvaZMailu}
+          onVyzvaZmena={onVyzvaZmena}
           onReady={onReady}
-          onHotovo={prepocitej}
+          onHotovo={onHotovoZMailu}
           onUzMate={onUzMate}
           onTipChrome={onTipChrome}
         />
@@ -341,6 +401,7 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
       ) : null}
 
       {overlay}
+      {uzMateOverlay}
     </div>
   );
 }

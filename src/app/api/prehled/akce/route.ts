@@ -1813,6 +1813,11 @@ export async function POST(request: Request): Promise<NextResponse> {
                 dalsiPct: pokrok.dalsiPct,
                 chybiKc: pokrok.chybiKc,
                 pruhPct: pokrok.pct,
+                // Schváleno 27. 11. 2026: stříbrná karta v mailu (ne jen řádek Klub).
+                kartaReprezentacni: true,
+                kartaBarva: 'stribrna',
+                textPodKartou:
+                  'Pro hosty máme nový VIVIEN Klub. Klepněte na kartu a uvidíte své výhody.',
               };
               klubKlientPoMailu = k;
             }

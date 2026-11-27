@@ -497,7 +497,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 0,
       "utrataCeka": 1640,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -519,7 +519,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 2,
       "utrata": 0,
       "utrataCeka": 1650,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -550,7 +550,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 2,
       "utrata": 0,
       "utrataCeka": 9400,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "priradit",
       "rezervace": [
@@ -581,7 +581,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 0,
       "utrataCeka": 8500,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -727,7 +727,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 3853,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -749,7 +749,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 2800,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -771,7 +771,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 4367,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -793,7 +793,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 6950,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -815,7 +815,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 5200,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -837,7 +837,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 2450,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -881,7 +881,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 2,
       "utrata": 6400,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1006,7 +1006,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 0,
       "utrataCeka": 1640,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1028,7 +1028,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 2,
       "utrata": 0,
       "utrataCeka": 1650,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1059,7 +1059,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 0,
       "utrataCeka": 8500,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1081,7 +1081,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 3853,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1103,7 +1103,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 2800,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1125,7 +1125,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 4367,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1147,7 +1147,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 6950,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1169,7 +1169,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 5200,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1191,7 +1191,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 1,
       "utrata": 2450,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
@@ -1235,7 +1235,7 @@ export const KLUB_IMPORT_BH_PRIME_SEED: ImportBhNahled = {
       "pocet": 2,
       "utrata": 6400,
       "utrataCeka": 0,
-      "uroven": "Host",
+      "uroven": "Náš host",
       "klientId": null,
       "akce": "cekajici",
       "rezervace": [
