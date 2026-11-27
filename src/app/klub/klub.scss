@@ -715,6 +715,27 @@
 
 .klub-sip {
   stroke: var(--acc);
+  transition: transform 0.2s ease;
+}
+
+.klub-sec.is-open .klub-sip {
+  transform: rotate(180deg);
+}
+
+.klub-dalsi {
+  margin-top: 10px;
+}
+
+.klub-dalsi__obsah {
+  margin-top: 0.35rem;
+}
+
+.klub-dalsi__obsah > .klub-sec {
+  margin-top: 8px;
+}
+
+.klub-dalsi__obsah > .klub-sec:first-child {
+  margin-top: 0;
 }
 
 .klub-chyba {
@@ -920,9 +941,10 @@
   background: var(--tile);
   border: 1px solid var(--tb);
   color: var(--tx);
-  font-size: 0.82rem;
-  line-height: 1.4;
+  font-size: 0.88rem;
+  line-height: 1.35;
   text-align: center;
+  text-wrap: pretty;
 }
 
 .klub-ramecek-po b {

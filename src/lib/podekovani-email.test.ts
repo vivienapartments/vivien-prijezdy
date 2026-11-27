@@ -62,7 +62,7 @@ describe('podekovani-email', () => {
     expect(html).toContain('color:#8a7f72');
   });
 
-  it('s klubem má PNG kartičku a Otevřít moji kartu', () => {
+  it('s klubem má řádek VIVIEN Klub místo velké kartičky', () => {
     const html = htmlPodekovaniEmail(
       'cs',
       'https://vivien-prijezdy-six.vercel.app/abc',
@@ -83,12 +83,68 @@ describe('podekovani-email', () => {
         pruhPct: 60,
       },
     );
-    expect(html).toContain('karticka-staly.png');
-    expect(html).toContain('Otevřít moji kartu');
+    expect(html).not.toContain('karticka-staly.png');
+    expect(html).not.toContain('Otevřít moji kartu');
+    expect(html).toContain('VIVIEN Klub');
+    expect(html).toContain('vaše karta a výhody');
+    expect(html).toContain('Věrný host');
     expect(html).toContain('Váš pobyt jsme započítali');
     expect(html).toContain('Tímto pobytem máte úroveň');
-    expect(html).toContain('Jana Nováková');
     expect(html).toContain('/klub?k=ukazka-host-po');
     expect(html).not.toContain('Jako poděkování jsme pro vás připravili 3');
+  });
+
+  it('stříbrná karta z podkladu se jménem a Prohlédnout kartu', () => {
+    const html = htmlPodekovaniEmail(
+      'cs',
+      'https://vivien-prijezdy-six.vercel.app/abc',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        odkazKarty: 'https://vivien-prijezdy-six.vercel.app/klub?k=ukazka-host-po',
+        jmeno: 'Anna Šťastná',
+        urovenId: 'host',
+        urovenNazev: 'Náš host',
+        slevaPct: 5,
+        booking: true,
+        kartaReprezentacni: true,
+        textPodKartou: 'Pro hosty máme nový VIVIEN Klub. Klepněte na kartu a uvidíte své výhody.',
+        navrhKarty: 1,
+      },
+    );
+    expect(html).toContain('karticka-stribrny-web-blank.png');
+    expect(html).toContain('Anna Šťastná');
+    expect(html).toContain('Vaše osobní karta VIVIEN Clubu');
+    expect(html).toContain('Prohlédnout kartu');
+    expect(html).toContain('Zjistit více');
+    expect(html).toContain('Pro hosty máme nový VIVIEN Klub');
+    expect(html).toContain('/klub?k=ukazka-host-po');
+    expect(html).not.toContain('vaše karta a výhody');
+  });
+
+  it('zlatá karta bere zlatý podklad', () => {
+    const html = htmlPodekovaniEmail(
+      'cs',
+      'https://vivien-prijezdy-six.vercel.app/abc',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      {
+        odkazKarty: 'https://vivien-prijezdy-six.vercel.app/klub?k=ukazka-host-po',
+        jmeno: 'Anna Šťastná',
+        urovenId: 'host',
+        urovenNazev: 'Náš host',
+        slevaPct: 5,
+        booking: true,
+        kartaReprezentacni: true,
+        kartaBarva: 'zlata',
+      },
+    );
+    expect(html).toContain('karticka-zlaty-web-blank.png');
+    expect(html).toContain('Anna Šťastná');
+    expect(html).toContain('Prohlédnout kartu');
   });
 });

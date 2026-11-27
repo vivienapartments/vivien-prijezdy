@@ -32,7 +32,7 @@ export type KlubPravidla = {
 
 export const VYCHOZI_KLUB_PRAVIDLA: KlubPravidla = {
   urovne: [
-    { id: 'host', nazevHost: 'Host', nazevFirma: 'Partner', odKc: 0, slevaPct: 5 },
+    { id: 'host', nazevHost: 'Náš host', nazevFirma: 'Partner', odKc: 0, slevaPct: 5 },
     { id: 'staly', nazevHost: 'Věrný host', nazevFirma: 'Věrný partner', odKc: 8000, slevaPct: 6 },
     { id: 'bronz', nazevHost: 'Bronzový host', nazevFirma: 'Bronzový partner', odKc: 16000, slevaPct: 7 },
     { id: 'stribrny', nazevHost: 'Stříbrný host', nazevFirma: 'Stříbrný partner', odKc: 25000, slevaPct: 8 },

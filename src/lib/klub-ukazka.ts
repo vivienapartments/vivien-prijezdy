@@ -895,7 +895,7 @@ export function pohledZKarty(
     bookingRezim === 'po-ubytovani' ? 5 : u.slevaPct;
   const urovenNazev =
     bookingRezim === 'po-ubytovani'
-      ? 'Host'
+      ? 'Náš host'
       : pohled === 'firma'
         ? u.nazevFirma
         : u.nazevHost;

@@ -1535,20 +1535,20 @@ export const expiredNadpis: LText = {
 };
 
 export const expiredDopis: LText = {
-  cs: 'Byli jsme rádi, že jsme vás mohli poznat a postarat se o vás. Doufáme, že vám pobyt udělal radost. Kdykoli se budete chtít vrátit, u nás vás vždy rádi uvidíme.',
-  en: 'We were glad to meet you and to look after you. We hope you enjoyed your stay. Whenever you would like to come back, you will always be welcome here.',
-  de: 'Wir haben uns gefreut, Sie kennenzulernen und für Sie da zu sein. Wir hoffen, Ihr Aufenthalt hat Ihnen Freude gemacht. Wann immer Sie wiederkommen möchten, sind Sie bei uns herzlich willkommen.',
-  pl: 'Cieszyliśmy się, że mogliśmy Was poznać i o Was zadbać. Mamy nadzieję, że pobyt sprawił Wam radość. Kiedy tylko zechcecie wrócić, zawsze chętnie Was u nas zobaczymy.',
-  uk: 'Ми були раді познайомитися з вами й подбати про вас. Сподіваємося, що перебування принесло вам радість. Коли б ви не захотіли повернутися, ми завжди будемо раді вас бачити.',
-  'zh-Hant': '很高興認識您，也很高興能照顧您。希望這次住宿讓您感到愉快。無論何時想再回來，我們都很歡迎您。',
-  sv: 'Vi var glada att få träffa er och ta hand om er. Vi hoppas att ni trivdes under vistelsen. När ni än vill komma tillbaka är ni alltid välkomna hos oss.',
-  es: 'Nos alegró conocerles y cuidar de ustedes. Esperamos que hayan disfrutado de su estancia. Siempre que quieran volver, estaremos encantados de recibirles.',
-  hu: 'Örültünk, hogy megismerhettük Önöket, és gondoskodhattunk Önökről. Reméljük, hogy jól érezték magukat nálunk. Bármikor szívesen látjuk Önöket újra.',
-  da: 'Vi var glade for at møde jer og tage os af jer. Vi håber, I har nydt opholdet. Når I har lyst til at komme igen, er I altid velkomne hos os.',
-  fi: 'Olimme iloisia, että saimme tavata teidät ja huolehtia teistä. Toivomme, että viihdyitte. Jos haluatte joskus palata, olette aina tervetulleita.',
-  fr: 'Nous avons été heureux de vous rencontrer et de prendre soin de vous. Nous espérons que vous avez apprécié votre séjour. Chaque fois que vous souhaiterez revenir, vous serez les bienvenus.',
-  it: 'Siamo stati felici di conoscervi e di prenderci cura di voi. Speriamo che il soggiorno vi sia piaciuto. Ogni volta che vorrete tornare, sarete sempre i benvenuti.',
-  pt: 'Ficámos contentes por vos conhecer e cuidar de vocês. Esperamos que tenham gostado da estadia. Sempre que quiserem voltar, serão sempre bem-vindos.',
+  cs: 'Byli jsme rádi, že jsme vás mohli poznat a přivítat u nás. Doufáme, že vám pobyt udělal radost a že se někdy znovu uvidíme.',
+  en: 'We were glad to meet you and welcome you. We hope you enjoyed your stay and that we will see each other again someday.',
+  de: 'Wir haben uns gefreut, Sie kennenzulernen und willkommen zu heißen. Wir hoffen, Ihr Aufenthalt hat Ihnen Freude gemacht und dass wir uns irgendwann wiedersehen.',
+  pl: 'Cieszyliśmy się, że mogliśmy Was poznać i u nas powitać. Mamy nadzieję, że pobyt sprawił Wam radość i że kiedyś znowu się zobaczymy.',
+  uk: 'Ми були раді познайомитися з вами й привітати вас у нас. Сподіваємося, що перебування принесло вам радість і що колись знову побачимося.',
+  'zh-Hant': '很高興認識您並歡迎您。希望這次住宿讓您愉快，也希望有機會再見面。',
+  sv: 'Vi var glada att få träffa er och välkomna er. Vi hoppas att ni trivdes och att vi ses igen någon gång.',
+  es: 'Nos alegró conocerles y darles la bienvenida. Esperamos que hayan disfrutado de su estancia y que nos veamos de nuevo algún día.',
+  hu: 'Örültünk, hogy megismerhettük Önöket és üdvözölhettük Önöket. Reméljük, jól érezték magukat, és egyszer újra találkozunk.',
+  da: 'Vi var glade for at møde jer og byde jer velkommen. Vi håber, I nød opholdet, og at vi ses igen engang.',
+  fi: 'Olimme iloisia, että saimme tavata teidät ja toivottaa teidät tervetulleiksi. Toivomme, että viihdyitte ja että tapaamme joskus uudelleen.',
+  fr: 'Nous avons été heureux de vous rencontrer et de vous accueillir. Nous espérons que vous avez apprécié votre séjour et que nous nous reverrons un jour.',
+  it: 'Siamo stati felici di conoscervi e di darvi il benvenuto. Speriamo che il soggiorno vi sia piaciuto e che ci rivediamo un giorno.',
+  pt: 'Ficámos contentes por vos conhecer e acolher. Esperamos que tenham gostado da estadia e que nos voltemos a ver um dia.',
 };
 
 export const expiredPodpis: LText = {

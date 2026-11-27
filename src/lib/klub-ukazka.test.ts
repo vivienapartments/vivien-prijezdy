@@ -16,7 +16,7 @@ describe('klub-ukazka', () => {
     expect(jeUkazkaKlic('abc')).toBe(false);
   });
 
-  it('booking před = bez klubu, po ubytování = Host 5 %', () => {
+  it('booking před = bez klubu, po ubytování = Náš host 5 %', () => {
     const pred = pohledZKarty(ukazkovaKlientKarta('ukazka-booking-pred'), 'https://example.com', {
       ukazka: true,
     });
@@ -26,7 +26,7 @@ describe('klub-ukazka', () => {
     });
     expect(karta.bookingRezim).toBe('po-ubytovani');
     expect(karta.slevaPct).toBe(5);
-    expect(karta.urovenNazev).toBe('Host');
+    expect(karta.urovenNazev).toBe('Náš host');
     expect(karta.pobyty[0]?.stavText).toMatch(/nepočítá/i);
   });
 

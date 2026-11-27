@@ -25,7 +25,6 @@ import {
   klubBookingPodekovani5,
   klubDoUrovneSablona,
   klubNejvyssiUroven,
-  klubOtevritKartu,
   klubPodekovaniUvod,
   klubRadek1Nadpis,
   klubRadek1PodPred,
@@ -34,6 +33,8 @@ import {
   klubRadek2Pod,
   klubRadek3Nadpis,
   klubRadek3Pod,
+  klubRadekKlubNadpis,
+  klubRadekKlubPod,
   klubTimtoUrovniPred,
   klubVaseUrovenPred,
   klubZapocitali,
@@ -58,6 +59,17 @@ export type PodekovaniKlubEmail = {
   chybiKc?: number | null;
   /** 0–100 vyplnění pruhu. */
   pruhPct?: number;
+  /**
+   * Reprezentativní zlatá karta VIVIEN Klub (ne úroveň hosta).
+   * Celá karta je odkaz na živý klub.
+   */
+  kartaReprezentacni?: boolean;
+  /** Text pod reprezentativní kartou (CS v náhledu, později LText). */
+  textPodKartou?: string;
+  /** Návrh vzhledu 1–3 pro majitele. */
+  navrhKarty?: 1 | 2 | 3;
+  /** Barva podkladu karty v mailu. */
+  kartaBarva?: 'stribrna' | 'zlata';
 };
 
 /** Obrázky v e-mailu přes stálou vercel.app, dokud běží i club. */
@@ -209,15 +221,14 @@ export function textPodekovaniEmail(
     radky.push(
       t(klubPodekovaniUvod, l),
       '',
-      `1. ${t(klubRadek1Nadpis, l)}. ${t(klubRadek1PodPred, l)} ${klub.slevaPct} ${t(klubRadek1PodZa, l)}`,
-      urlRez,
-      `2. ${t(klubRadek2Nadpis, l)}. ${t(klubRadek2Pod, l)}`,
-      urlDop,
-      `3. ${t(klubRadek3Nadpis, l)}. ${t(klubRadek3Pod, l)}`,
-      urlPlo,
-      '',
-      t(klubOtevritKartu, l),
+      `1. ${t(klubRadekKlubNadpis, l)}. ${t(klubRadekKlubPod, l)}`,
       opravVerejnyOdkaz(klub.odkazKarty),
+      `2. ${t(klubRadek1Nadpis, l)}. ${t(klubRadek1PodPred, l)} ${klub.slevaPct} ${t(klubRadek1PodZa, l)}`,
+      urlRez,
+      `3. ${t(klubRadek2Nadpis, l)}. ${t(klubRadek2Pod, l)}`,
+      urlDop,
+      `4. ${t(klubRadek3Nadpis, l)}. ${t(klubRadek3Pod, l)}`,
+      urlPlo,
       '',
     );
   } else {
@@ -292,6 +303,48 @@ function radekVyhody(
 </tr>`;
 }
 
+/**
+ * Karta z webu (blank PNG stříbrná/zlatá) + text verze 1:
+ * jméno, Vaše osobní karta VIVIEN Clubu, Prohlédnout kartu.
+ * VIVIEN CLUB je už v podkladu.
+ */
+function htmlKlasickaKarticka(
+  klub: PodekovaniKlubEmail,
+  urlKarta: string,
+  asset: string,
+  sans: string,
+  serif: string,
+): string {
+  const zlata = klub.kartaBarva === 'zlata';
+  const blank = zlata
+    ? `${asset}/email/karticka-zlaty-web-blank.png`
+    : `${asset}/email/karticka-stribrny-web-blank.png`;
+  const bgColor = zlata ? '#e0b84a' : '#c9ced4';
+  // Podklad 1200×692 ≈ 1,73. V mailu 340 × 196.
+  const w = 340;
+  const h = 196;
+  return `<a href="${urlKarta}" style="text-decoration:none;display:block;max-width:${w}px;margin:0 auto;">
+  <table role="presentation" width="${w}" cellspacing="0" cellpadding="0" style="width:100%;max-width:${w}px;border-radius:16px;overflow:hidden;box-shadow:0 13px 28px rgba(28,23,18,0.28);">
+  <tr>
+    <td background="${blank}" bgcolor="${bgColor}" width="${w}" height="${h}" valign="middle" style="width:${w}px;height:${h}px;background-image:url('${blank}');background-size:cover;background-position:center;background-repeat:no-repeat;border-radius:16px;">
+      <!--[if gte mso 9]><v:rect xmlns:v="urn:schemas-microsoft-com:vml" fill="true" stroke="false" style="width:${w}px;height:${h}px;"><v:fill type="frame" src="${blank}" color="${bgColor}" /><v:textbox inset="0,0,0,0"><![endif]-->
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;height:${h}px;">
+        <tr>
+          <td width="38%" style="font-size:0;line-height:0;">&nbsp;</td>
+          <td valign="middle" style="padding:28px 18px 18px 8px;text-align:right;color:#1c1712;">
+            <div style="font-family:${serif};font-size:28px;line-height:1.1;font-weight:500;">${esc(klub.jmeno)}</div>
+            <div style="font-family:${serif};font-size:13px;line-height:1.3;margin-top:8px;">Vaše osobní karta VIVIEN Clubu</div>
+            <div style="font-family:${sans};font-size:13px;line-height:1.2;margin-top:22px;text-decoration:underline;">Prohlédnout kartu ›</div>
+          </td>
+        </tr>
+      </table>
+      <!--[if gte mso 9]></v:textbox></v:rect><![endif]-->
+    </td>
+  </tr>
+</table>
+</a>`;
+}
+
 function klubHtmlBlok(
   l: GuideLang,
   klub: PodekovaniKlubEmail,
@@ -305,9 +358,8 @@ function klubHtmlBlok(
   ikDarek: string,
   ikTel: string,
 ): string {
-  const partner = Boolean(klub.jeFirma);
-  const karticka = `${asset}/email/karticka-${esc(klub.urovenId)}${partner ? '-partner' : ''}.png`;
   const urlKarta = opravVerejnyOdkaz(klub.odkazKarty).replaceAll('"', '%22');
+  const ikKlub = `${asset}/pruvodce/va-logo-192.png`;
   let urovenHtml: string;
   if (klub.booking) {
     urovenHtml = `<p style="margin:0;font-family:${sans};font-size:15px;line-height:1.45;color:#e8dfc8;text-align:center;">${slevaNbsp(esc(t(klubBookingPodekovani5, l)))}</p>`;
@@ -317,23 +369,32 @@ function klubHtmlBlok(
       : `${esc(t(klubVaseUrovenPred, l))} ${esc(klub.urovenNazev)}.`;
     urovenHtml = `<p style="margin:0;font-family:${sans};font-size:15px;line-height:1.45;color:#e8dfc8;text-align:center;">${esc(t(klubZapocitali, l))}<br><span style="color:#c9a84c;font-weight:700;">${zlaty}</span></p>`;
   }
-  let pruhHtml = '';
-  if (klub.dalsiNazev && klub.chybiKc != null && klub.dalsiPct != null) {
-    const text = vyplnSablonu(t(klubDoUrovneSablona, l), {
-      nazev: klub.dalsiNazev,
-      pct: klub.dalsiPct,
-      kc: klub.chybiKc.toLocaleString('cs-CZ'),
-    });
-    const pctBar = Math.max(4, Math.min(100, Math.round(klub.pruhPct ?? 50)));
-    pruhHtml = `<p style="margin:14px 0 6px;font-family:${sans};font-size:13px;color:#cbbba8;text-align:center;">${slevaNbsp(esc(text))}</p>
-<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 8px;"><tr><td style="background:#3d342a;border-radius:4px;height:8px;">
-<table role="presentation" width="${pctBar}%" cellspacing="0" cellpadding="0"><tr><td style="background:#c9a84c;height:8px;border-radius:4px;font-size:0;line-height:0;">&nbsp;</td></tr></table>
-</td></tr></table>`;
-  } else if (!klub.dalsiNazev) {
-    pruhHtml = `<p style="margin:14px 0 8px;font-family:${sans};font-size:13px;color:#cbbba8;text-align:center;">${esc(t(klubNejvyssiUroven, l))}</p>`;
-  }
   const pod1 = `${t(klubRadek1PodPred, l)} ${klub.slevaPct} ${t(klubRadek1PodZa, l)}`;
+
+  if (klub.kartaReprezentacni) {
+    const textPod = (klub.textPodKartou || '').trim();
+    const kartaHtml = htmlKlasickaKarticka(klub, urlKarta, asset, sans, serif);
+    // „Zjistit více“ hned za textem (za „své výhody“), ne samostatný řádek.
+    const textHtml = textPod
+      ? `<tr><td style="padding:12px 28px 10px;font-family:${sans};font-size:15px;line-height:1.45;color:#e8dfc8;text-align:center;">${slevaNbsp(esc(textPod))} <a href="${urlKarta}" style="color:#c9a84c;text-decoration:underline;white-space:nowrap;">Zjistit více ›</a></td></tr>`
+      : `<tr><td style="padding:2px 24px 10px;text-align:center;"><a href="${urlKarta}" style="font-family:${sans};font-size:14px;color:#c9a84c;text-decoration:underline;">Zjistit více ›</a></td></tr>`;
+    const vyhody = [
+      radekVyhody(ikKal, t(klubRadek1Nadpis, l), pod1, '›', urlRez, sans),
+      radekVyhody(ikDarek, t(klubRadek2Nadpis, l), t(klubRadek2Pod, l), '›', urlDop, sans),
+      radekVyhody(ikTel, t(klubRadek3Nadpis, l), t(klubRadek3Pod, l), '›', urlPlo, sans),
+    ].join('');
+    return `
+<tr><td style="padding:12px 24px 4px;"><div style="border-top:1px solid #3d342a;height:1px;font-size:0;">&nbsp;</div></td></tr>
+<tr><td style="padding:14px 24px 8px;">${urovenHtml}</td></tr>
+<tr><td style="padding:8px 20px 0;text-align:center;">${kartaHtml}</td></tr>
+${textHtml}
+<tr><td style="padding:10px 24px 4px;font-family:${serif};font-size:16px;font-style:italic;color:#e8dfc8;text-align:center;">${esc(t(klubPodekovaniUvod, l))}</td></tr>
+<tr><td style="padding:4px 16px 8px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${vyhody}</table></td></tr>`;
+  }
+
+  // Bez velké kartičky. Řádek VIVIEN Klub otevře živou kartu.
   const vyhody = [
+    radekVyhody(ikKlub, t(klubRadekKlubNadpis, l), t(klubRadekKlubPod, l), '›', urlKarta, sans),
     radekVyhody(ikKal, t(klubRadek1Nadpis, l), pod1, '›', urlRez, sans),
     radekVyhody(ikDarek, t(klubRadek2Nadpis, l), t(klubRadek2Pod, l), '›', urlDop, sans),
     radekVyhody(ikTel, t(klubRadek3Nadpis, l), t(klubRadek3Pod, l), '›', urlPlo, sans),
@@ -341,16 +402,8 @@ function klubHtmlBlok(
   return `
 <tr><td style="padding:12px 24px 4px;"><div style="border-top:1px solid #3d342a;height:1px;font-size:0;">&nbsp;</div></td></tr>
 <tr><td style="padding:14px 24px 8px;">${urovenHtml}</td></tr>
-<tr><td style="padding:8px 24px 0;text-align:center;">
-  <img src="${karticka}" width="520" alt="VIVIEN Klub" style="display:block;width:100%;max-width:520px;height:auto;border:0;margin:0 auto;border-radius:14px;">
-  <div style="font-family:${serif};font-size:16px;color:#e8dfc8;padding-top:8px;">${esc(klub.jmeno)}</div>
-</td></tr>
-<tr><td style="padding:4px 24px 4px;">${pruhHtml}</td></tr>
 <tr><td style="padding:10px 24px 4px;font-family:${serif};font-size:16px;font-style:italic;color:#e8dfc8;text-align:center;">${esc(t(klubPodekovaniUvod, l))}</td></tr>
-<tr><td style="padding:4px 16px 8px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${vyhody}</table></td></tr>
-<tr><td style="padding:10px 24px 6px;text-align:center;">
-  <a href="${urlKarta}" style="display:inline-block;background:#c9a84c;color:#1a1510;font-family:${sans};font-size:16px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:22px;">${esc(t(klubOtevritKartu, l))}</a>
-</td></tr>`;
+<tr><td style="padding:4px 16px 8px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${vyhody}</table></td></tr>`;
 }
 
 /**
@@ -361,14 +414,15 @@ function klubHtmlBlok(
 export function htmlPodekovaniEmail(
   lang: GuideLang | null,
   odkaz: string,
-  _baseUrl?: string,
+  /** Základ pro obrázky (náhled localhost / Preview). Bez něj ostrá vercel.app. */
+  assetBase?: string,
   odkazDoporucit?: string,
   odkazPlocha?: string,
   odkazRezervovat?: string,
   klub?: PodekovaniKlubEmail | null,
 ): string {
   const l = jazyk(lang);
-  const asset = OSTRA_ASSET;
+  const asset = (assetBase || '').trim().replace(/\/$/, '') || OSTRA_ASSET;
   const hlavicka = `${asset}/email/hlavicka-po-odjezdu.jpg`;
   const ikKal = `${asset}/email/ikona-kalendar.png`;
   const ikDarek = `${asset}/email/ikona-darek.png`;

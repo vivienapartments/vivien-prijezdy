@@ -1756,6 +1756,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         let urlDop = `${url}#doporucit`;
         let urlPlo = `${url}${url.includes('?') ? '&' : '?'}plocha=1`;
         let klubEmail: import('@/lib/podekovani-email').PodekovaniKlubEmail | null = null;
+        let klubKlientPoMailu: import('@/lib/klient-karta').KlientKarta | null = null;
         try {
           const { klubZapnut, klubKlic } = await import('@/lib/klub-klic');
           if (klubZapnut()) {
@@ -1806,10 +1807,12 @@ export async function POST(request: Request): Promise<NextResponse> {
                 chybiKc: pokrok.chybiKc,
                 pruhPct: pokrok.pct,
               };
+              klubKlientPoMailu = k;
             }
           }
         } catch {
           klubEmail = null;
+          klubKlientPoMailu = null;
         }
         const vysledek = await posliEmailZpravy({
           to: komu,
@@ -1822,6 +1825,16 @@ export async function POST(request: Request): Promise<NextResponse> {
           rezervace: id,
         });
         odeslanoNa = vysledek.to;
+        // Poděkování už šlo e-mailem → na kartě se znovu neukazuje (klik z mailu = rovnou klub).
+        if (klubKlientPoMailu && !klubKlientPoMailu.podekovaniVidel) {
+          try {
+            const { ulozKlientKartu } = await import('@/lib/klient-karta');
+            klubKlientPoMailu.podekovaniVidel = new Date().toISOString();
+            await ulozKlientKartu(store, klubKlientPoMailu);
+          } catch {
+            /* karta klubu není nutná pro úspěch mailu */
+          }
+        }
       } else {
         const { druhZpravyNaOdchozi } = await import('@/lib/odchozi-host');
         const vysledek = await posliEmailZpravy({

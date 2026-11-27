@@ -25,12 +25,8 @@ import {
 } from '@/lib/klub-ukazka';
 import type { GuideLang } from '@/lib/types';
 import { KlubPlochaRadek } from '@/components/KlubPlochaRadek';
-import {
-  klubATadyKarta,
-  klubRamecekPoOdjezduPred,
-  klubRamecekPoOdjezduZa,
-} from '@/lib/klub-podekovani-texty';
-import { klubBookingRamecekPo, pozdravDalsiOtevreni } from '@/lib/klub-pozdravy';
+import { klubATadyKarta, klubRamecekPoOdjezdu } from '@/lib/klub-podekovani-texty';
+import { pozdravDalsiOtevreni } from '@/lib/klub-pozdravy';
 import { t as tLang } from '@/lib/i18n';
 import {
   klicPoslednihoDokonceneho,
@@ -121,12 +117,13 @@ export default function KlubClient() {
   const [nacitam, setNacitam] = useState(true);
   const [ladder, setLadder] = useState(false);
   const [dopOpen, setDopOpen] = useState(false);
+  /** Po odjezdu: pod vrškem (karta + tlačítka) je zbytek za „Další detaily“. */
+  const [detailyOpen, setDetailyOpen] = useState(false);
   /** Pravidla doporučení pod zlatým „i“ (stejný příklad jako po odjezdu). */
   const [dopPravidla, setDopPravidla] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [ukazPodekovani, setUkazPodekovani] = useState(false);
   const [podekovaniId, setPodekovaniId] = useState<PodekovaniVariantaId>('1');
-
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
     setKlic((p.get('k') || '').trim());
@@ -160,6 +157,8 @@ export default function KlubClient() {
             (poOdjezdu && !json.karta.podekovaniVidel && !json.karta.ukazka) ||
             (json.karta.ukazka && demoPrvni);
           setUkazPodekovani(Boolean(prvni));
+          // Bez poděkování (např. z mailu): detaily rovnou otevřené, jde zase sbalit.
+          setDetailyOpen(Boolean(poOdjezdu && !prvni));
           if (prvni) {
             const qPodek = parsePodekovaniQuery(q.get('podekovani'));
             const pobytKlic = klicPoslednihoDokonceneho(json.karta.pobyty);
@@ -249,7 +248,7 @@ export default function KlubClient() {
     if (bookingKlub) {
       const hostUroven = {
         id: 'host',
-        nazevHost: 'Host',
+        nazevHost: 'Náš host',
         nazevFirma: 'Partner',
         slevaPct: 5,
         odKc: 0,
@@ -305,6 +304,7 @@ export default function KlubClient() {
   }, [odkaz, lang]);
 
   const scrollDop = useCallback(() => {
+    setDetailyOpen(true);
     setDopOpen(true);
     window.setTimeout(() => {
       document.getElementById('klub-dop')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -346,11 +346,12 @@ export default function KlubClient() {
   const urovenNazevKarticka = jeDop
     ? tx.doporucitelUroven
     : bookingKlub
-      ? 'Host'
+      ? 'Náš host'
       : jeFirma
         ? behem.zobrazena.nazevFirma
         : behem.zobrazena.nazevHost;
   const posun = !bookingKlub && behem.posuneUroven ? textPosunUrovne(behem.zobrazena, jeFirma) : null;
+  const [ramecekPred, ramecekZa = ''] = tLang(klubRamecekPoOdjezdu, lang).split('{sleva}');
 
   const serazene = [...KLUB_UROVNE_PRO_LADDER].sort((a, b) => a.odKc - b.odKc);
   const idxZobr = serazene.findIndex((u) => u.id === behem.zobrazena.id);
@@ -686,6 +687,25 @@ export default function KlubClient() {
       </section>
     ) : null;
 
+  const sekceFakturace =
+    jeFirma && !skromnyZbytek ? (
+      <section className="klub-sec">
+        <div className="klub-sn">{tx.fakturace}</div>
+        <div className="klub-fu">
+          {karta.firmaNazev || karta.jmenoZobrazeni}
+          {karta.firmaIco ? ` · IČO ${karta.firmaIco}` : ''}
+          {karta.firmaSidlo ? (
+            <>
+              <br />
+              {karta.firmaSidlo}
+            </>
+          ) : null}
+          <br />
+          {tx.fakturacePozn}
+        </div>
+      </section>
+    ) : null;
+
   const plocha = (
     <KlubPlochaRadek
       lang={lang}
@@ -696,6 +716,15 @@ export default function KlubClient() {
           : `/klub?k=${encodeURIComponent(karta.tajnyKlic)}`
       }
     />
+  );
+
+  const spodniZbytek = (
+    <>
+      {sekcePobyty}
+      {sekceFakturace}
+      {sekceDoporuceni}
+      {!verzeB ? plocha : null}
+    </>
   );
 
   /* —— Booking odkaz z Bookingu: jen průvodce, bez klubu —— */
@@ -825,14 +854,12 @@ export default function KlubClient() {
             kterou uděláte teď.
           </div>
         ) : null}
-        {ukazPodekovani && verzeC && !bookingKlub && !posun ? (
+        {ukazPodekovani && verzeC && !posun ? (
           <div className="klub-ramecek-po">
-            {tLang(klubRamecekPoOdjezduPred, lang)} <b>{urovenNazevKarticka}</b>.{' '}
-            {tLang(klubRamecekPoOdjezduZa, lang)} <b>{slevaPct}&nbsp;%</b>.
+            {ramecekPred}
+            <b>{slevaPct}</b>
+            {ramecekZa}
           </div>
-        ) : null}
-        {ukazPodekovani && verzeC && bookingKlub ? (
-          <div className="klub-ramecek-po">{tLang(klubBookingRamecekPo, lang)}</div>
         ) : null}
 
         {/* 3. Pruh úrovně */}
@@ -929,34 +956,24 @@ export default function KlubClient() {
         {/* Při bydlení / předání: Plocha hned pod „Právě u nás bydlíte“, ať to host nepřehlédne. */}
         {verzeB ? plocha : null}
 
-        {/* Po odjezdu průvodce neotevíráme (zůstává poděkování / karta). */}
-
-        {/* 6. Moje pobyty */}
-        {sekcePobyty}
-
-        {jeFirma && !skromnyZbytek ? (
-          <section className="klub-sec">
-            <div className="klub-sn">{tx.fakturace}</div>
-            <div className="klub-fu">
-              {karta.firmaNazev || karta.jmenoZobrazeni}
-              {karta.firmaIco ? ` · IČO ${karta.firmaIco}` : ''}
-              {karta.firmaSidlo ? (
-                <>
-                  <br />
-                  {karta.firmaSidlo}
-                </>
-              ) : null}
-              <br />
-              {tx.fakturacePozn}
+        {/* Po odjezdu: jen vršek (poděkování, karta, tlačítka). Zbytek za Další detaily. */}
+        {verzeC ? (
+          <div className={`klub-sec klub-dalsi${detailyOpen ? ' is-open' : ''}`}>
+            <div className="klub-sn">
+              <button
+                type="button"
+                onClick={() => setDetailyOpen((v) => !v)}
+                aria-expanded={detailyOpen}
+              >
+                <span>Další detaily</span>
+                <Sipka />
+              </button>
             </div>
-          </section>
-        ) : null}
-
-        {/* 7. Doporučení */}
-        {sekceDoporuceni}
-
-        {/* 8. Plocha (po odjezdu / bez probíhajícího pobytu) */}
-        {!verzeB ? plocha : null}
+            {detailyOpen ? <div className="klub-dalsi__obsah">{spodniZbytek}</div> : null}
+          </div>
+        ) : (
+          spodniZbytek
+        )}
       </div>
       <div className={`klub-toast${toast ? ' is-on' : ''}`} role="status">
         {toast}
