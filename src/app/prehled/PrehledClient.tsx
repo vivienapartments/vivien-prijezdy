@@ -552,6 +552,49 @@ export function PrehledClient({
   const [hledatDotaz, setHledatDotaz] = useState('');
   const [kontaktUlozen, setKontaktUlozen] = useState<Record<string, string>>({});
   const [poptavkaId, setPoptavkaId] = useState<string | null>(null);
+  /** Nevyřízené poptávky / doporučitelé ke schválení → červené tlačítko nahoře. */
+  const [poptavkyDotazy, setPoptavkyDotazy] = useState(0);
+  const [doporucitelDotazy, setDoporucitelDotazy] = useState(0);
+
+  useEffect(() => {
+    let zrus = false;
+    async function nactiDotazy() {
+      try {
+        const [pRes, dRes] = await Promise.all([
+          fetch('/api/prehled/poptavka', { cache: 'no-store' }),
+          fetch('/api/prehled/doporucitele', { cache: 'no-store' }),
+        ]);
+        const pJson = (await pRes.json()) as {
+          ok?: boolean;
+          poptavky?: { vyrizena?: boolean }[];
+        };
+        const dJson = (await dRes.json()) as {
+          ok?: boolean;
+          pocetKeSchvaleni?: number;
+          pozvanky?: { stav?: string }[];
+        };
+        if (zrus) return;
+        if (pJson.ok && Array.isArray(pJson.poptavky)) {
+          setPoptavkyDotazy(pJson.poptavky.filter((x) => !x.vyrizena).length);
+        }
+        if (dJson.ok) {
+          const n =
+            typeof dJson.pocetKeSchvaleni === 'number'
+              ? dJson.pocetKeSchvaleni
+              : (dJson.pozvanky || []).filter((x) => x.stav === 'ke_schvaleni').length;
+          setDoporucitelDotazy(n);
+        }
+      } catch {
+        /* přehled funguje i bez počtů */
+      }
+    }
+    void nactiDotazy();
+    const t = window.setInterval(() => void nactiDotazy(), 60_000);
+    return () => {
+      zrus = true;
+      window.clearInterval(t);
+    };
+  }, []);
 
   useEffect(() => {
     vybranaRef.current = vybrana;
@@ -6526,11 +6569,22 @@ export function PrehledClient({
           </button>
           <h1>Přehled rezervací</h1>
         </div>
-        <p className="ph-dnesek__akce" style={{ margin: '0 0 0.6rem' }}>
-          <Link className="ph-dnesek__odkaz" href="/prehled/poptavky">
+        <nav className="ph-nav2" aria-label="Poptávky a doporučitelé">
+          <Link
+            className={poptavkyDotazy > 0 ? 'ph-nav2__odkaz is-dotaz' : 'ph-nav2__odkaz'}
+            href="/prehled/poptavky"
+          >
             Poptávky
+            {poptavkyDotazy > 0 ? <span className="ph-nav2__pocet">{poptavkyDotazy}</span> : null}
           </Link>
-        </p>
+          <Link
+            className={doporucitelDotazy > 0 ? 'ph-nav2__odkaz is-dotaz' : 'ph-nav2__odkaz'}
+            href="/prehled/doporucitele"
+          >
+            Doporučitelé
+            {doporucitelDotazy > 0 ? <span className="ph-nav2__pocet">{doporucitelDotazy}</span> : null}
+          </Link>
+        </nav>
         <div className="ph-dny" role="tablist" aria-label="Výběr dne">
           {dnyNahled.map((d) => {
             const on = !pohledDomu && d.den === vybranyDen;

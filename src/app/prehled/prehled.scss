@@ -18,6 +18,55 @@
   min-height: 2.75rem;
 }
 
+/* Nahoře: Poptávky | Doporučitelé vedle sebe. Červené = čeká nevyřízený dotaz. */
+.ph-nav2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+}
+
+.ph-nav2__odkaz {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.55rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 55%, transparent);
+  border-radius: 6px;
+  background: rgba(201, 168, 76, 0.12);
+  color: var(--color-gold);
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 500;
+  text-decoration: none;
+  text-align: center;
+}
+
+.ph-nav2__odkaz.is-dotaz {
+  border-color: #c4554c;
+  background: rgba(196, 85, 76, 0.22);
+  color: #ff8a80;
+  font-weight: 700;
+}
+
+.ph-nav2__pocet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #c4554c;
+  color: #fff8f6;
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .ph button.ph-domu {
   flex: 0 0 auto;
   display: inline-flex;

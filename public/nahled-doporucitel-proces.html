@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Náhled · doporučitel (proces)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0b0a;
+      --card: #1c1712;
+      --mid: #3d342a;
+      --tile: #15110e;
+      --gold: #c9a84c;
+      --tx: #efe6d8;
+      --sec: #b7aa98;
+      --cream: #e8dfc8;
+      --acc: #d9b88a;
+      --klub-bg: #1f1a13;
+      --klub-mid: #40352a;
+      --klub-tile: #30271c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: #1a1612;
+      color: var(--tx);
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 16px 12px 40px; }
+    .banner {
+      position: sticky; top: 0; z-index: 20;
+      background: var(--gold); color: #1a1510;
+      text-align: center; font-weight: 700; font-size: 14px; padding: 10px 12px;
+    }
+    .banner span { font-weight: 500; opacity: 0.85; }
+    h1.main {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 500; color: var(--gold); text-align: center;
+      font-size: 1.85rem; margin: 18px 0 6px;
+    }
+    .intro {
+      text-align: center; color: var(--sec); font-size: 0.95rem;
+      max-width: 36rem; margin: 0 auto 18px; line-height: 1.45;
+    }
+    .tabs {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      justify-content: center; margin-bottom: 18px;
+    }
+    .tabs button {
+      border: 1px solid var(--gold); background: transparent; color: var(--gold);
+      border-radius: 18px; padding: 8px 14px; font: inherit; font-size: 0.82rem; cursor: pointer;
+    }
+    .tabs button.is-on { background: var(--gold); color: #1a1510; font-weight: 700; }
+    .stage {
+      display: flex; flex-wrap: wrap; gap: 24px;
+      justify-content: center; align-items: flex-start;
+    }
+    .phone {
+      width: 390px; height: 750px; background: var(--bg);
+      border: 1px solid var(--mid); border-radius: 28px; overflow: hidden;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45); flex-shrink: 0;
+    }
+    .phone-bar {
+      height: 28px; background: #12100e; display: flex; align-items: center;
+      justify-content: center; font-size: 11px; color: var(--sec);
+    }
+    .screen {
+      display: none; height: calc(750px - 28px); overflow: auto;
+      padding: 14px 14px 28px; -webkit-overflow-scrolling: touch;
+    }
+    .screen.is-on { display: block; }
+    .screen.full { padding: 0; }
+    /* Na mobilu telefon přes celou obrazovku */
+    @media (max-width: 440px) {
+      .wrap { padding: 0; max-width: none; }
+      .banner { position: static; font-size: 12px; padding: 8px; }
+      h1.main, .intro, .note { display: none; }
+      .tabs { margin: 8px 6px 10px; gap: 6px; }
+      .tabs button { padding: 7px 10px; font-size: 0.75rem; }
+      .stage { gap: 0; }
+      .phone {
+        width: 100vw; height: calc(100dvh - 90px);
+        border-radius: 0; border: 0; box-shadow: none;
+      }
+      .screen { height: calc(100dvh - 90px - 28px); }
+      .mail, .wa-full { min-height: calc(100dvh - 90px - 28px); }
+    }
+    .note {
+      width: min(340px, 100%); color: var(--sec); font-size: 0.9rem;
+      line-height: 1.5; padding-top: 8px;
+    }
+    .note b { color: var(--cream); font-weight: 600; }
+    .note ol { margin: 8px 0 0; padding-left: 1.2rem; }
+    .logo {
+      display: block; width: 52px; height: 52px; margin: 6px auto 10px; border-radius: 50%;
+    }
+    .h1 {
+      margin: 0 0 8px; font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 500; font-size: 1.55rem; color: var(--gold); text-align: center;
+    }
+    .h1-l { text-align: left; font-size: 1.35rem; }
+    .lead {
+      margin: 0 0 14px; font-size: 0.92rem; line-height: 1.45;
+      color: var(--cream); text-align: justify; hyphens: auto;
+    }
+    .lead-c { text-align: center; }
+    .panel {
+      background: var(--card); border: 1px solid var(--mid);
+      border-radius: 16px; padding: 16px 14px 18px;
+    }
+    .seg { display: flex; gap: 8px; margin-bottom: 12px; }
+    .seg button {
+      flex: 1; padding: 10px; border-radius: 18px; border: 1px solid var(--gold);
+      background: transparent; color: var(--gold); font: inherit; cursor: pointer;
+    }
+    .seg button.is-on { background: var(--gold); color: #1a1510; font-weight: 700; }
+    label.f {
+      display: block; margin-bottom: 10px; font-size: 0.82rem; color: var(--sec);
+    }
+    label.f input, label.f select, label.f textarea {
+      display: block; width: 100%; margin-top: 4px; padding: 11px 12px;
+      border-radius: 10px; border: 1px solid var(--mid); background: var(--tile);
+      color: var(--tx); font: inherit;
+    }
+    label.f textarea { min-height: 120px; resize: vertical; line-height: 1.4; }
+    .check {
+      display: flex; gap: 8px; align-items: flex-start; margin: 10px 0;
+      font-size: 0.85rem; color: var(--cream); line-height: 1.4;
+    }
+    .check input { margin-top: 3px; }
+    .cta, .cta2, .cta3 {
+      display: block; width: 100%; margin-top: 10px; padding: 13px 16px;
+      border-radius: 22px; font: inherit; font-weight: 700; cursor: pointer; text-align: center;
+    }
+    .cta { border: 0; background: var(--gold); color: #1a1510; }
+    .cta2 { border: 1px solid var(--gold); background: transparent; color: var(--gold); }
+    .cta3 { border: 1px solid var(--mid); background: var(--tile); color: var(--cream); font-weight: 600; }
+    .kanal {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px;
+    }
+    .kanal button {
+      padding: 12px 8px; border-radius: 16px; border: 1px solid var(--gold);
+      background: transparent; color: var(--gold); font: inherit; font-size: 0.82rem;
+      font-weight: 700; cursor: pointer;
+    }
+    .muted {
+      font-size: 0.8rem; color: var(--sec); text-align: center;
+      margin-top: 12px; line-height: 1.4;
+    }
+    .wa {
+      background: #0f1a14; border: 1px solid #2a3d32;
+      border-radius: 14px; padding: 14px; margin-top: 8px;
+    }
+    .wa-full {
+      background: #0b1410; min-height: calc(750px - 28px);
+      padding: 14px 14px 28px; display: flex; flex-direction: column;
+    }
+    .wa-top { font-size: 0.85rem; color: #9fbfab; margin-bottom: 12px; }
+    .wa-bubble {
+      background: #1c2b22; border-radius: 12px 12px 4px 12px;
+      padding: 12px 14px; font-size: 0.95rem; line-height: 1.45;
+      color: #e8f0ea; text-align: justify; hyphens: auto;
+    }
+    .wa-bubble a { color: #7dcea0; word-break: break-all; }
+    .wa-link {
+      display: block; margin-top: 10px; padding: 12px 14px;
+      background: #15241c; border: 1px solid #3d5c4a; border-radius: 10px;
+      color: #7dcea0; text-decoration: none; word-break: break-all;
+      font-size: 0.88rem; line-height: 1.35;
+    }
+    /* Karta jako u hostů (doporučitel bez pobytu = vzor C) */
+    .klub {
+      background: var(--klub-bg); border: 1px solid var(--klub-mid);
+      border-radius: 22px; padding: 12px; color: #f2dfc0;
+    }
+    .karticka {
+      position: relative; overflow: hidden; border-radius: 14px; height: 126px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, #d9b88a 0%, #d9b88ad9 50%, #2c2516 150%);
+      color: #1c1712; box-shadow: 0 4px 14px rgba(0,0,0,0.35); text-align: right;
+      margin-bottom: 12px;
+    }
+    .karticka .k1 { font-size: 0.7rem; letter-spacing: 0.12em; font-weight: 700; opacity: 0.75; }
+    .karticka .k2 {
+      margin-top: 18px; font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.35rem; font-weight: 600;
+    }
+    .karticka .k3 { margin-top: 4px; font-size: 0.82rem; opacity: 0.85; }
+    .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 8px; }
+    .vC {
+      display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+      min-height: 78px; padding: 12px 12px 10px;
+      border-radius: 14px; border: 1px solid #8c7352; background: var(--klub-tile);
+      color: #f2dfc0; text-decoration: none; cursor: pointer; font: inherit; text-align: left;
+    }
+    .vC b { font-size: 0.95rem; color: var(--acc); }
+    .vC i { font-style: normal; font-size: 0.78rem; color: #a8977d; line-height: 1.3; }
+    .odk {
+      background: #15110e; border: 1px solid var(--klub-mid); border-radius: 12px;
+      padding: 12px; font-size: 0.8rem; word-break: break-all; color: #f2dfc0;
+      margin: 8px 0 10px; text-align: center;
+    }
+    .row3 {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 12px 0;
+    }
+    .row3 div {
+      background: var(--klub-tile); border: 1px solid var(--klub-mid);
+      border-radius: 12px; padding: 10px 8px; text-align: center;
+    }
+    .row3 b { display: block; color: var(--acc); font-size: 1.05rem; }
+    .row3 span { font-size: 0.72rem; color: #a8977d; }
+    .list { list-style: none; padding: 0; margin: 0; }
+    .list li {
+      display: flex; justify-content: space-between; gap: 8px;
+      padding: 10px 0; border-bottom: 1px solid var(--klub-mid); font-size: 0.9rem;
+    }
+    .list .st { color: #a8977d; font-size: 0.8rem; }
+    .ph-card {
+      background: var(--card); border: 1px solid var(--mid);
+      border-radius: 14px; padding: 12px; margin-bottom: 10px;
+    }
+    .ph-card h3 { margin: 0 0 4px; font-size: 1rem; color: var(--cream); }
+    .ph-meta { font-size: 0.8rem; color: var(--sec); margin-bottom: 10px; line-height: 1.4; }
+    .ph-actions { display: flex; gap: 8px; }
+    .ph-actions button {
+      flex: 1; padding: 10px; border-radius: 16px; font: inherit; font-weight: 700; cursor: pointer;
+    }
+    .ok { background: var(--gold); color: #1a1510; border: 0; }
+    .no { background: transparent; color: #d4a08a; border: 1px solid #6a4034; }
+    .tel { white-space: nowrap; color: var(--gold); text-decoration: none; }
+    .sub { margin: 14px 0 6px; font-size: 0.85rem; color: var(--sec); }
+    .mail {
+      background: #1c1712; border: 0; border-radius: 0;
+      padding: 0 0 24px; min-height: calc(750px - 28px);
+    }
+    .mail > img {
+      display: block; width: 100%; height: auto; border-radius: 0; margin: 0;
+    }
+    .mail-body { padding: 16px 16px 8px; }
+    .mail-top {
+      display: flex; gap: 10px; align-items: center; margin-bottom: 12px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--mid);
+    }
+    .mail-top b { display: block; color: var(--gold); font-size: 0.95rem; }
+    .mail-top span { display: block; color: var(--sec); font-size: 0.78rem; margin-top: 2px; }
+    .nav2 {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      margin: 0 0 14px;
+    }
+    .nav2 a, .nav2 button {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      text-align: center; padding: 11px 10px; min-height: 44px;
+      border-radius: 6px; border: 1px solid rgba(201,168,76,0.55);
+      background: rgba(201,168,76,0.12); color: var(--gold);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.05rem; font-weight: 500;
+      text-decoration: none; cursor: pointer;
+    }
+    .nav2 .is-on { background: var(--gold); color: #1a1510; font-weight: 700; }
+    .nav2 .is-dotaz {
+      border-color: #c4554c; background: rgba(196,85,76,0.22);
+      color: #ff8a80; font-weight: 700;
+    }
+    .nav2 .pocet {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 1.35rem; height: 1.35rem; padding: 0 0.3rem;
+      border-radius: 999px; background: #c4554c; color: #fff8f6;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 0.75rem; font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">NÁHLED · doporučitel · <span>jako u hostů + pozvánka z přehledu</span></div>
+  <div class="wrap">
+    <h1 class="main">Doporučitel od pozvánky po kartu</h1>
+    <p class="intro">
+      Začínáte v přehledu: telefon nebo e-mail, text zprávy, odeslat WhatsAppem / e-mailem / SMS.
+      Jeho karta má stejný vzhled jako u hostů: Doporučit + Rezervovat pro sebe.
+    </p>
+
+    <div class="tabs" id="tabs">
+      <button type="button" data-s="1" class="is-on">1 · Vy přidáte</button>
+      <button type="button" data-s="2">2 · WhatsApp</button>
+      <button type="button" data-s="2mail">2 · E-mail</button>
+      <button type="button" data-s="3">3 · Osoba</button>
+      <button type="button" data-s="3b">3b · Firma (IČO)</button>
+      <button type="button" data-s="4">4 · Po odeslání</button>
+      <button type="button" data-s="5">5 · Schválíte</button>
+      <button type="button" data-s="6">6 · Jeho karta</button>
+    </div>
+
+    <div class="stage">
+      <div class="phone">
+        <div class="phone-bar" id="bar">Přehled · Doporučitelé</div>
+
+        <!-- 1 Přidat v přehledu -->
+        <div class="screen is-on" id="s1">
+          <p class="muted" style="margin:0 0 10px; text-align:left;">Přehled VIVIEN · nahoře (jako na ostře)</p>
+          <div class="nav2">
+            <button type="button" class="is-dotaz">Poptávky <span class="pocet">2</span></button>
+            <button type="button" class="is-dotaz is-on">Doporučitelé <span class="pocet">1</span></button>
+          </div>
+          <p class="lead" style="margin-top:0;">Když přijde nová poptávka nebo doporučitel vyplní údaje, tlačítko zčervená (stejně jako poptávka).</p>
+          <h2 class="h1 h1-l">Přidat doporučitele</h2>
+          <p class="lead">Vyplňte telefon nebo e-mail. Pod tím je text zprávy. Odkaz pošlete stejně jako jindy.</p>
+          <div class="panel">
+            <div class="seg">
+              <button type="button" class="is-on" id="tabTel">Telefon</button>
+              <button type="button" id="tabEmail">E-mail</button>
+            </div>
+            <label class="f" id="poleKontakt">Telefon
+              <input value="+420 777 123 456" readonly />
+            </label>
+            <label class="f">Zpráva
+              <textarea readonly>Dobrý den,
+
+děkujeme, že chcete doporučovat apartmány VIVIEN. Tady je odkaz, kde o sobě vyplníte údaje. Pak vám pošleme vaši kartu s odkazem pro vaše klienty.
+
+{odkaz}</textarea>
+            </label>
+            <p class="muted" style="text-align:left; margin-top:0;">Odkaz se doplní automaticky při odeslání.</p>
+            <div class="kanal">
+              <button type="button" data-go="2">WhatsApp</button>
+              <button type="button" data-go="2mail">E-mail</button>
+              <button type="button" data-go="2">SMS</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2 WhatsApp – stejný odkaz jako e-mail → stejná stránka vyplnění -->
+        <div class="screen full" id="s2">
+          <div class="wa-full">
+            <div class="wa-top">WhatsApp · od VIVIEN</div>
+            <div class="wa-bubble">
+              Dobrý den,<br /><br />
+              děkujeme, že chcete doporučovat apartmány VIVIEN. Otevřete odkaz a vyplňte o sobě údaje. Pak vám pošleme vaši kartu s odkazem pro vaše klienty.
+            </div>
+            <a class="wa-link" href="#" data-go="3">https://…/doporucitel/pozvanka?p=…</a>
+            <p class="muted" style="text-align:left; margin-top:14px;">Stejný odkaz jako v e-mailu. Otevře stejnou stránku vyplnění.</p>
+            <button type="button" class="cta" data-go="3" style="margin-top:auto;">Otevřít odkaz ›</button>
+            <button type="button" class="cta2" data-go="2mail">Ukázat e-mail</button>
+          </div>
+        </div>
+
+        <!-- 2mail E-mail – přes celou obrazovku, stejný odkaz -->
+        <div class="screen full" id="s2mail">
+          <div class="mail">
+            <img src="/email/hlavicka-tip.jpg" alt="VIVIEN Apartments" />
+            <div class="mail-body">
+              <div class="mail-top">
+                <img src="/pruvodce/va-logo-192.png" alt="" width="40" height="40" style="border-radius:50%" />
+                <div>
+                  <b>VIVIEN Apartments</b>
+                  <span>pro: jan.novak@email.cz</span>
+                </div>
+              </div>
+              <h2 class="h1" style="font-size:1.45rem; margin-top:4px;">Doporučení VIVIEN</h2>
+              <p class="lead">Dobrý den,</p>
+              <p class="lead">děkujeme, že chcete doporučovat apartmány VIVIEN. Klepněte na tlačítko a vyplňte o sobě údaje. Pak vám pošleme vaši kartu s odkazem pro vaše klienty.</p>
+              <button type="button" class="cta" data-go="3">Vyplnit údaje ›</button>
+              <p class="muted" style="margin-top:16px;">Stejný odkaz jako ve WhatsAppu:<br /><span style="color:var(--gold); word-break:break-all;">https://…/doporucitel/pozvanka?p=…</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 Osoba – stejný obal jako finální karta -->
+        <div class="screen" id="s3">
+          <div class="klub">
+            <div class="karticka">
+              <div class="k1">VIVIEN CLUB</div>
+              <div class="k2">Vaše jméno</div>
+              <div class="k3">Doporučitel · vyplnění</div>
+            </div>
+            <div class="duo" style="opacity:0.45; pointer-events:none;">
+              <div class="vC"><b>Doporučit</b><i>přítel má 5 %</i></div>
+              <div class="vC"><b>Rezervovat pro sebe</b><i>váš 1. pobyt 5 %</i></div>
+            </div>
+            <p class="lead" style="margin-top:6px;">Nejdřív o sobě. Tlačítka nahoře uvidíte až po schválení.</p>
+            <div class="seg">
+              <button type="button" class="is-on">Osoba</button>
+              <button type="button" data-go="3b">Firma</button>
+            </div>
+            <label class="f">Jméno<input value="Jan" readonly /></label>
+            <label class="f">Příjmení<input value="Novák" readonly /></label>
+            <label class="f">Telefon<input value="+420 777 123 456" readonly /></label>
+            <label class="f">E-mail<input value="jan.novak@email.cz" readonly /></label>
+            <label class="f">Jazyk<select disabled><option>Čeština</option></select></label>
+            <label class="check"><input type="checkbox" checked disabled /> Souhlasím s pravidly programu</label>
+            <button type="button" class="cta" data-go="4">Odeslat</button>
+          </div>
+        </div>
+
+        <!-- 3b Firma -->
+        <div class="screen" id="s3b">
+          <div class="klub">
+            <div class="karticka">
+              <div class="k1">VIVIEN CLUB</div>
+              <div class="k2">Název firmy</div>
+              <div class="k3">Doporučitel · firma</div>
+            </div>
+            <div class="duo" style="opacity:0.45; pointer-events:none;">
+              <div class="vC"><b>Doporučit</b><i>přítel má 5 %</i></div>
+              <div class="vC"><b>Rezervovat pro sebe</b><i>váš 1. pobyt 5 %</i></div>
+            </div>
+            <p class="lead" style="margin-top:6px;">Nejdřív IČO. Zbytek zkusíme z ARES.</p>
+            <div class="seg">
+              <button type="button" data-go="3">Osoba</button>
+              <button type="button" class="is-on">Firma</button>
+            </div>
+            <label class="f">IČO<input value="12345678" readonly /></label>
+            <button type="button" class="cta3" style="margin-top:0; margin-bottom:10px;">Načíst z ARES</button>
+            <label class="f">Název firmy<input value="Cestovní kancelář Luka s.r.o." readonly /></label>
+            <label class="f">Sídlo<input value="Nádražní 12, České Budějovice" readonly /></label>
+            <label class="f">Jméno kontaktní osoby<input value="Eva" readonly /></label>
+            <label class="f">Příjmení<input value="Svobodová" readonly /></label>
+            <label class="f">Telefon<input value="+420 602 111 222" readonly /></label>
+            <label class="f">E-mail<input value="eva@luka.cz" readonly /></label>
+            <label class="check"><input type="checkbox" checked disabled /> Souhlasím s pravidly programu</label>
+            <button type="button" class="cta" data-go="4">Odeslat</button>
+          </div>
+        </div>
+
+        <!-- 4 Po odeslání – on nemá kam jít, jen Zavřít -->
+        <div class="screen" id="s4">
+          <div class="klub" style="margin-top:48px; text-align:center; padding:22px 16px;">
+            <div class="karticka" style="height:88px; text-align:center;">
+              <div class="k1" style="text-align:center;">VIVIEN CLUB</div>
+              <div class="k2" style="margin-top:10px; text-align:center; font-size:1.25rem;">Děkujeme</div>
+            </div>
+            <p class="lead lead-c">Údaje jsme dostali. Ozveme se, jakmile kartu připravíme.</p>
+            <p class="muted">Zatím nemáte kam pokračovat. Až kartu schválíme, přijde vám odkaz.</p>
+            <button type="button" class="cta2">Zavřít</button>
+          </div>
+        </div>
+
+        <!-- 5 Schválení + úprava údajů -->
+        <div class="screen" id="s5">
+          <p class="muted" style="margin:0; text-align:left;">Přehled · Doporučitelé</p>
+          <h2 class="h1 h1-l">Ke schválení</h2>
+          <p class="lead">Když má něco špatně, upravte to tady. Pak zavolejte nebo rovnou schvalte.</p>
+          <div class="ph-card">
+            <label class="f">Jméno<input value="Jan" /></label>
+            <label class="f">Příjmení<input value="Novák" /></label>
+            <label class="f">Telefon<input value="+420 777 123 456" /></label>
+            <label class="f">E-mail<input value="jan.novak@email.cz" /></label>
+            <label class="f">Jazyk<select><option>Čeština</option><option>English</option></select></label>
+            <p class="ph-meta" style="margin-top:4px;">Osoba · vyplněno z pozvánky</p>
+            <div class="ph-actions">
+              <button type="button" class="ok" data-go="6">Uložit a schválit</button>
+              <button type="button" class="no">Zavolat</button>
+            </div>
+          </div>
+          <p class="muted" style="text-align:left;">Po schválení mu odejde odkaz na kartu (WhatsApp / e-mail / SMS).</p>
+        </div>
+
+        <!-- 6 Karta jako u hostů -->
+        <div class="screen" id="s6">
+          <div class="klub">
+            <div class="karticka">
+              <div class="k1">VIVIEN CLUB</div>
+              <div class="k2">Jan Novák</div>
+              <div class="k3">Doporučitel</div>
+            </div>
+            <div class="duo">
+              <button type="button" class="vC">
+                <b>Doporučit</b>
+                <i>přítel má 5 %</i>
+              </button>
+              <button type="button" class="vC">
+                <b>Rezervovat pro sebe</b>
+                <i>váš 1. pobyt 5 %</i>
+              </button>
+            </div>
+            <p class="sub">Váš odkaz pro klienty</p>
+            <div class="odk">…/poptavka?od=JAN12</div>
+            <button type="button" class="cta">Poslat e-mailem</button>
+            <button type="button" class="cta2">Poslat přes WhatsApp</button>
+            <button type="button" class="cta3">Kopírovat odkaz</button>
+            <div class="row3">
+              <div><b>2</b><span>přijeli</span></div>
+              <div><b>400</b><span>Kč čeká</span></div>
+              <div><b>0</b><span>k výplatě</span></div>
+            </div>
+            <p class="sub">Přátelé</p>
+            <ul class="list">
+              <li><span>Marie · listopad</span><span class="st">čeká na odjezd</span></li>
+              <li><span>Petr · říjen</span><span class="st">200 Kč</span></li>
+            </ul>
+            <p class="muted">Stejný vzhled jako karta hosta. Doporučit je první, vedle vlastní pobyt.</p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="note" id="note">
+        <b>1 · Vy přidáte</b>
+        <p>V přehledu: telefon nebo e-mail, text zprávy, odeslat WhatsAppem / e-mailem / SMS. Odkaz se vloží sám.</p>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const bars = {
+      1: 'Přehled · Doporučitelé',
+      2: 'WhatsApp',
+      '2mail': 'E-mail',
+      3: 'Pozvánka · osoba',
+      '3b': 'Pozvánka · firma',
+      4: 'Pozvánka',
+      5: 'Přehled · Doporučitelé',
+      6: 'VIVIEN Club',
+    };
+    const notes = {
+      1: ['1 · Vy přidáte', 'V ostrém přehledu nahoře vedle sebe: Poptávky | Doporučitelé. Červené = nevyřízený dotaz (poptávka i doporučitel ke schválení).'],
+      2: ['2 · WhatsApp / SMS', 'Stejný odkaz jako v e-mailu. Otevře stejnou stránku vyplnění. Na mobilu přes celou obrazovku.'],
+      '2mail': ['2 · E-mail', 'Stejný odkaz jako WhatsApp. Tmavý mail s fotkou. Na mobilu přes celou obrazovku.'],
+      3: ['3 · Osoba', 'Stejný obal jako finální karta (kartička + tlačítka šedě). Jeden souhlas.'],
+      '3b': ['3b · Firma', 'Stejný obal. Nejdřív IČO → ARES. Jeden souhlas.'],
+      4: ['4 · Po odeslání', 'Jen Zavřít. Nemá kam jít, dokud neschválíte.'],
+      5: ['5 · Schválíte', 'Údaje jdou upravit (jméno, mail, telefon…). Pak Uložit a schválit nebo Zavolat.'],
+      6: ['6 · Jeho karta', 'Finální karta. Do tohoto vzhledu ladíme i vyplňování.'],
+    };
+    function show(n) {
+      const id = String(n || '1');
+      document.querySelectorAll('.screen').forEach((el) => {
+        el.classList.toggle('is-on', el.id === 's' + id);
+      });
+      document.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('is-on', b.dataset.s === id));
+      document.getElementById('bar').textContent = bars[id] || ('Krok ' + id);
+      const pair = notes[id] || ['Náhled', ''];
+      document.getElementById('note').innerHTML = '<b>' + pair[0] + '</b><p>' + pair[1] + '</p>';
+    }
+    document.getElementById('tabs').addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-s]');
+      if (!b) return;
+      e.preventDefault();
+      show(b.getAttribute('data-s'));
+    });
+    document.querySelector('.phone').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-go]');
+      if (!b) return;
+      e.preventDefault();
+      show(b.getAttribute('data-go'));
+    });
+    const pole = document.getElementById('poleKontakt');
+    document.getElementById('tabTel').onclick = () => {
+      document.getElementById('tabTel').classList.add('is-on');
+      document.getElementById('tabEmail').classList.remove('is-on');
+      pole.innerHTML = 'Telefon<input value="+420 777 123 456" readonly />';
+    };
+    document.getElementById('tabEmail').onclick = () => {
+      document.getElementById('tabEmail').classList.add('is-on');
+      document.getElementById('tabTel').classList.remove('is-on');
+      pole.innerHTML = 'E-mail<input value="jan.novak@email.cz" readonly />';
+    };
+    // Otevři krok z ?krok=… nebo #s2 / #2mail
+    try {
+      const q = new URLSearchParams(location.search).get('krok');
+      const h = (location.hash || '').replace(/^#s?/, '');
+      if (q && document.getElementById('s' + q)) show(q);
+      else if (h && document.getElementById('s' + h)) show(h);
+    } catch (e) { /* ignore */ }
+  </script>
+</body>
+</html>

@@ -4,8 +4,8 @@
  */
 
 import { randomBytes, createHash } from 'crypto';
-import { doporuceniKlic } from './doporuceni-klic';
 import { generujKod, normalizujKod } from './doporuceni';
+import { jeZkusebniProstredi } from './klub-klic';
 import type { ProcessStore } from './store';
 import type { GuideLang } from './types';
 
@@ -99,6 +99,28 @@ export type DoporucitelKarta = {
   zalozil: string;
 };
 
+export type PozvankaDoporucitele = {
+  klic: string;
+  datum: string;
+  /** Poznámka majitele, než si člověk údaje vyplní. */
+  poznamka: string;
+  /** ceka = odkaz poslaný; ke_schvaleni = vyplnil, čeká na vás; vyplnena = schváleno / karta hotová */
+  stav: 'ceka' | 'ke_schvaleni' | 'vyplnena';
+  kod: string | null;
+};
+
+export type UdajeDoporucitele = {
+  typ: 'osoba' | 'firma';
+  jmeno: string;
+  prijmeni: string;
+  email: string;
+  telefon: string;
+  jazyk: GuideLang;
+  firmaNazev?: string;
+  firmaIco?: string;
+  novinky?: boolean;
+};
+
 export type DoporucitelPravidla = {
   odmenaPct: number;
   azPoOdjezdu: boolean;
@@ -119,8 +141,17 @@ const VYCHOZI_PRAVIDLA: DoporucitelPravidla = {
 
 const PODMINKY_VERZE = '2026-11-23';
 
+/** Na zkoušce (local / Preview) jdou karty do `test:`, ať se nesahá na ostrou. */
+function klicUloziste(key: string): string {
+  const raw = key.trim();
+  if (!raw) return raw;
+  if (!jeZkusebniProstredi()) return raw;
+  if (raw.startsWith('test:')) return raw;
+  return `test:${raw}`;
+}
+
 async function getJson<T>(store: ProcessStore, key: string): Promise<T | null> {
-  const raw = await store.getKv(doporuceniKlic(key));
+  const raw = await store.getKv(klicUloziste(key));
   if (!raw) return null;
   try {
     return JSON.parse(raw) as T;
@@ -130,7 +161,7 @@ async function getJson<T>(store: ProcessStore, key: string): Promise<T | null> {
 }
 
 async function setJson(store: ProcessStore, key: string, value: unknown): Promise<void> {
-  await store.setKv(doporuceniKlic(key), JSON.stringify(value));
+  await store.setKv(klicUloziste(key), JSON.stringify(value));
 }
 
 function novyId(prefix: string): string {
@@ -307,30 +338,26 @@ export async function zajistiKartuHosta(
   return karta;
 }
 
-export async function zalozKartuRegistrace(
-  store: ProcessStore,
-  vstup: {
-    typ: 'osoba' | 'firma';
-    jmeno: string;
-    prijmeni: string;
-    email: string;
-    telefon: string;
-    jazyk: GuideLang;
-    firmaNazev?: string;
-    firmaIco?: string;
-    novinky?: boolean;
-  },
-): Promise<DoporucitelKarta> {
+async function volnyKod(store: ProcessStore): Promise<string> {
   let kod = generujKod(6);
   for (let i = 0; i < 8; i++) {
     if (!(await nactiKartuPodleKodu(store, kod))) break;
     kod = generujKod(6);
   }
+  return kod;
+}
+
+function kartaZUdaju(
+  kod: string,
+  vstup: UdajeDoporucitele,
+  vznik: DoporucitelVznik,
+  zalozil: string,
+): DoporucitelKarta {
   const ted = new Date().toISOString();
-  const karta = prazdnaKarta({
+  return prazdnaKarta({
     kod,
     typ: vstup.typ,
-    vznik: 'registrace',
+    vznik,
     jmeno: vstup.jmeno.trim(),
     prijmeni: vstup.prijmeni.trim(),
     email: vstup.email.trim().toLowerCase(),
@@ -351,8 +378,25 @@ export async function zalozKartuRegistrace(
       zpracovaniUdaju: ted,
       novinky: vstup.novinky ? ted : null,
     },
-    zalozil: 'registrace',
+    zalozil,
   });
+}
+
+export async function zalozKartuRegistrace(
+  store: ProcessStore,
+  vstup: UdajeDoporucitele,
+): Promise<DoporucitelKarta> {
+  const karta = kartaZUdaju(await volnyKod(store), vstup, 'registrace', 'registrace');
+  await ulozKartu(store, karta);
+  return karta;
+}
+
+export async function zalozKartuZeZkousky(
+  store: ProcessStore,
+  vstup: UdajeDoporucitele,
+): Promise<DoporucitelKarta> {
+  const karta = kartaZUdaju(await volnyKod(store), vstup, 'majitel', 'zkouska');
+  karta.poznamka = 'zkouska';
   await ulozKartu(store, karta);
   return karta;
 }
@@ -386,6 +430,69 @@ export async function zalozKartuMajitel(
   });
   await ulozKartu(store, karta);
   return karta;
+}
+
+export async function zalozPozvanku(
+  store: ProcessStore,
+  poznamka: string,
+): Promise<PozvankaDoporucitele> {
+  const poz: PozvankaDoporucitele = {
+    klic: generujTajnyKlic(),
+    datum: new Date().toISOString(),
+    poznamka: poznamka.trim().slice(0, 80),
+    stav: 'ceka',
+    kod: null,
+  };
+  await setJson(store, `dop-pozvanka:${poz.klic}`, poz);
+  const list = (await getJson<string[]>(store, 'dop-pozvanky')) || [];
+  if (!list.includes(poz.klic)) list.unshift(poz.klic);
+  await setJson(store, 'dop-pozvanky', list.slice(0, 500));
+  return poz;
+}
+
+export async function nactiPozvanku(
+  store: ProcessStore,
+  klicRaw: string,
+): Promise<PozvankaDoporucitele | null> {
+  const klic = (klicRaw || '').trim();
+  if (!klic || klic.length > 80) return null;
+  const raw = await getJson<PozvankaDoporucitele>(store, `dop-pozvanka:${klic}`);
+  if (!raw || raw.klic !== klic) return null;
+  if (raw.stav !== 'ceka' && raw.stav !== 'ke_schvaleni' && raw.stav !== 'vyplnena') return null;
+  return raw;
+}
+
+export async function seznamPozvanek(store: ProcessStore): Promise<PozvankaDoporucitele[]> {
+  const list = (await getJson<string[]>(store, 'dop-pozvanky')) || [];
+  const out: PozvankaDoporucitele[] = [];
+  for (const klic of list) {
+    const poz = await nactiPozvanku(store, klic);
+    if (poz) out.push(poz);
+  }
+  return out;
+}
+
+/** Člověk vyplnil pozvánku. Podruhé už karta nevznikne. */
+export async function dokonciPozvanku(
+  store: ProcessStore,
+  klicRaw: string,
+  vstup: UdajeDoporucitele,
+): Promise<DoporucitelKarta | null> {
+  const poz = await nactiPozvanku(store, klicRaw);
+  if (!poz || poz.stav !== 'ceka') return null;
+  const karta = kartaZUdaju(await volnyKod(store), vstup, 'majitel', 'pozvanka');
+  if (poz.poznamka) karta.poznamka = poz.poznamka;
+  await ulozKartu(store, karta);
+  const hotovo: PozvankaDoporucitele = { ...poz, stav: 'vyplnena', kod: karta.kod };
+  await setJson(store, `dop-pozvanka:${poz.klic}`, hotovo);
+  return karta;
+}
+
+export function jmenoDoporucitele(karta: DoporucitelKarta): string {
+  const cele = `${karta.jmeno} ${karta.prijmeni}`.trim();
+  const firma = karta.typ === 'firma' ? (karta.firma?.nazev || '').trim() : '';
+  if (firma && cele) return `${cele} (${firma})`;
+  return firma || cele;
 }
 
 function normalEmail(e: string): string {
