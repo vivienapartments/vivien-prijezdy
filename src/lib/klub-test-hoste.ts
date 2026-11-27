@@ -508,7 +508,16 @@ function zeSpec(s: Spec) {
     urovenId: u.id,
     kredit:
       s.kreditKc > 0
-        ? [{ id: 'kr1', castka: s.kreditKc, pouzito: 0, kdy: TED, poznamka: 'zkouška' }]
+        ? [
+            {
+              id: 'kr1',
+              castka: s.kreditKc,
+              vznik: TED,
+              platnostDo: TED,
+              zdroj: 'zkouska',
+              pouzito: 0,
+            },
+          ]
         : [],
     kreditKc: s.kreditKc,
     dopKodPuvod: null,

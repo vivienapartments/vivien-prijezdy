@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 /**
  * Výběr 3 návrhů e-mailu: zlatá reprezentativní karta VIVIEN Klub.
  * Jen zkouška pro majitele.
@@ -34,29 +36,29 @@ export default function EmailPodekovaniTriPage() {
       </p>
       <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 12 }}>
         <li>
-          <a href="/zkouska/email-podekovani?v=1" style={odkaz}>
+          <Link href="/zkouska/email-podekovani?v=1" style={odkaz}>
             <b style={{ display: 'block', marginBottom: 4 }}>1 · Krátký text</b>
             <span style={{ color: '#cbbba8', fontSize: 14 }}>
               Pro hosty máme nový VIVIEN Klub. Klepněte na kartu a uvidíte své výhody.
             </span>
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="/zkouska/email-podekovani?v=2" style={odkaz}>
+          <Link href="/zkouska/email-podekovani?v=2" style={odkaz}>
             <b style={{ display: 'block', marginBottom: 4 }}>2 · Delší text + Zjistit více</b>
             <span style={{ color: '#cbbba8', fontSize: 14 }}>
               Připravili jsme VIVIEN Klub. Na kartě najdete slevu, historii pobytů a odkaz na další
               rezervaci.
             </span>
-          </a>
+          </Link>
         </li>
         <li>
-          <a href="/zkouska/email-podekovani?v=3" style={odkaz}>
+          <Link href="/zkouska/email-podekovani?v=3" style={odkaz}>
             <b style={{ display: 'block', marginBottom: 4 }}>3 · Výzva na kartě</b>
             <span style={{ color: '#cbbba8', fontSize: 14 }}>
               Na kartě „klepněte a uvidíte víc“. Pod ní: VIVIEN Klub je vaše karta u nás.
             </span>
-          </a>
+          </Link>
         </li>
       </ol>
     </main>

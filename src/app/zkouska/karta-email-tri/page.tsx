@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 /**
  * Stříbrná vs zlatá karta (stejný text). Jen karty, ne celý e-mail.
  */
@@ -87,14 +89,14 @@ export default function KartaEmailTriPage() {
         </p>
 
         <div className="odkazy">
-          <a href="/zkouska/email-podekovani?barva=stribrna">
+          <Link href="/zkouska/email-podekovani?barva=stribrna">
             <b>Mail · stříbrná</b>
             <span>Celý e-mail se stříbrnou kartou</span>
-          </a>
-          <a href="/zkouska/email-podekovani?barva=zlata">
+          </Link>
+          <Link href="/zkouska/email-podekovani?barva=zlata">
             <b>Mail · zlatá</b>
             <span>Celý e-mail se zlatou kartou</span>
-          </a>
+          </Link>
         </div>
 
         <div className="blok">
