@@ -14,11 +14,9 @@ import {
   ulozPravidla,
   zalozPozvanku,
   verejnaKartaProUi,
-  zalozKartuMajitel,
   zmenStavDoporuceniRucne,
   type DoporuceniNaKarteStav,
   type DoporucitelPravidla,
-  type DoporucitelTyp,
   type UdajeDoporucitele,
 } from '@/lib/doporucitel-karta';
 import {
