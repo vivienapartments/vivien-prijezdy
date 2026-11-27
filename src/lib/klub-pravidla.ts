@@ -1,5 +1,5 @@
 /**
- * Pravidla VIVIEN Klubu: úrovně, slevy, odměny, výplaty.
+ * Pravidla VIVIEN Clubu: úrovně, slevy, odměny, výplaty.
  * Měnitelná v přehledu (`klub:pravidla`).
  */
 

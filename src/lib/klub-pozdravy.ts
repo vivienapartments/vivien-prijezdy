@@ -157,12 +157,12 @@ export const klubBookingRamecekPo: LText = {
 };
 
 export const klubWaKartaBooking: LText = {
-  cs: 'Dobrý den, {jmeno}, vítejte u nás. Tady je vaše karta VIVIEN Klubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: {odkaz}',
+  cs: 'Dobrý den, {jmeno}, vítejte u nás. Tady je vaše karta VIVIEN Clubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: {odkaz}',
   en: 'Hello {jmeno}, welcome. Here is your VIVIEN Club card – it has the guide and 5 % off your next stay when you book directly: {odkaz}',
   de: 'Guten Tag, {jmeno}, willkommen. Hier ist Ihre VIVIEN-Club-Karte – darin finden Sie den Guide und 5 % auf den nächsten Aufenthalt bei Direktbuchung: {odkaz}',
-  pl: 'Dzień dobry, {jmeno}, witamy. Oto Wasza karta VIVIEN Klubu – znajdziecie w niej przewodnik i 5 % na kolejny pobyt przy rezerwacji bezpośrednio: {odkaz}',
-  uk: 'Добрий день, {jmeno}, ласкаво просимо. Ось ваша картка VIVIEN Klubu – у ній гід і 5 % на наступне перебування при прямому бронюванні: {odkaz}',
-  'zh-Hant': '您好，{jmeno}，歡迎。這是您的 VIVIEN 俱樂部卡片，內有指南與下次直接預訂 5% 優惠：{odkaz}',
+  pl: 'Dzień dobry, {jmeno}, witamy. Oto Wasza karta VIVIEN Club – znajdziecie w niej przewodnik i 5 % na kolejny pobyt przy rezerwacji bezpośrednio: {odkaz}',
+  uk: 'Добрий день, {jmeno}, ласкаво просимо. Ось ваша картка VIVIEN Club – у ній гід і 5 % на наступне перебування при прямому бронюванні: {odkaz}',
+  'zh-Hant': '您好，{jmeno}，歡迎。這是您的 VIVIEN Club卡片，內有指南與下次直接預訂 5% 優惠：{odkaz}',
   es: 'Buenos días, {jmeno}, bienvenido. Aquí tiene su tarjeta VIVIEN Club: guía y 5 % en la próxima estancia si reserva directamente: {odkaz}',
   fr: 'Bonjour {jmeno}, bienvenue. Voici votre carte VIVIEN Club – guide et 5 % sur le prochain séjour en réservant directement : {odkaz}',
   it: 'Buongiorno {jmeno}, benvenuti. Ecco la vostra carta VIVIEN Club – guida e 5 % sul prossimo soggiorno prenotando direttamente: {odkaz}',
@@ -174,12 +174,12 @@ export const klubWaKartaBooking: LText = {
 };
 
 export const klubWaKartaPrima: LText = {
-  cs: 'Dobrý den, {jmeno}, vítejte u nás. Tady je karta VIVIEN Klubu s průvodcem: {odkaz}',
+  cs: 'Dobrý den, {jmeno}, vítejte u nás. Tady je karta VIVIEN Clubu s průvodcem: {odkaz}',
   en: 'Hello {jmeno}, welcome. Here is your guide and VIVIEN Club card: {odkaz}',
   de: 'Guten Tag, {jmeno}, willkommen. Hier sind Ihr Guide und Ihre VIVIEN-Club-Karte: {odkaz}',
-  pl: 'Dzień dobry, {jmeno}, witamy. Oto Wasz przewodnik i karta VIVIEN Klubu: {odkaz}',
-  uk: 'Добрий день, {jmeno}, ласкаво просимо. Ось ваш гід і картка VIVIEN Klubu: {odkaz}',
-  'zh-Hant': '您好，{jmeno}，歡迎。這是您的指南與 VIVIEN 俱樂部卡片：{odkaz}',
+  pl: 'Dzień dobry, {jmeno}, witamy. Oto Wasz przewodnik i karta VIVIEN Club: {odkaz}',
+  uk: 'Добрий день, {jmeno}, ласкаво просимо. Ось ваш гід і картка VIVIEN Club: {odkaz}',
+  'zh-Hant': '您好，{jmeno}，歡迎。這是您的指南與 VIVIEN Club卡片：{odkaz}',
   es: 'Buenos días, {jmeno}, bienvenido. Aquí tiene su guía y tarjeta VIVIEN Club: {odkaz}',
   fr: 'Bonjour {jmeno}, bienvenue. Voici votre guide et carte VIVIEN Club : {odkaz}',
   it: 'Buongiorno {jmeno}, benvenuti. Ecco la guida e la carta VIVIEN Club: {odkaz}',

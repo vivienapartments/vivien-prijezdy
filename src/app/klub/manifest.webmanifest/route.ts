@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { jeZkusebniProstredi } from '@/lib/klub-klic';
 import { adresaPrujezd } from '@/lib/verejna-adresa';
 
 const OSTRA = adresaPrujezd();
 
-/** Manifest karty klubu. Ikona na ploše / PC otevře stejnou kartu. */
+/** Manifest karty Clubu. Ikona na ploše / PC otevře stejnou kartu. */
 export async function GET(req: Request) {
   const k = (() => {
     try {
@@ -25,14 +26,19 @@ export async function GET(req: Request) {
   })();
   const cesta = `/klub?k=${encodeURIComponent(k)}`;
   const manifestUrl = `${origin}/klub/manifest.webmanifest?k=${encodeURIComponent(k)}`;
+  /** Oddělit od Adminu. Vždy Club, nikdy Klub. Preview = vyvíjen. */
+  const zkouska = jeZkusebniProstredi();
+  const nazev = zkouska ? 'VIVIEN Club · vyvíjen' : 'VIVIEN Club';
+  const kratce = zkouska ? 'Club vyvíjen' : 'VIVIEN Club';
 
   const telo = {
-    id: cesta,
-    name: 'VIVIEN Klub',
-    short_name: 'VIVIEN',
-    description: 'Karta VIVIEN Klubu',
+    id: `/klub#${encodeURIComponent(k)}`,
+    name: nazev,
+    short_name: kratce,
+    description: 'Karta VIVIEN Clubu',
     start_url: cesta,
-    scope: '/',
+    /** Jen /klub, ať se neplete s Adminem (/prehled). */
+    scope: '/klub',
     display: 'standalone',
     background_color: '#1c1712',
     theme_color: '#1c1712',

@@ -134,7 +134,7 @@ export function mailtoKarty(opts: {
   zprava: string;
   odkaz: string;
 }): string {
-  const subject = encodeURIComponent('VIVIEN Klub');
+  const subject = encodeURIComponent('VIVIEN Club');
   const body = encodeURIComponent(`${opts.zprava}`);
   return `mailto:${encodeURIComponent(opts.email)}?subject=${subject}&body=${body}`;
 }

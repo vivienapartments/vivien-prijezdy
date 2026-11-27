@@ -25,7 +25,7 @@ export function GET(req: Request) {
     chybiKc: 8000,
     pruhPct: 0,
     kartaReprezentacni: true,
-    textPodKartou: 'Pro hosty máme nový VIVIEN Klub. Klepněte na kartu a uvidíte své výhody.',
+    textPodKartou: 'Pro hosty máme nový VIVIEN Club. Klepněte na kartu a uvidíte své výhody.',
     navrhKarty: 1 as const,
     kartaBarva: (zlata ? 'zlata' : 'stribrna') as 'stribrna' | 'zlata',
   };
@@ -34,7 +34,7 @@ export function GET(req: Request) {
     'cs',
     `${asset}/zkouska/po-odjezdu`,
     asset,
-    `${asset}/klub?k=test-tomek-pravoslav#doporucit`,
+    `${asset}/klub?k=test-tomek-pravoslav&doporucit=1`,
     `${asset}/klub?k=test-tomek-pravoslav&plocha=1`,
     `${asset}/poptavka?zkouska=1`,
     klub,

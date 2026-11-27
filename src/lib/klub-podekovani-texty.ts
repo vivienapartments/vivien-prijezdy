@@ -264,12 +264,12 @@ export const klubOtevritKartu: LText = {
 
 /** Řádek v e-mailu místo velké kartičky. */
 export const klubRadekKlubNadpis: LText = {
-  cs: 'VIVIEN Klub',
+  cs: 'VIVIEN Club',
   en: 'VIVIEN Club',
   de: 'VIVIEN Club',
-  pl: 'VIVIEN Klub',
-  uk: 'VIVIEN Klub',
-  'zh-Hant': 'VIVIEN 俱樂部',
+  pl: 'VIVIEN Club',
+  uk: 'VIVIEN Club',
+  'zh-Hant': 'VIVIEN Club',
   es: 'VIVIEN Club',
   fr: 'VIVIEN Club',
   it: 'VIVIEN Club',
@@ -298,12 +298,12 @@ export const klubRadekKlubPod: LText = {
 };
 
 export const klubATadyKarta: LText = {
-  cs: 'A tady je vaše karta VIVIEN Klubu',
+  cs: 'A tady je vaše karta VIVIEN Clubu',
   en: 'And here is your VIVIEN Club card',
   de: 'Und hier ist Ihre VIVIEN-Club-Karte',
-  pl: 'A oto Wasza karta VIVIEN Klubu',
-  uk: 'А ось ваша картка VIVIEN Klubu',
-  'zh-Hant': '這是您的 VIVIEN 俱樂部卡片',
+  pl: 'A oto Wasza karta VIVIEN Club',
+  uk: 'А ось ваша картка VIVIEN Club',
+  'zh-Hant': '這是您的 VIVIEN Club卡片',
   es: 'Y aquí está su tarjeta VIVIEN Club',
   fr: 'Et voici votre carte VIVIEN Club',
   it: 'Ed ecco la vostra carta VIVIEN Club',

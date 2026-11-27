@@ -1,0 +1,19 @@
+---
+description: Vždy poslat majiteli klikací odkaz na náhled (ne spoléhat na panel vpravo)
+alwaysApply: true
+---
+
+# Odkaz na náhled (základní pravidlo)
+
+Majitel vpravo často **žádný náhled nevidí**. Nestačí „je to vpravo“.
+
+## Po každé úpravě vzhledu / textu pro hosty
+1. Spusť nebo ověř `npm run dev` (port **3001** v této větvi / worktree, jinak 3000).
+2. Do chatu **vždy napiš celý klikací odkaz** (`http://localhost:3001/…`).
+3. Jednou větou, co se změnilo, a čekej.
+4. Když jde otevřít i vestavěný prohlížeč, otevři ho navíc. Odkaz v chatu je povinný i tak.
+
+## Adresy
+- E-mail poděkování (stříbrná): `http://localhost:3001/zkouska/email-podekovani?barva=stribrna`
+- Karta Club: `http://localhost:3001/klub?k=…`
+- Poptávka: `http://localhost:3001/poptavka?…`

@@ -1,5 +1,5 @@
 /**
- * Karta klienta (VIVIEN Klub, dávka 1).
+ * Karta klienta (VIVIEN Club, dávka 1).
  * Klíče: klient:{id}, klient-klic:{tajny}, indexy tel/email/ico/kod.
  * Migrace z dop:* = kopie, originál beze změny.
  */

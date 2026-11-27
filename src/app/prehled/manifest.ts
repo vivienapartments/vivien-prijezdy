@@ -1,12 +1,15 @@
 import type { MetadataRoute } from 'next';
+import { jeZkusebniProstredi } from '@/lib/klub-klic';
 
 const POZADI = '#1c1712';
 
 /** Jen pro /prehled. Průvodce hosta tenhle soubor nepoužívá. */
 export default function manifest(): MetadataRoute.Manifest {
+  const zkouska = jeZkusebniProstredi();
   return {
-    name: 'VIVIEN přehled',
-    short_name: 'VIVIEN',
+    id: '/prehled',
+    name: zkouska ? 'VIVIEN Admin · vyvíjen' : 'VIVIEN přehled',
+    short_name: zkouska ? 'Admin vyvíjen' : 'VIVIEN Admin',
     start_url: '/prehled',
     scope: '/prehled',
     display: 'standalone',

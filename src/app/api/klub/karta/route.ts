@@ -28,7 +28,7 @@ function klubPovolen(): boolean {
 export async function GET(req: Request) {
   if (!klubPovolen()) {
     return NextResponse.json(
-      { ok: false, chyba: 'Klub je vypnutý.' },
+      { ok: false, chyba: 'Club je vypnutý.' },
       { status: 404, headers: noStore },
     );
   }

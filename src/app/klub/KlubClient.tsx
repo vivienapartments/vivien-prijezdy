@@ -155,6 +155,10 @@ export default function KlubClient() {
           const q = new URLSearchParams(window.location.search);
           const demoPrvni = q.get('prvni') === '1';
           const chcePlochu = q.get('plocha') === '1';
+          // Z mailu „Doporučit přátelům“: rovnou otevřít doporučení (ne jen kartu).
+          const hash = (window.location.hash || '').replace(/^#/, '');
+          const chceDoporucit =
+            q.get('doporucit') === '1' || hash === 'klub-dop' || hash === 'doporucit';
           const poOdjezdu =
             !json.karta.praveBydli &&
             (json.karta.pobyty?.length || 0) > 0 &&
@@ -165,8 +169,14 @@ export default function KlubClient() {
             (json.karta.ukazka && demoPrvni);
           setUkazPodekovani(Boolean(prvni));
           // Bez poděkování (např. z mailu): detaily rovnou otevřené, jde zase sbalit.
-          // ?plocha=1 z e-mailu: detaily otevřít hned, ať se namountuje Přidat na plochu.
-          setDetailyOpen(Boolean((poOdjezdu && !prvni) || chcePlochu));
+          // ?plocha=1 / ?doporucit=1 z e-mailu: detaily hned.
+          setDetailyOpen(Boolean((poOdjezdu && !prvni) || chcePlochu || chceDoporucit));
+          if (chceDoporucit) {
+            setDopOpen(true);
+            window.setTimeout(() => {
+              document.getElementById('klub-dop')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 120);
+          }
           if (prvni) {
             const qPodek = parsePodekovaniQuery(q.get('podekovani'));
             const pobytKlic = klicPoslednihoDokonceneho(json.karta.pobyty);
@@ -838,7 +848,7 @@ export default function KlubClient() {
           <span className="klub-karticka__vtisk klub-karticka__vtisk--tmavy" aria-hidden />
           <span className="klub-karticka__vtisk klub-karticka__vtisk--svetly" aria-hidden />
           <span className="klub-karticka__vtisk klub-karticka__vtisk--zaklad" aria-hidden />
-          <div className="klub-karticka__k1">VIVIEN KLUB</div>
+          <div className="klub-karticka__k1">VIVIEN CLUB</div>
           <div className="klub-karticka__k2">{urovenNazevKarticka}</div>
           <div className="klub-karticka__k3">{karta.jmenoZobrazeni}</div>
           <div className="klub-karticka__k4">

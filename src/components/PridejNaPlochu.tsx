@@ -33,8 +33,10 @@ type Props = {
   lang: GuideLang;
   /** Token odkazu hosta → skutečný manifest `/{token}/manifest.webmanifest`. */
   token?: string | null;
-  /** Vlastní cesta k manifestu (např. karta klubu `/klub/manifest.webmanifest?k=`). */
+  /** Vlastní cesta k manifestu (např. karta Clubu `/klub/manifest.webmanifest?k=`). */
   manifestHref?: string | null;
+  /** Scope service workeru. Club: `/klub`, ať se neplete s Adminem. */
+  swScope?: string | null;
   /** Jen telefon. Na PC se tlačítko neukáže (výzva z ?plocha=1 ano). */
   jenMobil?: boolean;
   /** Menší / tišší (např. dole u poděkování). */
@@ -84,6 +86,7 @@ export function PridejNaPlochu({
   lang,
   token = null,
   manifestHref = null,
+  swScope = null,
   jenMobil = true,
   tichy = false,
   nahled = false,
@@ -227,7 +230,8 @@ export function PridejNaPlochu({
     }
 
     if ('serviceWorker' in navigator) {
-      void navigator.serviceWorker.register('/sw-pruvodce.js', { scope: '/' }).catch(() => undefined);
+      const scope = (swScope || '').trim() || '/';
+      void navigator.serviceWorker.register('/sw-pruvodce.js', { scope }).catch(() => undefined);
     }
 
     function onBip(e: Event) {
@@ -245,7 +249,7 @@ export function PridejNaPlochu({
       window.removeEventListener('beforeinstallprompt', onBip);
       window.removeEventListener('appinstalled', onAppInstalled);
     };
-  }, [token, manifestHref, shortNazev, onHotovo, onVyzvaZmena, oznacHotovo]);
+  }, [token, manifestHref, swScope, shortNazev, onHotovo, onVyzvaZmena, oznacHotovo]);
 
   useEffect(() => {
     if (!ready) return;

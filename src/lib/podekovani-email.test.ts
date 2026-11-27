@@ -40,7 +40,7 @@ describe('podekovani-email', () => {
     expect(html).toContain('Poslat ›');
     expect(html).toContain('Přidat ›');
     expect(html).toContain('/poptavka?t=');
-    expect(html).toContain('#doporucit');
+    expect(html).toContain('doporucit=1');
     expect(html).toContain('plocha=1');
     expect(html).toContain('5&nbsp;%');
     expect(html).toContain('https://vivien-prijezdy-six.vercel.app/email/hlavicka-po-odjezdu.jpg');
@@ -60,7 +60,7 @@ describe('podekovani-email', () => {
   it('prostý text obsahuje odkazy na výhody', () => {
     const text = textPodekovaniEmail('cs', 'https://priklad.cz/t');
     expect(text).toContain('https://priklad.cz/t');
-    expect(text).toContain('#doporucit');
+    expect(text).toContain('doporucit=1');
     expect(text).toContain('plocha=1');
     expect(text).not.toContain('Využít výhody');
     expect(text).toContain('Nechcete od nás další e-maily? Stačí odpovědět NE.');
@@ -72,7 +72,7 @@ describe('podekovani-email', () => {
     expect(html).toContain('color:#8a7f72');
   });
 
-  it('s klubem má řádek VIVIEN Klub místo velké kartičky', () => {
+  it('s klubem má řádek VIVIEN Club místo velké kartičky', () => {
     const html = htmlPodekovaniEmail(
       'cs',
       'https://vivien-prijezdy-six.vercel.app/abc',
@@ -95,7 +95,7 @@ describe('podekovani-email', () => {
     );
     expect(html).not.toContain('karticka-staly.png');
     expect(html).not.toContain('Otevřít moji kartu');
-    expect(html).toContain('VIVIEN Klub');
+    expect(html).toContain('VIVIEN Club');
     expect(html).toContain('vaše karta a výhody');
     expect(html).toContain('Věrný host');
     expect(html).toContain('Váš pobyt jsme započítali');
@@ -120,7 +120,7 @@ describe('podekovani-email', () => {
         slevaPct: 5,
         booking: true,
         kartaReprezentacni: true,
-        textPodKartou: 'Pro hosty máme nový VIVIEN Klub. Klepněte na kartu a uvidíte své výhody.',
+        textPodKartou: 'Pro hosty máme nový VIVIEN Club. Klepněte na kartu a uvidíte své výhody.',
         navrhKarty: 1,
       },
     );
@@ -129,9 +129,11 @@ describe('podekovani-email', () => {
     expect(html).toContain('Vaše osobní karta VIVIEN Clubu');
     expect(html).toContain('Prohlédnout kartu');
     expect(html).toContain('Zjistit více');
-    expect(html).toContain('Pro hosty máme nový VIVIEN Klub');
+    expect(html).toContain('Pro hosty máme nový VIVIEN Club');
     expect(html).toContain('/klub?k=ukazka-host-po');
-    expect(html).not.toContain('vaše karta a výhody');
+    // Karta i řádek s logem (ať je jasné klepnutí).
+    expect(html).toContain('vaše karta a výhody');
+    expect(html).toContain('va-logo-192.png');
   });
 
   it('zlatá karta bere zlatý podklad', () => {

@@ -60,7 +60,7 @@ export type PodekovaniKlubEmail = {
   /** 0–100 vyplnění pruhu. */
   pruhPct?: number;
   /**
-   * Reprezentativní zlatá karta VIVIEN Klub (ne úroveň hosta).
+   * Reprezentativní zlatá karta VIVIEN Club (ne úroveň hosta).
    * Celá karta je odkaz na živý klub.
    */
   kartaReprezentacni?: boolean;
@@ -188,7 +188,9 @@ export function textPodekovaniEmail(
   const l = jazyk(lang);
   const url = opravVerejnyOdkaz(odkaz.trim());
   const urlRez = opravVerejnyOdkaz(odkazRezervovat || odkazPoptavkaVernost(url));
-  const urlDop = opravVerejnyOdkaz(odkazDoporucit || `${url}#doporucit`);
+  const urlDop = opravVerejnyOdkaz(
+    odkazDoporucit || `${url}${url.includes('?') ? '&' : '?'}doporucit=1`,
+  );
   const urlPlo = opravVerejnyOdkaz(
     odkazPlocha || `${url}${url.includes('?') ? '&' : '?'}plocha=1`,
   );
@@ -382,7 +384,9 @@ function klubHtmlBlok(
     const textHtml = textPod
       ? `<tr><td style="padding:12px 28px 10px;font-family:${sans};font-size:15px;line-height:1.45;color:#e8dfc8;text-align:center;">${slevaNbsp(esc(textPod))} <a href="${urlKarta}" style="color:#c9a84c;text-decoration:underline;white-space:nowrap;">Zjistit více ›</a></td></tr>`
       : `<tr><td style="padding:2px 24px 10px;text-align:center;"><a href="${urlKarta}" style="font-family:${sans};font-size:14px;color:#c9a84c;text-decoration:underline;">Zjistit více ›</a></td></tr>`;
+    // Karta + řádek VIVIEN Club (logo), ať je jasné, že se dá klepnout. Pak 3 výhody.
     const vyhody = [
+      radekVyhody(ikKlub, t(klubRadekKlubNadpis, l), t(klubRadekKlubPod, l), '›', urlKarta, sans),
       radekVyhody(ikKal, t(klubRadek1Nadpis, l), pod1, '›', urlRez, sans),
       radekVyhody(ikDarek, t(klubRadek2Nadpis, l), t(klubRadek2Pod, l), '›', urlDop, sans),
       radekVyhody(ikTel, t(klubRadek3Nadpis, l), t(klubRadek3Pod, l), '›', urlPlo, sans),
@@ -396,7 +400,7 @@ ${textHtml}
 <tr><td style="padding:4px 16px 8px;"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${vyhody}</table></td></tr>`;
   }
 
-  // Bez velké kartičky. Řádek VIVIEN Klub otevře živou kartu.
+  // Bez velké kartičky. Řádek VIVIEN Club otevře živou kartu.
   const vyhody = [
     radekVyhody(ikKlub, t(klubRadekKlubNadpis, l), t(klubRadekKlubPod, l), '›', urlKarta, sans),
     radekVyhody(ikKal, t(klubRadek1Nadpis, l), pod1, '›', urlRez, sans),
@@ -441,7 +445,9 @@ export function htmlPodekovaniEmail(
     '"',
     '%22',
   );
-  const urlDop = opravVerejnyOdkaz(odkazDoporucit || `${url}#doporucit`).replaceAll('"', '%22');
+  const urlDop = opravVerejnyOdkaz(
+    odkazDoporucit || `${url}${url.includes('?') ? '&' : '?'}doporucit=1`,
+  ).replaceAll('"', '%22');
   const urlPlo = opravVerejnyOdkaz(
     odkazPlocha || (klub ? klub.odkazKarty : `${url}${url.includes('?') ? '&' : '?'}plocha=1`),
   ).replaceAll('"', '%22');

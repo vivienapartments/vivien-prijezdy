@@ -26,7 +26,7 @@ function L(cs: string, en: string, rest: Partial<T> = {}): T {
   };
 }
 
-const KLUB = L('VIVIEN Klub', 'VIVIEN Club', {
+const KLUB = L('VIVIEN Club', 'VIVIEN Club', {
   de: 'VIVIEN Club',
   pl: 'VIVIEN Club',
   uk: 'VIVIEN Club',

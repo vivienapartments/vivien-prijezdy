@@ -1,6 +1,6 @@
 /**
  * Dvě veřejné adresy (stejná aplikace na Vercelu), až budou na projektu napojené:
- * - klub = poptávka, VIVIEN KLUB na ploše
+ * - klub = poptávka, VIVIEN Club na ploše
  * - příjezd = odkaz na průvodce z e-mailu
  *
  * Teď club/prijezd na Vercelu ještě nejsou (DEPLOYMENT_NOT_FOUND).

@@ -5,7 +5,7 @@
  * Vzor: nahled-plocha-uz-ma-3-verze.html sloupce A a B1.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '@/lib/i18n';
 import {
@@ -18,13 +18,11 @@ import {
   klubPlochaSdileniUpozorneni,
 } from '@/lib/klub-podekovani-texty';
 import {
-  jeAndroid,
   jeIos,
-  jePwaNainstalovana,
   jeStandalone,
   nactiPlochaStav,
-  posliPlochaNaServer,
   ulozPlochaStav,
+  zjistiPwaNaPlose,
 } from '@/lib/plocha';
 import {
   plochaChromeMenuTip,
@@ -57,20 +55,6 @@ function chcePlochuZUrl(): boolean {
   }
 }
 
-/** Windows zkratka .url do Stažených (když prohlížeč nenabídne instalaci PWA). */
-function stahniZkratkuPc(url: string) {
-  const telo = `[InternetShortcut]\r\nURL=${url}\r\n`;
-  const blob = new Blob([telo], { type: 'application/octet-stream' });
-  const href = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = href;
-  a.download = 'VIVIEN Klub.url';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.setTimeout(() => URL.revokeObjectURL(href), 1500);
-}
-
 function IkTelefonPlus() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -95,14 +79,10 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
   const [spustPridej, setSpustPridej] = useState<(() => void) | null>(null);
   /**
    * Návod jen iPhone (rozhodnuto: Android nikdy návod, BIP / Chrome).
-   * pc = výběr tlačítek v náhledu na počítači.
-   * chrome = tip menu (Android bez BIP).
-   * zkratka = PC: stažená .url zkratka do Stažených.
+   * chrome = tip menu (Android/PC bez BIP). Hosté PC nepoužívají; PC jen Chrome s logem.
    */
-  const [navod, setNavod] = useState<'nic' | 'ios' | 'pc' | 'chrome' | 'zkratka'>('nic');
+  const [navod, setNavod] = useState<'nic' | 'ios' | 'chrome'>('nic');
   const [portalOk, setPortalOk] = useState(false);
-  /** Ref, ať setTimeout po klepnutí PC nevidí starou hodnotu ze state. */
-  const volbaPcRef = useRef(false);
   /** Z e-mailu (?plocha=1): zlatý překryv jako u průvodce po odjezdu. */
   const [zMailu, setZMailu] = useState(false);
   const [stavHotov, setStavHotov] = useState(false);
@@ -114,9 +94,15 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
       return;
     }
     const lokal = nactiPlochaStav(token);
-    const nainst = await jePwaNainstalovana();
-    if (nainst || lokal === 'hotovo') setStav('B');
-    else setStav('A');
+    const zjisteni = await zjistiPwaNaPlose();
+    // Chrome ví, že ikona není → smaž staré „hotovo“ z dřívější zkoušky.
+    if (zjisteni === 'ano') setStav('B');
+    else if (zjisteni === 'ne') {
+      if (lokal === 'hotovo') ulozPlochaStav(token, 'nic');
+      setStav('A');
+    } else {
+      setStav(lokal === 'hotovo' ? 'B' : 'A');
+    }
     setStavHotov(true);
   }, [token]);
 
@@ -145,55 +131,20 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
     void prepocitej();
   }, [prepocitej]);
   const onTipChrome = useCallback(() => {
-    if (volbaPcRef.current) {
-      volbaPcRef.current = false;
-      const url =
-        odkazKarty.startsWith('http')
-          ? odkazKarty
-          : `${window.location.origin}/klub?k=${encodeURIComponent(token)}`;
-      stahniZkratkuPc(url);
-      ulozPlochaStav(token, 'hotovo');
-      posliPlochaNaServer(token);
-      setNavod('zkratka');
-      setStav('B');
-      setZMailu(false);
-      return;
-    }
     setNavod('chrome');
-  }, [odkazKarty, token]);
+  }, []);
 
   const vyzvaZMailu = zMailu && stavHotov && stav === 'A';
   const uzMateZMailu = zMailu && stavHotov && (stav === 'B' || stav === 'C');
 
   const klepPridej = useCallback(() => {
-    /** Android: jen instalace, bez návodu. iPhone: návod Safari. */
+    /** Android: instalace. iPhone: návod Safari. PC: Chrome s logem (ne .url zkratka). */
     if (jeIos()) {
       setNavod('ios');
       return;
     }
-    if (jeAndroid()) {
-      setNavod('nic');
-      spustPridej?.();
-      return;
-    }
-    /** Počítač (náhled): tlačítka Android / PC / iPhone / Zavřít. */
-    setNavod('pc');
-  }, [spustPridej]);
-
-  const spustAndroid = useCallback(() => {
-    volbaPcRef.current = false;
     setNavod('nic');
-    window.setTimeout(() => {
-      spustPridej?.();
-    }, 0);
-  }, [spustPridej]);
-
-  const spustPc = useCallback(() => {
-    volbaPcRef.current = true;
-    setNavod('nic');
-    window.setTimeout(() => {
-      spustPridej?.();
-    }, 0);
+    spustPridej?.();
   }, [spustPridej]);
 
   const poslat = useCallback(async () => {
@@ -201,7 +152,7 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
     const text = `${t(klubPlochaSdileniUpozorneni, lang)}\n${url}`;
     try {
       if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share({ title: 'VIVIEN Klub', text, url });
+        await navigator.share({ title: 'VIVIEN Club', text, url });
         return;
       }
     } catch {
@@ -260,40 +211,6 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
                   <p className="klub-plocha-navod__tip">{t(plochaChromeMenuTip, lang)}</p>
                 </>
               ) : null}
-              {navod === 'zkratka' ? (
-                <>
-                  <h2 className="klub-plocha-navod__h" id="klub-plocha-navod-h">
-                    {t(plochaPridej, lang)}
-                  </h2>
-                  <p className="klub-plocha-navod__text">
-                    Zkratka je ve Stažených souborech. Přetáhněte ji na plochu.
-                  </p>
-                </>
-              ) : null}
-              {navod === 'pc' ? (
-                <>
-                  <h2 className="klub-plocha-navod__h" id="klub-plocha-navod-h">
-                    {t(plochaPridej, lang)}
-                  </h2>
-                  <button
-                    type="button"
-                    className="klub-plocha-navod__ok"
-                    onClick={spustAndroid}
-                  >
-                    Přidat na plochu Android
-                  </button>
-                  <button type="button" className="klub-plocha-navod__ok" onClick={spustPc}>
-                    Přidat na plochu PC
-                  </button>
-                  <button
-                    type="button"
-                    className="klub-plocha-navod__vedlejsi"
-                    onClick={() => setNavod('ios')}
-                  >
-                    Ukázat návod pro iPhone
-                  </button>
-                </>
-              ) : null}
               <button
                 type="button"
                 className={navod === 'ios' ? 'klub-plocha-navod__ok' : 'klub-plocha-navod__zavrit'}
@@ -342,6 +259,8 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
           lang={lang}
           token={token}
           manifestHref={`/klub/manifest.webmanifest?k=${encodeURIComponent(token)}`}
+          swScope="/klub"
+          shortNazev="VIVIEN Club"
           jenMobil
           skrytTlacitko
           vyzva={vyzvaZMailu}

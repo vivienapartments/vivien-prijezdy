@@ -270,7 +270,7 @@ export async function POST(req: Request) {
   }
 
   if (akce === 'utrata-rucne') {
-    if (!klubZapnut()) return chyba(403, 'Klub je vypnutý.');
+    if (!klubZapnut()) return chyba(403, 'Club je vypnutý.');
     const id = String(body.id || '').trim();
     const castka = Number(body.castka);
     const poznamka = String(body.poznamka || 'ruční').trim();
@@ -285,7 +285,7 @@ export async function POST(req: Request) {
   }
 
   if (akce === 'import-potvrdit') {
-    if (!klubZapnut()) return chyba(403, 'Klub je vypnutý.');
+    if (!klubZapnut()) return chyba(403, 'Club je vypnutý.');
     const nahled = body.nahled as ImportUtrataNahled | undefined;
     if (!nahled || !Array.isArray(nahled.souhrn)) return chyba(400, 'Chybí náhled.');
     const vysledek = await potvrdImportUtraty(store, nahled);
@@ -298,7 +298,7 @@ export async function POST(req: Request) {
   }
 
   if (akce === 'import-bh-csv-potvrdit') {
-    if (!klubZapnut()) return chyba(403, 'Klub je vypnutý.');
+    if (!klubZapnut()) return chyba(403, 'Club je vypnutý.');
     const nahled = body.nahled as ImportBhNahled | undefined;
     if (!nahled || !Array.isArray(nahled.souhrn)) return chyba(400, 'Chybí náhled.');
     const vysledek = await potvrdImportBhCsv(store, nahled);
@@ -306,7 +306,7 @@ export async function POST(req: Request) {
   }
 
   if (akce === 'utrata-ceka-spojit') {
-    if (!klubZapnut()) return chyba(403, 'Klub je vypnutý.');
+    if (!klubZapnut()) return chyba(403, 'Club je vypnutý.');
     const cekaId = String(body.cekaId || '').trim();
     const klientId = String(body.klientId || '').trim();
     if (!cekaId || !klientId) return chyba(400, 'Chybí cekaId nebo klientId.');

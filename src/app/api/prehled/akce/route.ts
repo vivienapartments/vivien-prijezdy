@@ -660,7 +660,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   async function pripravOdkazKartyKlubu() {
     const { klubKlic, klubPovolenProZkousku } = await import('@/lib/klub-klic');
     if (!klubPovolenProZkousku()) {
-      return { chyba: 'Klub je vypnutý.' as const };
+      return { chyba: 'Club je vypnutý.' as const };
     }
     const { sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
     const { nactiKlientPodleId } = await import('@/lib/klient-karta');
@@ -792,7 +792,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         const { posliEmailZpravy } = await import('@/lib/email-zprava');
         await posliEmailZpravy({
           to: cile.email,
-          subject: 'VIVIEN Klub',
+          subject: 'VIVIEN Club',
           text: over.text || zprava,
           lang,
           druh: 'klub',
@@ -1774,7 +1774,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         const url = odkaz || '';
         if (!url) return chyba(400, 'Chybí odkaz na průvodce.');
         const urlRez = odkazPoptavkaVernost(url);
-        let urlDop = `${url}#doporucit`;
+        let urlDop = `${url}${url.includes('?') ? '&' : '?'}doporucit=1`;
         let urlPlo = `${url}${url.includes('?') ? '&' : '?'}plocha=1`;
         let klubEmail: import('@/lib/podekovani-email').PodekovaniKlubEmail | null = null;
         let klubKlientPoMailu: import('@/lib/klient-karta').KlientKarta | null = null;
@@ -1806,8 +1806,8 @@ export async function POST(request: Request): Promise<NextResponse> {
                 (process.env.NEXT_PUBLIC_BASE_URL || '').replace(/\/$/, '') ||
                 'https://vivien-prijezdy-six.vercel.app';
               const odkazKarty = `${base}/klub?k=${encodeURIComponent(k.tajnyKlic)}`;
-              urlDop = `${odkazKarty}#klub-dop`;
-              urlPlo = `${odkazKarty}?plocha=1`;
+              urlDop = `${odkazKarty}&doporucit=1`;
+              urlPlo = `${odkazKarty}&plocha=1`;
               const booking = /booking|airbnb|expedia/i.test(
                 `${rec.zdroj || ''} ${rec.emailHosta || ''}`,
               );
@@ -1831,7 +1831,7 @@ export async function POST(request: Request): Promise<NextResponse> {
                 kartaReprezentacni: true,
                 kartaBarva: 'stribrna',
                 textPodKartou:
-                  'Pro hosty máme nový VIVIEN Klub. Klepněte na kartu a uvidíte své výhody.',
+                  'Pro hosty máme nový VIVIEN Club. Klepněte na kartu a uvidíte své výhody.',
               };
               klubKlientPoMailu = k;
             }

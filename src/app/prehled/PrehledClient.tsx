@@ -1326,8 +1326,8 @@ export function PrehledClient({
         const jmeno = (row.jmeno || '').trim() || (booking ? 'Anna Svobodová' : 'Karel Věrný');
         const krestni = jmeno.split(/\s+/)[0] || (booking ? 'Anna' : 'Karel');
         const text = booking
-          ? `Dobrý den, ${krestni}, vítejte u nás. Tady je vaše karta VIVIEN Klubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: ${odkaz}`
-          : `Dobrý den, ${krestni}, vítejte u nás. Tady je karta VIVIEN Klubu s průvodcem: ${odkaz}`;
+          ? `Dobrý den, ${krestni}, vítejte u nás. Tady je vaše karta VIVIEN Clubu – najdete v ní průvodce a slevu 5 % na příští pobyt, když rezervujete napřímo: ${odkaz}`
+          : `Dobrý den, ${krestni}, vítejte u nás. Tady je karta VIVIEN Clubu s průvodcem: ${odkaz}`;
         setOknoKarty({
           rezervace: row.rezervace,
           jmeno,
@@ -1433,7 +1433,7 @@ export function PrehledClient({
           /* ignore */
         }
       } else if (kanal === 'email') {
-        const mailto = `mailto:${encodeURIComponent(emailZkouska)}?subject=${encodeURIComponent('VIVIEN Klub')}&body=${encodeURIComponent(zprava)}`;
+        const mailto = `mailto:${encodeURIComponent(emailZkouska)}?subject=${encodeURIComponent('VIVIEN Club')}&body=${encodeURIComponent(zprava)}`;
         window.location.href = mailto;
       }
       const kdy = new Date().toISOString();

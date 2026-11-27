@@ -1,0 +1,11 @@
+# VIVIEN Club (název)
+
+Největší pravidlo pro texty, které vidí host, majitel nebo ikona na ploše:
+
+- Vždy **Club**, nikdy **Klub**.
+- Značka: **VIVIEN Club** (ne VIVIEN Klub, ne VIVIEN KLUB v běžném textu).
+- V 2. pádu česky: **VIVIEN Clubu** (karta VIVIEN Clubu).
+- Platí ve všech jazycích stejně: Club, ne překlad „klub / klub / 俱樂部“.
+- Na Preview: **Club vyvíjen**. Ostrá: **VIVIEN Club**.
+- Na kartičce (plastový vzhled) smí být kapitálky **VIVIEN CLUB** jako typografie karty.
+- Cesty v kódu (`/klub`, `KlubClient`, `klub-*.ts`) nechávat. Mění se jen to, co čtou lidé.

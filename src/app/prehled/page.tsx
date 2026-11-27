@@ -12,14 +12,17 @@ import { migracePoplatkuAirbnbJednou } from '@/lib/oprava-poplatku-airbnb';
 import { migracePoplatkuBookingJednou } from '@/lib/oprava-poplatku-booking';
 import { migracePredaniJednou } from '@/lib/predani';
 import { prehledPrihlasen } from '@/lib/prehled-session';
+import { jeZkusebniProstredi } from '@/lib/klub-klic';
 import { createProcessStore } from '@/lib/store';
 import './prehled.scss';
 
 export const dynamic = 'force-dynamic';
 
+const ADMIN_KRATCE = jeZkusebniProstredi() ? 'Admin vyvíjen' : 'VIVIEN Admin';
+
 export const metadata = {
   title: 'Přehled rezervací',
-  applicationName: 'VIVIEN',
+  applicationName: ADMIN_KRATCE,
   manifest: '/prehled/manifest.webmanifest',
   icons: {
     icon: [
@@ -29,7 +32,11 @@ export const metadata = {
     apple: [{ url: '/prehled/apple-icon.png', sizes: '180x180', type: 'image/png' }],
   },
   robots: { index: false, follow: false, nocache: true },
-  appleWebApp: { capable: true, title: 'VIVIEN', statusBarStyle: 'black-translucent' as const },
+  appleWebApp: {
+    capable: true,
+    title: ADMIN_KRATCE,
+    statusBarStyle: 'black-translucent' as const,
+  },
 };
 
 /** Bez pinch-zoom: na iPhonu se po SMS / návratu z jiné app jinak často „zasekne“ zvětšení. */

@@ -1,5 +1,5 @@
 /**
- * Klíče VIVIEN Klubu (karta klienta, pravidla).
+ * Klíče VIVIEN Clubu (karta klienta, pravidla).
  * Na Preview a lokálně předpona `test:` (ostré klient:* se nemění).
  */
 

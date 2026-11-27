@@ -4,7 +4,7 @@ export function GET() {
   return Response.json(manifest(), {
     headers: {
       'Content-Type': 'application/manifest+json; charset=utf-8',
-      'Cache-Control': 'public, max-age=86400',
+      'Cache-Control': 'private, max-age=300',
     },
   });
 }

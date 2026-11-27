@@ -74,8 +74,8 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
         ? `${window.location.pathname}${window.location.search}` || '/poptavka'
         : '/poptavka';
     const manifest = {
-      name: 'VIVIEN KLUB',
-      short_name: 'VIVIEN KLUB',
+      name: 'VIVIEN Club',
+      short_name: 'VIVIEN Club',
       start_url: start,
       scope: '/poptavka',
       display: 'standalone',
@@ -136,7 +136,7 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
       title.setAttribute('data-vivien-poptavka-title', '1');
       document.head.appendChild(title);
     }
-    title.content = 'VIVIEN KLUB';
+    title.content = 'VIVIEN Club';
 
     if ('serviceWorker' in navigator) {
       void navigator.serviceWorker.register('/sw-pruvodce.js', { scope: '/' }).catch(() => undefined);
