@@ -222,6 +222,72 @@ export async function POST(req: Request) {
     return chyba(400, 'Kartu nezakládejte rovnou. Použijte Nový doporučitel → on vyplní → vy schválíte.');
   }
 
+  if (akce === 'poslat-kartu') {
+    const karta = await nactiKartuPodleKodu(store, String(body.kod || ''));
+    if (!karta) return chyba(404, 'Karta nenalezena.');
+    const kanal = String(body.kanal || '').trim();
+    let base = adresaKlub();
+    try {
+      const u = new URL(req.url);
+      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') base = u.origin;
+    } catch {
+      /* veřejná */
+    }
+    const odkazKarta = `${base}/doporucitel?k=${encodeURIComponent(karta.tajnyKlic)}&plocha=1`;
+    let emailPoslan = false;
+    if (kanal === 'email') {
+      const email = (karta.email || '').trim().toLowerCase();
+      if (!email || !email.includes('@')) return chyba(400, 'Chybí e-mail u doporučitele.');
+      const user = process.env.SMTP_USER?.trim();
+      const pass = process.env.SMTP_HESLO?.trim();
+      if (!user || !pass || pass.startsWith('SEM_NAPIS')) {
+        return NextResponse.json(
+          {
+            ok: true,
+            odkazKarta,
+            emailPoslan: false,
+            mailto: true,
+            email,
+            telefon: karta.telefon || null,
+            jmeno: jmenoDoporucitele(karta),
+          },
+          { headers: noStore },
+        );
+      }
+      try {
+        const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+        const majitel = process.env.MAJITEL_EMAIL?.trim();
+        const transporter = nodemailer.createTransport({
+          host: 'smtp.seznam.cz',
+          port: 465,
+          secure: true,
+          auth: { user, pass },
+        });
+        await transporter.sendMail({
+          from: `VIVIEN Apartments <${user}>`,
+          to: testMode && majitel ? majitel : email,
+          subject: testMode ? '[TEST] Vaše karta VIVIEN Club' : 'Vaše karta VIVIEN Club',
+          text: textKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
+          html: htmlKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
+        });
+        emailPoslan = true;
+      } catch {
+        return chyba(500, 'E-mail se nepodařilo odeslat.');
+      }
+    }
+    return NextResponse.json(
+      {
+        ok: true,
+        odkazKarta,
+        emailPoslan,
+        telefon: karta.telefon || null,
+        email: karta.email || null,
+        jmeno: jmenoDoporucitele(karta),
+      },
+      { headers: noStore },
+    );
+  }
+
   if (akce === 'smazat-kartu') {
     const ok = await smazKartuDoporucitele(store, String(body.kod || ''));
     if (!ok) return chyba(404, 'Karta nenalezena.');

@@ -12,6 +12,8 @@ type Karta = {
   jmeno: string;
   prijmeni: string;
   typ: string;
+  email?: string;
+  telefon?: string;
   penize: { ceka: number; kVyplate: number; vyplacenoCelkem: number };
   statistiky: { poptavky: number; potvrzene: number; probehle: number };
   doporuceni: { id: string; krestniJmenoKamarada: string; stav: string; odmena: number }[];
@@ -63,6 +65,7 @@ export function DoporuciteleClient() {
   const [qrAkce, setQrAkce] = useState<string | null>(null);
   const [ukazQr, setUkazQr] = useState(false);
   const [detail, setDetail] = useState<Karta | null>(null);
+  const [poslatZnovu, setPoslatZnovu] = useState(false);
   const [novy, setNovy] = useState(false);
   const [kanalKontakt, setKanalKontakt] = useState<'telefon' | 'email'>('telefon');
   const [telefon, setTelefon] = useState('');
@@ -347,6 +350,68 @@ export function DoporuciteleClient() {
       setDetail(json.karta);
       await nacti();
       setHlaska('Označeno jako vyplaceno.');
+    }
+  }
+
+  function textKartyZnovu(odkaz: string): string {
+    return `Dobrý den,\n\nposíláme znovu odkaz na vaši kartu doporučitele VIVIEN Club. Můžete si ji přidat na plochu telefonu.\n\n${odkaz}`;
+  }
+
+  async function poslatKartuZnovu(kanal: 'whatsapp' | 'sms' | 'email') {
+    if (!detail) return;
+    setCekam(true);
+    setHlaska(null);
+    try {
+      const res = await fetch('/api/prehled/doporucitele', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ akce: 'poslat-kartu', kod: detail.kod, kanal }),
+      });
+      const json = (await res.json()) as {
+        ok?: boolean;
+        chyba?: string;
+        odkazKarta?: string;
+        emailPoslan?: boolean;
+        mailto?: boolean;
+        email?: string | null;
+        telefon?: string | null;
+      };
+      if (!res.ok || !json.ok || !json.odkazKarta) {
+        setHlaska(json.chyba || 'Odkaz se nepodařilo připravit.');
+        return;
+      }
+      const odkaz = json.odkazKarta;
+      const text = textKartyZnovu(odkaz);
+      const dig = jenCisliceTel(json.telefon || detail.telefon || '');
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+
+      if (kanal === 'email') {
+        if (json.emailPoslan) {
+          setHlaska('Odkaz na kartu znovu odešel e-mailem.');
+        } else if (json.mailto && json.email) {
+          window.location.href = `mailto:${encodeURIComponent(json.email)}?subject=${encodeURIComponent('Vaše karta VIVIEN Club')}&body=${encodeURIComponent(text)}`;
+          setHlaska('Otevřel se e-mail v telefonu.');
+        } else {
+          setHlaska(`Odkaz: ${odkaz}`);
+        }
+      } else if (kanal === 'whatsapp') {
+        if (dig.length < 9) {
+          setHlaska('Chybí telefon. Doplňte ho u doporučitele, nebo pošlete e-mailem.');
+          return;
+        }
+        window.open(odkazWhatsAppPrehled(dig, text, ua), '_blank');
+        setHlaska('WhatsApp je otevřený s odkazem na kartu.');
+      } else {
+        if (dig.length < 9) {
+          setHlaska('Chybí telefon. Doplňte ho u doporučitele, nebo pošlete e-mailem.');
+          return;
+        }
+        window.location.href = smsOdkaz(`+${dig}`, text, jeIos(ua));
+        setHlaska('SMS je připravená s odkazem na kartu.');
+      }
+      setPoslatZnovu(false);
+    } finally {
+      setCekam(false);
     }
   }
 
@@ -1043,7 +1108,10 @@ export function DoporuciteleClient() {
           <li
             key={k.kod}
             style={{ borderBottom: '1px solid #2c2520', padding: '0.7rem 0', cursor: 'pointer' }}
-            onClick={() => setDetail(k)}
+            onClick={() => {
+              setDetail(k);
+              setPoslatZnovu(false);
+            }}
           >
             <strong>
               {k.jmeno} {k.prijmeni}
@@ -1059,12 +1127,24 @@ export function DoporuciteleClient() {
           <h2 style={{ marginTop: 0, color: '#c9a84c' }}>
             {detail.jmeno} {detail.prijmeni}
           </h2>
-          <p style={{ fontSize: '0.85rem', wordBreak: 'break-all' }}>
+          <p style={{ fontSize: '0.85rem', wordBreak: 'break-all', color: '#b7aa98' }}>
             Kód ?od={detail.kod}
-            {detail.tajnyKlic ? (
+            {detail.telefon ? (
               <>
                 <br />
-                Karta: /doporucitel?k={detail.tajnyKlic}
+                Telefon:{' '}
+                <a
+                  href={`tel:${detail.telefon.replace(/\s+/g, '')}`}
+                  style={{ color: '#c9a84c', whiteSpace: 'nowrap' }}
+                >
+                  {detail.telefon}
+                </a>
+              </>
+            ) : null}
+            {detail.email ? (
+              <>
+                <br />
+                E-mail: {detail.email}
               </>
             ) : null}
           </p>
@@ -1075,6 +1155,93 @@ export function DoporuciteleClient() {
               </li>
             ))}
           </ul>
+          <button
+            type="button"
+            className="ph-nova-predani"
+            onClick={() => setPoslatZnovu((v) => !v)}
+            style={{ marginTop: 10, marginBottom: 0 }}
+          >
+            Poslat kartu znovu
+          </button>
+          {poslatZnovu ? (
+            <div
+              className="ph-predano-dotaz ph-predano-dotaz--karta"
+              style={{ marginTop: 10 }}
+            >
+              <p style={{ color: '#b7aa98', fontSize: '0.88rem', margin: '0 0 8px' }}>
+                Kam poslat odkaz na kartu
+              </p>
+              <div
+                className="ph-predano-dotaz__ctyrka"
+                role="group"
+                aria-label="Kam poslat kartu"
+                style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}
+              >
+                <button
+                  type="button"
+                  className="ph-btn"
+                  disabled={cekam}
+                  onClick={() => void poslatKartuZnovu('whatsapp')}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 16,
+                    border: 0,
+                    background: '#c9a84c',
+                    color: '#1a1510',
+                    fontWeight: 700,
+                  }}
+                >
+                  WhatsApp
+                </button>
+                <button
+                  type="button"
+                  className="ph-btn"
+                  disabled={cekam}
+                  onClick={() => void poslatKartuZnovu('sms')}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 16,
+                    border: '1px solid #c9a84c',
+                    background: 'transparent',
+                    color: '#c9a84c',
+                    fontWeight: 700,
+                  }}
+                >
+                  SMS
+                </button>
+                <button
+                  type="button"
+                  className="ph-btn"
+                  disabled={cekam}
+                  onClick={() => void poslatKartuZnovu('email')}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 16,
+                    border: '1px solid #c9a84c',
+                    background: 'transparent',
+                    color: '#c9a84c',
+                    fontWeight: 700,
+                  }}
+                >
+                  E-mail
+                </button>
+                <button
+                  type="button"
+                  className="ph-predano-dotaz__zrusit"
+                  onClick={() => setPoslatZnovu(false)}
+                  style={{
+                    padding: '10px 14px',
+                    borderRadius: 16,
+                    border: '1px solid #3d342a',
+                    background: 'transparent',
+                    color: '#b7aa98',
+                  }}
+                >
+                  Zrušit
+                </button>
+              </div>
+            </div>
+          ) : null}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
             {detail.penize.kVyplate > 0 ? (
               <button
