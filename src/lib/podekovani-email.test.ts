@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   htmlPodekovaniEmail,
+  odkazPoptavkaVernost,
   PREDMET_PODEKOVANI,
   textPodekovaniEmail,
   tlacitkoPodekovani,
@@ -8,6 +9,15 @@ import {
 import { GUIDE_LANGS } from './types';
 
 describe('podekovani-email', () => {
+  it('zkouškový odkaz neudělá poptávku s falešným tokenem zkouska', () => {
+    expect(odkazPoptavkaVernost('https://vivien-prijezdy-six.vercel.app/zkouska/po-odjezdu')).toBe(
+      'https://vivien-prijezdy-six.vercel.app/poptavka?zkouska=1',
+    );
+    expect(odkazPoptavkaVernost('https://vivien-prijezdy-six.vercel.app/klub?k=test-x')).toBe(
+      'https://vivien-prijezdy-six.vercel.app/poptavka?zkouska=1',
+    );
+  });
+
   it('má předmět a tlačítko ve všech 13 jazycích', () => {
     for (const lang of GUIDE_LANGS) {
       expect(PREDMET_PODEKOVANI[lang]).toMatch(/^VIVIEN/);

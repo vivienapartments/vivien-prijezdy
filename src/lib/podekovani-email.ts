@@ -166,6 +166,10 @@ export function odkazPoptavkaVernost(odkazPruvodce: string): string {
     const u = new URL(raw);
     const cast = u.pathname.replace(/^\//, '').split('/')[0] || '';
     if (!cast || cast === 'poptavka') return raw;
+    /** Zkušební cesty nejsou podpisovaný token průvodce. */
+    if (cast === 'zkouska' || cast === 'klub' || cast === 'nahled') {
+      return `${u.origin}/poptavka?zkouska=1`;
+    }
     return `${u.origin}/poptavka?t=${encodeURIComponent(cast)}`;
   } catch {
     return raw;

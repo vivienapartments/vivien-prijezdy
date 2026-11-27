@@ -34,9 +34,9 @@ export function GET(req: Request) {
     'cs',
     `${asset}/zkouska/po-odjezdu`,
     asset,
-    undefined,
-    undefined,
-    undefined,
+    `${asset}/klub?k=test-tomek-pravoslav#doporucit`,
+    `${asset}/klub?k=test-tomek-pravoslav&plocha=1`,
+    `${asset}/poptavka?zkouska=1`,
     klub,
   );
 
