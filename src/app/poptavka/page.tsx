@@ -14,10 +14,18 @@ import { parseSignedToken } from '@/lib/token';
 import { GUIDE_LANGS, type GuideLang } from '@/lib/types';
 import { verejnaAdresa } from '@/lib/verejna-adresa';
 import { nactiKlubPoptavkaKontext, PRAZDNY_KLUB_POPTAVKA } from '@/lib/klub-poptavka-kontext';
+import { kontaktZKlubTajnehoKlice } from '@/lib/poptavka-klub-klic';
 import { PoptavkaForm } from './PoptavkaForm';
 
 type Props = {
-  searchParams: Promise<{ t?: string; f?: string; od?: string; lang?: string; zkouska?: string }>;
+  searchParams: Promise<{
+    t?: string;
+    f?: string;
+    od?: string;
+    k?: string;
+    lang?: string;
+    zkouska?: string;
+  }>;
 };
 
 function baseUrl(): string {
@@ -75,6 +83,7 @@ export default async function PoptavkaPage({ searchParams }: Props) {
   let rezervace: string | null = null;
   let jmeno = '';
   let telefon = '';
+  let klubKlic: string | null = null;
   const suchyBeh = q.zkouska === '1' || q.zkouska === 'ano';
 
   const tokenRaw = (q.t || '').trim();
@@ -94,6 +103,25 @@ export default async function PoptavkaPage({ searchParams }: Props) {
       }
     } catch {
       /* obecná stránka */
+    }
+  }
+
+  /** Z karty klubu: věrný host, kontakt z karty (Rezervovat). */
+  const kRaw = (q.k || '').trim();
+  if (kRaw && zdroj === 'obecna') {
+    try {
+      const store = createProcessStore();
+      const kontakt = await kontaktZKlubTajnehoKlice(store, kRaw);
+      if (kontakt) {
+        zdroj = 'vernost';
+        klubKlic = kRaw;
+        jmeno = kontakt.jmeno;
+        telefon = kontakt.telefon;
+        rezervace = kontakt.rezervace;
+        if (kontakt.jazyk) lang = kontakt.jazyk;
+      }
+    } catch {
+      /* zůstane obecná */
     }
   }
 
@@ -132,7 +160,12 @@ export default async function PoptavkaPage({ searchParams }: Props) {
   if (suchyBeh && zdroj === 'doporucitel' && !jmeno) jmeno = 'Zkouška';
   if (suchyBeh && zdroj === 'doporucitel' && !telefon) telefon = '+420 604 692 573';
 
-  if (q.lang && GUIDE_LANGS.includes(q.lang as GuideLang) && (zdroj !== 'vernost' || suchyBeh)) {
+  /** Z karty klubu bereme jazyk z odkazu (host si ho na kartě zvolil). */
+  if (
+    q.lang &&
+    GUIDE_LANGS.includes(q.lang as GuideLang) &&
+    (zdroj !== 'vernost' || suchyBeh || Boolean(klubKlic))
+  ) {
     lang = q.lang as GuideLang;
   }
 
@@ -162,6 +195,7 @@ export default async function PoptavkaPage({ searchParams }: Props) {
       firmaNazev={firmaNazev}
       doporucitelKod={doporucitelKod}
       token={token}
+      klubKlic={klubKlic}
       rezervace={rezervace}
       jmeno={jmeno}
       telefon={telefon}

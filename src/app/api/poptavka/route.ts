@@ -17,6 +17,7 @@ import {
   type PoptavkaZdroj,
 } from '@/lib/poptavka';
 import { createProcessStore } from '@/lib/store';
+import { kontaktZKlubTajnehoKlice } from '@/lib/poptavka-klub-klic';
 import { parseSignedToken } from '@/lib/token';
 import { GUIDE_LANGS, type AptId, type GuideLang } from '@/lib/types';
 import { upozorniMajitele } from '@/lib/upozorneni';
@@ -35,6 +36,7 @@ function klicAdresy(req: Request): string {
 export async function POST(req: Request) {
   let body: {
     token?: string;
+    k?: string;
     f?: string;
     od?: string;
     jmeno?: string;
@@ -102,6 +104,21 @@ export async function POST(req: Request) {
       }
     } catch {
       /* neplatný token = obecná poptávka */
+    }
+  }
+
+  const klubKlic = (body.k || '').trim();
+  if (klubKlic && zdroj === 'obecna') {
+    try {
+      const kontakt = await kontaktZKlubTajnehoKlice(store, klubKlic);
+      if (kontakt) {
+        zdroj = 'vernost';
+        rezervace = kontakt.rezervace;
+        jmeno = (kontakt.jmeno || jmeno).slice(0, 120);
+        telefon = (kontakt.telefon || telefon).slice(0, 40);
+      }
+    } catch {
+      /* zůstane obecná */
     }
   }
 

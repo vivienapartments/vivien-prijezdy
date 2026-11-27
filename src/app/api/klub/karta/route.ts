@@ -141,11 +141,12 @@ export async function GET(req: Request) {
         stavText: probiha ? 'započítáno' : 'čeká',
       });
     } else {
+      const bookingPobyt = jeBookingZdroj(rec.zdroj, rec.emailHosta);
       pobyty.push({
         nadpis: nadpisSeznam,
         podnadpis: '',
-        barva: 'zapocteno',
-        stavText: 'započítáno',
+        barva: bookingPobyt ? 'ceka' : 'zapocteno',
+        stavText: bookingPobyt ? 'nepočítá se' : 'započítáno',
       });
     }
   }

@@ -111,7 +111,10 @@ function rozdelNadpisPobytu(nadpis: string): { termin: string; apt: string; cast
 }
 
 export default function KlubClient() {
-  const [klic, setKlic] = useState('');
+  const [klic, setKlic] = useState(() => {
+    if (typeof window === 'undefined') return '';
+    return (new URLSearchParams(window.location.search).get('k') || '').trim();
+  });
   const [karta, setKarta] = useState<KlubKartaPohled | null>(null);
   const [chyba, setChyba] = useState<string | null>(null);
   const [nacitam, setNacitam] = useState(true);
@@ -135,13 +138,17 @@ export default function KlubClient() {
       setChyba('missing');
       return;
     }
-    let zruseno = false;
+    let alive = true;
+    const ac = new AbortController();
+    const timeout = window.setTimeout(() => ac.abort(), 20000);
     setNacitam(true);
     (async () => {
       try {
-        const res = await fetch(`/api/klub/karta?k=${encodeURIComponent(klic)}`);
+        const res = await fetch(`/api/klub/karta?k=${encodeURIComponent(klic)}`, {
+          signal: ac.signal,
+        });
         const json = (await res.json()) as { ok?: boolean; karta?: KlubKartaPohled; chyba?: string };
-        if (zruseno) return;
+        if (!alive) return;
         if (json.ok && json.karta) {
           setKarta(json.karta);
           setDopOpen(json.karta.pohled === 'doporucitel');
@@ -216,16 +223,19 @@ export default function KlubClient() {
           setChyba(json.chyba || 'missing');
         }
       } catch {
-        if (!zruseno) {
+        if (alive) {
           setKarta(null);
           setChyba('missing');
         }
       } finally {
-        if (!zruseno) setNacitam(false);
+        window.clearTimeout(timeout);
+        if (alive) setNacitam(false);
       }
     })();
     return () => {
-      zruseno = true;
+      alive = false;
+      ac.abort();
+      window.clearTimeout(timeout);
     };
   }, [klic]);
 
@@ -311,8 +321,9 @@ export default function KlubClient() {
     }, 50);
   }, []);
 
+  /** Rezervovat = věrný host z vlastní karty (jméno/telefon předvyplněné). Doporučení kamarádovi zůstává ?od=. */
   const poptavkaUrl = karta
-    ? `/poptavka?od=${encodeURIComponent(karta.kod)}&lang=${encodeURIComponent(lang)}`
+    ? `/poptavka?k=${encodeURIComponent(karta.tajnyKlic)}&lang=${encodeURIComponent(lang)}`
     : '/poptavka';
 
   if (nacitam) {

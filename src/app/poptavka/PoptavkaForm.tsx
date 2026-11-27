@@ -51,7 +51,6 @@ import { GUIDE_LANGS, type AptId, type GuideLang } from '@/lib/types';
 import { JazykPrepinac } from './JazykPrepinac';
 import { PoptavkaPlochaRoot, PoptavkaPlochaTlacitko } from './PoptavkaPlocha';
 import { TelefonPole } from './TelefonPole';
-import { textTelefonu } from '@/lib/telefon';
 import { nazevDlazdice } from '@/lib/poptavka-nazev-dlazdice';
 import { ChytryKalendar } from './ChytryKalendar';
 import { VolneTerminyKalendar } from './VolneTerminyKalendar';
@@ -86,6 +85,8 @@ export type PoptavkaVstupni = {
   firmaNazev: string | null;
   doporucitelKod: string | null;
   token: string | null;
+  /** Tajný klíč karty klubu (`?k=`). Věrná poptávka bez e-mailového tokenu. */
+  klubKlic?: string | null;
   rezervace: string | null;
   jmeno: string;
   telefon: string;
@@ -167,9 +168,6 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   const [jmeno, setJmeno] = useState(props.jmeno);
   const [telefon, setTelefon] = useState(props.telefon);
   const [telefonChyba, setTelefonChyba] = useState(false);
-  /** Jen věrný host z tokenu: jméno a telefon z karty, znovu je nepíše. */
-  const kontaktZKarty =
-    props.zdroj === 'vernost' && Boolean(props.jmeno.trim() && props.telefon.trim());
   const [doprava, setDoprava] = useState<'auto' | 'pesky' | 'nevim' | ''>('');
   const [poznamka, setPoznamka] = useState('');
   const [honeypot, setHoneypot] = useState('');
@@ -575,6 +573,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           token: props.token,
+          k: props.klubKlic || undefined,
           f: props.firmaKod,
           od: props.doporucitelKod,
           jmeno: jmenoOdeslat,
@@ -1323,40 +1322,29 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
                     ) : null}
                   </label>
                 ) : null}
-                {kontaktZKarty ? (
-                  <div className="pp__kontakt-z-karty">
-                    <p className="pp__kontakt-z-karty-jmeno">{jmeno || props.jmeno}</p>
-                    <p className="pp__kontakt-z-karty-tel" style={{ whiteSpace: 'nowrap' }}>
-                      {textTelefonu(telefon || props.telefon).replace(/ /g, '\u00a0')}
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <label>
-                      {t.jmeno}
-                      <input
-                        type="text"
-                        autoComplete="name"
-                        value={jmeno}
-                        onChange={(e) => setJmeno(e.target.value)}
-                        required
-                      />
-                    </label>
-                    <TelefonPole
-                      key={lang}
-                      lang={lang}
-                      label={t.telefon}
-                      chybaText={t.chybaTelefon}
-                      ukazujeChybu={telefonChyba}
-                      vychoziE164={telefon}
-                      onBlurValidace={() => setTelefonChyba(true)}
-                      onChangeE164={(e164) => {
-                        setTelefon(e164);
-                        if (telefonChyba) setTelefonChyba(false);
-                      }}
-                    />
-                  </>
-                )}
+                <label>
+                  {t.jmeno}
+                  <input
+                    type="text"
+                    autoComplete="name"
+                    value={jmeno}
+                    onChange={(e) => setJmeno(e.target.value)}
+                    required
+                  />
+                </label>
+                <TelefonPole
+                  key={lang}
+                  lang={lang}
+                  label={t.telefon}
+                  chybaText={t.chybaTelefon}
+                  ukazujeChybu={telefonChyba}
+                  vychoziE164={telefon}
+                  onBlurValidace={() => setTelefonChyba(true)}
+                  onChangeE164={(e164) => {
+                    setTelefon(e164);
+                    if (telefonChyba) setTelefonChyba(false);
+                  }}
+                />
                 {!vernost ? (
                   <fieldset>
                     <legend>{t.doprava}</legend>
