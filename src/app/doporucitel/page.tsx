@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import QRCode from 'qrcode';
 import { useCallback, useEffect, useState } from 'react';
+import { KlubPlochaRadek } from '@/components/KlubPlochaRadek';
 import {
   blizciEmail,
   blizciKopie,
@@ -57,6 +59,8 @@ export default function DoporucitelKartaPage() {
   const [chyba, setChyba] = useState<string | null>(null);
   const [hlaska, setHlaska] = useState<string | null>(null);
   const [ukazEmail, setUkazEmail] = useState(false);
+  const [ukazQrKlient, setUkazQrKlient] = useState(false);
+  const [qrKlient, setQrKlient] = useState<string | null>(null);
   const [emailKam, setEmailKam] = useState('');
   const [jmeno, setJmeno] = useState('');
   const [cekam, setCekam] = useState(false);
@@ -94,6 +98,27 @@ export default function DoporucitelKartaPage() {
   const rezervovatUrl = karta
     ? `${baseProTip()}/poptavka?od=${encodeURIComponent(karta.kod)}&lang=${encodeURIComponent(lang)}&pro=sebe`
     : '/poptavka';
+  const odkazKarty = klic
+    ? `${baseProTip()}/doporucitel?k=${encodeURIComponent(klic)}`
+    : '';
+
+  useEffect(() => {
+    if (!odkaz || !ukazQrKlient) {
+      setQrKlient(null);
+      return;
+    }
+    let zruseno = false;
+    void QRCode.toDataURL(odkaz, {
+      width: 320,
+      margin: 2,
+      color: { dark: '#1a1510', light: '#efe6d8' },
+    }).then((url) => {
+      if (!zruseno) setQrKlient(url);
+    });
+    return () => {
+      zruseno = true;
+    };
+  }, [odkaz, ukazQrKlient]);
 
   const whatsapp = useCallback(() => {
     if (!odkaz) return;
@@ -200,11 +225,20 @@ export default function DoporucitelKartaPage() {
             </a>
           </div>
 
+          {odkazKarty ? (
+            <KlubPlochaRadek
+              lang={lang}
+              token={klic}
+              odkazKarty={odkazKarty}
+              manifestHref={`/doporucitel/manifest.webmanifest?k=${encodeURIComponent(klic)}`}
+            />
+          ) : null}
+
           <p className="dop-sub">Váš odkaz pro klienty</p>
           <div className="dop-odkaz">{odkaz}</div>
 
-          <button type="button" className="dop-cta" onClick={() => setUkazEmail((v) => !v)}>
-            {t(blizciEmail, lang)}
+          <button type="button" className="dop-cta" onClick={() => setUkazQrKlient(true)}>
+            QR kód pro klienty
           </button>
           <button type="button" className="dop-cta2" onClick={whatsapp}>
             {t(blizciWhatsapp, lang)}
@@ -212,6 +246,70 @@ export default function DoporucitelKartaPage() {
           <button type="button" className="dop-cta3" onClick={() => void kopie()}>
             {t(blizciKopie, lang)}
           </button>
+          <button type="button" className="dop-cta3" onClick={() => setUkazEmail((v) => !v)}>
+            {t(blizciEmail, lang)}
+          </button>
+
+          {ukazQrKlient ? (
+            <div
+              role="dialog"
+              aria-label="QR pro klienty"
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 80,
+                background: 'rgba(8, 6, 5, 0.94)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 16,
+              }}
+            >
+              <p
+                style={{
+                  color: '#c9a84c',
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '1.3rem',
+                  margin: '0 0 8px',
+                  textAlign: 'center',
+                }}
+              >
+                QR pro vaše klienty
+              </p>
+              <p
+                style={{
+                  color: '#b7aa98',
+                  fontSize: '0.9rem',
+                  margin: '0 0 14px',
+                  textAlign: 'center',
+                  maxWidth: 280,
+                }}
+              >
+                Naskenují a otevře se poptávka s vaší slevou. Rezervace se zapíše pod vámi.
+              </p>
+              {qrKlient ? (
+                <img
+                  src={qrKlient}
+                  alt="QR odkaz na poptávku"
+                  width={320}
+                  height={320}
+                  style={{
+                    display: 'block',
+                    width: 'min(320px, 86vw)',
+                    height: 'auto',
+                    borderRadius: 16,
+                    marginBottom: 14,
+                  }}
+                />
+              ) : (
+                <p style={{ color: '#d4a08a' }}>Připravuji QR…</p>
+              )}
+              <button type="button" className="dop-cta" onClick={() => setUkazQrKlient(false)}>
+                Zavřít
+              </button>
+            </div>
+          ) : null}
 
           {ukazEmail ? (
             <form

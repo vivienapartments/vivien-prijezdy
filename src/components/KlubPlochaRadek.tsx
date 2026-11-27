@@ -43,6 +43,8 @@ type Props = {
   /** Tajný klíč karty / token pro manifest. */
   token: string;
   odkazKarty: string;
+  /** Vlastní manifest (doporučitel). Bez toho Club `/klub/manifest…`. */
+  manifestHref?: string | null;
 };
 
 /** Odkaz z e-mailu „Přidat na plochu“ (`?plocha=1`). */
@@ -73,7 +75,7 @@ function IkPoslat() {
   );
 }
 
-export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
+export function KlubPlochaRadek({ lang, token, odkazKarty, manifestHref = null }: Props) {
   const [stav, setStav] = useState<Stav>('A');
   const [sdileni, setSdileni] = useState(false);
   const [spustPridej, setSpustPridej] = useState<(() => void) | null>(null);
@@ -258,7 +260,10 @@ export function KlubPlochaRadek({ lang, token, odkazKarty }: Props) {
         <PridejNaPlochu
           lang={lang}
           token={token}
-          manifestHref={`/klub/manifest.webmanifest?k=${encodeURIComponent(token)}`}
+          manifestHref={
+            (manifestHref || '').trim() ||
+            `/klub/manifest.webmanifest?k=${encodeURIComponent(token)}`
+          }
           swScope="/"
           shortNazev="VIVIEN Club"
           jenMobil

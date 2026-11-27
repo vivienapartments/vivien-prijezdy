@@ -3,6 +3,7 @@ import { problemEmailu } from '@/lib/chyby';
 import {
   jmenoDoporucitele,
   nactiPozvanku,
+  overAkcniToken,
   schvalPozvanku,
   vyplnPozvanku,
   zalozPozvanku,
@@ -49,8 +50,15 @@ function udajeZ(body: Record<string, unknown>): UdajeDoporucitele | { duvod: str
 }
 
 export async function GET(req: Request) {
-  const p = new URL(req.url).searchParams.get('p') || '';
+  const url = new URL(req.url);
+  const a = (url.searchParams.get('a') || '').trim();
+  const p = (url.searchParams.get('p') || '').trim();
   const store = createProcessStore();
+  if (a) {
+    const ok = await overAkcniToken(store, a);
+    if (!ok) return chyba(404, 'odkaz');
+    return NextResponse.json({ ok: true, stav: 'ceka', akce: true }, { headers: noStore });
+  }
   const poz = await nactiPozvanku(store, p);
   if (!poz) return chyba(404, 'odkaz');
   return NextResponse.json({ ok: true, stav: poz.stav }, { headers: noStore });
@@ -70,9 +78,15 @@ export async function POST(req: Request) {
   const zkouska = body.zkouska === true || body.zkouska === '1';
   const store = createProcessStore();
 
-  /** Nikdy rovnou karta. Vždy žádost ke schválení (i zkouška). */
+  /** Nikdy rovnou karta. Vždy žádost ke schválení (i zkouška / akce). */
   let p = String(body.p || '').trim();
-  if (zkouska && !p) {
+  const akcni = String(body.a || '').trim();
+  if (akcni && !p) {
+    const okAkce = await overAkcniToken(store, akcni);
+    if (!okAkce) return chyba(404, 'odkaz');
+    const pozAkce = await zalozPozvanku(store, 'akce');
+    p = pozAkce.klic;
+  } else if (zkouska && !p) {
     if (!jeZkusebniProstredi()) return chyba(400, 'zkouska');
     const pozZk = await zalozPozvanku(store, 'zkouska');
     p = pozZk.klic;

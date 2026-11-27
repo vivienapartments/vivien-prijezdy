@@ -3,8 +3,10 @@ import nodemailer from 'nodemailer';
 import {
   jmenoDoporucitele,
   nactiKartuPodleKodu,
+  nactiNeboZalozAkcniOdkaz,
   nactiPozvanku,
   nactiPravidla,
+  nastavAkcniOdkazAktivni,
   potvrdVyplaceno,
   schvalPozvanku,
   seznamKaret,
@@ -38,19 +40,32 @@ function chyba(status: number, text: string) {
   return NextResponse.json({ ok: false, chyba: text }, { status, headers: noStore });
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   if (!(await prehledPrihlasen())) return chyba(401, 'Nejste přihlášeni.');
   const store = createProcessStore();
   const karty = await seznamKaret(store);
   const pozvanky = await seznamPozvanek(store);
   const pravidla = await nactiPravidla(store);
+  const akcni = await nactiNeboZalozAkcniOdkaz(store);
   const pocetKeSchvaleni = pozvanky.filter((p) => p.stav === 'ke_schvaleni').length;
+  let base = adresaKlub();
+  try {
+    const u = new URL(req.url);
+    if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') base = u.origin;
+  } catch {
+    /* veřejná */
+  }
   return NextResponse.json(
     {
       ok: true,
       pravidla,
       pozvanky,
       pocetKeSchvaleni,
+      akcniOdkaz: {
+        klic: akcni.klic,
+        aktivni: akcni.aktivni,
+        url: `${base}/doporucitel/pozvanka?a=${encodeURIComponent(akcni.klic)}`,
+      },
       karty: karty.map((k) => ({
         ...verejnaKartaProUi(k),
         tajnyKlic: k.tajnyKlic,
@@ -121,6 +136,7 @@ export async function POST(req: Request) {
   if (akce === 'schvalit') {
     const klic = String(body.klic || '').trim();
     const uprava = (body.udaje || undefined) as Partial<UdajeDoporucitele> | undefined;
+    const kanal = String(body.kanal || 'email').trim() === 'whatsapp' ? 'whatsapp' : 'email';
     const karta = await schvalPozvanku(store, klic, uprava);
     if (!karta) return chyba(404, 'Pozvánka ke schválení není.');
     let base = adresaKlub();
@@ -130,31 +146,33 @@ export async function POST(req: Request) {
     } catch {
       /* */
     }
-    const odkazKarta = `${base}/doporucitel?k=${encodeURIComponent(karta.tajnyKlic)}`;
+    /** plocha=1 = po otevření nabídne Přidat na plochu. */
+    const odkazKarta = `${base}/doporucitel?k=${encodeURIComponent(karta.tajnyKlic)}&plocha=1`;
     let emailPoslan = false;
-    const user = process.env.SMTP_USER?.trim();
-    const pass = process.env.SMTP_HESLO?.trim();
-    if (karta.email && user && pass && !pass.startsWith('SEM_NAPIS')) {
-      try {
-        const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
-        const majitel = process.env.MAJITEL_EMAIL?.trim();
-        const jmeno = jmenoDoporucitele(karta);
-        const transporter = nodemailer.createTransport({
-          host: 'smtp.seznam.cz',
-          port: 465,
-          secure: true,
-          auth: { user, pass },
-        });
-        await transporter.sendMail({
-          from: `VIVIEN Apartments <${user}>`,
-          to: testMode && majitel ? majitel : karta.email,
-          subject: testMode ? '[TEST] Vaše karta VIVIEN Club' : 'Vaše karta VIVIEN Club',
-          text: textKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
-          html: htmlKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
-        });
-        emailPoslan = true;
-      } catch {
-        /* karta je hotová i bez mailu */
+    if (kanal === 'email') {
+      const user = process.env.SMTP_USER?.trim();
+      const pass = process.env.SMTP_HESLO?.trim();
+      if (karta.email && user && pass && !pass.startsWith('SEM_NAPIS')) {
+        try {
+          const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+          const majitel = process.env.MAJITEL_EMAIL?.trim();
+          const transporter = nodemailer.createTransport({
+            host: 'smtp.seznam.cz',
+            port: 465,
+            secure: true,
+            auth: { user, pass },
+          });
+          await transporter.sendMail({
+            from: `VIVIEN Apartments <${user}>`,
+            to: testMode && majitel ? majitel : karta.email,
+            subject: testMode ? '[TEST] Vaše karta VIVIEN Club' : 'Vaše karta VIVIEN Club',
+            text: textKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
+            html: htmlKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
+          });
+          emailPoslan = true;
+        } catch {
+          /* karta je hotová i bez mailu */
+        }
       }
     }
     return NextResponse.json(
@@ -164,7 +182,9 @@ export async function POST(req: Request) {
         tajnyKlic: karta.tajnyKlic,
         odkazKarta,
         emailPoslan,
+        kanal,
         telefon: karta.telefon || null,
+        jmeno: jmenoDoporucitele(karta),
       },
       { headers: noStore },
     );
@@ -174,6 +194,28 @@ export async function POST(req: Request) {
     const poz = await nactiPozvanku(store, String(body.klic || ''));
     if (!poz) return chyba(404, 'Pozvánka nenalezena.');
     return NextResponse.json({ ok: true, pozvanka: poz }, { headers: noStore });
+  }
+
+  if (akce === 'akcni-zapnout' || akce === 'akcni-vypnout') {
+    const akcni = await nastavAkcniOdkazAktivni(store, akce === 'akcni-zapnout');
+    let base = adresaKlub();
+    try {
+      const u = new URL(req.url);
+      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') base = u.origin;
+    } catch {
+      /* veřejná */
+    }
+    return NextResponse.json(
+      {
+        ok: true,
+        akcniOdkaz: {
+          klic: akcni.klic,
+          aktivni: akcni.aktivni,
+          url: `${base}/doporucitel/pozvanka?a=${encodeURIComponent(akcni.klic)}`,
+        },
+      },
+      { headers: noStore },
+    );
   }
 
   if (akce === 'novy') {

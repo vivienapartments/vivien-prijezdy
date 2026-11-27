@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import QRCode from 'qrcode';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { jeIos, smsOdkaz } from '@/lib/brana';
 import { odkazWhatsAppPrehled } from '@/lib/whatsapp-zprava';
@@ -41,6 +42,12 @@ type Pozvanka = {
   udaje?: Udaje;
 };
 
+type AkcniOdkaz = {
+  klic: string;
+  aktivni: boolean;
+  url: string;
+};
+
 const ZPRAVA_VYCHOZI =
   'Dobrý den,\n\nděkujeme, že chcete doporučovat apartmány VIVIEN. Tady je odkaz, kde o sobě vyplníte údaje. Pak vám pošleme vaši kartu s odkazem pro vaše klienty.';
 
@@ -52,6 +59,9 @@ export function DoporuciteleClient() {
   const [karty, setKarty] = useState<Karta[]>([]);
   const [pozvanky, setPozvanky] = useState<Pozvanka[]>([]);
   const [pravidla, setPravidla] = useState<Pravidla | null>(null);
+  const [akcni, setAkcni] = useState<AkcniOdkaz | null>(null);
+  const [qrAkce, setQrAkce] = useState<string | null>(null);
+  const [ukazQr, setUkazQr] = useState(false);
   const [detail, setDetail] = useState<Karta | null>(null);
   const [novy, setNovy] = useState(false);
   const [kanalKontakt, setKanalKontakt] = useState<'telefon' | 'email'>('telefon');
@@ -76,13 +86,33 @@ export function DoporuciteleClient() {
       karty?: Karta[];
       pravidla?: Pravidla;
       pozvanky?: Pozvanka[];
+      akcniOdkaz?: AkcniOdkaz;
     };
     if (json.ok) {
       setKarty(json.karty || []);
       setPravidla(json.pravidla || null);
       setPozvanky(json.pozvanky || []);
+      if (json.akcniOdkaz?.url) setAkcni(json.akcniOdkaz);
     }
   }, []);
+
+  useEffect(() => {
+    if (!akcni?.url || !akcni.aktivni) {
+      setQrAkce(null);
+      return;
+    }
+    let zruseno = false;
+    void QRCode.toDataURL(akcni.url, {
+      width: 320,
+      margin: 2,
+      color: { dark: '#1a1510', light: '#efe6d8' },
+    }).then((url) => {
+      if (!zruseno) setQrAkce(url);
+    });
+    return () => {
+      zruseno = true;
+    };
+  }, [akcni?.url, akcni?.aktivni]);
 
   useEffect(() => {
     void nacti();
@@ -215,8 +245,16 @@ export function DoporuciteleClient() {
     });
   }
 
-  async function schvalit() {
+  async function schvalit(kanal: 'email' | 'whatsapp') {
     if (!editace) return;
+    if (kanal === 'whatsapp' && jenCisliceTel(editace.telefon).length < 9) {
+      setHlaska('Pro WhatsApp doplňte telefon.');
+      return;
+    }
+    if (kanal === 'email' && (!editace.email.trim() || !editace.email.includes('@'))) {
+      setHlaska('Pro e-mail doplňte e-mail.');
+      return;
+    }
     setCekam(true);
     setHlaska(null);
     try {
@@ -226,6 +264,7 @@ export function DoporuciteleClient() {
         body: JSON.stringify({
           akce: 'schvalit',
           klic: editace.klic,
+          kanal,
           udaje: {
             jmeno: editace.jmeno.trim(),
             prijmeni: editace.prijmeni.trim(),
@@ -241,16 +280,27 @@ export function DoporuciteleClient() {
         tajnyKlic?: string;
         emailPoslan?: boolean;
         telefon?: string | null;
+        jmeno?: string;
       };
       if (!res.ok || !json.ok) {
         setHlaska(json.chyba || 'Schválení se nepovedlo.');
         return;
       }
+      const odkaz = json.odkazKarta || '';
+      const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      if (kanal === 'whatsapp' && odkaz) {
+        const dig = jenCisliceTel(editace.telefon);
+        const text = `Dobrý den,\n\nschválili jsme vás jako doporučitele VIVIEN Club. Tady je vaše karta. Můžete si ji přidat na plochu telefonu.\n\n${odkaz}`;
+        window.open(odkazWhatsAppPrehled(dig, text, ua), '_blank');
+        setHlaska('Schváleno. WhatsApp je otevřený s odkazem na kartu.');
+      } else if (json.emailPoslan) {
+        setHlaska('Schváleno. Odkaz na kartu mu odešel e-mailem.');
+      } else if (odkaz) {
+        setHlaska(`Schváleno. Odkaz na kartu: ${odkaz}`);
+      } else {
+        setHlaska('Schváleno.');
+      }
       setEditace(null);
-      const casti = ['Schváleno.'];
-      if (json.emailPoslan) casti.push('Odkaz na kartu mu odešel e-mailem.');
-      else if (json.odkazKarta) casti.push(`Odkaz na kartu: ${json.odkazKarta}`);
-      setHlaska(casti.join(' '));
       await nacti();
     } finally {
       setCekam(false);
@@ -263,6 +313,26 @@ export function DoporuciteleClient() {
       setHlaska('Odkaz je zkopírovaný.');
     } catch {
       setHlaska('Odkaz vyberte a zkopírujte ručně.');
+    }
+  }
+
+  async function prepniAkci(zapnout: boolean) {
+    setCekam(true);
+    try {
+      const res = await fetch('/api/prehled/doporucitele', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ akce: zapnout ? 'akcni-zapnout' : 'akcni-vypnout' }),
+      });
+      const json = (await res.json()) as { ok?: boolean; akcniOdkaz?: AkcniOdkaz; chyba?: string };
+      if (!res.ok || !json.ok || !json.akcniOdkaz) {
+        setHlaska(json.chyba || 'Odkaz se nepodařilo upravit.');
+        return;
+      }
+      setAkcni(json.akcniOdkaz);
+      setHlaska(zapnout ? 'Odkaz na akci je zapnutý.' : 'Odkaz na akci je vypnutý.');
+    } finally {
+      setCekam(false);
     }
   }
 
@@ -507,19 +577,171 @@ export function DoporuciteleClient() {
       </p>
       {hlaska ? <p style={{ color: '#c9a84c' }}>{hlaska}</p> : null}
 
-      <button
-        type="button"
-        className="ph-nova-predani"
-        onClick={() => {
-          setNovy(true);
-          setHlaska(null);
-          setDetail(null);
-          setEditace(null);
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 10,
+          marginBottom: '1rem',
         }}
-        style={{ marginBottom: '1rem' }}
       >
-        Nový doporučitel
-      </button>
+        <button
+          type="button"
+          className="ph-nova-predani"
+          onClick={() => {
+            setNovy(true);
+            setHlaska(null);
+            setDetail(null);
+            setEditace(null);
+            setUkazQr(false);
+          }}
+          style={{ marginBottom: 0 }}
+        >
+          Nový doporučitel
+        </button>
+        {akcni ? (
+          <button
+            type="button"
+            className="ph-btn"
+            disabled={cekam}
+            onClick={() => {
+              setHlaska(null);
+              if (!akcni.aktivni) {
+                void (async () => {
+                  await prepniAkci(true);
+                  setUkazQr(true);
+                })();
+                return;
+              }
+              setUkazQr(true);
+            }}
+            style={{
+              padding: '12px 18px',
+              borderRadius: 18,
+              border: '1px solid #c9a84c',
+              background: ukazQr ? '#c9a84c' : 'transparent',
+              color: ukazQr ? '#1a1510' : '#c9a84c',
+              fontWeight: 700,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+            }}
+          >
+            <span aria-hidden="true" style={{ fontSize: '1.15rem', lineHeight: 1 }}>
+              ▦
+            </span>
+            QR kód
+          </button>
+        ) : null}
+      </div>
+
+      {ukazQr && akcni ? (
+        <div
+          role="dialog"
+          aria-label="QR kód na akci"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 80,
+            background: 'rgba(8, 6, 5, 0.94)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px 16px',
+          }}
+        >
+          <p
+            style={{
+              color: '#c9a84c',
+              fontFamily: 'Georgia, serif',
+              fontSize: '1.35rem',
+              margin: '0 0 8px',
+              textAlign: 'center',
+            }}
+          >
+            Naskenujte QR
+          </p>
+          <p
+            style={{
+              color: '#b7aa98',
+              fontSize: '0.9rem',
+              margin: '0 0 16px',
+              textAlign: 'center',
+              maxWidth: 280,
+            }}
+          >
+            Kolega vyplní údaje. Žádost vám přijde sem ke schválení.
+          </p>
+          {akcni.aktivni && qrAkce ? (
+            <img
+              src={qrAkce}
+              alt="QR odkaz na akci"
+              width={320}
+              height={320}
+              style={{
+                display: 'block',
+                width: 'min(320px, 86vw)',
+                height: 'auto',
+                borderRadius: 16,
+                marginBottom: 14,
+              }}
+            />
+          ) : (
+            <p style={{ color: '#d4a08a' }}>Připravuji QR…</p>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+            <button
+              type="button"
+              className="ph-btn"
+              onClick={() => setUkazQr(false)}
+              style={{
+                padding: '10px 18px',
+                borderRadius: 18,
+                border: 0,
+                background: '#c9a84c',
+                color: '#1a1510',
+                fontWeight: 700,
+              }}
+            >
+              Zavřít
+            </button>
+            {akcni.aktivni ? (
+              <button
+                type="button"
+                className="ph-btn"
+                disabled={cekam}
+                onClick={() => void kopirovat(akcni.url)}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: 18,
+                  border: '1px solid #c9a84c',
+                  background: 'transparent',
+                  color: '#c9a84c',
+                  fontWeight: 700,
+                }}
+              >
+                Kopírovat odkaz
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="ph-btn"
+              disabled={cekam}
+              onClick={() => void prepniAkci(!akcni.aktivni)}
+              style={{
+                padding: '10px 18px',
+                borderRadius: 18,
+                border: '1px solid #6a4034',
+                background: 'transparent',
+                color: '#d4a08a',
+              }}
+            >
+              {akcni.aktivni ? 'Vypnout odkaz' : 'Zapnout odkaz'}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {keSchvaleni.length > 0 ? (
         <section style={{ marginBottom: '1rem' }}>
@@ -679,13 +901,17 @@ export function DoporuciteleClient() {
               }}
             />
           </label>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <p style={{ color: '#b7aa98', fontSize: '0.85rem', margin: '4px 0 8px' }}>
+            Schválit a poslat odkaz na kartu
+          </p>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button
               type="button"
               disabled={cekam}
-              onClick={() => void schvalit()}
+              onClick={() => void schvalit('whatsapp')}
               style={{
                 flex: 1,
+                minWidth: 120,
                 padding: 12,
                 borderRadius: 16,
                 border: 0,
@@ -694,12 +920,30 @@ export function DoporuciteleClient() {
                 fontWeight: 700,
               }}
             >
-              Uložit a schválit
+              WhatsApp
+            </button>
+            <button
+              type="button"
+              disabled={cekam}
+              onClick={() => void schvalit('email')}
+              style={{
+                flex: 1,
+                minWidth: 120,
+                padding: 12,
+                borderRadius: 16,
+                border: '1px solid #c9a84c',
+                background: 'transparent',
+                color: '#c9a84c',
+                fontWeight: 700,
+              }}
+            >
+              E-mail
             </button>
             <a
               href={editace.telefon ? `tel:${editace.telefon.replace(/\s+/g, '')}` : undefined}
               style={{
                 flex: 1,
+                minWidth: 100,
                 padding: 12,
                 borderRadius: 16,
                 border: '1px solid #6a4034',

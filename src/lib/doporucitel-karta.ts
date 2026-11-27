@@ -457,6 +457,58 @@ export async function zalozPozvanku(
   return poz;
 }
 
+type AkcniOdkaz = { klic: string; datum: string; aktivni: boolean };
+
+/** Jeden sdílený odkaz / QR pro akci (více lidí). Každý odeslání = nová žádost. */
+export async function nactiNeboZalozAkcniOdkaz(store: ProcessStore): Promise<AkcniOdkaz> {
+  const exist = await getJson<AkcniOdkaz>(store, 'dop-akce');
+  if (exist?.klic) {
+    return {
+      klic: exist.klic,
+      datum: exist.datum || new Date().toISOString(),
+      aktivni: exist.aktivni !== false,
+    };
+  }
+  const novy: AkcniOdkaz = {
+    klic: generujTajnyKlic(),
+    datum: new Date().toISOString(),
+    aktivni: true,
+  };
+  await setJson(store, 'dop-akce', novy);
+  return novy;
+}
+
+export async function nactiAkcniOdkaz(store: ProcessStore): Promise<AkcniOdkaz | null> {
+  const exist = await getJson<AkcniOdkaz>(store, 'dop-akce');
+  if (!exist?.klic) return null;
+  return {
+    klic: exist.klic,
+    datum: exist.datum || '',
+    aktivni: exist.aktivni !== false,
+  };
+}
+
+export async function nastavAkcniOdkazAktivni(
+  store: ProcessStore,
+  aktivni: boolean,
+): Promise<AkcniOdkaz> {
+  const akce = await nactiNeboZalozAkcniOdkaz(store);
+  const dalsi: AkcniOdkaz = { ...akce, aktivni };
+  await setJson(store, 'dop-akce', dalsi);
+  return dalsi;
+}
+
+/** Ověří token akčního odkazu. Neplatný nebo vypnutý = null. */
+export async function overAkcniToken(
+  store: ProcessStore,
+  tokenRaw: string,
+): Promise<boolean> {
+  const token = (tokenRaw || '').trim();
+  if (!token || token.length > 80) return false;
+  const akce = await nactiAkcniOdkaz(store);
+  return Boolean(akce && akce.aktivni && akce.klic === token);
+}
+
 export async function nactiPozvanku(
   store: ProcessStore,
   klicRaw: string,

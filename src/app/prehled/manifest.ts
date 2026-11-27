@@ -22,5 +22,14 @@ export default function manifest(): MetadataRoute.Manifest {
       { src: '/prehled/icon-192-maskable.png', sizes: '192x192', type: 'image/png', purpose: 'maskable' },
       { src: '/prehled/icon-512-maskable.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
+    shortcuts: [
+      {
+        name: 'Doporučitelé',
+        short_name: 'Doporučitelé',
+        description: 'Pozvánky, žádosti a QR na akci',
+        url: '/prehled/doporucitele',
+        icons: [{ src: '/prehled/icon-192.png', sizes: '192x192', type: 'image/png' }],
+      },
+    ],
   };
 }

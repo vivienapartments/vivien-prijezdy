@@ -7,6 +7,7 @@ import '../doporucitel.scss';
 export default function PozvankaDoporucitelePage() {
   const [pripraveno, setPripraveno] = useState(false);
   const [klic, setKlic] = useState('');
+  const [akcniToken, setAkcniToken] = useState('');
   const [zkouska, setZkouska] = useState(false);
   const [stav, setStav] = useState<'ceka' | 'vyplnena' | 'ke_schvaleni' | 'neplatny' | 'nacitam' | 'diky'>(
     'nacitam',
@@ -28,10 +29,29 @@ export default function PozvankaDoporucitelePage() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
     const p = (q.get('p') || '').trim();
+    const a = (q.get('a') || '').trim();
     const z = q.get('zkouska') === '1';
     setKlic(p);
+    setAkcniToken(a);
     setZkouska(z);
     setPripraveno(true);
+    if (a && !p) {
+      let zruseno = false;
+      (async () => {
+        try {
+          const res = await fetch(`/api/doporucitel/pozvanka?a=${encodeURIComponent(a)}`);
+          const json = (await res.json()) as { ok?: boolean };
+          if (zruseno) return;
+          if (!res.ok || !json.ok) setStav('neplatny');
+          else setStav('ceka');
+        } catch {
+          if (!zruseno) setStav('neplatny');
+        }
+      })();
+      return () => {
+        zruseno = true;
+      };
+    }
     if (z && !p) {
       setStav('ceka');
       return;
@@ -96,7 +116,8 @@ export default function PozvankaDoporucitelePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           p: klic || undefined,
-          zkouska: zkouska && !klic ? true : undefined,
+          a: akcniToken && !klic ? akcniToken : undefined,
+          zkouska: zkouska && !klic && !akcniToken ? true : undefined,
           typ,
           jmeno,
           prijmeni,
