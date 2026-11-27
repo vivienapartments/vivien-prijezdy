@@ -285,14 +285,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       akce !== 'doporuceni-priradit' &&
       akce !== 'doporuceni-seznam' &&
       akce !== 'klub-poslat-kartu' &&
-      akce !== 'klub-karta-pripravit')
+      akce !== 'klub-karta-pripravit' &&
+      akce !== 'klub-karta-stav')
   ) {
     return chyba(400, 'Neznámá akce.');
   }
 
   const store = createProcessStore();
   const { smiZapisovatRezervaci } = await import('@/lib/klub-klic');
-  if (!smiZapisovatRezervaci(id) && akce !== 'doporuceni-seznam') {
+  if (!smiZapisovatRezervaci(id) && akce !== 'doporuceni-seznam' && akce !== 'klub-karta-stav') {
     return chyba(
       403,
       'Na Preview a lokálně se ostré rezervace nemění. Zkoušejte jen fiktivního hosta (TESTKARTY / Pravoslav).',
