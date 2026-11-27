@@ -167,6 +167,10 @@ async function setJson(store: ProcessStore, key: string, value: unknown): Promis
   await store.setKv(klicUloziste(key), JSON.stringify(value));
 }
 
+async function delJson(store: ProcessStore, key: string): Promise<void> {
+  await store.delKv(klicUloziste(key));
+}
+
 function novyId(prefix: string): string {
   return `${prefix}${Date.now().toString(36)}${randomBytes(3).toString('hex')}`;
 }
@@ -739,6 +743,45 @@ export async function seznamKaret(store: ProcessStore): Promise<DoporucitelKarta
     if (k) out.push(k);
   }
   return out;
+}
+
+/** Smaže kartu doporučitele (zkoušky, špatné údaje). */
+export async function smazKartuDoporucitele(
+  store: ProcessStore,
+  kodRaw: string,
+): Promise<boolean> {
+  const karta = await nactiKartuPodleKodu(store, kodRaw);
+  if (!karta) return false;
+  await delJson(store, `dop:${karta.kod}`);
+  await delJson(store, `dop-klic:${karta.tajnyKlic}`);
+  const list = ((await getJson<string[]>(store, 'dop-seznam')) || []).filter((k) => k !== karta.kod);
+  await setJson(store, 'dop-seznam', list);
+  /** Pozvánky, které na tuto kartu odkazují. */
+  const pozList = (await getJson<string[]>(store, 'dop-pozvanky')) || [];
+  const dalsi: string[] = [];
+  for (const klic of pozList) {
+    const poz = await nactiPozvanku(store, klic);
+    if (poz?.kod === karta.kod) {
+      await delJson(store, `dop-pozvanka:${klic}`);
+    } else if (poz) {
+      dalsi.push(klic);
+    }
+  }
+  await setJson(store, 'dop-pozvanky', dalsi);
+  return true;
+}
+
+/** Smaže pozvánku (čeká / ke schválení / vyplněná). */
+export async function smazPozvankuDoporucitele(
+  store: ProcessStore,
+  klicRaw: string,
+): Promise<boolean> {
+  const poz = await nactiPozvanku(store, klicRaw);
+  if (!poz) return false;
+  await delJson(store, `dop-pozvanka:${poz.klic}`);
+  const list = ((await getJson<string[]>(store, 'dop-pozvanky')) || []).filter((k) => k !== poz.klic);
+  await setJson(store, 'dop-pozvanky', list);
+  return true;
 }
 
 export async function zmenStavDoporuceniRucne(

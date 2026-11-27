@@ -9,6 +9,8 @@ import {
   schvalPozvanku,
   seznamKaret,
   seznamPozvanek,
+  smazKartuDoporucitele,
+  smazPozvankuDoporucitele,
   ulozPravidla,
   zalozPozvanku,
   verejnaKartaProUi,
@@ -178,6 +180,18 @@ export async function POST(req: Request) {
 
   if (akce === 'novy') {
     return chyba(400, 'Kartu nezakládejte rovnou. Použijte Nový doporučitel → on vyplní → vy schválíte.');
+  }
+
+  if (akce === 'smazat-kartu') {
+    const ok = await smazKartuDoporucitele(store, String(body.kod || ''));
+    if (!ok) return chyba(404, 'Karta nenalezena.');
+    return NextResponse.json({ ok: true }, { headers: noStore });
+  }
+
+  if (akce === 'smazat-pozvanku') {
+    const ok = await smazPozvankuDoporucitele(store, String(body.klic || ''));
+    if (!ok) return chyba(404, 'Pozvánka nenalezena.');
+    return NextResponse.json({ ok: true }, { headers: noStore });
   }
 
   if (akce === 'vyplaceno') {

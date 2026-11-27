@@ -280,6 +280,50 @@ export function DoporuciteleClient() {
     }
   }
 
+  async function smazatKartu(kod: string, jmeno: string) {
+    if (!window.confirm(`Smazat doporučitele ${jmeno}? Půjde založit znovu.`)) return;
+    setCekam(true);
+    try {
+      const res = await fetch('/api/prehled/doporucitele', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ akce: 'smazat-kartu', kod }),
+      });
+      const json = (await res.json()) as { ok?: boolean; chyba?: string };
+      if (!res.ok || !json.ok) {
+        setHlaska(json.chyba || 'Smazání se nepovedlo.');
+        return;
+      }
+      setDetail(null);
+      setHlaska('Doporučitel je smazaný. Můžete ho pozvat znovu.');
+      await nacti();
+    } finally {
+      setCekam(false);
+    }
+  }
+
+  async function smazatPozvanku(klic: string, popisek: string) {
+    if (!window.confirm(`Smazat pozvánku (${popisek})?`)) return;
+    setCekam(true);
+    try {
+      const res = await fetch('/api/prehled/doporucitele', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ akce: 'smazat-pozvanku', klic }),
+      });
+      const json = (await res.json()) as { ok?: boolean; chyba?: string };
+      if (!res.ok || !json.ok) {
+        setHlaska(json.chyba || 'Smazání se nepovedlo.');
+        return;
+      }
+      if (editace?.klic === klic) setEditace(null);
+      setHlaska('Pozvánka je smazaná.');
+      await nacti();
+    } finally {
+      setCekam(false);
+    }
+  }
+
   const cekaUdaje = pozvanky.filter((p) => p.stav === 'ceka');
   const keSchvaleni = pozvanky.filter((p) => p.stav === 'ke_schvaleni');
 
@@ -529,6 +573,21 @@ export function DoporuciteleClient() {
                         Zavolat
                       </a>
                     ) : null}
+                    <button
+                      type="button"
+                      disabled={cekam}
+                      onClick={() => void smazatPozvanku(p.klic, jmeno)}
+                      style={{
+                        marginLeft: 8,
+                        padding: '8px 14px',
+                        borderRadius: 18,
+                        border: '1px solid #6a4034',
+                        background: 'transparent',
+                        color: '#d4a08a',
+                      }}
+                    >
+                      Smazat
+                    </button>
                   </div>
                 </li>
               );
@@ -653,21 +712,37 @@ export function DoporuciteleClient() {
               Zavolat
             </a>
           </div>
-          <button
-            type="button"
-            onClick={() => setEditace(null)}
-            style={{
-              marginTop: 8,
-              width: '100%',
-              padding: 10,
-              borderRadius: 16,
-              border: '1px solid #3d342a',
-              background: 'transparent',
-              color: '#b7aa98',
-            }}
-          >
-            Zrušit
-          </button>
+          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+            <button
+              type="button"
+              onClick={() => setEditace(null)}
+              style={{
+                flex: 1,
+                padding: 10,
+                borderRadius: 16,
+                border: '1px solid #3d342a',
+                background: 'transparent',
+                color: '#b7aa98',
+              }}
+            >
+              Zrušit
+            </button>
+            <button
+              type="button"
+              disabled={cekam}
+              onClick={() => void smazatPozvanku(editace.klic, `${editace.jmeno} ${editace.prijmeni}`.trim())}
+              style={{
+                flex: 1,
+                padding: 10,
+                borderRadius: 16,
+                border: '1px solid #6a4034',
+                background: 'transparent',
+                color: '#d4a08a',
+              }}
+            >
+              Smazat žádost
+            </button>
+          </div>
         </section>
       ) : null}
 
@@ -691,6 +766,21 @@ export function DoporuciteleClient() {
                   }}
                 >
                   Kopírovat odkaz
+                </button>
+                <button
+                  type="button"
+                  disabled={cekam}
+                  onClick={() => void smazatPozvanku(p.klic, p.poznamka || 'pozvánka')}
+                  style={{
+                    marginLeft: 8,
+                    padding: '4px 10px',
+                    borderRadius: 16,
+                    border: '1px solid #6a4034',
+                    background: 'transparent',
+                    color: '#d4a08a',
+                  }}
+                >
+                  Smazat
                 </button>
               </li>
             ))}
@@ -741,22 +831,39 @@ export function DoporuciteleClient() {
               </li>
             ))}
           </ul>
-          {detail.penize.kVyplate > 0 ? (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+            {detail.penize.kVyplate > 0 ? (
+              <button
+                type="button"
+                onClick={() => void vyplaceno(detail.kod, detail.penize.kVyplate)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 18,
+                  border: 0,
+                  background: '#c9a84c',
+                  color: '#1a1510',
+                  fontWeight: 700,
+                }}
+              >
+                Vyplaceno {detail.penize.kVyplate} Kč
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={() => void vyplaceno(detail.kod, detail.penize.kVyplate)}
+              disabled={cekam}
+              onClick={() => void smazatKartu(detail.kod, `${detail.jmeno} ${detail.prijmeni}`.trim())}
               style={{
                 padding: '8px 14px',
                 borderRadius: 18,
-                border: 0,
-                background: '#c9a84c',
-                color: '#1a1510',
+                border: '1px solid #6a4034',
+                background: 'transparent',
+                color: '#d4a08a',
                 fontWeight: 700,
               }}
             >
-              Vyplaceno {detail.penize.kVyplate} Kč
+              Smazat doporučitele
             </button>
-          ) : null}
+          </div>
         </section>
       ) : null}
     </main>
