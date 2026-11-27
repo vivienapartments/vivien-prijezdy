@@ -90,12 +90,14 @@ type ZmenaFaktury = (
   opts?: { fakturaNeprebirat?: boolean },
 ) => void;
 type ZmenaCeny = (rezervace: string, cenaPobytu: number) => void;
+type ZmenaMeny = (rezervace: string, mena: 'CZK' | 'EUR') => void | Promise<void>;
 
 type Spolecne = {
   ukazka: boolean;
   userAgent: string;
   onZmena: ZmenaFaktury;
   onCenaPobytu?: ZmenaCeny;
+  onMena?: ZmenaMeny;
   onHlaska: (text: string) => void;
 };
 
@@ -205,6 +207,7 @@ function FakturaObsah({
   userAgent,
   onZmena,
   onCenaPobytu,
+  onMena,
   onHlaska,
 }: Spolecne & { row: PrehledRadek; faktura: FakturaUdaje }) {
   const [cekam, setCekam] = useState(false);
@@ -504,24 +507,45 @@ function FakturaObsah({
         ))}
         <li>
           <span className="ph-faktura__nazev">Cena pobytu</span>
+          <span className="ph-faktura__hodnota ph-faktura__volby">
+            <button
+              type="button"
+              className={row.mena !== 'EUR' ? 'ph-ulozit' : 'ph-kopie'}
+              disabled={cekam}
+              onClick={() => void onMena?.(row.rezervace, 'CZK')}
+            >
+              Kč
+            </button>
+            <button
+              type="button"
+              className={row.mena === 'EUR' ? 'ph-ulozit' : 'ph-kopie'}
+              disabled={cekam}
+              onClick={() => void onMena?.(row.rezervace, 'EUR')}
+            >
+              €
+            </button>
+          </span>
           <span className="ph-faktura__hodnota">
             <input
               className="ph-input"
               inputMode="decimal"
               value={cena}
               onChange={(e) => setCena(e.target.value)}
-              placeholder={row.mena === 'EUR' ? 'např. 180' : 'např. 4569.85'}
+              placeholder={row.mena === 'EUR' ? 'např. 180' : 'např. 1034,46'}
               aria-label="Cena pobytu"
             />
           </span>
           <button type="button" className="ph-kopie" disabled={cekam} onClick={() => void ulozCenu()}>
             Uložit cenu
           </button>
-          {!cena.trim() && row.cenaPobytu == null ? (
-            <span className="ph-faktura__napoveda">
-              Cena přijde z check-inu (TOTAL_PRICE) nebo z mailu Nová rezervace (Celková cena). U starších karet ji doplňte ručně a uložte.
-            </span>
-          ) : null}
+          <span className="ph-faktura__napoveda">
+            {row.mena === 'EUR'
+              ? 'Na dokladu bude částka v eurech. Po odjezdu ji tu můžete kdykoli změnit.'
+              : 'Na dokladu bude částka v korunách. Po odjezdu ji tu můžete kdykoli změnit.'}
+            {!cena.trim() && row.cenaPobytu == null
+              ? ' Cena přijde z check-inu nebo z mailu Nová rezervace. U starších karet ji doplňte ručně a uložte.'
+              : ''}
+          </span>
         </li>
         <li>
           <span className="ph-faktura__nazev">Typ dokladu</span>

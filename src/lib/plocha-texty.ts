@@ -230,7 +230,7 @@ export const plochaZobrazit: LText = {
 
 export const plochaSchovat: LText = {
   cs: 'Schovat',
-  en: 'Piilottakaa',
+  en: 'Hide',
   de: 'Ausblenden',
   pl: 'Ukryj',
   uk: 'Сховати',
@@ -239,7 +239,7 @@ export const plochaSchovat: LText = {
   es: 'Ocultar',
   hu: 'Elrejtés',
   da: 'Skjul',
-  fi: 'Hide',
+  fi: 'Piilottakaa',
   fr: 'Masquer',
   it: 'Nascondi',
   pt: 'Ocultar',
@@ -438,7 +438,7 @@ export const plochaHotovo: LText = {
 
 export const plochaZavrit: LText = {
   cs: 'Zavřít',
-  en: 'Sulkekaa',
+  en: 'Close',
   de: 'Schließen',
   pl: 'Zamknij',
   uk: 'Закрити',
@@ -447,7 +447,7 @@ export const plochaZavrit: LText = {
   es: 'Cerrar',
   hu: 'Bezárás',
   da: 'Luk',
-  fi: 'Close',
+  fi: 'Sulkekaa',
   fr: 'Fermer',
   it: 'Chiudi',
   pt: 'Fechar',

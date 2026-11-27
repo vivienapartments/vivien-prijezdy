@@ -25,7 +25,7 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 };
 
-const hotovoPoptavka: LText = {
+export const hotovoPoptavka: LText = {
   cs: 'Hotovo. Poptávku najdete na ploše telefonu.',
   en: 'Done. You will find the request form on your phone home screen.',
   de: 'Fertig. Die Anfrage finden Sie auf dem Startbildschirm.',
@@ -36,6 +36,7 @@ const hotovoPoptavka: LText = {
   es: 'Listo. La solicitud estará en la pantalla del teléfono.',
   hu: 'Kész. A kérés a telefon kezdőképernyőjén lesz.',
   da: 'Færdig. Forespørgslen ligger på telefonens hjemmeskærm.',
+  fi: 'Valmista. Tiedustelulomake löytyy puhelimen kotinäytöltä.',
   fr: 'C’est fait. La demande est sur l’écran d’accueil du téléphone.',
   it: 'Fatto. La richiesta è sulla schermata del telefono.',
   pt: 'Feito. O pedido fica no ecrã do telemóvel.',
@@ -217,7 +218,7 @@ export function PoptavkaPlochaRoot({ lang, children }: RootProps) {
   );
 }
 
-const plochaVetaDekujeme: LText = {
+export const plochaVetaDekujeme: LText = {
   cs: 'Mějte nás na ploše telefonu. Další pobyt pak poptáte bez hledání.',
   en: 'Keep us on your phone home screen. You can then request your next stay without searching.',
   de: 'Haben Sie uns auf dem Startbildschirm. Den nächsten Aufenthalt fragen Sie dann ohne Suchen an.',
@@ -228,6 +229,7 @@ const plochaVetaDekujeme: LText = {
   es: 'Téngannos en la pantalla del teléfono. La próxima estancia la piden entonces sin buscar.',
   hu: 'Legyünk a telefon kezdőképernyőjén. A következő tartózkodást akkor keresés nélkül kérheti.',
   da: 'Hav os på telefonens hjemmeskærm. Næste ophold spørger I så om uden at lede.',
+  fi: 'Pitäkää meidät puhelimen kotinäytöllä. Seuraavaa majoitusta voi sitten tiedustella ilman etsimistä.',
   fr: 'Gardez-nous sur l’écran d’accueil. Le prochain séjour se demande alors sans chercher.',
   it: 'Teneteci sulla schermata del telefono. Il prossimo soggiorno lo chiedete allora senza cercare.',
   pt: 'Tenha-nos no ecrã do telemóvel. A próxima estadia pede-se então sem procurar.',

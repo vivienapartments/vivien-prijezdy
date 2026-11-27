@@ -944,7 +944,7 @@ export async function sendGuestEmail(opts: {
   return { to, messageId: info.messageId };
 }
 
-const upominkaPredmetL: LText = {
+export const upominkaPredmetL: LText = {
   cs: 'Vaše vstupní PINy na vás čekají',
   en: 'Your entry PIN codes are waiting for you',
   de: 'Ihre Eingangs-PIN-Codes warten auf Sie',
@@ -955,6 +955,7 @@ const upominkaPredmetL: LText = {
   es: 'Sus códigos PIN de entrada les esperan',
   hu: 'A belépő PIN-kódjaik várják önöket',
   da: 'Your entry PIN codes are waiting for you',
+  fi: 'Sisäänpääsyn PIN-koodinne odottavat teitä',
   fr: "Vos codes PIN d’entrée vous attendent",
   it: "I vostri codici PIN di ingresso vi aspettano",
   pt: 'Os vossos códigos PIN de entrada esperam por vocês',
