@@ -658,65 +658,66 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, predano: dalsi.predano }, { headers: noStore });
   }
 
+  async function nactiExistujiciKartuKlubu() {
+    const { klubKlic } = await import('@/lib/klub-klic');
+    const { nactiKlientPodleId } = await import('@/lib/klient-karta');
+    const { adresaKlub } = await import('@/lib/verejna-adresa');
+    const raw = await store.getKv(klubKlic(`klient-index:rez:${id}`));
+    if (!raw) return null;
+    try {
+      const o = JSON.parse(raw) as { id?: string };
+      if (!o.id) return null;
+      const karta = await nactiKlientPodleId(store, o.id);
+      if (!karta?.tajnyKlic) return null;
+      const odkaz = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`;
+      return { odkaz, tajnyKlic: karta.tajnyKlic };
+    } catch {
+      return null;
+    }
+  }
+
   async function pripravOdkazKartyKlubu() {
-    const { klubKlic, klubPovolenProZkousku } = await import('@/lib/klub-klic');
+    const existujici = await nactiExistujiciKartuKlubu();
+    if (existujici) return existujici;
+
+    const { klubPovolenProZkousku } = await import('@/lib/klub-klic');
     if (!klubPovolenProZkousku()) {
       return { chyba: 'Club je vypnutý.' as const };
     }
     const { sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
-    const { nactiKlientPodleId } = await import('@/lib/klient-karta');
-    const { adresaKlub } = await import('@/lib/verejna-adresa');
-    let karta = null as Awaited<ReturnType<typeof nactiKlientPodleId>>;
-    const raw = await store.getKv(klubKlic(`klient-index:rez:${id}`));
-    if (raw) {
-      try {
-        const o = JSON.parse(raw) as { id?: string };
-        if (o.id) karta = await nactiKlientPodleId(store, o.id);
-      } catch {
-        /* ignore */
-      }
-    }
-    if (!karta) {
-      if (!rec) return { chyba: 'Rezervace v přehledu není.' as const };
-      karta = await sparujNeboVytvorKlienta(store, {
-        jmeno: rec.jmeno,
-        email: rec.emailHosta,
-        telefon: rec.telefon || rec.telefonRezervace,
-        rezervace: rec.rezervace,
-        jazyk: rec.jazyk || 'cs',
-      });
-    }
+    if (!rec) return { chyba: 'Rezervace v přehledu není.' as const };
+    const karta = await sparujNeboVytvorKlienta(store, {
+      jmeno: rec.jmeno,
+      email: rec.emailHosta,
+      telefon: rec.telefon || rec.telefonRezervace,
+      rezervace: rec.rezervace,
+      jazyk: rec.jazyk || 'cs',
+    });
     if (!karta?.tajnyKlic) return { chyba: 'Kartu se nepodařilo připravit.' as const };
+    const { adresaKlub } = await import('@/lib/verejna-adresa');
     const odkaz = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`;
     return { odkaz, tajnyKlic: karta.tajnyKlic };
   }
 
   /** Jen zjistí, jestli už Club karta existuje. Nic nezakládá. */
   if (akce === 'klub-karta-stav') {
-    const { klubKlic, klubPovolenProZkousku } = await import('@/lib/klub-klic');
-    if (!klubPovolenProZkousku()) {
-      return NextResponse.json({ ok: true, ma: false, vypnuto: true }, { headers: noStore });
+    const { klubPovolenProZkousku } = await import('@/lib/klub-klic');
+    const existujici = await nactiExistujiciKartuKlubu();
+    if (existujici) {
+      return NextResponse.json(
+        { ok: true, ma: true, odkaz: existujici.odkaz, vypnuto: !klubPovolenProZkousku() },
+        { headers: noStore },
+      );
     }
-    const { nactiKlientPodleId } = await import('@/lib/klient-karta');
-    const { adresaKlub } = await import('@/lib/verejna-adresa');
-    const raw = await store.getKv(klubKlic(`klient-index:rez:${id}`));
-    let tajnyKlic: string | null = null;
-    if (raw) {
-      try {
-        const o = JSON.parse(raw) as { id?: string };
-        if (o.id) {
-          const karta = await nactiKlientPodleId(store, o.id);
-          tajnyKlic = karta?.tajnyKlic || null;
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-    if (!tajnyKlic) {
-      return NextResponse.json({ ok: true, ma: false, odkaz: null }, { headers: noStore });
-    }
-    const odkaz = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(tajnyKlic)}`;
-    return NextResponse.json({ ok: true, ma: true, odkaz }, { headers: noStore });
+    return NextResponse.json(
+      {
+        ok: true,
+        ma: false,
+        odkaz: null,
+        vypnuto: !klubPovolenProZkousku(),
+      },
+      { headers: noStore },
+    );
   }
 
   if (akce === 'klub-karta-pripravit' || akce === 'klub-poslat-kartu') {

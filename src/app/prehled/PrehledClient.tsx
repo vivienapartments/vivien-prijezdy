@@ -441,17 +441,18 @@ function ClubKartaNahore({
           vypnuto?: boolean;
         };
         if (zruseno) return;
-        if (data.vypnuto) {
-          setStav('vypnuto');
-          return;
-        }
         if (data.ok && data.ma && data.odkaz) {
           setOdkaz(data.odkaz);
           setStav('ano');
-        } else {
-          setOdkaz(null);
-          setStav('ne');
+          return;
         }
+        if (data.vypnuto) {
+          setOdkaz(null);
+          setStav('vypnuto');
+          return;
+        }
+        setOdkaz(null);
+        setStav('ne');
       } catch {
         if (!zruseno) setStav('ne');
       }
@@ -492,14 +493,14 @@ function ClubKartaNahore({
     }
   }
 
-  if (stav === 'vypnuto') return null;
-
   return (
     <div className="ph-club-pravy" aria-live="polite">
       {stav === 'nacitam' ? (
         <b>Club karta</b>
       ) : stav === 'ano' ? (
         <b className="is-ano">Club karta · ano</b>
+      ) : stav === 'vypnuto' ? (
+        <b className="is-ne">Club vypnutý</b>
       ) : (
         <b className="is-ne">Club karta · ne</b>
       )}
