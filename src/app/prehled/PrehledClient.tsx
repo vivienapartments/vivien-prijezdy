@@ -404,6 +404,118 @@ function TelefonZMinulaNahore({
   );
 }
 
+/** Club karta nahoře u hosta: ano / ne + Založit nebo Otevřít. */
+function ClubKartaNahore({
+  rezervace,
+  ukazka,
+  onHlaska,
+}: {
+  rezervace: string;
+  ukazka: boolean;
+  onHlaska: (t: string) => void;
+}) {
+  const [stav, setStav] = useState<'nacitam' | 'ano' | 'ne' | 'vypnuto'>('nacitam');
+  const [odkaz, setOdkaz] = useState<string | null>(null);
+  const [cekam, setCekam] = useState(false);
+
+  useEffect(() => {
+    let zruseno = false;
+    if (ukazka) {
+      const ma = /[02468]$/.test(rezervace);
+      setStav(ma ? 'ano' : 'ne');
+      setOdkaz(ma ? `/klub?k=ukazka-${encodeURIComponent(rezervace)}` : null);
+      return;
+    }
+    setStav('nacitam');
+    void (async () => {
+      try {
+        const res = await fetch('/api/prehled/akce', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: rezervace, akce: 'klub-karta-stav' }),
+        });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          ma?: boolean;
+          odkaz?: string | null;
+          vypnuto?: boolean;
+        };
+        if (zruseno) return;
+        if (data.vypnuto) {
+          setStav('vypnuto');
+          return;
+        }
+        if (data.ok && data.ma && data.odkaz) {
+          setOdkaz(data.odkaz);
+          setStav('ano');
+        } else {
+          setOdkaz(null);
+          setStav('ne');
+        }
+      } catch {
+        if (!zruseno) setStav('ne');
+      }
+    })();
+    return () => {
+      zruseno = true;
+    };
+  }, [rezervace, ukazka]);
+
+  async function zalozit() {
+    if (cekam || ukazka) {
+      if (ukazka) {
+        setOdkaz(`/klub?k=ukazka-${encodeURIComponent(rezervace)}`);
+        setStav('ano');
+        onHlaska('Ukázka: Club karta založena.');
+      }
+      return;
+    }
+    setCekam(true);
+    try {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: rezervace, akce: 'klub-karta-pripravit' }),
+      });
+      const data = (await res.json()) as { ok?: boolean; odkaz?: string; chyba?: string };
+      if (!res.ok || !data.ok || !data.odkaz) {
+        onHlaska(data.chyba || 'Kartu se nepodařilo založit.');
+        return;
+      }
+      setOdkaz(data.odkaz);
+      setStav('ano');
+      onHlaska('Club karta je založená.');
+    } catch {
+      onHlaska('Kartu se nepodařilo založit.');
+    } finally {
+      setCekam(false);
+    }
+  }
+
+  if (stav === 'vypnuto') return null;
+
+  return (
+    <div className="ph-club-pravy" aria-live="polite">
+      {stav === 'nacitam' ? (
+        <b>Club karta</b>
+      ) : stav === 'ano' ? (
+        <b className="is-ano">Club karta · ano</b>
+      ) : (
+        <b className="is-ne">Club karta · ne</b>
+      )}
+      {stav === 'ano' && odkaz ? (
+        <a className="ph-club-pravy__btn is-line" href={odkaz} target="_blank" rel="noopener noreferrer">
+          Otevřít
+        </a>
+      ) : stav === 'ne' ? (
+        <button type="button" className="ph-club-pravy__btn" disabled={cekam} onClick={() => void zalozit()}>
+          {cekam ? '…' : 'Založit'}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export function PrehledClient({
   rows,
   dnes,
@@ -4629,18 +4741,29 @@ export function PrehledClient({
             row.osob == null ? null : row.osob === 1 ? '1 dospělý' : `${row.osob} dospělí`;
           return (
             <>
-              <div className="ph-nova-top">
-                <span>
-                  {stitekDneKarty(row.prijezd, dnes)}
-                  {row.apartman ? ` · ${row.apartman}` : ''}
-                  {row.stitek === 'rucne' ? ' · Ruční' : ''}
-                </span>
-                <span className={`ph-nova-pill ph-nova-pill--${pillTon}`}>{pillText}</span>
+              <div className="ph-nova-hlava">
+                <div className="ph-nova-hlava__levy">
+                  <div className="ph-nova-top">
+                    <span>
+                      {stitekDneKarty(row.prijezd, dnes)}
+                      {row.apartman ? ` · ${row.apartman}` : ''}
+                      {row.stitek === 'rucne' ? ' · Ruční' : ''}
+                    </span>
+                  </div>
+                  <div className="ph-nova-jmeno">{kdo}</div>
+                  <p className="ph-nova-sub">
+                    {[apartman, osobText, termin].filter(Boolean).join(' · ')}
+                  </p>
+                </div>
+                <div className="ph-nova-hlava__pravy">
+                  <span className={`ph-nova-pill ph-nova-pill--${pillTon}`}>{pillText}</span>
+                  <ClubKartaNahore
+                    rezervace={row.rezervace}
+                    ukazka={ukazka}
+                    onHlaska={setHlaska}
+                  />
+                </div>
               </div>
-              <div className="ph-nova-jmeno">{kdo}</div>
-              <p className="ph-nova-sub">
-                {[apartman, osobText, termin].filter(Boolean).join(' · ')}
-              </p>
               {staly ? (
                 <p className={staly.shoda === 'slaba' ? 'ph-staly is-slaba' : 'ph-staly'}>{textStalehoHosta(staly)}</p>
               ) : null}

@@ -690,6 +690,34 @@ export async function POST(request: Request): Promise<NextResponse> {
     return { odkaz, tajnyKlic: karta.tajnyKlic };
   }
 
+  /** Jen zjistí, jestli už Club karta existuje. Nic nezakládá. */
+  if (akce === 'klub-karta-stav') {
+    const { klubKlic, klubPovolenProZkousku } = await import('@/lib/klub-klic');
+    if (!klubPovolenProZkousku()) {
+      return NextResponse.json({ ok: true, ma: false, vypnuto: true }, { headers: noStore });
+    }
+    const { nactiKlientPodleId } = await import('@/lib/klient-karta');
+    const { adresaKlub } = await import('@/lib/verejna-adresa');
+    const raw = await store.getKv(klubKlic(`klient-index:rez:${id}`));
+    let tajnyKlic: string | null = null;
+    if (raw) {
+      try {
+        const o = JSON.parse(raw) as { id?: string };
+        if (o.id) {
+          const karta = await nactiKlientPodleId(store, o.id);
+          tajnyKlic = karta?.tajnyKlic || null;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!tajnyKlic) {
+      return NextResponse.json({ ok: true, ma: false, odkaz: null }, { headers: noStore });
+    }
+    const odkaz = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(tajnyKlic)}`;
+    return NextResponse.json({ ok: true, ma: true, odkaz }, { headers: noStore });
+  }
+
   if (akce === 'klub-karta-pripravit' || akce === 'klub-poslat-kartu') {
     const {
       emailProKartu,

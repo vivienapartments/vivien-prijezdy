@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Náhled · Club karta vpravo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0b0a;
+      --mid: #3d342a;
+      --gold: #c9a84c;
+      --tx: #efe6d8;
+      --sec: #b7aa98;
+      --ok: #8fbf9f;
+      --ne: #d4a08a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      background: #1a1612;
+      color: var(--tx);
+      font-family: 'DM Sans', system-ui, sans-serif;
+    }
+    .banner {
+      background: var(--gold);
+      color: #1a1510;
+      text-align: center;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+    .wrap { max-width: 420px; margin: 0 auto; padding: 16px 12px 40px; }
+    h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 500;
+      color: var(--gold);
+      text-align: center;
+      font-size: 1.6rem;
+      margin: 14px 0 6px;
+    }
+    .intro {
+      text-align: center;
+      color: var(--sec);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      margin: 0 0 18px;
+    }
+    .phone {
+      width: 100%;
+      max-width: 390px;
+      margin: 0 auto 22px;
+      background: var(--bg);
+      border: 1px solid var(--mid);
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.4);
+    }
+    .label {
+      color: var(--gold);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
+    .hlava {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .levy { min-width: 0; flex: 1; }
+    .pravy {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 6px;
+      max-width: 42%;
+      text-align: right;
+    }
+    .top {
+      color: var(--sec);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .pill {
+      border: 1px solid #5a7a62;
+      color: var(--ok);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .pill.wait {
+      border-color: #6a4034;
+      color: var(--ne);
+    }
+    .jmeno {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 1.55rem;
+      color: var(--gold);
+      margin: 0 0 4px;
+      line-height: 1.15;
+    }
+    .sub {
+      color: var(--sec);
+      font-size: 0.88rem;
+      margin: 0;
+      line-height: 1.35;
+    }
+    .club b {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .club .ano { color: var(--ok); }
+    .club .ne { color: var(--ne); }
+    .btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 6px 12px;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: default;
+    }
+    .btn-gold {
+      background: var(--gold);
+      color: #1a1510;
+    }
+    .btn-line {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+    .tiles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .tile {
+      border: 1px solid var(--mid);
+      border-radius: 14px;
+      padding: 12px 10px;
+      background: #15110e;
+      min-height: 72px;
+    }
+    .tile i {
+      display: block;
+      font-style: normal;
+      color: var(--sec);
+      font-size: 0.75rem;
+    }
+    .tile b {
+      display: block;
+      margin-top: 6px;
+      color: var(--tx);
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">Náhled · Club vpravo pod Předáno</div>
+  <div class="wrap">
+    <h1>Club vpravo</h1>
+    <p class="intro">Vpravo nahoře je Předáno. Pod ním, na úrovni jména, Club karta · ano/ne a tlačítko.</p>
+
+    <div class="phone">
+      <p class="label">Když kartu už má</p>
+      <div class="hlava">
+        <div class="levy">
+          <div class="top">Dnes · V1</div>
+          <div class="jmeno">Michaela Klímová</div>
+          <p class="sub">Jemná harmonie · 2 dospělí · 27.–29. 11.</p>
+        </div>
+        <div class="pravy">
+          <span class="pill">Předáno 16:23</span>
+          <div class="club">
+            <b class="ano">Club karta · ano</b>
+            <button type="button" class="btn btn-line">Otevřít</button>
+          </div>
+        </div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><i>Příjezd</i><b>16:15</b></div>
+        <div class="tile"><i>Check-in</i><b>Hotovo</b></div>
+      </div>
+    </div>
+
+    <div class="phone">
+      <p class="label">Když kartu ještě nemá</p>
+      <div class="hlava">
+        <div class="levy">
+          <div class="top">Dnes · V4</div>
+          <div class="jmeno">Petr Flidr</div>
+          <p class="sub">Ušlechtilý kontrast · 2 dospělí · 20.–22. 11.</p>
+        </div>
+        <div class="pravy">
+          <span class="pill wait">Čeká check-in</span>
+          <div class="club">
+            <b class="ne">Club karta · ne</b>
+            <button type="button" class="btn btn-gold">Založit</button>
+          </div>
+        </div>
+      </div>
+      <div class="tiles">
+        <div class="tile"><i>Příjezd</i><b>Čas chybí</b></div>
+        <div class="tile"><i>Check-in</i><b>Čeká</b></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
