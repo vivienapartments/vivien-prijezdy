@@ -16,7 +16,7 @@ function esc(s: string): string {
     .replaceAll('"', '&quot;');
 }
 
-function odstavceHtml(text: string, align: 'justify' | 'center' = 'justify'): string {
+function odstavceHtml(text: string, align: 'justify' | 'center' | 'left' = 'justify'): string {
   return text
     .split(/\n\s*\n/)
     .map((blok) => blok.trim())
