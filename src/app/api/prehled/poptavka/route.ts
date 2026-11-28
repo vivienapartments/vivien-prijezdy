@@ -204,7 +204,14 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   if (!(await prehledPrihlasen())) return chyba(401, 'Nepřihlášen.');
-  let body: { id?: string; akce?: string; navrh?: string; ios?: boolean } = {};
+  let body: {
+    id?: string;
+    akce?: string;
+    navrh?: string;
+    ios?: boolean;
+    kanal?: string;
+    email?: string;
+  } = {};
   try {
     body = (await req.json()) as typeof body;
   } catch {
@@ -213,6 +220,11 @@ export async function POST(req: Request) {
   const id = (body.id || '').trim();
   const akce = (body.akce || '').trim();
   if (!id || !akce) return chyba(400, 'Špatný požadavek.');
+  const kanalOdeslani =
+    body.kanal === 'sms' || body.kanal === 'email' || body.kanal === 'whatsapp'
+      ? body.kanal
+      : undefined;
+  const emailOdeslani = (body.email || '').trim().slice(0, 120);
 
   const store = createProcessStore();
   const seznam = await store.listPoptavky();
@@ -225,13 +237,20 @@ export async function POST(req: Request) {
 
   if (akce === 'potvrdit') {
     /* Host už termín chce. Potvrzujeme rezervaci, bez druhého „ano“. Další je platba / BH. */
+    if (kanalOdeslani === 'email' && !emailOdeslani.includes('@')) {
+      return chyba(400, 'Napište e-mail hosta.');
+    }
     z = await doplnPoptavkuZKarty(z, store);
     zprava = textPotvrditHostovi(z, {
       cenaKc: cena.kc,
       cenaPredKc: cena.kcPred,
       seSlevou: cena.seSlevou,
     });
-    const o = odkazZpravyHostovi(z, zprava, Boolean(body.ios));
+    const o = odkazZpravyHostovi(z, zprava, {
+      ios: Boolean(body.ios),
+      kanal: kanalOdeslani,
+      email: emailOdeslani,
+    });
     odkaz = o.href;
     z = {
       ...z,
@@ -265,9 +284,16 @@ export async function POST(req: Request) {
       pripominkaNocniPocet: 0,
     };
   } else if (akce === 'nejde') {
+    if (kanalOdeslani === 'email' && !emailOdeslani.includes('@')) {
+      return chyba(400, 'Napište e-mail hosta.');
+    }
     const navrh = (body.navrh || '').trim().slice(0, 500);
     zprava = textNejdeHostovi(z, navrh);
-    const o = odkazZpravyHostovi(z, zprava, Boolean(body.ios));
+    const o = odkazZpravyHostovi(z, zprava, {
+      ios: Boolean(body.ios),
+      kanal: kanalOdeslani,
+      email: emailOdeslani,
+    });
     odkaz = o.href;
     z = {
       ...z,

@@ -422,16 +422,43 @@ export function textNejdeHostovi(z: PoptavkaZaznam, navrh: string): string {
   });
 }
 
+export type PoptavkaOdeslaniKanal = 'whatsapp' | 'sms' | 'email';
+
 export function odkazZpravyHostovi(
   z: PoptavkaZaznam,
   text: string,
-  ios = false,
-): { href: string; kanal: PoptavkaKanal } {
+  iosOrOpts:
+    | boolean
+    | {
+        ios?: boolean;
+        kanal?: PoptavkaOdeslaniKanal;
+        email?: string | null;
+      } = false,
+): { href: string; kanal: PoptavkaOdeslaniKanal } {
+  const opts = typeof iosOrOpts === 'boolean' ? { ios: iosOrOpts } : iosOrOpts || {};
+  const ios = Boolean(opts.ios);
   const tel = (z.telefon || '').replace(/\D/g, '');
-  const kanal: PoptavkaKanal =
-    z.kanal === 'sms' ? 'sms' : z.kanal === 'whatsapp' || z.kanal === 'formular' || !z.kanal ? 'whatsapp' : 'whatsapp';
-  if (z.kanal === 'sms') {
-    return { href: odkazSmsPodekovani(tel.startsWith('+') ? z.telefon : `+${tel}`, text, ios), kanal: 'sms' };
+  const kanal: PoptavkaOdeslaniKanal =
+    opts.kanal === 'sms' || opts.kanal === 'email' || opts.kanal === 'whatsapp'
+      ? opts.kanal
+      : z.kanal === 'sms'
+        ? 'sms'
+        : 'whatsapp';
+
+  if (kanal === 'email') {
+    const na = (opts.email || '').trim();
+    const subject = encodeURIComponent('VIVIEN Apartments');
+    const body = encodeURIComponent(text);
+    return {
+      href: `mailto:${encodeURIComponent(na)}?subject=${subject}&body=${body}`,
+      kanal: 'email',
+    };
+  }
+  if (kanal === 'sms') {
+    return {
+      href: odkazSmsPodekovani(tel.startsWith('+') ? z.telefon : `+${tel}`, text, ios),
+      kanal: 'sms',
+    };
   }
   return { href: odkazWhatsApp(tel, text), kanal: 'whatsapp' };
 }

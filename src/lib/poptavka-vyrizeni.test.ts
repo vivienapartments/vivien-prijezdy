@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   jeNocPraha,
   jeZkouskaPoptavky,
+  odkazZpravyHostovi,
   rozhodniPripominku,
   spocitejLhutu,
   textNejdeHostovi,
@@ -60,6 +61,22 @@ describe('poptavka-vyrizeni', () => {
     expect(t).toContain('1 473');
     expect(t).toContain('potvrzujeme');
     expect(t).not.toContain('Napište nám');
+  });
+
+  it('odkaz e-mailem otevře mailto s textem', () => {
+    const t = textPotvrditHostovi(baza(), {
+      cenaKc: 1473,
+      cenaPredKc: 1550,
+      seSlevou: true,
+    });
+    const o = odkazZpravyHostovi(baza(), t, {
+      kanal: 'email',
+      email: 'host@example.com',
+    });
+    expect(o.kanal).toBe('email');
+    expect(o.href.startsWith('mailto:host%40example.com?')).toBe(true);
+    expect(o.href).toContain('subject=');
+    expect(o.href).toContain('body=');
   });
 
   it('text NEJDE cs s návrhem', () => {

@@ -4089,6 +4089,20 @@
   cursor: pointer;
 }
 
+.ph-poptavka__odeslani {
+  margin-top: 1rem;
+}
+
+.ph-poptavka__odeslani-nadpis {
+  margin: 0 0 0.35rem;
+  color: #cbbba8;
+  font-size: 0.88rem;
+}
+
+.ph-poptavka__odeslani .ph-poptavka__akce {
+  margin-top: 0.35rem;
+}
+
 .ph-poptavka__nejde {
   display: grid;
   gap: 0.55rem;
@@ -4102,7 +4116,8 @@
   font-size: 0.9rem;
 }
 
-.ph-poptavka__nejde textarea {
+.ph-poptavka__nejde textarea,
+.ph-poptavka__nejde input {
   width: 100%;
   box-sizing: border-box;
   padding: 0.55rem 0.65rem;
@@ -4111,6 +4126,9 @@
   background: #15110e;
   color: #e6dccb;
   font: inherit;
+}
+
+.ph-poptavka__nejde textarea {
   resize: vertical;
 }
 
