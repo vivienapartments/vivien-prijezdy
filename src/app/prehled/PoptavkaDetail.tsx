@@ -22,15 +22,36 @@ type Detail = {
 
 type OdeslaniKanal = 'whatsapp' | 'sms' | 'email';
 
+function otevriOdkazy(odkazy: Partial<Record<OdeslaniKanal, string>>) {
+  const poradi: OdeslaniKanal[] = ['whatsapp', 'sms', 'email'];
+  const hrefs = poradi.map((k) => odkazy[k]).filter((x): x is string => Boolean(x));
+  if (!hrefs.length) return;
+  /* První v novém okně / mailto, další taky otevřít (SMS často window.location). */
+  for (let i = 0; i < hrefs.length; i += 1) {
+    const href = hrefs[i];
+    if (href.startsWith('mailto:') || href.startsWith('sms:')) {
+      if (i === 0) window.location.href = href;
+      else window.open(href, '_blank', 'noopener,noreferrer');
+    } else {
+      window.open(href, '_blank', 'noopener,noreferrer');
+    }
+  }
+}
+
 export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => void }) {
   const [d, setD] = useState<Detail | null>(null);
   const [chyba, setChyba] = useState('');
+  const [hlaska, setHlaska] = useState('');
   const [cekam, setCekam] = useState(false);
   const [navrh, setNavrh] = useState('');
   const [ukazNejde, setUkazNejde] = useState(false);
   const [emailHosta, setEmailHosta] = useState('');
-  const [ukazEmail, setUkazEmail] = useState(false);
-  const [cekajiciAkce, setCekajiciAkce] = useState<'potvrdit' | 'nejde' | null>(null);
+  const [wa, setWa] = useState(true);
+  const [sms, setSms] = useState(false);
+  const [email, setEmail] = useState(false);
+  const [waNejde, setWaNejde] = useState(true);
+  const [smsNejde, setSmsNejde] = useState(false);
+  const [emailNejde, setEmailNejde] = useState(false);
 
   useEffect(() => {
     let zrus = false;
@@ -56,12 +77,28 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
     };
   }, [id]);
 
+  function vybrane(proNejde: boolean): OdeslaniKanal[] {
+    const out: OdeslaniKanal[] = [];
+    if (proNejde ? waNejde : wa) out.push('whatsapp');
+    if (proNejde ? smsNejde : sms) out.push('sms');
+    if (proNejde ? emailNejde : email) out.push('email');
+    return out;
+  }
+
   async function akce(
     kod: string,
     extras: Record<string, unknown> = {},
-  ): Promise<boolean> {
+  ): Promise<{
+    ok: boolean;
+    odkazy?: Partial<Record<OdeslaniKanal, string>>;
+    emailPoslan?: boolean;
+    emailMailto?: boolean;
+    emailOdeslanoNa?: string | null;
+    emailTestMode?: boolean;
+  }> {
     setCekam(true);
     setChyba('');
+    setHlaska('');
     try {
       const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const res = await fetch('/api/prehled/poptavka', {
@@ -73,55 +110,64 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
         ok?: boolean;
         poptavka?: Detail;
         odkaz?: string | null;
+        odkazy?: Partial<Record<OdeslaniKanal, string>>;
+        emailPoslan?: boolean;
+        emailMailto?: boolean;
+        emailOdeslanoNa?: string | null;
+        emailTestMode?: boolean;
         error?: string;
       };
       if (!json.ok || !json.poptavka) {
         setChyba(json.error || 'Akce se nepovedla.');
-        return false;
+        return { ok: false };
       }
       setD(json.poptavka);
-      if (json.odkaz) {
-        if (String(json.odkaz).startsWith('mailto:')) {
-          window.location.href = json.odkaz;
-        } else {
-          window.open(json.odkaz, '_blank', 'noopener,noreferrer');
-        }
-      }
-      return true;
+      const odkazy = json.odkazy || (json.odkaz ? { whatsapp: json.odkaz } : {});
+      return {
+        ok: true,
+        odkazy,
+        emailPoslan: json.emailPoslan,
+        emailMailto: json.emailMailto,
+        emailOdeslanoNa: json.emailOdeslanoNa,
+        emailTestMode: json.emailTestMode,
+      };
     } catch {
       setChyba('Akce se nepovedla.');
-      return false;
+      return { ok: false };
     } finally {
       setCekam(false);
     }
   }
 
-  async function posli(kod: 'potvrdit' | 'nejde', kanal: OdeslaniKanal) {
-    if (kanal === 'email') {
-      const mail = emailHosta.trim();
-      if (!mail.includes('@')) {
-        setUkazEmail(true);
-        setCekajiciAkce(kod);
-        setChyba('Napište e-mail hosta.');
-        return;
-      }
-      const ok = await akce(kod, {
-        kanal: 'email',
-        email: mail,
-        ...(kod === 'nejde' ? { navrh: navrh.trim() } : {}),
-      });
-      if (ok) {
-        setUkazEmail(false);
-        setCekajiciAkce(null);
-        if (kod === 'nejde') setUkazNejde(false);
-      }
+  async function posliVybrane(kod: 'potvrdit' | 'nejde') {
+    const kanaly = vybrane(kod === 'nejde');
+    if (!kanaly.length) {
+      setChyba('Zaškrtněte aspoň WhatsApp, SMS nebo e-mail.');
       return;
     }
-    const ok = await akce(kod, {
-      kanal,
+    if (kanaly.includes('email') && !emailHosta.trim().includes('@')) {
+      setChyba('Napište e-mail hosta.');
+      return;
+    }
+    const vysledek = await akce(kod, {
+      kanaly,
+      email: emailHosta.trim(),
       ...(kod === 'nejde' ? { navrh: navrh.trim() } : {}),
     });
-    if (ok && kod === 'nejde') setUkazNejde(false);
+    if (!vysledek.ok) return;
+    if (vysledek.odkazy) otevriOdkazy(vysledek.odkazy);
+    if (vysledek.emailPoslan) {
+      setHlaska(
+        vysledek.emailTestMode && vysledek.emailOdeslanoNa
+          ? `TEST: hezký e-mail šel na ${vysledek.emailOdeslanoNa}.`
+          : vysledek.emailOdeslanoNa
+            ? `Hezký e-mail odešel na ${vysledek.emailOdeslanoNa}.`
+            : 'Hezký e-mail je odeslaný.',
+      );
+    } else if (vysledek.emailMailto) {
+      setHlaska('E-mail se otevřel v telefonu (bez SMTP). Na ostře odejde hezký mail.');
+    }
+    if (kod === 'nejde') setUkazNejde(false);
   }
 
   const telCiste = (d?.telefon || '').replace(/\D/g, '');
@@ -134,6 +180,32 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
     stav === 'ceka_na_hosta' ||
     stav === 'neozval_se';
 
+  function kanalyUi(
+    waOn: boolean,
+    setWaOn: (v: boolean) => void,
+    smsOn: boolean,
+    setSmsOn: (v: boolean) => void,
+    emailOn: boolean,
+    setEmailOn: (v: boolean) => void,
+  ) {
+    return (
+      <div className="ph-poptavka__kanaly">
+        <label className="ph-poptavka__check">
+          <input type="checkbox" checked={waOn} onChange={(e) => setWaOn(e.target.checked)} />
+          WhatsApp
+        </label>
+        <label className="ph-poptavka__check">
+          <input type="checkbox" checked={smsOn} onChange={(e) => setSmsOn(e.target.checked)} />
+          SMS
+        </label>
+        <label className="ph-poptavka__check">
+          <input type="checkbox" checked={emailOn} onChange={(e) => setEmailOn(e.target.checked)} />
+          E-mail
+        </label>
+      </div>
+    );
+  }
+
   return (
     <div className="ph-poptavka" role="dialog" aria-modal="true" aria-label="Poptávka">
       <div className="ph-poptavka__vnitr">
@@ -141,6 +213,7 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
           Zavřít
         </button>
         {chyba ? <p className="ph-poptavka__chyba">{chyba}</p> : null}
+        {hlaska ? <p className="ph-poptavka__ok">{hlaska}</p> : null}
         {!d && !chyba ? <p>Načítám…</p> : null}
         {d ? (
           <>
@@ -178,59 +251,29 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
             {muzePotvrdit ? (
               <div className="ph-poptavka__odeslani">
                 <p className="ph-poptavka__odeslani-nadpis">Potvrdit a poslat hostovi</p>
+                {kanalyUi(wa, setWa, sms, setSms, email, setEmail)}
+                {email ? (
+                  <label className="ph-poptavka__email">
+                    E-mail hosta
+                    <input
+                      type="email"
+                      value={emailHosta}
+                      onChange={(e) => setEmailHosta(e.target.value)}
+                      placeholder="host@email.cz"
+                      autoComplete="email"
+                    />
+                  </label>
+                ) : null}
                 <div className="ph-poptavka__akce">
                   <button
                     type="button"
                     className="ph-btn"
                     disabled={cekam}
-                    onClick={() => void posli('potvrdit', 'whatsapp')}
+                    onClick={() => void posliVybrane('potvrdit')}
                   >
-                    WhatsApp
-                  </button>
-                  <button
-                    type="button"
-                    className="ph-btn"
-                    disabled={cekam}
-                    onClick={() => void posli('potvrdit', 'sms')}
-                  >
-                    SMS
-                  </button>
-                  <button
-                    type="button"
-                    className="ph-btn"
-                    disabled={cekam}
-                    onClick={() => {
-                      setUkazEmail(true);
-                      setCekajiciAkce('potvrdit');
-                      setChyba('');
-                    }}
-                  >
-                    E-mail
+                    Potvrdit a odeslat
                   </button>
                 </div>
-              </div>
-            ) : null}
-
-            {ukazEmail && (muzePotvrdit || ukazNejde) ? (
-              <div className="ph-poptavka__nejde">
-                <label>
-                  E-mail hosta
-                  <input
-                    type="email"
-                    value={emailHosta}
-                    onChange={(e) => setEmailHosta(e.target.value)}
-                    placeholder="host@email.cz"
-                    autoComplete="email"
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="ph-btn"
-                  disabled={cekam}
-                  onClick={() => void posli(cekajiciAkce || 'potvrdit', 'email')}
-                >
-                  Odeslat e-mailem
-                </button>
               </div>
             ) : null}
 
@@ -284,11 +327,7 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
                   type="button"
                   className="ph-btn"
                   disabled={cekam}
-                  onClick={() => {
-                    setUkazNejde((v) => !v);
-                    setUkazEmail(false);
-                    setCekajiciAkce(null);
-                  }}
+                  onClick={() => setUkazNejde((v) => !v)}
                 >
                   NEJDE
                 </button>
@@ -307,36 +346,27 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
                   />
                 </label>
                 <p className="ph-poptavka__odeslani-nadpis">Poslat NEJDE hostovi</p>
-                <div className="ph-poptavka__akce">
-                  <button
-                    type="button"
-                    className="ph-btn"
-                    disabled={cekam}
-                    onClick={() => void posli('nejde', 'whatsapp')}
-                  >
-                    WhatsApp
-                  </button>
-                  <button
-                    type="button"
-                    className="ph-btn"
-                    disabled={cekam}
-                    onClick={() => void posli('nejde', 'sms')}
-                  >
-                    SMS
-                  </button>
-                  <button
-                    type="button"
-                    className="ph-btn"
-                    disabled={cekam}
-                    onClick={() => {
-                      setUkazEmail(true);
-                      setCekajiciAkce('nejde');
-                      setChyba('');
-                    }}
-                  >
-                    E-mail
-                  </button>
-                </div>
+                {kanalyUi(waNejde, setWaNejde, smsNejde, setSmsNejde, emailNejde, setEmailNejde)}
+                {emailNejde ? (
+                  <label className="ph-poptavka__email">
+                    E-mail hosta
+                    <input
+                      type="email"
+                      value={emailHosta}
+                      onChange={(e) => setEmailHosta(e.target.value)}
+                      placeholder="host@email.cz"
+                      autoComplete="email"
+                    />
+                  </label>
+                ) : null}
+                <button
+                  type="button"
+                  className="ph-btn"
+                  disabled={cekam}
+                  onClick={() => void posliVybrane('nejde')}
+                >
+                  Odeslat NEJDE
+                </button>
               </div>
             ) : null}
           </>

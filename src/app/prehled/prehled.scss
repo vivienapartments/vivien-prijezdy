@@ -4103,6 +4103,51 @@
   margin-top: 0.35rem;
 }
 
+.ph-poptavka__ok {
+  color: #c9a84c;
+}
+
+.ph-poptavka__kanaly {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  margin: 0.55rem 0 0.75rem;
+}
+
+.ph-poptavka__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #e6dccb;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.ph-poptavka__check input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: #c9a84c;
+}
+
+.ph-poptavka__email {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  color: #cbbba8;
+  font-size: 0.9rem;
+}
+
+.ph-poptavka__email input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid #3d342a;
+  background: #15110e;
+  color: #e6dccb;
+  font: inherit;
+}
+
 .ph-poptavka__nejde {
   display: grid;
   gap: 0.55rem;

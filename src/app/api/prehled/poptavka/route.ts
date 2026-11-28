@@ -13,8 +13,14 @@ import { spocitejCenuPoptavky, textCenyPoptavky } from '@/lib/poptavka-cena';
 import type { ProcessStore } from '@/lib/store';
 import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
 import {
+  htmlZpravaPoptavkyHostovi,
+  predmetNejdePoptavky,
+  predmetPotvrzeniPoptavky,
+} from '@/lib/poptavka-potvrzeni-email';
+import {
   jeZkouskaPoptavky,
   odkazZpravyHostovi,
+  type PoptavkaOdeslaniKanal,
   POPTAVKA_STAVY_BLOKUJI,
   stitekStavu,
   textNejdeHostovi,
@@ -31,6 +37,63 @@ const noStore = { 'Cache-Control': 'no-store' };
 
 function chyba(status: number, msg: string) {
   return NextResponse.json({ ok: false, error: msg }, { status, headers: noStore });
+}
+
+function nactiKanaly(body: { kanal?: string; kanaly?: unknown }): PoptavkaOdeslaniKanal[] {
+  const out: PoptavkaOdeslaniKanal[] = [];
+  const pridej = (k: string) => {
+    if ((k === 'whatsapp' || k === 'sms' || k === 'email') && !out.includes(k)) out.push(k);
+  };
+  if (Array.isArray(body.kanaly)) {
+    for (const x of body.kanaly) pridej(String(x || '').trim());
+  }
+  if (body.kanal) pridej(String(body.kanal).trim());
+  return out;
+}
+
+async function odesliHtmlEmailPoptavky(opts: {
+  na: string;
+  predmet: string;
+  text: string;
+  jmeno: string;
+  termin: string;
+  apartman: string;
+  cena: string;
+}): Promise<{ ok: true; odeslanoNa: string; testMode: boolean; mailto?: false } | { ok: true; mailto: true } | { ok: false; error: string }> {
+  const user = process.env.SMTP_USER?.trim();
+  const pass = process.env.SMTP_HESLO?.trim();
+  if (!user || !pass || pass.startsWith('SEM_NAPIS')) {
+    return { ok: true, mailto: true };
+  }
+  const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+  const majitel = process.env.MAJITEL_EMAIL?.trim();
+  const cil = testMode && majitel ? majitel : opts.na;
+  try {
+    const nodemailer = await import('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.seznam.cz',
+      port: 465,
+      secure: true,
+      auth: { user, pass },
+    });
+    await transporter.sendMail({
+      from: `VIVIEN Apartments <${user}>`,
+      to: cil,
+      subject: opts.predmet,
+      text: opts.text,
+      html: htmlZpravaPoptavkyHostovi({
+        predmet: opts.predmet.replace(/^\[TEST\]\s*/, ''),
+        text: opts.text,
+        jmeno: opts.jmeno,
+        termin: opts.termin,
+        apartman: opts.apartman,
+        cena: opts.cena,
+      }),
+    });
+    return { ok: true, odeslanoNa: cil, testMode };
+  } catch {
+    return { ok: false, error: 'E-mail se nepodařilo odeslat (SMTP).' };
+  }
 }
 
 function odkudText(z: PoptavkaZaznam): string {
@@ -211,6 +274,7 @@ export async function POST(req: Request) {
     navrh?: string;
     ios?: boolean;
     kanal?: string;
+    kanaly?: unknown;
     email?: string;
   } = {};
   try {
@@ -221,10 +285,7 @@ export async function POST(req: Request) {
   const id = (body.id || '').trim();
   const akce = (body.akce || '').trim();
   if (!id || !akce) return chyba(400, 'Špatný požadavek.');
-  const kanalOdeslani =
-    body.kanal === 'sms' || body.kanal === 'email' || body.kanal === 'whatsapp'
-      ? body.kanal
-      : undefined;
+  const kanaly = nactiKanaly(body);
   const emailOdeslani = (body.email || '').trim().slice(0, 120);
 
   const store = createProcessStore();
@@ -235,24 +296,61 @@ export async function POST(req: Request) {
   const cena = await cenaPro(z, store);
   let odkaz: string | null = null;
   let zprava: string | null = null;
+  const odkazy: Partial<Record<PoptavkaOdeslaniKanal, string>> = {};
+  let emailPoslan = false;
+  let emailMailto = false;
+  let emailOdeslanoNa: string | null = null;
+  let emailTestMode = false;
 
   if (akce === 'potvrdit') {
     /* Host už termín chce. Potvrzujeme rezervaci, bez druhého „ano“. Další je platba / BH. */
-    if (kanalOdeslani === 'email' && !emailOdeslani.includes('@')) {
+    if (kanaly.includes('email') && !emailOdeslani.includes('@')) {
       return chyba(400, 'Napište e-mail hosta.');
     }
+    if (kanaly.length === 0) return chyba(400, 'Zaškrtněte aspoň jeden kanál.');
     z = await doplnPoptavkuZKarty(z, store);
     zprava = textPotvrditHostovi(z, {
       cenaKc: cena.kc,
       cenaPredKc: cena.kcPred,
       seSlevou: cena.seSlevou,
     });
-    const o = odkazZpravyHostovi(z, zprava, {
-      ios: Boolean(body.ios),
-      kanal: kanalOdeslani,
-      email: emailOdeslani,
-    });
-    odkaz = o.href;
+    const detail = detailJson(z, cena.text);
+    for (const k of kanaly) {
+      if (k === 'email') {
+        const mail = await odesliHtmlEmailPoptavky({
+          na: emailOdeslani,
+          predmet: predmetPotvrzeniPoptavky((process.env.TEST_REZIM ?? '1') !== '0'),
+          text: zprava,
+          jmeno: z.jmeno,
+          termin: detail.termin,
+          apartman: detail.apartman,
+          cena: detail.cena || '',
+        });
+        if (!mail.ok) return chyba(500, mail.error);
+        if (mail.mailto) {
+          emailMailto = true;
+          const o = odkazZpravyHostovi(z, zprava, {
+            ios: Boolean(body.ios),
+            kanal: 'email',
+            email: emailOdeslani,
+          });
+          odkazy.email = o.href;
+          odkaz = o.href;
+        } else {
+          emailPoslan = true;
+          emailOdeslanoNa = mail.odeslanoNa;
+          emailTestMode = mail.testMode;
+        }
+        continue;
+      }
+      const o = odkazZpravyHostovi(z, zprava, {
+        ios: Boolean(body.ios),
+        kanal: k,
+        email: emailOdeslani,
+      });
+      odkazy[k] = o.href;
+      if (!odkaz) odkaz = o.href;
+    }
     z = {
       ...z,
       stav: 'potvrzeno',
@@ -285,17 +383,49 @@ export async function POST(req: Request) {
       pripominkaNocniPocet: 0,
     };
   } else if (akce === 'nejde') {
-    if (kanalOdeslani === 'email' && !emailOdeslani.includes('@')) {
+    if (kanaly.includes('email') && !emailOdeslani.includes('@')) {
       return chyba(400, 'Napište e-mail hosta.');
     }
+    if (kanaly.length === 0) return chyba(400, 'Zaškrtněte aspoň jeden kanál.');
     const navrh = (body.navrh || '').trim().slice(0, 500);
     zprava = textNejdeHostovi(z, navrh);
-    const o = odkazZpravyHostovi(z, zprava, {
-      ios: Boolean(body.ios),
-      kanal: kanalOdeslani,
-      email: emailOdeslani,
-    });
-    odkaz = o.href;
+    const detail = detailJson(z, cena.text);
+    for (const k of kanaly) {
+      if (k === 'email') {
+        const mail = await odesliHtmlEmailPoptavky({
+          na: emailOdeslani,
+          predmet: predmetNejdePoptavky((process.env.TEST_REZIM ?? '1') !== '0'),
+          text: zprava,
+          jmeno: z.jmeno,
+          termin: detail.termin,
+          apartman: detail.apartman,
+          cena: detail.cena || '',
+        });
+        if (!mail.ok) return chyba(500, mail.error);
+        if (mail.mailto) {
+          emailMailto = true;
+          const o = odkazZpravyHostovi(z, zprava, {
+            ios: Boolean(body.ios),
+            kanal: 'email',
+            email: emailOdeslani,
+          });
+          odkazy.email = o.href;
+          odkaz = o.href;
+        } else {
+          emailPoslan = true;
+          emailOdeslanoNa = mail.odeslanoNa;
+          emailTestMode = mail.testMode;
+        }
+        continue;
+      }
+      const o = odkazZpravyHostovi(z, zprava, {
+        ios: Boolean(body.ios),
+        kanal: k,
+        email: emailOdeslani,
+      });
+      odkazy[k] = o.href;
+      if (!odkaz) odkaz = o.href;
+    }
     z = {
       ...z,
       stav: 'nejde',
@@ -375,7 +505,17 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json(
-    { ok: true, poptavka: detailJson(z, cena.text), odkaz, zprava },
+    {
+      ok: true,
+      poptavka: detailJson(z, cena.text),
+      odkaz,
+      odkazy,
+      zprava,
+      emailPoslan,
+      emailMailto,
+      emailOdeslanoNa,
+      emailTestMode,
+    },
     { headers: noStore },
   );
 }

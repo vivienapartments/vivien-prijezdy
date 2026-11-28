@@ -24,7 +24,6 @@ type Radek = {
   vyrizena: boolean;
 };
 
-type KanalKontakt = 'telefon' | 'email';
 type KanalOdeslani = 'whatsapp' | 'sms' | 'email';
 
 function casCesky(iso: string): string {
@@ -56,10 +55,12 @@ export function PoptavkyClient() {
   const [hlaska, setHlaska] = useState<string | null>(null);
   const [cekam, setCekam] = useState(false);
   const [nova, setNova] = useState(false);
-  const [kanalKontakt, setKanalKontakt] = useState<KanalKontakt>('telefon');
   const [telefon, setTelefon] = useState('');
   const [email, setEmail] = useState('');
   const [zprava, setZprava] = useState(vychoziZprava);
+  const [posliWa, setPosliWa] = useState(true);
+  const [posliSms, setPosliSms] = useState(false);
+  const [posliEmail, setPosliEmail] = useState(false);
 
   const nacti = useCallback(async () => {
     setChyba('');
@@ -95,51 +96,59 @@ export function PoptavkyClient() {
     return `${zaklad}\n\n${odkaz}`;
   }
 
-  async function posliPozvanku(kanal: KanalOdeslani) {
+  async function posliPozvanku() {
     setCekam(true);
     setChyba('');
     setHlaska(null);
     try {
+      const kanaly: KanalOdeslani[] = [];
+      if (posliWa) kanaly.push('whatsapp');
+      if (posliSms) kanaly.push('sms');
+      if (posliEmail) kanaly.push('email');
+      if (!kanaly.length) {
+        setChyba('Zaškrtněte aspoň WhatsApp, SMS nebo e-mail.');
+        return;
+      }
+
       const dig = jenCisliceTel(telefon);
       const mail = email.trim();
-      if (kanalKontakt === 'telefon' && dig.length < 9) {
-        setChyba('Napište telefon hosta.');
+      if ((posliWa || posliSms) && dig.length < 9) {
+        setChyba('Pro WhatsApp a SMS napište telefon hosta.');
         return;
       }
-      if (kanalKontakt === 'email' && !mail.includes('@')) {
-        setChyba('Napište e-mail hosta.');
-        return;
-      }
-      if ((kanal === 'whatsapp' || kanal === 'sms') && kanalKontakt === 'email') {
-        setChyba('Pro WhatsApp a SMS zvolte telefon.');
-        return;
-      }
-      if (kanal === 'email' && kanalKontakt === 'telefon') {
-        setChyba('Pro e-mail zvolte e-mailovou adresu.');
+      if (posliEmail && !mail.includes('@')) {
+        setChyba('Pro e-mail napište e-mail hosta.');
         return;
       }
 
       const text = textSeOdkazem();
       const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+      const co: string[] = [];
 
-      if (kanal === 'email') {
+      if (posliWa) {
+        window.open(odkazWhatsAppPrehled(dig, text, ua), '_blank');
+        co.push('WhatsApp');
+      }
+      if (posliSms) {
+        window.open(smsOdkaz(`+${dig}`, text, jeIos(ua)), '_blank');
+        co.push('SMS');
+      }
+      if (posliEmail) {
         const mailto = `mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent(
           'VIVIEN Apartments, poptávka termínu',
         )}&body=${encodeURIComponent(text)}`;
-        window.location.href = mailto;
-        setHlaska('Otevřel se e-mail s textem a odkazem na poptávku.');
-      } else if (kanal === 'whatsapp') {
-        window.open(odkazWhatsAppPrehled(dig, text, ua), '_blank');
-        setHlaska('WhatsApp je otevřený. Zkontrolujte text a odešlete.');
-      } else {
-        window.location.href = smsOdkaz(`+${dig}`, text, jeIos(ua));
-        setHlaska('SMS je připravená. Zkontrolujte text a odešlete.');
+        window.open(mailto, '_blank');
+        co.push('e-mail');
       }
 
+      setHlaska(`Připraveno k odeslání: ${co.join(', ')}. Zkontrolujte a odešlete.`);
       setNova(false);
       setTelefon('');
       setEmail('');
       setZprava(vychoziZprava());
+      setPosliWa(true);
+      setPosliSms(false);
+      setPosliEmail(false);
     } finally {
       setCekam(false);
     }
@@ -255,80 +264,48 @@ export function PoptavkyClient() {
             marginTop: '1rem',
           }}
         >
-          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-            <button
-              type="button"
-              className="ph-btn"
+          <label style={{ display: 'block', marginBottom: 10, fontSize: '0.82rem', color: '#b7aa98' }}>
+            Telefon
+            <input
+              value={telefon}
+              onChange={(e) => setTelefon(e.target.value)}
+              placeholder="+420 …"
+              inputMode="tel"
+              autoComplete="tel"
               style={{
-                flex: 1,
-                background: kanalKontakt === 'telefon' ? '#c9a84c' : 'transparent',
-                color: kanalKontakt === 'telefon' ? '#1a1510' : '#c9a84c',
-                border: '1px solid #c9a84c',
+                display: 'block',
+                width: '100%',
+                marginTop: 4,
+                padding: '11px 12px',
+                borderRadius: 10,
+                border: '1px solid #3d342a',
+                background: '#0f0c0a',
+                color: '#efe6d8',
+                font: 'inherit',
               }}
-              onClick={() => setKanalKontakt('telefon')}
-            >
-              Telefon
-            </button>
-            <button
-              type="button"
-              className="ph-btn"
+            />
+          </label>
+          <label style={{ display: 'block', marginBottom: 10, fontSize: '0.82rem', color: '#b7aa98' }}>
+            E-mail
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="jmeno@email.cz"
+              inputMode="email"
+              autoComplete="email"
               style={{
-                flex: 1,
-                background: kanalKontakt === 'email' ? '#c9a84c' : 'transparent',
-                color: kanalKontakt === 'email' ? '#1a1510' : '#c9a84c',
-                border: '1px solid #c9a84c',
+                display: 'block',
+                width: '100%',
+                marginTop: 4,
+                padding: '11px 12px',
+                borderRadius: 10,
+                border: '1px solid #3d342a',
+                background: '#0f0c0a',
+                color: '#efe6d8',
+                font: 'inherit',
               }}
-              onClick={() => setKanalKontakt('email')}
-            >
-              E-mail
-            </button>
-          </div>
-
-          {kanalKontakt === 'telefon' ? (
-            <label style={{ display: 'block', marginBottom: 10, fontSize: '0.82rem', color: '#b7aa98' }}>
-              Telefon
-              <input
-                value={telefon}
-                onChange={(e) => setTelefon(e.target.value)}
-                placeholder="+420 …"
-                inputMode="tel"
-                autoComplete="tel"
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: 4,
-                  padding: '11px 12px',
-                  borderRadius: 10,
-                  border: '1px solid #3d342a',
-                  background: '#0f0c0a',
-                  color: '#efe6d8',
-                  font: 'inherit',
-                }}
-              />
-            </label>
-          ) : (
-            <label style={{ display: 'block', marginBottom: 10, fontSize: '0.82rem', color: '#b7aa98' }}>
-              E-mail
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jmeno@email.cz"
-                inputMode="email"
-                autoComplete="email"
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  marginTop: 4,
-                  padding: '11px 12px',
-                  borderRadius: 10,
-                  border: '1px solid #3d342a',
-                  background: '#0f0c0a',
-                  color: '#efe6d8',
-                  font: 'inherit',
-                }}
-              />
-            </label>
-          )}
+            />
+          </label>
 
           <label style={{ display: 'block', marginBottom: 10, fontSize: '0.82rem', color: '#b7aa98' }}>
             Zpráva
@@ -355,35 +332,30 @@ export function PoptavkyClient() {
             Odkaz se doplní automaticky při odeslání místo [Odkaz na poptávku].
           </p>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-            <button
-              type="button"
-              className="ph-btn"
-              disabled={cekam}
-              onClick={() => void posliPozvanku('whatsapp')}
-              style={{ border: '1px solid #c9a84c', background: 'transparent', color: '#c9a84c', fontWeight: 700 }}
-            >
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 16px', marginBottom: 14, color: '#efe6d8' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <input type="checkbox" checked={posliWa} onChange={(e) => setPosliWa(e.target.checked)} />
               WhatsApp
-            </button>
-            <button
-              type="button"
-              className="ph-btn"
-              disabled={cekam}
-              onClick={() => void posliPozvanku('email')}
-              style={{ border: '1px solid #c9a84c', background: 'transparent', color: '#c9a84c', fontWeight: 700 }}
-            >
-              E-mail
-            </button>
-            <button
-              type="button"
-              className="ph-btn"
-              disabled={cekam}
-              onClick={() => void posliPozvanku('sms')}
-              style={{ border: '1px solid #c9a84c', background: 'transparent', color: '#c9a84c', fontWeight: 700 }}
-            >
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <input type="checkbox" checked={posliSms} onChange={(e) => setPosliSms(e.target.checked)} />
               SMS
-            </button>
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <input type="checkbox" checked={posliEmail} onChange={(e) => setPosliEmail(e.target.checked)} />
+              E-mail
+            </label>
           </div>
+
+          <button
+            type="button"
+            className="ph-btn"
+            disabled={cekam}
+            onClick={() => void posliPozvanku()}
+            style={{ width: '100%', border: '1px solid #c9a84c', background: 'transparent', color: '#c9a84c', fontWeight: 700 }}
+          >
+            Odeslat přes vybrané
+          </button>
         </div>
       </main>
     );
