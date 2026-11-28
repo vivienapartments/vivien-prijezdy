@@ -169,6 +169,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     poznamka?: string;
     zpusobUhrady?: string;
     kanal?: string;
+    /** Více kanálů najednou (poděkování): whatsapp / sms / email. */
+    kanaly?: unknown[];
     zdroj?: string;
   } | null;
   if (body?.akce === 'platba-hromadne') {
