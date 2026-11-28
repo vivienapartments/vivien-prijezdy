@@ -207,15 +207,22 @@ export function DoporuciteleClient() {
           poslano?: boolean;
           mailto?: boolean;
           odkaz?: string;
+          odeslanoNa?: string;
+          testMode?: boolean;
+          chyba?: string;
         };
         if (!mailRes.ok || !mailJson.ok) {
-          setHlaska('E-mail se nepodařilo odeslat.');
+          setHlaska(mailJson.chyba || 'E-mail se nepodařilo odeslat.');
           return;
         }
         if (mailJson.mailto) {
           const mailto = `mailto:${encodeURIComponent(email.trim())}?subject=${encodeURIComponent('Doporučení VIVIEN')}&body=${encodeURIComponent(text)}`;
           window.location.href = mailto;
           setHlaska('Otevřel se e-mail v telefonu (bez HTML vzhledu). Na ostře odejde hezký mail.');
+        } else if (mailJson.testMode && mailJson.odeslanoNa) {
+          setHlaska(`TEST: mail šel na ${mailJson.odeslanoNa}, ne na zadanou adresu. Na ostře (TEST_REZIM=0) půjde doporučiteli.`);
+        } else if (mailJson.odeslanoNa) {
+          setHlaska(`E-mail s fotkou a tlačítkem odešel na ${mailJson.odeslanoNa}.`);
         } else {
           setHlaska('E-mail s fotkou a tlačítkem je odeslaný. Otevře stejnou stránku jako WhatsApp.');
         }
@@ -282,6 +289,8 @@ export function DoporuciteleClient() {
         odkazKarta?: string;
         tajnyKlic?: string;
         emailPoslan?: boolean;
+        odeslanoNa?: string | null;
+        testMode?: boolean;
         telefon?: string | null;
         jmeno?: string;
       };
@@ -296,6 +305,10 @@ export function DoporuciteleClient() {
         const text = `Dobrý den,\n\nschválili jsme vás jako doporučitele VIVIEN Club. Tady je vaše karta. Můžete si ji přidat na plochu telefonu.\n\n${odkaz}`;
         window.open(odkazWhatsAppPrehled(dig, text, ua), '_blank');
         setHlaska('Schváleno. WhatsApp je otevřený s odkazem na kartu.');
+      } else if (json.emailPoslan && json.testMode && json.odeslanoNa) {
+        setHlaska(`Schváleno. TEST: mail šel na ${json.odeslanoNa}.`);
+      } else if (json.emailPoslan && json.odeslanoNa) {
+        setHlaska(`Schváleno. Odkaz na kartu odešel na ${json.odeslanoNa}.`);
       } else if (json.emailPoslan) {
         setHlaska('Schváleno. Odkaz na kartu mu odešel e-mailem.');
       } else if (odkaz) {
@@ -372,6 +385,8 @@ export function DoporuciteleClient() {
         chyba?: string;
         odkazKarta?: string;
         emailPoslan?: boolean;
+        odeslanoNa?: string | null;
+        testMode?: boolean;
         mailto?: boolean;
         email?: string | null;
         telefon?: string | null;
@@ -386,7 +401,11 @@ export function DoporuciteleClient() {
       const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
 
       if (kanal === 'email') {
-        if (json.emailPoslan) {
+        if (json.emailPoslan && json.testMode && json.odeslanoNa) {
+          setHlaska(`TEST: mail šel na ${json.odeslanoNa}, ne na doporučitele.`);
+        } else if (json.emailPoslan && json.odeslanoNa) {
+          setHlaska(`Odkaz na kartu znovu odešel na ${json.odeslanoNa}.`);
+        } else if (json.emailPoslan) {
           setHlaska('Odkaz na kartu znovu odešel e-mailem.');
         } else if (json.mailto && json.email) {
           window.location.href = `mailto:${encodeURIComponent(json.email)}?subject=${encodeURIComponent('Vaše karta VIVIEN Club')}&body=${encodeURIComponent(text)}`;

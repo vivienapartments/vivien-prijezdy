@@ -115,22 +115,30 @@ export async function POST(req: Request) {
     }
     const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
     const majitel = process.env.MAJITEL_EMAIL?.trim();
+    const cil = testMode && majitel ? majitel : email;
     const text = textPozvankaDoporucitele(odkaz);
     const html = htmlPozvankaDoporucitele(odkaz);
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.seznam.cz',
-      port: 465,
-      secure: true,
-      auth: { user, pass },
-    });
-    await transporter.sendMail({
-      from: `VIVIEN Apartments <${user}>`,
-      to: testMode && majitel ? majitel : email,
-      subject: predmetPozvankaDoporucitele(testMode),
-      text,
-      html,
-    });
-    return NextResponse.json({ ok: true, klic, odkaz, poslano: true }, { headers: noStore });
+    try {
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.seznam.cz',
+        port: 465,
+        secure: true,
+        auth: { user, pass },
+      });
+      await transporter.sendMail({
+        from: `VIVIEN Apartments <${user}>`,
+        to: cil,
+        subject: predmetPozvankaDoporucitele(testMode),
+        text,
+        html,
+      });
+    } catch {
+      return chyba(500, 'E-mail se nepodařilo odeslat (SMTP).');
+    }
+    return NextResponse.json(
+      { ok: true, klic, odkaz, poslano: true, odeslanoNa: cil, testMode },
+      { headers: noStore },
+    );
   }
 
   if (akce === 'schvalit') {
@@ -149,13 +157,16 @@ export async function POST(req: Request) {
     /** plocha=1 = po otevření nabídne Přidat na plochu. */
     const odkazKarta = `${base}/doporucitel?k=${encodeURIComponent(karta.tajnyKlic)}&plocha=1`;
     let emailPoslan = false;
+    let odeslanoNa: string | null = null;
+    let testMode = false;
     if (kanal === 'email') {
       const user = process.env.SMTP_USER?.trim();
       const pass = process.env.SMTP_HESLO?.trim();
       if (karta.email && user && pass && !pass.startsWith('SEM_NAPIS')) {
         try {
-          const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+          testMode = (process.env.TEST_REZIM ?? '1') !== '0';
           const majitel = process.env.MAJITEL_EMAIL?.trim();
+          odeslanoNa = testMode && majitel ? majitel : karta.email;
           const transporter = nodemailer.createTransport({
             host: 'smtp.seznam.cz',
             port: 465,
@@ -164,7 +175,7 @@ export async function POST(req: Request) {
           });
           await transporter.sendMail({
             from: `VIVIEN Apartments <${user}>`,
-            to: testMode && majitel ? majitel : karta.email,
+            to: odeslanoNa,
             subject: testMode ? '[TEST] Vaše karta VIVIEN Club' : 'Vaše karta VIVIEN Club',
             text: textKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
             html: htmlKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
@@ -172,6 +183,7 @@ export async function POST(req: Request) {
           emailPoslan = true;
         } catch {
           /* karta je hotová i bez mailu */
+          odeslanoNa = null;
         }
       }
     }
@@ -182,6 +194,8 @@ export async function POST(req: Request) {
         tajnyKlic: karta.tajnyKlic,
         odkazKarta,
         emailPoslan,
+        odeslanoNa,
+        testMode,
         kanal,
         telefon: karta.telefon || null,
         jmeno: jmenoDoporucitele(karta),
@@ -235,6 +249,8 @@ export async function POST(req: Request) {
     }
     const odkazKarta = `${base}/doporucitel?k=${encodeURIComponent(karta.tajnyKlic)}&plocha=1`;
     let emailPoslan = false;
+    let odeslanoNa: string | null = null;
+    let testMode = false;
     if (kanal === 'email') {
       const email = (karta.email || '').trim().toLowerCase();
       if (!email || !email.includes('@')) return chyba(400, 'Chybí e-mail u doporučitele.');
@@ -255,8 +271,9 @@ export async function POST(req: Request) {
         );
       }
       try {
-        const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+        testMode = (process.env.TEST_REZIM ?? '1') !== '0';
         const majitel = process.env.MAJITEL_EMAIL?.trim();
+        odeslanoNa = testMode && majitel ? majitel : email;
         const transporter = nodemailer.createTransport({
           host: 'smtp.seznam.cz',
           port: 465,
@@ -265,7 +282,7 @@ export async function POST(req: Request) {
         });
         await transporter.sendMail({
           from: `VIVIEN Apartments <${user}>`,
-          to: testMode && majitel ? majitel : email,
+          to: odeslanoNa,
           subject: testMode ? '[TEST] Vaše karta VIVIEN Club' : 'Vaše karta VIVIEN Club',
           text: textKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
           html: htmlKartaDoporuciteleSchvalena(karta.jmeno, odkazKarta),
@@ -280,6 +297,8 @@ export async function POST(req: Request) {
         ok: true,
         odkazKarta,
         emailPoslan,
+        odeslanoNa,
+        testMode,
         telefon: karta.telefon || null,
         email: karta.email || null,
         jmeno: jmenoDoporucitele(karta),
