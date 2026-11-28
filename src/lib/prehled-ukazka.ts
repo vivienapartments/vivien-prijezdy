@@ -246,6 +246,7 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     otevrenoPocet: 2,
     otevrenoPoprve: '2026-10-08T10:00:00.000Z',
     otevrenoNaposled: '2026-10-08T10:00:00.000Z',
+    predano: `${posunDen(dnes, -4)}T15:00:00.000Z`,
   };
 
   const jelinek: RezervaceRecord = {
@@ -268,6 +269,9 @@ export function ukazkoveZaznamy(now = new Date()): RezervaceRecord[] {
     telefonWa: '420777000111',
     zdroj: 'Booking',
     casOdjezdu: '10:00',
+    predano: `${posunDen(dnes, -6)}T15:00:00.000Z`,
+    podekovaniKdy: `${posunDen(dnes, -2)}T17:10:00.000Z`,
+    podekovaniKanal: 'email',
   };
 
   const luisa: RezervaceRecord = {

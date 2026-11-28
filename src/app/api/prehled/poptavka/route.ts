@@ -186,6 +186,7 @@ function detailJson(z: PoptavkaZaznam, cenaText: string) {
     id: z.id,
     jmeno: z.jmeno,
     telefon: z.telefon,
+    email: (z.email || '').trim(),
     termin: `${formatRozsahPoptavky(z.prijezd, z.odjezd, 'cs')} · ${tvarNoci(noci, 'cs')}`,
     prijezd: z.prijezd,
     odjezd: z.odjezd,
@@ -417,6 +418,7 @@ export async function POST(req: Request) {
     const doVyrizenych = emailPoslan || (kanaly.includes('email') && emailMailto);
     z = {
       ...z,
+      email: emailOdeslani.includes('@') ? emailOdeslani : z.email || null,
       potvrzeniToken,
       stav: doVyrizenych ? 'hotovo' : 'potvrzeno',
       blokApt: doVyrizenych ? null : z.blokApt,
@@ -501,6 +503,7 @@ export async function POST(req: Request) {
     }
     z = {
       ...z,
+      email: emailOdeslani.includes('@') ? emailOdeslani : z.email || null,
       stav: 'nejde',
       blokApt: null,
       lhutaDo: null,

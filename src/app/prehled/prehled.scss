@@ -1926,6 +1926,17 @@
   color: var(--sec, #a89c86);
 }
 
+.ph-karta-podekovani {
+  margin-top: 0.45rem;
+}
+
+.ph-karta-podekovani__panel {
+  margin-top: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
 .ph-predano-dotaz--karta {
   a {
     color: var(--color-gold, #c9a84c);

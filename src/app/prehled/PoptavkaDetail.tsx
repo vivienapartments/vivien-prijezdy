@@ -6,6 +6,7 @@ type Detail = {
   id: string;
   jmeno: string;
   telefon: string;
+  email?: string;
   termin: string;
   apartman: string;
   cena: string;
@@ -68,6 +69,12 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
         }
         setD(json.poptavka);
         setNavrh(json.poptavka.navrhMajitele || '');
+        const mail = (json.poptavka.email || '').trim();
+        if (mail.includes('@')) {
+          setEmailHosta(mail);
+          setEmail(true);
+          setEmailNejde(true);
+        }
       } catch {
         if (!zrus) setChyba('Poptávka se nenačetla.');
       }
@@ -237,6 +244,7 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
             <p>{d.odkud}</p>
             <p>Jazyk: {d.jazyk}</p>
             <p style={{ whiteSpace: 'nowrap' }}>{d.telefon}</p>
+            {d.email ? <p>{d.email}</p> : null}
             {d.poznamka ? <p>{d.poznamka}</p> : null}
             <p>Stav: {d.stavText || d.stav}</p>
             {d.lhutaDo ? (

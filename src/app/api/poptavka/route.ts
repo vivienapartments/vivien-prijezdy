@@ -174,6 +174,7 @@ export async function POST(req: Request) {
     rezervace,
     jmeno,
     telefon,
+    email: null,
     prijezd: (body.prijezd || '').trim(),
     odjezd: (body.odjezd || '').trim(),
     apartmany: filtrApartmany(Array.isArray(body.apartmany) ? body.apartmany : []),

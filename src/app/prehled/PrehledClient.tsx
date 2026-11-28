@@ -67,6 +67,7 @@ import {
   chybiSkutecnyEmailPodekovani,
   hledejProPodekovani,
   hosteProPodekovani,
+  muzePodekovatKdykoliv,
   odkazSmsPodekovani,
   skutecnyEmailProPodekovani,
   stitekPodekovaniKanalu,
@@ -5664,7 +5665,8 @@ export function PrehledClient({
             {kanalKartyPodTlacitkem}
           </>
         ) : null}
-        {predanoKdy ? (
+        {/* Po předání a ještě u nás: Poslat kartu. Po odjezdu stejné místo = Poděkování. */}
+        {predanoKdy && !odjel ? (
           <>
             <button
               type="button"
@@ -5686,6 +5688,121 @@ export function PrehledClient({
               : null}
           </>
         ) : null}
+        {odjel && muzePodekovatKdykoliv(row, dnes) && row.bezMarketingu !== true
+          ? (() => {
+              const text =
+                zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
+                textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
+              const waPodek = row.telefonWa;
+              const telefonSms = row.telefonText || (waPodek ? `+${waPodek}` : '');
+              const emailSkutecny = skutecnyEmailProPodekovani(row);
+              const jenRelayEmail = chybiSkutecnyEmailPodekovani(row);
+              const panelOtevren = dotazPodekovani === `karta:${row.rezervace}`;
+              return (
+                <div className="ph-karta-podekovani">
+                  <button
+                    type="button"
+                    className="ph-nova-predani"
+                    disabled={cekam !== null}
+                    onClick={() =>
+                      setDotazPodekovani((prev) =>
+                        prev === `karta:${row.rezervace}` ? null : `karta:${row.rezervace}`,
+                      )
+                    }
+                  >
+                    Poděkování za poslední pobyt
+                  </button>
+                  {row.podekovaniKdy ? (
+                    <p className="ph-karta-poslana">odesláno už</p>
+                  ) : null}
+                  {panelOtevren ? (
+                    <div className="ph-karta-podekovani__panel">
+                      <span className="ph-podekovani-email-radek">
+                        {emailSkutecny ? (
+                          <>
+                            E-mail hosta: <span className="ph-tel">{emailSkutecny}</span>
+                          </>
+                        ) : jenRelayEmail ? (
+                          'Chybí skutečný e-mail (Booking/Airbnb)'
+                        ) : (
+                          'Bez e-mailu'
+                        )}
+                      </span>
+                      <span className="ph-odjezdy__akce">
+                        {waPodek ? (
+                          <TlacitkoWhatsApp
+                            wa={waPodek}
+                            zprava={text}
+                            userAgent={userAgent}
+                            onPredOtevrenim={() => oznacPodekovani(row, 'whatsapp')}
+                          >
+                            WhatsApp
+                          </TlacitkoWhatsApp>
+                        ) : null}
+                        {telefonSms ? (
+                          <a
+                            className="ph-wa"
+                            href={odkazSmsPodekovani(telefonSms, text, jeIos(userAgent))}
+                            onClick={() => void oznacPodekovani(row, 'sms')}
+                          >
+                            SMS
+                          </a>
+                        ) : null}
+                        {emailSkutecny ? (
+                          <button
+                            type="button"
+                            className="ph-wa"
+                            onClick={() => setDotazPodekovani(`karta-email:${row.rezervace}`)}
+                          >
+                            E-mail
+                          </button>
+                        ) : null}
+                        {row.podekovaniKdy ? (
+                          <button
+                            type="button"
+                            className="ph-kopie"
+                            onClick={() => void vratPodekovani(row)}
+                          >
+                            Vrátit
+                          </button>
+                        ) : null}
+                      </span>
+                    </div>
+                  ) : null}
+                  {dotazPodekovani === `karta-email:${row.rezervace}` && emailSkutecny ? (
+                    <div
+                      id={`podekovani-karta-email-${row.rezervace}`}
+                      className="ph-predano-dotaz ph-predano-dotaz--email"
+                    >
+                      <p>E-mail půjde na</p>
+                      <p className="ph-podekovani-email-cil">
+                        <span className="ph-tel">{emailSkutecny}</span>
+                      </p>
+                      <p>
+                        Kopie na <span className="ph-tel">info@vivienapartments.cz</span>
+                        {row.podekovaniKdy ? '. Poslat znovu?' : '.'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDotazPodekovani(null);
+                          void posliEmail(row, 'podekovani');
+                        }}
+                      >
+                        Ano, poslat
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDotazPodekovani(`karta:${row.rezervace}`)}
+                      >
+                        Zrušit
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })()
+          : null}
         {jazykNahore ? <div className="ph-znovu">{jazykSelect}</div> : null}
         <div className="ph-nova-rada">
           {row.telefonText || row.jinyTelefonText ? (

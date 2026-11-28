@@ -30,6 +30,8 @@ export type PoptavkaZaznam = {
   rezervace: string | null;
   jmeno: string;
   telefon: string;
+  /** Skutečný e-mail hosta (z potvrzení / NEJDE). Příště se předvyplní. */
+  email?: string | null;
   prijezd: string;
   odjezd: string;
   apartmany: AptId[];
@@ -319,6 +321,10 @@ export function nactiPoptavkySeznam(raw: unknown): PoptavkaZaznam[] {
       rezervace: typeof r.rezervace === 'string' ? r.rezervace : null,
       jmeno: jmeno || '—',
       telefon: telefon || '—',
+      email:
+        typeof r.email === 'string' && r.email.includes('@')
+          ? r.email.trim().slice(0, 120)
+          : null,
       prijezd,
       odjezd,
       apartmany: filtrApartmany(Array.isArray(r.apartmany) ? r.apartmany.map(String) : []),
