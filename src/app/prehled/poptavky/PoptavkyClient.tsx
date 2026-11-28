@@ -13,6 +13,7 @@ type Radek = {
   odjezd: string;
   termin: string;
   apartman: string;
+  cena?: string;
   odkud: string;
   stav: string;
   stavText: string;
@@ -222,6 +223,7 @@ export function PoptavkyClient() {
               ) : null}
               <div style={{ color: '#b7aa98', fontSize: '0.9rem', marginTop: 4 }}>
                 {r.termin} · {r.apartman}
+                {r.cena ? ` · ${r.cena}` : ''}
               </div>
               <div style={{ color: '#b7aa98', fontSize: '0.85rem', marginTop: 2 }}>
                 {r.odkud} · {r.stavText}

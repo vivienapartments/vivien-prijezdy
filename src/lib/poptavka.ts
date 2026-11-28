@@ -49,6 +49,10 @@ export type PoptavkaZaznam = {
   pripominkaNocniPocet?: number;
   /** Zkušební poptávka (bez Telegram připomínek). */
   zkouska?: boolean;
+  /** Cena za pobyt před slevou (Kč), jak ji host viděl při odeslání. */
+  cenaKc?: number | null;
+  /** Cena po slevě 5 % (Kč). Null = bez slevy. */
+  cenaSeSlevouKc?: number | null;
 };
 
 /** Firmy spravujeme tady (kód v odkazu ?f=). Hesla tu nejsou. */
@@ -262,7 +266,11 @@ export function textTelegramPoptavky(z: PoptavkaZaznam, opts: TelegramPoptavkaOp
     odkud = `doporučení od: ${opts.doporucitelJmeno || z.doporucitelKod || '?'}`;
   }
   const radky = [`Poptávka: ${z.jmeno}`, termin, apt];
-  if (opts.seSlevouKc != null && opts.slevaPct != null && opts.slevaPct > 0) {
+  if (opts.seSlevouKc != null && opts.slevaPct != null && opts.slevaPct > 0 && opts.cenaKc != null) {
+    radky.push(
+      `${formatKc(opts.cenaKc)}, se slevou ${opts.slevaPct} % ${formatKc(opts.seSlevouKc)}`,
+    );
+  } else if (opts.seSlevouKc != null && opts.slevaPct != null && opts.slevaPct > 0) {
     radky.push(`${formatKc(opts.seSlevouKc)}, sleva ${opts.slevaPct} %`);
   } else if (opts.cenaKc != null) {
     radky.push(formatKc(opts.cenaKc));
@@ -328,6 +336,12 @@ export function nactiPoptavkySeznam(raw: unknown): PoptavkaZaznam[] {
           ? Math.min(20, Math.floor(r.pripominkaNocniPocet))
           : 0,
       zkouska: r.zkouska === true,
+      cenaKc:
+        typeof r.cenaKc === 'number' && r.cenaKc > 0 ? Math.round(r.cenaKc) : null,
+      cenaSeSlevouKc:
+        typeof r.cenaSeSlevouKc === 'number' && r.cenaSeSlevouKc > 0
+          ? Math.round(r.cenaSeSlevouKc)
+          : null,
     });
     if (out.length >= 200) break;
   }

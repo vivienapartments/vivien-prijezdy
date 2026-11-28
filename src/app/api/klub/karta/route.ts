@@ -115,6 +115,13 @@ export async function GET(req: Request) {
   const pobyty: import('@/lib/klub-ukazka').KlubPobytRadek[] = [];
   const maKlubovouUtratu = (karta.utrataKc || 0) > 0;
 
+  type RadekSDatem = {
+    prijezd: string;
+    radek: import('@/lib/klub-ukazka').KlubPobytRadek;
+  };
+  const nadchazejiciSDatem: RadekSDatem[] = [];
+  const pobytySDatem: RadekSDatem[] = [];
+
   for (const rezId of karta.rezervace || []) {
     const rec = await store.getRezervace(rezId);
     if (!rec || !rec.prijezd || !rec.odjezd) continue;
@@ -134,29 +141,46 @@ export async function GET(req: Request) {
     const probiha = rec.prijezd <= dnes && rec.odjezd > dnes;
     const ceka = rec.prijezd > dnes;
     if (probiha || ceka) {
-      nadchazejici.push({
-        nadpis: nadpisBox,
-        podnadpis: 'Adresa, příjezd, kódy',
-        pruvodceUrl,
-        barva: probiha ? 'probiha' : 'ceka',
-        stavText: probiha ? 'započítáno' : 'čeká',
+      nadchazejiciSDatem.push({
+        prijezd: rec.prijezd,
+        radek: {
+          nadpis: nadpisBox,
+          podnadpis: 'Adresa, příjezd, kódy',
+          pruvodceUrl,
+          barva: probiha ? 'probiha' : 'ceka',
+          stavText: probiha ? 'započítáno' : 'čeká',
+        },
       });
-      pobyty.push({
-        nadpis: nadpisSeznam,
-        podnadpis: '',
-        barva: probiha ? 'probiha' : 'ceka',
-        stavText: probiha ? 'započítáno' : 'čeká',
+      pobytySDatem.push({
+        prijezd: rec.prijezd,
+        radek: {
+          nadpis: nadpisSeznam,
+          podnadpis: '',
+          barva: probiha ? 'probiha' : 'ceka',
+          stavText: probiha ? 'započítáno' : 'čeká',
+        },
       });
     } else {
       const bookingPobyt = jeBookingZdroj(rec.zdroj, rec.emailHosta);
-      pobyty.push({
-        nadpis: nadpisSeznam,
-        podnadpis: '',
-        barva: bookingPobyt ? 'ceka' : 'zapocteno',
-        stavText: bookingPobyt ? 'nepočítá se' : 'započítáno',
+      pobytySDatem.push({
+        prijezd: rec.prijezd,
+        radek: {
+          nadpis: nadpisSeznam,
+          podnadpis: '',
+          barva: bookingPobyt ? 'ceka' : 'zapocteno',
+          stavText: bookingPobyt ? 'nepočítá se' : 'započítáno',
+        },
       });
     }
   }
+
+  // Nejnovější nahoře (podle příjezdu).
+  const odNejnovejsi = (a: RadekSDatem, b: RadekSDatem) =>
+    a.prijezd < b.prijezd ? 1 : a.prijezd > b.prijezd ? -1 : 0;
+  nadchazejiciSDatem.sort(odNejnovejsi);
+  pobytySDatem.sort(odNejnovejsi);
+  for (const x of nadchazejiciSDatem) nadchazejici.push(x.radek);
+  for (const x of pobytySDatem) pobyty.push(x.radek);
 
   const kartaPohled = pohledZKarty(karta, base, { ukazka: false, pohled, bookingRezim });
   if (nadchazejici.length || pobyty.length) {

@@ -194,6 +194,7 @@ export default async function PoptavkaPage({ searchParams }: Props) {
       firmaKod={firmaKod}
       firmaNazev={firmaNazev}
       doporucitelKod={doporucitelKod}
+      sdileni={q.k === 'e' || q.k === 'w' || q.k === 'c' ? q.k : null}
       token={token}
       klubKlic={klubKlic}
       rezervace={rezervace}

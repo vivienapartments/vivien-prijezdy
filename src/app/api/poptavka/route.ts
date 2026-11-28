@@ -2,6 +2,12 @@ import { createHash } from 'crypto';
 import { NextResponse } from 'next/server';
 import { jeBlokPokus, zapisPokus } from '@/lib/okno-pobytu';
 import { vytvorDoporuceni } from '@/lib/doporuceni';
+import {
+  jmenoDoporucitele,
+  kanalZParamu,
+  nactiKartuPodleKodu,
+  pridejDoporuceniZPoptavky,
+} from '@/lib/doporucitel-karta';
 import { aptyVolneVeTerminu, nejlevnejsiVolnyPobyt } from '@/lib/kalendar-denni';
 import { sestavKalendarProHosta } from '@/lib/kalendar-uloziste';
 import {
@@ -16,6 +22,7 @@ import {
   type PoptavkaZaznam,
   type PoptavkaZdroj,
 } from '@/lib/poptavka';
+import { spocitejCenuPoptavky } from '@/lib/poptavka-cena';
 import { createProcessStore } from '@/lib/store';
 import { kontaktZKlubTajnehoKlice } from '@/lib/poptavka-klub-klic';
 import { parseSignedToken } from '@/lib/token';
@@ -51,6 +58,7 @@ export async function POST(req: Request) {
     honeypot?: string;
     zkouska?: boolean | string;
     kanal?: string;
+    sdileni?: string;
   } = {};
   try {
     body = (await req.json()) as typeof body;
@@ -182,6 +190,8 @@ export async function POST(req: Request) {
     pripominkaPosledni: new Date().toISOString(),
     pripominkaNocniPocet: 0,
     zkouska,
+    cenaKc: null,
+    cenaSeSlevouKc: null,
   };
 
   let dnyKal = null as Awaited<ReturnType<typeof sestavKalendarProHosta>>['dny'] | null;
@@ -217,6 +227,13 @@ export async function POST(req: Request) {
     console.error('poptavka: obsazenost', err instanceof Error ? err.message : err);
   }
 
+  // Cenu uložíme hned se záznamem (host ji viděl, majitel ji uvidí v přehledu i ve zprávě).
+  if (dnyKal) {
+    const cena = spocitejCenuPoptavky(dnyKal, zaznam);
+    zaznam.cenaKc = cena.cenaKc;
+    zaznam.cenaSeSlevouKc = cena.cenaSeSlevouKc;
+  }
+
   // Suchý beh v prohlížeči (?zkouska=1): nic neukládat.
   if (suchyBeh) {
     return NextResponse.json({ ok: true, id: zaznam.id, suchy: true, zkouska: true }, { headers: noStore });
@@ -233,29 +250,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, id: zaznam.id, zkouska: true }, { headers: noStore });
   }
 
-  const slevaCesty = zdroj === 'vernost' || zdroj === 'doporucitel';
-  let cenaKc: number | null = null;
-  let seSlevouKc: number | null = null;
-  let slevaPct: number | null = null;
-  if (dnyKal) {
-    const cena = nejlevnejsiVolnyPobyt(
-      dnyKal,
-      zaznam.prijezd,
-      zaznam.odjezd,
-      zaznam.libovolnyApartman || !zaznam.apartmany.length ? undefined : zaznam.apartmany,
-    );
-    if (cena) {
-      cenaKc = cena.suma;
-      if (slevaCesty) {
-        seSlevouKc = cena.seSlevou;
-        slevaPct = POPTAVKA_SLEVA_PCT;
-      }
-    }
-  }
+  let cenaKc = zaznam.cenaKc ?? null;
+  let seSlevouKc = zaznam.cenaSeSlevouKc ?? null;
+  let slevaPct: number | null =
+    seSlevouKc != null && cenaKc != null ? POPTAVKA_SLEVA_PCT : null;
 
   let doporucitelJmeno: string | null = null;
   let tgExtra = '';
   if (zdroj === 'doporucitel' && doporucitelKod) {
+    const slevaPred = slevaPct;
+    const cenaPred = seSlevouKc;
     try {
       const d = await vytvorDoporuceni(store, {
         kod: doporucitelKod,
@@ -273,8 +277,39 @@ export async function POST(req: Request) {
         tgExtra = `\nZkontroluj kód ${doporucitelKod}, mnoho poptávek.`;
       }
     } catch (err) {
-      console.error('poptavka: doporuceni', err instanceof Error ? err.message : err);
-      tgExtra = `\nDoporučení: neznámý kód ${doporucitelKod}.`;
+      console.error('poptavka: doporuceni-osoba', err instanceof Error ? err.message : err);
+      tgExtra = `\nDoporučení: starý zápis kódu ${doporucitelKod} selhal.`;
+    }
+    // Karta doporučitele (nový systém) musí dostat poptávku i když starý zápis osoby selže.
+    try {
+      const kartaDop = await nactiKartuPodleKodu(store, doporucitelKod);
+      if (kartaDop && kartaDop.stav === 'aktivni') {
+        const popisek = jmenoDoporucitele(kartaDop);
+        if (popisek) doporucitelJmeno = popisek;
+        if (slevaPct == null && slevaPred != null) {
+          slevaPct = slevaPred;
+          seSlevouKc = cenaPred;
+        }
+        await pridejDoporuceniZPoptavky(store, {
+          kod: doporucitelKod,
+          poptavkaId: zaznam.id,
+          krestniJmeno: jmeno,
+          telefon,
+          kanal: kanalZParamu(body.sdileni),
+          termin:
+            zaznam.prijezd && zaznam.odjezd
+              ? `${zaznam.prijezd}–${zaznam.odjezd}`
+              : zaznam.prijezd,
+          apartman: zaznam.apartmany[0] || zaznam.blokApt || null,
+          cenaPredSlevou: cenaKc,
+          odjezd: zaznam.odjezd,
+        });
+      } else {
+        tgExtra += `\nDoporučení: karta kódu ${doporucitelKod} chybí nebo není aktivní.`;
+      }
+    } catch (err) {
+      console.error('poptavka: doporuceni-karta', err instanceof Error ? err.message : err);
+      tgExtra += `\nDoporučení: zápis na kartu ${doporucitelKod} selhal.`;
     }
   }
 

@@ -84,6 +84,8 @@ export type PoptavkaVstupni = {
   firmaKod: string | null;
   firmaNazev: string | null;
   doporucitelKod: string | null;
+  /** Jak doporučitel odkaz poslal: e / w / c. */
+  sdileni?: string | null;
   token: string | null;
   /** Tajný klíč karty klubu (`?k=`). Věrná poptávka bez e-mailového tokenu. */
   klubKlic?: string | null;
@@ -576,6 +578,7 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
           k: props.klubKlic || undefined,
           f: props.firmaKod,
           od: props.doporucitelKod,
+          sdileni: props.sdileni || undefined,
           jmeno: jmenoOdeslat,
           telefon: telefonOdeslat,
           prijezd,

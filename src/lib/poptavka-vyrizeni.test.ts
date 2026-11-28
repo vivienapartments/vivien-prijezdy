@@ -51,10 +51,13 @@ describe('poptavka-vyrizeni', () => {
   it('text POTVRDIT potvrzuje pobyt bez druhého ano', () => {
     const t = textPotvrditHostovi(baza(), {
       cenaKc: 1473,
+      cenaPredKc: 1550,
       seSlevou: true,
     });
     expect(t).toContain('Jana');
     expect(t).toContain('5 %');
+    expect(t).toContain('1 550');
+    expect(t).toContain('1 473');
     expect(t).toContain('potvrzujeme');
     expect(t).not.toContain('Napište nám');
   });

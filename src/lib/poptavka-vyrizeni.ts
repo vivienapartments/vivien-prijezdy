@@ -371,15 +371,32 @@ function dopln(s: string, mapa: Record<string, string>): string {
 
 export function textPotvrditHostovi(
   z: PoptavkaZaznam,
-  opts: { cenaKc: number | null; seSlevou: boolean; lhutaIso?: string | null },
+  opts: {
+    cenaKc: number | null;
+    cenaPredKc?: number | null;
+    seSlevou: boolean;
+    lhutaIso?: string | null;
+  },
 ): string {
   const lang = z.jazyk || 'cs';
   const s = POTVRDIT[lang] || POTVRDIT.en;
   const apt = z.blokApt || z.apartmany[0];
   const apartman = apt ? aptRecord(apt).nazev.cs : '—';
   const termin = formatRozsahPoptavky(z.prijezd, z.odjezd, lang);
-  const cena = opts.cenaKc != null ? formatKc(opts.cenaKc) : '—';
-  const sleva = opts.seSlevou ? SLEVA[lang] || SLEVA.en : '';
+  let cena = '—';
+  let sleva = '';
+  if (
+    opts.seSlevou &&
+    opts.cenaPredKc != null &&
+    opts.cenaKc != null &&
+    opts.cenaPredKc !== opts.cenaKc
+  ) {
+    // Obě částky v jednom místě (před i po slevě), bez druhého dovětku.
+    cena = `${formatKc(opts.cenaPredKc)}, se slevou 5 % ${formatKc(opts.cenaKc)}`;
+  } else if (opts.cenaKc != null) {
+    cena = formatKc(opts.cenaKc);
+    sleva = opts.seSlevou ? SLEVA[lang] || SLEVA.en : '';
+  }
   const mapa = {
     jmeno: krestni(z.jmeno) || 'host',
     termin,

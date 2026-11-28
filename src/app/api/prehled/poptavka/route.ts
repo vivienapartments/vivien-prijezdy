@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { aptRecord } from '@/lib/guide-data';
-import { aptyVolneVeTerminu, nejlevnejsiVolnyPobyt } from '@/lib/kalendar-denni';
-import { formatKc, tvarNoci } from '@/lib/kalendar-texty';
+import { aptyVolneVeTerminu, slevaPctCastka } from '@/lib/kalendar-denni';
+import { tvarNoci } from '@/lib/kalendar-texty';
 import { sestavKalendarProHosta } from '@/lib/kalendar-uloziste';
 import {
   doplnKontaktZKarty,
@@ -9,6 +9,7 @@ import {
   POPTAVKA_SLEVA_PCT,
   type PoptavkaZaznam,
 } from '@/lib/poptavka';
+import { spocitejCenuPoptavky, textCenyPoptavky } from '@/lib/poptavka-cena';
 import type { ProcessStore } from '@/lib/store';
 import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
 import {
@@ -39,26 +40,60 @@ function odkudText(z: PoptavkaZaznam): string {
   return 'web';
 }
 
+function cenaZUlozene(z: PoptavkaZaznam) {
+  if (z.cenaKc == null || !(z.cenaKc > 0)) return null;
+  const slevaZdroj = z.zdroj === 'vernost' || z.zdroj === 'doporucitel';
+  const kcPred = z.cenaKc;
+  const kcPo =
+    z.cenaSeSlevouKc != null && z.cenaSeSlevouKc > 0
+      ? z.cenaSeSlevouKc
+      : slevaZdroj
+        ? slevaPctCastka(kcPred, POPTAVKA_SLEVA_PCT)
+        : kcPred;
+  const seSlevou = slevaZdroj || kcPo !== kcPred;
+  return {
+    text: textCenyPoptavky(kcPred, seSlevou ? kcPo : null),
+    kc: seSlevou ? kcPo : kcPred,
+    kcPred,
+    seSlevou,
+  };
+}
+
 async function cenaPro(z: PoptavkaZaznam, store: ReturnType<typeof createProcessStore>) {
+  const ulozena = cenaZUlozene(z);
+  if (ulozena) return ulozena;
   try {
     const { dny } = await sestavKalendarProHosta(store);
-    const kandidati = z.blokApt
-      ? [z.blokApt]
-      : z.libovolnyApartman || !z.apartmany.length
-        ? undefined
-        : z.apartmany;
-    const cena = nejlevnejsiVolnyPobyt(dny, z.prijezd, z.odjezd, kandidati);
-    if (!cena) return { text: '', kc: null as number | null, seSlevou: false };
-    const sleva = z.zdroj === 'vernost' || z.zdroj === 'doporucitel';
+    const cena = spocitejCenuPoptavky(dny, z);
+    if (cena.cenaKc == null) {
+      return { text: '', kc: null as number | null, kcPred: null as number | null, seSlevou: false };
+    }
+    const seSlevou = cena.cenaSeSlevouKc != null;
     return {
-      text: sleva
-        ? `${formatKc(cena.seSlevou)}, sleva ${POPTAVKA_SLEVA_PCT} %`
-        : formatKc(cena.suma),
-      kc: sleva ? cena.seSlevou : cena.suma,
-      seSlevou: sleva,
+      text: textCenyPoptavky(cena.cenaKc, cena.cenaSeSlevouKc),
+      kc: seSlevou ? cena.cenaSeSlevouKc : cena.cenaKc,
+      kcPred: cena.cenaKc,
+      seSlevou,
     };
   } catch {
-    return { text: '', kc: null as number | null, seSlevou: false };
+    return { text: '', kc: null as number | null, kcPred: null as number | null, seSlevou: false };
+  }
+}
+
+/** Doplní chybějící cenu do starších poptávek (jednou při otevření). */
+async function doplnCenuKdyzChybi(
+  z: PoptavkaZaznam,
+  store: ReturnType<typeof createProcessStore>,
+  dnyHotove?: Awaited<ReturnType<typeof sestavKalendarProHosta>>['dny'] | null,
+): Promise<PoptavkaZaznam> {
+  if (z.cenaKc != null && z.cenaKc > 0) return z;
+  try {
+    const dny = dnyHotove ?? (await sestavKalendarProHosta(store)).dny;
+    const cena = spocitejCenuPoptavky(dny, z);
+    if (cena.cenaKc == null) return z;
+    return { ...z, cenaKc: cena.cenaKc, cenaSeSlevouKc: cena.cenaSeSlevouKc };
+  } catch {
+    return z;
   }
 }
 
@@ -109,10 +144,19 @@ export async function GET(req: Request) {
     const seznam = await store.listPoptavky();
     let zmena = false;
     const doplnene: PoptavkaZaznam[] = [];
+    let dnyProCenu: Awaited<ReturnType<typeof sestavKalendarProHosta>>['dny'] | null = null;
     for (const z of seznam) {
       const d = await doplnPoptavkuZKarty(z, store);
-      if (d !== z) zmena = true;
-      doplnene.push(d);
+      if ((d.cenaKc == null || !(d.cenaKc > 0)) && !dnyProCenu) {
+        try {
+          dnyProCenu = (await sestavKalendarProHosta(store)).dny;
+        } catch {
+          dnyProCenu = null;
+        }
+      }
+      const sCenou = await doplnCenuKdyzChybi(d, store, dnyProCenu);
+      if (sCenou !== d || d !== z) zmena = true;
+      doplnene.push(sCenou);
     }
     if (zmena) await store.ulozPoptavky(doplnene);
     const radky = [...doplnene]
@@ -132,6 +176,7 @@ export async function GET(req: Request) {
             : z.libovolnyApartman
               ? 'libovolný'
               : z.apartmany.map((a) => aptRecord(a).nazev.cs).join(', ') || '—',
+          cena: textCenyPoptavky(z.cenaKc, z.cenaSeSlevouKc),
           odkud: odkudText(z),
           stav: z.stav,
           stavText: stitekStavu(nactiPoptavkaStav(z.stav)),
@@ -147,10 +192,11 @@ export async function GET(req: Request) {
   if (i < 0) return chyba(404, 'Poptávka nenalezena.');
   let z = seznam[i];
   const doplnena = await doplnPoptavkuZKarty(z, store);
-  if (doplnena !== z) {
-    seznam[i] = doplnena;
+  const sCenou = await doplnCenuKdyzChybi(doplnena, store);
+  if (sCenou !== z) {
+    seznam[i] = sCenou;
     await store.ulozPoptavky(seznam);
-    z = doplnena;
+    z = sCenou;
   }
   const cena = await cenaPro(z, store);
   return NextResponse.json({ ok: true, poptavka: detailJson(z, cena.text) }, { headers: noStore });
@@ -182,6 +228,7 @@ export async function POST(req: Request) {
     z = await doplnPoptavkuZKarty(z, store);
     zprava = textPotvrditHostovi(z, {
       cenaKc: cena.kc,
+      cenaPredKc: cena.kcPred,
       seSlevou: cena.seSlevou,
     });
     const o = odkazZpravyHostovi(z, zprava, Boolean(body.ios));
@@ -193,6 +240,12 @@ export async function POST(req: Request) {
       pripominkaPosledni: null,
       pripominkaNocniPocet: 0,
     };
+    try {
+      const { aktualizujStavDoporuceniPodlePoptavky } = await import('@/lib/doporucitel-karta');
+      await aktualizujStavDoporuceniPodlePoptavky(store, z.id, 'potvrzeno');
+    } catch {
+      /* doporučitel nesmí shodit potvrzení */
+    }
   } else if (akce === 'host_potvrdil') {
     /* Staré poptávky ve stavu „čeká na hosta“. Nové sem už nejdou. */
     z = {
@@ -225,6 +278,12 @@ export async function POST(req: Request) {
       pripominkaPosledni: null,
       pripominkaNocniPocet: 0,
     };
+    try {
+      const { aktualizujStavDoporuceniPodlePoptavky } = await import('@/lib/doporucitel-karta');
+      await aktualizujStavDoporuceniPodlePoptavky(store, z.id, 'storno');
+    } catch {
+      /* doporučitel */
+    }
   } else if (akce === 'prodlouzit') {
     if (nactiPoptavkaStav(z.stav) !== 'neozval_se') return chyba(400, 'Nelze prodloužit.');
     const { dny } = await sestavKalendarProHosta(store);
