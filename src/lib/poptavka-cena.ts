@@ -17,7 +17,8 @@ export function spocitejCenuPoptavky(
   dny: KalendarDenni,
   z: Pick<PoptavkaZaznam, 'prijezd' | 'odjezd' | 'apartmany' | 'libovolnyApartman' | 'blokApt' | 'zdroj'>,
 ): { cenaKc: number | null; cenaSeSlevouKc: number | null } {
-  const sleva = z.zdroj === 'vernost' || z.zdroj === 'doporucitel';
+  const sleva =
+    z.zdroj === 'vernost' || z.zdroj === 'doporucitel' || z.zdroj === 'obecna';
   let suma: number | null = null;
   const preferovane = z.blokApt
     ? [z.blokApt]

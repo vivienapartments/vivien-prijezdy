@@ -106,9 +106,13 @@ type GalerieStav =
   | null;
 
 export function PoptavkaForm(props: PoptavkaVstupni) {
-  /** Věrný i doporučený host: stejná stavba obrazovek (PROMPT-76 / 77). */
-  const vernost = props.zdroj === 'vernost' || props.zdroj === 'doporucitel';
+  /** Věrný, doporučený i přímá obecná poptávka: stejná stavba (PROMPT-76 / 77). */
+  const vernost =
+    props.zdroj === 'vernost' ||
+    props.zdroj === 'doporucitel' ||
+    props.zdroj === 'obecna';
   const doporucitel = props.zdroj === 'doporucitel';
+  const obecnaPrima = props.zdroj === 'obecna';
   const suchyBeh = Boolean(props.suchyBeh);
   const klub = props.klub || PRAZDNY_KLUB_POPTAVKA;
   const [lang, setLang] = useState<GuideLang>(props.lang);
@@ -130,7 +134,9 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
   );
   const slevaInfo = useMemo(() => {
     if (klub.zapnuto) {
-      const jeDoporucenyPrvniPobyt = doporucitel && !klub.maDokoncenyPobyt;
+      /* Přímá obecná = stejných 5 % jako doporučený na 1. pobyt (bez kreditu doporučiteli). */
+      const jeDoporucenyPrvniPobyt =
+        (doporucitel || obecnaPrima) && !klub.maDokoncenyPobyt;
       const pct = vyslednaSlevaPct(
         {
           noci: noci || 1,
@@ -148,21 +154,22 @@ export function PoptavkaForm(props: PoptavkaVstupni) {
       if (pct > 0) {
         if (delka >= pct && delka > 0) duvod = 'delka';
         else if (klub.jeFirma || firma) duvod = 'firma';
-        else if (jeDoporucenyPrvniPobyt) duvod = 'doporuceny';
+        else if (doporucitel && jeDoporucenyPrvniPobyt) duvod = 'doporuceny';
+        else if (obecnaPrima && jeDoporucenyPrvniPobyt) duvod = 'cesta';
         else if (klub.jeDoporucitelBezPobytu) duvod = 'doporucitel';
         else if (klub.maDokoncenyPobyt) duvod = 'staly';
         else duvod = 'cesta';
       }
       return { pct, duvod, text: textSlevyPobytu(pct, duvod) };
     }
-    // Bez klubu: sleva v ceně jen věrný / doporučený (firma má text, ne výpočet ceny).
+    // Bez klubu: sleva v ceně věrný / doporučený / přímá obecná.
     const pct = vernost ? POPTAVKA_SLEVA_PCT : 0;
     return {
       pct,
       duvod: (vernost ? 'cesta' : null) as SlevaDuvod,
       text: t.sleva || '',
     };
-  }, [klub, noci, prijezd, doporucitel, firma, vernost, props.zdroj, t.sleva]);
+  }, [klub, noci, prijezd, doporucitel, obecnaPrima, firma, vernost, props.zdroj, t.sleva]);
   const slevaPct = slevaInfo.pct;
   const slevaCesty = slevaPct > 0;
   const [zpusob, setZpusob] = useState<'doporucit' | 'vybrat' | 'pruvodce' | null>(null);

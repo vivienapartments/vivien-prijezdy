@@ -6,7 +6,6 @@
 
 import { doporuceniTexty } from './doporuceni-texty';
 import { DEKUJEME_POTVRDIME, UVOD_VERNOST_CENA } from './poptavka-ceny-texty';
-import { doporucitelUiTexty } from './poptavka-doporucitel-ui';
 import { poptavkaTextyVernost } from './poptavka-texty-vernost';
 import type { PoptavkaZdroj } from './poptavka';
 import type { GuideLang } from './types';
@@ -238,7 +237,8 @@ export function poptavkaTexty(
       chybaTelefon,
     };
   }
-  if (zdroj === 'doporucitel') {
+  if (zdroj === 'doporucitel' || zdroj === 'obecna') {
+    /* Obecná přímá = stejná stavba a texty jako doporučený, bez štítku „na doporučení“. */
     const base = poptavkaTextyVernost(lang);
     const d = doporuceniTexty(lang);
     return {
@@ -260,15 +260,7 @@ export function poptavkaTexty(
     return { ...base, chybaTelefon };
   }
   const base = lang === 'cs' ? CS : EN;
-  if (!cenyZapnuto) return { ...base, chybaTelefon };
-  /** Běžná poptávka: poslední věta o ceně → napověda, děkujeme → potvrzení termínu. */
-  const napoveda = doporucitelUiTexty(lang).poptavkaNapoveda;
-  return {
-    ...base,
-    uvod: napoveda,
-    dekujeme: DEKUJEME_POTVRDIME[lang] || DEKUJEME_POTVRDIME.en,
-    chybaTelefon,
-  };
+  return { ...base, chybaTelefon };
 }
 
 /** Štítek na první obrazovce doporučeného hosta. */

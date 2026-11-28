@@ -95,12 +95,15 @@ describe('poptavkaTexty', () => {
     expect(poptavkaTexty('cs', 'vernost').nadpisOdeslano).toBe('Děkujeme, že se k nám vracíte.');
   });
 
-  it('obecná / firma drží staré CS a EN', () => {
-    expect(poptavkaTexty('cs', 'obecna').nadpis).toBe('Další pobyt u nás');
+  it('obecná má stejný tvar jako doporučený, firma drží staré CS', () => {
+    expect(poptavkaTexty('cs', 'obecna').nadpis).toBe('Rádi vás u nás přivítáme');
+    expect(poptavkaTexty('cs', 'obecna').nadpis).toBe(poptavkaTexty('cs', 'doporucitel').nadpis);
     expect(poptavkaTexty('cs', 'firma').sleva).toContain('5');
     expect(poptavkaTexty('en', 'doporucitel').nadpis).toBe('We look forward to welcoming you');
     expect(poptavkaTexty('en', 'doporucitel').sleva).toBe('');
-    expect(poptavkaTexty('en', 'obecna').dekujemeVolejte).toBe('');
+    expect(poptavkaTexty('en', 'obecna').dekujemeVolejte).toBe(
+      poptavkaTexty('en', 'doporucitel').dekujemeVolejte,
+    );
   });
 
   it('formátuje datum podle jazyka', () => {

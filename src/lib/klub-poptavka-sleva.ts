@@ -52,7 +52,7 @@ export function textSlevyPobytu(pct: number, duvod: SlevaDuvod): string {
 
 /** Dnešní chování bez klubu. */
 export function slevaPoptavkyBezKlubu(zdroj: PoptavkaZdroj): SlevaPoptavkyVysledek {
-  if (zdroj === 'vernost' || zdroj === 'doporucitel') {
+  if (zdroj === 'vernost' || zdroj === 'doporucitel' || zdroj === 'obecna') {
     return {
       pct: POPTAVKA_SLEVA_PCT,
       duvod: 'cesta',

@@ -42,7 +42,8 @@ function odkudText(z: PoptavkaZaznam): string {
 
 function cenaZUlozene(z: PoptavkaZaznam) {
   if (z.cenaKc == null || !(z.cenaKc > 0)) return null;
-  const slevaZdroj = z.zdroj === 'vernost' || z.zdroj === 'doporucitel';
+  const slevaZdroj =
+    z.zdroj === 'vernost' || z.zdroj === 'doporucitel' || z.zdroj === 'obecna';
   const kcPred = z.cenaKc;
   const kcPo =
     z.cenaSeSlevouKc != null && z.cenaSeSlevouKc > 0

@@ -7,10 +7,10 @@ import {
 import { vyslednaSlevaPct } from './klub-pravidla';
 
 describe('klub poptávka sleva', () => {
-  it('bez klubu: věrný 5 %, obecná 0', () => {
+  it('bez klubu: věrný / doporučený / obecná 5 %', () => {
     expect(slevaPoptavkyBezKlubu('vernost').pct).toBe(5);
     expect(slevaPoptavkyBezKlubu('doporucitel').pct).toBe(5);
-    expect(slevaPoptavkyBezKlubu('obecna').pct).toBe(0);
+    expect(slevaPoptavkyBezKlubu('obecna').pct).toBe(5);
   });
 
   it('text slevy s důvodem', () => {
