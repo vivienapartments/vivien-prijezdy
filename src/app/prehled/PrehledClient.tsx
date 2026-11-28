@@ -404,7 +404,7 @@ function TelefonZMinulaNahore({
   );
 }
 
-/** Club karta nahoře u hosta: ano / ne + Založit nebo Otevřít. */
+/** U hosta: má / nemá kartu. Neplést s vypínačem celého Clubu. */
 function ClubKartaNahore({
   rezervace,
   ukazka,
@@ -417,16 +417,20 @@ function ClubKartaNahore({
   const [stav, setStav] = useState<'nacitam' | 'ano' | 'ne' | 'vypnuto'>('nacitam');
   const [odkaz, setOdkaz] = useState<string | null>(null);
   const [cekam, setCekam] = useState(false);
+  const [chybaMistni, setChybaMistni] = useState<string | null>(null);
 
   useEffect(() => {
     let zruseno = false;
     if (ukazka) {
-      const ma = /[02468]$/.test(rezervace);
+      /** Ukázka: zkušební ZKTOMEK mají kartu. Jinak sudé id = má. */
+      const ma = /^ZKTOMEK/i.test(rezervace) || /[02468]$/.test(rezervace);
       setStav(ma ? 'ano' : 'ne');
       setOdkaz(ma ? `/klub?k=ukazka-${encodeURIComponent(rezervace)}` : null);
+      setChybaMistni(null);
       return;
     }
     setStav('nacitam');
+    setChybaMistni(null);
     void (async () => {
       try {
         const res = await fetch('/api/prehled/akce', {
@@ -439,8 +443,15 @@ function ClubKartaNahore({
           ma?: boolean;
           odkaz?: string | null;
           vypnuto?: boolean;
+          error?: string;
         };
         if (zruseno) return;
+        if (!res.ok) {
+          setOdkaz(null);
+          setStav('ne');
+          setChybaMistni(data.error || 'Stav karty se nepodařilo načíst.');
+          return;
+        }
         if (data.ok && data.ma && data.odkaz) {
           setOdkaz(data.odkaz);
           setStav('ano');
@@ -454,7 +465,10 @@ function ClubKartaNahore({
         setOdkaz(null);
         setStav('ne');
       } catch {
-        if (!zruseno) setStav('ne');
+        if (!zruseno) {
+          setStav('ne');
+          setChybaMistni('Stav karty se nepodařilo načíst.');
+        }
       }
     })();
     return () => {
@@ -463,12 +477,12 @@ function ClubKartaNahore({
   }, [rezervace, ukazka]);
 
   async function zalozit() {
-    if (cekam || ukazka) {
-      if (ukazka) {
-        setOdkaz(`/klub?k=ukazka-${encodeURIComponent(rezervace)}`);
-        setStav('ano');
-        onHlaska('Ukázka: Club karta založena.');
-      }
+    if (cekam) return;
+    setChybaMistni(null);
+    if (ukazka) {
+      setOdkaz(`/klub?k=ukazka-${encodeURIComponent(rezervace)}`);
+      setStav('ano');
+      onHlaska('Ukázka: karta je založená.');
       return;
     }
     setCekam(true);
@@ -478,16 +492,26 @@ function ClubKartaNahore({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: rezervace, akce: 'klub-karta-pripravit' }),
       });
-      const data = (await res.json()) as { ok?: boolean; odkaz?: string; chyba?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        odkaz?: string;
+        chyba?: string;
+        error?: string;
+      };
+      const textChyby = data.error || data.chyba || 'Kartu se nepodařilo založit.';
       if (!res.ok || !data.ok || !data.odkaz) {
-        onHlaska(data.chyba || 'Kartu se nepodařilo založit.');
+        if (/vypnut/i.test(textChyby)) setStav('vypnuto');
+        setChybaMistni(textChyby);
+        onHlaska(textChyby);
         return;
       }
       setOdkaz(data.odkaz);
       setStav('ano');
-      onHlaska('Club karta je založená.');
+      onHlaska('Karta je založená.');
     } catch {
-      onHlaska('Kartu se nepodařilo založit.');
+      const text = 'Kartu se nepodařilo založit.';
+      setChybaMistni(text);
+      onHlaska(text);
     } finally {
       setCekam(false);
     }
@@ -496,13 +520,13 @@ function ClubKartaNahore({
   return (
     <div className="ph-club-pravy" aria-live="polite">
       {stav === 'nacitam' ? (
-        <b>Club karta</b>
+        <b>Karta</b>
       ) : stav === 'ano' ? (
-        <b className="is-ano">Club karta · ano</b>
+        <b className="is-ano">Má kartu</b>
       ) : stav === 'vypnuto' ? (
-        <b className="is-ne">Club vypnutý</b>
+        <b className="is-ne">Bez karty · Club vypnutý</b>
       ) : (
-        <b className="is-ne">Club karta · ne</b>
+        <b className="is-ne">Bez karty</b>
       )}
       {stav === 'ano' && odkaz ? (
         <a className="ph-club-pravy__btn is-line" href={odkaz} target="_blank" rel="noopener noreferrer">
@@ -513,6 +537,7 @@ function ClubKartaNahore({
           {cekam ? '…' : 'Založit'}
         </button>
       ) : null}
+      {chybaMistni ? <span className="ph-club-pravy__chyba">{chybaMistni}</span> : null}
     </div>
   );
 }
