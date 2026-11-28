@@ -549,7 +549,7 @@ function ClubKartaNahore({
           target="_blank"
           rel="noopener noreferrer"
         >
-          Zobrazit kartu jako host
+          Karta hosta
         </a>
       ) : stav === 'ne' ? (
         <button type="button" className="ph-club-pravy__btn" disabled={cekam} onClick={() => void propojit()}>

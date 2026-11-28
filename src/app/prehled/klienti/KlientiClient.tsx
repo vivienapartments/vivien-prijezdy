@@ -762,7 +762,7 @@ export function KlientiClient() {
                   rel="noreferrer"
                   style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}
                 >
-                  Zobrazit kartu jako host
+                  Karta hosta
                 </a>
               ) : null}
               <button type="button" onClick={() => setDetailId(null)} style={{ ...btn, background: '#2a231c', color: '#cfc5b0' }}>
@@ -838,7 +838,7 @@ export function KlientiClient() {
                       padding: '6px 12px',
                     }}
                   >
-                    Zobrazit kartu jako host
+                    Karta hosta
                   </a>
                 ) : null}
               </li>
