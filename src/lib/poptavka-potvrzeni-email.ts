@@ -83,6 +83,16 @@ export function htmlZpravaPoptavkyHostovi(opts: {
   termin?: string;
   apartman?: string;
   cena?: string;
+  /** Jednoduchý box (např. sleva u pozvánky). Prázdné lab = jen hodnota. */
+  infoBox?: { lab: string; val: string } | null;
+  /** Hotový HTML řádek místo infoBox (pozvánka verze 3). */
+  infoHtml?: string | null;
+  /** Zlaté kulaté tlačítko (pozvánka → formulář). */
+  tlacitko?: { text: string; url: string } | null;
+  /** Blok pod tlačítkem (např. VIVIEN Klub). */
+  poTlacitkuHtml?: string | null;
+  /** Vlastní patička (telefon + podpis). Když je, výchozí se nepoužije. */
+  patickaHtml?: string | null;
   verze?: PoptavkaEmailVerze;
   telefonHostum?: string;
 }): string {
@@ -117,16 +127,52 @@ export function htmlZpravaPoptavkyHostovi(opts: {
   /* Verze 4 má delší text: vlevo, ať e-mail neroztáhne mezery. */
   const textAlign = verze === 4 || verze === 2 ? 'left' : verze === 3 || verze === 1 ? 'center' : 'justify';
 
+  const info =
+    opts.infoHtml ||
+    (opts.infoBox && opts.infoBox.val
+      ? `<tr><td style="padding:8px 24px;font-family:${sans};">
+          <div style="background:#15110e;border:1px solid #3d342a;border-radius:10px;padding:14px 16px;text-align:center;">
+            ${
+              opts.infoBox.lab
+                ? `<div style="color:#b7aa98;font-size:13px;margin-bottom:4px;">${esc(opts.infoBox.lab)}</div>
+            <div style="color:#c9a84c;font-size:17px;font-weight:700;">${esc(opts.infoBox.val)}</div>`
+                : `<div style="color:#c9a84c;font-size:18px;line-height:1.35;font-weight:700;">${esc(opts.infoBox.val)}</div>`
+            }
+          </div>
+        </td></tr>`
+      : '');
+
+  const tlac = opts.tlacitko?.url
+    ? `<tr><td align="center" style="padding:16px 24px 8px;">
+        <table role="presentation" cellspacing="0" cellpadding="0"><tr>
+          <td align="center" style="background:#c9a84c;border-radius:28px;">
+            <a href="${opts.tlacitko.url.trim().replaceAll('"', '%22')}" style="display:inline-block;padding:13px 26px;font-family:${sans};font-size:16px;line-height:1.3;color:#1a1510;text-decoration:none;border-radius:28px;font-weight:700;">${esc(opts.tlacitko.text || 'Otevřít')}</a>
+          </td>
+        </tr></table>
+      </td></tr>`
+    : '';
+
   const tel = (opts.telefonHostum || '+420 604 692 573').trim();
   const telHref = `tel:${tel.replace(/[^\d+]/g, '')}`;
   const telNbsp = esc(tel).replaceAll(' ', '&nbsp;');
-  const telefonBlok =
-    verze === 4
-      ? `<tr><td style="padding:4px 24px 8px;font-family:${sans};font-size:15px;line-height:1.5;color:#b7aa98;text-align:center;">
+  const vychoziPaticka =
+    opts.patickaHtml != null
+      ? opts.patickaHtml
+      : verze === 4
+        ? `<tr><td style="padding:14px 24px 4px;font-family:${sans};font-size:15px;line-height:1.45;color:#b7aa98;text-align:center;">
           Napište nebo zavolejte<br>
           <a href="${telHref}" style="color:#c9a84c;text-decoration:none;white-space:nowrap;font-weight:700;">${telNbsp}</a>
-        </td></tr>`
-      : '';
+        </td></tr>
+        <tr>
+          <td style="padding:8px 24px 26px;font-family:${serif};font-size:16px;font-style:italic;color:#c9a84c;text-align:center;">
+            Nikol a rodina VIVIEN
+          </td>
+        </tr>`
+        : `<tr>
+          <td style="padding:8px 24px 26px;font-family:${serif};font-size:16px;font-style:italic;color:#c9a84c;text-align:center;">
+            Nikol a rodina VIVIEN
+          </td>
+        </tr>`;
 
   return `<!DOCTYPE html>
 <html lang="cs">
@@ -143,18 +189,16 @@ export function htmlZpravaPoptavkyHostovi(opts: {
           </tr>
           ${radaVivien}
           ${nadpisBlok}
+          ${info}
           ${souhrnBox({ termin: opts.termin, apartman: opts.apartman, cena: opts.cena }, sans, layoutSouhrn)}
           <tr>
             <td style="padding:12px 24px 4px;">
               ${odstavceHtml(opts.text, textAlign)}
             </td>
           </tr>
-          ${telefonBlok}
-          <tr>
-            <td style="padding:8px 24px 26px;font-family:${serif};font-size:16px;font-style:italic;color:#c9a84c;text-align:center;">
-              Nikol a rodina VIVIEN
-            </td>
-          </tr>
+          ${tlac}
+          ${opts.poTlacitkuHtml || ''}
+          ${vychoziPaticka}
         </table>
       </td>
     </tr>

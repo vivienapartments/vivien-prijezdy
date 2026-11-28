@@ -12,6 +12,12 @@ import {
 import { spocitejCenuPoptavky, textCenyPoptavky } from '@/lib/poptavka-cena';
 import type { ProcessStore } from '@/lib/store';
 import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
+import {
+  htmlPozvankaPoptavky,
+  odkazObecnePoptavky,
+  predmetPozvankyPoptavky,
+  textPozvankyPoptavky,
+} from '@/lib/poptavka-pozvanka';
 import { ceskyVokativ } from '@/lib/osloveni';
 import {
   htmlZpravaPoptavkyHostovi,
@@ -68,12 +74,8 @@ function osloveniEmail(jmeno: string): string {
 async function odesliHtmlEmailPoptavky(opts: {
   na: string;
   predmet: string;
-  nadpis: string;
   text: string;
-  jmeno: string;
-  termin: string;
-  apartman: string;
-  cena: string;
+  html: string;
 }): Promise<{ ok: true; odeslanoNa: string; testMode: boolean; mailto?: false } | { ok: true; mailto: true } | { ok: false; error: string }> {
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_HESLO?.trim();
@@ -100,15 +102,7 @@ async function odesliHtmlEmailPoptavky(opts: {
       to: cil,
       subject: opts.predmet,
       text: opts.text,
-      html: htmlZpravaPoptavkyHostovi({
-        predmet: opts.predmet.replace(/^\[TEST\]\s*/, ''),
-        nadpis: opts.nadpis,
-        text: opts.text,
-        jmeno: opts.jmeno,
-        termin: opts.termin,
-        apartman: opts.apartman,
-        cena: opts.cena,
-      }),
+      html: opts.html,
     });
     return { ok: true, odeslanoNa: cil, testMode };
   } catch {
@@ -304,10 +298,45 @@ export async function POST(req: Request) {
   }
   const id = (body.id || '').trim();
   const akce = (body.akce || '').trim();
-  if (!id || !akce) return chyba(400, 'Špatný požadavek.');
+  if (!akce) return chyba(400, 'Špatný požadavek.');
   const kanaly = nactiKanaly(body);
   const emailOdeslani = (body.email || '').trim().slice(0, 120);
 
+  /* Nová poptávka e-mailem: hezká pozvánka (stejný styl jako potvrzení). */
+  if (akce === 'poslat_pozvanku') {
+    if (!emailOdeslani.includes('@')) return chyba(400, 'Napište e-mail hosta.');
+    const odkaz = odkazObecnePoptavky();
+    const text = textPozvankyPoptavky(odkaz);
+    const predmet = predmetPozvankyPoptavky((process.env.TEST_REZIM ?? '1') !== '0');
+    const mail = await odesliHtmlEmailPoptavky({
+      na: emailOdeslani,
+      predmet,
+      text,
+      html: htmlPozvankaPoptavky(odkaz),
+    });
+    if (!mail.ok) return chyba(500, mail.error);
+    if (mail.mailto) {
+      return NextResponse.json(
+        {
+          ok: true,
+          emailMailto: true,
+          mailto: `mailto:${encodeURIComponent(emailOdeslani)}?subject=${encodeURIComponent(predmet)}&body=${encodeURIComponent(text)}`,
+        },
+        { headers: noStore },
+      );
+    }
+    return NextResponse.json(
+      {
+        ok: true,
+        emailPoslan: true,
+        emailOdeslanoNa: mail.odeslanoNa,
+        emailTestMode: mail.testMode,
+      },
+      { headers: noStore },
+    );
+  }
+
+  if (!id) return chyba(400, 'Špatný požadavek.');
   const store = createProcessStore();
   const seznam = await store.listPoptavky();
   const i = seznam.findIndex((x) => x.id === id);
@@ -344,15 +373,20 @@ export async function POST(req: Request) {
     const detail = detailJson(z, cena.text);
     for (const k of kanaly) {
       if (k === 'email') {
+        const emailText = textPotvrzeniProEmail(osloveniEmail(z.jmeno));
         const mail = await odesliHtmlEmailPoptavky({
           na: emailOdeslani,
           predmet: predmetPotvrzeniPoptavky((process.env.TEST_REZIM ?? '1') !== '0'),
-          nadpis: nadpisPotvrzeniPoptavky(),
-          text: textPotvrzeniProEmail(osloveniEmail(z.jmeno)),
-          jmeno: osloveniEmail(z.jmeno) || z.jmeno,
-          termin: detail.termin,
-          apartman: detail.apartman,
-          cena: detail.cena || '',
+          text: emailText,
+          html: htmlZpravaPoptavkyHostovi({
+            predmet: predmetPotvrzeniPoptavky(false),
+            nadpis: nadpisPotvrzeniPoptavky(),
+            text: emailText,
+            jmeno: osloveniEmail(z.jmeno) || z.jmeno,
+            termin: detail.termin,
+            apartman: detail.apartman,
+            cena: detail.cena || '',
+          }),
         });
         if (!mail.ok) return chyba(500, mail.error);
         if (mail.mailto) {
@@ -425,15 +459,20 @@ export async function POST(req: Request) {
     const detail = detailJson(z, cena.text);
     for (const k of kanaly) {
       if (k === 'email') {
+        const emailText = textNejdeProEmail(osloveniEmail(z.jmeno), navrh);
         const mail = await odesliHtmlEmailPoptavky({
           na: emailOdeslani,
           predmet: predmetNejdePoptavky((process.env.TEST_REZIM ?? '1') !== '0'),
-          nadpis: nadpisNejdePoptavky(),
-          text: textNejdeProEmail(osloveniEmail(z.jmeno), navrh),
-          jmeno: osloveniEmail(z.jmeno) || z.jmeno,
-          termin: detail.termin,
-          apartman: detail.apartman,
-          cena: '',
+          text: emailText,
+          html: htmlZpravaPoptavkyHostovi({
+            predmet: predmetNejdePoptavky(false),
+            nadpis: nadpisNejdePoptavky(),
+            text: emailText,
+            jmeno: osloveniEmail(z.jmeno) || z.jmeno,
+            termin: detail.termin,
+            apartman: detail.apartman,
+            cena: '',
+          }),
         });
         if (!mail.ok) return chyba(500, mail.error);
         if (mail.mailto) {

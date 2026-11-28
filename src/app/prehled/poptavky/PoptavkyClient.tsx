@@ -134,14 +134,43 @@ export function PoptavkyClient() {
         co.push('SMS');
       }
       if (posliEmail) {
-        const mailto = `mailto:${encodeURIComponent(mail)}?subject=${encodeURIComponent(
-          'VIVIEN Apartments, poptávka termínu',
-        )}&body=${encodeURIComponent(text)}`;
-        window.open(mailto, '_blank');
-        co.push('e-mail');
+        const res = await fetch('/api/prehled/poptavka', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ akce: 'poslat_pozvanku', email: mail }),
+        });
+        const json = (await res.json()) as {
+          ok?: boolean;
+          error?: string;
+          emailPoslan?: boolean;
+          emailMailto?: boolean;
+          mailto?: string;
+          emailOdeslanoNa?: string;
+          emailTestMode?: boolean;
+        };
+        if (!json.ok) {
+          setChyba(json.error || 'E-mail se nepodařilo odeslat.');
+          return;
+        }
+        if (json.emailMailto && json.mailto) {
+          window.location.href = json.mailto;
+          co.push('e-mail (otevřen u vás)');
+        } else if (json.emailPoslan) {
+          co.push(
+            json.emailTestMode && json.emailOdeslanoNa
+              ? `e-mail TEST → ${json.emailOdeslanoNa}`
+              : 'e-mail odešel hostovi',
+          );
+        }
       }
 
-      setHlaska(`Připraveno k odeslání: ${co.join(', ')}. Zkontrolujte a odešlete.`);
+      const jenEmailBezWa =
+        posliEmail && !posliWa && !posliSms && co.some((c) => c.includes('odešel'));
+      setHlaska(
+        jenEmailBezWa
+          ? `${co.join('. ')}. Hotovo.`
+          : `Připraveno: ${co.join(', ')}.${posliWa || posliSms ? ' Zkontrolujte a odešlete ve WhatsApp / SMS.' : ''}`,
+      );
       setNova(false);
       setTelefon('');
       setEmail('');
