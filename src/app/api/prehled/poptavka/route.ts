@@ -62,10 +62,14 @@ async function odesliHtmlEmailPoptavky(opts: {
 }): Promise<{ ok: true; odeslanoNa: string; testMode: boolean; mailto?: false } | { ok: true; mailto: true } | { ok: false; error: string }> {
   const user = process.env.SMTP_USER?.trim();
   const pass = process.env.SMTP_HESLO?.trim();
+  const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
+  /* Na ostře (TEST_REZIM=0) e-mail odejde rovnou hostovi. Bez SMTP to není mailto. */
   if (!user || !pass || pass.startsWith('SEM_NAPIS')) {
+    if (!testMode) {
+      return { ok: false, error: 'E-mail nejde odeslat. Chybí SMTP na serveru.' };
+    }
     return { ok: true, mailto: true };
   }
-  const testMode = (process.env.TEST_REZIM ?? '1') !== '0';
   const majitel = process.env.MAJITEL_EMAIL?.trim();
   const cil = testMode && majitel ? majitel : opts.na;
   try {

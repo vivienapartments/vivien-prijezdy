@@ -155,18 +155,28 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
       ...(kod === 'nejde' ? { navrh: navrh.trim() } : {}),
     });
     if (!vysledek.ok) return;
-    if (vysledek.odkazy) otevriOdkazy(vysledek.odkazy);
+    /* Na ostře e-mail odešel ze serveru. Otevři jen WhatsApp / SMS. */
+    const kOtevreni = { ...(vysledek.odkazy || {}) };
+    const mailtoHref = kOtevreni.email?.startsWith('mailto:') ? kOtevreni.email : null;
+    delete kOtevreni.email;
+    if (Object.keys(kOtevreni).length) otevriOdkazy(kOtevreni);
+
+    const casti: string[] = [];
     if (vysledek.emailPoslan) {
-      setHlaska(
+      casti.push(
         vysledek.emailTestMode && vysledek.emailOdeslanoNa
-          ? `TEST: hezký e-mail šel na ${vysledek.emailOdeslanoNa}.`
+          ? `TEST: e-mail šel na ${vysledek.emailOdeslanoNa}`
           : vysledek.emailOdeslanoNa
-            ? `Hezký e-mail odešel na ${vysledek.emailOdeslanoNa}.`
-            : 'Hezký e-mail je odeslaný.',
+            ? `E-mail odešel hostovi na ${vysledek.emailOdeslanoNa}`
+            : 'E-mail odešel hostovi',
       );
-    } else if (vysledek.emailMailto) {
-      setHlaska('E-mail se otevřel v telefonu (bez SMTP). Na ostře odejde hezký mail.');
+    } else if (vysledek.emailMailto && mailtoHref) {
+      window.location.href = mailtoHref;
+      casti.push('E-mail se otevřel u vás (zkouška bez SMTP). Na ostře odejde rovnou hostovi.');
     }
+    if (kOtevreni.whatsapp) casti.push('WhatsApp je otevřený');
+    if (kOtevreni.sms) casti.push('SMS je připravená');
+    if (casti.length) setHlaska(`${casti.join('. ')}.`);
     if (kod === 'nejde') setUkazNejde(false);
   }
 
