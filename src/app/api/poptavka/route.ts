@@ -250,7 +250,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, id: zaznam.id, zkouska: true }, { headers: noStore });
   }
 
-  let cenaKc = zaznam.cenaKc ?? null;
+  const cenaKc = zaznam.cenaKc ?? null;
   let seSlevouKc = zaznam.cenaSeSlevouKc ?? null;
   let slevaPct: number | null =
     seSlevouKc != null && cenaKc != null ? POPTAVKA_SLEVA_PCT : null;
