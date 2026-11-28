@@ -662,6 +662,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const { klubKlic } = await import('@/lib/klub-klic');
     const { nactiKlientPodleId } = await import('@/lib/klient-karta');
     const { adresaKlub } = await import('@/lib/verejna-adresa');
+    const { klientMaKontakt } = await import('@/lib/klub-utrata');
+    const { urovenZUtraty } = await import('@/lib/klub-pravidla');
     const raw = await store.getKv(klubKlic(`klient-index:rez:${id}`));
     if (!raw) return null;
     try {
@@ -670,33 +672,48 @@ export async function POST(request: Request): Promise<NextResponse> {
       const karta = await nactiKlientPodleId(store, o.id);
       if (!karta?.tajnyKlic) return null;
       const odkaz = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`;
-      return { odkaz, tajnyKlic: karta.tajnyKlic };
+      const u = urovenZUtraty(karta.utrataKc);
+      return {
+        odkaz,
+        tajnyKlic: karta.tajnyKlic,
+        bezKontaktu: !klientMaKontakt(karta.email, karta.telefon),
+        urovenNazev: karta.typ === 'firma' ? u.nazevFirma : u.nazevHost,
+        nova: false as boolean,
+      };
     } catch {
       return null;
     }
   }
 
   async function pripravOdkazKartyKlubu() {
-    const existujici = await nactiExistujiciKartuKlubu();
-    if (existujici) return existujici;
-
     const { klubPovolenProZkousku } = await import('@/lib/klub-klic');
     if (!klubPovolenProZkousku()) {
       return { chyba: 'Club je vypnutý.' as const };
     }
     const { sparujNeboVytvorKlienta } = await import('@/lib/klub-utrata');
+    const { adresaKlub } = await import('@/lib/verejna-adresa');
+    const { urovenZUtraty } = await import('@/lib/klub-pravidla');
     if (!rec) return { chyba: 'Rezervace v přehledu není.' as const };
-    const karta = await sparujNeboVytvorKlienta(store, {
+    const spar = await sparujNeboVytvorKlienta(store, {
       jmeno: rec.jmeno,
       email: rec.emailHosta,
       telefon: rec.telefon || rec.telefonRezervace,
       rezervace: rec.rezervace,
       jazyk: rec.jazyk || 'cs',
     });
-    if (!karta?.tajnyKlic) return { chyba: 'Kartu se nepodařilo připravit.' as const };
-    const { adresaKlub } = await import('@/lib/verejna-adresa');
+    if (!spar?.karta?.tajnyKlic) {
+      return { chyba: 'Kartu se nepodařilo připravit.' as const };
+    }
+    const karta = spar.karta;
     const odkaz = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(karta.tajnyKlic)}`;
-    return { odkaz, tajnyKlic: karta.tajnyKlic };
+    const u = urovenZUtraty(karta.utrataKc);
+    return {
+      odkaz,
+      tajnyKlic: karta.tajnyKlic,
+      nova: spar.nova,
+      bezKontaktu: spar.bezKontaktu,
+      urovenNazev: karta.typ === 'firma' ? u.nazevFirma : u.nazevHost,
+    };
   }
 
   /** Jen zjistí, jestli už Club karta existuje. Nic nezakládá. */
@@ -705,7 +722,14 @@ export async function POST(request: Request): Promise<NextResponse> {
     const existujici = await nactiExistujiciKartuKlubu();
     if (existujici) {
       return NextResponse.json(
-        { ok: true, ma: true, odkaz: existujici.odkaz, vypnuto: !klubPovolenProZkousku() },
+        {
+          ok: true,
+          ma: true,
+          odkaz: existujici.odkaz,
+          vypnuto: !klubPovolenProZkousku(),
+          bezKontaktu: existujici.bezKontaktu,
+          urovenNazev: existujici.urovenNazev,
+        },
         { headers: noStore },
       );
     }
@@ -715,6 +739,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         ma: false,
         odkaz: null,
         vypnuto: !klubPovolenProZkousku(),
+        bezKontaktu: false,
       },
       { headers: noStore },
     );
@@ -759,11 +784,19 @@ export async function POST(request: Request): Promise<NextResponse> {
     const maTelefon = Boolean(telefonWa && telefonWa.length >= 9);
 
     if (akce === 'klub-karta-pripravit') {
+      const urovenNazev = pripraveno.urovenNazev || 'Věrný host';
+      const hlaska = pripraveno.nova
+        ? 'Založena nová karta'
+        : `Propojeno s existující kartou (${urovenNazev})`;
       return NextResponse.json(
         {
           ok: true,
           jmeno: rec.jmeno || krestni || 'Host',
           odkaz: pripraveno.odkaz,
+          nova: pripraveno.nova,
+          bezKontaktu: pripraveno.bezKontaktu,
+          urovenNazev,
+          hlaska,
           zprava,
           booking,
           email: cile.email,
@@ -1808,67 +1841,54 @@ export async function POST(request: Request): Promise<NextResponse> {
         let urlPlo = `${url}${url.includes('?') ? '&' : '?'}plocha=1`;
         let klubEmail: import('@/lib/podekovani-email').PodekovaniKlubEmail | null = null;
         let klubKlientPoMailu: import('@/lib/klient-karta').KlientKarta | null = null;
-        try {
-          const { klubZapnut, klubKlic } = await import('@/lib/klub-klic');
-          if (klubZapnut()) {
-            const { nactiKlientPodleId } = await import('@/lib/klient-karta');
-            const { urovenZUtraty } = await import('@/lib/klub-pravidla');
-            const { pokrokUrovne } = await import('@/lib/klub-ukazka');
-            let k = null as Awaited<ReturnType<typeof nactiKlientPodleId>>;
-            const rezId = String(rec.rezervace || id || '').trim();
-            if (rezId) {
-              const raw = await store.getKv(klubKlic(`klient-index:rez:${rezId}`));
-              if (raw) {
-                try {
-                  const o = JSON.parse(raw) as { id?: string };
-                  if (o.id) k = await nactiKlientPodleId(store, o.id);
-                } catch {
-                  /* ignore */
-                }
-              }
-            }
-            if (k) {
-              const u = urovenZUtraty(k.utrataKc);
-              const pokrok = pokrokUrovne(k.utrataKc, {
-                pohled: k.typ === 'firma' ? 'firma' : 'host',
-              });
-              const base =
-                (process.env.NEXT_PUBLIC_BASE_URL || '').replace(/\/$/, '') ||
-                'https://vivien-prijezdy-six.vercel.app';
-              const odkazKarty = `${base}/klub?k=${encodeURIComponent(k.tajnyKlic)}`;
-              urlDop = `${odkazKarty}&doporucit=1`;
-              urlPlo = `${odkazKarty}&plocha=1`;
-              const booking = /booking|airbnb|expedia/i.test(
-                `${rec.zdroj || ''} ${rec.emailHosta || ''}`,
-              );
-              klubEmail = {
-                odkazKarty,
-                jmeno:
-                  k.typ === 'firma' && k.firma?.nazev
-                    ? k.firma.nazev
-                    : `${k.jmeno} ${k.prijmeni}`.trim() || k.kod,
-                urovenId: u.id,
-                urovenNazev: k.typ === 'firma' ? u.nazevFirma : u.nazevHost,
-                slevaPct: booking ? 5 : u.slevaPct,
-                jeFirma: k.typ === 'firma',
-                urovenNova: true,
-                booking,
-                dalsiNazev: pokrok.dalsiNazev,
-                dalsiPct: pokrok.dalsiPct,
-                chybiKc: pokrok.chybiKc,
-                pruhPct: pokrok.pct,
-                // Schváleno 27. 11. 2026: stříbrná karta v mailu (ne jen řádek Klub).
-                kartaReprezentacni: true,
-                kartaBarva: 'stribrna',
-                textPodKartou:
-                  'Pro hosty máme nový VIVIEN Club. Klepněte na kartu a uvidíte své výhody.',
-              };
-              klubKlientPoMailu = k;
-            }
+        {
+          const { zajistiKartuProPodekovani } = await import('@/lib/klub-utrata');
+          const { urovenZUtraty } = await import('@/lib/klub-pravidla');
+          const { pokrokUrovne } = await import('@/lib/klub-ukazka');
+          const { adresaKlub } = await import('@/lib/verejna-adresa');
+          const zajisteno = await zajistiKartuProPodekovani(store, {
+            jmeno: rec.jmeno,
+            email: rec.emailHosta,
+            telefon: rec.telefon || rec.telefonRezervace,
+            rezervace: rec.rezervace || id,
+            jazyk: rec.jazyk || 'cs',
+          });
+          if (!zajisteno.ok) {
+            return chyba(400, `Poděkování neodešlo: ${zajisteno.duvod}`);
           }
-        } catch {
-          klubEmail = null;
-          klubKlientPoMailu = null;
+          const k = zajisteno.karta;
+          const u = urovenZUtraty(k.utrataKc);
+          const pokrok = pokrokUrovne(k.utrataKc, {
+            pohled: k.typ === 'firma' ? 'firma' : 'host',
+          });
+          const odkazKarty = `${adresaKlub().replace(/\/$/, '')}/klub?k=${encodeURIComponent(k.tajnyKlic)}`;
+          urlDop = `${odkazKarty}&doporucit=1`;
+          urlPlo = `${odkazKarty}&plocha=1`;
+          const booking = /booking|airbnb|expedia/i.test(
+            `${rec.zdroj || ''} ${rec.emailHosta || ''}`,
+          );
+          klubEmail = {
+            odkazKarty,
+            jmeno:
+              k.typ === 'firma' && k.firma?.nazev
+                ? k.firma.nazev
+                : `${k.jmeno} ${k.prijmeni}`.trim() || k.kod,
+            urovenId: u.id,
+            urovenNazev: k.typ === 'firma' ? u.nazevFirma : u.nazevHost,
+            slevaPct: booking ? 5 : u.slevaPct,
+            jeFirma: k.typ === 'firma',
+            urovenNova: true,
+            booking,
+            dalsiNazev: pokrok.dalsiNazev,
+            dalsiPct: pokrok.dalsiPct,
+            chybiKc: pokrok.chybiKc,
+            pruhPct: pokrok.pct,
+            kartaReprezentacni: true,
+            kartaBarva: 'stribrna',
+            textPodKartou:
+              'Pro hosty máme nový VIVIEN Club. Klepněte na kartu a uvidíte své výhody.',
+          };
+          klubKlientPoMailu = k;
         }
         const vysledek = await posliEmailZpravy({
           to: komu,

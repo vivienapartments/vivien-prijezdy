@@ -24,11 +24,16 @@ type KartaUi = {
   posledniPobyt?: string | null;
   pristiPobyt?: string | null;
   praveBydli?: boolean;
+  propojeno?: boolean;
   preview?: boolean;
   zkontrolovatSlevu?: boolean;
 };
 
-type Razeni = 'utrata' | 'uroven' | 'pristi';
+type Razeni = 'posledni' | 'utrata' | 'uroven' | 'pristi';
+
+function odkazAdminKarty(tajnyKlic: string) {
+  return `/klub?k=${encodeURIComponent(tajnyKlic)}&admin=1`;
+}
 
 type NahledXlsx = {
   souhrn: { host: string; pocet: number; utrata: number; uroven: string }[];
@@ -55,7 +60,7 @@ export function KlientiClient() {
   const [utrataCastka, setUtrataCastka] = useState('');
   const [utrataPozn, setUtrataPozn] = useState('');
   const [hledat, setHledat] = useState('');
-  const [razeni, setRazeni] = useState<Razeni>('utrata');
+  const [razeni, setRazeni] = useState<Razeni>('posledni');
   const [detailId, setDetailId] = useState<string | null>(null);
 
   const nacti = useCallback(async () => {
@@ -294,9 +299,15 @@ export function KlientiClient() {
     .sort((a, b) => {
       if (razeni === 'utrata') return (b.utrataKc || 0) - (a.utrataKc || 0);
       if (razeni === 'uroven') return (b.slevaPct || 0) - (a.slevaPct || 0);
-      const ap = a.pristiPobyt || 'zzzz';
-      const bp = b.pristiPobyt || 'zzzz';
-      return ap.localeCompare(bp, 'cs');
+      if (razeni === 'pristi') {
+        const ap = a.pristiPobyt || 'zzzz';
+        const bp = b.pristiPobyt || 'zzzz';
+        return ap.localeCompare(bp, 'cs');
+      }
+      const ap = a.posledniPobyt || '';
+      const bp = b.posledniPobyt || '';
+      if (ap !== bp) return bp.localeCompare(ap);
+      return (b.utrataKc || 0) - (a.utrataKc || 0);
     });
   const detail = detailId ? karty.find((k) => k.id === detailId) || null : null;
 
@@ -670,6 +681,7 @@ export function KlientiClient() {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           {(
             [
+              ['posledni', 'Naposledy u nás'],
               ['utrata', 'Podle útraty'],
               ['uroven', 'Podle úrovně'],
               ['pristi', 'Podle příštího pobytu'],
@@ -745,7 +757,7 @@ export function KlientiClient() {
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {detail.tajnyKlic ? (
                 <a
-                  href={`/klub?k=${encodeURIComponent(detail.tajnyKlic)}`}
+                  href={odkazAdminKarty(detail.tajnyKlic)}
                   target="_blank"
                   rel="noreferrer"
                   style={{ ...btn, textDecoration: 'none', display: 'inline-block' }}
@@ -796,7 +808,8 @@ export function KlientiClient() {
                   ) : null}
                   <br />
                   <span style={{ fontSize: '0.85rem', color: '#b7aa98' }}>
-                    {k.urovenNazev} · sleva {k.slevaPct} % · {k.pocetPobytu || 0} pobytů
+                    {k.urovenNazev} · sleva {k.slevaPct} % · {k.pocetPobytu || 0} pobytů ·{' '}
+                    {k.propojeno ? 'propojeno' : 'nepropojeno'}
                     <br />
                     <span style={{ color: '#e09a3e' }}>{kc(k.utrataKc)}</span>
                     {(k.utrataCekaKc || 0) > 0 ? (
@@ -811,6 +824,23 @@ export function KlientiClient() {
                     posl. {k.posledniPobyt || '—'} · příští {k.pristiPobyt || '—'}
                   </span>
                 </button>
+                {k.tajnyKlic ? (
+                  <a
+                    href={odkazAdminKarty(k.tajnyKlic)}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      ...btn,
+                      marginTop: 8,
+                      textDecoration: 'none',
+                      display: 'inline-block',
+                      fontSize: '0.82rem',
+                      padding: '6px 12px',
+                    }}
+                  >
+                    Zobrazit kartu jako host
+                  </a>
+                ) : null}
               </li>
             ))}
           </ul>

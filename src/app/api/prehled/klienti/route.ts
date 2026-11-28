@@ -180,30 +180,67 @@ export async function GET() {
     return `h:${normalJmeno(`${k.jmeno || ''} ${k.prijmeni || ''}`)}`;
   }
 
+  const dnes = new Date().toISOString().slice(0, 10);
+  const seznamRez = previewOk ? [] : await store.listRezervace();
+  const mapaRez = new Map(seznamRez.map((e) => [e.id || e.record?.rezervace, e.record]));
+
+  function terminZKarty(rezIds: string[] | undefined) {
+    let posledni: string | null = null;
+    let pristi: string | null = null;
+    let praveBydli = false;
+    let propojeno = 0;
+    for (const id of rezIds || []) {
+      const r = mapaRez.get(id);
+      if (!r?.prijezd || !r.odjezd) continue;
+      propojeno += 1;
+      const od = String(r.odjezd).slice(0, 10);
+      const pr = String(r.prijezd).slice(0, 10);
+      if (pr <= dnes && od > dnes) praveBydli = true;
+      if (od <= dnes && (!posledni || od > posledni)) posledni = od;
+      if (pr > dnes && (!pristi || pr < pristi)) pristi = pr;
+    }
+    return { posledniPobyt: posledni, pristiPobyt: pristi, praveBydli, propojeno };
+  }
+
   // Preview: jen seed (BH + Flídr/Sofia/Hromada). Staré KV karty EG.D / duplicity Flídr ne.
   const kvKarty = previewOk
     ? []
     : karty
         .filter((k) => !jeEgdFirma(k))
-        .map((k) => ({
-          ...verejnaKlientKarta(k, pravidla),
-          tajnyKlic: k.tajnyKlic,
-          utrataCekaKc: 0,
-          pocetPobytu: k.rezervace?.length || 0,
-          posledniPobyt: null as string | null,
-          pristiPobyt: null as string | null,
-          praveBydli: false,
-          preview: false,
-        }));
+        .map((k) => {
+          const t = terminZKarty(k.rezervace);
+          return {
+            ...verejnaKlientKarta(k, pravidla),
+            tajnyKlic: k.tajnyKlic,
+            utrataCekaKc: 0,
+            pocetPobytu: k.rezervace?.length || 0,
+            posledniPobyt: t.posledniPobyt,
+            pristiPobyt: t.pristiPobyt,
+            praveBydli: t.praveBydli,
+            propojeno: t.propojeno > 0,
+            preview: false,
+          };
+        });
 
   const videne = new Set<string>();
-  const sloucené = [...previewKarty, ...kvKarty].filter((k) => {
-    if (jeEgdFirma(k)) return false;
-    const key = klicOsoby(k);
-    if (videne.has(key)) return false;
-    videne.add(key);
-    return true;
-  });
+  const sloucené = [...previewKarty, ...kvKarty]
+    .map((k) => ({
+      ...k,
+      propojeno: 'propojeno' in k ? Boolean((k as { propojeno?: boolean }).propojeno) : (k.pocetPobytu || 0) > 0,
+    }))
+    .filter((k) => {
+      if (jeEgdFirma(k)) return false;
+      const key = klicOsoby(k);
+      if (videne.has(key)) return false;
+      videne.add(key);
+      return true;
+    })
+    .sort((a, b) => {
+      const ap = a.posledniPobyt || '';
+      const bp = b.posledniPobyt || '';
+      if (ap !== bp) return bp.localeCompare(ap);
+      return (b.utrataKc || 0) - (a.utrataKc || 0);
+    });
 
   return NextResponse.json(
     {

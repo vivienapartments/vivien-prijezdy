@@ -133,8 +133,22 @@ function ulozKlicProPlochu(k: string) {
   }
 }
 
+/** Admin náhled z přehledu: nic se nezapisuje hostovi. */
+export type AdminJak = 'ted' | 'prvni' | 'dalsi';
+
+function nactiAdminZUrl(): { admin: boolean; jak: AdminJak } {
+  if (typeof window === 'undefined') return { admin: false, jak: 'ted' };
+  const q = new URLSearchParams(window.location.search);
+  const admin = q.get('admin') === '1';
+  const raw = (q.get('jak') || 'ted').trim();
+  const jak: AdminJak = raw === 'prvni' || raw === 'dalsi' ? raw : 'ted';
+  return { admin, jak };
+}
+
 export default function KlubClient() {
   const [klic, setKlic] = useState(() => nactiKlicZUrlNeboPameti());
+  const [adminNahled, setAdminNahled] = useState(false);
+  const [adminJak, setAdminJak] = useState<AdminJak>('ted');
   const [karta, setKarta] = useState<KlubKartaPohled | null>(null);
   const [chyba, setChyba] = useState<string | null>(null);
   const [nacitam, setNacitam] = useState(true);
@@ -150,6 +164,9 @@ export default function KlubClient() {
   useEffect(() => {
     const nacteny = nactiKlicZUrlNeboPameti();
     setKlic(nacteny);
+    const a = nactiAdminZUrl();
+    setAdminNahled(a.admin);
+    setAdminJak(a.jak);
     // Když ikona otevřela /klub bez k, doplň ho do adresy (ať jde sdílet / obnovit).
     if (nacteny && typeof window !== 'undefined') {
       const u = new URL(window.location.href);
@@ -159,6 +176,46 @@ export default function KlubClient() {
       }
     }
   }, []);
+
+  function nastavAdminJak(jak: AdminJak) {
+    setAdminJak(jak);
+    if (typeof window === 'undefined') return;
+    const u = new URL(window.location.href);
+    u.searchParams.set('admin', '1');
+    u.searchParams.set('jak', jak);
+    window.history.replaceState(null, '', `${u.pathname}?${u.searchParams.toString()}${u.hash}`);
+    if (!karta) return;
+    const poOdjezdu =
+      !karta.praveBydli && (karta.pobyty?.length || 0) > 0 && !(karta.nadchazejici?.length > 0);
+    if (jak === 'prvni') {
+      setUkazPodekovani(true);
+      setDetailyOpen(false);
+    } else if (jak === 'dalsi') {
+      setUkazPodekovani(false);
+      setDetailyOpen(true);
+    } else {
+      const prvni = Boolean(poOdjezdu && !karta.podekovaniVidel && !karta.ukazka);
+      setUkazPodekovani(prvni);
+      setDetailyOpen(Boolean(poOdjezdu && !prvni));
+    }
+  }
+
+  const adminPruh = adminNahled ? (
+    <div className="klub-admin-pruh" role="status">
+      <span>Náhled majitele – host nic nevidí</span>
+      <label className="klub-admin-pruh__jak">
+        Jak to host uvidí{' '}
+        <select
+          value={adminJak}
+          onChange={(e) => nastavAdminJak((e.target.value as AdminJak) || 'ted')}
+        >
+          <option value="ted">teď</option>
+          <option value="prvni">první otevření po odjezdu</option>
+          <option value="dalsi">další otevření</option>
+        </select>
+      </label>
+    </div>
+  ) : null;
 
   useEffect(() => {
     if (!klic) {
@@ -178,8 +235,11 @@ export default function KlubClient() {
         const json = (await res.json()) as { ok?: boolean; karta?: KlubKartaPohled; chyba?: string };
         if (!alive) return;
         if (json.ok && json.karta) {
+          const admin = nactiAdminZUrl();
+          setAdminNahled(admin.admin);
+          setAdminJak(admin.jak);
           setKarta(json.karta);
-          ulozKlicProPlochu(json.karta.tajnyKlic || klic);
+          if (!admin.admin) ulozKlicProPlochu(json.karta.tajnyKlic || klic);
           setDopOpen(json.karta.pohled === 'doporucitel');
           setChyba(null);
           const q = new URLSearchParams(window.location.search);
@@ -193,14 +253,19 @@ export default function KlubClient() {
             !json.karta.praveBydli &&
             (json.karta.pobyty?.length || 0) > 0 &&
             !(json.karta.nadchazejici?.length > 0);
-          const prvni =
+          let prvni =
             demoPrvni ||
             (poOdjezdu && !json.karta.podekovaniVidel && !json.karta.ukazka) ||
             (json.karta.ukazka && demoPrvni);
+          if (admin.admin) {
+            if (admin.jak === 'prvni') prvni = true;
+            else if (admin.jak === 'dalsi') prvni = false;
+            // jak=ted: skutečný stav karty
+          }
           setUkazPodekovani(Boolean(prvni));
           // Bez poděkování (např. z mailu): detaily rovnou otevřené, jde zase sbalit.
           // ?plocha=1 / ?doporucit=1 z e-mailu: detaily hned.
-          setDetailyOpen(Boolean((poOdjezdu && !prvni) || chcePlochu || chceDoporucit));
+          setDetailyOpen(Boolean((poOdjezdu && !prvni) || chcePlochu || chceDoporucit || (admin.admin && !prvni)));
           if (chceDoporucit) {
             setDopOpen(true);
             window.setTimeout(() => {
@@ -215,7 +280,7 @@ export default function KlubClient() {
             if (!id && json.karta.podekovaniVariantaPobyt === pobytKlic && json.karta.podekovaniVarianta) {
               id = json.karta.podekovaniVarianta as PodekovaniVariantaId;
             }
-            if (!id && typeof window !== 'undefined') {
+            if (!id && !admin.admin && typeof window !== 'undefined') {
               try {
                 const raw = localStorage.getItem(`vivien-klub-podekovani:${json.karta.tajnyKlic}`);
                 if (raw) {
@@ -239,24 +304,26 @@ export default function KlubClient() {
               });
             }
             setPodekovaniId(id);
-            try {
-              localStorage.setItem(
-                `vivien-klub-podekovani:${json.karta.tajnyKlic}`,
-                JSON.stringify({ pobyt: pobytKlic, id }),
-              );
-            } catch {
-              /* paměť */
-            }
-            if (!json.karta.ukazka) {
-              void fetch('/api/klub/podekovani-videl', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  k: json.karta.tajnyKlic,
-                  varianta: id,
-                  pobytKlic,
-                }),
-              }).catch(() => undefined);
+            if (!admin.admin) {
+              try {
+                localStorage.setItem(
+                  `vivien-klub-podekovani:${json.karta.tajnyKlic}`,
+                  JSON.stringify({ pobyt: pobytKlic, id }),
+                );
+              } catch {
+                /* paměť */
+              }
+              if (!json.karta.ukazka) {
+                void fetch('/api/klub/podekovani-videl', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    k: json.karta.tajnyKlic,
+                    varianta: id,
+                    pobytKlic,
+                  }),
+                }).catch(() => undefined);
+              }
             }
           }
         } else {
@@ -779,6 +846,7 @@ export default function KlubClient() {
     const url = radek?.pruvodceUrl || pruvodceUrl;
     return (
       <main className="klub-page" data-uroven="host" style={pageStyle}>
+        {adminPruh}
         <div className="klub-shell">
           {pozdrav ? <p className="klub-pozdrav">{pozdrav}</p> : null}
           <div className="klub-bez">
@@ -844,6 +912,7 @@ export default function KlubClient() {
 
   return (
     <main className="klub-page" data-uroven={ton.id} style={pageStyle}>
+      {adminPruh}
       <div className="klub-shell">
         {ukazPodekovani ? (
           <div className="klub-podekovani-prvni">

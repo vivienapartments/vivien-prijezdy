@@ -153,11 +153,12 @@ export async function potvrdImportBhCsv(
     let klientId = s.klientId;
     const jeFirma = s.akce === 'firma';
     if (!klientId) {
-      const novy = await sparujNeboVytvorKlienta(store, {
+      const spar = await sparujNeboVytvorKlienta(store, {
         jmeno: s.host,
         email: null,
         telefon: null,
       });
+      const novy = spar?.karta || null;
       if (!novy) {
         const { randomBytes } = await import('crypto');
         const { ulozKlientKartu, normalizujKlientKod } = await import('./klient-karta');

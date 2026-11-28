@@ -189,20 +189,12 @@ function pobytyRucniKarty(id: KlubUkazkaId): {
   const kid = normalizujUkazkaId(id);
   if (kid === 'ukazka-flidr') {
     return {
-      nadchazejici: [
-        {
-          nadpis: '24.–27. 11. 2026 · Jemná harmonie',
-          podnadpis: 'Adresa, příjezd, kódy',
-          pruvodceUrl: '/nahled',
-          barva: 'probiha',
-        },
-      ],
+      nadchazejici: [],
       pobyty: [
         {
-          nadpis: '24.–27. 11. 2026',
-          podnadpis: 'Jemná harmonie',
-          barva: 'probiha',
-          stavText: 'započítáno',
+          nadpis: '24.–27. 11. 2026 · Jemná harmonie',
+          podnadpis: 'započítáno',
+          barva: 'zapocteno',
         },
         {
           nadpis: '18.–19. 11. 2026 · Jemná harmonie',
@@ -210,12 +202,12 @@ function pobytyRucniKarty(id: KlubUkazkaId): {
           barva: 'zapocteno',
         },
         {
-          nadpis: 'Další pobyt · 3 600 Kč',
+          nadpis: '18.–20. 10. 2026 · Pohodlí v tlumených tónech',
           podnadpis: 'započítáno',
           barva: 'zapocteno',
         },
         {
-          nadpis: 'Další pobyt · 2 900 Kč',
+          nadpis: '14.–18. 9. 2026 · Jemná harmonie',
           podnadpis: 'započítáno',
           barva: 'zapocteno',
         },
@@ -227,12 +219,12 @@ function pobytyRucniKarty(id: KlubUkazkaId): {
       nadchazejici: [],
       pobyty: [
         {
-          nadpis: '7.–8. 10. 2026 · Pohodlí v tlumených tónech',
+          nadpis: '22. 9.–13. 10. 2026 · Ušlechtilý kontrast',
           podnadpis: 'započteno',
           barva: 'zapocteno',
         },
         {
-          nadpis: 'Svatba a rodiče',
+          nadpis: '24. 9.–26. 9. 2026 · Zlatá rovnováha',
           podnadpis: 'započteno',
           barva: 'zapocteno',
         },
@@ -241,29 +233,16 @@ function pobytyRucniKarty(id: KlubUkazkaId): {
   }
   if (kid === 'ukazka-hromada') {
     return {
-      nadchazejici: [
-        {
-          nadpis: '23.–26. 11. 2026 · Zlatá rovnováha',
-          podnadpis: 'Adresa, příjezd, kódy',
-          pruvodceUrl: '/nahled',
-          barva: 'probiha',
-        },
-      ],
+      nadchazejici: [],
       pobyty: [
         {
-          nadpis: '23.–26. 11. 2026',
-          podnadpis: 'Zlatá rovnováha · 1 450 Kč',
-          barva: 'probiha',
-          stavText: 'započítáno',
-        },
-        {
-          nadpis: '6.–7. 11. 2026 · Jemná harmonie · 1 700 Kč',
-          podnadpis: 'započítáno',
+          nadpis: '23.–26. 11. 2026 · Zlatá rovnováha · 4 440 Kč',
+          podnadpis: 'započítáno (doklad)',
           barva: 'zapocteno',
         },
         {
-          nadpis: '1.–6. 11. 2026 · Jemná harmonie · 7 900 Kč',
-          podnadpis: 'započítáno',
+          nadpis: '1.–7. 11. 2026 · Jemná harmonie · 9 600 Kč',
+          podnadpis: 'včetně protažení 1 noc 1 650 Kč hotově',
           barva: 'zapocteno',
         },
         {
@@ -291,9 +270,9 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       telefon: '+420603778347',
       jazyk: 'cs',
       utrataKc: 12300,
-      rezervace: ['92026110902', '92026110903'],
+      rezervace: ['120260444', '92026101801', '92026110902', '92026110903'],
       poznamka: '',
-      zalozil: 'rucni-2026-11-25',
+      zalozil: 'rucni-2026-11-28',
     });
   }
   if (id === 'ukazka-sofia') {
@@ -309,9 +288,9 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       telefon: '+420774053627',
       jazyk: 'cs',
       utrataKc: 35000,
-      rezervace: [],
+      rezervace: ['92026092201', '92026092401'],
       poznamka: '',
-      zalozil: 'rucni-2026-11-25',
+      zalozil: 'rucni-2026-11-28',
     });
   }
   if (id === 'ukazka-hromada' || id === 'ukazka-egd') {
@@ -326,10 +305,10 @@ export function ukazkovaKlientKarta(id: KlubUkazkaId): KlientKarta {
       email: 'dominik.hromada@egd.cz',
       telefon: '+420732347329',
       jazyk: 'cs',
-      utrataKc: 9600,
-      rezervace: ['120260570', '92026111801', '120260643'],
+      utrataKc: 14040,
+      rezervace: ['120260570', '92026111801', '120260538'],
       poznamka: '',
-      zalozil: 'rucni-2026-11-25',
+      zalozil: 'rucni-2026-11-28',
     });
   }
   if (id === 'ukazka-firma' || id === 'ukazka-firma-pred' || id === 'ukazka-firma-bydli') {
@@ -851,13 +830,13 @@ export function pohledZKarty(
   const kidUkazka = ukazka ? normalizujUkazkaId(karta.tajnyKlic as KlubUkazkaId) : null;
   const utrataCekaUkazka =
     kidUkazka === 'ukazka-hromada' || kidUkazka === 'ukazka-egd'
-      ? 1450
+      ? 0
       : kidUkazka === 'ukazka-host'
         ? 1450
         : kidUkazka === 'ukazka-host-up'
           ? 16000
           : kidUkazka === 'ukazka-flidr'
-            ? 2900
+            ? 0
             : kidUkazka === 'ukazka-host-pred' || kidUkazka === 'ukazka-host-maxi-pred'
               ? 1450
               : kidUkazka === 'ukazka-dop-host-bydli'
@@ -873,9 +852,6 @@ export function pohledZKarty(
     kidUkazka === 'ukazka-host' ||
     kidUkazka === 'ukazka-host-up' ||
     kidUkazka === 'ukazka-pravoslav' ||
-    kidUkazka === 'ukazka-hromada' ||
-    kidUkazka === 'ukazka-egd' ||
-    kidUkazka === 'ukazka-flidr' ||
     kidUkazka === 'ukazka-dop-host-bydli' ||
     kidUkazka === 'ukazka-firma-bydli' ||
     kidUkazka === 'ukazka-booking-bydli' ||

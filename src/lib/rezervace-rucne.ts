@@ -169,6 +169,14 @@ export async function doplnRezervaci(
   const seznam = (await store.listRezervace()).map((e) => e.record);
   const hotovo = doplnUdajeZMinulehoPobytu(rec, seznam, now);
   await store.setRezervace(id, hotovo);
+  if (nova) {
+    try {
+      const { zajistiKartuPoNoveRezervaci } = await import('./klub-utrata');
+      await zajistiKartuPoNoveRezervaci(store, hotovo);
+    } catch (err) {
+      console.error('klub: karta po doplneni', err instanceof Error ? err.message : err);
+    }
+  }
   return { ok: true, nova };
 }
 
@@ -298,6 +306,12 @@ export async function vytvorRucniRezervaci(
     if (telegram) await upozorniMajitele(store, telegram, '/prehled', { telegram: 'zadost' });
   } catch (err) {
     console.error('doporuceni: sparovani rucne', err instanceof Error ? err.message : err);
+  }
+  try {
+    const { zajistiKartuPoNoveRezervaci } = await import('./klub-utrata');
+    await zajistiKartuPoNoveRezervaci(store, rec);
+  } catch (err) {
+    console.error('klub: karta po rucni rezervaci', err instanceof Error ? err.message : err);
   }
   return { ok: true, rezervace: id };
 }

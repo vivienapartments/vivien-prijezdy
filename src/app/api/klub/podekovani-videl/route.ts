@@ -14,11 +14,20 @@ export async function POST(req: Request) {
   if (!klubZapnut()) {
     return NextResponse.json({ ok: false, chyba: 'klub-vypnuty' }, { status: 400, headers: noStore });
   }
-  let body: { k?: string; varianta?: string; pobytKlic?: string } = {};
+  let body: { k?: string; varianta?: string; pobytKlic?: string; admin?: boolean | string } = {};
   try {
-    body = (await req.json()) as { k?: string; varianta?: string; pobytKlic?: string };
+    body = (await req.json()) as {
+      k?: string;
+      varianta?: string;
+      pobytKlic?: string;
+      admin?: boolean | string;
+    };
   } catch {
     return NextResponse.json({ ok: false, chyba: 'json' }, { status: 400, headers: noStore });
+  }
+  /** Náhled majitele nesmí označit, že kartu viděl host. */
+  if (body.admin === true || body.admin === '1') {
+    return NextResponse.json({ ok: true, admin: true }, { headers: noStore });
   }
   const klic = (body.k || '').trim();
   if (!klic || klic.startsWith('ukazka-') || klic.startsWith('test-')) {

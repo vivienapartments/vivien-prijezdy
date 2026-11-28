@@ -24,6 +24,40 @@
   align-items: center;
 }
 
+.klub-admin-pruh {
+  width: min(26rem, calc(100% - 1.5rem));
+  margin: 0.5rem 0.75rem 0;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: #2a2318;
+  border: 1px solid #c9a84c;
+  color: #efe6d8;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  display: grid;
+  gap: 0.4rem;
+  box-sizing: border-box;
+}
+
+.klub-admin-pruh__jak {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  color: #cfc5b0;
+}
+
+.klub-admin-pruh__jak select {
+  flex: 1 1 10rem;
+  min-width: 0;
+  padding: 0.3rem 0.4rem;
+  border-radius: 8px;
+  border: 1px solid #4a4034;
+  background: #15110e;
+  color: #efe6d8;
+  font: inherit;
+}
+
 .klub-shell {
   width: min(26rem, 100%);
   background: var(--bg);

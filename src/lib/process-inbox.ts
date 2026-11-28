@@ -54,24 +54,18 @@ async function zkusDoporuceniPoNove(store: ProcessStore, prev: RezervaceRecord |
   }
 }
 
-/** Dávka 6: karta klienta při potvrzené přímé (TYP: PRIMA / zdroj přímá), ne až při předání. */
-async function zkusKlientPoPrime(store: ProcessStore, id: string): Promise<void> {
+/**
+ * Karta VIVIEN Klubu hned při vzniku / doplnění rezervace (všechny zdroje).
+ * Tiše: nic hostovi neposílá. Jen založí nebo propojí existující kartu.
+ */
+async function zkusKlientKartuPoRezervaci(store: ProcessStore, id: string): Promise<void> {
   try {
-    const { klubZapnut } = await import('./klub-klic');
-    if (!klubZapnut()) return;
+    const { zajistiKartuPoNoveRezervaci } = await import('./klub-utrata');
     const rec = await store.getRezervace(id);
     if (!rec) return;
-    const { jePrimaZdroj, sparujNeboVytvorKlienta } = await import('./klub-utrata');
-    if (!jePrimaZdroj(rec.zdroj)) return;
-    await sparujNeboVytvorKlienta(store, {
-      jmeno: rec.jmeno,
-      email: rec.emailHosta,
-      telefon: rec.telefon || rec.telefonRezervace,
-      rezervace: rec.rezervace,
-      jazyk: rec.jazyk || 'cs',
-    });
+    await zajistiKartuPoNoveRezervaci(store, rec);
   } catch (err) {
-    console.error('klub: karta prima', err instanceof Error ? err.message : err);
+    console.error('klub: karta po rezervaci', err instanceof Error ? err.message : err);
   }
 }
 
@@ -823,7 +817,7 @@ async function zpracujDataPrima(
     );
     await store.setRezervace(id, final);
     await zkusDoporuceniPoNove(store, prev, id);
-    await zkusKlientPoPrime(store, id);
+    await zkusKlientKartuPoRezervaci(store, id);
   }
   await store.markMessage({
     messageId: mail.messageId,
@@ -1041,7 +1035,7 @@ async function zpracujInterni(mail: InboxMail, store: ProcessStore, now: string)
   const rec = sloucit(id, prev, data, now, historieInterni(u, stav, odeslano));
   await store.setRezervace(id, rec);
   await zkusDoporuceniPoNove(store, prev, id);
-  await zkusKlientPoPrime(store, id);
+  await zkusKlientKartuPoRezervaci(store, id);
 
   const zmeniloSe =
     !!prev &&

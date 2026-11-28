@@ -12,7 +12,7 @@ import {
   type KlientUtrataRucne,
 } from './klient-karta';
 import { urovenZUtraty, type KlubPravidla } from './klub-pravidla';
-import { klubZapnut } from './klub-klic';
+import { klubPovolenProZkousku, klubZapnut, klubKlic } from './klub-klic';
 import { jeRelayEmail } from './staly-host';
 import { normalizujTelefon } from './telefon';
 import type { ProcessStore, RezervaceRecord } from './store';
@@ -29,6 +29,66 @@ function telefonOk(raw: string | null | undefined): string {
   const t = normalizujTelefon(raw, null);
   if (!t || t.nejisty) return '';
   return t.ulozeny;
+}
+
+/** Platný e-mail (ne relay) nebo jistý telefon. */
+export function klientMaKontakt(email?: string | null, telefon?: string | null): boolean {
+  return Boolean(emailOk(email) || telefonOk(telefon));
+}
+
+export type SparujVysledek = {
+  karta: KlientKarta;
+  /** Právě vznikla nová karta. */
+  nova: boolean;
+  /** Bez platného e-mailu i telefonu. */
+  bezKontaktu: boolean;
+};
+
+/**
+ * Po vzniku rezervace: tiše založ / propoj kartu. Nic hostovi neposílá.
+ * Platí pro všechny zdroje (Booking, Airbnb, přímá).
+ */
+export async function zajistiKartuPoNoveRezervaci(
+  store: ProcessStore,
+  rec: Pick<
+    RezervaceRecord,
+    'jmeno' | 'emailHosta' | 'telefon' | 'telefonRezervace' | 'rezervace' | 'jazyk'
+  >,
+): Promise<SparujVysledek | null> {
+  if (!klubPovolenProZkousku()) return null;
+  return sparujNeboVytvorKlienta(store, {
+    jmeno: rec.jmeno,
+    email: rec.emailHosta,
+    telefon: rec.telefon || rec.telefonRezervace,
+    rezervace: rec.rezervace,
+    jazyk: rec.jazyk || 'cs',
+  });
+}
+
+/** Před poděkováním: karta musí existovat a být propojená s pobytem. */
+export async function zajistiKartuProPodekovani(
+  store: ProcessStore,
+  vstup: {
+    jmeno?: string | null;
+    email?: string | null;
+    telefon?: string | null;
+    rezervace?: string | null;
+    jazyk?: KlientKarta['jazyk'];
+  },
+): Promise<{ ok: true; karta: KlientKarta; nova: boolean } | { ok: false; duvod: string }> {
+  if (!klubPovolenProZkousku()) {
+    return { ok: false, duvod: 'Club je vypnutý, kartu nelze připravit.' };
+  }
+  try {
+    const spar = await sparujNeboVytvorKlienta(store, vstup);
+    if (!spar?.karta?.tajnyKlic) {
+      return { ok: false, duvod: 'Club kartu se nepodařilo připravit (chybí jméno i rezervace).' };
+    }
+    return { ok: true, karta: spar.karta, nova: spar.nova };
+  } catch (err) {
+    const duvod = err instanceof Error ? err.message : 'neznámá chyba';
+    return { ok: false, duvod: `Club kartu se nepodařilo připravit (${duvod}).` };
+  }
 }
 
 function normalizujJmeno(jmeno: string | null | undefined): string {
@@ -57,6 +117,50 @@ export function castkaUtratyZRezervace(rec: Pick<RezervaceRecord, 'cenaPobytu'>)
   const c = rec.cenaPobytu;
   if (typeof c !== 'number' || !Number.isFinite(c) || c <= 0) return 0;
   return Math.round(c);
+}
+
+const UTRATA_OD = '2026-05-01';
+
+/**
+ * Kolik útraty by se při propojení / založení přičetlo.
+ * Booking a Airbnb = 0. Před 1. 5. 2026 = 0.
+ * Když je částka už na kartě (rez: v poznámce, nebo pobyt už v rezervace karty), = 0.
+ */
+export function castkaUtratyPriPropojeni(
+  rec: Pick<RezervaceRecord, 'zdroj' | 'prijezd' | 'cenaPobytu' | 'rezervace'>,
+  karta: Pick<KlientKarta, 'rezervace' | 'utrataRucne'> | null,
+): number {
+  if (!jePrimaZdroj(rec.zdroj)) return 0;
+  const prijezd = String(rec.prijezd || '').slice(0, 10);
+  if (prijezd && prijezd < UTRATA_OD) return 0;
+  const castka = castkaUtratyZRezervace(rec);
+  if (castka <= 0) return 0;
+  if (!karta) return castka;
+  const rezId = String(rec.rezervace || '').trim();
+  if (rezId && karta.rezervace.includes(rezId)) return 0;
+  if (rezId && karta.utrataRucne.some((u) => u.poznamka.includes(`rez:${rezId}`))) return 0;
+  return castka;
+}
+
+/** Normalizace jména pro porovnání (bez diakritiky). */
+export function normalizujJmenoKlubu(jmeno: string | null | undefined): string {
+  return normalizujJmeno(jmeno);
+}
+
+/** Podobné jméno: stejné celé, nebo stejné příjmení + stejné křestní. */
+export function jmenaPodobnaKlubu(a: string | null | undefined, b: string | null | undefined): boolean {
+  const na = normalizujJmeno(a);
+  const nb = normalizujJmeno(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  const ca = na.split(' ').filter(Boolean);
+  const cb = nb.split(' ').filter(Boolean);
+  if (ca.length < 2 || cb.length < 2) return false;
+  const krestniA = ca[0];
+  const prijmeniA = ca[ca.length - 1];
+  const krestniB = cb[0];
+  const prijmeniB = cb[cb.length - 1];
+  return krestniA === krestniB && prijmeniA === prijmeniB;
 }
 
 export function smíPripsatUtratu(rec: RezervaceRecord): boolean {
@@ -94,8 +198,9 @@ function kodZJmena(jmeno: string): string {
 }
 
 /**
- * Najde nebo založí kartu klienta ze skutečného kontaktu (ne relay).
- * Volat u potvrzené přímé / po check-inu.
+ * Najde nebo založí věrnostní kartu a vždy propojí pobyt (klient-index:rez).
+ * Kartu jde založit i bez e-mailu/telefonu (jméno + rezervace).
+ * Zapnutí: klubPovolenProZkousku (ostrý Club nebo zkušební test:).
  */
 export async function sparujNeboVytvorKlienta(
   store: ProcessStore,
@@ -106,38 +211,64 @@ export async function sparujNeboVytvorKlienta(
     rezervace?: string | null;
     jazyk?: KlientKarta['jazyk'];
   },
-): Promise<KlientKarta | null> {
-  if (!klubZapnut()) return null;
+): Promise<SparujVysledek | null> {
+  if (!klubPovolenProZkousku()) return null;
   const email = emailOk(vstup.email);
   const telefon = telefonOk(vstup.telefon);
-  if (!email && !telefon) return null;
+  const rezId = String(vstup.rezervace || '').trim();
+  const cele = (vstup.jmeno || '').trim();
+  if (!email && !telefon && !cele && !rezId) return null;
 
-  const id = (await najdiKlientIndex(store, 'tel', telefon)) || (await najdiKlientIndex(store, 'email', email));
+  let id: string | null = null;
+  if (rezId) {
+    const raw = await store.getKv(klubKlic(`klient-index:rez:${rezId}`));
+    if (raw) {
+      try {
+        const o = JSON.parse(raw) as { id?: string };
+        if (o.id) id = o.id;
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+  if (!id) {
+    id =
+      (await najdiKlientIndex(store, 'tel', telefon)) ||
+      (await najdiKlientIndex(store, 'email', email));
+  }
+
   if (id) {
     const exist = await nactiKlientPodleId(store, id);
     if (exist) {
-      if (vstup.rezervace && !exist.rezervace.includes(vstup.rezervace)) {
-        exist.rezervace = [...exist.rezervace, vstup.rezervace].slice(-40);
-        if (!exist.role.includes('host')) exist.role = [...exist.role, 'host'];
-        await ulozKlientKartu(store, exist);
+      if (rezId && !exist.rezervace.includes(rezId)) {
+        exist.rezervace = [...exist.rezervace, rezId].slice(-40);
       }
+      if (!exist.role.includes('host')) exist.role = [...exist.role, 'host'];
+      if (email && !exist.email) exist.email = email;
+      if (telefon && !exist.telefon) exist.telefon = telefon;
+      /** Vždy uložit: i když rezervace už v poli je, musí vzniknout klient-index:rez. */
+      await ulozKlientKartu(store, exist);
       try {
         const { pripojUtratuCekaKeKarte } = await import('./klub-utrata-ceka');
         await pripojUtratuCekaKeKarte(store, exist);
       } catch {
         /* ignore */
       }
-      return exist;
+      return {
+        karta: exist,
+        nova: false,
+        bezKontaktu: !klientMaKontakt(exist.email, exist.telefon),
+      };
     }
   }
 
-  const cele = (vstup.jmeno || '').trim();
   const casti = cele.split(/\s+/).filter(Boolean);
-  const jmeno = casti[0] || '';
+  const jmeno = casti[0] || (rezId ? 'Host' : '');
   const prijmeni = casti.slice(1).join(' ');
+  const bezKontaktu = !email && !telefon;
   const nova: KlientKarta = {
     id: `k${Date.now().toString(36)}${randomBytes(3).toString('hex')}`,
-    kod: kodZJmena(cele || email || telefon),
+    kod: kodZJmena(cele || email || telefon || rezId || 'HOST'),
     tajnyKlic: randomBytes(18).toString('base64url'),
     datumZalozeni: new Date().toISOString(),
     typ: 'host',
@@ -148,7 +279,7 @@ export async function sparujNeboVytvorKlienta(
     email,
     telefon,
     jazyk: vstup.jazyk || 'cs',
-    rezervace: vstup.rezervace ? [vstup.rezervace] : [],
+    rezervace: rezId ? [rezId] : [],
     firma: null,
     utrataKc: 0,
     utrataRucne: [],
@@ -156,7 +287,7 @@ export async function sparujNeboVytvorKlienta(
     kredit: [],
     kreditKc: 0,
     dopKodPuvod: null,
-    poznamka: '',
+    poznamka: bezKontaktu ? 'Bez kontaktu. Doplň e-mail nebo telefon z check-inu.' : '',
     zalozil: 'automat-prima',
     slevaBehem: [],
     slevaKontrola: null,
@@ -172,7 +303,7 @@ export async function sparujNeboVytvorKlienta(
   } catch {
     /* čekající útrata nesmí shodit kartu */
   }
-  return nova;
+  return { karta: nova, nova: true, bezKontaktu };
 }
 
 export async function pridejUtratuPoPredani(
@@ -181,14 +312,15 @@ export async function pridejUtratuPoPredani(
 ): Promise<{ ok: boolean; castka: number; klientId: string | null }> {
   if (!smíPripsatUtratu(rec)) return { ok: false, castka: 0, klientId: null };
   const castka = castkaUtratyZRezervace(rec);
-  const klient = await sparujNeboVytvorKlienta(store, {
+  const spar = await sparujNeboVytvorKlienta(store, {
     jmeno: rec.jmeno,
     email: rec.emailHosta,
     telefon: rec.telefon || rec.telefonRezervace,
     rezervace: rec.rezervace,
     jazyk: rec.jazyk || 'cs',
   });
-  if (!klient) return { ok: false, castka, klientId: null };
+  if (!spar) return { ok: false, castka, klientId: null };
+  const klient = spar.karta;
   const uz = klient.utrataRucne.some((u) => u.poznamka.includes(`rez:${rec.rezervace}`));
   if (uz) return { ok: true, castka: 0, klientId: klient.id };
   const polozka: KlientUtrataRucne = {
@@ -373,13 +505,13 @@ export async function potvrdImportUtraty(
       if (k) zapsano += 1;
     } else {
       const vzor = nahled.radky.find((r) => (r.klientNazev || r.jmeno) === s.host);
-      const novy = await sparujNeboVytvorKlienta(store, {
+      const spar = await sparujNeboVytvorKlienta(store, {
         jmeno: s.host,
         email: vzor?.email,
         telefon: vzor?.telefon,
       });
-      if (novy) {
-        await pridejUtratuRucne(store, novy.id, s.utrata, 'import-bh-xlsx');
+      if (spar) {
+        await pridejUtratuRucne(store, spar.karta.id, s.utrata, 'import-bh-xlsx');
         zapsano += 1;
       }
     }
