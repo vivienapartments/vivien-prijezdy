@@ -19,8 +19,11 @@ import {
   nadpisPotvrzeniPoptavky,
   predmetNejdePoptavky,
   predmetPotvrzeniPoptavky,
+  novyPotvrzeniToken,
+  odkazPotvrzeniPoptavky,
   textNejdeProEmail,
   textPotvrzeniProEmail,
+  textPotvrditSOdkazemNaStranku,
 } from '@/lib/poptavka-potvrzeni-email';
 import {
   jeZkouskaPoptavky,
@@ -331,6 +334,13 @@ export async function POST(req: Request) {
       cenaPredKc: cena.kcPred,
       seSlevou: cena.seSlevou,
     });
+    const potrebujeStranku = kanaly.includes('whatsapp') || kanaly.includes('sms');
+    const potvrzeniToken =
+      potrebujeStranku ? z.potvrzeniToken || novyPotvrzeniToken() : z.potvrzeniToken || null;
+    const strankaUrl = potvrzeniToken ? odkazPotvrzeniPoptavky(potvrzeniToken) : '';
+    const zpravaWaSms = strankaUrl
+      ? textPotvrditSOdkazemNaStranku(zprava, strankaUrl)
+      : zprava;
     const detail = detailJson(z, cena.text);
     for (const k of kanaly) {
       if (k === 'email') {
@@ -361,7 +371,7 @@ export async function POST(req: Request) {
         }
         continue;
       }
-      const o = odkazZpravyHostovi(z, zprava, {
+      const o = odkazZpravyHostovi(z, zpravaWaSms, {
         ios: Boolean(body.ios),
         kanal: k,
         email: emailOdeslani,
@@ -373,12 +383,14 @@ export async function POST(req: Request) {
     const doVyrizenych = emailPoslan || (kanaly.includes('email') && emailMailto);
     z = {
       ...z,
+      potvrzeniToken,
       stav: doVyrizenych ? 'hotovo' : 'potvrzeno',
       blokApt: doVyrizenych ? null : z.blokApt,
       lhutaDo: null,
       pripominkaPosledni: null,
       pripominkaNocniPocet: 0,
     };
+    if (strankaUrl) zprava = zpravaWaSms;
     try {
       const { aktualizujStavDoporuceniPodlePoptavky } = await import('@/lib/doporucitel-karta');
       await aktualizujStavDoporuceniPodlePoptavky(store, z.id, 'potvrzeno');

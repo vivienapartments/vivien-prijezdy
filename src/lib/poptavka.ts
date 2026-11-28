@@ -53,6 +53,8 @@ export type PoptavkaZaznam = {
   cenaKc?: number | null;
   /** Cena po slevě 5 % (Kč). Null = bez slevy. */
   cenaSeSlevouKc?: number | null;
+  /** Tajný odkaz na hezké potvrzení (WhatsApp / SMS). */
+  potvrzeniToken?: string | null;
 };
 
 /** Firmy spravujeme tady (kód v odkazu ?f=). Hesla tu nejsou. */
@@ -341,6 +343,10 @@ export function nactiPoptavkySeznam(raw: unknown): PoptavkaZaznam[] {
       cenaSeSlevouKc:
         typeof r.cenaSeSlevouKc === 'number' && r.cenaSeSlevouKc > 0
           ? Math.round(r.cenaSeSlevouKc)
+          : null,
+      potvrzeniToken:
+        typeof r.potvrzeniToken === 'string' && /^[a-zA-Z0-9_-]{8,64}$/.test(r.potvrzeniToken)
+          ? r.potvrzeniToken
           : null,
     });
     if (out.length >= 200) break;

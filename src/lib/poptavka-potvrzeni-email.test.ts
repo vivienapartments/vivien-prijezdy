@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   htmlZpravaPoptavkyHostovi,
+  odkazPotvrzeniPoptavky,
   predmetPotvrzeniPoptavky,
   textPotvrzeniProEmail,
+  textPotvrditSOdkazemNaStranku,
 } from './poptavka-potvrzeni-email';
 
 describe('poptavka-potvrzeni-email', () => {
@@ -42,5 +44,11 @@ describe('poptavka-potvrzeni-email', () => {
   it('předmět v testu má [TEST]', () => {
     expect(predmetPotvrzeniPoptavky(true).startsWith('[TEST]')).toBe(true);
     expect(predmetPotvrzeniPoptavky(false).startsWith('[TEST]')).toBe(false);
+  });
+
+  it('WhatsApp text dostane odkaz na stránku', () => {
+    const url = odkazPotvrzeniPoptavky('abcToken12', 'https://example.test');
+    expect(url).toBe('https://example.test/poptavka/potvrzeni/abcToken12');
+    expect(textPotvrditSOdkazemNaStranku('Ahoj.', url)).toContain(url);
   });
 });

@@ -1,4 +1,5 @@
-import { OSTRA_ADRESA_ZALOHA } from './verejna-adresa';
+import { randomBytes } from 'crypto';
+import { adresaKlub, OSTRA_ADRESA_ZALOHA } from './verejna-adresa';
 
 const OSTRA_ASSET = OSTRA_ADRESA_ZALOHA;
 
@@ -201,4 +202,21 @@ export function textNejdeProEmail(krestni: string, navrh: string): string {
     return `${pozdrav}\n\nděkujeme za poptávku. Tento termín už bohužel nemáme volný. Můžeme nabídnout ${n}. Napište nám, jestli by vám to vyhovovalo.`;
   }
   return `${pozdrav}\n\nděkujeme za poptávku. Tento termín je bohužel už obsazený. Rádi najdeme jiný, stačí napsat, kdy by se vám hodilo.`;
+}
+
+export function novyPotvrzeniToken(): string {
+  return randomBytes(16).toString('base64url');
+}
+
+export function odkazPotvrzeniPoptavky(token: string, base?: string): string {
+  const root = (base || adresaKlub()).replace(/\/$/, '');
+  return `${root}/poptavka/potvrzeni/${encodeURIComponent(token)}`;
+}
+
+/** Starý WhatsApp text + odkaz na hezkou stránku. */
+export function textPotvrditSOdkazemNaStranku(zprava: string, url: string): string {
+  const t = zprava.trim();
+  const u = url.trim();
+  if (!u) return t;
+  return `${t}\n\n${u}`;
 }
