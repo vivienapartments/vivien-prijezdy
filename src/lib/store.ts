@@ -529,6 +529,8 @@ export interface ProcessStore {
   ulozPoptavky(seznam: PoptavkaZaznam[]): Promise<void>;
   /** Trvalý klíč (JSON string). Bez TTL. */
   getKv(key: string): Promise<string | null>;
+  /** Více klíčů najednou (Upstash MGET). Pořadí = pořadí klíčů. */
+  getKvMany?(keys: string[]): Promise<(string | null)[]>;
   setKv(key: string, value: string): Promise<void>;
   /**
    * Zápis jen když klíč neexistuje (Redis SET NX).
@@ -1425,6 +1427,10 @@ export class FileProcessStore implements ProcessStore {
     return typeof v === 'string' ? v : null;
   }
 
+  async getKvMany(keys: string[]): Promise<(string | null)[]> {
+    return Promise.all(keys.map((k) => this.getKv(k)));
+  }
+
   async setKv(key: string, value: string): Promise<void> {
     const { smiSahatNaKvKlic } = await import('./klub-klic');
     const k = key.trim();
@@ -1965,6 +1971,18 @@ export class UpstashProcessStore implements ProcessStore {
     if (!k || !smiSahatNaKvKlic(k)) return null;
     const v = await this.cmd<string | null>('GET', k);
     return typeof v === 'string' ? v : null;
+  }
+
+  async getKvMany(keys: string[]): Promise<(string | null)[]> {
+    const { smiSahatNaKvKlic } = await import('./klub-klic');
+    const povolene = keys.map((raw) => {
+      const k = String(raw || '').trim();
+      return k && smiSahatNaKvKlic(k) ? k : null;
+    });
+    const kNacist = povolene.filter((k): k is string => Boolean(k));
+    const hodnoty = kNacist.length ? await this.hodnotyKlicu(kNacist) : [];
+    let i = 0;
+    return povolene.map((k) => (k ? (hodnoty[i++] ?? null) : null));
   }
 
   async setKv(key: string, value: string): Promise<void> {

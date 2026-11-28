@@ -62,27 +62,33 @@ export function KlientiClient() {
   const [hledat, setHledat] = useState('');
   const [razeni, setRazeni] = useState<Razeni>('posledni');
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [nacitam, setNacitam] = useState(true);
 
   const nacti = useCallback(async () => {
-    const res = await fetch('/api/prehled/klienti');
-    const json = (await res.json()) as {
-      ok?: boolean;
-      karty?: KartaUi[];
-      pravidla?: KlubPravidla;
-      utrataCeka?: UtrataCekaPolozka[];
-    };
-    if (json.ok) {
-      setKarty(json.karty || []);
-      setUtrataCeka(json.utrataCeka || []);
-      if (json.pravidla) {
-        setPravidla(json.pravidla);
-        const d7 = json.pravidla.slevaDelka.find((x) => x.odNoci === 7);
-        const d14 = json.pravidla.slevaDelka.find((x) => x.odNoci === 14);
-        setEditDelka7(String(d7?.pct ?? 10));
-        setEditDelka14(String(d14?.pct ?? 15));
-        setEditOdmena1(String(json.pravidla.odmenaPrvniPct));
-        setEditOdmena2(String(json.pravidla.odmenaDalsiPct));
+    setNacitam(true);
+    try {
+      const res = await fetch('/api/prehled/klienti');
+      const json = (await res.json()) as {
+        ok?: boolean;
+        karty?: KartaUi[];
+        pravidla?: KlubPravidla;
+        utrataCeka?: UtrataCekaPolozka[];
+      };
+      if (json.ok) {
+        setKarty(json.karty || []);
+        setUtrataCeka(json.utrataCeka || []);
+        if (json.pravidla) {
+          setPravidla(json.pravidla);
+          const d7 = json.pravidla.slevaDelka.find((x) => x.odNoci === 7);
+          const d14 = json.pravidla.slevaDelka.find((x) => x.odNoci === 14);
+          setEditDelka7(String(d7?.pct ?? 10));
+          setEditDelka14(String(d14?.pct ?? 15));
+          setEditOdmena1(String(json.pravidla.odmenaPrvniPct));
+          setEditOdmena2(String(json.pravidla.odmenaDalsiPct));
+        }
       }
+    } finally {
+      setNacitam(false);
     }
   }, []);
 
@@ -666,7 +672,7 @@ export function KlientiClient() {
 
       <section>
         <h2 style={{ fontSize: '1rem', color: '#c9a84c' }}>
-          Moji klienti ({filtrovane.length})
+          {nacitam ? 'Načítám klienty…' : `Moji klienti (${filtrovane.length})`}
         </h2>
         <p style={{ color: '#b7aa98', fontSize: '0.85rem' }}>
           Oranžová = započtená útrata. Modrá = čeká po odjezdu. Kliknutím detail a karta
@@ -772,7 +778,9 @@ export function KlientiClient() {
           </div>
         ) : null}
 
-        {!filtrovane.length ? (
+        {nacitam ? (
+          <p style={{ color: '#b7aa98' }}>Načítám klienty…</p>
+        ) : !filtrovane.length ? (
           <p style={{ color: '#b7aa98' }}>Nikdo v seznamu neodpovídá hledání.</p>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>

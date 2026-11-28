@@ -405,7 +405,7 @@ export function Dnesek({
         </button>
         {r.prevzato || r.uvolni.startsWith('uvolněno') ? null : (
           <button type="button" onClick={() => void prevzit(r.rezervace)}>
-            Předáno zpět
+            Zapsat předání zpět
           </button>
         )}
         {cerstve === r.rezervace ? (

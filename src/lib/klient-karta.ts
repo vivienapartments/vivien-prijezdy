@@ -324,10 +324,22 @@ export async function nactiKlientPodleTajnehoKlice(
 
 export async function seznamKlientu(store: ProcessStore): Promise<KlientKarta[]> {
   const list = (await getJson<string[]>(store, 'klient-seznam')) || [];
+  if (!list.length) return [];
+  const klice = list.map((id) => klubKlic(`klient:${id}`));
+  const hodnoty =
+    typeof store.getKvMany === 'function'
+      ? await store.getKvMany(klice)
+      : await Promise.all(klice.map((k) => store.getKv(k)));
   const out: KlientKarta[] = [];
-  for (const id of list) {
-    const k = await nactiKlientPodleId(store, id);
-    if (k) out.push(k);
+  for (let i = 0; i < list.length; i += 1) {
+    const raw = hodnoty[i];
+    if (!raw) continue;
+    try {
+      const k = asKarta(JSON.parse(raw));
+      if (k) out.push(k);
+    } catch {
+      /* přeskočit poškozenou kartu */
+    }
   }
   return out;
 }

@@ -614,6 +614,7 @@ export function PrehledClient({
   const [zitraOtevreno, setZitraOtevreno] = useState(false);
   const [casySchvaleniOtevreno, setCasySchvaleniOtevreno] = useState(false);
   const [odjezdySchvaleniOtevreno, setOdjezdySchvaleniOtevreno] = useState(true);
+  const [predaniZpetOtevreno, setPredaniZpetOtevreno] = useState(true);
   const [zalozka, setZalozka] = useState<Zalozka>('prijezdy');
   const [fakturyFocus, setFakturyFocus] = useState(false);
   const [kdoKouka, setKdoKouka] = useState<'pravoslav' | 'nikol'>('pravoslav');
@@ -2528,6 +2529,30 @@ export function PrehledClient({
         };
       }),
     );
+  }
+
+  async function zapisPredaniZpet(row: PrehledRadek) {
+    if (ukazka) {
+      poPrevzeti(row.rezervace, new Date().toISOString());
+      return;
+    }
+    setCekam(`predani-zpet:${row.rezervace}`);
+    try {
+      const res = await fetch('/api/prehled/akce', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rezervace: row.rezervace, akce: 'prevzato' }),
+      });
+      const json = (await res.json().catch(() => null)) as { ok?: boolean; prevzatoKdy?: string } | null;
+      if (!res.ok || !json?.ok) {
+        setHlaska('Předání zpět se nepodařilo zapsat.');
+        return;
+      }
+      poPrevzeti(row.rezervace, json.prevzatoKdy || new Date().toISOString());
+      setHlaska(`Zapsáno předání zpět · ${row.jmeno || row.rezervace}`);
+    } finally {
+      setCekam(null);
+    }
   }
 
   async function posliEmail(row: PrehledRadek, druh?: string) {
@@ -6915,6 +6940,17 @@ export function PrehledClient({
   const hosteShrnutiCekaji = hosteCekajiciShrnuti(hosteShrnutiVstupy, dnes);
   const hosteShrnutiHotove = hosteHotoveShrnuti(hosteShrnutiVstupy, dnes);
   const hosteZitraOdjezd = seradOdjezdy(radky.filter((r) => !jeBezDalsichAkci(r) && r.odjezd === zitra));
+  /** Den po odjezdu a dál: chybí zápis předání zpět. */
+  const hosteBezPredaniZpet = seradOdjezdy(
+    radky.filter(
+      (r) =>
+        !jeBezDalsichAkci(r) &&
+        !r.nelzeNacist &&
+        !r.prevzatoKdy &&
+        Boolean(r.odjezd) &&
+        r.odjezd! < dnes,
+    ),
+  );
   const zitraVyrizeno = hosteZitraOdjezd.filter(
     (r) => jeHodina(casOdjezduRadku(r)) || Boolean(r.odjezdDotaz),
   ).length;
@@ -7730,6 +7766,50 @@ export function PrehledClient({
                       )}
                     </span>
                     {podekovaniKanalyUi(row, Boolean(odeslano))}
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
+        </section>
+      ) : null}
+      {pohledDomu && zalozka === 'prijezdy' && hosteBezPredaniZpet.length ? (
+        <section id="predani-zpet" className="ph-domu-radek">
+          <button
+            type="button"
+            className="ph-domu-radek__souhrn is-akce"
+            aria-expanded={predaniZpetOtevreno}
+            onClick={() => setPredaniZpetOtevreno((v) => !v)}
+          >
+            Zapsat předání zpět · {hosteBezPredaniZpet.length}{' '}
+            {predaniZpetOtevreno ? '▴' : '▸'}
+          </button>
+          {predaniZpetOtevreno ? (
+            <ul className="ph-odjezdy ph-odjezdy--vnorene">
+              {hosteBezPredaniZpet.map((row) => {
+                const odjezdText = row.odjezd
+                  ? `${Number(row.odjezd.slice(8, 10))}. ${Number(row.odjezd.slice(5, 7))}.`
+                  : '';
+                return (
+                  <li key={row.rezervace} className="is-akce">
+                    <button
+                      type="button"
+                      className="ph-dnesek__odkaz"
+                      onClick={() => otevriKartu(row.rezervace)}
+                    >
+                      {row.apartman || '—'} · {row.jmeno || 'Host'}
+                    </button>
+                    {odjezdText ? ` · odjezd ${odjezdText}` : null}
+                    <span className="ph-odjezdy__akce">
+                      <button
+                        type="button"
+                        className="ph-wa"
+                        disabled={cekam !== null}
+                        onClick={() => void zapisPredaniZpet(row)}
+                      >
+                        Zapsat předání zpět
+                      </button>
+                    </span>
                   </li>
                 );
               })}
