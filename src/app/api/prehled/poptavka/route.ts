@@ -12,10 +12,15 @@ import {
 import { spocitejCenuPoptavky, textCenyPoptavky } from '@/lib/poptavka-cena';
 import type { ProcessStore } from '@/lib/store';
 import { formatRozsahPoptavky } from '@/lib/poptavka-texty';
+import { ceskyVokativ } from '@/lib/osloveni';
 import {
   htmlZpravaPoptavkyHostovi,
+  nadpisNejdePoptavky,
+  nadpisPotvrzeniPoptavky,
   predmetNejdePoptavky,
   predmetPotvrzeniPoptavky,
+  textNejdeProEmail,
+  textPotvrzeniProEmail,
 } from '@/lib/poptavka-potvrzeni-email';
 import {
   jeZkouskaPoptavky,
@@ -51,9 +56,16 @@ function nactiKanaly(body: { kanal?: string; kanaly?: unknown }): PoptavkaOdesla
   return out;
 }
 
+function osloveniEmail(jmeno: string): string {
+  const cast = jmeno.trim().split(/\s+/).filter(Boolean)[0] || '';
+  if (!cast) return '';
+  return ceskyVokativ(cast) || cast;
+}
+
 async function odesliHtmlEmailPoptavky(opts: {
   na: string;
   predmet: string;
+  nadpis: string;
   text: string;
   jmeno: string;
   termin: string;
@@ -87,6 +99,7 @@ async function odesliHtmlEmailPoptavky(opts: {
       text: opts.text,
       html: htmlZpravaPoptavkyHostovi({
         predmet: opts.predmet.replace(/^\[TEST\]\s*/, ''),
+        nadpis: opts.nadpis,
         text: opts.text,
         jmeno: opts.jmeno,
         termin: opts.termin,
@@ -324,8 +337,9 @@ export async function POST(req: Request) {
         const mail = await odesliHtmlEmailPoptavky({
           na: emailOdeslani,
           predmet: predmetPotvrzeniPoptavky((process.env.TEST_REZIM ?? '1') !== '0'),
-          text: zprava,
-          jmeno: z.jmeno,
+          nadpis: nadpisPotvrzeniPoptavky(),
+          text: textPotvrzeniProEmail(osloveniEmail(z.jmeno)),
+          jmeno: osloveniEmail(z.jmeno) || z.jmeno,
           termin: detail.termin,
           apartman: detail.apartman,
           cena: detail.cena || '',
@@ -402,11 +416,12 @@ export async function POST(req: Request) {
         const mail = await odesliHtmlEmailPoptavky({
           na: emailOdeslani,
           predmet: predmetNejdePoptavky((process.env.TEST_REZIM ?? '1') !== '0'),
-          text: zprava,
-          jmeno: z.jmeno,
+          nadpis: nadpisNejdePoptavky(),
+          text: textNejdeProEmail(osloveniEmail(z.jmeno), navrh),
+          jmeno: osloveniEmail(z.jmeno) || z.jmeno,
           termin: detail.termin,
           apartman: detail.apartman,
-          cena: detail.cena || '',
+          cena: '',
         });
         if (!mail.ok) return chyba(500, mail.error);
         if (mail.mailto) {
