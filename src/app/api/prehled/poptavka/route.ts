@@ -355,9 +355,12 @@ export async function POST(req: Request) {
       odkazy[k] = o.href;
       if (!odkaz) odkaz = o.href;
     }
+    /* E-mail odešel rovnou → hned do vyřízených. WhatsApp/SMS zatím jen potvrzeno. */
+    const doVyrizenych = emailPoslan || (kanaly.includes('email') && emailMailto);
     z = {
       ...z,
-      stav: 'potvrzeno',
+      stav: doVyrizenych ? 'hotovo' : 'potvrzeno',
+      blokApt: doVyrizenych ? null : z.blokApt,
       lhutaDo: null,
       pripominkaPosledni: null,
       pripominkaNocniPocet: 0,

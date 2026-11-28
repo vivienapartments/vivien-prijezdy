@@ -170,9 +170,11 @@ export function PoptavkaDetail({ id, onZavrit }: { id: string; onZavrit: () => v
             ? `E-mail odešel hostovi na ${vysledek.emailOdeslanoNa}`
             : 'E-mail odešel hostovi',
       );
+      if (kod === 'potvrdit') casti.push('Poptávka je ve vyřízených');
     } else if (vysledek.emailMailto && mailtoHref) {
       window.location.href = mailtoHref;
       casti.push('E-mail se otevřel u vás (zkouška bez SMTP). Na ostře odejde rovnou hostovi.');
+      if (kod === 'potvrdit') casti.push('Poptávka je ve vyřízených');
     }
     if (kOtevreni.whatsapp) casti.push('WhatsApp je otevřený');
     if (kOtevreni.sms) casti.push('SMS je připravená');
