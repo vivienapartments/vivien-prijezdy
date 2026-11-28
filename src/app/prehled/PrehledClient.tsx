@@ -440,7 +440,7 @@ function ClubKartaNahore({
         const res = await fetch('/api/prehled/akce', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: rezervace, akce: 'klub-karta-stav' }),
+          body: JSON.stringify({ rezervace, akce: 'klub-karta-stav' }),
         });
         const data = (await res.json()) as {
           ok?: boolean;
@@ -498,7 +498,7 @@ function ClubKartaNahore({
       const res = await fetch('/api/prehled/akce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: rezervace, akce: 'klub-karta-pripravit' }),
+        body: JSON.stringify({ rezervace, akce: 'klub-karta-pripravit' }),
       });
       const data = (await res.json()) as {
         ok?: boolean;

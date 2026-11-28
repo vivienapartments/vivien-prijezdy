@@ -191,7 +191,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, pocet }, { headers: noStore });
   }
 
-  const id = (body?.rezervace || '').trim();
+  const id = String(body?.rezervace || (body as { id?: string } | null)?.id || '').trim();
   const akce = body?.akce;
   if (
     !id ||
