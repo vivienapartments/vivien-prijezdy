@@ -91,7 +91,8 @@ export type PrehledRadek = {
   odjezdDotaz: string | null;
   pohodaDotaz: string | null;
   podekovaniKdy: string | null;
-  podekovaniKanal: 'whatsapp' | 'sms' | 'email' | null;
+  /** Jeden kanál, nebo „whatsapp,email“. */
+  podekovaniKanal: string | null;
   /** Text nedoplatku pro seznam odjezdů. Prázdné, když nic nedluží. */
   dluhText: string;
   dluhPolozky: { druh: DruhDluhu; kc: number; nazev: string }[];

@@ -181,7 +181,8 @@ export type RezervaceRecord = {
   /** Kdy majitel odeslal poděkování po odjezdu. null = ještě ne. */
   podekovaniKdy: string | null;
   /** Kanál posledního poděkování. */
-  podekovaniKanal: 'whatsapp' | 'sms' | 'email' | null;
+  /** Jeden kanál, nebo „whatsapp,email“. */
+  podekovaniKanal: string | null;
   /**
    * Kdy a jakými kanály majitel poslal kartu klubu (PROMPT-PODEKOVANI 5b).
    * null = ještě ne. U Booking hosta klub na kartě až po tomto.
@@ -852,10 +853,16 @@ function asRezervace(id: string, raw: unknown): RezervaceRecord | null {
     odjezdDotaz: typeof r.odjezdDotaz === 'string' && r.odjezdDotaz ? r.odjezdDotaz : null,
     pohodaDotaz: typeof r.pohodaDotaz === 'string' && r.pohodaDotaz ? r.pohodaDotaz : null,
     podekovaniKdy: typeof r.podekovaniKdy === 'string' && r.podekovaniKdy ? r.podekovaniKdy : null,
-    podekovaniKanal:
-      r.podekovaniKanal === 'whatsapp' || r.podekovaniKanal === 'sms' || r.podekovaniKanal === 'email'
-        ? r.podekovaniKanal
-        : null,
+    podekovaniKanal: (() => {
+      const raw = typeof r.podekovaniKanal === 'string' ? r.podekovaniKanal.trim() : '';
+      if (!raw) return null;
+      const casti = raw.split(/[,+]/).map((x) => x.trim());
+      const ok = casti.filter(
+        (x): x is 'whatsapp' | 'sms' | 'email' =>
+          x === 'whatsapp' || x === 'sms' || x === 'email',
+      );
+      return ok.length ? [...new Set(ok)].join(',') : null;
+    })(),
     kartaPredana: (() => {
       const raw = r.kartaPredana;
       if (!raw || typeof raw !== 'object') return null;

@@ -1512,29 +1512,33 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (akce === 'podekovani-odeslat') {
     if (rec.bezMarketingu) return chyba(400, 'Host nechce e-maily.');
-    const kanalRaw = String(body?.kanal || '').trim();
-    const kanal =
-      kanalRaw === 'whatsapp' || kanalRaw === 'sms' || kanalRaw === 'email' ? kanalRaw : null;
-    if (!kanal) return chyba(400, 'Vyberte kanál.');
-    if (kanal === 'email') {
-      const {
-        CHYBA_PODEKOVANI_RELAY,
-        chybiSkutecnyEmailPodekovani,
-        skutecnyEmailProPodekovani,
-      } = await import('@/lib/podekovani');
-      if (!skutecnyEmailProPodekovani(rec)) {
-        return chyba(
-          400,
-          chybiSkutecnyEmailPodekovani(rec) ? CHYBA_PODEKOVANI_RELAY : 'Host nemá e-mail.',
-        );
-      }
+    const {
+      CHYBA_PODEKOVANI_RELAY,
+      chybiSkutecnyEmailPodekovani,
+      nactiPodekovaniKanaly,
+      skutecnyEmailProPodekovani,
+      stitekPodekovaniKanalu,
+      zapisPodekovaniKanaly,
+    } = await import('@/lib/podekovani');
+    const zeSeznamu = Array.isArray(body?.kanaly)
+      ? body.kanaly.flatMap((x: unknown) => nactiPodekovaniKanaly(x))
+      : [];
+    const kanaly =
+      nactiPodekovaniKanaly(zapisPodekovaniKanaly([...zeSeznamu, ...nactiPodekovaniKanaly(body?.kanal)]));
+    if (!kanaly.length) return chyba(400, 'Vyberte aspoň jeden kanál.');
+    if (kanaly.includes('email') && !skutecnyEmailProPodekovani(rec)) {
+      return chyba(
+        400,
+        chybiSkutecnyEmailPodekovani(rec) ? CHYBA_PODEKOVANI_RELAY : 'Host nemá e-mail.',
+      );
     }
     const ted = new Date().toISOString();
-    const stitek = kanal === 'whatsapp' ? 'WhatsApp' : kanal === 'sms' ? 'SMS' : 'E-mail';
+    const ulozeno = zapisPodekovaniKanaly(kanaly);
+    const stitek = stitekPodekovaniKanalu(kanaly);
     const veta = rec.podekovaniKdy
       ? `Poděkování odesláno znovu · ${stitek}`
       : `Poděkování odesláno · ${stitek}`;
-    const dalsi = pridej(rec, veta, { podekovaniKdy: ted, podekovaniKanal: kanal });
+    const dalsi = pridej(rec, veta, { podekovaniKdy: ted, podekovaniKanal: ulozeno });
     await store.setRezervace(id, dalsi);
     return NextResponse.json(
       { ok: true, cas: dalsi.podekovaniKdy, kanal: dalsi.podekovaniKanal },

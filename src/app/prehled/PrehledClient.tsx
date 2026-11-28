@@ -72,6 +72,7 @@ import {
   skutecnyEmailProPodekovani,
   stitekPodekovaniKanalu,
   textPodekovani,
+  zapisPodekovaniKanaly,
   type PodekovaniKanal,
 } from '@/lib/podekovani';
 import {
@@ -598,6 +599,10 @@ export function PrehledClient({
   const [pohodaOtevreno, setPohodaOtevreno] = useState(false);
   const [podekovaniOtevreno, setPodekovaniOtevreno] = useState(false);
   const [dotazPodekovani, setDotazPodekovani] = useState<string | null>(null);
+  /** Zaškrtnuté kanály u poděkování (karta i Domů). */
+  const [podekovaniVolba, setPodekovaniVolba] = useState<
+    Record<string, { wa: boolean; sms: boolean; email: boolean }>
+  >({});
   const [hledaniPodekovani, setHledaniPodekovani] = useState('');
   const [hledaniPodekovaniRez, setHledaniPodekovaniRez] = useState('');
   const [hledaniPodekovaniTel, setHledaniPodekovaniTel] = useState('');
@@ -3245,9 +3250,38 @@ export function PrehledClient({
     );
   }
 
-  async function oznacPodekovani(row: PrehledRadek, kanal: PodekovaniKanal) {
+  function vychoziPodekovaniVolba(row: PrehledRadek) {
+    const emailOk = Boolean(skutecnyEmailProPodekovani(row));
+    const waOk = Boolean(row.telefonWa);
+    return { wa: waOk, sms: false, email: emailOk };
+  }
+
+  function volbaPodekovaniRadku(row: PrehledRadek) {
+    return podekovaniVolba[row.rezervace] || vychoziPodekovaniVolba(row);
+  }
+
+  function nastavPodekovaniVolbu(
+    rezervace: string,
+    patch: Partial<{ wa: boolean; sms: boolean; email: boolean }>,
+    row: PrehledRadek,
+  ) {
+    setPodekovaniVolba((prev) => {
+      const zaklad = prev[rezervace] || vychoziPodekovaniVolba(row);
+      return { ...prev, [rezervace]: { ...zaklad, ...patch } };
+    });
+  }
+
+  async function oznacPodekovani(
+    row: PrehledRadek,
+    kanal: PodekovaniKanal | PodekovaniKanal[],
+  ) {
+    const kanaly = (Array.isArray(kanal) ? kanal : [kanal]).filter(
+      (k): k is PodekovaniKanal => k === 'whatsapp' || k === 'sms' || k === 'email',
+    );
+    if (!kanaly.length) return;
     const ted = new Date().toISOString();
-    const stitek = stitekPodekovaniKanalu(kanal);
+    const ulozeno = zapisPodekovaniKanaly(kanaly);
+    const stitek = stitekPodekovaniKanalu(kanaly);
     const co = row.podekovaniKdy
       ? `Poděkování odesláno znovu · ${stitek}`
       : `Poděkování odesláno · ${stitek}`;
@@ -3255,7 +3289,12 @@ export function PrehledClient({
       const res = await fetch('/api/prehled/akce', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rezervace: row.rezervace, akce: 'podekovani-odeslat', kanal }),
+        body: JSON.stringify({
+          rezervace: row.rezervace,
+          akce: 'podekovani-odeslat',
+          kanaly,
+          kanal: kanaly[0],
+        }),
       });
       if (!res.ok) {
         setHlaska('Poděkování se nepodařilo označit.');
@@ -3268,11 +3307,152 @@ export function PrehledClient({
           ? {
               ...r,
               podekovaniKdy: ted,
-              podekovaniKanal: kanal,
+              podekovaniKanal: ulozeno,
               historie: [...r.historie, { cas: ted, co }].slice(-40),
             }
           : r,
       ),
+    );
+  }
+
+  /** E-mail (SMTP) + otevření WhatsApp / SMS najednou. */
+  async function odesliPodekovaniVybrane(row: PrehledRadek) {
+    const volba = volbaPodekovaniRadku(row);
+    const kanaly: PodekovaniKanal[] = [];
+    if (volba.wa) kanaly.push('whatsapp');
+    if (volba.sms) kanaly.push('sms');
+    if (volba.email) kanaly.push('email');
+    if (!kanaly.length) {
+      setHlaska('Zaškrtněte WhatsApp, SMS nebo e-mail.');
+      return;
+    }
+    const emailSkutecny = skutecnyEmailProPodekovani(row);
+    if (volba.email && !emailSkutecny) {
+      setHlaska(
+        chybiSkutecnyEmailPodekovani(row)
+          ? 'Chybí skutečný e-mail (Booking/Airbnb).'
+          : 'Host nemá e-mail.',
+      );
+      return;
+    }
+    if (volba.wa && !row.telefonWa) {
+      setHlaska('Chybí telefon pro WhatsApp.');
+      return;
+    }
+    const text =
+      zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
+      textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
+    const telefonSms = row.telefonText || (row.telefonWa ? `+${row.telefonWa}` : '');
+
+    if (volba.email) {
+      setCekam(`${row.rezervace}:email`);
+      setHlaska('Odesílám e-mail…');
+      if (ukazka) {
+        setCekam(null);
+      } else {
+        const res = await fetch('/api/prehled/akce', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            rezervace: row.rezervace,
+            akce: 'email',
+            zprava: 'podekovani',
+            jazyk: jazykRadku(row),
+          }),
+        });
+        const json = (await res.json().catch(() => null)) as {
+          ok?: boolean;
+          error?: string;
+          email?: string;
+        } | null;
+        setCekam(null);
+        if (!res.ok || !json?.ok) {
+          setHlaska(json?.error || 'E-mail se nepodařilo odeslat.');
+          return;
+        }
+      }
+    }
+
+    if (volba.wa && row.telefonWa) {
+      window.open(odkazWhatsAppPrehled(row.telefonWa, text, userAgent), '_blank');
+    }
+    if (volba.sms && telefonSms) {
+      window.open(odkazSmsPodekovani(telefonSms, text, jeIos(userAgent)), '_blank');
+    }
+
+    await oznacPodekovani(row, kanaly);
+    setDotazPodekovani(null);
+    const stitek = stitekPodekovaniKanalu(kanaly);
+    setHlaska(
+      volba.email && (volba.wa || volba.sms)
+        ? `Poděkování: e-mail odešel · ${stitek}. WhatsApp/SMS zkontrolujte a odešlete.`
+        : volba.email
+          ? `Poděkování e-mailem odešlo${emailSkutecny ? ` na ${emailSkutecny}` : ''}.`
+          : `Poděkování připraveno · ${stitek}. Zkontrolujte a odešlete.`,
+    );
+  }
+
+  function podekovaniKanalyUi(row: PrehledRadek, odeslano: boolean) {
+    const wa = row.telefonWa;
+    const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
+    const emailSkutecny = skutecnyEmailProPodekovani(row);
+    const volba = volbaPodekovaniRadku(row);
+    return (
+      <>
+        <div className="ph-podekovani-kanaly">
+          {wa ? (
+            <label className="ph-podekovani-kanaly__check">
+              <input
+                type="checkbox"
+                checked={volba.wa}
+                onChange={(e) =>
+                  nastavPodekovaniVolbu(row.rezervace, { wa: e.target.checked }, row)
+                }
+              />
+              WhatsApp
+            </label>
+          ) : null}
+          {telefonSms ? (
+            <label className="ph-podekovani-kanaly__check">
+              <input
+                type="checkbox"
+                checked={volba.sms}
+                onChange={(e) =>
+                  nastavPodekovaniVolbu(row.rezervace, { sms: e.target.checked }, row)
+                }
+              />
+              SMS
+            </label>
+          ) : null}
+          {emailSkutecny ? (
+            <label className="ph-podekovani-kanaly__check">
+              <input
+                type="checkbox"
+                checked={volba.email}
+                onChange={(e) =>
+                  nastavPodekovaniVolbu(row.rezervace, { email: e.target.checked }, row)
+                }
+              />
+              E-mail
+            </label>
+          ) : null}
+        </div>
+        <span className="ph-odjezdy__akce">
+          <button
+            type="button"
+            className="ph-wa"
+            disabled={cekam !== null}
+            onClick={() => void odesliPodekovaniVybrane(row)}
+          >
+            Odeslat
+          </button>
+          {odeslano ? (
+            <button type="button" className="ph-kopie" onClick={() => void vratPodekovani(row)}>
+              Vrátit
+            </button>
+          ) : null}
+        </span>
+      </>
     );
   }
 
@@ -5690,11 +5870,6 @@ export function PrehledClient({
         ) : null}
         {odjel && muzePodekovatKdykoliv(row, dnes) && row.bezMarketingu !== true
           ? (() => {
-              const text =
-                zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
-                textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
-              const waPodek = row.telefonWa;
-              const telefonSms = row.telefonText || (waPodek ? `+${waPodek}` : '');
               const emailSkutecny = skutecnyEmailProPodekovani(row);
               const jenRelayEmail = chybiSkutecnyEmailPodekovani(row);
               const panelOtevren = dotazPodekovani === `karta:${row.rezervace}`;
@@ -5713,7 +5888,12 @@ export function PrehledClient({
                     Poděkování za poslední pobyt
                   </button>
                   {row.podekovaniKdy ? (
-                    <p className="ph-karta-poslana">odesláno už</p>
+                    <p className="ph-karta-poslana">
+                      odesláno už
+                      {stitekPodekovaniKanalu(row.podekovaniKanal)
+                        ? ` · ${stitekPodekovaniKanalu(row.podekovaniKanal)}`
+                        : ''}
+                    </p>
                   ) : null}
                   {panelOtevren ? (
                     <div className="ph-karta-podekovani__panel">
@@ -5728,75 +5908,7 @@ export function PrehledClient({
                           'Bez e-mailu'
                         )}
                       </span>
-                      <span className="ph-odjezdy__akce">
-                        {waPodek ? (
-                          <TlacitkoWhatsApp
-                            wa={waPodek}
-                            zprava={text}
-                            userAgent={userAgent}
-                            onPredOtevrenim={() => oznacPodekovani(row, 'whatsapp')}
-                          >
-                            WhatsApp
-                          </TlacitkoWhatsApp>
-                        ) : null}
-                        {telefonSms ? (
-                          <a
-                            className="ph-wa"
-                            href={odkazSmsPodekovani(telefonSms, text, jeIos(userAgent))}
-                            onClick={() => void oznacPodekovani(row, 'sms')}
-                          >
-                            SMS
-                          </a>
-                        ) : null}
-                        {emailSkutecny ? (
-                          <button
-                            type="button"
-                            className="ph-wa"
-                            onClick={() => setDotazPodekovani(`karta-email:${row.rezervace}`)}
-                          >
-                            E-mail
-                          </button>
-                        ) : null}
-                        {row.podekovaniKdy ? (
-                          <button
-                            type="button"
-                            className="ph-kopie"
-                            onClick={() => void vratPodekovani(row)}
-                          >
-                            Vrátit
-                          </button>
-                        ) : null}
-                      </span>
-                    </div>
-                  ) : null}
-                  {dotazPodekovani === `karta-email:${row.rezervace}` && emailSkutecny ? (
-                    <div
-                      id={`podekovani-karta-email-${row.rezervace}`}
-                      className="ph-predano-dotaz ph-predano-dotaz--email"
-                    >
-                      <p>E-mail půjde na</p>
-                      <p className="ph-podekovani-email-cil">
-                        <span className="ph-tel">{emailSkutecny}</span>
-                      </p>
-                      <p>
-                        Kopie na <span className="ph-tel">info@vivienapartments.cz</span>
-                        {row.podekovaniKdy ? '. Poslat znovu?' : '.'}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setDotazPodekovani(null);
-                          void posliEmail(row, 'podekovani');
-                        }}
-                      >
-                        Ano, poslat
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDotazPodekovani(`karta:${row.rezervace}`)}
-                      >
-                        Zrušit
-                      </button>
+                      {podekovaniKanalyUi(row, Boolean(row.podekovaniKdy))}
                     </div>
                   ) : null}
                 </div>
@@ -7590,11 +7702,6 @@ export function PrehledClient({
               {hostePodekovaniHledani.map((row) => {
                 const odeslano = row.podekovaniKdy ? hodinaPraha(row.podekovaniKdy) : '';
                 const kanalStitek = stitekPodekovaniKanalu(row.podekovaniKanal);
-                const text =
-                  zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
-                  textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
-                const wa = row.telefonWa;
-                const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
                 const emailSkutecny = skutecnyEmailProPodekovani(row);
                 const jenRelayEmail = chybiSkutecnyEmailPodekovani(row);
                 const odjezdText = row.odjezd
@@ -7622,75 +7729,7 @@ export function PrehledClient({
                         'Bez e-mailu'
                       )}
                     </span>
-                    <span className="ph-odjezdy__akce">
-                      {wa ? (
-                        <TlacitkoWhatsApp
-                          wa={wa}
-                          zprava={text}
-                          userAgent={userAgent}
-                          onPredOtevrenim={() => oznacPodekovani(row, 'whatsapp')}
-                        >
-                          WhatsApp
-                        </TlacitkoWhatsApp>
-                      ) : null}
-                      {telefonSms ? (
-                        <a
-                          className="ph-wa"
-                          href={odkazSmsPodekovani(telefonSms, text, jeIos(userAgent))}
-                          onClick={() => void oznacPodekovani(row, 'sms')}
-                        >
-                          SMS
-                        </a>
-                      ) : null}
-                      {emailSkutecny ? (
-                        <button
-                          type="button"
-                          className="ph-wa"
-                          onClick={() => {
-                            setDotazPodekovani(row.rezervace);
-                            requestAnimationFrame(() => {
-                              document
-                                .getElementById(`podekovani-email-${row.rezervace}`)
-                                ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                            });
-                          }}
-                        >
-                          E-mail
-                        </button>
-                      ) : null}
-                      {odeslano ? (
-                        <button type="button" className="ph-kopie" onClick={() => void vratPodekovani(row)}>
-                          Vrátit
-                        </button>
-                      ) : null}
-                    </span>
-                    {dotazPodekovani === row.rezervace && emailSkutecny ? (
-                      <div
-                        id={`podekovani-email-${row.rezervace}`}
-                        className="ph-predano-dotaz ph-predano-dotaz--email"
-                      >
-                        <p>E-mail půjde na</p>
-                        <p className="ph-podekovani-email-cil">
-                          <span className="ph-tel">{emailSkutecny}</span>
-                        </p>
-                        <p>
-                          Kopie na <span className="ph-tel">info@vivienapartments.cz</span>
-                          {odeslano ? '. Poslat znovu?' : '.'}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDotazPodekovani(null);
-                            void posliEmail(row, 'podekovani');
-                          }}
-                        >
-                          Ano, poslat
-                        </button>
-                        <button type="button" onClick={() => setDotazPodekovani(null)}>
-                          Zrušit
-                        </button>
-                      </div>
-                    ) : null}
+                    {podekovaniKanalyUi(row, Boolean(odeslano))}
                   </li>
                 );
               })}
@@ -7713,11 +7752,6 @@ export function PrehledClient({
               {hostePodekovaniSeznam.map((row) => {
                 const odeslano = row.podekovaniKdy ? hodinaPraha(row.podekovaniKdy) : '';
                 const kanalStitek = stitekPodekovaniKanalu(row.podekovaniKanal);
-                const text =
-                  zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
-                  textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
-                const wa = row.telefonWa;
-                const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
                 const emailSkutecny = skutecnyEmailProPodekovani(row);
                 const jenRelayEmail = chybiSkutecnyEmailPodekovani(row);
                 const odjezdText = row.odjezd
@@ -7745,75 +7779,7 @@ export function PrehledClient({
                         'Bez e-mailu'
                       )}
                     </span>
-                    <span className="ph-odjezdy__akce">
-                      {wa ? (
-                        <TlacitkoWhatsApp
-                          wa={wa}
-                          zprava={text}
-                          userAgent={userAgent}
-                          onPredOtevrenim={() => oznacPodekovani(row, 'whatsapp')}
-                        >
-                          WhatsApp
-                        </TlacitkoWhatsApp>
-                      ) : null}
-                      {telefonSms ? (
-                        <a
-                          className="ph-wa"
-                          href={odkazSmsPodekovani(telefonSms, text, jeIos(userAgent))}
-                          onClick={() => void oznacPodekovani(row, 'sms')}
-                        >
-                          SMS
-                        </a>
-                      ) : null}
-                      {emailSkutecny ? (
-                        <button
-                          type="button"
-                          className="ph-wa"
-                          onClick={() => {
-                            setDotazPodekovani(row.rezervace);
-                            requestAnimationFrame(() => {
-                              document
-                                .getElementById(`podekovani-email-${row.rezervace}`)
-                                ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                            });
-                          }}
-                        >
-                          E-mail
-                        </button>
-                      ) : null}
-                      {odeslano ? (
-                        <button type="button" className="ph-kopie" onClick={() => void vratPodekovani(row)}>
-                          Vrátit
-                        </button>
-                      ) : null}
-                    </span>
-                    {dotazPodekovani === row.rezervace && emailSkutecny ? (
-                      <div
-                        id={`podekovani-email-${row.rezervace}`}
-                        className="ph-predano-dotaz ph-predano-dotaz--email"
-                      >
-                        <p>E-mail půjde na</p>
-                        <p className="ph-podekovani-email-cil">
-                          <span className="ph-tel">{emailSkutecny}</span>
-                        </p>
-                        <p>
-                          Kopie na <span className="ph-tel">info@vivienapartments.cz</span>
-                          {odeslano ? '. Poslat znovu?' : '.'}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDotazPodekovani(null);
-                            void posliEmail(row, 'podekovani');
-                          }}
-                        >
-                          Ano, poslat
-                        </button>
-                        <button type="button" onClick={() => setDotazPodekovani(null)}>
-                          Zrušit
-                        </button>
-                      </div>
-                    ) : null}
+                    {podekovaniKanalyUi(row, Boolean(odeslano))}
                   </li>
                 );
               })}
@@ -8361,11 +8327,6 @@ export function PrehledClient({
               {hostePodekovaniSeznam.map((row) => {
                 const odeslano = row.podekovaniKdy ? hodinaPraha(row.podekovaniKdy) : '';
                 const kanalStitek = stitekPodekovaniKanalu(row.podekovaniKanal);
-                const text =
-                  zpravyRadku(row).find((z) => z.id === 'podekovani')?.text ||
-                  textPodekovani(jazykRadku(row), row.odkaz, row.odjezd, dnes);
-                const wa = row.telefonWa;
-                const telefonSms = row.telefonText || (wa ? `+${wa}` : '');
                 const emailSkutecny = skutecnyEmailProPodekovani(row);
                 const jenRelayEmail = chybiSkutecnyEmailPodekovani(row);
                 return (
@@ -8389,72 +8350,7 @@ export function PrehledClient({
                         'Bez e-mailu'
                       )}
                     </span>
-                    <span className="ph-odjezdy__akce">
-                      {wa ? (
-                        <TlacitkoWhatsApp
-                          wa={wa}
-                          zprava={text}
-                          userAgent={userAgent}
-                          onPredOtevrenim={() => oznacPodekovani(row, 'whatsapp')}
-                        >
-                          WhatsApp
-                        </TlacitkoWhatsApp>
-                      ) : null}
-                      {telefonSms ? (
-                        <a
-                          className="ph-wa"
-                          href={odkazSmsPodekovani(telefonSms, text, jeIos(userAgent))}
-                          onClick={() => void oznacPodekovani(row, 'sms')}
-                        >
-                          SMS
-                        </a>
-                      ) : null}
-                      {emailSkutecny ? (
-                        <button
-                          type="button"
-                          className="ph-wa"
-                          onClick={() => {
-                            setDotazPodekovani(row.rezervace);
-                            requestAnimationFrame(() => {
-                              document
-                                .getElementById(`podekovani-email-${row.rezervace}`)
-                                ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                            });
-                          }}
-                        >
-                          E-mail
-                        </button>
-                      ) : null}
-                      <button type="button" className="ph-kopie" onClick={() => void vratPodekovani(row)}>
-                        Vrátit
-                      </button>
-                    </span>
-                    {dotazPodekovani === row.rezervace && emailSkutecny ? (
-                      <div
-                        id={`podekovani-email-${row.rezervace}`}
-                        className="ph-predano-dotaz ph-predano-dotaz--email"
-                      >
-                        <p>E-mail půjde na</p>
-                        <p className="ph-podekovani-email-cil">
-                          <span className="ph-tel">{emailSkutecny}</span>
-                        </p>
-                        <p>
-                          Kopie na <span className="ph-tel">info@vivienapartments.cz</span>. Poslat znovu?
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDotazPodekovani(null);
-                            void posliEmail(row, 'podekovani');
-                          }}
-                        >
-                          Ano, poslat
-                        </button>
-                        <button type="button" onClick={() => setDotazPodekovani(null)}>
-                          Zrušit
-                        </button>
-                      </div>
-                    ) : null}
+                    {podekovaniKanalyUi(row, true)}
                   </li>
                 );
               })}

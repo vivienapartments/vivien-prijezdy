@@ -134,11 +134,34 @@ export function odkazSmsPodekovani(telefon: string, text: string, ios: boolean):
   return ios ? `sms:${cil}&body=${body}` : `sms:${cil}?body=${body}`;
 }
 
-export function stitekPodekovaniKanalu(kanal: PodekovaniKanal | null | undefined): string {
-  if (kanal === 'whatsapp') return 'WhatsApp';
-  if (kanal === 'sms') return 'SMS';
-  if (kanal === 'email') return 'E-mail';
-  return '';
+/** Jedna hodnota nebo „whatsapp,email“ ze skladu. */
+export function nactiPodekovaniKanaly(raw: unknown): PodekovaniKanal[] {
+  const s = String(raw || '').trim();
+  if (!s) return [];
+  const out: PodekovaniKanal[] = [];
+  for (const cast of s.split(/[,+]/)) {
+    const p = cast.trim();
+    if ((p === 'whatsapp' || p === 'sms' || p === 'email') && !out.includes(p)) out.push(p);
+  }
+  return out;
+}
+
+export function zapisPodekovaniKanaly(kanaly: readonly PodekovaniKanal[]): string | null {
+  const uniq: PodekovaniKanal[] = [];
+  for (const k of kanaly) {
+    if ((k === 'whatsapp' || k === 'sms' || k === 'email') && !uniq.includes(k)) uniq.push(k);
+  }
+  return uniq.length ? uniq.join(',') : null;
+}
+
+export function stitekPodekovaniKanalu(
+  kanal: PodekovaniKanal | PodekovaniKanal[] | string | null | undefined,
+): string {
+  const list = Array.isArray(kanal) ? kanal : nactiPodekovaniKanaly(kanal);
+  const nazvy = list.map((k) =>
+    k === 'whatsapp' ? 'WhatsApp' : k === 'sms' ? 'SMS' : k === 'email' ? 'E-mail' : '',
+  );
+  return nazvy.filter(Boolean).join(' · ');
 }
 
 /**

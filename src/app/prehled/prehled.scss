@@ -691,6 +691,29 @@
   word-break: break-all;
 }
 
+.ph-podekovani-kanaly {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem 0.9rem;
+  margin-top: 0.2rem;
+}
+
+.ph-podekovani-kanaly__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: rgba(243, 235, 224, 0.92);
+  font-size: 0.92rem;
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    width: 1.05rem;
+    height: 1.05rem;
+    accent-color: var(--color-gold, #c9a84c);
+  }
+}
+
 .ph-domu-hlaska {
   margin: 0.35rem 0 0.65rem;
   padding: 0.55rem 0.75rem;
