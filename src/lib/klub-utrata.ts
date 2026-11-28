@@ -330,7 +330,8 @@ export async function pridejUtratuPoPredani(
     poznamka: `rez:${rec.rezervace} ACC_PRICE`,
   };
   klient.utrataRucne = [...klient.utrataRucne, polozka];
-  klient.utrataKc = klient.utrataRucne.reduce((s, u) => s + u.castka, 0);
+  const soucet = klient.utrataRucne.reduce((s, u) => s + Math.max(0, u.castka), 0);
+  klient.utrataKc = Math.max(klient.utrataKc || 0, soucet);
   if (!klient.rezervace.includes(rec.rezervace)) {
     klient.rezervace = [...klient.rezervace, rec.rezervace].slice(-40);
   }
@@ -384,6 +385,46 @@ export async function pridejUtratuRucne(
     },
   ];
   k.utrataKc = k.utrataRucne.reduce((s, u) => s + u.castka, 0);
+  await ulozKlientKartu(store, k);
+  return k;
+}
+
+/**
+ * Označí rezervace jako už započtené v ruční útratě (castka 0).
+ * Nepřičítá peníze. Blokuje další přičtení přes Předáno zpět i seznam „chybí útrata“.
+ */
+export async function oznacUtratuZapoctenouVRucni(
+  store: ProcessStore,
+  klientId: string,
+  rezervaceIds: string[],
+): Promise<KlientKarta | null> {
+  if (!klubZapnut()) return null;
+  const k = await nactiKlientPodleId(store, klientId);
+  if (!k) return null;
+  const ted = new Date().toISOString();
+  let zmena = false;
+  for (const rezId of rezervaceIds) {
+    const id = String(rezId || '').trim();
+    if (!id) continue;
+    if (k.utrataRucne.some((u) => u.poznamka.includes(`rez:${id}`))) continue;
+    k.utrataRucne = [
+      ...k.utrataRucne,
+      {
+        id: `u${randomBytes(4).toString('hex')}`,
+        castka: 0,
+        kdy: ted,
+        poznamka: `rez:${id} započteno v ruční útratě`,
+      },
+    ];
+    if (!k.rezervace.includes(id)) {
+      k.rezervace = [...k.rezervace, id].slice(-40);
+    }
+    zmena = true;
+  }
+  if (!zmena) return k;
+  /** Součet jen kladných položek; nula u značek. Když je utrataKc vyšší (starý zápis), necháme ji. */
+  const soucet = k.utrataRucne.reduce((s, u) => s + Math.max(0, u.castka), 0);
+  k.utrataKc = Math.max(k.utrataKc || 0, soucet);
   await ulozKlientKartu(store, k);
   return k;
 }
