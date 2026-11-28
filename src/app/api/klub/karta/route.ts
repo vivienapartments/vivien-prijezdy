@@ -103,7 +103,9 @@ export async function GET(req: Request) {
     );
   }
 
-  /** Booking host: klub až po kartaPredana (PROMPT 5b). */
+  /** Booking host: klub až po kartaPredana (PROMPT 5b).
+   *  Když už má klubovou útratu (přímé pobyty), karta je plná Club karta,
+   *  ne režim „Booking bez klubu“ (ten by schoval útratu a úroveň). */
   let bookingRezim: 'bez-klubu' | 'po-ubytovani' | null = null;
   const { jeBookingZdroj } = await import('@/lib/klub-karta-predana');
   const { odkazNaPruvodce } = await import('@/lib/posli-pruvodce');
@@ -111,11 +113,16 @@ export async function GET(req: Request) {
   const dnes = denPraha(new Date());
   const nadchazejici: import('@/lib/klub-ukazka').KlubPobytRadek[] = [];
   const pobyty: import('@/lib/klub-ukazka').KlubPobytRadek[] = [];
+  const maKlubovouUtratu = (karta.utrataKc || 0) > 0;
 
   for (const rezId of karta.rezervace || []) {
     const rec = await store.getRezervace(rezId);
     if (!rec || !rec.prijezd || !rec.odjezd) continue;
-    if (bookingRezim == null && jeBookingZdroj(rec.zdroj, rec.emailHosta)) {
+    if (
+      !maKlubovouUtratu &&
+      bookingRezim == null &&
+      jeBookingZdroj(rec.zdroj, rec.emailHosta)
+    ) {
       bookingRezim = rec.kartaPredana?.kdy ? 'po-ubytovani' : 'bez-klubu';
     }
     const apt = rec.apartman || 'Apartmán';
